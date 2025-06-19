@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Usage for major nightly update: bash driver-version-update.sh --driver_update_type "major" --release_type "nightly" --powerscale_version "2.15.0" --powermax_version "2.15.0" --powerflex_version "2.15.0" --powerstore_version "2.15.0" --unity_version "2.15.0"
-# Usage for major tag update: bash driver-version-update.sh --driver_update_type "major" --release_type "tag" --powerscale_version "2.15.0" --powermax_version "2.15.0" --powerflex_version "2.15.0" --powerstore_version "2.15.0" --unity_version "2.15.0"
-# Usage for patch update: bash driver-version-update.sh --driver_update_type "patch" --release_type "nightly" --powerscale_version "2.14.1" --powermax_version "2.14.1" --powerflex_version "2.14.1" --powerstore_version "2.14.1" --unity_version "2.14.1"
+# Usage for major nightly update: bash ./.github/scripts/driver-version-update.sh --driver_update_type "major" --release_type "nightly" --powerscale_version "2.15.0" --powermax_version "2.15.0" --powerflex_version "2.15.0" --powerstore_version "2.15.0" --unity_version "2.15.0"
+# Usage for major tag update: bash ./.github/scripts/driver-version-update.sh --driver_update_type "major" --release_type "tag" --powerscale_version "2.15.0" --powermax_version "2.15.0" --powerflex_version "2.15.0" --powerstore_version "2.15.0" --unity_version "2.15.0"
+# Usage for patch update: bash ./.github/scripts/driver-version-update.sh --driver_update_type "patch" --release_type "nightly" --powerscale_version "2.14.1" --powermax_version "2.14.1" --powerflex_version "2.14.1" --powerstore_version "2.14.1" --unity_version "2.14.1"
 
 # Initialize variables with default values
 driver_update_type=""
@@ -328,29 +328,11 @@ UpdateMajorPowerflexDriver() {
     yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' tests/config/driverconfig/powerflex/v$driver_version_update/upgrade-path.yaml
 
     # Update config version in testfiles
-    declare -a configArr=(
-        "application-mobility-templates/csm_application_mobility_no_velero"
-        "application-mobility-templates/csm_application_mobility_with_pflex_alt"
-        "application-mobility-templates/csm_application_mobility_with_pflex"
-        "application-mobility-templates/powerflex_noAM"
-        "storage_csm_powerflex_alt_vals_1"
-        "storage_csm_powerflex_alt_vals_2"
-        "storage_csm_powerflex_alt_vals_3"
-        "storage_csm_powerflex_alt_vals_4"
-        "storage_csm_powerflex_auth_driver_only_upgrade"
-        "storage_csm_powerflex_health_monitor"
-        "storage_csm_powerflex_no_sdc"
-        "storage_csm_powerflex_auth"
-        "storage_csm_powerflex_observability_auth"
-        "storage_csm_powerflex_observability_custom_cert"
-        "storage_csm_powerflex_observability_otel_custom_cert"
-        "storage_csm_powerflex_observability"
-        "storage_csm_powerflex_replica"
-        "storage_csm_powerflex_resiliency"
-        "storage_csm_powerflex"
-    )
+    testfiles="tests/e2e/testfiles"
+    prefix="storage_csm_powerflex"
+    configArr=($(find "$testfiles" -type f -name "${prefix}*"))
     for i in "${configArr[@]}"; do
-        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' tests/e2e/testfiles/$i.yaml
+        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' $i
     done
 
     previous_driver_config_version="v$previous_major_driver_version"
@@ -375,19 +357,10 @@ UpdateMajorPowerflexDriver() {
     done
 
     # Update config version in minimal testfiles
-    declare -a configArr=(
-        "storage_csm_powerflex_auth_v1"
-        "storage_csm_powerflex_auth"
-        "storage_csm_powerflex_observability_otel_custom_cert"
-        "storage_csm_powerflex_observability"
-        "storage_csm_powerflex_replica"
-        "storage_csm_powerflex_resiliency"
-        "storage_csm_powerflex_with_false_forceRemoveDriver"
-        "storage_csm_powerflex_with_no_forceRemoveDriver"
-        "storage_csm_powerflex"
-    )
+    testfiles="tests/e2e/testfiles/minimal-testfiles"
+    configArr=($(find "$testfiles" -type f -name "${prefix}*"))
     for i in "${configArr[@]}"; do
-        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' tests/e2e/testfiles/minimal-testfiles/$i.yaml
+        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' $i
     done
 
     yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[6].value = "'"$new_image_version"'")' config/manager/manager.yaml
@@ -484,45 +457,18 @@ UpdatePatchPowerflexDriver() {
     yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' tests/config/driverconfig/powerflex/v$driver_version_update/upgrade-path.yaml
 
     # Update config version in testfiles
-    declare -a configArr=(
-        "application-mobility-templates/csm_application_mobility_no_velero"
-        "application-mobility-templates/csm_application_mobility_with_pflex_alt"
-        "application-mobility-templates/csm_application_mobility_with_pflex"
-        "application-mobility-templates/powerflex_noAM"
-        "storage_csm_powerflex_alt_vals_1"
-        "storage_csm_powerflex_alt_vals_2"
-        "storage_csm_powerflex_alt_vals_3"
-        "storage_csm_powerflex_alt_vals_4"
-        "storage_csm_powerflex_auth_driver_only_upgrade"
-        "storage_csm_powerflex_health_monitor"
-        "storage_csm_powerflex_no_sdc"
-        "storage_csm_powerflex_auth"
-        "storage_csm_powerflex_observability_auth"
-        "storage_csm_powerflex_observability_custom_cert"
-        "storage_csm_powerflex_observability_otel_custom_cert"
-        "storage_csm_powerflex_observability"
-        "storage_csm_powerflex_replica"
-        "storage_csm_powerflex_resiliency"
-        "storage_csm_powerflex"
-    )
+    testfiles="tests/e2e/testfiles"
+    prefix="storage_csm_powerflex"
+    configArr=($(find "$testfiles" -type f -name "${prefix}*"))
     for i in "${configArr[@]}"; do
-        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' tests/e2e/testfiles/$i.yaml
+        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' $i
     done
 
     # Update config version in minimal testfiles
-    declare -a configArr=(
-        "storage_csm_powerflex_auth_v1"
-        "storage_csm_powerflex_auth"
-        "storage_csm_powerflex_observability_otel_custom_cert"
-        "storage_csm_powerflex_observability"
-        "storage_csm_powerflex_replica"
-        "storage_csm_powerflex_resiliency"
-        "storage_csm_powerflex_with_false_forceRemoveDriver"
-        "storage_csm_powerflex_with_no_forceRemoveDriver"
-        "storage_csm_powerflex"
-    )
+    testfiles="tests/e2e/testfiles/minimal-testfiles"
+    configArr=($(find "$testfiles" -type f -name "${prefix}*"))
     for i in "${configArr[@]}"; do
-        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' tests/e2e/testfiles/minimal-testfiles/$i.yaml
+        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' $i
     done
 
     yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[6].value = "'"$new_image_version"'")' config/manager/manager.yaml
@@ -609,35 +555,18 @@ UpdateMajorPowermaxDriver() {
     yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' tests/config/driverconfig/powermax/v$driver_version_update/upgrade-path.yaml
 
     # Update config version in testfiles
-    declare -a configArr=(
-        "storage_csm_powermax_authorization"
-        "storage_csm_powermax_observability_authorization"
-        "storage_csm_powermax_observability"
-        "storage_csm_powermax_resiliency"
-        "storage_csm_powermax_reverseproxy_authorization"
-        "storage_csm_powermax_sidecar_tls"
-        "storage_csm_powermax_sidecar"
-        "storage_csm_powermax_tls"
-        "storage_csm_powermax"
-    )
+    testfiles="tests/e2e/testfiles"
+    prefix="storage_csm_powermax"
+    configArr=($(find "$testfiles" -type f -name "${prefix}*"))
     for i in "${configArr[@]}"; do
-        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' tests/e2e/testfiles/$i.yaml
+        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' $i
     done
 
     # Update config version in minimal testfiles
-    declare -a configArr=(
-        "storage_csm_powermax_authorization"
-        "storage_csm_powermax_observability"
-        "storage_csm_powermax_replica"
-        "storage_csm_powermax_resiliency"
-        "storage_csm_powermax_reverseproxy_authorization_v2"
-        "storage_csm_powermax_reverseproxy_authorization"
-        "storage_csm_powermax_with_false_forceRemoveDriver"
-        "storage_csm_powermax_with_no_forceRemoveDriver"
-        "storage_csm_powermax"
-    )
+    testfiles="tests/e2e/testfiles/minimal-testfiles"
+    configArr=($(find "$testfiles" -type f -name "${prefix}*"))
     for i in "${configArr[@]}"; do
-        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' tests/e2e/testfiles/minimal-testfiles/$i.yaml
+        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' $i
     done
 
     yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[2].value = "'"$new_image_version"'")' config/manager/manager.yaml
@@ -724,35 +653,18 @@ UpdatePatchPowermaxDriver() {
     yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' tests/config/driverconfig/powermax/v$driver_version_update/upgrade-path.yaml
 
     # Update config version in testfiles
-    declare -a configArr=(
-        "storage_csm_powermax_authorization"
-        "storage_csm_powermax_observability_authorization"
-        "storage_csm_powermax_observability"
-        "storage_csm_powermax_resiliency"
-        "storage_csm_powermax_reverseproxy_authorization"
-        "storage_csm_powermax_sidecar_tls"
-        "storage_csm_powermax_sidecar"
-        "storage_csm_powermax_tls"
-        "storage_csm_powermax"
-    )
+    testfiles="tests/e2e/testfiles"
+    prefix="storage_csm_powermax"
+    configArr=($(find "$testfiles" -type f -name "${prefix}*"))
     for i in "${configArr[@]}"; do
-        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' tests/e2e/testfiles/$i.yaml
+        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' $i
     done
 
     # Update config version in minimal testfiles
-    declare -a configArr=(
-        "storage_csm_powermax_authorization"
-        "storage_csm_powermax_observability"
-        "storage_csm_powermax_replica"
-        "storage_csm_powermax_resiliency"
-        "storage_csm_powermax_reverseproxy_authorization_v2"
-        "storage_csm_powermax_reverseproxy_authorization"
-        "storage_csm_powermax_with_false_forceRemoveDriver"
-        "storage_csm_powermax_with_no_forceRemoveDriver"
-        "storage_csm_powermax"
-    )
+    testfiles="tests/e2e/testfiles/minimal-testfiles"
+    configArr=($(find "$testfiles" -type f -name "${prefix}*"))
     for i in "${configArr[@]}"; do
-        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' tests/e2e/testfiles/minimal-testfiles/$i.yaml
+        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' $i
     done
 
     yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[2].value = "'"$new_image_version"'")' config/manager/manager.yaml
@@ -840,21 +752,11 @@ UpdateMajorPowerscaleDriver() {
     yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' tests/config/driverconfig/powerscale/v$driver_version_update/upgrade-path.yaml
 
     # Update config version in testfiles
-    declare -a configArr=(
-        "storage_csm_powerscale_alt_vals_1"
-        "storage_csm_powerscale_alt_vals_2"
-        "storage_csm_powerscale_alt_vals_3"
-        "storage_csm_powerscale_auth"
-        "storage_csm_powerscale_health_monitor"
-        "storage_csm_powerscale_observability_auth"
-        "storage_csm_powerscale_observability_top_custom_cert"
-        "storage_csm_powerscale_observability_val2"
-        "storage_csm_powerscale_observability"
-        "storage_csm_powerscale_replica"
-        "storage_csm_powerscale_resiliency"
-        "storage_csm_powerscale")
+    testfiles="tests/e2e/testfiles"
+    prefix="storage_csm_powerscale"
+    configArr=($(find "$testfiles" -type f -name "${prefix}*"))
     for i in "${configArr[@]}"; do
-        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' tests/e2e/testfiles/$i.yaml
+        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' $i
     done
 
     previous_driver_config_version="v$previous_major_driver_version"
@@ -877,19 +779,10 @@ UpdateMajorPowerscaleDriver() {
     done
 
     # Update config version in minimal testfiles
-    declare -a configArr=(
-        "storage_csm_powerscale_auth"
-        "storage_csm_powerscale_auth2.0"
-        "storage_csm_powerscale_observability_top_custom_cert"
-        "storage_csm_powerscale_observability"
-        "storage_csm_powerscale_replica"
-        "storage_csm_powerscale_resiliency"
-        "storage_csm_powerscale_with_false_forceRemoveDriver"
-        "storage_csm_powerscale_with_no_forceRemoveDriver"
-        "storage_csm_powerscale"
-    )
+    testfiles="tests/e2e/testfiles/minimal-testfiles"
+    configArr=($(find "$testfiles" -type f -name "${prefix}*"))
     for i in "${configArr[@]}"; do
-        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' tests/e2e/testfiles/minimal-testfiles/$i.yaml
+        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' $i
     done
 
     yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[1].value = "'"$new_image_version"'")' config/manager/manager.yaml
@@ -977,38 +870,18 @@ UpdatePatchPowerscaleDriver() {
     yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' tests/config/driverconfig/powerscale/v$driver_version_update/upgrade-path.yaml
 
     # Update config version in testfiles
-    declare -a configArr=(
-        "storage_csm_powerscale_alt_vals_1"
-        "storage_csm_powerscale_alt_vals_2"
-        "storage_csm_powerscale_alt_vals_3"
-        "storage_csm_powerscale_auth"
-        "storage_csm_powerscale_health_monitor"
-        "storage_csm_powerscale_observability_auth"
-        "storage_csm_powerscale_observability_top_custom_cert"
-        "storage_csm_powerscale_observability_val2"
-        "storage_csm_powerscale_observability"
-        "storage_csm_powerscale_replica"
-        "storage_csm_powerscale_resiliency"
-        "storage_csm_powerscale"
-    )
+    testfiles="tests/e2e/testfiles"
+    prefix="storage_csm_powerscale"
+    configArr=($(find "$testfiles" -type f -name "${prefix}*"))
     for i in "${configArr[@]}"; do
-        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' tests/e2e/testfiles/$i.yaml
+        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' $i
     done
 
     # Update config version in minimal testfiles
-    declare -a configArr=(
-        "storage_csm_powerscale_auth"
-        "storage_csm_powerscale_auth2.0"
-        "storage_csm_powerscale_observability_top_custom_cert"
-        "storage_csm_powerscale_observability"
-        "storage_csm_powerscale_replica"
-        "storage_csm_powerscale_resiliency"
-        "storage_csm_powerscale_with_false_forceRemoveDriver"
-        "storage_csm_powerscale_with_no_forceRemoveDriver"
-        "storage_csm_powerscale"
-    )
+    testfiles="tests/e2e/testfiles/minimal-testfiles"
+    configArr=($(find "$testfiles" -type f -name "${prefix}*"))
     for i in "${configArr[@]}"; do
-        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' tests/e2e/testfiles/minimal-testfiles/$i.yaml
+        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' $i
     done
 
     yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[1].value = "'"$new_image_version"'")' config/manager/manager.yaml
@@ -1086,23 +959,18 @@ UpdateMajorPowerstoreDriver() {
     yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' tests/config/driverconfig/powerstore/v$driver_version_update/upgrade-path.yaml
 
     # Update config version in testfiles
-    declare -a configArr=(
-        "storage_csm_powerstore_resiliency"
-        "storage_csm_powerstore"
-    )
+    testfiles="tests/e2e/testfiles"
+    prefix="storage_csm_powerstore"
+    configArr=($(find "$testfiles" -type f -name "${prefix}*"))
     for i in "${configArr[@]}"; do
-        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' tests/e2e/testfiles/$i.yaml
+        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' $i
     done
 
     # Update config version in minimal testfiles
-    declare -a configArr=(
-        "storage_csm_powerstore_resiliency"
-        "storage_csm_powerstore_with_false_forceRemoveDriver"
-        "storage_csm_powerstore_with_no_forceRemoveDriver"
-        "storage_csm_powerstore"
-    )
+    testfiles="tests/e2e/testfiles/minimal-testfiles"
+    configArr=($(find "$testfiles" -type f -name "${prefix}*"))
     for i in "${configArr[@]}"; do
-        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' tests/e2e/testfiles/minimal-testfiles/$i.yaml
+        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' $i
     done
 
     yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[4].value = "'"$new_image_version"'")' config/manager/manager.yaml
@@ -1179,23 +1047,18 @@ UpdatePatchPowerstoreDriver() {
     yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' tests/config/driverconfig/powerstore/v$driver_version_update/upgrade-path.yaml
 
     # Update config version in testfiles
-    declare -a configArr=(
-        "storage_csm_powerstore_resiliency"
-        "storage_csm_powerstore"
-    )
+    testfiles="tests/e2e/testfiles"
+    prefix="storage_csm_powerstore"
+    configArr=($(find "$testfiles" -type f -name "${prefix}*"))
     for i in "${configArr[@]}"; do
-        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' tests/e2e/testfiles/$i.yaml
+        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' $i
     done
 
     # Update config version in minimal testfiles
-    declare -a configArr=(
-        "storage_csm_powerstore_resiliency"
-        "storage_csm_powerstore_with_false_forceRemoveDriver"
-        "storage_csm_powerstore_with_no_forceRemoveDriver"
-        "storage_csm_powerstore"
-    )
+    testfiles="tests/e2e/testfiles/minimal-testfiles"
+    configArr=($(find "$testfiles" -type f -name "${prefix}*"))
     for i in "${configArr[@]}"; do
-        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' tests/e2e/testfiles/minimal-testfiles/$i.yaml
+        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' $i
     done
 
     yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[4].value = "'"$new_image_version"'")' config/manager/manager.yaml
@@ -1270,19 +1133,18 @@ UpdateMajorUnityDriver() {
     yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' tests/config/driverconfig/unity/v$driver_version_update/upgrade-path.yaml
 
     # Update config version in testfiles
-    declare -a configArr=("storage_csm_unity")
+    testfiles="tests/e2e/testfiles"
+    prefix="storage_csm_unity"
+    configArr=($(find "$testfiles" -type f -name "${prefix}*"))
     for i in "${configArr[@]}"; do
-        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' tests/e2e/testfiles/$i.yaml
+        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' $i
     done
 
     # Update config version in minimal testfiles
-    declare -a configArr=(
-        "storage_csm_unity_with_false_forceRemoveDriver"
-        "storage_csm_unity_with_no_forceRemoveDriver"
-        "storage_csm_unity"
-    )
+    testfiles="tests/e2e/testfiles/minimal-testfiles"
+    configArr=($(find "$testfiles" -type f -name "${prefix}*"))
     for i in "${configArr[@]}"; do
-        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' tests/e2e/testfiles/minimal-testfiles/$i.yaml
+        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' $i
     done
 
     yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[5].value = "'"$new_image_version"'")' config/manager/manager.yaml
@@ -1357,19 +1219,18 @@ UpdatePatchUnityDriver() {
     yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' tests/config/driverconfig/unity/v$driver_version_update/upgrade-path.yaml
 
     # Update config version in testfiles
-    declare -a configArr=("storage_csm_unity")
+    testfiles="tests/e2e/testfiles"
+    prefix="storage_csm_unity"
+    configArr=($(find "$testfiles" -type f -name "${prefix}*"))
     for i in "${configArr[@]}"; do
-        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' tests/e2e/testfiles/$i.yaml
+        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' $i
     done
 
     # Update config version in minimal testfiles
-    declare -a configArr=(
-        "storage_csm_unity_with_false_forceRemoveDriver"
-        "storage_csm_unity_with_no_forceRemoveDriver"
-        "storage_csm_unity"
-    )
+    testfiles="tests/e2e/testfiles/minimal-testfiles"
+    configArr=($(find "$testfiles" -type f -name "${prefix}*"))
     for i in "${configArr[@]}"; do
-        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' tests/e2e/testfiles/minimal-testfiles/$i.yaml
+        yq eval -i '(.spec.driver.configVersion) |= "'"$update_config_version"'"' $i
     done
 
     yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[5].value = "'"$new_image_version"'")' config/manager/manager.yaml

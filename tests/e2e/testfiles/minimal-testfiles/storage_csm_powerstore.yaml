@@ -5,6 +5,7 @@ metadata:
   namespace: powerstore
 spec:
   driver:
+    replicas: 1 # resiliency test will fail with 2 replicas.
     csiDriverType: "powerstore"
     configVersion: v2.14.0
     common:
