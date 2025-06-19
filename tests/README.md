@@ -45,8 +45,7 @@ Any time changes made to the operator are being checked into the main branch, sa
   - (if running unity suite) `unity`
   - (if running powermax suite) `powermax`
   - (if running powerstore suite) `powerstore`
-- For auth: edit your `/etc/hosts` file to include the following line: `<master node IP> csm-authorization.com`
-- For auth V2:
+- For Authorization V2:
   - Vault needs to be installed on cluster
   - edit vaultConfiguration section of testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml to point to your vault instance. For example, if I was running the vault service on the same cluster I was running the tests, I would make the following edit:
     ```
@@ -94,9 +93,9 @@ If running the Authorization proxy server e2e tests, further setup must be done:
 
 Notes:
 
-- Authorization V1 scenarios support PowerFlex and PowerScale
-- Authorization V2 scenarios only support PowerFlex
-- Upgrade from Authorization V1 to V2 is not supported. Only V1 to other V1 versions is allowed.
+- Authorization V2 scenarios only support PowerFlex, PowerScale and PowerMax
+- Upgrade from Authorization V1 to V2 is not supported
+- The required host entry `<master node IP> csm-authorization.com` is now automatically added to `/etc/hosts`, so no manual update is needed.
 
 ### Shared NFS Prerequisites
 
