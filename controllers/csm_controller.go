@@ -17,7 +17,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -66,13 +65,15 @@ type ContainerStorageModuleReconciler struct {
 	client.Client
 	// k8s client, implements client-go/kubernetes interface, responsible for apply, which
 	// client.Client does not provides
-	K8sClient     kubernetes.Interface
-	Scheme        *runtime.Scheme
-	Log           *zap.SugaredLogger
-	Config        utils.OperatorConfig
-	updateCount   int32
-	trcID         string
-	EventRecorder record.EventRecorder
+	K8sClient            kubernetes.Interface
+	Scheme               *runtime.Scheme
+	Log                  *zap.SugaredLogger
+	Config               utils.OperatorConfig
+	updateCount          int32
+	trcID                string
+	EventRecorder        record.EventRecorder
+	ContentWatchChannels map[string]chan struct{}
+	ContentWatchLock     sync.Mutex
 }
 
 // DriverConfig  -
@@ -321,8 +322,16 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 			log.Errorw("remove driver finalizer", "error", err.Error())
 			return ctrl.Result{}, fmt.Errorf("error when handling finalizer: %v", err)
 		}
-		r.EventRecorder.Event(csm, corev1.EventTypeNormal, csmv1.EventDeleted, "Object finalizer is deleted")
 
+		// stop this CSM's informers
+		r.ContentWatchLock.Lock()
+		if stopCh, ok := r.ContentWatchChannels[csm.Name]; ok {
+			close(stopCh)
+			delete(r.ContentWatchChannels, csm.Name)
+		}
+		r.ContentWatchLock.Unlock()
+
+		r.EventRecorder.Event(csm, corev1.EventTypeNormal, csmv1.EventDeleted, "Object finalizer is deleted")
 		return ctrl.Result{}, nil
 	}
 
@@ -361,6 +370,21 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 			utils.LogEndReconcile()
 			return reconcile.Result{Requeue: true}, err
 		}
+
+		// start content (deployment, daemonset, pod) for this CSM
+		stop, err := r.ContentWatch(csm)
+		if err != nil {
+			log.Errorf("starting content watch for %s: %v", csm.Name, err)
+			return reconcile.Result{Requeue: true}, err
+		}
+
+		r.ContentWatchLock.Lock()
+		if stopCh, ok := r.ContentWatchChannels[csm.Name]; ok {
+			close(stopCh)
+		}
+		r.ContentWatchChannels[csm.Name] = stop
+		r.ContentWatchLock.Unlock()
+
 		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "install/update storage component: %s completed OK", csm.Name)
 		utils.LogEndReconcile()
 		return reconcile.Result{}, nil
@@ -541,48 +565,74 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 	}
 }
 
-// ContentWatch - watch updates on deployment and deamonset
-func (r *ContainerStorageModuleReconciler) ContentWatch() error {
-	sharedInformerFactory := sinformer.NewSharedInformerFactory(r.K8sClient, time.Duration(time.Hour))
+// ContentWatch - watch updates on deployments, deamonsets, and pods
+func (r *ContainerStorageModuleReconciler) ContentWatch(csm *csmv1.ContainerStorageModule) (chan struct{}, error) {
+	sharedInformerFactory := sinformer.NewSharedInformerFactoryWithOptions(r.K8sClient, time.Duration(time.Hour))
+
+	// extract csm labels from object
+	// if labels are not present or don't specify a CSM, do nothing
+	// else, proceed to update CSM state
+	updateFn := func(oldObj interface{}, newObj interface{}) {
+		var csmName, csmNamespace string
+		var nameOk, namespaceOk bool
+		var fn func(oldObj interface{}, newObj interface{})
+		switch v := oldObj.(type) {
+		case *appsv1.DaemonSet:
+			csmName, nameOk = v.Spec.Template.Labels[constants.CsmLabel]
+			csmNamespace, namespaceOk = v.Spec.Template.Labels[constants.CsmNamespaceLabel]
+			fn = r.handleDaemonsetUpdate
+		case *appsv1.Deployment:
+			csmName, nameOk = v.Spec.Template.Labels[constants.CsmLabel]
+			csmNamespace, namespaceOk = v.Spec.Template.Labels[constants.CsmNamespaceLabel]
+			fn = r.handleDeploymentUpdate
+		case *corev1.Pod:
+			csmName, nameOk = v.GetLabels()[constants.CsmLabel]
+			csmNamespace, namespaceOk = v.GetLabels()[constants.CsmNamespaceLabel]
+			fn = r.handlePodsUpdate
+		default:
+			return
+		}
+
+		if (!nameOk || !namespaceOk) || (csmName == "" || csmNamespace == "") || (csmName != csm.Name) {
+			return
+		}
+
+		fn(oldObj, newObj)
+	}
 
 	daemonsetInformer := sharedInformerFactory.Apps().V1().DaemonSets().Informer()
 	_, err := daemonsetInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		UpdateFunc: r.handleDaemonsetUpdate,
+		UpdateFunc: updateFn,
 	})
 	if err != nil {
-		return fmt.Errorf("ContentWatch failed adding event handler to daemonsetInformer: %v", err)
+		return nil, fmt.Errorf("ContentWatch failed adding event handler to daemonsetInformer: %v", err)
 	}
 
 	deploymentInformer := sharedInformerFactory.Apps().V1().Deployments().Informer()
 	_, err = deploymentInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		UpdateFunc: r.handleDeploymentUpdate,
+		UpdateFunc: updateFn,
 	})
 	if err != nil {
-		return fmt.Errorf("ContentWatch failed adding event handler to deploymentInformer: %v", err)
+		return nil, fmt.Errorf("ContentWatch failed adding event handler to deploymentInformer: %v", err)
 	}
 
 	podsInformer := sharedInformerFactory.Core().V1().Pods().Informer()
 	_, err = podsInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		UpdateFunc: r.handlePodsUpdate,
+		UpdateFunc: updateFn,
 	})
 	if err != nil {
-		return fmt.Errorf("ContentWatch failed adding event handler to podsInformer: %v", err)
+		return nil, fmt.Errorf("ContentWatch failed adding event handler to podsInformer: %v", err)
 	}
 
-	sharedInformerFactory.Start(StopWatch)
-	return nil
+	stopCh := make(chan struct{})
+	sharedInformerFactory.Start(stopCh)
+	sharedInformerFactory.WaitForCacheSync(stopCh)
+
+	return stopCh, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ContainerStorageModuleReconciler) SetupWithManager(mgr ctrl.Manager, limiter workqueue.TypedRateLimiter[reconcile.Request], maxReconcilers int) error {
-	go func() {
-		err := r.ContentWatch()
-		if err != nil {
-			fmt.Println("ContentWatch failed", err)
-			os.Exit(1)
-		}
-	}()
-
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&csmv1.ContainerStorageModule{}).
 		WithEventFilter(r.ignoreUpdatePredicate()).
