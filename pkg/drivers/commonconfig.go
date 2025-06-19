@@ -174,6 +174,9 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 			if cr.Spec.Driver.CSIDriverType == "powermax" {
 				newV, err = getApplyCertVolumePowermax(cr)
 			}
+			if cr.Spec.Driver.CSIDriverType == "powerstore" {
+				newV, err = getApplyCertVolumePowerstore(cr)
+			}
 			if err != nil {
 				log.Errorw("GetController spec template volumes", "Error", err.Error())
 				return nil, err
@@ -376,6 +379,9 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 			}
 			if cr.Spec.Driver.CSIDriverType == "powermax" {
 				newV, err = getApplyCertVolumePowermax(cr)
+			}
+			if cr.Spec.Driver.CSIDriverType == "powerstore" {
+				newV, err = getApplyCertVolumePowerstore(cr)
 			}
 			if err != nil {
 				log.Errorw("GetNode apply cert Volume failed", "Error", err.Error())
