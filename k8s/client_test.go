@@ -22,9 +22,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 
+	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/version"
 	discoveryfake "k8s.io/client-go/discovery/fake"
-	"go.uber.org/zap"
 )
 
 type testOverrides struct {
@@ -120,7 +120,7 @@ func Test_IsOpenShift(t *testing.T) {
 			assert.NoError(t, err)
 			_ = os.Setenv("KUBECONFIG", "./fake-kubeconfig")
 
-      var log *zap.SugaredLogger
+			var log *zap.SugaredLogger
 			isOpenshift, err := IsOpenShift(log)
 			if patch.ignoreError {
 				t.Log("cover  real Openshift setup")

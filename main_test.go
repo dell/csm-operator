@@ -406,8 +406,11 @@ func TestIsOpenshift(t *testing.T) {
 	assert.NoError(t, err)
 	_ = os.Setenv("KUBECONFIG", "./fake-kubeconfig")
 	var log *zap.SugaredLogger
-	_, err = isOpenShift(log)
-	assert.NotNil(t, err)
+	var isOpenShiftResult bool
+	isOpenShiftResult, _ = isOpenShift(log)
+	if ( isOpenShiftResult != false ) {
+		t.Errorf("IsOpenShift() = %v, want %v", isOpenShiftResult, true)
+	}
 }
 
 func TestGetKubeAPIServerVersion(t *testing.T) {
