@@ -70,6 +70,7 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 
 	runner.addStep(`^Set secret for driver from CR \[(\d+)\] to \[([^"]*)\]$`, step.setDriverSecret)
 	runner.addStep(`^Create Secret with template \[([^"]*)\] name \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpSecret)
+	runner.addStep(`^Generate and Create SFTP Secrets from template \[([^"]*)\] private-secret \[([^"]*)\] public-secret \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]$`, step.generateAndCreateSftpSecrets)
 	runner.addStep(`^Create ConfigMap with template \[([^"]*)\] name \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpConfigMap)
 	runner.addStep(`^Create resource with template \[([^"]*)\] for \[([^"]*)\]`, step.createResource)
 	runner.addStep(`^Create StorageClass with template \[([^"]*)\] for \[([^"]*)\]`, step.setUpStorageClass)
@@ -120,6 +121,18 @@ func (runner *Runner) addStep(expr string, stepFunc interface{}) {
 
 // RunStep - runs a step
 func (runner *Runner) RunStep(stepName string, res Resource) error {
+	// Support conditional execution: "If config.enableSftpSDC is true: ..."
+	const conditionalPrefix = "If config.enableSftpSDC is true: "
+	if len(stepName) > len(conditionalPrefix) && stepName[:len(conditionalPrefix)] == conditionalPrefix {
+		if res.Scenario.Config["enableSftpSDC"] != "true" {
+			// Skip the step if the config is not enabled
+			fmt.Printf("Skipping conditional step (enableSftpSDC is not true): %s\n", stepName)
+			return nil
+		}
+		// Run the actual step (remove the prefix)
+		stepName = stepName[len(conditionalPrefix):]
+	}
+
 	for _, stepDef := range runner.Definitions {
 		if stepDef.Expr.MatchString(stepName) {
 			var values []reflect.Value
