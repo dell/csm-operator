@@ -97,8 +97,8 @@ func printVersion(log *zap.SugaredLogger) {
 }
 
 var (
-	isOpenShift = func() (bool, error) {
-		return k8sClient.IsOpenShift()
+	isOpenShift = func(log *zap.SugaredLogger) (bool, error) {
+		return k8sClient.IsOpenShift(log)
 	}
 
 	getKubeAPIServerVersion = func() (*version.Info, error) {
@@ -129,9 +129,9 @@ var (
 func getOperatorConfig(log *zap.SugaredLogger) (utils.OperatorConfig, error) {
 	cfg := utils.OperatorConfig{}
 
-	isOpenShift, err := isOpenShift()
+	isOpenShift, err := isOpenShift(log)
 	if err != nil {
-		log.Info(fmt.Sprintf("isOpenShift err %t", isOpenShift))
+		log.Info(fmt.Sprintf("isOpenShift err %v", err))
 	}
 	cfg.IsOpenShift = isOpenShift
 	if isOpenShift {

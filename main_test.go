@@ -56,7 +56,7 @@ func TestPrintVersion(_ *testing.T) {
 func TestGetOperatorConfig(t *testing.T) {
 	tests := []struct {
 		name                            string
-		isOpenShift                     func() (bool, error)
+		isOpenShift                     func(_ *zap.SugaredLogger) (bool, error)
 		getKubeAPIServerVersion         func() (*version.Info, error)
 		getConfigDir                    func() string
 		getK8sPathFn                    func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string
@@ -68,7 +68,7 @@ func TestGetOperatorConfig(t *testing.T) {
 	}{
 		{
 			name:                    "Openshift environment",
-			isOpenShift:             func() (bool, error) { return true, nil },
+			isOpenShift:             func(_ *zap.SugaredLogger) (bool, error) { return true, nil },
 			getKubeAPIServerVersion: func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, nil },
 			getConfigDir:            func() string { return "testdata" },
 			getK8sPathFn: func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
@@ -106,7 +106,7 @@ func TestGetOperatorConfig(t *testing.T) {
 		},
 		{
 			name:                    "Kubernetes environment",
-			isOpenShift:             func() (bool, error) { return false, nil },
+			isOpenShift:             func(_ *zap.SugaredLogger) (bool, error) { return false, nil },
 			getKubeAPIServerVersion: func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, nil },
 			getConfigDir:            func() string { return "testdata" },
 			getK8sPathFn: func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
@@ -144,7 +144,7 @@ func TestGetOperatorConfig(t *testing.T) {
 		},
 		{
 			name:                    "Bad config directory",
-			isOpenShift:             func() (bool, error) { return false, nil },
+			isOpenShift:             func(_ *zap.SugaredLogger) (bool, error) { return false, nil },
 			getKubeAPIServerVersion: func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, nil },
 			getConfigDir:            func() string { return "/bad/path/does/not/exist" },
 			getK8sPathFn: func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
@@ -174,7 +174,7 @@ func TestGetOperatorConfig(t *testing.T) {
 		},
 		{
 			name:                    "Fail get openshift",
-			isOpenShift:             func() (bool, error) { return false, errors.New("error") },
+			isOpenShift:             func(_ *zap.SugaredLogger) (bool, error) { return false, errors.New("error") },
 			getKubeAPIServerVersion: func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, errors.New("error") },
 			getConfigDir:            func() string { return "/bad/path/does/not/exist" },
 			getK8sPathFn: func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
@@ -204,7 +204,7 @@ func TestGetOperatorConfig(t *testing.T) {
 		},
 		{
 			name:                    "Fail get kube api version",
-			isOpenShift:             func() (bool, error) { return false, nil },
+			isOpenShift:             func(_ *zap.SugaredLogger) (bool, error) { return false, nil },
 			getKubeAPIServerVersion: func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, errors.New("error") },
 			getConfigDir:            func() string { return "/bad/path/does/not/exist" },
 			getK8sPathFn: func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
@@ -234,7 +234,7 @@ func TestGetOperatorConfig(t *testing.T) {
 		},
 		{
 			name:                    "Fail parse K8sMinimumSupportedVersion",
-			isOpenShift:             func() (bool, error) { return false, nil },
+			isOpenShift:             func(_ *zap.SugaredLogger) (bool, error) { return false, nil },
 			getKubeAPIServerVersion: func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, errors.New("error") },
 			getConfigDir:            func() string { return "/bad/path/does/not/exist" },
 			getK8sPathFn: func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
@@ -264,7 +264,7 @@ func TestGetOperatorConfig(t *testing.T) {
 		},
 		{
 			name:                    "Fail parse K8sMaximumSupportedVersion",
-			isOpenShift:             func() (bool, error) { return false, nil },
+			isOpenShift:             func(_ *zap.SugaredLogger) (bool, error) { return false, nil },
 			getKubeAPIServerVersion: func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, errors.New("error") },
 			getConfigDir:            func() string { return "/bad/path/does/not/exist" },
 			getK8sPathFn: func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
@@ -294,7 +294,7 @@ func TestGetOperatorConfig(t *testing.T) {
 		},
 		{
 			name:                    "Fail parse kube version",
-			isOpenShift:             func() (bool, error) { return false, nil },
+			isOpenShift:             func(_ *zap.SugaredLogger) (bool, error) { return false, nil },
 			getKubeAPIServerVersion: func() (*version.Info, error) { return &version.Info{Major: "test", Minor: "test"}, nil },
 			getConfigDir:            func() string { return "/bad/path/does/not/exist" },
 			getK8sPathFn: func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
@@ -324,7 +324,7 @@ func TestGetOperatorConfig(t *testing.T) {
 		},
 		{
 			name:                    "Fail yaml unmarshal",
-			isOpenShift:             func() (bool, error) { return false, nil },
+			isOpenShift:             func(_ *zap.SugaredLogger) (bool, error) { return false, nil },
 			getKubeAPIServerVersion: func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, nil },
 			getConfigDir:            func() string { return "/bad/path/does/not/exist" },
 			getK8sPathFn: func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
@@ -405,7 +405,8 @@ func TestIsOpenshift(t *testing.T) {
 	err := k8s.CreateTempKubeconfig("./fake-kubeconfig")
 	assert.NoError(t, err)
 	_ = os.Setenv("KUBECONFIG", "./fake-kubeconfig")
-	_, err = isOpenShift()
+	var log *zap.SugaredLogger
+	_, err = isOpenShift(log)
 	assert.NotNil(t, err)
 }
 
@@ -514,7 +515,7 @@ func TestMain(_ *testing.T) {
 		setupSignalHandler = originalSetupSignalHandler
 	}()
 
-	isOpenShift = func() (bool, error) { return true, nil }
+	isOpenShift = func(_ *zap.SugaredLogger) (bool, error) { return true, nil }
 	getKubeAPIServerVersion = func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, nil }
 	getConfigDir = func() string { return "testdata" }
 	getk8sPathFn = func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
@@ -606,7 +607,7 @@ func TestMainGetOperatorConfigError(_ *testing.T) {
 		osExit = originalOsExit
 	}()
 
-	isOpenShift = func() (bool, error) { return true, nil }
+	isOpenShift = func(_ *zap.SugaredLogger) (bool, error) { return true, nil }
 	getKubeAPIServerVersion = func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, nil }
 	getConfigDir = func() string { return "testdata" }
 	getk8sPathFn = func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
@@ -704,7 +705,7 @@ func TestMainNewManagerError(_ *testing.T) {
 		osExit = originalOsExit
 	}()
 
-	isOpenShift = func() (bool, error) { return true, nil }
+	isOpenShift = func(_ *zap.SugaredLogger) (bool, error) { return true, nil }
 	getKubeAPIServerVersion = func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, nil }
 	getConfigDir = func() string { return "testdata" }
 	getk8sPathFn = func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
@@ -777,7 +778,7 @@ func TestMainSetupWithManagerError(_ *testing.T) {
 		initZapFlags = originalInitZapFlags
 	}()
 
-	isOpenShift = func() (bool, error) { return true, nil }
+	isOpenShift = func(_ *zap.SugaredLogger) (bool, error) { return true, nil }
 	getKubeAPIServerVersion = func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, nil }
 	getConfigDir = func() string { return "testdata" }
 	getk8sPathFn = func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
@@ -853,7 +854,7 @@ func TestMainAddHealthzCheckError(_ *testing.T) {
 		getControllerWatchCh = originalGetControllerWatchCh
 	}()
 
-	isOpenShift = func() (bool, error) { return true, nil }
+	isOpenShift = func(_ *zap.SugaredLogger) (bool, error) { return true, nil }
 	getKubeAPIServerVersion = func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, nil }
 	getConfigDir = func() string { return "testdata" }
 	getk8sPathFn = func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
@@ -934,7 +935,7 @@ func TestMainAddReadyzCheckError(_ *testing.T) {
 		getControllerWatchCh = originalGetControllerWatchCh
 	}()
 
-	isOpenShift = func() (bool, error) { return true, nil }
+	isOpenShift = func(_ *zap.SugaredLogger) (bool, error) { return true, nil }
 	getKubeAPIServerVersion = func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, nil }
 	getConfigDir = func() string { return "testdata" }
 	getk8sPathFn = func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
@@ -1018,7 +1019,7 @@ func TestMainStartError(_ *testing.T) {
 		setupSignalHandler = originalSetupSignalHandler
 	}()
 
-	isOpenShift = func() (bool, error) { return true, nil }
+	isOpenShift = func(_ *zap.SugaredLogger) (bool, error) { return true, nil }
 	getKubeAPIServerVersion = func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, nil }
 	getConfigDir = func() string { return "testdata" }
 	getk8sPathFn = func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {

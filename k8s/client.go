@@ -14,6 +14,7 @@ package k8s
 
 import (
 	"os"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/kubernetes"
@@ -24,6 +25,7 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/clientcmd"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
+	"go.uber.org/zap"
 )
 
 // GetClientSetWrapper -
@@ -58,7 +60,7 @@ func GetKubeAPIServerVersion() (*version.Info, error) {
 }
 
 // IsOpenShift - Returns a boolean which indicates if we are running in an OpenShift cluster
-func IsOpenShift() (bool, error) {
+func IsOpenShift(log *zap.SugaredLogger) (bool, error) {
 	k8sClientSet, err := GetClientSetWrapper()
 	if err != nil {
 		return false, err
@@ -66,7 +68,7 @@ func IsOpenShift() (bool, error) {
 
 	serverGroups, _, err := k8sClientSet.Discovery().ServerGroupsAndResources()
 	if err != nil {
-		return false, err
+		log.Info(fmt.Sprintf("isOpenShift err %v", err))
 	}
 
 	openshiftAPIGroup := "security.openshift.io"
