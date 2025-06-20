@@ -49,19 +49,6 @@
     - "Delete Authorization CRDs [2]"
     - "Validate [authorization] module pods from CR [1] is not installed"
 
-- scenario: "Install Authorization CRDs for V2"
-  paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
-  tags:
-    - "authorizationproxyserver"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Install Authorization CRDs [1]"
-    - "Validate [csmroles] CRD for Authorization is installed"
-    - "Validate [csmtenants] CRD for Authorization is installed"
-    - "Validate [storages] CRD for Authorization is installed"
-    - "Delete Authorization CRDs [1]"
-
 - scenario: "Install Authorization Proxy Server V2 With Multiple Vaults"  # TODO: Should this be using the multiple_vaults YAML?
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_default_redis.yaml"
