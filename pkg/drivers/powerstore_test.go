@@ -65,6 +65,7 @@ var (
 	}{
 		{"invalid value for skip cert validation", powerStoreCSMBadSkipCert, powerStoreClient, powerStoreSecret, "is an invalid value for X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION"},
 		{"invalid value for cert secret cnt", powerStoreCSMBadCertCnt, powerStoreClient, powerStoreSecret, "is an invalid value for CERT_SECRET_COUNT"},
+		{"skip cert false", csmForPowerStoreSkipCertFalse(), powerStoreClient, powerStoreSecret, ""},
 	}
 
 	powerStorePrecheckTests = []struct {
@@ -174,6 +175,21 @@ var (
 		},
 	}
 )
+
+func csmForPowerStoreSkipCertFalse() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
+
+	// Add log level to cover some code in GetConfigMap
+	envVarLogLevel1 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "2"}
+	envVarLogLevel2 := corev1.EnvVar{Name: "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION", Value: "false"}
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2}
+
+	// Add powerstore driver version
+	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
+
+	return res
+}
 
 func TestPrecheckPowerStore(t *testing.T) {
 	ctx := context.Background()
