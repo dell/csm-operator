@@ -22,6 +22,7 @@ import (
 	"github.com/dell/csm-operator/tests/shared/crclient"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -66,6 +67,7 @@ var (
 		{"invalid value for skip cert validation", powerStoreCSMBadSkipCert, powerStoreClient, powerStoreSecret, "is an invalid value for X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION"},
 		{"invalid value for cert secret cnt", powerStoreCSMBadCertCnt, powerStoreClient, powerStoreSecret, "is an invalid value for CERT_SECRET_COUNT"},
 		{"skip cert false", csmForPowerStoreSkipCertFalse(), powerStoreClient, powerStoreSecret, ""},
+		{"common is nil", powerStoreCSMCommonNil, powerStoreClient, powerStoreSecret, ""},
 	}
 
 	powerStorePrecheckTests = []struct {
@@ -189,6 +191,17 @@ func csmForPowerStoreSkipCertFalse() csmv1.ContainerStorageModule {
 	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
 
 	return res
+}
+
+var powerStoreCSMCommonNil = csmv1.ContainerStorageModule{
+	ObjectMeta: metav1.ObjectMeta{
+		Name: "test-csm",
+	},
+	Spec: csmv1.ContainerStorageModuleSpec{
+		Driver: csmv1.Driver{
+			Common: nil,
+		},
+	},
 }
 
 func TestPrecheckPowerStore(t *testing.T) {
