@@ -21,20 +21,20 @@ on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
     inputs:
       csm-version:
-        description: 'CSM program version, ex: v1.12.0, v1.13.0, ...'
+        description: 'CSM program version, ex: v1.14.0, v1.15.0, ...'
         required: true
-      latest-version:
-        description: 'Latest operator version, ex: v1.7.0, v1.8.0, ...'
+      update-option:
+        description: 'Select the update flag, ex. "nightly" or "tag"'
         required: true
-      existing-version:
-        description: 'Existing operator version, ex: v1.6.0, 1.7.0, ...'
-        required: true
+        type: choice
+        options:
+          - nightly
+          - tag
 jobs:
   version-update:
     uses: dell/common-github-actions/.github/workflows/operator-version-update.yaml@main
     name: Operator version update
     with:
-      latest-version: ${{ inputs.latest-version }}
-      existing-version: ${{ inputs.existing-version }}
       csm-version: ${{ inputs.csm-version }}
+      update-option: ${{ inputs.update-option}}
     secrets: inherit
