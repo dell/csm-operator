@@ -371,7 +371,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 			return reconcile.Result{Requeue: true}, err
 		}
 
-		// start content (deployment, daemonset, pod) for this CSM
+		// start content watch for this CSM
 		stop, err := r.ContentWatch(csm)
 		if err != nil {
 			log.Errorf("starting content watch for %s: %v", csm.Name, err)
