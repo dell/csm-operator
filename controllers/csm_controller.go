@@ -569,35 +569,8 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 func (r *ContainerStorageModuleReconciler) ContentWatch(csm *csmv1.ContainerStorageModule) (chan struct{}, error) {
 	sharedInformerFactory := sinformer.NewSharedInformerFactoryWithOptions(r.K8sClient, time.Duration(time.Hour))
 
-	// extract csm labels from object
-	// if labels are not present or don't specify a CSM, do nothing
-	// else, proceed to update CSM state
 	updateFn := func(oldObj interface{}, newObj interface{}) {
-		var csmName, csmNamespace string
-		var nameOk, namespaceOk bool
-		var fn func(oldObj interface{}, newObj interface{})
-		switch v := oldObj.(type) {
-		case *appsv1.DaemonSet:
-			csmName, nameOk = v.Spec.Template.Labels[constants.CsmLabel]
-			csmNamespace, namespaceOk = v.Spec.Template.Labels[constants.CsmNamespaceLabel]
-			fn = r.handleDaemonsetUpdate
-		case *appsv1.Deployment:
-			csmName, nameOk = v.Spec.Template.Labels[constants.CsmLabel]
-			csmNamespace, namespaceOk = v.Spec.Template.Labels[constants.CsmNamespaceLabel]
-			fn = r.handleDeploymentUpdate
-		case *corev1.Pod:
-			csmName, nameOk = v.GetLabels()[constants.CsmLabel]
-			csmNamespace, namespaceOk = v.GetLabels()[constants.CsmNamespaceLabel]
-			fn = r.handlePodsUpdate
-		default:
-			return
-		}
-
-		if (!nameOk || !namespaceOk) || (csmName == "" || csmNamespace == "") || (csmName != csm.Name) {
-			return
-		}
-
-		fn(oldObj, newObj)
+		r.informerUpdate(csm, oldObj, newObj, r.handleDaemonsetUpdate, r.handleDeploymentUpdate, r.handlePodsUpdate)
 	}
 
 	daemonsetInformer := sharedInformerFactory.Apps().V1().DaemonSets().Informer()
@@ -629,6 +602,41 @@ func (r *ContainerStorageModuleReconciler) ContentWatch(csm *csmv1.ContainerStor
 	sharedInformerFactory.WaitForCacheSync(stopCh)
 
 	return stopCh, nil
+}
+
+func (r *ContainerStorageModuleReconciler) informerUpdate(csm *csmv1.ContainerStorageModule, oldObj interface{}, newObj interface{},
+	handleDaemonsetUpdate func(oldObj interface{}, obj interface{}),
+	handleDeploymentUpdate func(oldObj interface{}, obj interface{}),
+	handlePodsUpdate func(oldObj interface{}, obj interface{}),
+) {
+	// extract csm labels from object
+	// if labels are not present, don't specify a CSM, or CSM name does not match passed in CSM, do nothing
+	// else, proceed to update CSM state
+	var csmName, csmNamespace string
+	var nameOk, namespaceOk bool
+	var fn func(oldObj interface{}, newObj interface{})
+	switch v := oldObj.(type) {
+	case *appsv1.DaemonSet:
+		csmName, nameOk = v.Spec.Template.Labels[constants.CsmLabel]
+		csmNamespace, namespaceOk = v.Spec.Template.Labels[constants.CsmNamespaceLabel]
+		fn = handleDaemonsetUpdate
+	case *appsv1.Deployment:
+		csmName, nameOk = v.Spec.Template.Labels[constants.CsmLabel]
+		csmNamespace, namespaceOk = v.Spec.Template.Labels[constants.CsmNamespaceLabel]
+		fn = handleDeploymentUpdate
+	case *corev1.Pod:
+		csmName, nameOk = v.GetLabels()[constants.CsmLabel]
+		csmNamespace, namespaceOk = v.GetLabels()[constants.CsmNamespaceLabel]
+		fn = handlePodsUpdate
+	default:
+		return
+	}
+
+	if (!nameOk || !namespaceOk) || (csmName == "" || csmNamespace == "") || (csmName != csm.Name) {
+		return
+	}
+
+	fn(oldObj, newObj)
 }
 
 // SetupWithManager sets up the controller with the Manager.

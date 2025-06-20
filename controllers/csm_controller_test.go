@@ -1316,6 +1316,174 @@ func (suite *CSMControllerTestSuite) createReconciler() (reconciler *ContainerSt
 	return reconciler
 }
 
+func (suite *CSMControllerTestSuite) TestInformerUpdate() {
+	tests := []struct {
+		csm        *csmv1.ContainerStorageModule
+		oldObj     interface{}
+		objType    string
+		wantCalled bool
+	}{
+		{
+			csm: &csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "powermax",
+					Namespace: "powermax",
+				},
+			},
+			objType: "deployment",
+			oldObj: &appsv1.Deployment{
+				Spec: appsv1.DeploymentSpec{
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{
+								constants.CsmLabel:          "powermax",
+								constants.CsmNamespaceLabel: "powermax",
+							},
+						},
+					},
+				},
+			},
+			wantCalled: true,
+		},
+		{
+			csm: &csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "powermax",
+					Namespace: "powermax",
+				},
+			},
+			objType: "deployment",
+			oldObj: &appsv1.Deployment{
+				Spec: appsv1.DeploymentSpec{
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{
+								constants.CsmLabel:          "powerflex",
+								constants.CsmNamespaceLabel: "powerflex",
+							},
+						},
+					},
+				},
+			},
+			wantCalled: false,
+		},
+		{
+			csm: &csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "powermax",
+					Namespace: "powermax",
+				},
+			},
+			objType: "daemonset",
+			oldObj: &appsv1.DaemonSet{
+				Spec: appsv1.DaemonSetSpec{
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{
+								constants.CsmLabel:          "powermax",
+								constants.CsmNamespaceLabel: "powermax",
+							},
+						},
+					},
+				},
+			},
+			wantCalled: true,
+		},
+		{
+			csm: &csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "powermax",
+					Namespace: "powermax",
+				},
+			},
+			objType: "daemonset",
+			oldObj: &appsv1.DaemonSet{
+				Spec: appsv1.DaemonSetSpec{
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{
+								constants.CsmLabel:          "powerflex",
+								constants.CsmNamespaceLabel: "powerflex",
+							},
+						},
+					},
+				},
+			},
+			wantCalled: false,
+		},
+		{
+			csm: &csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "powermax",
+					Namespace: "powermax",
+				},
+			},
+			objType: "pod",
+			oldObj: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						constants.CsmLabel:          "powermax",
+						constants.CsmNamespaceLabel: "powermax",
+					},
+				},
+			},
+			wantCalled: true,
+		},
+		{
+			csm: &csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "powermax",
+					Namespace: "powermax",
+				},
+			},
+			objType: "pod",
+			oldObj: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						constants.CsmLabel:          "powerflex",
+						constants.CsmNamespaceLabel: "powerflex",
+					},
+				},
+			},
+			wantCalled: false,
+		},
+	}
+
+	handleDaemonsetFnCalled := false
+	handleDaemonsetFn := func(oldObj interface{}, obj interface{}) {
+		handleDaemonsetFnCalled = true
+	}
+
+	handleDeploymentFnCalled := false
+	handleDeploymentFn := func(oldObj interface{}, obj interface{}) {
+		handleDeploymentFnCalled = true
+	}
+
+	handlePodFnCalled := false
+	handlePodFn := func(oldObj interface{}, obj interface{}) {
+		handlePodFnCalled = true
+	}
+
+	reset := func() {
+		handleDaemonsetFnCalled = false
+		handleDeploymentFnCalled = false
+		handlePodFnCalled = false
+	}
+	r := &ContainerStorageModuleReconciler{}
+	for _, test := range tests {
+		r.informerUpdate(test.csm, test.oldObj, nil, handleDaemonsetFn, handleDeploymentFn, handlePodFn)
+		switch test.objType {
+		case "deployment":
+			assert.Equal(suite.T(), test.wantCalled, handleDeploymentFnCalled)
+		case "daemonset":
+			assert.Equal(suite.T(), test.wantCalled, handleDaemonsetFnCalled)
+		case "pod":
+			assert.Equal(suite.T(), test.wantCalled, handlePodFnCalled)
+		}
+		reset()
+	}
+}
+
 func (suite *CSMControllerTestSuite) runFakeCSMManager(expectedErr string, reconcileDelete bool) {
 	reconciler := suite.createReconciler()
 
