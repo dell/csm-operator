@@ -29,48 +29,63 @@ func (f *FakeCoreV1) RESTClient() rest.Interface {
 func (f *FakeCoreV1) ComponentStatuses() corev1.ComponentStatusInterface {
 	panic("not implemented")
 }
+
 func (f *FakeCoreV1) ConfigMaps(_ string) corev1.ConfigMapInterface {
 	panic("not implemented")
 }
+
 func (f *FakeCoreV1) Endpoints(_ string) corev1.EndpointsInterface {
 	panic("not implemented")
 }
+
 func (f *FakeCoreV1) Events(_ string) corev1.EventInterface {
 	panic("not implemented")
 }
+
 func (f *FakeCoreV1) LimitRanges(_ string) corev1.LimitRangeInterface {
 	panic("not implemented")
 }
+
 func (f *FakeCoreV1) Namespaces() corev1.NamespaceInterface {
 	panic("not implemented")
 }
+
 func (f *FakeCoreV1) Nodes() corev1.NodeInterface {
 	panic("not implemented")
 }
+
 func (f *FakeCoreV1) PersistentVolumes() corev1.PersistentVolumeInterface {
 	panic("not implemented")
 }
+
 func (f *FakeCoreV1) PersistentVolumeClaims(_ string) corev1.PersistentVolumeClaimInterface {
 	panic("not implemented")
 }
+
 func (f *FakeCoreV1) Pods(_ string) corev1.PodInterface {
 	return &FakePod{}
 }
+
 func (f *FakeCoreV1) PodTemplates(_ string) corev1.PodTemplateInterface {
 	panic("not implemented")
 }
+
 func (f *FakeCoreV1) ReplicationControllers(_ string) corev1.ReplicationControllerInterface {
 	panic("not implemented")
 }
+
 func (f *FakeCoreV1) ResourceQuotas(_ string) corev1.ResourceQuotaInterface {
 	panic("not implemented")
 }
+
 func (f *FakeCoreV1) Secrets(_ string) corev1.SecretInterface {
 	panic("not implemented")
 }
+
 func (f *FakeCoreV1) Services(_ string) corev1.ServiceInterface {
 	panic("not implemented")
 }
+
 func (f *FakeCoreV1) ServiceAccounts(_ string) corev1.ServiceAccountInterface {
 	panic("not implemented")
 }
