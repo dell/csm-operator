@@ -72,6 +72,9 @@ func IsOpenShift(log *zap.SugaredLogger) (bool, error) {
 			log.Info(fmt.Sprintf("isOpenShift err %v", err))
 		}
 	}
+	if serverGroups == nil {
+		return false, fmt.Errorf("serverGroups is nil")
+	}
 
 	openshiftAPIGroup := "security.openshift.io"
 	for i := 0; i < len(serverGroups); i++ {

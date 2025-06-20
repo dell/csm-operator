@@ -131,7 +131,7 @@ func getOperatorConfig(log *zap.SugaredLogger) (utils.OperatorConfig, error) {
 
 	isOpenShift, err := isOpenShift(log)
 	if err != nil {
-		log.Info(fmt.Sprintf("isOpenShift err %v", err))
+		log.Info(fmt.Sprintf("isOpenShift returned %v err %v", isOpenShift, err))
 	}
 	cfg.IsOpenShift = isOpenShift
 	if isOpenShift {
