@@ -1278,26 +1278,6 @@ func TestCustom(t *testing.T) {
 	suite.Run(t, testSuite)
 }
 
-// test with a csm without a finalizer, reconcile should add it
-/*func (suite *CSMControllerTestSuite) TestContentWatch() {
-	mgr, err := ctrl.NewManager(&rest.Config{}, ctrl.Options{
-		Scheme: scheme.Scheme,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	expRateLimiter := workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](5*time.Millisecond, 120*time.Second)
-	err = suite.createReconciler().SetupWithManager(mgr, expRateLimiter, 1)
-	if err != nil {
-		panic(err)
-	}
-	close(StopWatch)
-	version, err := utils.GetModuleDefaultVersion("v2.12.0", "csi-isilon", csmv1.Authorization, "../operatorconfig")
-	assert.NotNil(suite.T(), err)
-	assert.NotNil(suite.T(), version)
-}*/
-
 func (suite *CSMControllerTestSuite) createReconciler() (reconciler *ContainerStorageModuleReconciler) {
 	logType := logger.DevelopmentLogLevel
 	_, log := logger.GetNewContextWithLogger("0")

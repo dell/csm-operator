@@ -25,10 +25,10 @@ type FakePod struct {
 	corv1typed.PodInterface
 }
 
-func (f *FakePod) List(ctx context.Context, opts metav1.ListOptions) (*corev1.PodList, error) {
+func (f *FakePod) List(_ context.Context, _ metav1.ListOptions) (*corev1.PodList, error) {
 	return &corev1.PodList{}, nil
 }
 
-func (f *FakePod) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
+func (f *FakePod) Watch(_ context.Context, _ metav1.ListOptions) (watch.Interface, error) {
 	return watch.NewFake(), nil
 }
