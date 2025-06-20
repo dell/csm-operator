@@ -1,4 +1,4 @@
-# Copyright © 2022-2024 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2022-2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 # Set environment variables and options
 ###############################################################################
 export E2E_SCENARIOS_FILE=testfiles/scenarios.yaml
-export ARRAY_INFO_FILE=array-info.sh
+export ARRAY_INFO_FILE=array-info.env
 export GO111MODULE=on
 export ACK_GINKGO_RC=true
 export PROG="${0}"
@@ -33,6 +33,8 @@ export APPLICATIONMOBILITY=false
 export ZONING=false
 export SHAREDNFS=false
 
+export INSTALL_VAULT=false
+
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -46,6 +48,15 @@ function getArrayInfo() {
   source ./$ARRAY_INFO_FILE
 }
 
+function vaultSetupAutomation() {
+  echo "Removing any existing vault installation..."
+  helm delete vault || true
+  echo "Installing vault with all secrets for Authorization tests..."
+  cd ./scripts/vault-automation
+  go run main.go --kubeconfig ~/.kube/config --name vault --env-config
+  cd ../..
+}
+
 function checkForScenariosFile() {
   if [ -v SCENARIOS ]; then
     export E2E_SCENARIOS_FILE=$SCENARIOS
@@ -53,21 +64,6 @@ function checkForScenariosFile() {
 
   stat $E2E_SCENARIOS_FILE >&/dev/null || {
     echo "error: $E2E_SCENARIOS_FILE is not a valid scenario file - exiting"
-    exit 1
-  }
-}
-
-function checkForCertCsi() {
-  if [ -v CERT_CSI ]; then
-    stat $CERT_CSI >&/dev/null || {
-      echo "error: $CERT_CSI is not a valid cert-csi binary - exiting"
-      exit 1
-    }
-    cp $CERT_CSI /usr/local/bin/
-  fi
-
-  cert-csi --help >&/dev/null || {
-    echo "error: cert-csi required but not available - exiting"
     exit 1
   }
 }
@@ -111,9 +107,6 @@ function checkForGinkgo() {
     exit 1
 fi
 
-# Uncomment if cert-csi is not in PATH
-# cp $CERT_CSI .
-
 # Uncomment for authorization proxy server
 #cp $DELLCTL /usr/local/bin/
 
@@ -129,8 +122,6 @@ fi
 
 pwd
 ginkgo -mod=mod "${OPTS[@]}"
-
-rm -f cert-csi
 
 # Uncomment for authorization proxy server
 # rm -f /usr/local/bin/dellctl
@@ -153,7 +144,6 @@ function usage() {
   echo "  Optional"
   echo "  -h                                           print out helptext"
   echo "  -v                                           enable verbose logging"
-  echo "  --cert-csi=<path to cert-csi binary>         use to specify cert-csi binary, if not in PATH"
   echo "  --karavictl=<path to karavictl binary>       use to specify karavictl binary, if not in PATH"
   echo "  --dellctl=<path to dellctl binary>           use to specify dellctl binary, if not in PATH"
   echo "  --kube-cfg=<path to kubeconfig file>         use to specify non-default kubeconfig file"
@@ -174,6 +164,8 @@ function usage() {
   echo "  --zoning                                     use to run powerflex zoning tests (requires multiple storage systems)"
   echo "  --minimal                                    use minimal testfiles scenarios"
   echo "  --sharednfs                                  use to run e2e sharednfs suite (pre-requisite, the nodes need to have nfs-server setup)"
+  echo "  --install-vault                              use to install authorization vault instance with secrets for authorization tests"
+  echo "  --add-tag=<scenario tag>                     use to specify scenarios to run by one of their tags"
   echo
 
   exit 0
@@ -221,13 +213,6 @@ while getopts ":hv-:" optchar; do
       export POWERMAX=true ;;
     zoning)
       export ZONING=true ;;
-    cert-csi)
-      CERT_CSI="${!OPTIND}"
-      OPTIND=$((OPTIND + 1))
-      ;;
-    cert-csi=*)
-      CERT_CSI=${OPTARG#*=}
-      ;;
     kube-cfg)
       KUBECONFIG="${!OPTIND}"
       OPTIND=$((OPTIND + 1))
@@ -255,6 +240,12 @@ while getopts ":hv-:" optchar; do
       ;;
     scenarios=*)
       SCENARIOS=${OPTARG#*=}
+      ;;
+    install-vault)
+      export INSTALL_VAULT=true
+      ;;
+    add-tag=*)
+      export ADD_SCENARIO_TAG=${OPTARG#*=}
       ;;
     minimal)
       export E2E_SCENARIOS_FILE=testfiles/minimal-testfiles/scenarios.yaml
@@ -287,11 +278,13 @@ done
 ###############################################################################
 getArrayInfo
 checkForScenariosFile
-checkForCertCsi
 checkForKaravictl
 if [[ $APPLICATIONMOBILITY == "true" ]]; then
   echo "Checking for dellctl - APPLICATIONMOBILITY"
   checkForDellctl
+fi
+if [[ $INSTALL_VAULT == "true" ]]; then
+  vaultSetupAutomation
 fi
 if [[ $AUTHORIZATIONPROXYSERVER == "true" ]]; then
   echo "Checking for dellctl - AUTHORIZATIONPROXYSERVER"
