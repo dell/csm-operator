@@ -241,7 +241,12 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 func getApplyCertVolumePowerstore(cr csmv1.ContainerStorageModule) (*acorev1.VolumeApplyConfiguration, error) {
 	skipCertValid := true
 	certCount := 1
+
 	if cr.Spec.Driver.Common != nil {
+		if len(cr.Spec.Driver.Common.Envs) == 0 ||
+			(len(cr.Spec.Driver.Common.Envs) == 1 && cr.Spec.Driver.Common.Envs[0].Name != "CERT_SECRET_COUNT") {
+			certCount = 0
+		}
 		for _, env := range cr.Spec.Driver.Common.Envs {
 			if env.Name == "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION" {
 				b, err := strconv.ParseBool(env.Value)
