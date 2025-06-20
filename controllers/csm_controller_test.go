@@ -1450,17 +1450,17 @@ func (suite *CSMControllerTestSuite) TestInformerUpdate() {
 	}
 
 	handleDaemonsetFnCalled := false
-	handleDaemonsetFn := func(oldObj interface{}, obj interface{}) {
+	handleDaemonsetFn := func(_ interface{}, _ interface{}) {
 		handleDaemonsetFnCalled = true
 	}
 
 	handleDeploymentFnCalled := false
-	handleDeploymentFn := func(oldObj interface{}, obj interface{}) {
+	handleDeploymentFn := func(_ interface{}, _ interface{}) {
 		handleDeploymentFnCalled = true
 	}
 
 	handlePodFnCalled := false
-	handlePodFn := func(oldObj interface{}, obj interface{}) {
+	handlePodFn := func(_ interface{}, _ interface{}) {
 		handlePodFnCalled = true
 	}
 
