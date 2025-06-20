@@ -209,7 +209,7 @@ spec:
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
-            - "--volume-name-prefix=<CSI_VOL_PREFIX>"
+            - "--volume-name-prefix=csivol"
             - "--volume-name-uuid-length=10"
             - "--worker-threads=5"
             - "--timeout=120s"
@@ -256,7 +256,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: csi-metadata-retriever
-          image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0
+          image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.12.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -276,7 +276,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: quay.io/dell/container-storage-modules/csi-isilon:v2.14.0
+          image: quay.io/dell/container-storage-modules/csi-isilon:v2.15.0
           imagePullPolicy: IfNotPresent
           command: ["/csi-isilon"]
           args:
@@ -326,8 +326,6 @@ spec:
               value: /isilon-configs/config
             - name: X_CSI_MAX_PATH_LIMIT
               value: "192"
-            - name: X_CSI_VOL_PREFIX
-              value: "<CSI_VOL_PREFIX>"
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
