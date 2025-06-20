@@ -150,6 +150,14 @@ var _ = Describe("[run-e2e-test] E2E Testing", func() {
 				continue
 			}
 
+			// Override config.enableSftpSDC using env var
+			if strings.Contains(strings.Join(test.Scenario.Tags, ","), "powerflex") {
+				if test.Scenario.Config == nil {
+					test.Scenario.Config = map[string]string{}
+				}
+				test.Scenario.Config["enableSftpSDC"] = os.Getenv("PFLEX_SDC_SFTP_REPO_ENABLED")
+			}
+
 			// if no-modules are enabled, skip this test if it has a module tag
 			if CheckNoModules(test.Scenario.Tags) {
 				By(fmt.Sprintf("Ending: %s\n", test.Scenario.Scenario))

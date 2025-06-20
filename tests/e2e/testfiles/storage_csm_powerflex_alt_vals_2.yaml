@@ -121,7 +121,7 @@ spec:
           value: "1"
         # X_CSI_SDC_SFTP_REPO_ENABLED: Enable/Disable SDC SFTP repository
         - name: X_CSI_SDC_SFTP_REPO_ENABLED
-          value: "false"
+          value: "REPLACE_SDC_SFTP_REPO_ENABLED"
       # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
@@ -152,11 +152,11 @@ spec:
         name: sdc
         envs:
           - name: MDM
-            value: "10.x.x.x,10.x.x.x"  # provide MDM value
+            value: "REPLACE_MDM"  # provide MDM value
           - name: REPO_ADDRESS
-            value: "sftp://0.0.0.0"  # SFTP/private repository address. Format: "protocol://address"
+            value: "REPLACE_SFTP_REPO_ADDRESS"  # SFTP/private repository address. Format: "protocol://address"
           - name: REPO_USER
-            value: "sdcRepoUser"  # provide username to authenticate to the SFTP repo
+            value: "REPLACE_SFTP_REPO_USER"  # provide username to authenticate to the SFTP repo
           - name: MODULE_SIGCHECK
             value: "0"
   modules:
