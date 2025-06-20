@@ -8,7 +8,6 @@ bin
 testbin/*
 vendor/
 semver.mk
-cert-csi
 csm-common.mk
 __debug_bin*
 
