@@ -1979,6 +1979,22 @@ func (step *Step) configureAMInstall(_ Resource, templateFile string) error {
 	return nil
 }
 
+// Render the Powerflex SFTP CR template into a temporary file with the same name
+func (step *Step) configurePowerflexSftpInstall(_ Resource, templateFile string) error {
+	fileString, err := renderTemplate("pflex", templateFile)
+	if err != nil {
+		return err
+	}
+
+	filePath, err := writeRenderedFile(templateFile, fileString)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Rendered template %s into %s\n", templateFile, filePath)
+
+	return nil
+}
+
 // For authentication to registry.redhat.io, create an image pull secret and
 // associate it with the service account vxflexos-app-mobility-controller,
 // that is used by the AM controller manager.
