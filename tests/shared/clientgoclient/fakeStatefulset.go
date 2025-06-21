@@ -1,4 +1,4 @@
-//  Copyright © 2024 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2024-2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -80,12 +80,12 @@ func (c *FakeStatefulsets) Create(ctx context.Context, statefulset *appsv1.State
 
 // List takes label and field selectors, and returns the list of StatefulSets that match those selectors.
 func (c *FakeStatefulsets) List(_ context.Context, _ v1.ListOptions) (result *appsv1.StatefulSetList, err error) {
-	panic("implement me")
+	return &appsv1.StatefulSetList{}, nil
 }
 
 // Watch returns a watch.Interface that watches the requested statefulsets.
 func (c *FakeStatefulsets) Watch(_ context.Context, _ v1.ListOptions) (watch.Interface, error) {
-	panic("implement me")
+	return watch.NewFake(), nil
 }
 
 // Update takes the representation of a statefulset and updates it. Returns the server's representation of the statefulset, and an error, if there is any.
