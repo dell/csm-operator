@@ -1,4 +1,4 @@
-//  Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2022-2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -77,12 +77,12 @@ func (c *FakeDaemonSets) Create(ctx context.Context, daemonSet *appsv1.DaemonSet
 
 // List takes label and field selectors, and returns the list of DaemonSets that match those selectors.
 func (c *FakeDaemonSets) List(_ context.Context, _ v1.ListOptions) (result *appsv1.DaemonSetList, err error) {
-	panic("implement me")
+	return &appsv1.DaemonSetList{}, nil
 }
 
 // Watch returns a watch.Interface that watches the requested daemonSets.
 func (c *FakeDaemonSets) Watch(_ context.Context, _ v1.ListOptions) (watch.Interface, error) {
-	panic("implement me")
+	return watch.NewFake(), nil
 }
 
 // Update takes the representation of a daemonSet and updates it. Returns the server's representation of the daemonSet, and an error, if there is any.

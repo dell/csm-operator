@@ -21,6 +21,7 @@ import (
 	osruntime "runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -307,12 +308,14 @@ func main() {
 	expRateLimiter := workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](5*time.Millisecond, 120*time.Second)
 
 	r := &controllers.ContainerStorageModuleReconciler{
-		Client:        mgr.GetClient(),
-		K8sClient:     k8sClient,
-		Log:           log,
-		Scheme:        mgr.GetScheme(),
-		EventRecorder: recorder,
-		Config:        operatorConfig,
+		Client:               mgr.GetClient(),
+		K8sClient:            k8sClient,
+		Log:                  log,
+		Scheme:               mgr.GetScheme(),
+		EventRecorder:        recorder,
+		Config:               operatorConfig,
+		ContentWatchChannels: make(map[string]chan struct{}),
+		ContentWatchLock:     sync.Mutex{},
 	}
 
 	setupWithManager := getSetupWithManagerFn(r)
