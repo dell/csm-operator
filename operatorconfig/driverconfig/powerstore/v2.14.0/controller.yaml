@@ -267,6 +267,8 @@ spec:
               value:
             - name: CSI_ENDPOINT
               value: /var/run/csi/csi.sock
+            - name: SSL_CERT_DIR
+              value: /certs
             - name: X_CSI_MODE
               value: controller
             - name: X_CSI_DRIVER_NAME
@@ -306,6 +308,9 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
+            - name: certs
+              mountPath: /certs
+              readOnly: true
             - name: powerstore-config
               mountPath: /powerstore-config
             - name: powerstore-config-params
@@ -319,3 +324,11 @@ spec:
         - name: powerstore-config
           secret:
             secretName: <DriverDefaultReleaseName>-config
+        - name: certs
+          projected:
+            sources:
+              - secret:
+                  name: <DriverDefaultReleaseName>-certs-0
+                  items:
+                    - key: cert-0
+                      path: cert-0
