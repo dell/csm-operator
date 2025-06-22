@@ -100,10 +100,10 @@ func PrecheckPowerStore(ctx context.Context, cr *csmv1.ContainerStorageModule, o
 	if cr.Spec.Driver.Common != nil {
 		for _, env := range cr.Spec.Driver.Common.Envs {
 			switch env.Name {
-			case "X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION":
+			case "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION":
 				certTempCheck, err := strconv.ParseBool(env.Value)
 				if err != nil {
-					return fmt.Errorf("invalid value for X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION: %s (%v)", env.Value, err)
+					return fmt.Errorf("invalid value for X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION: %s (%v)", env.Value, err)
 				}
 				skipCertValid = certTempCheck
 
