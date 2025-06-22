@@ -1,4 +1,4 @@
-//  Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2022-2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -220,7 +220,7 @@ func (c *K8sClient) CoordinationV1() coordinationv1.CoordinationV1Interface {
 
 // CoreV1 retrieves the CoreV1Client
 func (c *K8sClient) CoreV1() corev1.CoreV1Interface {
-	panic("implement me")
+	return &FakeCoreV1{}
 }
 
 // DiscoveryV1 retrieves the DiscoveryV1Client

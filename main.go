@@ -21,6 +21,7 @@ import (
 	osruntime "runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -97,8 +98,8 @@ func printVersion(log *zap.SugaredLogger) {
 }
 
 var (
-	isOpenShift = func() (bool, error) {
-		return k8sClient.IsOpenShift()
+	isOpenShift = func(log *zap.SugaredLogger) (bool, error) {
+		return k8sClient.IsOpenShift(log)
 	}
 
 	getKubeAPIServerVersion = func() (*version.Info, error) {
@@ -129,9 +130,9 @@ var (
 func getOperatorConfig(log *zap.SugaredLogger) (utils.OperatorConfig, error) {
 	cfg := utils.OperatorConfig{}
 
-	isOpenShift, err := isOpenShift()
+	isOpenShift, err := isOpenShift(log)
 	if err != nil {
-		log.Info(fmt.Sprintf("isOpenShift err %t", isOpenShift))
+		log.Info(fmt.Sprintf("isOpenShift returned %v err %v", isOpenShift, err))
 	}
 	cfg.IsOpenShift = isOpenShift
 	if isOpenShift {
@@ -307,12 +308,14 @@ func main() {
 	expRateLimiter := workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](5*time.Millisecond, 120*time.Second)
 
 	r := &controllers.ContainerStorageModuleReconciler{
-		Client:        mgr.GetClient(),
-		K8sClient:     k8sClient,
-		Log:           log,
-		Scheme:        mgr.GetScheme(),
-		EventRecorder: recorder,
-		Config:        operatorConfig,
+		Client:               mgr.GetClient(),
+		K8sClient:            k8sClient,
+		Log:                  log,
+		Scheme:               mgr.GetScheme(),
+		EventRecorder:        recorder,
+		Config:               operatorConfig,
+		ContentWatchChannels: make(map[string]chan struct{}),
+		ContentWatchLock:     sync.Mutex{},
 	}
 
 	setupWithManager := getSetupWithManagerFn(r)
