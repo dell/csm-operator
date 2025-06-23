@@ -21,7 +21,7 @@ on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
     inputs:
       csm-version:
-        description: 'CSM program version, ex: v1.12.0, v1.13.0, ...'
+        description: 'CSM program version, ex: v1.15.0, v1.16.0, ...'
         required: true
       update-option:
         description: 'Select the update flag, ex. "nightly" or "tag"'
