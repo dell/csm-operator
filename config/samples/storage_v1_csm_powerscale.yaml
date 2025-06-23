@@ -17,7 +17,7 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.14.0
+    configVersion: v2.15.0
     authSecret: isilon-creds
     # Controller count
     # Allowed values: n, where n > 0
@@ -27,7 +27,7 @@ spec:
     # Uninstall CSI Driver and/or modules when CR is deleted
     forceRemoveDriver: true
     common:
-      image: "quay.io/dell/container-storage-modules/csi-isilon:v2.14.0"
+      image: "quay.io/dell/container-storage-modules/csi-isilon:nightly"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
