@@ -121,7 +121,7 @@ spec:
           value: "0"
         # X_CSI_SDC_SFTP_REPO_ENABLED: Enable/Disable SDC SFTP repository
         - name: X_CSI_SDC_SFTP_REPO_ENABLED
-          value: "REPLACE_SDC_SFTP_REPO_ENABLED"
+          value: "false"
       # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs

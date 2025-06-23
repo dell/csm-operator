@@ -127,7 +127,9 @@ func (runner *Runner) RunStep(stepName string, res Resource) error {
 	if len(stepName) > len(conditionalPrefix) && stepName[:len(conditionalPrefix)] == conditionalPrefix {
 		if res.Scenario.Config["enableSftpSDC"] != "true" {
 			// Skip the step if the config is not enabled
-			fmt.Printf("Skipping conditional step (enableSftpSDC is not true): %s\n", stepName)
+			fmt.Printf("             Skipping   %s\n", stepName[len(conditionalPrefix):])
+			fmt.Println("             Reason: config.enableSftpSDC is not set to 'true'")
+
 			return nil
 		}
 		// Run the actual step (remove the prefix)

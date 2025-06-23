@@ -120,7 +120,7 @@ spec:
         - name: X_CSI_MAX_VOLUMES_PER_NODE
           value: "1"
         - name: X_CSI_SDC_SFTP_REPO_ENABLED
-          value: "REPLACE_SDC_SFTP_REPO_ENABLED"
+          value: "false"
       # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
