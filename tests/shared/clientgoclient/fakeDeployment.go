@@ -1,4 +1,4 @@
-//  Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2022-2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -80,12 +80,12 @@ func (c *FakeDeployments) Create(ctx context.Context, deployment *appsv1.Deploym
 
 // List takes label and field selectors, and returns the list of Deployments that match those selectors.
 func (c *FakeDeployments) List(_ context.Context, _ v1.ListOptions) (result *appsv1.DeploymentList, err error) {
-	panic("implement me")
+	return &appsv1.DeploymentList{}, nil
 }
 
 // Watch returns a watch.Interface that watches the requested deployments.
 func (c *FakeDeployments) Watch(_ context.Context, _ v1.ListOptions) (watch.Interface, error) {
-	panic("implement me")
+	return watch.NewFake(), nil
 }
 
 // Update takes the representation of a deployment and updates it. Returns the server's representation of the deployment, and an error, if there is any.
