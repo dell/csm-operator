@@ -539,10 +539,12 @@ UpdateMajorPowermaxDriver() {
     fi
 
     declare -a configArr=(
+        "cr_powermax_observability_use_secret"
         "cr_powermax_observability"
         "cr_powermax_replica"
         "cr_powermax_resiliency"
         "cr_powermax_reverseproxy_sidecar"
+        "cr_powermax_reverseproxy_use_secret"
         "cr_powermax_reverseproxy"
     )
     for i in "${configArr[@]}"; do
@@ -637,10 +639,12 @@ UpdatePatchPowermaxDriver() {
     fi
 
     declare -a configArr=(
+        "cr_powermax_observability_use_secret"
         "cr_powermax_observability"
         "cr_powermax_replica"
         "cr_powermax_resiliency"
         "cr_powermax_reverseproxy_sidecar"
+        "cr_powermax_reverseproxy_use_secret"
         "cr_powermax_reverseproxy"
     )
     for i in "${configArr[@]}"; do
