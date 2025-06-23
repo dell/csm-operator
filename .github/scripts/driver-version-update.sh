@@ -365,6 +365,8 @@ UpdateMajorPowerflexDriver() {
 
     yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[6].value = "'"$new_image_version"'")' config/manager/manager.yaml
     yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[6].value = "'"$new_image_version"'")' deploy/operator.yaml
+
+    find . -type f \( -name "*.yaml" -o -name "*.yml" \) -exec sed -i 's/" # /"  # /g' {} +
 }
 
 # For Updating Powerflex Driver Patch Version
@@ -473,6 +475,8 @@ UpdatePatchPowerflexDriver() {
 
     yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[6].value = "'"$new_image_version"'")' config/manager/manager.yaml
     yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[6].value = "'"$new_image_version"'")' deploy/operator.yaml
+
+    find . -type f \( -name "*.yaml" -o -name "*.yml" \) -exec sed -i 's/" # /"  # /g' {} +
 }
 
 # For Updating Powermax Driver Major Version
@@ -535,10 +539,12 @@ UpdateMajorPowermaxDriver() {
     fi
 
     declare -a configArr=(
+        "cr_powermax_observability_use_secret"
         "cr_powermax_observability"
         "cr_powermax_replica"
         "cr_powermax_resiliency"
         "cr_powermax_reverseproxy_sidecar"
+        "cr_powermax_reverseproxy_use_secret"
         "cr_powermax_reverseproxy"
     )
     for i in "${configArr[@]}"; do
@@ -633,10 +639,12 @@ UpdatePatchPowermaxDriver() {
     fi
 
     declare -a configArr=(
+        "cr_powermax_observability_use_secret"
         "cr_powermax_observability"
         "cr_powermax_replica"
         "cr_powermax_resiliency"
         "cr_powermax_reverseproxy_sidecar"
+        "cr_powermax_reverseproxy_use_secret"
         "cr_powermax_reverseproxy"
     )
     for i in "${configArr[@]}"; do

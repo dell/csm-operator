@@ -28,10 +28,10 @@ spec:
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
       storageCapacity: false
-    configVersion: v2.14.0
+    configVersion: v2.15.0
     authSecret: powerstore-config
     # Controller count
-    replicas: 1  # resiliency test will fail with 2 replicas.
+    replicas: 1 # resiliency test will fail with 2 replicas.
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
