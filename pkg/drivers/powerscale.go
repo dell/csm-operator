@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -211,7 +211,7 @@ func ModifyPowerScaleCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
 		yamlString = strings.ReplaceAll(yamlString, PowerScaleCSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerScaleDebug, debug)
-		yamlString = strings.ReplaceAll(yamlString, PowerScaleCsiVolPrefix, csiVolPrefix)
+		yamlString = strings.ReplaceAll(yamlString, PowerScaleCsiVolPrefix, csiVolPrefix) // applicable only for v2.14.0/controller.yaml
 	case "Node":
 		if cr.Spec.Driver.Node != nil {
 			for _, env := range cr.Spec.Driver.Node.Envs {
