@@ -701,7 +701,7 @@
     - "testfiles/storage_csm_powerflex.yaml"
     - "testfiles/storage_csm_powerflex_downgrade.yaml"
   tags:
-  #    - "powerflex"
+      - "powerflex"
   config:
     enableSftpSDC: false
   steps:
@@ -1966,7 +1966,7 @@
     - "Run [Apply Node Labels]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-zoning-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.yaml] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
-    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [2]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Run [Validate Node Labels]"
