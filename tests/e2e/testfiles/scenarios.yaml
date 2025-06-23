@@ -701,7 +701,7 @@
     - "testfiles/storage_csm_powerflex.yaml"
     - "testfiles/storage_csm_powerflex_downgrade.yaml"
   tags:
-      - "powerflex"
+    - "powerflex"
   config:
     enableSftpSDC: false
   steps:
