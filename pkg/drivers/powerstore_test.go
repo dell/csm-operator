@@ -90,6 +90,7 @@ var (
 		{"missing envs", powerStoreCSMEmptyEnv, powerStoreClient, fakeSecretPstore, "failed to find secret"},
 		{"invalid skip cert validation", csmForPowerStoreBadSkipCert(), powerStoreClient, fakeSecretPstore, "invalid value for X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION"},
 		{"invalid cert secret count", csmForPowerStoreBadCertCnt(), powerStoreClient, fakeSecretPstore, "invalid value for CERT_SECRET_COUNT"},
+		{"valid skip cert validation", csmForPowerStoreGoodSkipCert(), powerStoreClient, fakeSecretPstore, "failed to find secret csm-creds"},
 	}
 
 	powerStoreCommonEnvTest = []struct {
@@ -185,6 +186,27 @@ var (
 	}
 )
 
+func csmForPowerStoreGoodSkipCert() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
+
+	// Valid environment variables
+	envCertCount := corev1.EnvVar{
+		Name:  "CERT_SECRET_COUNT",
+		Value: "1", // Ensures the loop runs at least once
+	}
+	envSkipCertValidation := corev1.EnvVar{
+		Name:  "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION",
+		Value: "true", // Valid boolean string
+	}
+
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envCertCount, envSkipCertValidation}
+	res.Spec.Driver.AuthSecret = "csm-creds"
+	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
+
+	return res
+}
+
 func csmForPowerStoreMultipleCertSecrets() csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.PStoreConfigVersion)
 	// Add log level to cover some code in GetConfigMap
@@ -260,14 +282,15 @@ func csmForPowerStoreSkipCertFalse() csmv1.ContainerStorageModule {
 	return res
 }
 
-// makes a csm object with skip cert validation set to true
 func csmForPowerStoreSkipCertTrue() csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
+	// Add valid env vars
 	envVarCertCount := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "2"}
 	envVarSkipCert := corev1.EnvVar{Name: "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION", Value: "true"}
 	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarCertCount, envVarSkipCert}
 
+	// Set PowerStore driver type and config version
 	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
 	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
 
