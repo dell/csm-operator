@@ -2602,11 +2602,11 @@ func TestGetModuleDefaultVersion(t *testing.T) {
 	}{
 		{
 			name:             "valid version",
-			driverConfig:     "v2.12.0",
+			driverConfig:     "v2.14.0",
 			driverType:       csmv1.PowerScale,
 			moduleType:       csmv1.Observability,
 			path:             "../../operatorconfig",
-			expectedVersion:  "v1.10.0",
+			expectedVersion:  "v1.12.0",
 			expectedErrorMsg: "",
 		},
 		{
@@ -2688,9 +2688,9 @@ func TestVersionParser(t *testing.T) {
 	}{
 		{
 			name:          "valid version",
-			driverConfig:  "v2.12.0",
+			driverConfig:  "v2.14.0",
 			expectedMajor: 2,
-			expectedMinor: 12,
+			expectedMinor: 14,
 			expectedError: "",
 		},
 		{
@@ -2702,9 +2702,9 @@ func TestVersionParser(t *testing.T) {
 		},
 		{
 			name:          "valid version alt format - no leading v",
-			driverConfig:  "2.12.0",
+			driverConfig:  "2.14.0",
 			expectedMajor: 2,
-			expectedMinor: 12,
+			expectedMinor: 14,
 			expectedError: "",
 		},
 	}
