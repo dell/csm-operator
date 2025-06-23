@@ -365,6 +365,8 @@ UpdateMajorPowerflexDriver() {
 
     yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[6].value = "'"$new_image_version"'")' config/manager/manager.yaml
     yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[6].value = "'"$new_image_version"'")' deploy/operator.yaml
+
+    find . -type f \( -name "*.yaml" -o -name "*.yml" \) -exec sed -i 's/" # /"  # /g' {} +
 }
 
 # For Updating Powerflex Driver Patch Version
@@ -473,6 +475,8 @@ UpdatePatchPowerflexDriver() {
 
     yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[6].value = "'"$new_image_version"'")' config/manager/manager.yaml
     yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[6].value = "'"$new_image_version"'")' deploy/operator.yaml
+
+    find . -type f \( -name "*.yaml" -o -name "*.yml" \) -exec sed -i 's/" # /"  # /g' {} +
 }
 
 # For Updating Powermax Driver Major Version
