@@ -26,7 +26,6 @@ import (
 	"time"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
-
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
 	"github.com/dell/csm-operator/pkg/utils"
@@ -335,6 +334,33 @@ func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) er
 	}
 
 	return nil
+}
+
+func (step *Step) validateContainerArg(res Resource, crNumStr string, arg string, container string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+	dp, err := getDriverDeployment(cr, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get deployment: %v", err)
+	}
+	containerFound := false
+	for _, cnt := range dp.Spec.Template.Spec.Containers {
+		if cnt.Name == container {
+			containerFound = true
+			// iterate through args and see if it was found
+			for _, argVal := range cnt.Args {
+				if argVal == arg {
+					return nil
+				}
+			}
+			return fmt.Errorf("container arg %s not found on container %s", arg, container)
+		}
+	}
+	if !containerFound {
+		return fmt.Errorf("container %s not found in deployment", container)
+	}
+
+	return fmt.Errorf("unknown error validating container arg")
 }
 
 func (step *Step) validateDriverInstalled(res Resource, driverName string, crNumStr string) error {
