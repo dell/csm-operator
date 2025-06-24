@@ -1,6 +1,4 @@
-#
-#
-# Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +10,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-#
-- apiGroups: [""]
-  resources: ["nodes"]
-  verbs: ["get", "list", "watch", "patch"]
-- apiGroups: ["storage.k8s.io"]
-  resources: ["volumeattachments"]
-  verbs: ["get", "list", "watch", "update", "patch", "delete"]
-- apiGroups: [""]
-  resources: ["pods"]
-  verbs: ["get", "list", "watch", "update", "delete"]
+apiVersion: v1
+kind: Service
+metadata:
+  name: csipowermax-reverseproxy
+  namespace: <DriverDefaultReleaseNamespace>
+spec:
+  ports:
+    - port: <X_CSI_REVPROXY_PORT>
+      protocol: TCP
+      targetPort: 2222
+  selector:
+    app: <DriverDefaultReleaseName>-controller
+  type: ClusterIP
