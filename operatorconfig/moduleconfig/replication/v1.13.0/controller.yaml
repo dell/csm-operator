@@ -34,17 +34,6 @@ rules:
       - list
       - watch
   - apiGroups:
-      - coordination.k8s.io
-    resources:
-      - leases
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - update
-      - watch
-  - apiGroups:
       - ""
     resources:
       - events
@@ -177,6 +166,24 @@ rules:
     verbs:
       - create
 ---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: dell-replication-manager-role
+  namespace: dell-replication-controller
+rules:
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - update
+      - watch
+---
 apiVersion: v1
 kind: Secret
 metadata:
@@ -194,6 +201,20 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
+  name: dell-replication-manager-role
+subjects:
+  - kind: ServiceAccount
+    name: dell-replication-controller-sa
+    namespace: dell-replication-controller
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: dell-replication-manager-rolebinding
+  namespace: dell-replication-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
   name: dell-replication-manager-role
 subjects:
   - kind: ServiceAccount
@@ -249,6 +270,8 @@ spec:
       serviceAccountName: dell-replication-controller-sa
       containers:
         - args:
+            - --disable-pvc-remap=<DISABLE_PVC_REMAP>
+            - --allow-pvc-creation-on-target=<REPLICATION_ALLOW_PVC_CREATION_ON_TARGET>
             - --enable-leader-election
             - --prefix=replication.storage.dell.com
           command:
@@ -272,8 +295,8 @@ spec:
               value: /app/certs
             - name: X_CSI_REPLICATION_CONFIG_FILE_NAME
               value: config
-          image: dellemc/dell-replication-controller:v1.9.0
-          imagePullPolicy: Always
+          image: quay.io/dell/container-storage-modules/dell-replication-controller:nightly
+          imagePullPolicy: IfNotPresent
           name: manager
           resources:
             requests:
