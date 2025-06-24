@@ -18,7 +18,7 @@ spec:
       enabled: true
       components:
         - name: podmon-controller
-          image: quay.io/dell/container-storage-modules/podmon:nightly
+          image: quay.io/dell/container-storage-modules/podmon:v1.14.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csisock=unix:/var/run/csi/csi.sock"
@@ -31,7 +31,7 @@ spec:
             - "--driverPodLabelValue=dell-storage"
             - "--ignoreVolumelessPods=false"
         - name: podmon-node
-          image: quay.io/dell/container-storage-modules/podmon:nightly
+          image: quay.io/dell/container-storage-modules/podmon:v1.14.0
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
