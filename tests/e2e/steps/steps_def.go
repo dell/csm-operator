@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -815,7 +816,9 @@ func (step *Step) generateAndCreateSftpSecrets(_ Resource, privateKeyPath, priva
 		return fmt.Errorf("failed to write private key to temp dir: %v", err)
 	}
 
-	if strings.ContainsAny(repoUser, ";&|`$<>") || strings.ContainsAny(repoHost, ";&|`$<>") {
+	// Validate repoUser and repoHost for safe characters
+	validPattern := regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
+	if !validPattern.MatchString(repoUser) || !validPattern.MatchString(repoHost) {
 		return fmt.Errorf("repoUser or repoHost contains invalid characters")
 	}
 
@@ -836,8 +839,14 @@ func (step *Step) generateAndCreateSftpSecrets(_ Resource, privateKeyPath, priva
 	}
 
 	// Extract repo public key from known_hosts
-	if !strings.HasPrefix(knownHostsPath, "temp/") {
-		return fmt.Errorf("untrusted known_hosts path: %s", knownHostsPath)
+	// Validate known_hosts path
+	absKnownHostsPath, err := filepath.Abs(knownHostsPath)
+	if err != nil {
+		return fmt.Errorf("failed to resolve known_hosts path: %v", err)
+	}
+	trustedBase, _ := filepath.Abs("temp")
+	if !strings.HasPrefix(absKnownHostsPath, trustedBase) {
+		return fmt.Errorf("known_hosts path outside temp dir: %s", absKnownHostsPath)
 	}
 	pubKeyBytes, err := os.ReadFile(knownHostsPath)
 	if err != nil {
