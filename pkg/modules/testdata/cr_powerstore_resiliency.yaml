@@ -6,11 +6,11 @@ metadata:
 spec:
   driver:
     csiDriverType: "powerstore"
-    configVersion: v2.14.0
+    configVersion: v2.15.0
     authSecret: powerstore-creds
     replicas: 1
     common:
-      image: "quay.io/dell/container-storage-modules/csi-powerstore:v2.14.0"
+      image: "quay.io/dell/container-storage-modules/csi-powerstore:nightly"
       imagePullPolicy: IfNotPresent
   modules:
     - name: resiliency

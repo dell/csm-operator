@@ -6,4 +6,4 @@ metadata:
 spec:
   driver:
     csiDriverType: "unity"
-    configVersion: v2.14.0
+    configVersion: v2.15.0
