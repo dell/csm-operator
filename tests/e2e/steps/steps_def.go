@@ -815,6 +815,10 @@ func (step *Step) generateAndCreateSftpSecrets(_ Resource, privateKeyPath, priva
 		return fmt.Errorf("failed to write private key to temp dir: %v", err)
 	}
 
+	if strings.ContainsAny(repoUser, ";&|`$<>") || strings.ContainsAny(repoHost, ";&|`$<>") {
+		return fmt.Errorf("repoUser or repoHost contains invalid characters")
+	}
+
 	// Run SFTP session to populate known_hosts
 	knownHostsPath := filepath.Join(sshDir, "known_hosts")
 	cmd := exec.Command("sftp",
@@ -832,6 +836,9 @@ func (step *Step) generateAndCreateSftpSecrets(_ Resource, privateKeyPath, priva
 	}
 
 	// Extract repo public key from known_hosts
+	if !strings.HasPrefix(knownHostsPath, "temp/") {
+		return fmt.Errorf("untrusted known_hosts path: %s", knownHostsPath)
+	}
 	pubKeyBytes, err := os.ReadFile(knownHostsPath)
 	if err != nil {
 		return fmt.Errorf("failed to read known_hosts: %v", err)
