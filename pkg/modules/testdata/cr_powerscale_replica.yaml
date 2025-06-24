@@ -6,25 +6,25 @@ metadata:
 spec:
   driver:
     csiDriverType: "isilon"
-    configVersion: v2.14.0
+    configVersion: v2.15.0
     authSecret: isilon-creds
     replicas: 1
     common:
-      image: "quay.io/dell/container-storage-modules/csi-isilon:v2.14.0"
+      image: "quay.io/dell/container-storage-modules/csi-isilon:nightly"
       imagePullPolicy: IfNotPresent
   modules:
     - name: replication
       enabled: true
       components:
         - name: dell-csi-replicator
-          image: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.12.0
+          image: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.13.0
           envs:
             - name: "X_CSI_REPLICATION_PREFIX"
               value: "replication.storage.dell.com"
             - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
               value: "powerscale"
         - name: dell-replication-controller-manager
-          image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.12.0
+          image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0
           envs:
             - name: "REPLICATION_CTRL_LOG_LEVEL"
               value: "debug"

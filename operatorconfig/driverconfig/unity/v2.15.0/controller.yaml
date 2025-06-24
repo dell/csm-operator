@@ -93,9 +93,9 @@ rules:
   - apiGroups: ["coordination.k8s.io"]
     resources: ["leases"]
     verbs: ["get", "watch", "list", "delete", "update", "create"]
-  - apiGroups: [ "apps" ]
-    resources: [ "replicasets" ]
-    verbs: [ "get" ]
+  - apiGroups: ["apps"]
+    resources: ["replicasets"]
+    verbs: ["get"]
 ---
 # RoleBinding for Driver-specific Role
 kind: RoleBinding
@@ -235,7 +235,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: quay.io/dell/container-storage-modules/csi-unity:v2.14.0
+          image: quay.io/dell/container-storage-modules/csi-unity:nightly
           args:
             - "--driver-name=csi-unity.dellemc.com"
             - "--driver-config=/unity-config/driver-config-params.yaml"

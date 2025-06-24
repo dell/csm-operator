@@ -6,25 +6,25 @@ metadata:
 spec:
   driver:
     csiDriverType: "isilon"
-    configVersion: v2.14.0
+    configVersion: v2.15.0
     authSecret: isilon-creds
     replicas: 1
     common:
-      image: "quay.io/dell/container-storage-modules/csi-isilon:v2.14.0"
+      image: "quay.io/dell/container-storage-modules/csi-isilon:nightly"
       imagePullPolicy: IfNotPresent
   modules:
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
       enabled: true
-      configVersion: v1.12.0
+      configVersion: v1.13.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
           enabled: true
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
-          image: quay.io/dell/container-storage-modules/csm-topology:v1.12.0
+          image: quay.io/dell/container-storage-modules/csm-topology:nightly
           envs:
             # topology log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
@@ -36,7 +36,7 @@ spec:
           enabled: false
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
-          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.124.0
+          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:v0.127.0
           envs:
             # image of nginx proxy image
             # Allowed values: string

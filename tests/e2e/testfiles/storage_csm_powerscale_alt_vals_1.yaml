@@ -11,7 +11,7 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
-    configVersion: v2.14.0
+    configVersion: v2.15.0
     authSecret: csm-creds
     # currently fails with something about nodes taints etc
     replicas: 3
@@ -245,7 +245,7 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: false
-      configVersion: v2.2.0
+      configVersion: v2.3.0
       components:
         - name: karavi-authorization-proxy
           image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
@@ -265,7 +265,7 @@ spec:
       #   false: disable replication feature(do not install dell-csi-replicator sidecar)
       # Default value: false
       enabled: false
-      configVersion: v1.12.0
+      configVersion: v1.13.0
       components:
         - name: dell-csi-replicator
           # image: Image to use for dell-csi-replicator. This shouldn't be changed
@@ -315,7 +315,7 @@ spec:
     - name: observability
       # enabled: Enable/Disable observability
       enabled: false
-      configVersion: v1.12.0
+      configVersion: v1.13.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
@@ -334,7 +334,7 @@ spec:
           enabled: false
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
-          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.124.0
+          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:v0.127.0
           envs:
             # image of nginx proxy image
             # Allowed values: string
