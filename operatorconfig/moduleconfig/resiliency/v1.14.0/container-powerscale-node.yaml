@@ -14,14 +14,27 @@
 #
 #
 name: podmon
+image: quay.io/dell/container-storage-modules/podmon:nightly
+imagePullPolicy: Always
 securityContext:
   privileged: true
   capabilities:
     add: ["SYS_ADMIN"]
   allowPrivilegeEscalation: true
-image: dellemc/podmon:v1.10.0
-imagePullPolicy: IfNotPresent
+args:
+  - "--labelvalue=csi-isilon"
+  - "--arrayConnectivityPollRate=60"
+  - "--leaderelection=false"
+  - "--driverPodLabelValue=dell-storage"
+  - "--ignoreVolumelessPods=false"
+  # Below 4 args should not be modified.
+  - "--csisock=unix:/var/lib/kubelet/plugins/csi-isilon/csi_sock"
+  - "--mode=node"
+  - "--driverPath=csi-isilon.dellemc.com"
+  - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
 env:
+  - name: "X_CSI_PODMON_API_PORT"
+    value: "8083"
   - name: KUBE_NODE_NAME
     valueFrom:
       fieldRef:
@@ -46,7 +59,7 @@ volumeMounts:
     mountPath: <KUBELET_CONFIG_DIR>/pods
     mountPropagation: "Bidirectional"
   - name: driver-path
-    mountPath: <KUBELET_CONFIG_DIR>/plugins/powermax.emc.dell.com
+    mountPath: <KUBELET_CONFIG_DIR>/plugins/csi-isilon
     mountPropagation: "Bidirectional"
   - name: csi-path
     mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
@@ -57,5 +70,5 @@ volumeMounts:
     mountPath: /usr-bin
   - name: var-run
     mountPath: /var/run
-  - name: powermax-config-params
-    mountPath: /powermax-config-params
+  - name: csi-isilon-config-params
+    mountPath: /csi-isilon-config-params
