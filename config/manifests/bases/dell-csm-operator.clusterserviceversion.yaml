@@ -1758,7 +1758,7 @@ spec:
       name: csi-isilon
     - image: quay.io/dell/container-storage-modules/csi-powermax:nightly
       name: csi-powermax
-    - image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.13.0
+    - image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.14.0
       name: csipowermax-reverseproxy
     - image: quay.io/dell/container-storage-modules/csi-powerstore:nightly
       name: csi-powerstore
