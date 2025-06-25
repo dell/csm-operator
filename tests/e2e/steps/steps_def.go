@@ -829,7 +829,7 @@ func (step *Step) generateAndCreateSftpSecrets(_ Resource, privateKeyPath, priva
 		"-o", "StrictHostKeyChecking=accept-new",
 		"-i", privateKeyFile,
 		fmt.Sprintf("%s@%s", repoUser, repoHost),
-	)
+	)		// #nosec G204
 	cmd.Stdin = strings.NewReader("exit\n")
 	cmd.Env = append(os.Environ(), "HOME="+tmpDir)
 	cmd.Stdout = io.Discard
