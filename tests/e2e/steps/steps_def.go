@@ -808,7 +808,7 @@ func (step *Step) generateAndCreateSftpSecrets(_ Resource, privateKeyPath, priva
 
 	// Copy private key
 	privateKeyFile := filepath.Join(tmpDir, "id_rsa")
-	privateKeyData, err := os.ReadFile(privateKeyPath)
+	privateKeyData, err := os.ReadFile(filepath.Clean(privateKeyPath))
 	if err != nil {
 		return fmt.Errorf("failed to read private key: %v", err)
 	}
@@ -848,7 +848,7 @@ func (step *Step) generateAndCreateSftpSecrets(_ Resource, privateKeyPath, priva
 	if !strings.HasPrefix(absKnownHostsPath, trustedBase) {
 		return fmt.Errorf("known_hosts path outside temp dir: %s", absKnownHostsPath)
 	}
-	pubKeyBytes, err := os.ReadFile(knownHostsPath)
+	pubKeyBytes, err := os.ReadFile(filepath.Clean(knownHostsPath))
 	if err != nil {
 		return fmt.Errorf("failed to read known_hosts: %v", err)
 	}
