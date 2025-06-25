@@ -194,7 +194,7 @@ spec:
       #   operator: "Exists"
       #   effect: "NoSchedule"
   modules:
-      # Authorization: enable csm-authorization for RBAC
+    # Authorization: enable csm-authorization for RBAC
     - name: authorization
       # enable: Enable/Disable csm-authorization
       # Default value: false

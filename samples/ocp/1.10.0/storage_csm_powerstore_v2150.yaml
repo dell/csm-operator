@@ -44,7 +44,7 @@ spec:
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: "quay.io/dell/container-storage-modules/csi-powerstore:v2.14.0"
+      image: "registry.connect.redhat.com/dell-emc/dell-csm-powerstore@sha256:5a7538443a01c6a1a6be4766d2e3d376eec9e564e238282f25ab987229406bb5"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_POWERSTORE_NODE_NAME_PREFIX
@@ -65,23 +65,23 @@ spec:
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
-        image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
+        image: registry.k8s.io/sig-storage/csi-provisioner@sha256:672e45d6a55678abc1d102de665b5cbd63848e75dc7896f238c8eaaf3c7d322f
         args: ["--volume-name-prefix=csivol"]
       - name: attacher
-        image: registry.k8s.io/sig-storage/csi-attacher:v4.8.0
+        image: registry.k8s.io/sig-storage/csi-attacher@sha256:a399393ff5bd156277c56bae0c08389b1a1b95b7fd6ea44a316ce55e0dd559d7
       - name: registrar
-        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar@sha256:8e66117d3b5e336901fc2ff508b3eb6105f8cf3b70f631e8102441e9562c8875
       - name: resizer
-        image: registry.k8s.io/sig-storage/csi-resizer:v1.13.1
+        image: registry.k8s.io/sig-storage/csi-resizer@sha256:2a0b297cc7c4cd376ac7413df339ff2fdaa1ec9d099aed92b5ea1f031ef7f639
       - name: snapshotter
-        image: registry.k8s.io/sig-storage/csi-snapshotter:v8.2.0
+        image: registry.k8s.io/sig-storage/csi-snapshotter@sha256:339a83a86e6e1eead14413fe494b43de8bc48243d146c2810b39dd741d26ca6a
       - name: csi-metadata-retriever
-        image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0
+        image: registry.connect.redhat.com/dell-emc/dell-csm-metadata-retriever@sha256:a8412f649ffca3aa72f5c9f5f2c3eb5dac5d742dfa5d3f4e0ef4bd81d72f2956
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
         args: ["--monitor-interval=60s"]
-        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.14.0
+        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller@sha256:65d118e955cfa0827d0f727fe161a7469e0e1c6829c347a484130aeb6e45f377
     # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
     # Configure only when the storageCapacity is set as "true"
     # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
@@ -194,7 +194,7 @@ spec:
       #   operator: "Exists"
       #   effect: "NoSchedule"
   modules:
-      # Authorization: enable csm-authorization for RBAC
+    # Authorization: enable csm-authorization for RBAC
     - name: authorization
       # enable: Enable/Disable csm-authorization
       # Default value: false
@@ -202,7 +202,7 @@ spec:
       configVersion: v2.2.0
       components:
         - name: karavi-authorization-proxy
-          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.2.0
+          image: registry.connect.redhat.com/dell-emc/dell-csm-authorization-sidecar@sha256:dd8aac3380d1d0664f7bbeb63da36443a57da12f9a26e435f33b8a33bdea4cb9
           envs:
             # proxyHost: hostname of the csm-authorization server
             # Default value: none
@@ -222,7 +222,7 @@ spec:
       configVersion: v1.13.0
       components:
         - name: podmon-controller
-          image: quay.io/dell/container-storage-modules/podmon:v1.13.0
+          image: registry.connect.redhat.com/dell-emc/dell-csm-podmon@sha256:5c3f5e473b9f3ce5797a61b2466d16d8b9c488e69ee35ac336c424bef8979abc
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-powerstore"
@@ -237,7 +237,7 @@ spec:
             - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
             - "--driverPath=csi-powerstore.dellemc.com"
         - name: podmon-node
-          image: quay.io/dell/container-storage-modules/podmon:v1.13.0
+          image: registry.connect.redhat.com/dell-emc/dell-csm-podmon@sha256:5c3f5e473b9f3ce5797a61b2466d16d8b9c488e69ee35ac336c424bef8979abc
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
