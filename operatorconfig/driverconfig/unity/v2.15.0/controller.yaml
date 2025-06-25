@@ -149,6 +149,7 @@ spec:
             - "--csi-address=$(ADDRESS)"
             - "--v=5"
             - "--leader-election"
+            - "--timeout=300s"
           env:
             - name: ADDRESS
               value: /var/run/csi/csi.sock
@@ -162,7 +163,7 @@ spec:
             - "--csi-address=$(ADDRESS)"
             - "--volume-name-prefix=csivol"
             - "--volume-name-uuid-length=10"
-            - "--timeout=180s"
+            - "--timeout=300s"
             - "--worker-threads=6"
             - "--v=5"
             - "--feature-gates=Topology=true"
