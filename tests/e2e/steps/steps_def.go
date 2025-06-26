@@ -16,6 +16,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -52,7 +53,7 @@ var (
 	operatorNamespace = "dell-csm-operator"
 	quotaLimit        = "100000000"
 	pflexSecretMap    = map[string]string{
-		"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_NAS": "PFLEX_NAS",
+		"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_NAS": "PFLEX_NAS", "REPLACE_SFTP_REPO_ADDRESS": "PFLEX_SFTP_REPO_ADDRESS", "REPLACE_SFTP_REPO_USER": "PFLEX_SFTP_REPO_USER",
 		"REPLACE_ZONING_USER": "PFLEX_ZONING_USER", "REPLACE_ZONING_PASS": "PFLEX_ZONING_PASS", "REPLACE_ZONING_SYSTEMID": "PFLEX_ZONING_SYSTEMID", "REPLACE_ZONING_ENDPOINT": "PFLEX_ZONING_ENDPOINT", "REPLACE_ZONING_MDM": "PFLEX_ZONING_MDM", "REPLACE_ZONING_POOL": "PFLEX_ZONING_POOL", "REPLACE_ZONING_NAS": "PFLEX_ZONING_NAS",
 	}
 	pflexAuthSecretMap       = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
@@ -804,6 +805,114 @@ func (step *Step) setUpSecret(_ Resource, templateFile, name, namespace, crType 
 		return fmt.Errorf("failed to create secret with template file %s: %v", templateFile, err)
 	}
 
+	return nil
+}
+
+func (step *Step) generateAndCreateSftpSecrets(_ Resource, privateKeyPath, privateSecretName, publicSecretName, namespace, crType string) error {
+	tmpDir := filepath.Join("temp", "sftp", fmt.Sprintf("%d", time.Now().UnixNano()))
+	defer os.RemoveAll(tmpDir)
+
+	// Load env vars
+	repoAddress, repoUser := os.Getenv("PFLEX_SFTP_REPO_ADDRESS"), os.Getenv("PFLEX_SFTP_REPO_USER")
+	if repoAddress == "" || repoUser == "" {
+		return fmt.Errorf("PFLEX_SFTP_REPO_ADDRESS and PFLEX_SFTP_REPO_USER must be set")
+	}
+	repoHost := strings.TrimPrefix(repoAddress, "sftp://")
+	repoHost = strings.TrimSuffix(repoHost, "/")
+
+	// Prepare temp directories
+	if err := os.MkdirAll(tmpDir, 0o700); err != nil {
+		return fmt.Errorf("failed to create temp directory: %w", err)
+	}
+	sshDir := filepath.Join(tmpDir, ".ssh")
+	if err := os.MkdirAll(sshDir, 0o700); err != nil {
+		return fmt.Errorf("failed to create .ssh directory: %w", err)
+	}
+
+	// Copy private key
+	privateKeyFile := filepath.Join(tmpDir, "id_rsa")
+	privateKeyData, err := os.ReadFile(filepath.Clean(privateKeyPath))
+	if err != nil {
+		return fmt.Errorf("failed to read private key: %v", err)
+	}
+	if err := os.WriteFile(privateKeyFile, privateKeyData, 0o600); err != nil {
+		return fmt.Errorf("failed to write private key to temp dir: %v", err)
+	}
+
+	// Run SFTP session to populate known_hosts
+	knownHostsPath := filepath.Join(sshDir, "known_hosts")
+	cmd := exec.Command("sftp",
+		"-o", "UserKnownHostsFile="+knownHostsPath,
+		"-o", "StrictHostKeyChecking=accept-new",
+		"-i", privateKeyFile,
+		fmt.Sprintf("%s@%s", repoUser, repoHost),
+	) // #nosec G204
+	cmd.Stdin = strings.NewReader("exit\n")
+	cmd.Env = append(os.Environ(), "HOME="+tmpDir)
+	cmd.Stdout = io.Discard
+	cmd.Stderr = io.Discard
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("sftp session failed: %v", err)
+	}
+
+	// Extract repo public key from known_hosts
+	pubKeyBytes, err := os.ReadFile(filepath.Clean(knownHostsPath))
+	if err != nil {
+		return fmt.Errorf("failed to read known_hosts: %v", err)
+	}
+	hostPubKey, err := extractHostPublicKey(string(pubKeyBytes), repoHost)
+	if err != nil {
+		return err
+	}
+
+	// Write key files to disk for secret creation
+	privateOut := filepath.Join(tmpDir, "sftp-secret-private.yaml")
+	publicOut := filepath.Join(tmpDir, "sftp-secret-public.yaml")
+	if err := os.WriteFile(privateOut, privateKeyData, 0o600); err != nil {
+		return fmt.Errorf("failed to write private secret file: %v", err)
+	}
+	if err := os.WriteFile(publicOut, []byte(hostPubKey), 0o600); err != nil {
+		return fmt.Errorf("failed to write public secret file: %v", err)
+	}
+
+	// Delete and recreate secrets
+	if err := deleteSecretIfExists(namespace, privateSecretName); err != nil {
+		return fmt.Errorf("failed to delete private secret: %w", err)
+	}
+	if err := deleteSecretIfExists(namespace, publicSecretName); err != nil {
+		return fmt.Errorf("failed to delete public secret: %w", err)
+	}
+	if err := execCommand("kubectl", "create", "secret", "generic", privateSecretName,
+		"-n", namespace,
+		"--from-file=user_private_rsa_key="+privateOut); err != nil {
+		return fmt.Errorf("failed to create private SFTP secret: %v", err)
+	}
+
+	if err := execCommand("kubectl", "create", "secret", "generic", publicSecretName,
+		"-n", namespace,
+		"--from-file=repo_public_rsa_key="+publicOut); err != nil {
+		return fmt.Errorf("failed to create public SFTP secret: %v", err)
+	}
+	fmt.Println("SFTP secrets created successfully.")
+
+	return nil
+}
+
+// Extract public key line for host from known_hosts
+func extractHostPublicKey(knownHostsContent, repoHost string) (string, error) {
+	for _, line := range strings.Split(knownHostsContent, "\n") {
+		if strings.HasPrefix(line, repoHost+" ") {
+			return line, nil
+		}
+	}
+	return "", fmt.Errorf("could not extract %s public key from known_hosts", repoHost)
+}
+
+// Delete secret if exists in a namespace
+func deleteSecretIfExists(namespace, secretName string) error {
+	if secretExists(namespace, secretName) {
+		return execCommand("kubectl", "delete", "secret", "-n", namespace, secretName)
+	}
 	return nil
 }
 
@@ -1617,6 +1726,24 @@ func (step *Step) configureAMInstall(_ Resource, templateFile string) error {
 	if err != nil {
 		return fmt.Errorf("failed to setup RH registry authentication for App Mobility: %v", err)
 	}
+
+	return nil
+}
+
+// Render the Powerflex SFTP CR template into a temporary file with the same name
+func (step *Step) configurePowerflexSftpInstall(res Resource, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	crFilePath := res.Scenario.Paths[crNum-1]
+	fileString, err := renderTemplate("pflex", crFilePath)
+	if err != nil {
+		return err
+	}
+
+	filePath, err := writeRenderedFile(crFilePath, fileString)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Rendered template %s into %s\n", crFilePath, filePath)
 
 	return nil
 }

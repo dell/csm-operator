@@ -299,10 +299,14 @@
   tags:
     - "powerflex"
     - "sanity"
+  config:
+    enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.yaml] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -318,10 +322,14 @@
     - "testfiles/powerflex-cert-secret-0.yaml"
   tags:
     - "powerflex"
+  config:
+    enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.yaml] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [dell] for [pflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [2]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -342,10 +350,14 @@
     - "testfiles/storage_csm_powerflex_alt_vals_2.yaml"
   tags:
     - "powerflex"
+  config:
+    enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.yaml] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [dell] for [pflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -364,11 +376,15 @@
     - "testfiles/storage_csm_powerflex_alt_vals_3.yaml"
   tags:
     - "powerflex"
+  config:
+    enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Set [control-plane] node label"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.yaml] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [dell] for [pflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -388,10 +404,14 @@
     - "testfiles/storage_csm_powerflex_alt_vals_4.yaml"
   tags:
     - "powerflex"
+  config:
+    enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.yaml] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [dell] for [pflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -410,10 +430,14 @@
     - "testfiles/storage_csm_powerflex_no_sdc.yaml"
   tags:
     - "powerflex"
+  config:
+    enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.yaml] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [dell] for [pflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -432,10 +456,14 @@
     - "testfiles/storage_csm_powerflex_health_monitor.yaml"
   tags:
     - "powerflex"
+  config:
+    enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.yaml] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [dell] for [pflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -449,9 +477,13 @@
     - "testfiles/storage_csm_powerflex.yaml"
   tags:
     - "powerflex"
+  config:
+    enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.yaml] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -468,6 +500,8 @@
     - "authorization"
     - "authorizationproxyserver"
     # - "powerflex"
+  config:
+    enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [3]"
@@ -478,6 +512,8 @@
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Create Secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-vxflexos] for [pflexAuthSidecar]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.yaml] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [2]"
     - "Apply custom resource [2]"
     - "Validate custom resource [2]"
     - "Validate [powerflex] driver from CR [2] is installed"
@@ -610,7 +646,9 @@
   tags:
     - "authorization"
     - "authorizationproxyserver"
-    # - "powerflex"
+  #    - "powerflex"
+  config:
+    enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [4]"
@@ -622,11 +660,15 @@
     - "Create Secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-vxflexos] for [pflexAuthSidecar]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.yaml] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [2]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [3]"
     - "Apply custom resource [2]"
     - "Validate custom resource [2]"
     - "Validate [powerflex] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
     # upgrade
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [3]"
     - "Upgrade from custom resource [2] to [3]"
     - "Validate custom resource [3]"
     - "Validate [powerflex] driver from CR [3] is installed"
@@ -646,14 +688,19 @@
     - "testfiles/storage_csm_powerflex_downgrade.yaml"
   tags:
     - "powerflex"
+  config:
+    enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.yaml] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
     # downgrade, using the same method as upgrade. hence the same name
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [2]"
     - "Upgrade from custom resource [1] to [2]"
     - "Validate custom resource [2]"
     - "Validate [powerflex] driver from CR [2] is installed"
@@ -668,10 +715,14 @@
   tags:
     - "observability"
     - "powerflex"
+  config:
+    enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.yaml] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Validate [observability] module from CR [1] is installed"
@@ -685,10 +736,14 @@
     - "testfiles/storage_csm_powerflex_observability_custom_cert.yaml"
   tags:
     - "observability"
+  config:
+    enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.yaml] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Validate [observability] module from CR [1] is installed"
@@ -702,10 +757,14 @@
     - "testfiles/storage_csm_powerflex_observability_otel_custom_cert.yaml"
   tags:
     - "observability"
+  config:
+    enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.yaml] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Validate [observability] module from CR [1] is installed"
@@ -721,10 +780,14 @@
     - "powerflex"
     - "observability"
     - "sanity"
+  config:
+    enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.yaml] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Validate [observability] module from CR [1] is not installed"
@@ -746,10 +809,14 @@
     - "powerflex"
     - "replication"
     - "sanity"
+  config:
+    enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.yaml] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Validate [replication] module from CR [1] is installed"
@@ -764,10 +831,14 @@
   tags:
     - "powerflex"
     - "replication"
+  config:
+    enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.yaml] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Validate [replication] module from CR [1] is not installed"
@@ -793,6 +864,8 @@
     # - "powerflex"
     - "observability"
     # - "sanity"
+  config:
+    enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     # Install Auth proxy server
@@ -805,6 +878,8 @@
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Create Secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-vxflexos] for [pflexAuthSidecar]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.yaml] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [2]"
     - "Apply custom resource [2]"
     - "Validate custom resource [2]"
     - "Validate [powerflex] driver from CR [2] is installed"
@@ -837,9 +912,13 @@
     - "powerflex"
     - "resiliency"
     - "sanity"
+  config:
+    enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.yaml] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Validate [resiliency] module from CR [1] is installed"
@@ -854,9 +933,13 @@
   tags:
     - "powerflex"
     - "resiliency"
+  config:
+    enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.yaml] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -924,10 +1007,14 @@
 #     - "powerscale"
 #     - "powerflex"
 #     - "sanity"
+#   config:
+#     enableSftpSDC: false
 #   steps:
 #     - "Given an environment with k8s or openshift, and CSM operator installed"
 #     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
 #     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+#     - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.yaml] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+#     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [2]"
 #     - "Apply custom resource [1]"
 #     - "Apply custom resource [2]"
 #     - "Validate custom resource [1]"
@@ -1094,11 +1181,15 @@
   tags:
     - "applicationmobility"
     - "sanity"
+  config:
+    enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Set up application mobility CR [testfiles/application-mobility-templates/powerflex_noAM.yaml]"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-app-mobility-config] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.yaml] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Validate [application-mobility] module from CR [1] is not installed"
@@ -1873,10 +1964,14 @@
   tags:
     - "zoning"
     - "powerflex"
+  config:
+    enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Run [Apply Node Labels]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-zoning-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.yaml] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Run [Validate Node Labels]"
