@@ -49,19 +49,6 @@
     - "Delete Authorization CRDs [2]"
     - "Validate [authorization] module pods from CR [1] is not installed"
 
-- scenario: "Install Authorization CRDs for V2"
-  paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
-  tags:
-    - "authorizationproxyserver"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Install Authorization CRDs [1]"
-    - "Validate [csmroles] CRD for Authorization is installed"
-    - "Validate [csmtenants] CRD for Authorization is installed"
-    - "Validate [storages] CRD for Authorization is installed"
-    - "Delete Authorization CRDs [1]"
-
 - scenario: "Install Authorization Proxy Server V2 With Multiple Vaults"  # TODO: Should this be using the multiple_vaults YAML?
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_default_redis.yaml"
@@ -1122,6 +1109,24 @@
     - "Validate [unity] driver from CR [1] is installed"
     # ephemeral.properties must be set up according to the storage class created
     - "Set up ephemeral volume properties [testfiles/unity-templates/ephemeral.properties] for [unityEphemeral]"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [unity] driver from CR [1] is not installed"
+
+- scenario: "Install Unity Driver With Additional Arg"
+  paths:
+    - "testfiles/storage_csm_unity_extra_arg.yaml"
+  tags:
+    - "unity"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create StorageClass with template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
+    - "Create Secret with template [testfiles/unity-templates/unity-secret-template.yaml] name [unity-creds] in namespace [unity] for [unity]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [unity] driver from CR [1] is installed"
+    - "Validate deployment from CR [1] has argument [--skip_headers] in container [provisioner]"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"

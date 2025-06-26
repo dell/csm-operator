@@ -35,6 +35,8 @@ export SHAREDNFS=false
 
 export INSTALL_VAULT=false
 
+export PROXY_HOST="csm-authorization.com"
+
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -68,21 +70,6 @@ function checkForScenariosFile() {
   }
 }
 
-function checkForKaravictl() {
-  if [ -v KARAVICTL ]; then
-    stat $KARAVICTL >&/dev/null || {
-      echo "$KARAVICTL is not a valid karavictl binary - exiting"
-      exit 1
-    }
-    cp $KARAVICTL /usr/local/bin/
-  fi
-
-  karavictl --help >&/dev/null || {
-    echo "error:karavictl required but not available - exiting"
-    exit 1
-  }
-}
-
 function checkForDellctl() {
   if [ -v DELLCTL ]; then
     # Check if the file exists and is not the same as the destination
@@ -105,32 +92,40 @@ function checkForGinkgo() {
   if ! (go mod vendor && go get github.com/onsi/ginkgo/v2); then
     echo "go mod vendor or go get ginkgo error"
     exit 1
-fi
+  fi
 
-# Uncomment for authorization proxy server
-#cp $DELLCTL /usr/local/bin/
+  # Uncomment for authorization proxy server
+  #cp $DELLCTL /usr/local/bin/
 
-PATH=$PATH:$(go env GOPATH)/bin
+  PATH=$PATH:$(go env GOPATH)/bin
 
-OPTS=()
+  OPTS=()
 
-if [ -z "${GINKGO_OPTS-}" ]; then
-    OPTS=(-v)
-else
-    read -ra OPTS <<<"-v $GINKGO_OPTS"
-fi
+  if [ -z "${GINKGO_OPTS-}" ]; then
+      OPTS=(-v)
+  else
+      read -ra OPTS <<<"-v $GINKGO_OPTS"
+  fi
 
-pwd
-ginkgo -mod=mod "${OPTS[@]}"
+  pwd
+  ginkgo -mod=mod "${OPTS[@]}"
 
-# Uncomment for authorization proxy server
-# rm -f /usr/local/bin/dellctl
+  # Uncomment for authorization proxy server
+  # rm -f /usr/local/bin/dellctl
 
   # Checking for test status
   TEST_PASS=$?
   if [[ $TEST_PASS -ne 0 ]]; then
     exit 1
   fi
+}
+
+function getMasterNodeIP() {
+  export CLUSTER_IP=$(grep server ~/.kube/config | awk '{print $2}' | sed -E "s|https?://([^:/]+).*|\1|")
+  if [[ $IS_OPENSHIFT == "true" ]]; then
+    export CLUSTER_IP=$(nslookup $CLUSTER_IP | awk '/^Address: / { print $2 }')
+  fi
+  echo "Cluster IP: $CLUSTER_IP"
 }
 
 function usage() {
@@ -144,7 +139,6 @@ function usage() {
   echo "  Optional"
   echo "  -h                                           print out helptext"
   echo "  -v                                           enable verbose logging"
-  echo "  --karavictl=<path to karavictl binary>       use to specify karavictl binary, if not in PATH"
   echo "  --dellctl=<path to dellctl binary>           use to specify dellctl binary, if not in PATH"
   echo "  --kube-cfg=<path to kubeconfig file>         use to specify non-default kubeconfig file"
   echo "  --scenarios=<path to custom scenarios file>  use to specify custom test scenarios file"
@@ -220,13 +214,6 @@ while getopts ":hv-:" optchar; do
     kube-cfg=*)
       KUBECONFIG=${OPTARG#*=}
       ;;
-    karavictl)
-      KARAVICTL="${!OPTIND}"
-      OPTIND=$((OPTIND + 1))
-      ;;
-    karavictl=*)
-      KARAVICTL=${OPTARG#*=}
-      ;;
     dellctl)
       DELLCTL="${!OPTIND}"
       OPTIND=$((OPTIND + 1))
@@ -276,9 +263,15 @@ done
 ###############################################################################
 # Check pre-requisites and run tests
 ###############################################################################
+if kubectl get crd | grep securitycontextconstraints.security.openshift.io &>/dev/null; then
+  export IS_OPENSHIFT=true
+else
+  export IS_OPENSHIFT=false
+fi
+echo "IS_OPENSHIFT: $IS_OPENSHIFT"
+
 getArrayInfo
 checkForScenariosFile
-checkForKaravictl
 if [[ $APPLICATIONMOBILITY == "true" ]]; then
   echo "Checking for dellctl - APPLICATIONMOBILITY"
   checkForDellctl
@@ -289,6 +282,15 @@ fi
 if [[ $AUTHORIZATIONPROXYSERVER == "true" ]]; then
   echo "Checking for dellctl - AUTHORIZATIONPROXYSERVER"
   checkForDellctl
+  
+  getMasterNodeIP
+  echo "Authorization proxy host: $PROXY_HOST"
+  export entryExists=$(cat /etc/hosts | grep $PROXY_HOST | wc -l)
+  if [[ $entryExists != 1 ]]; then
+      echo "Adding authorization host to /etc/hosts file"
+      echo $CLUSTER_IP $PROXY_HOST >> /etc/hosts
+  fi
 fi
+
 checkForGinkgo
 # runTests
