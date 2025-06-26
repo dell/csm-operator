@@ -22,7 +22,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -816,12 +815,6 @@ func (step *Step) generateAndCreateSftpSecrets(_ Resource, privateKeyPath, priva
 		return fmt.Errorf("failed to write private key to temp dir: %v", err)
 	}
 
-	// Validate repoUser and repoHost for safe characters
-	validPattern := regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
-	if !validPattern.MatchString(repoUser) || !validPattern.MatchString(repoHost) {
-		return fmt.Errorf("repoUser or repoHost contains invalid characters")
-	}
-
 	// Run SFTP session to populate known_hosts
 	knownHostsPath := filepath.Join(sshDir, "known_hosts")
 	cmd := exec.Command("sftp",
@@ -839,15 +832,6 @@ func (step *Step) generateAndCreateSftpSecrets(_ Resource, privateKeyPath, priva
 	}
 
 	// Extract repo public key from known_hosts
-	// Validate known_hosts path
-	absKnownHostsPath, err := filepath.Abs(knownHostsPath)
-	if err != nil {
-		return fmt.Errorf("failed to resolve known_hosts path: %v", err)
-	}
-	trustedBase, _ := filepath.Abs("temp")
-	if !strings.HasPrefix(absKnownHostsPath, trustedBase) {
-		return fmt.Errorf("known_hosts path outside temp dir: %s", absKnownHostsPath)
-	}
 	pubKeyBytes, err := os.ReadFile(filepath.Clean(knownHostsPath))
 	if err != nil {
 		return fmt.Errorf("failed to read known_hosts: %v", err)

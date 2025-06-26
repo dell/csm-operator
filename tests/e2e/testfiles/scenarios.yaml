@@ -714,6 +714,7 @@
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
     # downgrade, using the same method as upgrade. hence the same name
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [2]"
     - "Upgrade from custom resource [1] to [2]"
     - "Validate custom resource [2]"
     - "Validate [powerflex] driver from CR [2] is installed"
