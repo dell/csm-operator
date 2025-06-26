@@ -101,10 +101,6 @@ var ReplicationSupportedDrivers = map[string]SupportedDriverParam{
 		PluginIdentifier:              drivers.PowerStorePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerStoreConfigParamsVolumeMount,
 	},
-	string(csmv1.PowerStoreName): {
-		PluginIdentifier:              drivers.PowerStorePluginIdentifier,
-		DriverConfigParamsVolumeMount: drivers.PowerStoreConfigParamsVolumeMount,
-	},
 }
 
 func getRepctlPrefices(replicaModule csmv1.Module, driverType csmv1.DriverType) (string, string) {
