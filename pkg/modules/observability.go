@@ -716,6 +716,7 @@ func getPowerFlexMetricsObject(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	YamlString = strings.ReplaceAll(YamlString, PowerflexLogFormat, logFormat)
 	YamlString = strings.ReplaceAll(YamlString, OtelCollectorAddress, otelCollectorAddress)
 	YamlString = strings.ReplaceAll(YamlString, DriverDefaultReleaseName, cr.Name)
+
 	metricsObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
 	if err != nil {
 		return nil, err
