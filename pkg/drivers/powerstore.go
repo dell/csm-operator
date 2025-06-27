@@ -32,7 +32,7 @@ const (
 	PowerStorePluginIdentifier = "powerstore"
 
 	// PowerStoreConfigParamsVolumeMount -
-	PowerStoreConfigParamsVolumeMount = "csi-powerstore-config-params"
+	PowerStoreConfigParamsVolumeMount = "powerstore-config-params"
 
 	// CsiPowerstoreNodeNamePrefix - Node Name Prefix
 	CsiPowerstoreNodeNamePrefix = "<X_CSI_POWERSTORE_NODE_NAME_PREFIX>"
