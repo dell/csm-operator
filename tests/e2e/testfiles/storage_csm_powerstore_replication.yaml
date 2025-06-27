@@ -1,19 +1,3 @@
-#
-#
-# Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#      http://www.apache.org/licenses/LICENSE-2.0
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-#
-
 apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
@@ -23,35 +7,72 @@ spec:
   driver:
     csiDriverType: "powerstore"
     csiDriverSpec:
+      # in OCP <= 4.16 and K8s <= 1.29, fsGroupPolicy is an immutable field
       # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
-      storageCapacity: false
+      # storageCapacity: Helps the scheduler to schedule the pod on a node satisfying the topology constraints, only if the requested capacity is available on the storage array
+      # Allowed values:
+      #   true: enable storage capacity tracking
+      #   false: disable storage capacity tracking
+      storageCapacity: true
     configVersion: v2.15.0
+    # authSecret: This is the secret used to validate the default PowerStore secret used for installation
+    # Allowed values: <metadataName specified in the Manifest>-config
+    # For example: If the metadataName is set to powerstore, authSecret value should be set to powerstore-config
     authSecret: powerstore-config
     # Controller count
-    replicas: 1 # resiliency test will fail with 2 replicas.
+    # Allowed values: n, where n > 0
+    # Default value: 2
+    replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
       image: "quay.io/dell/container-storage-modules/csi-powerstore:nightly"
-      imagePullPolicy: Always
+      imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_POWERSTORE_NODE_NAME_PREFIX
           value: "csi-node"
         - name: X_CSI_FC_PORTS_FILTER_FILE_PATH
           value: "/etc/fc-ports-filter"
+        # Specify kubelet config dir path.
+        # Ensure that the config.yaml file is present at this path.
+        # Default value: /var/lib/kubelet
         - name: KUBELET_CONFIG_DIR
           value: /var/lib/kubelet
         - name: CSI_LOG_LEVEL
-          value: debug
+          value: info
+        # GOPOWERSTORE_DEBUG: Enable/disable debug logs from gopowerstore library.
+        # Default value: false
+        - name: "GOPOWERSTORE_DEBUG"
+          value: "false"
     sideCars:
+      # 'csivol' represents a string prepended to each volume created by the CSI driver
+      - name: provisioner
+        image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
+        args: ["--volume-name-prefix=csivol"]
+      - name: attacher
+        image: registry.k8s.io/sig-storage/csi-attacher:v4.8.0
+      - name: registrar
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0
+      - name: resizer
+        image: registry.k8s.io/sig-storage/csi-resizer:v1.13.1
+      - name: snapshotter
+        image: registry.k8s.io/sig-storage/csi-snapshotter:v8.2.0
+      - name: csi-metadata-retriever
+        image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0
       # health monitor is disabled by default, refer to driver documentation before enabling it
-      # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
       - name: external-health-monitor
         enabled: false
         args: ["--monitor-interval=60s"]
+        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.14.0
+    # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
+    # Configure only when the storageCapacity is set as "true"
+    # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
+    # - name: provisioner
+    #  args: ["--capacity-poll-interval=5m"]
+
     controller:
       envs:
         # X_CSI_MULTI_NAS_FAILURE_THRESHOLD: Number of consecutive FS creation failures after which a NAS is put into cooldown.
@@ -150,6 +171,13 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
+      # Uncomment if CSM for Resiliency and CSI Driver pods monitor is enabled
+      # - key: "offline.powerstore.storage.dell.com"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+      # - key: "powerstore.podmon.storage.dell.com"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
   modules:
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature
@@ -162,20 +190,22 @@ spec:
       components:
         - name: podmon-controller
           image: quay.io/dell/container-storage-modules/podmon:nightly
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           args:
-            - "--csisock=unix:/var/run/csi/csi.sock"
             - "--labelvalue=csi-powerstore"
             - "--arrayConnectivityPollRate=60"
-            - "--driverPath=csi-powerstore.dellemc.com"
-            - "--mode=controller"
             - "--skipArrayConnectionValidation=false"
-            - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
             - "--driverPodLabelValue=dell-storage"
             - "--ignoreVolumelessPods=false"
+            - "--arrayConnectivityConnectionLossThreshold=3"
+            # Below 4 args should not be modified.
+            - "--csisock=unix:/var/run/csi/csi.sock"
+            - "--mode=controller"
+            - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
+            - "--driverPath=csi-powerstore.dellemc.com"
         - name: podmon-node
           image: quay.io/dell/container-storage-modules/podmon:nightly
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
             # Allowed values: Any valid and free port (string)
@@ -183,15 +213,16 @@ spec:
             - name: "X_CSI_PODMON_API_PORT"
               value: "8083"
           args:
-            - "--csisock=unix:/var/lib/kubelet/plugins/csi-powerstore.dellemc.com/csi_sock"
             - "--labelvalue=csi-powerstore"
             - "--arrayConnectivityPollRate=60"
-            - "--driverPath=csi-powerstore.dellemc.com"
-            - "--mode=node"
             - "--leaderelection=false"
-            - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
             - "--driverPodLabelValue=dell-storage"
             - "--ignoreVolumelessPods=false"
+            # Below 4 args should not be modified.
+            - "--csisock=unix:/var/lib/kubelet/plugins/csi-powerstore.dellemc.com/csi_sock"
+            - "--mode=node"
+            - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
+            - "--driverPath=csi-powerstore.dellemc.com"
     # Replication: allows to configure replication
     # Replication CRDs must be installed before installing driver
     - name: replication
