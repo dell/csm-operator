@@ -15,8 +15,8 @@ package steps
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -26,11 +26,9 @@ import (
 	"time"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
-
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
 	"github.com/dell/csm-operator/pkg/utils"
-	"golang.org/x/mod/semver"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -55,10 +53,10 @@ var (
 	operatorNamespace = "dell-csm-operator"
 	quotaLimit        = "100000000"
 	pflexSecretMap    = map[string]string{
-		"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_NAS": "PFLEX_NAS",
+		"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_NAS": "PFLEX_NAS", "REPLACE_SFTP_REPO_ADDRESS": "PFLEX_SFTP_REPO_ADDRESS", "REPLACE_SFTP_REPO_USER": "PFLEX_SFTP_REPO_USER",
 		"REPLACE_ZONING_USER": "PFLEX_ZONING_USER", "REPLACE_ZONING_PASS": "PFLEX_ZONING_PASS", "REPLACE_ZONING_SYSTEMID": "PFLEX_ZONING_SYSTEMID", "REPLACE_ZONING_ENDPOINT": "PFLEX_ZONING_ENDPOINT", "REPLACE_ZONING_MDM": "PFLEX_ZONING_MDM", "REPLACE_ZONING_POOL": "PFLEX_ZONING_POOL", "REPLACE_ZONING_NAS": "PFLEX_ZONING_NAS",
 	}
-	pflexAuthSecretMap       = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
+	pflexAuthSecretMap       = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
 	pscaleSecretMap          = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT", "REPLACE_MULTI_CLUSTERNAME": "PSCALE_MULTI_CLUSTER", "REPLACE_MULTI_USER": "PSCALE_MULTI_USER", "REPLACE_MULTI_PASS": "PSCALE_MULTI_PASS", "REPLACE_MULTI_ENDPOINT": "PSCALE_MULTI_ENDPOINT", "REPLACE_MULTI_PORT": "PSCALE_MULTI_PORT", "REPLACE_MULTI_AUTH_ENDPOINT": "PSCALE_MULTI_AUTH_ENDPOINT", "REPLACE_MULTI_AUTH_PORT": "PSCALE_MULTI_AUTH_PORT"}
 	pscaleAuthSecretMap      = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
 	pscaleAuthSidecarMap     = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_PORT": "PSCALE_PORT"}
@@ -335,6 +333,33 @@ func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) er
 	}
 
 	return nil
+}
+
+func (step *Step) validateContainerArg(res Resource, crNumStr string, arg string, container string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+	dp, err := getDriverDeployment(cr, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get deployment: %v", err)
+	}
+	containerFound := false
+	for _, cnt := range dp.Spec.Template.Spec.Containers {
+		if cnt.Name == container {
+			containerFound = true
+			// iterate through args and see if it was found
+			for _, argVal := range cnt.Args {
+				if argVal == arg {
+					return nil
+				}
+			}
+			return fmt.Errorf("container arg %s not found on container %s", arg, container)
+		}
+	}
+	if !containerFound {
+		return fmt.Errorf("container %s not found in deployment", container)
+	}
+
+	return fmt.Errorf("unknown error validating container arg")
 }
 
 func (step *Step) validateDriverInstalled(res Resource, driverName string, crNumStr string) error {
@@ -780,6 +805,114 @@ func (step *Step) setUpSecret(_ Resource, templateFile, name, namespace, crType 
 		return fmt.Errorf("failed to create secret with template file %s: %v", templateFile, err)
 	}
 
+	return nil
+}
+
+func (step *Step) generateAndCreateSftpSecrets(_ Resource, privateKeyPath, privateSecretName, publicSecretName, namespace, crType string) error {
+	tmpDir := filepath.Join("temp", "sftp", fmt.Sprintf("%d", time.Now().UnixNano()))
+	defer os.RemoveAll(tmpDir)
+
+	// Load env vars
+	repoAddress, repoUser := os.Getenv("PFLEX_SFTP_REPO_ADDRESS"), os.Getenv("PFLEX_SFTP_REPO_USER")
+	if repoAddress == "" || repoUser == "" {
+		return fmt.Errorf("PFLEX_SFTP_REPO_ADDRESS and PFLEX_SFTP_REPO_USER must be set")
+	}
+	repoHost := strings.TrimPrefix(repoAddress, "sftp://")
+	repoHost = strings.TrimSuffix(repoHost, "/")
+
+	// Prepare temp directories
+	if err := os.MkdirAll(tmpDir, 0o700); err != nil {
+		return fmt.Errorf("failed to create temp directory: %w", err)
+	}
+	sshDir := filepath.Join(tmpDir, ".ssh")
+	if err := os.MkdirAll(sshDir, 0o700); err != nil {
+		return fmt.Errorf("failed to create .ssh directory: %w", err)
+	}
+
+	// Copy private key
+	privateKeyFile := filepath.Join(tmpDir, "id_rsa")
+	privateKeyData, err := os.ReadFile(filepath.Clean(privateKeyPath))
+	if err != nil {
+		return fmt.Errorf("failed to read private key: %v", err)
+	}
+	if err := os.WriteFile(privateKeyFile, privateKeyData, 0o600); err != nil {
+		return fmt.Errorf("failed to write private key to temp dir: %v", err)
+	}
+
+	// Run SFTP session to populate known_hosts
+	knownHostsPath := filepath.Join(sshDir, "known_hosts")
+	cmd := exec.Command("sftp",
+		"-o", "UserKnownHostsFile="+knownHostsPath,
+		"-o", "StrictHostKeyChecking=accept-new",
+		"-i", privateKeyFile,
+		fmt.Sprintf("%s@%s", repoUser, repoHost),
+	) // #nosec G204
+	cmd.Stdin = strings.NewReader("exit\n")
+	cmd.Env = append(os.Environ(), "HOME="+tmpDir)
+	cmd.Stdout = io.Discard
+	cmd.Stderr = io.Discard
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("sftp session failed: %v", err)
+	}
+
+	// Extract repo public key from known_hosts
+	pubKeyBytes, err := os.ReadFile(filepath.Clean(knownHostsPath))
+	if err != nil {
+		return fmt.Errorf("failed to read known_hosts: %v", err)
+	}
+	hostPubKey, err := extractHostPublicKey(string(pubKeyBytes), repoHost)
+	if err != nil {
+		return err
+	}
+
+	// Write key files to disk for secret creation
+	privateOut := filepath.Join(tmpDir, "sftp-secret-private.yaml")
+	publicOut := filepath.Join(tmpDir, "sftp-secret-public.yaml")
+	if err := os.WriteFile(privateOut, privateKeyData, 0o600); err != nil {
+		return fmt.Errorf("failed to write private secret file: %v", err)
+	}
+	if err := os.WriteFile(publicOut, []byte(hostPubKey), 0o600); err != nil {
+		return fmt.Errorf("failed to write public secret file: %v", err)
+	}
+
+	// Delete and recreate secrets
+	if err := deleteSecretIfExists(namespace, privateSecretName); err != nil {
+		return fmt.Errorf("failed to delete private secret: %w", err)
+	}
+	if err := deleteSecretIfExists(namespace, publicSecretName); err != nil {
+		return fmt.Errorf("failed to delete public secret: %w", err)
+	}
+	if err := execCommand("kubectl", "create", "secret", "generic", privateSecretName,
+		"-n", namespace,
+		"--from-file=user_private_rsa_key="+privateOut); err != nil {
+		return fmt.Errorf("failed to create private SFTP secret: %v", err)
+	}
+
+	if err := execCommand("kubectl", "create", "secret", "generic", publicSecretName,
+		"-n", namespace,
+		"--from-file=repo_public_rsa_key="+publicOut); err != nil {
+		return fmt.Errorf("failed to create public SFTP secret: %v", err)
+	}
+	fmt.Println("SFTP secrets created successfully.")
+
+	return nil
+}
+
+// Extract public key line for host from known_hosts
+func extractHostPublicKey(knownHostsContent, repoHost string) (string, error) {
+	for _, line := range strings.Split(knownHostsContent, "\n") {
+		if strings.HasPrefix(line, repoHost+" ") {
+			return line, nil
+		}
+	}
+	return "", fmt.Errorf("could not extract %s public key from known_hosts", repoHost)
+}
+
+// Delete secret if exists in a namespace
+func deleteSecretIfExists(namespace, secretName string) error {
+	if secretExists(namespace, secretName) {
+		return execCommand("kubectl", "delete", "secret", "-n", namespace, secretName)
+	}
 	return nil
 }
 
@@ -1396,289 +1529,13 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	}
 
 	address := proxyHost
-	// For v1.9.1 and earlier, use the old address
-	configVersion := cr.GetModule(csmv1.AuthorizationServer).ConfigVersion
-	isOldVersion, _ := utils.MinVersionCheck(configVersion, "v1.9.1")
-	if isOldVersion {
-		address = "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
-	}
-
 	fmt.Printf("Address: %s\n", address)
 
-	switch semver.Major(configVersion) {
-	case "v2":
-		return step.AuthorizationV2Resources(storageType, driver, driverNamespace, address, port, csmTenantName, configVersion)
-	case "v1":
-		return step.AuthorizationV1Resources(storageType, driver, port, address, driverNamespace)
-	default:
-		return fmt.Errorf("authorization major version %s not supported", semver.Major(configVersion))
-	}
-}
-
-// AuthorizationV1Resources creates resources using karavictl for V1 versions of Authorization Proxy Server
-func (step *Step) AuthorizationV1Resources(storageType, driver, port, proxyHost, driverNamespace string) error {
-	fmt.Println("=====Waiting for everything to be up and running, adding a sleep time of 120 seconds before creating the role, tenant and role binding===")
-	time.Sleep(120 * time.Second)
-	var (
-		endpoint = ""
-		sysID    = ""
-		user     = ""
-		password = ""
-		pool     = ""
-		// YAML variables
-		endpointvar = ""
-		systemIdvar = ""
-		uservar     = ""
-		passvar     = ""
-		poolvar     = ""
-	)
-
-	if driver == "powerflex" {
-		endpointvar = "PFLEX_ENDPOINT"
-		systemIdvar = "PFLEX_SYSTEMID"
-		uservar = "PFLEX_USER"
-		passvar = "PFLEX_PASS"
-		poolvar = "PFLEX_POOL"
-	}
-
-	if driver == "powerscale" {
-		endpointvar = "PSCALE_ENDPOINT"
-		systemIdvar = "PSCALE_CLUSTER"
-		uservar = "PSCALE_USER"
-		passvar = "PSCALE_PASS"
-		poolvar = "PSCALE_POOL_V1"
-	}
-
-	if driver == "powermax" {
-		endpointvar = "PMAX_ENDPOINT"
-		systemIdvar = "PMAX_SYSTEMID"
-		uservar = "PMAX_USER"
-		passvar = "PMAX_PASS"
-		poolvar = "PMAX_POOL_V1"
-	}
-
-	// get env variables
-	if os.Getenv(endpointvar) != "" {
-		endpoint = os.Getenv(endpointvar)
-
-		if driver == "powerscale" {
-			port := os.Getenv("PSCALE_PORT")
-			if port == "" {
-				fmt.Println("=== PSCALE_PORT not set, using default port 8080 ===")
-				port = "8080"
-			}
-
-			endpoint = endpoint + ":" + port
-		}
-	}
-	if os.Getenv(systemIdvar) != "" {
-		sysID = os.Getenv(systemIdvar)
-	}
-	if os.Getenv(uservar) != "" {
-		user = os.Getenv(uservar)
-	}
-	if os.Getenv(passvar) != "" {
-		password = os.Getenv(passvar)
-	}
-	if os.Getenv(poolvar) != "" {
-		pool = os.Getenv(poolvar)
-	}
-
-	// Create Admin Token
-	fmt.Printf("=== Generating Admin Token ===\n")
-	adminTkn := exec.Command("karavictl",
-		"admin", "token",
-		"--name", "Admin",
-		"--jwt-signing-secret", "secret",
-		"--refresh-token-expiration", fmt.Sprint(30*24*time.Hour),
-		"--access-token-expiration", fmt.Sprint(2*time.Hour),
-	) // #nosec G204
-	b, err := adminTkn.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to create admin token: %v\nErrMessage:\n%s", err, string(b))
-	}
-
-	fmt.Println("=== Writing Admin Token to Tmp File ===\n ")
-	err = os.WriteFile("temp/adminToken.yaml", b, 0o644) // #nosec G303, G306
-	if err != nil {
-		return fmt.Errorf("failed to write admin token: %v\nErrMessage:\n%s", err, string(b))
-	}
-
-	// Check for storage
-	fmt.Println("\n=== Checking Storage ===\n ")
-	cmd := exec.Command("karavictl",
-		"--admin-token", "temp/adminToken.yaml",
-		"storage", "list",
-		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
-	) // #nosec G204
-
-	// by default, assume we will create storage
-	skipStorage := false
-
-	fmt.Println("=== Checking Storage === \n", cmd.String())
-	b, err = cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to check storage %s: %v\nErrMessage:\n%s", storageType, err, string(b))
-	}
-
-	storage := make(map[string]json.RawMessage)
-
-	err = json.Unmarshal(b, &storage)
-	if err != nil {
-		return fmt.Errorf("failed to marshall response:%s \nErrMessage:\n%s", string(b), err)
-	}
-
-	for k, v := range storage {
-		if k == storageType {
-			fmt.Printf("Storage %s is already registered. \n It has the following config: %s \n", k, v)
-			skipStorage = true
-		}
-	}
-
-	if !skipStorage {
-
-		// Create storage
-		fmt.Println("\n=== Creating Storage ===\n ")
-		cmd = exec.Command("karavictl",
-			"--admin-token", "temp/adminToken.yaml",
-			"storage", "create",
-			"--type", storageType,
-			"--endpoint", fmt.Sprintf("https://%s", endpoint),
-			"--system-id", sysID,
-			"--user", user,
-			"--password", password,
-			"--array-insecure",
-			"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
-		) // #nosec G204
-		fmt.Println("=== Storage === \n", cmd.String())
-		b, err = cmd.CombinedOutput()
-		if err != nil {
-			return fmt.Errorf("failed to create storage %s: %v\nErrMessage:\n%s", storageType, err, string(b))
-		}
-
-	}
-
-	// Create Tenant
-	fmt.Println("\n\n=== Creating Tenant ===\n ")
-	cmd = exec.Command("karavictl",
-		"--admin-token", "temp/adminToken.yaml",
-		"tenant", "create",
-		"-n", tenantName, "--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
-	) // #nosec G204
-	b, err = cmd.CombinedOutput()
-	fmt.Println("=== Tenant === \n", cmd.String())
-
-	if err != nil && !strings.Contains(string(b), "tenant already exists") {
-		return fmt.Errorf("failed to create tenant %s: %v\nErrMessage:\n%s", tenantName, err, string(b))
-	}
-
-	// By default, assume a role will be created
-	skipCreateRole := false
-	cmd = exec.Command("karavictl",
-		"--admin-token", "temp/adminToken.yaml",
-		"role", "list",
-		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
-	) // #nosec G204
-
-	fmt.Println("=== Checking Roles === \n", cmd.String())
-
-	b, err = cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to check roles: %v\nErrMessage:\n%s", err, string(b))
-	}
-
-	roles := make(map[string]json.RawMessage)
-
-	err = json.Unmarshal(b, &roles)
-	if err != nil {
-		return fmt.Errorf("failed to marshall response:%s \nErrMessage:\n%s", string(b), err)
-	}
-
-	for k, v := range roles {
-		if k == roleName {
-			fmt.Printf("Role %s is already created. \n It has the following config: %s \n", k, v)
-			skipCreateRole = true
-		}
-	}
-
-	if !skipCreateRole {
-
-		// Create Role
-		fmt.Println("\n\n=== Creating Role ===\n ")
-		if storageType == "powerscale" {
-			quotaLimit = "0"
-		}
-		cmd = exec.Command("karavictl",
-			"--admin-token", "temp/adminToken.yaml",
-			"role", "create",
-			fmt.Sprintf("--role=%s=%s=%s=%s=%s",
-				roleName, storageType, sysID, pool, quotaLimit),
-			"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
-		) // #nosec G204
-
-		fmt.Println("=== Role === \n", cmd.String())
-		b, err = cmd.CombinedOutput()
-		if err != nil {
-			return fmt.Errorf("failed to create role %s: %v\nErrMessage:\n%s", roleName, err, string(b))
-		}
-
-		// role creation take few seconds
-		time.Sleep(5 * time.Second)
-
-	}
-	// Bind role
-	fmt.Println("\n\n=== Creating RoleBinding ===\n ")
-	cmd = exec.Command("karavictl",
-		"--admin-token", "temp/adminToken.yaml",
-		"rolebinding", "create",
-		"--tenant", tenantName,
-		"--role", roleName,
-		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
-	) // #nosec G204
-	fmt.Println("=== Binding Role ===\n", cmd.String())
-	b, err = cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to create rolebinding %s: %v\nErrMessage:\n%s", roleName, err, string(b))
-	}
-
-	// Generate token
-	fmt.Println("\n\n=== Generating token ===\n ")
-	cmd = exec.Command("karavictl",
-		"--admin-token", "temp/adminToken.yaml",
-		"generate", "token",
-		"--tenant", tenantName,
-		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
-		"--access-token-expiration", fmt.Sprint(2*time.Hour),
-	) // #nosec G204
-	fmt.Println("=== Token ===\n", cmd.String())
-	b, err = cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to generate token for %s: %v\nErrMessage:\n%s", tenantName, err, string(b))
-	}
-
-	// Apply token to CSI driver host
-	fmt.Println("\n\n=== Applying token ===\n ")
-
-	err = os.WriteFile("temp/token.yaml", b, 0o644) // #nosec G303, G306
-	if err != nil {
-		return fmt.Errorf("failed to write tenant token: %v\nErrMessage:\n%s", err, string(b))
-	}
-
-	cmd = exec.Command("kubectl", "apply",
-		"-f", "temp/token.yaml",
-		"-n", driverNamespace,
-	) // #nosec G204
-	b, err = cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to apply token: %v\nErrMessage:\n%s", err, string(b))
-	}
-
-	fmt.Println("=== Token Applied ===\n ")
-	return nil
+	return step.AuthorizationV2Resources(storageType, driver, driverNamespace, address, port, csmTenantName)
 }
 
 // AuthorizationV2Resources creates resources using CRs and dellctl for V2 versions of Authorization Proxy Server
-func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName, configVersion string) error {
+func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName string) error {
 	var (
 		crMap               = ""
 		templateFile        = "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
@@ -1869,6 +1726,24 @@ func (step *Step) configureAMInstall(_ Resource, templateFile string) error {
 	if err != nil {
 		return fmt.Errorf("failed to setup RH registry authentication for App Mobility: %v", err)
 	}
+
+	return nil
+}
+
+// Render the Powerflex SFTP CR template into a temporary file with the same name
+func (step *Step) configurePowerflexSftpInstall(res Resource, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	crFilePath := res.Scenario.Paths[crNum-1]
+	fileString, err := renderTemplate("pflex", crFilePath)
+	if err != nil {
+		return err
+	}
+
+	filePath, err := writeRenderedFile(crFilePath, fileString)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Rendered template %s into %s\n", crFilePath, filePath)
 
 	return nil
 }

@@ -198,9 +198,6 @@ func UpdateSideCarApply(sideCars []csmv1.ContainerTemplate, c *acorev1.Container
 	UpdateContainerApply(sideCars, c)
 }
 
-// TODO: It seems like this function only acts on envs that are shared between
-// the new and the old, with any that aren't on the new being left alone (instead of deleted)
-// and any that aren't on the old being ignored (instead of added). Unknown if this is intentional.
 func UpdateContainerApply(toBeApplied []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration) {
 	for _, ctr := range toBeApplied {
 		if *c.Name == ctr.Name {
@@ -247,9 +244,6 @@ func UpdateInitContainerApply(initContainers []csmv1.ContainerTemplate, c *acore
 }
 
 // ReplaceAllApplyCustomEnvs -
-// TODO: It seems like this function only acts on envs that are shared between
-// the new and the old, with any that aren't on the new being left alone (instead of deleted)
-// and any that aren't on the old being ignored (instead of added). Unknown if this is intentional.
 func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 	commonEnv []corev1.EnvVar,
 	nrEnv []corev1.EnvVar,
@@ -277,7 +271,6 @@ func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 			if val == "NA" {
 				val = ""
 			}
-			// log.Info("debug overwrite ", "name", *old.Name, "value", val)
 			e := acorev1.EnvVarApplyConfiguration{
 				Name:  old.Name,
 				Value: &val,

@@ -17,7 +17,7 @@ rules:
     verbs: ["list"]
   - apiGroups: [""]
     resources: ["endpoints"]
-    verbs: ["*"]
+    verbs: ["get", "list", "watch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -29,6 +29,30 @@ subjects:
     namespace: karavi
 roleRef:
   kind: ClusterRole
+  name: karavi-metrics-powerscale-controller
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: karavi-metrics-powerscale-controller
+  namespace: karavi
+rules:
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "watch", "list", "delete", "update", "create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: karavi-metrics-powerscale-controller
+  namespace: karavi
+subjects:
+  - kind: ServiceAccount
+    name: karavi-metrics-powerscale-controller
+    namespace: karavi
+roleRef:
+  kind: Role
   name: karavi-metrics-powerscale-controller
   apiGroup: rbac.authorization.k8s.io
 ---
@@ -106,7 +130,7 @@ spec:
       serviceAccount: karavi-metrics-powerscale-controller
       containers:
         - name: karavi-metrics-powerscale
-          image: dellemc/csm-metrics-powerscale:v1.6.0
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:nightly
           resources: {}
           env:
             - name: POWERSCALE_METRICS_ENDPOINT
