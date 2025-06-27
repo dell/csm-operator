@@ -139,6 +139,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: SSL_CERT_DIR
+              value: /certs
             - name: X_CSI_POWERSTORE_NODE_NAME_PREFIX
               value: <X_CSI_POWERSTORE_NODE_NAME_PREFIX>
             - name: X_CSI_POWERSTORE_NODE_ID_PATH
@@ -198,6 +200,9 @@ spec:
               mountPath: /powerstore-config
             - name: powerstore-config-params
               mountPath: /powerstore-config-params
+            - name: certs
+              mountPath: /certs
+              readOnly: true
             - name: nfs-powerstore
               mountPath: <X_CSI_NFS_EXPORT_DIRECTORY>
               mountPropagation: "Bidirectional"
@@ -287,3 +292,11 @@ spec:
           hostPath:
             path: <X_CSI_NFS_EXPORT_DIRECTORY>
             type: DirectoryOrCreate
+        - name: certs
+          projected:
+            sources:
+              - secret:
+                  name: <DriverDefaultReleaseName>-certs-0
+                  items:
+                    - key: cert-0
+                      path: cert-0
