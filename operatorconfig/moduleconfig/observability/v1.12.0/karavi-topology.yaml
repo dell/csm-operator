@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: karavi-topology-configmap
-  namespace: <DRIVER_NAMESPACE>
+  namespace: karavi
 data:
   karavi-topology.yaml: |
     PROVISIONER_NAMES: csi-isilon.dellemc.com,csi-vxflexos.dellemc.com,csi-powermax.dellemc.com
@@ -16,7 +16,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: karavi-observability-topology-controller
-  namespace: <DRIVER_NAMESPACE>
+  namespace: karavi
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -34,7 +34,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: karavi-observability-topology-controller
-    namespace: <DRIVER_NAMESPACE>
+    namespace: karavi
 roleRef:
   kind: ClusterRole
   name: karavi-observability-topology-controller
@@ -47,7 +47,7 @@ metadata:
     app.kubernetes.io/name: karavi-topology
     app.kubernetes.io/instance: karavi-observability
   name: karavi-topology
-  namespace: <DRIVER_NAMESPACE>
+  namespace: karavi
 spec:
   type: ClusterIP
   ports:
@@ -62,7 +62,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: karavi-topology
-  namespace: <DRIVER_NAMESPACE>
+  namespace: karavi
   labels:
     app.kubernetes.io/name: karavi-topology
     app.kubernetes.io/instance: karavi-observability

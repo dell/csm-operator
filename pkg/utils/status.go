@@ -584,10 +584,9 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 		}
 	}
 
-	log.Infof("Niranjan::: %s ::::: %+v", instance.GetNamespace(), instance)
-	namespaceCert := instance.GetNamespace()
+	namespace := instance.GetNamespace()
 	opts := []client.ListOption{
-		client.InNamespace(namespaceCert),
+		client.InNamespace(namespace),
 	}
 	deploymentList := &appsv1.DeploymentList{}
 	err := r.GetClient().List(ctx, deploymentList, opts...)
@@ -609,14 +608,14 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 					return false, nil
 				}
 			}
-		case fmt.Sprintf("%s-metrics-%s", namespaceCert, driverName):
+		case fmt.Sprintf("%s-metrics-%s", namespace, driverName):
 			if metricsEnabled {
 				if !checkFn(&deployment) {
 					log.Infof("%s component not running in observability deployment", deployment.Name)
 					return false, nil
 				}
 			}
-		case fmt.Sprintf("%s-topology", namespaceCert):
+		case fmt.Sprintf("%s-topology", namespace):
 			if topologyEnabled {
 				if !checkFn(&deployment) {
 					log.Infof("%s component not running in observability deployment", deployment.Name)
@@ -626,9 +625,8 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 		}
 	}
 
-	//namespaceCert := instance.GetNamespace()
 	opts = []client.ListOption{
-		client.InNamespace(namespaceCert),
+		client.InNamespace(namespace),
 	}
 
 	deploymentCertList := &appsv1.DeploymentList{}
