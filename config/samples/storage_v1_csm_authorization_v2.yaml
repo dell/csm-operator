@@ -9,7 +9,7 @@ spec:
     - name: authorization-proxy-server
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v2.2.0
+      configVersion: v2.3.0
       forceRemoveModule: true
       components:
         # For Kubernetes Container Platform only
@@ -30,17 +30,17 @@ spec:
         - name: proxy-server
           # enable: Enable/Disable csm-authorization proxy server
           enabled: true
-          proxyService: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.2.0
+          proxyService: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.3.0
           proxyServiceReplicas: 1
-          tenantService: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.2.0
+          tenantService: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.3.0
           tenantServiceReplicas: 1
-          roleService: quay.io/dell/container-storage-modules/csm-authorization-role:v2.2.0
+          roleService: quay.io/dell/container-storage-modules/csm-authorization-role:v2.3.0
           roleServiceReplicas: 1
-          storageService: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.2.0
+          storageService: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.3.0
           storageServiceReplicas: 1
           opa: docker.io/openpolicyagent/opa:latest
           opaKubeMgmt: docker.io/openpolicyagent/kube-mgmt:8.5.10
-          authorizationController: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.2.0
+          authorizationController: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.3.0
           authorizationControllerReplicas: 1
           leaderElection: true
           # controllerReconcileInterval: interval for the authorization controllers to reconcile with Redis.

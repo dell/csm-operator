@@ -48,11 +48,12 @@ type CustomTest struct {
 
 // Scenario -
 type Scenario struct {
-	Scenario   string       `json:"scenario" yaml:"scenario"`
-	Paths      []string     `json:"paths" yaml:"paths"`
-	Tags       []string     `json:"tags" yaml:"tags"`
-	Steps      []string     `json:"steps" yaml:"steps"`
-	CustomTest []CustomTest `json:"customTest,omitempty" yaml:"customTest"`
+	Scenario   string            `json:"scenario" yaml:"scenario"`
+	Paths      []string          `json:"paths" yaml:"paths"`
+	Tags       []string          `json:"tags" yaml:"tags"`
+	Steps      []string          `json:"steps" yaml:"steps"`
+	CustomTest []CustomTest      `json:"customTest,omitempty" yaml:"customTest"`
+	Config     map[string]string `json:"config,omitempty" yaml:"config"`
 }
 
 // Resource -
@@ -514,14 +515,28 @@ func checkAuthorizationProxyServerNoRunningPods(ctx context.Context, namespace s
 func getPortContainerizedAuth(namespace string) (string, error) {
 	port := ""
 	service := namespace + "-ingress-nginx-controller"
-	b, err := exec.Command(
-		"kubectl", "get",
-		"service", service,
-		"-n", namespace,
-		"-o", `jsonpath="{.spec.ports[1].nodePort}"`,
-	).CombinedOutput() // #nosec G204
+	var err error
+	var b []byte
+
+	isOpenShift := os.Getenv("IS_OPENSHIFT")
+	if isOpenShift == "true" {
+		service = "router-internal-default"
+		b, err = exec.Command(
+			"kubectl", "get",
+			"service", service,
+			"-n", "openshift-ingress",
+			"-o", `jsonpath="{.spec.ports[1].port}"`,
+		).CombinedOutput() // #nosec G204
+	} else {
+		b, err = exec.Command(
+			"kubectl", "get",
+			"service", service,
+			"-n", namespace,
+			"-o", `jsonpath="{.spec.ports[1].nodePort}"`,
+		).CombinedOutput() // #nosec G204
+	}
 	if err != nil {
-		return "", fmt.Errorf("failed to get %s-ingress-nginx-controller port in namespace: %s: %s", namespace, namespace, b)
+		return "", fmt.Errorf("failed to get %s port in namespace: %s: %s", service, namespace, b)
 	}
 	port = strings.Replace(string(b), `"`, "", -1)
 	return port, nil
