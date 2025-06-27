@@ -88,6 +88,9 @@ spec:
               mountPath: /etc/karavi-authorization/config
             - name: csm-config-params
               mountPath: /etc/karavi-authorization/csm-config-params
+            - name: secrets-store-inline
+              mountPath: "/etc/csm-authorization/array-creds"
+              readOnly: true
         - name: opa
           image: <AUTHORIZATION_OPA_IMAGE>
           imagePullPolicy: IfNotPresent
@@ -112,6 +115,12 @@ spec:
         - name: csm-config-params
           configMap:
             name: csm-config-params
+        - name: secrets-store-inline
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: "spc-vault"
 ---
 apiVersion: v1
 kind: Service

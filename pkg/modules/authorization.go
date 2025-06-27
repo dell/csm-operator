@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2024 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -137,6 +137,8 @@ const (
 	AuthRedisComponent = "redis"
 	// AuthVaultComponent - vault component
 	AuthVaultComponent = "vault"
+	// AuthStorageSystemCredentialsComponent - storage-system-credentials component
+	AuthStorageSystemCredentialsComponent = "storage-system-credentials"
 
 	// AuthLocalStorageClass -
 	AuthLocalStorageClass = "csm-authorization-local-storage"
@@ -594,6 +596,8 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 			YamlString = strings.ReplaceAll(YamlString, AuthControllerReconcileInterval, component.ControllerReconcileInterval)
 			YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 			YamlString = strings.ReplaceAll(YamlString, AuthCSMNameSpace, cr.Namespace)
+
+			// update volumeMounts and volumes for proxy-server component for given secrets-store-inline providers
 		}
 
 		// redis component
