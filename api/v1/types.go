@@ -347,10 +347,12 @@ type ContainerTemplate struct {
 
 	// Vaults are the vault configurations
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Vault Configurations"
+	// Applicable till CSM v1.14
 	Vaults []Vault `json:"vaultConfigurations,omitempty" yaml:"vaultConfigurations,omitempty"`
 
 	// SecretProviderClasses is a map of storage system ID to secret provider class that defines which secret provider to use and what secrets to retrieve
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Secret Provider Classes"
+	// Applicable from CSM v1.15 onwards
 	SecretProviderClasses map[string]string `json:"secretProviderClasses,omitempty" yaml:"secretProviderClasses,omitempty"`
 
 	// skipCertificateValidation is the flag to skip certificate validation
