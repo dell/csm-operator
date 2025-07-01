@@ -28,7 +28,7 @@ import (
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
-	"github.com/dell/csm-operator/pkg/utils"
+	"github.com/dell/csm-operator/pkg/tools"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -535,25 +535,25 @@ func (step *Step) validateObservabilityInstalled(cr csmv1.ContainerStorageModule
 	}
 
 	// check installation for all replicas
-	fakeReconcile := utils.FakeReconcileCSM{
+	fakeReconcile := tools.FakeReconcileCSM{
 		Client:    step.ctrlClient,
 		K8sClient: step.clientSet,
 	}
 
-	clusterClient := utils.GetCluster(context.TODO(), &fakeReconcile)
+	clusterClient := tools.GetCluster(context.TODO(), &fakeReconcile)
 
 	// check observability in all clusters
-	if err := checkObservabilityRunningPods(context.TODO(), utils.ObservabilityNamespace, clusterClient.ClusterK8sClient); err != nil {
+	if err := checkObservabilityRunningPods(context.TODO(), tools.ObservabilityNamespace, clusterClient.ClusterK8sClient); err != nil {
 		return fmt.Errorf("failed to check for observability installation in %s: %v", clusterClient.ClusterID, err)
 	}
 
 	// check observability's authorization
 	driverType := cr.Spec.Driver.CSIDriverType
-	dpApply, err := getApplyObservabilityDeployment(utils.ObservabilityNamespace, driverType, clusterClient.ClusterCTRLClient)
+	dpApply, err := getApplyObservabilityDeployment(tools.ObservabilityNamespace, driverType, clusterClient.ClusterCTRLClient)
 	if err != nil {
 		return err
 	}
-	if authorizationEnabled, _ := utils.IsModuleEnabled(context.TODO(), *instance, csmv1.Authorization); authorizationEnabled {
+	if authorizationEnabled, _ := tools.IsModuleEnabled(context.TODO(), *instance, csmv1.Authorization); authorizationEnabled {
 		if err := correctlyAuthInjected(cr, dpApply.Annotations, dpApply.Spec.Template.Spec.Volumes, dpApply.Spec.Template.Spec.Containers); err != nil {
 			return fmt.Errorf("failed to check for observability authorization installation in %s: %v", clusterClient.ClusterID, err)
 		}
@@ -570,15 +570,15 @@ func (step *Step) validateObservabilityInstalled(cr csmv1.ContainerStorageModule
 
 func (step *Step) validateObservabilityNotInstalled(cr csmv1.ContainerStorageModule) error {
 	// check installation for all replicas
-	fakeReconcile := utils.FakeReconcileCSM{
+	fakeReconcile := tools.FakeReconcileCSM{
 		Client:    step.ctrlClient,
 		K8sClient: step.clientSet,
 	}
 
-	clusterClient := utils.GetCluster(context.TODO(), &fakeReconcile)
+	clusterClient := tools.GetCluster(context.TODO(), &fakeReconcile)
 
 	// check observability is not installed
-	if err := checkObservabilityNoRunningPods(context.TODO(), utils.ObservabilityNamespace, clusterClient.ClusterK8sClient); err != nil {
+	if err := checkObservabilityNoRunningPods(context.TODO(), tools.ObservabilityNamespace, clusterClient.ClusterK8sClient); err != nil {
 		return fmt.Errorf("failed observability installation check %s: %v", clusterClient.ClusterID, err)
 	}
 
@@ -607,15 +607,15 @@ func (step *Step) validateReplicationInstalled(cr csmv1.ContainerStorageModule) 
 	}
 
 	// check installation for all replicas
-	fakeReconcile := utils.FakeReconcileCSM{
+	fakeReconcile := tools.FakeReconcileCSM{
 		Client:    step.ctrlClient,
 		K8sClient: step.clientSet,
 	}
 
-	clusterClient := utils.GetCluster(context.TODO(), &fakeReconcile)
+	clusterClient := tools.GetCluster(context.TODO(), &fakeReconcile)
 
 	// check replication controllers in cluster
-	if err := checkAllRunningPods(context.TODO(), utils.ReplicationControllerNameSpace, clusterClient.ClusterK8sClient); err != nil {
+	if err := checkAllRunningPods(context.TODO(), tools.ReplicationControllerNameSpace, clusterClient.ClusterK8sClient); err != nil {
 		return fmt.Errorf("failed to check for  replication controllers installation in %s: %v", clusterClient.ClusterID, err)
 	}
 
@@ -629,15 +629,15 @@ func (step *Step) validateReplicationInstalled(cr csmv1.ContainerStorageModule) 
 
 func (step *Step) validateReplicationNotInstalled(cr csmv1.ContainerStorageModule) error {
 	// check installation for all replicas
-	fakeReconcile := utils.FakeReconcileCSM{
+	fakeReconcile := tools.FakeReconcileCSM{
 		Client:    step.ctrlClient,
 		K8sClient: step.clientSet,
 	}
 
-	clusterClient := utils.GetCluster(context.TODO(), &fakeReconcile)
+	clusterClient := tools.GetCluster(context.TODO(), &fakeReconcile)
 
 	// check replication  controller is not installed
-	if err := checkNoRunningPods(context.TODO(), utils.ReplicationControllerNameSpace, clusterClient.ClusterK8sClient); err != nil {
+	if err := checkNoRunningPods(context.TODO(), tools.ReplicationControllerNameSpace, clusterClient.ClusterK8sClient); err != nil {
 		return fmt.Errorf("failed replica installation check %s: %v", clusterClient.ClusterID, err)
 	}
 
@@ -647,8 +647,8 @@ func (step *Step) validateReplicationNotInstalled(cr csmv1.ContainerStorageModul
 		return fmt.Errorf("failed to get deployment: %v", err)
 	}
 	for _, cnt := range dp.Spec.Template.Spec.Containers {
-		if cnt.Name == utils.ReplicationSideCarName {
-			return fmt.Errorf("found %s: %v", utils.ReplicationSideCarName, err)
+		if cnt.Name == tools.ReplicationSideCarName {
+			return fmt.Errorf("found %s: %v", tools.ReplicationSideCarName, err)
 		}
 	}
 
@@ -1342,12 +1342,12 @@ func (step *Step) validateAuthorizationProxyServerInstalled(cr csmv1.ContainerSt
 	}
 
 	// check installation for all AuthorizationProxyServer
-	fakeReconcile := utils.FakeReconcileCSM{
+	fakeReconcile := tools.FakeReconcileCSM{
 		Client:    step.ctrlClient,
 		K8sClient: step.clientSet,
 	}
 
-	clusterClient := utils.GetCluster(context.TODO(), &fakeReconcile)
+	clusterClient := tools.GetCluster(context.TODO(), &fakeReconcile)
 
 	// check AuthorizationProxyServer in all clusters
 	if err := checkAuthorizationProxyServerPods(context.TODO(), cr.Namespace, clusterClient.ClusterK8sClient); err != nil {
@@ -1361,12 +1361,12 @@ func (step *Step) validateAuthorizationProxyServerInstalled(cr csmv1.ContainerSt
 
 func (step *Step) validateAuthorizationProxyServerNotInstalled(cr csmv1.ContainerStorageModule) error {
 	// check installation for all AuthorizationProxyServer
-	fakeReconcile := utils.FakeReconcileCSM{
+	fakeReconcile := tools.FakeReconcileCSM{
 		Client:    step.ctrlClient,
 		K8sClient: step.clientSet,
 	}
 
-	clusterClient := utils.GetCluster(context.TODO(), &fakeReconcile)
+	clusterClient := tools.GetCluster(context.TODO(), &fakeReconcile)
 
 	// check AuthorizationProxyServer is not installed
 	if err := checkAuthorizationProxyServerNoRunningPods(context.TODO(), cr.Namespace, clusterClient.ClusterK8sClient); err != nil {
@@ -1388,12 +1388,12 @@ func (step *Step) validateAppMobInstalled(cr csmv1.ContainerStorageModule) error
 		return err
 	}
 
-	fakeReconcile := utils.FakeReconcileCSM{
+	fakeReconcile := tools.FakeReconcileCSM{
 		Client:    step.ctrlClient,
 		K8sClient: step.clientSet,
 	}
 
-	clusterClient := utils.GetCluster(context.TODO(), &fakeReconcile)
+	clusterClient := tools.GetCluster(context.TODO(), &fakeReconcile)
 
 	if err := checkApplicationMobilityPods(context.TODO(), cr.Namespace, clusterClient.ClusterK8sClient); err != nil {
 		return fmt.Errorf("failed to check for App-mob installation in %s: %v", clusterClient.ClusterID, err)
@@ -1689,8 +1689,8 @@ func (step *Step) validateResiliencyNotInstalled(cr csmv1.ContainerStorageModule
 		return fmt.Errorf("failed to get deployment: %v", err)
 	}
 	for _, cnt := range dp.Spec.Template.Spec.Containers {
-		if cnt.Name == utils.ResiliencySideCarName {
-			return fmt.Errorf("found %s: %v", utils.ResiliencySideCarName, err)
+		if cnt.Name == tools.ResiliencySideCarName {
+			return fmt.Errorf("found %s: %v", tools.ResiliencySideCarName, err)
 		}
 	}
 
@@ -1700,8 +1700,8 @@ func (step *Step) validateResiliencyNotInstalled(cr csmv1.ContainerStorageModule
 		return fmt.Errorf("failed to get daemonset: %v", err)
 	}
 	for _, cnt := range ds.Spec.Template.Spec.Containers {
-		if cnt.Name == utils.ResiliencySideCarName {
-			return fmt.Errorf("found %s: %v", utils.ResiliencySideCarName, err)
+		if cnt.Name == tools.ResiliencySideCarName {
+			return fmt.Errorf("found %s: %v", tools.ResiliencySideCarName, err)
 		}
 	}
 	return nil
@@ -1778,12 +1778,12 @@ func setupAMImagePullSecret() error {
 }
 
 func (step *Step) validateApplicationMobilityNotInstalled(cr csmv1.ContainerStorageModule) error {
-	fakeReconcile := utils.FakeReconcileCSM{
+	fakeReconcile := tools.FakeReconcileCSM{
 		Client:    step.ctrlClient,
 		K8sClient: step.clientSet,
 	}
 
-	clusterClient := utils.GetCluster(context.TODO(), &fakeReconcile)
+	clusterClient := tools.GetCluster(context.TODO(), &fakeReconcile)
 
 	err := checkApplicationMobilityPods(context.TODO(), cr.Namespace, clusterClient.ClusterK8sClient)
 	if err == nil {

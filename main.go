@@ -51,7 +51,7 @@ import (
 	"github.com/dell/csm-operator/core"
 	k8sClient "github.com/dell/csm-operator/k8s"
 	"github.com/dell/csm-operator/pkg/logger"
-	utils "github.com/dell/csm-operator/pkg/tools"
+	tools "github.com/dell/csm-operator/pkg/tools"
 	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -127,8 +127,8 @@ var (
 	}
 )
 
-func getOperatorConfig(log *zap.SugaredLogger) (utils.OperatorConfig, error) {
-	cfg := utils.OperatorConfig{}
+func getOperatorConfig(log *zap.SugaredLogger) (tools.OperatorConfig, error) {
+	cfg := tools.OperatorConfig{}
 
 	isOpenShift, err := isOpenShift(log)
 	if err != nil {
@@ -185,7 +185,7 @@ func getOperatorConfig(log *zap.SugaredLogger) (utils.OperatorConfig, error) {
 		log.Info(fmt.Sprintf("reading file, %s, from the configmap mount: %v", k8sPath, err))
 	}
 
-	var imageConfig utils.K8sImagesConfig
+	var imageConfig tools.K8sImagesConfig
 	err = yamlUnmarshal(buf, &imageConfig)
 	if err != nil {
 		return cfg, fmt.Errorf("unmarshalling: %v", err)
