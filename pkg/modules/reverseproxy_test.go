@@ -24,7 +24,7 @@ import (
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
-	"github.com/dell/csm-operator/pkg/utils"
+	"github.com/dell/csm-operator/pkg/tools"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
@@ -212,20 +212,20 @@ func TestReverseProxyPrecheck(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			oldNewControllerRuntimeClientWrapper := utils.NewControllerRuntimeClientWrapper
-			oldNewK8sClientWrapper := utils.NewK8sClientWrapper
+			oldNewControllerRuntimeClientWrapper := tools.NewControllerRuntimeClientWrapper
+			oldNewK8sClientWrapper := tools.NewK8sClientWrapper
 			defer func() {
-				utils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
-				utils.NewK8sClientWrapper = oldNewK8sClientWrapper
+				tools.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
+				tools.NewK8sClientWrapper = oldNewK8sClientWrapper
 			}()
 
 			success, reverseProxy, tmpCR, sourceClient, fakeControllerRuntimeClient := tc(t)
-			utils.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
-			utils.NewK8sClientWrapper = func(_ []byte) (*kubernetes.Clientset, error) {
+			tools.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
+			tools.NewK8sClientWrapper = func(_ []byte) (*kubernetes.Clientset, error) {
 				return nil, nil
 			}
 
-			fakeReconcile := utils.FakeReconcileCSM{
+			fakeReconcile := tools.FakeReconcileCSM{
 				Client:    sourceClient,
 				K8sClient: fake.NewSimpleClientset(),
 			}
@@ -241,8 +241,8 @@ func TestReverseProxyPrecheck(t *testing.T) {
 }
 
 func TestReverseProxyServer(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
 			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
 			if err != nil {
 				panic(err)
@@ -260,7 +260,7 @@ func TestReverseProxyServer(t *testing.T) {
 
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
 			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
 			if err != nil {
 				panic(err)
@@ -269,7 +269,7 @@ func TestReverseProxyServer(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating as Sidecar": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating as Sidecar": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
 			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
 			if err != nil {
 				panic(err)
@@ -278,7 +278,7 @@ func TestReverseProxyServer(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating with minimal manifest": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating with minimal manifest": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
 			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
 			if err != nil {
 				panic(err)
@@ -288,7 +288,7 @@ func TestReverseProxyServer(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - reverseproxy module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"fail - reverseproxy module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
 			tmpCR, err := getCustomResource("./testdata/cr_powermax_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -297,7 +297,7 @@ func TestReverseProxyServer(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return false, false, tmpCR, sourceClient, operatorConfig
 		},
-		"success - use reverse proxy secret": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - use reverse proxy secret": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
 			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy_use_secret.yaml")
 			if err != nil {
 				panic(err)
@@ -312,7 +312,7 @@ func TestReverseProxyServer(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"success - dynamically mount configMap": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - dynamically mount configMap": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
 			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy_use_secret.yaml")
 			if err != nil {
 				panic(err)
@@ -328,7 +328,7 @@ func TestReverseProxyServer(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - invalid csm version": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"fail - invalid csm version": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
 			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy_use_secret.yaml")
 			if err != nil {
 				panic(err)
@@ -362,8 +362,8 @@ func TestReverseProxyServer(t *testing.T) {
 }
 
 func TestReverseProxyInjectDeployment(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule){
-		"success - no deployAsSidecar": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+	tests := map[string]func(t *testing.T) (bool, applyv1.DeploymentApplyConfiguration, tools.OperatorConfig, csmv1.ContainerStorageModule){
+		"success - no deployAsSidecar": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, tools.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
 			if err != nil {
 				panic(err)
@@ -374,7 +374,7 @@ func TestReverseProxyInjectDeployment(t *testing.T) {
 			}
 			return true, controllerYAML.Deployment, operatorConfig, customResource
 		},
-		"success - deployAsSidecar": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+		"success - deployAsSidecar": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, tools.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
 			if err != nil {
 				panic(err)
@@ -386,7 +386,7 @@ func TestReverseProxyInjectDeployment(t *testing.T) {
 			deployAsSidecar = true
 			return true, controllerYAML.Deployment, operatorConfig, customResource
 		},
-		"success - dynamically mount secret": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+		"success - dynamically mount secret": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, tools.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powermax_reverseproxy_use_secret.yaml")
 			if err != nil {
 				panic(err)
@@ -405,7 +405,7 @@ func TestReverseProxyInjectDeployment(t *testing.T) {
 
 			return true, controllerYAML.Deployment, operatorConfig, customResource
 		},
-		"success - dynamically mount configMap": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+		"success - dynamically mount configMap": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, tools.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powermax_reverseproxy_use_secret.yaml")
 			if err != nil {
 				panic(err)
@@ -424,7 +424,7 @@ func TestReverseProxyInjectDeployment(t *testing.T) {
 
 			return true, controllerYAML.Deployment, operatorConfig, customResource
 		},
-		"fail - invalid csm version": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+		"fail - invalid csm version": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, tools.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powermax_reverseproxy_use_secret.yaml")
 			if err != nil {
 				panic(err)
@@ -460,8 +460,8 @@ func TestReverseProxyInjectDeployment(t *testing.T) {
 }
 
 func TestReverseProxyStartService(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
-		"success - no service": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig){
+		"success - no service": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
 			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
 			if err != nil {
 				panic(err)
@@ -470,7 +470,7 @@ func TestReverseProxyStartService(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creates service": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creates service": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
 			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
 			if err != nil {
 				panic(err)
@@ -479,7 +479,7 @@ func TestReverseProxyStartService(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"success - deletes service": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - deletes service": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
 			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
 			if err != nil {
 				panic(err)
@@ -585,20 +585,20 @@ func TestIsReverseProxySidecar(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			oldNewControllerRuntimeClientWrapper := utils.NewControllerRuntimeClientWrapper
-			oldNewK8sClientWrapper := utils.NewK8sClientWrapper
+			oldNewControllerRuntimeClientWrapper := tools.NewControllerRuntimeClientWrapper
+			oldNewK8sClientWrapper := tools.NewK8sClientWrapper
 			defer func() {
-				utils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
-				utils.NewK8sClientWrapper = oldNewK8sClientWrapper
+				tools.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
+				tools.NewK8sClientWrapper = oldNewK8sClientWrapper
 			}()
 
 			isSideCar, reverseProxy, tmpCR, sourceClient, fakeControllerRuntimeClient := tc(t)
-			utils.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
-			utils.NewK8sClientWrapper = func(_ []byte) (*kubernetes.Clientset, error) {
+			tools.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
+			tools.NewK8sClientWrapper = func(_ []byte) (*kubernetes.Clientset, error) {
 				return nil, nil
 			}
 
-			fakeReconcile := utils.FakeReconcileCSM{
+			fakeReconcile := tools.FakeReconcileCSM{
 				Client:    sourceClient,
 				K8sClient: fake.NewSimpleClientset(),
 			}

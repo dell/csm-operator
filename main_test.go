@@ -23,7 +23,7 @@ import (
 	"github.com/dell/csm-operator/controllers"
 	"github.com/dell/csm-operator/k8s"
 	"github.com/dell/csm-operator/pkg/logger"
-	"github.com/dell/csm-operator/pkg/utils"
+	"github.com/dell/csm-operator/pkg/tools"
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -63,7 +63,7 @@ func TestGetOperatorConfig(t *testing.T) {
 		getK8sMinimumSupportedVersionFn func() string
 		getK8sMaximumSupportedVersionFn func() string
 		yamlUnmarshal                   func(data []byte, v interface{}, opts ...yaml.JSONOpt) error
-		expectedConfig                  utils.OperatorConfig
+		expectedConfig                  tools.OperatorConfig
 		wantErr                         bool
 	}{
 		{
@@ -77,10 +77,10 @@ func TestGetOperatorConfig(t *testing.T) {
 			getK8sMinimumSupportedVersionFn: getK8sMinimumSupportedVersion,
 			getK8sMaximumSupportedVersionFn: getK8sMaximumSupportedVersion,
 			yamlUnmarshal:                   yaml.Unmarshal,
-			expectedConfig: utils.OperatorConfig{
+			expectedConfig: tools.OperatorConfig{
 				IsOpenShift:     true,
 				ConfigDirectory: "testdata",
-				K8sVersion: utils.K8sImagesConfig{
+				K8sVersion: tools.K8sImagesConfig{
 					Images: struct {
 						Attacher              string `json:"attacher" yaml:"attacher"`
 						Provisioner           string `json:"provisioner" yaml:"provisioner"`
@@ -115,10 +115,10 @@ func TestGetOperatorConfig(t *testing.T) {
 			getK8sMinimumSupportedVersionFn: getK8sMinimumSupportedVersion,
 			getK8sMaximumSupportedVersionFn: getK8sMaximumSupportedVersion,
 			yamlUnmarshal:                   yaml.Unmarshal,
-			expectedConfig: utils.OperatorConfig{
+			expectedConfig: tools.OperatorConfig{
 				IsOpenShift:     false,
 				ConfigDirectory: "testdata",
-				K8sVersion: utils.K8sImagesConfig{
+				K8sVersion: tools.K8sImagesConfig{
 					Images: struct {
 						Attacher              string `json:"attacher" yaml:"attacher"`
 						Provisioner           string `json:"provisioner" yaml:"provisioner"`
@@ -153,10 +153,10 @@ func TestGetOperatorConfig(t *testing.T) {
 			getK8sMinimumSupportedVersionFn: getK8sMinimumSupportedVersion,
 			getK8sMaximumSupportedVersionFn: getK8sMaximumSupportedVersion,
 			yamlUnmarshal:                   yaml.Unmarshal,
-			expectedConfig: utils.OperatorConfig{
+			expectedConfig: tools.OperatorConfig{
 				IsOpenShift:     false,
 				ConfigDirectory: "operatorconfig",
-				K8sVersion: utils.K8sImagesConfig{
+				K8sVersion: tools.K8sImagesConfig{
 					Images: struct {
 						Attacher              string `json:"attacher" yaml:"attacher"`
 						Provisioner           string `json:"provisioner" yaml:"provisioner"`
@@ -183,10 +183,10 @@ func TestGetOperatorConfig(t *testing.T) {
 			getK8sMinimumSupportedVersionFn: getK8sMinimumSupportedVersion,
 			getK8sMaximumSupportedVersionFn: getK8sMaximumSupportedVersion,
 			yamlUnmarshal:                   yaml.Unmarshal,
-			expectedConfig: utils.OperatorConfig{
+			expectedConfig: tools.OperatorConfig{
 				IsOpenShift:     false,
 				ConfigDirectory: "operatorconfig",
-				K8sVersion: utils.K8sImagesConfig{
+				K8sVersion: tools.K8sImagesConfig{
 					Images: struct {
 						Attacher              string `json:"attacher" yaml:"attacher"`
 						Provisioner           string `json:"provisioner" yaml:"provisioner"`
@@ -213,10 +213,10 @@ func TestGetOperatorConfig(t *testing.T) {
 			getK8sMinimumSupportedVersionFn: getK8sMinimumSupportedVersion,
 			getK8sMaximumSupportedVersionFn: getK8sMaximumSupportedVersion,
 			yamlUnmarshal:                   yaml.Unmarshal,
-			expectedConfig: utils.OperatorConfig{
+			expectedConfig: tools.OperatorConfig{
 				IsOpenShift:     false,
 				ConfigDirectory: "operatorconfig",
-				K8sVersion: utils.K8sImagesConfig{
+				K8sVersion: tools.K8sImagesConfig{
 					Images: struct {
 						Attacher              string `json:"attacher" yaml:"attacher"`
 						Provisioner           string `json:"provisioner" yaml:"provisioner"`
@@ -243,10 +243,10 @@ func TestGetOperatorConfig(t *testing.T) {
 			getK8sMinimumSupportedVersionFn: func() string { return "test" },
 			getK8sMaximumSupportedVersionFn: getK8sMaximumSupportedVersion,
 			yamlUnmarshal:                   yaml.Unmarshal,
-			expectedConfig: utils.OperatorConfig{
+			expectedConfig: tools.OperatorConfig{
 				IsOpenShift:     false,
 				ConfigDirectory: "operatorconfig",
-				K8sVersion: utils.K8sImagesConfig{
+				K8sVersion: tools.K8sImagesConfig{
 					Images: struct {
 						Attacher              string `json:"attacher" yaml:"attacher"`
 						Provisioner           string `json:"provisioner" yaml:"provisioner"`
@@ -273,10 +273,10 @@ func TestGetOperatorConfig(t *testing.T) {
 			getK8sMinimumSupportedVersionFn: getK8sMinimumSupportedVersion,
 			getK8sMaximumSupportedVersionFn: func() string { return "test" },
 			yamlUnmarshal:                   yaml.Unmarshal,
-			expectedConfig: utils.OperatorConfig{
+			expectedConfig: tools.OperatorConfig{
 				IsOpenShift:     false,
 				ConfigDirectory: "operatorconfig",
-				K8sVersion: utils.K8sImagesConfig{
+				K8sVersion: tools.K8sImagesConfig{
 					Images: struct {
 						Attacher              string `json:"attacher" yaml:"attacher"`
 						Provisioner           string `json:"provisioner" yaml:"provisioner"`
@@ -303,10 +303,10 @@ func TestGetOperatorConfig(t *testing.T) {
 			getK8sMinimumSupportedVersionFn: getK8sMinimumSupportedVersion,
 			getK8sMaximumSupportedVersionFn: func() string { return "test" },
 			yamlUnmarshal:                   yaml.Unmarshal,
-			expectedConfig: utils.OperatorConfig{
+			expectedConfig: tools.OperatorConfig{
 				IsOpenShift:     false,
 				ConfigDirectory: "operatorconfig",
-				K8sVersion: utils.K8sImagesConfig{
+				K8sVersion: tools.K8sImagesConfig{
 					Images: struct {
 						Attacher              string `json:"attacher" yaml:"attacher"`
 						Provisioner           string `json:"provisioner" yaml:"provisioner"`
@@ -334,10 +334,10 @@ func TestGetOperatorConfig(t *testing.T) {
 			getK8sMaximumSupportedVersionFn: func() string { return "test" },
 			yamlUnmarshal:                   func(_ []byte, _ interface{}, _ ...yaml.JSONOpt) error { return errors.New("error") },
 			wantErr:                         true,
-			expectedConfig: utils.OperatorConfig{
+			expectedConfig: tools.OperatorConfig{
 				IsOpenShift:     false,
 				ConfigDirectory: "operatorconfig",
-				K8sVersion: utils.K8sImagesConfig{
+				K8sVersion: tools.K8sImagesConfig{
 					Images: struct {
 						Attacher              string `json:"attacher" yaml:"attacher"`
 						Provisioner           string `json:"provisioner" yaml:"provisioner"`

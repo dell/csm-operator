@@ -17,7 +17,7 @@ import (
 	"errors"
 	"testing"
 
-	common "github.com/dell/csm-operator/pkg/utils"
+	common "github.com/dell/csm-operator/pkg/tools"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

@@ -22,7 +22,7 @@ import (
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
-	"github.com/dell/csm-operator/pkg/utils"
+	"github.com/dell/csm-operator/pkg/tools"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -83,7 +83,7 @@ const (
 )
 
 // PrecheckPowerFlex do input validation
-func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ct client.Client) error {
+func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig tools.OperatorConfig, ct client.Client) error {
 	log := logger.GetLogger(ctx)
 
 	// Check if driver version is supported by doing a stat on a config file
@@ -188,7 +188,7 @@ func SetSDCinitContainers(ctx context.Context, cr csmv1.ContainerStorageModule, 
 func GetMDMFromSecret(ctx context.Context, cr *csmv1.ContainerStorageModule, ct client.Client) (string, error) {
 	log := logger.GetLogger(ctx)
 	secretName := cr.Name + "-config"
-	credSecret, err := utils.GetSecret(ctx, secretName, cr.GetNamespace(), ct)
+	credSecret, err := tools.GetSecret(ctx, secretName, cr.GetNamespace(), ct)
 	if err != nil {
 		return "", fmt.Errorf("reading secret [%s] error [%s]", secretName, err)
 	}
@@ -409,7 +409,7 @@ func ValidateZones(ctx context.Context, cr *csmv1.ContainerStorageModule, ct cli
 func ValidateZonesInSecret(ctx context.Context, kube client.Client, namespace string, secret string) error {
 	log := logger.GetLogger(ctx)
 
-	arraySecret, err := utils.GetSecret(ctx, secret, namespace, kube)
+	arraySecret, err := tools.GetSecret(ctx, secret, namespace, kube)
 	if err != nil {
 		return fmt.Errorf("reading secret [%s] error %v", secret, err)
 	}

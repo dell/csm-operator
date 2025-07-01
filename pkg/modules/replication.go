@@ -26,7 +26,7 @@ import (
 
 	"github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/logger"
-	utils "github.com/dell/csm-operator/pkg/utils"
+	utils "github.com/dell/csm-operator/pkg/tools"
 	rbacv1 "k8s.io/api/rbac/v1"
 
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"

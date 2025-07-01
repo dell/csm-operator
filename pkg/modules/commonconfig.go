@@ -20,7 +20,7 @@ import (
 	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
-	utils "github.com/dell/csm-operator/pkg/utils"
+	utils "github.com/dell/csm-operator/pkg/tools"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 

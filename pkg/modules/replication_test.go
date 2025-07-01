@@ -15,7 +15,7 @@ import (
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	drivers "github.com/dell/csm-operator/pkg/drivers"
-	utils "github.com/dell/csm-operator/pkg/utils"
+	utils "github.com/dell/csm-operator/pkg/tools"
 	"github.com/dell/csm-operator/tests/shared"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"

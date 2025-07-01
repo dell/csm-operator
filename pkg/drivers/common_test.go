@@ -14,14 +14,14 @@ package drivers
 
 import (
 	csmv1 "github.com/dell/csm-operator/api/v1"
-	"github.com/dell/csm-operator/pkg/utils"
+	"github.com/dell/csm-operator/pkg/tools"
 	"github.com/dell/csm-operator/tests/shared"
 	corev1 "k8s.io/api/core/v1"
 )
 
 var (
 	// where to find all the yaml files
-	config = utils.OperatorConfig{
+	config = tools.OperatorConfig{
 		ConfigDirectory: "../../tests/config",
 	}
 
