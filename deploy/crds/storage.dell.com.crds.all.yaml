@@ -453,6 +453,14 @@ spec:
                             RoleServiceReplicas is the number of replicas for
                             the role service deployment
                           type: integer
+                        secretProviderClasses:
+                          additionalProperties:
+                            type: string
+                          description: >-
+                            SecretProviderClasses is a map of storage system ID to secret
+                            provider class that defines which secret provider to use
+                            and what secrets to retrieve
+                          type: object
                         sentinel:
                           description: Sentinel is the name of the sentinel statefulSet
                           type: string
@@ -974,6 +982,14 @@ spec:
                             RoleServiceReplicas is the number of replicas for
                             the role service deployment
                           type: integer
+                        secretProviderClasses:
+                          additionalProperties:
+                            type: string
+                          description: >-
+                            SecretProviderClasses is a map of storage system ID to secret
+                            provider class that defines which secret provider to use
+                            and what secrets to retrieve
+                          type: object
                         sentinel:
                           description: Sentinel is the name of the sentinel statefulSet
                           type: string
@@ -1520,6 +1536,14 @@ spec:
                               RoleServiceReplicas is the number of replicas for
                               the role service deployment
                             type: integer
+                          secretProviderClasses:
+                            additionalProperties:
+                              type: string
+                            description: >-
+                              SecretProviderClasses is a map of storage system ID to secret
+                              provider class that defines which secret provider to use
+                              and what secrets to retrieve
+                            type: object
                           sentinel:
                             description: Sentinel is the name of the sentinel statefulSet
                             type: string
@@ -2039,6 +2063,14 @@ spec:
                             RoleServiceReplicas is the number of replicas for
                             the role service deployment
                           type: integer
+                        secretProviderClasses:
+                          additionalProperties:
+                            type: string
+                          description: >-
+                            SecretProviderClasses is a map of storage system ID to secret
+                            provider class that defines which secret provider to use
+                            and what secrets to retrieve
+                          type: object
                         sentinel:
                           description: Sentinel is the name of the sentinel statefulSet
                           type: string
@@ -2567,6 +2599,14 @@ spec:
                               RoleServiceReplicas is the number of replicas for
                               the role service deployment
                             type: integer
+                          secretProviderClasses:
+                            additionalProperties:
+                              type: string
+                            description: >-
+                              SecretProviderClasses is a map of storage system ID to secret
+                              provider class that defines which secret provider to use
+                              and what secrets to retrieve
+                            type: object
                           sentinel:
                             description: Sentinel is the name of the sentinel statefulSet
                             type: string
@@ -3130,6 +3170,14 @@ spec:
                                 RoleServiceReplicas is the number of replicas
                                 for the role service deployment
                               type: integer
+                            secretProviderClasses:
+                              additionalProperties:
+                                type: string
+                              description: >-
+                                SecretProviderClasses is a map of storage system ID to secret
+                                provider class that defines which secret provider to use
+                                and what secrets to retrieve
+                              type: object
                             sentinel:
                               description: Sentinel is the name of the sentinel statefulSet
                               type: string
@@ -3687,6 +3735,14 @@ spec:
                                 RoleServiceReplicas is the number of replicas
                                 for the role service deployment
                               type: integer
+                            secretProviderClasses:
+                              additionalProperties:
+                                type: string
+                              description: >-
+                                SecretProviderClasses is a map of storage system ID to secret
+                                provider class that defines which secret provider to use
+                                and what secrets to retrieve
+                              type: object
                             sentinel:
                               description: Sentinel is the name of the sentinel statefulSet
                               type: string

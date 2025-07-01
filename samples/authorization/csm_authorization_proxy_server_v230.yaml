@@ -30,17 +30,17 @@ spec:
         - name: proxy-server
           # enable: Enable/Disable csm-authorization proxy server
           enabled: true
-          proxyService: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.2.0
+          proxyService: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.3.0
           proxyServiceReplicas: 1
-          tenantService: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.2.0
+          tenantService: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.3.0
           tenantServiceReplicas: 1
-          roleService: quay.io/dell/container-storage-modules/csm-authorization-role:v2.2.0
+          roleService: quay.io/dell/container-storage-modules/csm-authorization-role:v2.3.0
           roleServiceReplicas: 1
-          storageService: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.2.0
+          storageService: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.3.0
           storageServiceReplicas: 1
           opa: docker.io/openpolicyagent/opa:0.70.0
           opaKubeMgmt: docker.io/openpolicyagent/kube-mgmt:8.5.7
-          authorizationController: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.2.0
+          authorizationController: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.3.0
           authorizationControllerReplicas: 1
           leaderElection: true
           # controllerReconcileInterval: interval for the authorization controllers to reconcile with Redis.
@@ -61,8 +61,8 @@ spec:
           proxyServerIngress:
             - ingressClassName: nginx
               # additional host rules for the proxy-server ingress
-              hosts:
-                - authorization-ingress-nginx-controller.authorization.svc.cluster.local
+              hosts: []
+              # - [application name]-ingress-nginx-controller.[namespace].svc.cluster.local
 
               # additional annotations for the proxy-server ingress
               annotations: {}
@@ -78,8 +78,8 @@ spec:
         - name: storage-system-credentials
           secretProviderClasses:
             # mapping of storage system ID to matching SecretProviderClass
-            - system1: secret-provider-class-1
-            - system2: secret-provider-class-2
+            system1: secret-provider-class-1
+            system2: secret-provider-class-2
 ---
 apiVersion: v1
 kind: ConfigMap
