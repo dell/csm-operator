@@ -286,9 +286,14 @@ spec:
               value: "5"
             - name: X_CSI_MULTI_NAS_COOLDOWN_PERIOD
               value: "5m"
+            - name: SSL_CERT_DIR
+              value: /certs
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
+            - name: certs
+              mountPath: /certs
+              readOnly: true
             - name: powerstore-config
               mountPath: /powerstore-config
             - name: powerstore-config-params
@@ -296,6 +301,14 @@ spec:
       volumes:
         - name: socket-dir
           emptyDir:
+        - name: certs
+          projected:
+            sources:
+              - secret:
+                  name: <DriverDefaultReleaseName>-certs-0
+                  items:
+                    - key: cert-0
+                      path: cert-0
         - name: powerstore-config-params
           configMap:
             name: <DriverDefaultReleaseName>-config-params
