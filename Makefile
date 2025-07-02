@@ -104,7 +104,7 @@ driver-unit-test:
 module-unit-test:
 	go clean -cache && go test -v -coverprofile=c.out github.com/dell/csm-operator/pkg/modules
 
-tools-unit-test:
+operatorutils-unit-test:
 	go clean -cache && go test -v -coverprofile=c.out github.com/dell/csm-operator/pkg/operatorutils
 
 .PHONY: actions action-help
