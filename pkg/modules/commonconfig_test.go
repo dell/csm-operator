@@ -16,7 +16,7 @@ import (
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
-	utils "github.com/dell/csm-operator/pkg/utils"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -29,14 +29,14 @@ import (
 )
 
 var (
-	operatorConfig    utils.OperatorConfig
-	badOperatorConfig utils.OperatorConfig
+	operatorConfig    operatorutils.OperatorConfig
+	badOperatorConfig operatorutils.OperatorConfig
 )
 
 func TestMain(m *testing.M) {
 	status := 0
 
-	operatorConfig = utils.OperatorConfig{}
+	operatorConfig = operatorutils.OperatorConfig{}
 	operatorConfig.ConfigDirectory = "../../operatorconfig"
 
 	err := apiextv1.AddToScheme(scheme.Scheme)
@@ -99,8 +99,8 @@ func getConfigMap(namespace, configmapName string) *corev1.ConfigMap {
 }
 
 func TestCommonCertManager(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -120,7 +120,7 @@ func TestCommonCertManager(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -131,7 +131,7 @@ func TestCommonCertManager(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)

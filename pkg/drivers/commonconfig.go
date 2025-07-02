@@ -21,7 +21,7 @@ import (
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
-	"github.com/dell/csm-operator/pkg/utils"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
@@ -40,7 +40,7 @@ const (
 )
 
 // GetController get controller yaml
-func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*utils.ControllerYAML, error) {
+func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, driverName csmv1.DriverType) (*operatorutils.ControllerYAML, error) {
 	log := logger.GetLogger(ctx)
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/controller.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
 	log.Debugw("GetController", "configMapPath", configMapPath)
@@ -50,7 +50,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 		return nil, err
 	}
 
-	YamlString := utils.ModifyCommonCR(string(buf), cr)
+	YamlString := operatorutils.ModifyCommonCR(string(buf), cr)
 	if cr.Spec.Driver.CSIDriverType == "powerstore" {
 		YamlString = ModifyPowerstoreCR(YamlString, cr, "Controller")
 	}
@@ -68,13 +68,13 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 		YamlString = ModifyPowerScaleCR(YamlString, cr, "Controller")
 	}
 
-	driverYAML, err := utils.GetDriverYaml(YamlString, "Deployment")
+	driverYAML, err := operatorutils.GetDriverYaml(YamlString, "Deployment")
 	if err != nil {
 		log.Errorw("GetController get Deployment failed", "Error", err.Error())
 		return nil, err
 	}
 
-	controllerYAML := driverYAML.(utils.ControllerYAML)
+	controllerYAML := driverYAML.(operatorutils.ControllerYAML)
 
 	// if using a minimal manifest, replicas may not be present.
 	if cr.Spec.Driver.Replicas != 0 {
@@ -122,7 +122,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 				if cr.Spec.Driver.Controller != nil {
 					controllerEnvs = cr.Spec.Driver.Controller.Envs
 				}
-				containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, commonEnvs, controllerEnvs)
+				containers[i].Env = operatorutils.ReplaceAllApplyCustomEnvs(c.Env, commonEnvs, controllerEnvs)
 				c.Env = containers[i].Env
 			}
 		}
@@ -153,8 +153,8 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 			}
 		}
 		if !removeContainer {
-			utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &c)
-			utils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &c)
+			operatorutils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &c)
+			operatorutils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &c)
 			newcontainers = append(newcontainers, c)
 		}
 
@@ -206,7 +206,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 }
 
 // GetNode get node yaml
-func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverType csmv1.DriverType, filename string, ct client.Client) (*utils.NodeYAML, error) {
+func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, driverType csmv1.DriverType, filename string, ct client.Client) (*operatorutils.NodeYAML, error) {
 	log := logger.GetLogger(ctx)
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/%s", operatorConfig.ConfigDirectory, driverType, cr.Spec.Driver.ConfigVersion, filename)
 	log.Debugw("GetNode", "configMapPath", configMapPath)
@@ -216,7 +216,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 		return nil, err
 	}
 
-	YamlString := utils.ModifyCommonCR(string(buf), cr)
+	YamlString := operatorutils.ModifyCommonCR(string(buf), cr)
 	if cr.Spec.Driver.CSIDriverType == "powerstore" {
 		YamlString = ModifyPowerstoreCR(YamlString, cr, "Node")
 	}
@@ -233,13 +233,13 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 		YamlString = ModifyPowerScaleCR(YamlString, cr, "Node")
 	}
 
-	driverYAML, err := utils.GetDriverYaml(YamlString, "DaemonSet")
+	driverYAML, err := operatorutils.GetDriverYaml(YamlString, "DaemonSet")
 	if err != nil {
 		log.Errorw("GetNode Daemonset failed", "Error", err.Error())
 		return nil, err
 	}
 
-	nodeYaml := driverYAML.(utils.NodeYAML)
+	nodeYaml := driverYAML.(operatorutils.NodeYAML)
 
 	if cr.Spec.Driver.DNSPolicy != "" {
 		dnspolicy := corev1.DNSPolicy(cr.Spec.Driver.DNSPolicy)
@@ -285,7 +285,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 				}
 
 				if cr.Spec.Driver.Node != nil {
-					containers[i].Env = utils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Driver.Common.Envs, cr.Spec.Driver.Node.Envs)
+					containers[i].Env = operatorutils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Driver.Common.Envs, cr.Spec.Driver.Node.Envs)
 					c.Env = containers[i].Env
 				}
 			}
@@ -315,8 +315,8 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 			}
 		}
 		if !removeContainer {
-			utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &containers[i])
-			utils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &containers[i])
+			operatorutils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &containers[i])
+			operatorutils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &containers[i])
 			newcontainers = append(newcontainers, c)
 		}
 	}
@@ -348,8 +348,8 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	}
 
 	for i := range initcontainers {
-		utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &initcontainers[i])
-		utils.UpdateInitContainerApply(updatedCr.Spec.Driver.InitContainers, &initcontainers[i])
+		operatorutils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &initcontainers[i])
+		operatorutils.UpdateInitContainerApply(updatedCr.Spec.Driver.InitContainers, &initcontainers[i])
 		// mdm-container is exclusive to powerflex driver deamonset, will use the driver image as an init container
 		if *initcontainers[i].Name == "mdm-container" {
 			// driver minimial manifest may not have common section
@@ -393,7 +393,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 }
 
 // GetUpgradeInfo -
-func GetUpgradeInfo(ctx context.Context, operatorConfig utils.OperatorConfig, driverType csmv1.DriverType, oldVersion string) (string, error) {
+func GetUpgradeInfo(ctx context.Context, operatorConfig operatorutils.OperatorConfig, driverType csmv1.DriverType, oldVersion string) (string, error) {
 	log := logger.GetLogger(ctx)
 	upgradeInfoPath := fmt.Sprintf("%s/driverconfig/%s/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, driverType, oldVersion)
 	log.Debugw("GetUpgradeInfo", "upgradeInfoPath", upgradeInfoPath)
@@ -405,7 +405,7 @@ func GetUpgradeInfo(ctx context.Context, operatorConfig utils.OperatorConfig, dr
 	}
 	YamlString := string(buf)
 
-	var upgradePath utils.UpgradePaths
+	var upgradePath operatorutils.UpgradePaths
 	err = yaml.Unmarshal([]byte(YamlString), &upgradePath)
 	if err != nil {
 		log.Errorw("GetUpgradeInfo yaml marshall failed", "Error", err.Error())
@@ -417,7 +417,7 @@ func GetUpgradeInfo(ctx context.Context, operatorConfig utils.OperatorConfig, dr
 }
 
 // GetConfigMap get configmap
-func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*corev1.ConfigMap, error) {
+func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, driverName csmv1.DriverType) (*corev1.ConfigMap, error) {
 	log := logger.GetLogger(ctx)
 	var podmanLogFormat string
 	var podmanLogLevel string
@@ -429,7 +429,7 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 		log.Errorw("GetConfigMap failed", "Error", err.Error())
 		return nil, err
 	}
-	YamlString := utils.ModifyCommonCR(string(buf), cr)
+	YamlString := operatorutils.ModifyCommonCR(string(buf), cr)
 
 	var configMap corev1.ConfigMap
 	cmValue := ""
@@ -489,7 +489,7 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 }
 
 // GetCSIDriver get driver
-func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, driverName csmv1.DriverType) (*storagev1.CSIDriver, error) {
+func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, driverName csmv1.DriverType) (*storagev1.CSIDriver, error) {
 	log := logger.GetLogger(ctx)
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/csidriver.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
 	log.Debugw("GetCSIDriver", "configMapPath", configMapPath)
@@ -501,7 +501,7 @@ func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 
 	var csidriver storagev1.CSIDriver
 
-	YamlString := utils.ModifyCommonCR(string(buf), cr)
+	YamlString := operatorutils.ModifyCommonCR(string(buf), cr)
 	switch cr.Spec.Driver.CSIDriverType {
 	case "powerstore":
 		YamlString = ModifyPowerstoreCR(YamlString, cr, "CSIDriverSpec")
