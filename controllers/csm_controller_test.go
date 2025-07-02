@@ -25,12 +25,12 @@ import (
 
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	v1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
-	"github.com/dell/csm-operator/pkg/tools"
 	"github.com/dell/csm-operator/tests/shared"
 	"github.com/dell/csm-operator/tests/shared/clientgoclient"
 	"github.com/dell/csm-operator/tests/shared/crclient"
@@ -152,11 +152,11 @@ var (
 		},
 	}
 
-	operatorConfig = tools.OperatorConfig{
+	operatorConfig = operatorutils.OperatorConfig{
 		ConfigDirectory: "../operatorconfig",
 	}
 
-	badOperatorConfig = tools.OperatorConfig{
+	badOperatorConfig = operatorutils.OperatorConfig{
 		ConfigDirectory: "../in-valid-path",
 	}
 )
@@ -881,7 +881,7 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 	syncCSMTests := []struct {
 		name        string
 		csm         csmv1.ContainerStorageModule
-		op          tools.OperatorConfig
+		op          operatorutils.OperatorConfig
 		expectedErr string
 	}{
 		{"auth proxy server bad op conf", authProxyServerCSM, badOperatorConfig, "failed to deploy authorization proxy server"},
@@ -1130,11 +1130,11 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleError() {
 	}
 	reconciler := suite.createReconciler()
 
-	goodOperatorConfig := tools.OperatorConfig{
+	goodOperatorConfig := operatorutils.OperatorConfig{
 		ConfigDirectory: "../operatorconfig",
 	}
 
-	badOperatorConfig := tools.OperatorConfig{
+	badOperatorConfig := operatorutils.OperatorConfig{
 		ConfigDirectory: "../in-valid-path",
 	}
 
@@ -1911,7 +1911,7 @@ func getReplicaModule() []csmv1.Module {
 			ConfigVersion: "v1.12.0",
 			Components: []csmv1.ContainerTemplate{
 				{
-					Name: tools.ReplicationSideCarName,
+					Name: operatorutils.ReplicationSideCarName,
 				},
 			},
 		},
@@ -1926,7 +1926,7 @@ func getResiliencyModule() []csmv1.Module {
 			ConfigVersion: "v1.13.0",
 			Components: []csmv1.ContainerTemplate{
 				{
-					Name: tools.ResiliencySideCarName,
+					Name: operatorutils.ResiliencySideCarName,
 				},
 			},
 		},
@@ -2167,7 +2167,7 @@ func (suite *CSMControllerTestSuite) TestReconcileObservabilityError() {
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Modules = getObservabilityModule()
 	reconciler := suite.createReconciler()
-	badOperatorConfig := tools.OperatorConfig{
+	badOperatorConfig := operatorutils.OperatorConfig{
 		ConfigDirectory: "../in-valid-path",
 	}
 	err := reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, nil, suite.fakeClient, suite.k8sClient)
@@ -2247,7 +2247,7 @@ func (suite *CSMControllerTestSuite) TestReconcileAuthorization() {
 	csm := shared.MakeCSM(csmName, suite.namespace, shared.AuthServerConfigVersion)
 	csm.Spec.Modules = getAuthProxyServer()
 	reconciler := suite.createReconciler()
-	badOperatorConfig := tools.OperatorConfig{
+	badOperatorConfig := operatorutils.OperatorConfig{
 		ConfigDirectory: "../in-valid-path",
 	}
 
@@ -2308,10 +2308,10 @@ func (suite *CSMControllerTestSuite) TestReconcileAppMob() {
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csm.Spec.Modules = getAppMob()
 	reconciler := suite.createReconciler()
-	badOperatorConfig := tools.OperatorConfig{
+	badOperatorConfig := operatorutils.OperatorConfig{
 		ConfigDirectory: "../in-valid-path",
 	}
-	goodOperatorConfig := tools.OperatorConfig{
+	goodOperatorConfig := operatorutils.OperatorConfig{
 		ConfigDirectory: "../operatorconfig",
 	}
 	err := reconciler.reconcileAppMobility(ctx, false, badOperatorConfig, csm, suite.fakeClient)
@@ -2412,7 +2412,7 @@ func (suite *CSMControllerTestSuite) makeFakeCSM(name, ns string, withFinalizer 
 	assert.Nil(suite.T(), err)
 
 	// replication secrets
-	sec = shared.MakeSecret("skip-replication-cluster-check", tools.ReplicationControllerNameSpace, configVersion)
+	sec = shared.MakeSecret("skip-replication-cluster-check", operatorutils.ReplicationControllerNameSpace, configVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
@@ -2827,7 +2827,7 @@ func (suite *CSMControllerTestSuite) TestZoneValidation2() {
 func (suite *CSMControllerTestSuite) TestReconcileReplicationCRDSReturnError() {
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	reconciler := suite.createReconciler()
-	err := reconciler.reconcileReplicationCRDS(ctx, tools.OperatorConfig{}, csm, suite.fakeClient)
+	err := reconciler.reconcileReplicationCRDS(ctx, operatorutils.OperatorConfig{}, csm, suite.fakeClient)
 	assert.NotNil(suite.T(), err)
 	assert.ErrorContains(suite.T(), err, "unable to reconcile replication CRDs")
 }

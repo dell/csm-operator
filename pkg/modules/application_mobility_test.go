@@ -14,7 +14,7 @@ import (
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	csmv1 "github.com/dell/csm-operator/api/v1"
-	tools "github.com/dell/csm-operator/pkg/tools"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	"github.com/stretchr/testify/assert"
 	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -28,8 +28,8 @@ import (
 )
 
 func TestAppMobilityModuleDeployment(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -49,7 +49,7 @@ func TestAppMobilityModuleDeployment(t *testing.T) {
 
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"happy path": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"happy path": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -60,7 +60,7 @@ func TestAppMobilityModuleDeployment(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - app mobility module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - app mobility module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -71,7 +71,7 @@ func TestAppMobilityModuleDeployment(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - app mob config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - app mob config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -83,7 +83,7 @@ func TestAppMobilityModuleDeployment(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, badOperatorConfig
 		},
-		"fail - app mob deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - app mob deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -111,8 +111,8 @@ func TestAppMobilityModuleDeployment(t *testing.T) {
 }
 
 func TestAppMobilityWebhookService(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -132,7 +132,7 @@ func TestAppMobilityWebhookService(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - bad yaml found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - bad yaml found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -144,7 +144,7 @@ func TestAppMobilityWebhookService(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, badOperatorConfig
 		},
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -154,7 +154,7 @@ func TestAppMobilityWebhookService(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - app mob config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - app mob config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -166,7 +166,7 @@ func TestAppMobilityWebhookService(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, badOperatorConfig
 		},
-		"fail - app mob deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - app mob deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -194,8 +194,8 @@ func TestAppMobilityWebhookService(t *testing.T) {
 }
 
 func TestControllerManagerMetricService(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -215,7 +215,7 @@ func TestControllerManagerMetricService(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - bad yaml found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - bad yaml found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -227,7 +227,7 @@ func TestControllerManagerMetricService(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, badOperatorConfig
 		},
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -238,7 +238,7 @@ func TestControllerManagerMetricService(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - app mob config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - app mob config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -250,7 +250,7 @@ func TestControllerManagerMetricService(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, badOperatorConfig
 		},
-		"fail - app mob deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - app mob deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -278,8 +278,8 @@ func TestControllerManagerMetricService(t *testing.T) {
 }
 
 func TestApplicationMobilityIssuerCertService(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -304,7 +304,7 @@ func TestApplicationMobilityIssuerCertService(t *testing.T) {
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
 
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -319,7 +319,7 @@ func TestApplicationMobilityIssuerCertService(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - app mobility module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - app mobility module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -330,7 +330,7 @@ func TestApplicationMobilityIssuerCertService(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - app mob deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - app mob deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -342,7 +342,7 @@ func TestApplicationMobilityIssuerCertService(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, badOperatorConfig
 		},
-		"fail - app mob config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - app mob config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -358,11 +358,11 @@ func TestApplicationMobilityIssuerCertService(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			oldNewControllerRuntimeClientWrapper := tools.NewControllerRuntimeClientWrapper
-			oldNewK8sClientWrapper := tools.NewK8sClientWrapper
+			oldNewControllerRuntimeClientWrapper := operatorutils.NewControllerRuntimeClientWrapper
+			oldNewK8sClientWrapper := operatorutils.NewK8sClientWrapper
 			defer func() {
-				tools.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
-				tools.NewK8sClientWrapper = oldNewK8sClientWrapper
+				operatorutils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
+				operatorutils.NewK8sClientWrapper = oldNewK8sClientWrapper
 			}()
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
@@ -461,18 +461,18 @@ func TestApplicationMobilityPrecheck(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			oldNewControllerRuntimeClientWrapper := tools.NewControllerRuntimeClientWrapper
-			oldNewK8sClientWrapper := tools.NewK8sClientWrapper
+			oldNewControllerRuntimeClientWrapper := operatorutils.NewControllerRuntimeClientWrapper
+			oldNewK8sClientWrapper := operatorutils.NewK8sClientWrapper
 			defer func() {
-				tools.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
-				tools.NewK8sClientWrapper = oldNewK8sClientWrapper
+				operatorutils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
+				operatorutils.NewK8sClientWrapper = oldNewK8sClientWrapper
 			}()
 			success, appMobility, tmpCR, sourceClient, fakeControllerRuntimeClient := tc(t)
-			tools.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
-			tools.NewK8sClientWrapper = func(_ []byte) (*kubernetes.Clientset, error) {
+			operatorutils.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
+			operatorutils.NewK8sClientWrapper = func(_ []byte) (*kubernetes.Clientset, error) {
 				return nil, nil
 			}
-			fakeReconcile := tools.FakeReconcileCSM{
+			fakeReconcile := operatorutils.FakeReconcileCSM{
 				Client:    sourceClient,
 				K8sClient: fake.NewSimpleClientset(),
 			}
@@ -487,8 +487,8 @@ func TestApplicationMobilityPrecheck(t *testing.T) {
 }
 
 func TestAppMobilityVelero(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -513,7 +513,7 @@ func TestAppMobilityVelero(t *testing.T) {
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
 
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -529,7 +529,7 @@ func TestAppMobilityVelero(t *testing.T) {
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
 
-		"success - upgrading with old node agent with valid old version": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"success - upgrading with old node agent with valid old version": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -546,7 +546,7 @@ func TestAppMobilityVelero(t *testing.T) {
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
 
-		"success - upgrade should finish if failed to remove old node agent Daemonset": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"success - upgrade should finish if failed to remove old node agent Daemonset": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -563,7 +563,7 @@ func TestAppMobilityVelero(t *testing.T) {
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
 
-		"fail - app mobility module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - app mobility module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -574,7 +574,7 @@ func TestAppMobilityVelero(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - app mob deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - app mob deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -586,7 +586,7 @@ func TestAppMobilityVelero(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, badOperatorConfig
 		},
-		"fail - app mob config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - app mob config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -602,11 +602,11 @@ func TestAppMobilityVelero(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			oldNewControllerRuntimeClientWrapper := tools.NewControllerRuntimeClientWrapper
-			oldNewK8sClientWrapper := tools.NewK8sClientWrapper
+			oldNewControllerRuntimeClientWrapper := operatorutils.NewControllerRuntimeClientWrapper
+			oldNewK8sClientWrapper := operatorutils.NewK8sClientWrapper
 			defer func() {
-				tools.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
-				tools.NewK8sClientWrapper = oldNewK8sClientWrapper
+				operatorutils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
+				operatorutils.NewK8sClientWrapper = oldNewK8sClientWrapper
 			}()
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
@@ -621,8 +621,8 @@ func TestAppMobilityVelero(t *testing.T) {
 }
 
 func TestAppMobilityCertManager(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -642,7 +642,7 @@ func TestAppMobilityCertManager(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -653,7 +653,7 @@ func TestAppMobilityCertManager(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - app mob deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - app mob deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -665,7 +665,7 @@ func TestAppMobilityCertManager(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, badOperatorConfig
 		},
-		"fail - app mob config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - app mob config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -693,8 +693,8 @@ func TestAppMobilityCertManager(t *testing.T) {
 }
 
 func TestVeleroCrdDeploy(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -717,7 +717,7 @@ func TestVeleroCrdDeploy(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
 			return true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -732,7 +732,7 @@ func TestVeleroCrdDeploy(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - app mob deployment file bad yaml": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - app mob deployment file bad yaml": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -744,7 +744,7 @@ func TestVeleroCrdDeploy(t *testing.T) {
 
 			return false, tmpCR, sourceClient, badOperatorConfig
 		},
-		"fail - app mob config file not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - app mob config file not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -756,7 +756,7 @@ func TestVeleroCrdDeploy(t *testing.T) {
 
 			return false, tmpCR, sourceClient, badOperatorConfig
 		},
-		"fail - app mobility module not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - app mobility module not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -783,8 +783,8 @@ func TestVeleroCrdDeploy(t *testing.T) {
 }
 
 func TestAppMobCrdDeploy(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -807,7 +807,7 @@ func TestAppMobCrdDeploy(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
 			return true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -822,7 +822,7 @@ func TestAppMobCrdDeploy(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - app mob deployment file bad yaml": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - app mob deployment file bad yaml": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -834,7 +834,7 @@ func TestAppMobCrdDeploy(t *testing.T) {
 
 			return false, tmpCR, sourceClient, badOperatorConfig
 		},
-		"fail - app mob config file not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - app mob config file not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -846,7 +846,7 @@ func TestAppMobCrdDeploy(t *testing.T) {
 
 			return false, tmpCR, sourceClient, badOperatorConfig
 		},
-		"fail - app mobility module not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - app mobility module not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -873,8 +873,8 @@ func TestAppMobCrdDeploy(t *testing.T) {
 }
 
 func TestBackupStorageLoc(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -898,7 +898,7 @@ func TestBackupStorageLoc(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -913,7 +913,7 @@ func TestBackupStorageLoc(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - app mob deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - app mob deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -925,7 +925,7 @@ func TestBackupStorageLoc(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, badOperatorConfig
 		},
-		"fail - app mob config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - app mob config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -937,7 +937,7 @@ func TestBackupStorageLoc(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, badOperatorConfig
 		},
-		"fail - app mobility module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - app mobility module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -951,11 +951,11 @@ func TestBackupStorageLoc(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			oldNewControllerRuntimeClientWrapper := tools.NewControllerRuntimeClientWrapper
-			oldNewK8sClientWrapper := tools.NewK8sClientWrapper
+			oldNewControllerRuntimeClientWrapper := operatorutils.NewControllerRuntimeClientWrapper
+			oldNewK8sClientWrapper := operatorutils.NewK8sClientWrapper
 			defer func() {
-				tools.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
-				tools.NewK8sClientWrapper = oldNewK8sClientWrapper
+				operatorutils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
+				operatorutils.NewK8sClientWrapper = oldNewK8sClientWrapper
 			}()
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
@@ -972,8 +972,8 @@ func TestBackupStorageLoc(t *testing.T) {
 // currently will test getBackupStorageLoc and getUseVolumeSnapshot, as these methods are expected to use a custom region
 // or use the default value "region" if custom region is not defined in CR
 func TestRegionSubstitutions(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig){
-		"region default value": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"region default value": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
@@ -983,7 +983,7 @@ func TestRegionSubstitutions(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, tmpCR, sourceClient, operatorConfig
 		},
-		"region custom value": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"region custom value": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility_custom_region.yaml")
 			if err != nil {
 				panic(err)
@@ -995,11 +995,11 @@ func TestRegionSubstitutions(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			oldNewControllerRuntimeClientWrapper := tools.NewControllerRuntimeClientWrapper
-			oldNewK8sClientWrapper := tools.NewK8sClientWrapper
+			oldNewControllerRuntimeClientWrapper := operatorutils.NewControllerRuntimeClientWrapper
+			oldNewK8sClientWrapper := operatorutils.NewK8sClientWrapper
 			defer func() {
-				tools.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
-				tools.NewK8sClientWrapper = oldNewK8sClientWrapper
+				operatorutils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
+				operatorutils.NewK8sClientWrapper = oldNewK8sClientWrapper
 			}()
 			defaultRegion, cr, sourceClient, op := tc(t)
 

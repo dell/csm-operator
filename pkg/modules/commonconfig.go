@@ -20,7 +20,7 @@ import (
 	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
-	tools "github.com/dell/csm-operator/pkg/tools"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -69,11 +69,11 @@ func checkVersion(moduleType, givenVersion, configPath string) error {
 	return nil
 }
 
-func readConfigFile(module csmv1.Module, cr csmv1.ContainerStorageModule, op tools.OperatorConfig, filename string) ([]byte, error) {
+func readConfigFile(module csmv1.Module, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, filename string) ([]byte, error) {
 	var err error
 	moduleConfigVersion := module.ConfigVersion
 	if moduleConfigVersion == "" {
-		moduleConfigVersion, err = tools.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, module.Name, op.ConfigDirectory)
+		moduleConfigVersion, err = operatorutils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, module.Name, op.ConfigDirectory)
 		if err != nil {
 			return nil, err
 		}
@@ -89,7 +89,7 @@ func readConfigFile(module csmv1.Module, cr csmv1.ContainerStorageModule, op too
 }
 
 // getCertManager - configure cert-manager with the specified namespace before installation
-func getCertManager(op tools.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getCertManager(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 
 	certManagerPath := fmt.Sprintf("%s/moduleconfig/common/cert-manager/%s", op.ConfigDirectory, CertManagerManifest)
@@ -107,7 +107,7 @@ func getCertManager(op tools.OperatorConfig, cr csmv1.ContainerStorageModule) (s
 	return YamlString, nil
 }
 
-func getCertManagerCRDs(op tools.OperatorConfig) (string, error) {
+func getCertManagerCRDs(op operatorutils.OperatorConfig) (string, error) {
 	YamlString := ""
 
 	certManagerPath := fmt.Sprintf("%s/moduleconfig/common/cert-manager/%s", op.ConfigDirectory, CertManagerCRDsManifest)
@@ -121,7 +121,7 @@ func getCertManagerCRDs(op tools.OperatorConfig) (string, error) {
 }
 
 // CommonCertManager - apply/delete cert-manager objects
-func CommonCertManager(ctx context.Context, isDeleting bool, op tools.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func CommonCertManager(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	YamlString, err := getCertManager(op, cr)
 	if err != nil {
 		return err
@@ -131,12 +131,12 @@ func CommonCertManager(ctx context.Context, isDeleting bool, op tools.OperatorCo
 		return err
 	}
 
-	ctrlObjects, err := tools.GetModuleComponentObj([]byte(YamlString))
+	ctrlObjects, err := operatorutils.GetModuleComponentObj([]byte(YamlString))
 	if err != nil {
 		return err
 	}
 
-	crdObjects, err := tools.GetModuleComponentObj([]byte(crdYamlString))
+	crdObjects, err := operatorutils.GetModuleComponentObj([]byte(crdYamlString))
 	if err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func CommonCertManager(ctx context.Context, isDeleting bool, op tools.OperatorCo
 	// keep cert-manager CRDs in place, even if cert-manager is uninstalled
 	for _, crdObj := range crdObjects {
 		if !isDeleting {
-			if err := tools.ApplyObject(ctx, crdObj, ctrlClient); err != nil {
+			if err := operatorutils.ApplyObject(ctx, crdObj, ctrlClient); err != nil {
 				return err
 			}
 		}
@@ -152,11 +152,11 @@ func CommonCertManager(ctx context.Context, isDeleting bool, op tools.OperatorCo
 
 	for _, ctrlObj := range ctrlObjects {
 		if isDeleting {
-			if err := tools.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+			if err := operatorutils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
 		} else {
-			if err := tools.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+			if err := operatorutils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
 		}

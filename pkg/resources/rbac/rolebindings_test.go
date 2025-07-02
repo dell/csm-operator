@@ -17,7 +17,7 @@ import (
 	"errors"
 	"testing"
 
-	common "github.com/dell/csm-operator/pkg/tools"
+	common "github.com/dell/csm-operator/pkg/operatorutils"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"

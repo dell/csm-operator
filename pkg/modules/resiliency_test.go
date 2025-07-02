@@ -19,7 +19,7 @@ import (
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	drivers "github.com/dell/csm-operator/pkg/drivers"
-	tools "github.com/dell/csm-operator/pkg/tools"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	"github.com/stretchr/testify/assert"
 	rbacv1 "k8s.io/api/rbac/v1"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
@@ -32,8 +32,8 @@ import (
 
 func TestResiliencyInjectDeployment(t *testing.T) {
 	ctx := context.Background()
-	tests := map[string]func(t *testing.T) (bool, applyv1.DeploymentApplyConfiguration, tools.OperatorConfig, csmv1.ContainerStorageModule){
-		"success - greenfield injection": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, tools.OperatorConfig, csmv1.ContainerStorageModule) {
+	tests := map[string]func(t *testing.T) (bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule){
+		"success - greenfield injection": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
 			if err != nil {
 				panic(err)
@@ -44,7 +44,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			}
 			return true, controllerYAML.Deployment, operatorConfig, customResource
 		},
-		"success - brownfield injection": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, tools.OperatorConfig, csmv1.ContainerStorageModule) {
+		"success - brownfield injection": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
 			if err != nil {
 				panic(err)
@@ -59,7 +59,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			}
 			return true, *newDeployment, operatorConfig, customResource
 		},
-		"fail - bad config path": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, tools.OperatorConfig, csmv1.ContainerStorageModule) {
+		"fail - bad config path": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
 			if err != nil {
 				panic(err)
@@ -72,7 +72,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			tmpOperatorConfig.ConfigDirectory = "bad/path"
 			return false, controllerYAML.Deployment, tmpOperatorConfig, customResource
 		},
-		"success - valid Powerscale driver name": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, tools.OperatorConfig, csmv1.ContainerStorageModule) {
+		"success - valid Powerscale driver name": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_resiliency.yaml")
 			if err != nil {
 				panic(err)
@@ -87,7 +87,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			}
 			return true, *newDeployment, operatorConfig, customResource
 		},
-		"success - valid Powerflex driver name": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, tools.OperatorConfig, csmv1.ContainerStorageModule) {
+		"success - valid Powerflex driver name": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerflex_resiliency.yaml")
 			if err != nil {
 				panic(err)
@@ -102,7 +102,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			}
 			return true, *newDeployment, operatorConfig, customResource
 		},
-		"success - valid PowerMax driver name": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, tools.OperatorConfig, csmv1.ContainerStorageModule) {
+		"success - valid PowerMax driver name": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powermax_resiliency.yaml")
 			if err != nil {
 				panic(err)
@@ -117,7 +117,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			}
 			return true, *newDeployment, operatorConfig, customResource
 		},
-		"fail - bad PowerMax config path": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, tools.OperatorConfig, csmv1.ContainerStorageModule) {
+		"fail - bad PowerMax config path": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powermax_resiliency.yaml")
 			if err != nil {
 				panic(err)
@@ -154,8 +154,8 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 func TestResiliencyInjectClusterRole(t *testing.T) {
 	ctx := context.Background()
 
-	tests := map[string]func(t *testing.T) (bool, rbacv1.ClusterRole, tools.OperatorConfig, csmv1.ContainerStorageModule){
-		"success - greenfield injection": func(*testing.T) (bool, rbacv1.ClusterRole, tools.OperatorConfig, csmv1.ContainerStorageModule) {
+	tests := map[string]func(t *testing.T) (bool, rbacv1.ClusterRole, operatorutils.OperatorConfig, csmv1.ContainerStorageModule){
+		"success - greenfield injection": func(*testing.T) (bool, rbacv1.ClusterRole, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
 			if err != nil {
 				panic(err)
@@ -166,7 +166,7 @@ func TestResiliencyInjectClusterRole(t *testing.T) {
 			}
 			return true, controllerYAML.Rbac.ClusterRole, operatorConfig, customResource
 		},
-		"fail - bad config path": func(*testing.T) (bool, rbacv1.ClusterRole, tools.OperatorConfig, csmv1.ContainerStorageModule) {
+		"fail - bad config path": func(*testing.T) (bool, rbacv1.ClusterRole, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			tmpOperatorConfig := operatorConfig
 			tmpOperatorConfig.ConfigDirectory = "bad/path"
 
@@ -180,7 +180,7 @@ func TestResiliencyInjectClusterRole(t *testing.T) {
 			}
 			return false, controllerYAML.Rbac.ClusterRole, tmpOperatorConfig, customResource
 		},
-		"failure - getResiliencyModule error": func(*testing.T) (bool, rbacv1.ClusterRole, tools.OperatorConfig, csmv1.ContainerStorageModule) {
+		"failure - getResiliencyModule error": func(*testing.T) (bool, rbacv1.ClusterRole, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			return false, rbacv1.ClusterRole{}, operatorConfig, csmv1.ContainerStorageModule{}
 		},
 	}
@@ -202,9 +202,9 @@ func TestResiliencyInjectClusterRole(t *testing.T) {
 
 func TestResiliencyInjectRole(t *testing.T) {
 	ctx := context.Background()
-	c := &tools.MockClient{}
-	tests := map[string]func(t *testing.T) (bool, rbacv1.Role, tools.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client){
-		"success - greenfield injection": func(*testing.T) (bool, rbacv1.Role, tools.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client) {
+	c := &operatorutils.MockClient{}
+	tests := map[string]func(t *testing.T) (bool, rbacv1.Role, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client){
+		"success - greenfield injection": func(*testing.T) (bool, rbacv1.Role, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client) {
 			customResource, err := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
 			if err != nil {
 				panic(err)
@@ -215,10 +215,10 @@ func TestResiliencyInjectRole(t *testing.T) {
 			}
 			return true, nodeYAML.Rbac.Role, operatorConfig, customResource, "node.yaml", c
 		},
-		"failure - getResiliencyModule error": func(*testing.T) (bool, rbacv1.Role, tools.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client) {
+		"failure - getResiliencyModule error": func(*testing.T) (bool, rbacv1.Role, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client) {
 			return false, rbacv1.Role{}, operatorConfig, csmv1.ContainerStorageModule{}, "node.yaml", c
 		},
-		"success - mode is controller": func(*testing.T) (bool, rbacv1.Role, tools.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client) {
+		"success - mode is controller": func(*testing.T) (bool, rbacv1.Role, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client) {
 			return true, rbacv1.Role{}, operatorConfig, csmv1.ContainerStorageModule{}, "node.yaml", c
 		},
 	}
@@ -320,20 +320,20 @@ func TestResiliencyPrecheck(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			oldNewControllerRuntimeClientWrapper := tools.NewControllerRuntimeClientWrapper
-			oldNewK8sClientWrapper := tools.NewK8sClientWrapper
+			oldNewControllerRuntimeClientWrapper := operatorutils.NewControllerRuntimeClientWrapper
+			oldNewK8sClientWrapper := operatorutils.NewK8sClientWrapper
 			defer func() {
-				tools.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
-				tools.NewK8sClientWrapper = oldNewK8sClientWrapper
+				operatorutils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
+				operatorutils.NewK8sClientWrapper = oldNewK8sClientWrapper
 			}()
 
 			success, replica, tmpCR, sourceClient, fakeControllerRuntimeClient := tc(t)
-			tools.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
-			tools.NewK8sClientWrapper = func(_ []byte) (*kubernetes.Clientset, error) {
+			operatorutils.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
+			operatorutils.NewK8sClientWrapper = func(_ []byte) (*kubernetes.Clientset, error) {
 				return nil, nil
 			}
 
-			fakeReconcile := tools.FakeReconcileCSM{
+			fakeReconcile := operatorutils.FakeReconcileCSM{
 				Client:    sourceClient,
 				K8sClient: fake.NewSimpleClientset(),
 			}
@@ -350,8 +350,8 @@ func TestResiliencyPrecheck(t *testing.T) {
 
 func TestResiliencyInjectDaemonset(t *testing.T) {
 	ctx := context.Background()
-	tests := map[string]func(t *testing.T) (bool, applyv1.DaemonSetApplyConfiguration, tools.OperatorConfig){
-		"success - greenfield injection": func(*testing.T) (bool, applyv1.DaemonSetApplyConfiguration, tools.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, applyv1.DaemonSetApplyConfiguration, operatorutils.OperatorConfig){
+		"success - greenfield injection": func(*testing.T) (bool, applyv1.DaemonSetApplyConfiguration, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
 			if err != nil {
 				panic(err)
@@ -363,7 +363,7 @@ func TestResiliencyInjectDaemonset(t *testing.T) {
 
 			return true, nodeYAML.DaemonSetApplyConfig, operatorConfig
 		},
-		"success - brownfield injection": func(*testing.T) (bool, applyv1.DaemonSetApplyConfiguration, tools.OperatorConfig) {
+		"success - brownfield injection": func(*testing.T) (bool, applyv1.DaemonSetApplyConfiguration, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
 			if err != nil {
 				panic(err)
@@ -379,7 +379,7 @@ func TestResiliencyInjectDaemonset(t *testing.T) {
 
 			return true, *newDaemonSet, operatorConfig
 		},
-		"fail - bad config path": func(*testing.T) (bool, applyv1.DaemonSetApplyConfiguration, tools.OperatorConfig) {
+		"fail - bad config path": func(*testing.T) (bool, applyv1.DaemonSetApplyConfiguration, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
 			if err != nil {
 				panic(err)
@@ -430,7 +430,7 @@ func checkApplyContainersResiliency(containers []acorev1.ContainerApplyConfigura
 	podmonArrayConnectivityPollRate := getPollRateFromArgs(container.Args)
 
 	for _, cnt := range containers {
-		if *cnt.Name == tools.ResiliencySideCarName {
+		if *cnt.Name == operatorutils.ResiliencySideCarName {
 
 			// check argument in resiliency sidecar(podmon)
 			foundPodmonArrayConnectivityPollRate := false

@@ -21,12 +21,12 @@ import (
 	"strconv"
 	"strings"
 
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	v1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
-	"github.com/dell/csm-operator/pkg/tools"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -105,7 +105,7 @@ var (
 )
 
 // PrecheckPowerMax do input validation
-func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig tools.OperatorConfig, ct client.Client) error {
+func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, ct client.Client) error {
 	log := logger.GetLogger(ctx)
 
 	// Check if driver version is supported by doing a stat on a config file

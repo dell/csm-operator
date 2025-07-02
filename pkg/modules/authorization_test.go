@@ -16,7 +16,7 @@ import (
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	drivers "github.com/dell/csm-operator/pkg/drivers"
-	tools "github.com/dell/csm-operator/pkg/tools"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -165,8 +165,8 @@ func TestAuthInjectDaemonset(t *testing.T) {
 		return nil
 	}
 	//*appsv1.DaemonSet
-	tests := map[string]func(t *testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, tools.OperatorConfig){
-		"success - greenfield injection": func(*testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, tools.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, operatorutils.OperatorConfig){
+		"success - greenfield injection": func(*testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -178,7 +178,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 
 			return true, true, nodeYAML.DaemonSetApplyConfig, operatorConfig
 		},
-		"success - brownfield injection": func(*testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, tools.OperatorConfig) {
+		"success - brownfield injection": func(*testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -194,7 +194,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 
 			return true, true, *newDaemonSet, operatorConfig
 		},
-		"success - validate certificate": func(*testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, tools.OperatorConfig) {
+		"success - validate certificate": func(*testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth_validate_cert.yaml")
 			if err != nil {
 				panic(err)
@@ -210,7 +210,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 
 			return true, false, *newDaemonSet, operatorConfig
 		},
-		"fail - bad config path": func(*testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, tools.OperatorConfig) {
+		"fail - bad config path": func(*testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -263,8 +263,8 @@ func TestAuthInjectDeployment(t *testing.T) {
 		return nil
 	}
 
-	tests := map[string]func(t *testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, tools.OperatorConfig, csmv1.ContainerStorageModule){
-		"success - greenfield injection": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, tools.OperatorConfig, csmv1.ContainerStorageModule) {
+	tests := map[string]func(t *testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule){
+		"success - greenfield injection": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -275,7 +275,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 			}
 			return true, true, controllerYAML.Deployment, operatorConfig, customResource
 		},
-		"success - greenfield injection missing skip certificate validation env": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, tools.OperatorConfig, csmv1.ContainerStorageModule) {
+		"success - greenfield injection missing skip certificate validation env": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth_missing_skip_cert_env.yaml")
 			if err != nil {
 				panic(err)
@@ -286,7 +286,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 			}
 			return true, true, controllerYAML.Deployment, operatorConfig, customResource
 		},
-		"success - brownfield injection": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, tools.OperatorConfig, csmv1.ContainerStorageModule) {
+		"success - brownfield injection": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -303,7 +303,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 
 			return true, true, *newDeployment, operatorConfig, customResource
 		},
-		"success - validate certificate": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, tools.OperatorConfig, csmv1.ContainerStorageModule) {
+		"success - validate certificate": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth_validate_cert.yaml")
 			if err != nil {
 				panic(err)
@@ -320,7 +320,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 
 			return true, false, *newDeployment, operatorConfig, customResource
 		},
-		"fail - bad config path": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, tools.OperatorConfig, csmv1.ContainerStorageModule) {
+		"fail - bad config path": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -631,20 +631,20 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			oldNewControllerRuntimeClientWrapper := tools.NewControllerRuntimeClientWrapper
-			oldNewK8sClientWrapper := tools.NewK8sClientWrapper
+			oldNewControllerRuntimeClientWrapper := operatorutils.NewControllerRuntimeClientWrapper
+			oldNewK8sClientWrapper := operatorutils.NewK8sClientWrapper
 			defer func() {
-				tools.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
-				tools.NewK8sClientWrapper = oldNewK8sClientWrapper
+				operatorutils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
+				operatorutils.NewK8sClientWrapper = oldNewK8sClientWrapper
 			}()
 
 			success, auth, tmpCR, sourceClient, fakeControllerRuntimeClient := tc(t)
-			tools.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
-			tools.NewK8sClientWrapper = func(_ []byte) (*kubernetes.Clientset, error) {
+			operatorutils.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
+			operatorutils.NewK8sClientWrapper = func(_ []byte) (*kubernetes.Clientset, error) {
 				return nil, nil
 			}
 
-			fakeReconcile := tools.FakeReconcileCSM{
+			fakeReconcile := operatorutils.FakeReconcileCSM{
 				Client:    sourceClient,
 				K8sClient: fake.NewSimpleClientset(),
 			}
@@ -660,8 +660,8 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 }
 
 func TestAuthorizationServerDeployment(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -686,7 +686,7 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -701,7 +701,7 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating with vault client certificates": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"success - creating with vault client certificates": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_vault_cert.yaml")
 			if err != nil {
 				panic(err)
@@ -716,7 +716,7 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating v1": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"success - creating v1": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1120.yaml")
 			if err != nil {
 				panic(err)
@@ -731,7 +731,7 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating with default redis storage class": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"success - creating with default redis storage class": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_no_redis.yaml")
 			if err != nil {
 				panic(err)
@@ -746,7 +746,7 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - authorization module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - authorization module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -761,7 +761,7 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - corrupt vault ca": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - corrupt vault ca": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_bad_vault_ca.yaml")
 			if err != nil {
 				panic(err)
@@ -776,7 +776,7 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - corrupt vault client cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - corrupt vault client cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_bad_vault_cert.yaml")
 			if err != nil {
 				panic(err)
@@ -791,7 +791,7 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - corrupt vault client key": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - corrupt vault client key": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_bad_vault_key.yaml")
 			if err != nil {
 				panic(err)
@@ -1468,7 +1468,7 @@ func TestAuthorizationIngress(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			isOpenShift = true
 			success, isDeleting, cr, sourceClient := tc(t)
-			fakeReconcile := tools.FakeReconcileCSM{
+			fakeReconcile := operatorutils.FakeReconcileCSM{
 				Client:    sourceClient,
 				K8sClient: fake.NewSimpleClientset(),
 			}
@@ -1483,8 +1483,8 @@ func TestAuthorizationIngress(t *testing.T) {
 }
 
 func TestInstallPolicies(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -1505,7 +1505,7 @@ func TestInstallPolicies(t *testing.T) {
 
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -1518,7 +1518,7 @@ func TestInstallPolicies(t *testing.T) {
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
 
-		"fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -1546,8 +1546,8 @@ func TestInstallPolicies(t *testing.T) {
 }
 
 func TestNginxIngressController(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -1567,7 +1567,7 @@ func TestNginxIngressController(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -1579,7 +1579,7 @@ func TestNginxIngressController(t *testing.T) {
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
 
-		"fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -1607,8 +1607,8 @@ func TestNginxIngressController(t *testing.T) {
 }
 
 func TestAuthorizationCertificates(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig){
-		"success - using self-signed certificate": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - using self-signed certificate": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -1623,7 +1623,7 @@ func TestAuthorizationCertificates(t *testing.T) {
 
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - using custom tls secret": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"success - using custom tls secret": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_certs.yaml")
 			if err != nil {
 				panic(err)
@@ -1639,7 +1639,7 @@ func TestAuthorizationCertificates(t *testing.T) {
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
 
-		"fail - using partial custom cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - using partial custom cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_certs_missing_key.yaml")
 			if err != nil {
 				panic(err)
@@ -1670,8 +1670,8 @@ func TestAuthorizationCertificates(t *testing.T) {
 }
 
 func TestAuthorizationCrdDeploy(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -1694,7 +1694,7 @@ func TestAuthorizationCrdDeploy(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
 			return true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -1709,7 +1709,7 @@ func TestAuthorizationCrdDeploy(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating v1": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"success - creating v1": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1120.yaml")
 			if err != nil {
 				panic(err)
@@ -1724,7 +1724,7 @@ func TestAuthorizationCrdDeploy(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - auth deployment file bad yaml": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - auth deployment file bad yaml": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -1736,7 +1736,7 @@ func TestAuthorizationCrdDeploy(t *testing.T) {
 
 			return false, tmpCR, sourceClient, badOperatorConfig
 		},
-		"fail - auth config file not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - auth config file not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -1748,7 +1748,7 @@ func TestAuthorizationCrdDeploy(t *testing.T) {
 
 			return false, tmpCR, sourceClient, badOperatorConfig
 		},
-		"fail - auth module not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, tools.OperatorConfig) {
+		"fail - auth module not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
 			if err != nil {
 				panic(err)
