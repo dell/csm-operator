@@ -559,24 +559,6 @@ func parseObservabilityMetricsDeployment(ctx context.Context, deployment *appsv1
 		if err != nil {
 			return nil, fmt.Errorf("injecting auth into Observability metrics deployment: %v", err)
 		}
-		// add prefix to secretName of auth volumes
-		for i, v := range dpApply.Spec.Template.Spec.Volumes {
-			if utils.Contains(defaultAuthSecretsName, *v.Name) {
-				name := getNewAuthSecretName(cr.GetDriverType(), *v.Secret.SecretName)
-				dpApply.Spec.Template.Spec.Volumes[i].Secret.SecretName = &name
-			}
-		}
-		// add prefix to secretName of proxy token
-		for i, c := range dpApply.Spec.Template.Spec.Containers {
-			if *c.Name == "karavi-authorization-proxy" {
-				for j, env := range c.Env {
-					if (*env.Name == "ACCESS_TOKEN" || *env.Name == "REFRESH_TOKEN") && utils.Contains(defaultAuthSecretsName, *env.ValueFrom.SecretKeyRef.Name) {
-						name := getNewAuthSecretName(cr.GetDriverType(), *env.ValueFrom.SecretKeyRef.Name)
-						dpApply.Spec.Template.Spec.Containers[i].Env[j].ValueFrom.SecretKeyRef.Name = &name
-					}
-				}
-			}
-		}
 	}
 
 	return dpApply, nil
@@ -734,11 +716,6 @@ func getObservabilityModule(cr csmv1.ContainerStorageModule) (csmv1.Module, erro
 		}
 	}
 	return csmv1.Module{}, fmt.Errorf("could not find observability module")
-}
-
-// getNewAuthSecretName - add prefix to secretName
-func getNewAuthSecretName(driverType csmv1.DriverType, secretName string) string {
-	return fmt.Sprintf("%s-%s", driverType, secretName)
 }
 
 // getIssuerCertServiceObs - gets cert manager issuer and certificate manifest for observability
