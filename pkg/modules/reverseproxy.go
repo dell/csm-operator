@@ -21,6 +21,7 @@ import (
 	"strconv"
 	"strings"
 
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -34,7 +35,6 @@ import (
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/logger"
-	"github.com/dell/csm-operator/pkg/utils"
 )
 
 // Constants to be used in reverse proxy config files
@@ -73,7 +73,7 @@ var ReverseproxySupportedDrivers = map[string]SupportedDriverParam{
 }
 
 // ReverseProxyPrecheck  - runs precheck for CSM ReverseProxy
-func ReverseProxyPrecheck(ctx context.Context, op utils.OperatorConfig, revproxy csmv1.Module, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
+func ReverseProxyPrecheck(ctx context.Context, op operatorutils.OperatorConfig, revproxy csmv1.Module, cr csmv1.ContainerStorageModule, r operatorutils.ReconcileCSM) error {
 	log := logger.GetLogger(ctx)
 
 	if _, ok := ReverseproxySupportedDrivers[string(cr.Spec.Driver.CSIDriverType)]; !ok {
@@ -131,13 +131,13 @@ func ReverseProxyPrecheck(ctx context.Context, op utils.OperatorConfig, revproxy
 }
 
 // ReverseProxyServer - apply/delete deployment objects
-func ReverseProxyServer(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func ReverseProxyServer(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	log := logger.GetLogger(ctx)
 	YamlString, err := getReverseProxyDeployment(op, cr)
 	if err != nil {
 		return err
 	}
-	deployObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	deployObjects, err := operatorutils.GetModuleComponentObj([]byte(YamlString))
 	if err != nil {
 		return err
 	}
@@ -149,7 +149,7 @@ func ReverseProxyServer(ctx context.Context, isDeleting bool, op utils.OperatorC
 
 			// Mount Credential support is only introduced in CSM v2.14.0. Prior to this version, we will not try to dynamically
 			// add the necessary fields for either approach.
-			secretSupported, err := utils.MinVersionCheck(drivers.PowerMaxMountCredentialMinVersion, cr.Spec.Driver.ConfigVersion)
+			secretSupported, err := operatorutils.MinVersionCheck(drivers.PowerMaxMountCredentialMinVersion, cr.Spec.Driver.ConfigVersion)
 			if err != nil {
 				return err
 			}
@@ -170,11 +170,11 @@ func ReverseProxyServer(ctx context.Context, isDeleting bool, op utils.OperatorC
 			}
 		}
 		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+			if err := operatorutils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
 		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+			if err := operatorutils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
 		}
@@ -184,14 +184,14 @@ func ReverseProxyServer(ctx context.Context, isDeleting bool, op utils.OperatorC
 }
 
 // ReverseProxyStartService starts reverseproxy service for node to connect to revserseproxy sidecar
-func ReverseProxyStartService(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func ReverseProxyStartService(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	log := logger.GetLogger(ctx)
 
 	YamlString, err := getReverseProxyService(op, cr)
 	if err != nil {
 		return err
 	}
-	deployObjects, err := utils.GetModuleComponentObj([]byte(YamlString))
+	deployObjects, err := operatorutils.GetModuleComponentObj([]byte(YamlString))
 	if err != nil {
 		return err
 	}
@@ -199,11 +199,11 @@ func ReverseProxyStartService(ctx context.Context, isDeleting bool, op utils.Ope
 	for _, ctrlObj := range deployObjects {
 		log.Infof("Object: %v -----\n", ctrlObj)
 		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+			if err := operatorutils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
 		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+			if err := operatorutils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
 		}
@@ -222,7 +222,7 @@ func getReverseProxyModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error
 }
 
 // getReverseProxyService - gets the reverseproxy service manifest
-func getReverseProxyService(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getReverseProxyService(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	yamlString := ""
 	revProxy := cr.GetModule(csmv1.ReverseProxy)
 	// This is necessary for the minimal manifest, where the reverse proxy will not be included in the CSM CR.
@@ -246,16 +246,16 @@ func getReverseProxyService(op utils.OperatorConfig, cr csmv1.ContainerStorageMo
 			}
 		}
 	}
-	yamlString = strings.ReplaceAll(yamlString, utils.DefaultReleaseName, cr.Name)
+	yamlString = strings.ReplaceAll(yamlString, operatorutils.DefaultReleaseName, cr.Name)
 	yamlString = strings.ReplaceAll(yamlString, ReverseProxyPort, proxyPort)
-	yamlString = strings.ReplaceAll(yamlString, utils.DefaultReleaseNamespace, cr.Namespace)
+	yamlString = strings.ReplaceAll(yamlString, operatorutils.DefaultReleaseNamespace, cr.Namespace)
 	yamlString = strings.ReplaceAll(yamlString, ReverseProxyCSMNameSpace, cr.Namespace)
 
 	return yamlString, nil
 }
 
 // getReverseProxyDeployment - updates deployment manifest with reverseproxy CRD values
-func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getReverseProxyDeployment(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 	revProxy, err := getReverseProxyModule(cr)
 	if err != nil {
@@ -295,7 +295,7 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 	}
 
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyImage, image)
-	YamlString = strings.ReplaceAll(YamlString, utils.DefaultReleaseNamespace, proxyNamespace)
+	YamlString = strings.ReplaceAll(YamlString, operatorutils.DefaultReleaseNamespace, proxyNamespace)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyPort, proxyPort)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyTLSSecret, proxyTLSSecret)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyConfigMap, proxyConfig)
@@ -305,7 +305,7 @@ func getReverseProxyDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorag
 }
 
 // ReverseProxyInjectDeployment injects reverseproxy container as sidecar into controller
-func ReverseProxyInjectDeployment(dp v1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*v1.DeploymentApplyConfiguration, error) {
+func ReverseProxyInjectDeployment(dp v1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*v1.DeploymentApplyConfiguration, error) {
 	revProxyModule, containerPtr, err := getRevproxyApplyCR(cr, op)
 	if err != nil {
 		return nil, err
@@ -333,7 +333,7 @@ func ReverseProxyInjectDeployment(dp v1.DeploymentApplyConfiguration, cr csmv1.C
 	}
 
 	// Dynamic secret/configMap mounting is only supported in v2.14.0 and above
-	secretSupported, err := utils.MinVersionCheck(drivers.PowerMaxMountCredentialMinVersion, cr.Spec.Driver.ConfigVersion)
+	secretSupported, err := operatorutils.MinVersionCheck(drivers.PowerMaxMountCredentialMinVersion, cr.Spec.Driver.ConfigVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -539,7 +539,7 @@ func getRevProxyVolumeComp(revProxyModule csmv1.Module) []acorev1.VolumeApplyCon
 	}
 
 	// Volume tls-secret should be added only of version is older than 2.12.0
-	isNewReverProxy, _ := utils.MinVersionCheck("v2.12.0", revProxyModule.ConfigVersion)
+	isNewReverProxy, _ := operatorutils.MinVersionCheck("v2.12.0", revProxyModule.ConfigVersion)
 	if revProxyModule.ConfigVersion != "" && !isNewReverProxy {
 		revProxyVolumes = append(revProxyVolumes, []acorev1.VolumeApplyConfiguration{
 			{
@@ -557,7 +557,7 @@ func getRevProxyVolumeComp(revProxyModule csmv1.Module) []acorev1.VolumeApplyCon
 }
 
 // returns revproxy module and container
-func getRevproxyApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
+func getRevproxyApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
 	var err error
 	revProxyModule := cr.GetModule(csmv1.ReverseProxy)
 
@@ -571,7 +571,7 @@ func getRevproxyApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig
 		return nil, nil, err
 	}
 
-	YamlString := utils.ModifyCommonCR(string(buf), cr)
+	YamlString := operatorutils.ModifyCommonCR(string(buf), cr)
 	var container acorev1.ContainerApplyConfiguration
 	err = yaml.Unmarshal([]byte(YamlString), &container)
 	if err != nil {

@@ -104,8 +104,8 @@ driver-unit-test:
 module-unit-test:
 	go clean -cache && go test -v -coverprofile=c.out github.com/dell/csm-operator/pkg/modules
 
-utils-unit-test:
-	go clean -cache && go test -v -coverprofile=c.out github.com/dell/csm-operator/pkg/utils
+operatorutils-unit-test:
+	go clean -cache && go test -v -coverprofile=c.out github.com/dell/csm-operator/pkg/operatorutils
 
 .PHONY: actions action-help
 actions: ## Run all GitHub Action checks that run on a pull request creation
