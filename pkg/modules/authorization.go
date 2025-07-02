@@ -29,7 +29,7 @@ import (
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	drivers "github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/logger"
-	utils "github.com/dell/csm-operator/pkg/utils"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	"golang.org/x/mod/semver"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -270,7 +270,7 @@ func CheckApplyContainersAuth(containers []acorev1.ContainerApplyConfiguration, 
 	return errors.New("karavi-authorization-proxy container was not injected into driver")
 }
 
-func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
+func getAuthApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
 	var err error
 	authModule := csmv1.Module{}
 	for _, m := range cr.Spec.Modules {
@@ -282,7 +282,7 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*
 
 	authConfigVersion := authModule.ConfigVersion
 	if authConfigVersion == "" {
-		authConfigVersion, err = utils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+		authConfigVersion, err = operatorutils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -294,7 +294,7 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*
 		return nil, nil, err
 	}
 
-	YamlString := utils.ModifyCommonCR(string(buf), cr)
+	YamlString := operatorutils.ModifyCommonCR(string(buf), cr)
 
 	YamlString = strings.ReplaceAll(YamlString, DefaultPluginIdentifier, AuthorizationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)].PluginIdentifier)
 	YamlString = strings.ReplaceAll(YamlString, AuthCSMNameSpace, cr.Namespace)
@@ -323,7 +323,7 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*
 			}
 		}
 	}
-	container.Env = utils.ReplaceAllApplyCustomEnvs(container.Env, authModule.Components[0].Envs, authModule.Components[0].Envs)
+	container.Env = operatorutils.ReplaceAllApplyCustomEnvs(container.Env, authModule.Components[0].Envs, authModule.Components[0].Envs)
 
 	skipCertValid := false
 	for _, env := range authModule.Components[0].Envs {
@@ -359,8 +359,8 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*
 	return &authModule, &container, nil
 }
 
-func getAuthApplyVolumes(cr csmv1.ContainerStorageModule, op utils.OperatorConfig, auth csmv1.ContainerTemplate) ([]acorev1.VolumeApplyConfiguration, error) {
-	version, err := utils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+func getAuthApplyVolumes(cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, auth csmv1.ContainerTemplate) ([]acorev1.VolumeApplyConfiguration, error) {
+	version, err := operatorutils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
 	if err != nil {
 		return nil, err
 	}
@@ -398,14 +398,14 @@ func getAuthApplyVolumes(cr csmv1.ContainerStorageModule, op utils.OperatorConfi
 }
 
 // AuthInjectDaemonset  - inject authorization into daemonset
-func AuthInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*applyv1.DaemonSetApplyConfiguration, error) {
+func AuthInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*applyv1.DaemonSetApplyConfiguration, error) {
 	authModule, containerPtr, err := getAuthApplyCR(cr, op)
 	if err != nil {
 		return nil, err
 	}
 
 	container := *containerPtr
-	utils.UpdateSideCarApply(authModule.Components, &container)
+	operatorutils.UpdateSideCarApply(authModule.Components, &container)
 
 	vols, err := getAuthApplyVolumes(cr, op, authModule.Components[0])
 	if err != nil {
@@ -426,14 +426,14 @@ func AuthInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.Contai
 }
 
 // AuthInjectDeployment - inject authorization into deployment
-func AuthInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op utils.OperatorConfig) (*applyv1.DeploymentApplyConfiguration, error) {
+func AuthInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*applyv1.DeploymentApplyConfiguration, error) {
 	authModule, containerPtr, err := getAuthApplyCR(cr, op)
 	if err != nil {
 		return nil, err
 	}
 
 	container := *containerPtr
-	utils.UpdateSideCarApply(authModule.Components, &container)
+	operatorutils.UpdateSideCarApply(authModule.Components, &container)
 
 	vols, err := getAuthApplyVolumes(cr, op, authModule.Components[0])
 	if err != nil {
@@ -454,7 +454,7 @@ func AuthInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.Cont
 }
 
 // AuthorizationPrecheck  - runs precheck for CSM Authorization
-func AuthorizationPrecheck(ctx context.Context, op utils.OperatorConfig, auth csmv1.Module, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func AuthorizationPrecheck(ctx context.Context, op operatorutils.OperatorConfig, auth csmv1.Module, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	log := logger.GetLogger(ctx)
 	if _, ok := AuthorizationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)]; !ok {
 		return fmt.Errorf("CSM Authorization does not support %s driver", string(cr.Spec.Driver.CSIDriverType))
@@ -527,7 +527,7 @@ func AuthorizationPrecheck(ctx context.Context, op utils.OperatorConfig, auth cs
 }
 
 // AuthorizationServerPrecheck  - runs precheck for CSM Authorization Proxy Server
-func AuthorizationServerPrecheck(ctx context.Context, op utils.OperatorConfig, auth csmv1.Module, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
+func AuthorizationServerPrecheck(ctx context.Context, op operatorutils.OperatorConfig, auth csmv1.Module, cr csmv1.ContainerStorageModule, r operatorutils.ReconcileCSM) error {
 	log := logger.GetLogger(ctx)
 
 	if auth.ConfigVersion != "" {
@@ -562,7 +562,7 @@ func AuthorizationServerPrecheck(ctx context.Context, op utils.OperatorConfig, a
 }
 
 // getAuthorizationServerDeployment - apply dynamic values to the deployment manifest before installation
-func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getAuthorizationServerDeployment(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 	auth, err := getAuthorizationModule(cr)
 	if err != nil {
@@ -632,7 +632,7 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 }
 
 // getAuthorizationLocalProvisioner for redis
-func getAuthorizationLocalProvisioner(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (bool, string, error) {
+func getAuthorizationLocalProvisioner(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (bool, string, error) {
 	auth, err := getAuthorizationModule(cr)
 	if err != nil {
 		return false, "", err
@@ -653,7 +653,7 @@ func getAuthorizationLocalProvisioner(op utils.OperatorConfig, cr csmv1.Containe
 }
 
 // AuthorizationServerDeployment - apply/delete deployment objects
-func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	useLocalStorage, yamlString, err := getAuthorizationLocalProvisioner(op, cr)
 	if err != nil {
 		return err
@@ -1205,7 +1205,7 @@ loop:
 }
 
 // AuthorizationIngress - apply/delete ingress objects
-func AuthorizationIngress(ctx context.Context, isDeleting, isOpenShift bool, cr csmv1.ContainerStorageModule, r utils.ReconcileCSM, ctrlClient crclient.Client) error {
+func AuthorizationIngress(ctx context.Context, isDeleting, isOpenShift bool, cr csmv1.ContainerStorageModule, r operatorutils.ReconcileCSM, ctrlClient crclient.Client) error {
 	ingress, err := createIngress(isOpenShift, cr)
 	if err != nil {
 		return fmt.Errorf("creating ingress: %v", err)
@@ -1224,7 +1224,7 @@ func AuthorizationIngress(ctx context.Context, isDeleting, isOpenShift bool, cr 
 	// Wait for NGINX ingress controller to be ready before creating Ingresses
 	// Needed for Kubernetes only
 	if !isDeleting && !isOpenShift {
-		if err := utils.WaitForNginxController(ctx, cr, r, time.Duration(10)*time.Second); err != nil {
+		if err := operatorutils.WaitForNginxController(ctx, cr, r, time.Duration(10)*time.Second); err != nil {
 			return fmt.Errorf("NGINX ingress controller is not ready: %v", err)
 		}
 	}
@@ -1238,7 +1238,7 @@ func AuthorizationIngress(ctx context.Context, isDeleting, isOpenShift bool, cr 
 }
 
 // getNginxIngressController - configure nginx ingress controller with the specified namespace before installation
-func getNginxIngressController(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getNginxIngressController(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 
 	auth, err := getAuthorizationModule(cr)
@@ -1261,7 +1261,7 @@ func getNginxIngressController(op utils.OperatorConfig, cr csmv1.ContainerStorag
 }
 
 // NginxIngressController - apply/delete nginx ingress controller objects
-func NginxIngressController(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func NginxIngressController(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	YamlString, err := getNginxIngressController(op, cr)
 	if err != nil {
 		return err
@@ -1276,7 +1276,7 @@ func NginxIngressController(ctx context.Context, isDeleting bool, op utils.Opera
 }
 
 // getPolicies - configure policies with the specified namespace before installation
-func getPolicies(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getPolicies(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 
 	auth, err := getAuthorizationModule(cr)
@@ -1297,7 +1297,7 @@ func getPolicies(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (stri
 }
 
 // InstallPolicies - apply/delete authorization opa policy objects
-func InstallPolicies(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func InstallPolicies(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	YamlString, err := getPolicies(op, cr)
 	if err != nil {
 		return err
@@ -1311,7 +1311,7 @@ func InstallPolicies(ctx context.Context, isDeleting bool, op utils.OperatorConf
 	return nil
 }
 
-func getCerts(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (bool, string, error) {
+func getCerts(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (bool, string, error) {
 	log := logger.GetLogger(ctx)
 	YamlString := ""
 	authNamespace := cr.Namespace
@@ -1357,7 +1357,7 @@ func getCerts(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerSt
 }
 
 // InstallWithCerts - apply/delete certificate related objects
-func InstallWithCerts(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func InstallWithCerts(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	useSelfSignedCert, YamlString, err := getCerts(ctx, op, cr)
 	if err != nil {
 		return err
@@ -1414,7 +1414,7 @@ func InstallWithCerts(ctx context.Context, isDeleting bool, op utils.OperatorCon
 }
 
 // getAuthCrdDeploy - apply and deploy authorization crd manifest
-func getAuthCrdDeploy(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getAuthCrdDeploy(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	yamlString := ""
 
 	auth, err := getAuthorizationModule(cr)
@@ -1436,7 +1436,7 @@ func getAuthCrdDeploy(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) 
 }
 
 // AuthCrdDeploy - apply and delete Auth crds deployment
-func AuthCrdDeploy(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func AuthCrdDeploy(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	auth, err := getAuthorizationModule(cr)
 	if err != nil {
 		return err
