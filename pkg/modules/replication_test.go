@@ -206,8 +206,8 @@ func TestReplicationPreCheck(t *testing.T) {
 			tmpCR.Spec.Driver.CSIDriverType = "powerstore"
 			replica := tmpCR.Spec.Modules[0]
 
-			cluster1ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-1")
-			cluster2ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-2")
+			cluster1ConfigSecret := getSecret(operatorutils.ReplicationControllerNameSpace, "test-target-cluster-1")
+			cluster2ConfigSecret := getSecret(operatorutils.ReplicationControllerNameSpace, "test-target-cluster-2")
 			configJSONFileGood := fmt.Sprintf("%s/driverconfig/%s/config.json", config.ConfigDirectory, csmv1.PowerStore)
 			driverSecret1 := shared.MakeSecretWithJSON(customResource.Name+"-config", customResource.Namespace, configJSONFileGood)
 			driverSecret2 := getSecret(customResource.Namespace, customResource.Name+"-certs-0")
