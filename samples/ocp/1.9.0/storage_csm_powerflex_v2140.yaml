@@ -75,7 +75,7 @@ spec:
         # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
-        image: quay.io/dell/storage/powerflex/sdc@sha256:048fbb10837cd301d55808f5e2a7d25ab711fa68ddb00f5a07b86affaf67b86e
+        image: quay.io/dell/storage/powerflex/sdc@sha256:4aca94f895636efcc7308aeb8b083cb2f15133e255185b8db0805b9649ca8540
         envs:
           - name: HOST_PID
             value: "1"
@@ -207,7 +207,7 @@ spec:
       #    operator: "Exists"
       #    effect: "NoSchedule"
     initContainers:
-      - image: quay.io/dell/storage/powerflex/sdc@sha256:048fbb10837cd301d55808f5e2a7d25ab711fa68ddb00f5a07b86affaf67b86e
+      - image: quay.io/dell/storage/powerflex/sdc@sha256:4aca94f895636efcc7308aeb8b083cb2f15133e255185b8db0805b9649ca8540
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
