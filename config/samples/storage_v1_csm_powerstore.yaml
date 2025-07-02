@@ -62,6 +62,20 @@ spec:
         # Default value: false
         - name: "GOPOWERSTORE_DEBUG"
           value: "false"
+        # X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION: It determines if driver is going to skip verification of TLS certificates.
+        # This value acts as a default value for skipCertificateValidation, if not specified for a cluster config in secret
+        # Allowed values:
+        #   true: skip certificate verification
+        #   false: verify certificates
+        # Default value: true
+        - name: X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION
+          value: "true"
+        # certSecretCount: Represents number of certificate secrets, which user is going to create for
+        # ssl authentication. (powerstore-cert-0..powerstore-cert-n)
+        # Allowed values: n, where n > 0
+        # Default value: None
+        - name: "CERT_SECRET_COUNT"
+          value: "1"
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
