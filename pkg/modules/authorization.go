@@ -768,7 +768,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	sentinels := ""
 	image := ""
 	vaults := []csmv1.Vault{}
-	secretProviderClasses := make(map[string]string)
+	var secretProviderClasses []string
 	leaderElection := true
 	otelCollector := ""
 	for _, component := range authModule.Components {

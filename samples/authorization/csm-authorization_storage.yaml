@@ -9,8 +9,8 @@ spec:
   storageSystemCredentials:
     secretProviderClass:
       name: secretProviderClassName
-      usernameObjectName: ""
-      passwordObjectName: ""
+      usernameObjectName: "username"
+      passwordObjectName: "password"
   skipCertificateValidation: true
   pollInterval: 30s
   isiPath: /ifs/data/csi
