@@ -22,12 +22,17 @@ import (
 	"github.com/dell/csm-operator/tests/shared/crclient"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var (
 	powerStoreCSM            = csmForPowerStore("csm")
 	powerStoreCSMBadVersion  = csmForPowerStoreBadVersion()
+	powerStoreCSMBadCertCnt  = csmForPowerStoreBadCertCnt()
+	powerStoreCSMEmptyEnv    = csmForPowerStoreWithEmptyEnv()
+	powerStoreCSMBadSkipCert = csmForPowerStoreBadSkipCert()
+	powerStoreSkipCertFalse  = csmForPowerStoreSkipCertFalse()
 	powerStoreClient         = crclient.NewFakeClientNoInjector(objects)
 	configJSONFileGoodPStore = fmt.Sprintf("%s/driverconfig/%s/config.json", config.ConfigDirectory, csmv1.PowerStore)
 	powerStoreSecret         = shared.MakeSecretWithJSON("csm-config", "driver-test", configJSONFileGoodPStore)
@@ -49,6 +54,25 @@ var (
 		{"bad version", powerStoreCSMBadVersion, powerStoreClient, powerStoreSecret, "not supported"},
 	}
 
+	powerStoreCertsVolumeTests = []struct {
+		// every single unit test name
+		name string
+		// csm object
+		csm csmv1.ContainerStorageModule
+		// client
+		ct client.Client
+		// secret
+		sec *corev1.Secret
+		// expected error
+		expectedErr string
+	}{
+		{"invalid value for skip cert validation", powerStoreCSMBadSkipCert, powerStoreClient, powerStoreSecret, "is an invalid value for X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION"},
+		{"invalid value for cert secret cnt", powerStoreCSMBadCertCnt, powerStoreClient, powerStoreSecret, "is an invalid value for CERT_SECRET_COUNT"},
+		{"skip cert false", powerStoreSkipCertFalse, powerStoreClient, powerStoreSecret, ""},
+		{"common is nil", powerStoreCSMCommonNil, powerStoreClient, powerStoreSecret, ""},
+		{"common env is empty", powerStoreCSMCommonEnvEmpty, powerStoreClient, powerStoreSecret, ""},
+	}
+
 	powerStorePrecheckTests = []struct {
 		// every single unit test name
 		name string
@@ -62,6 +86,11 @@ var (
 		expectedErr string
 	}{
 		{"missing secret", powerStoreCSM, powerStoreClient, fakeSecretPstore, "failed to find secret"},
+		{"bad version", powerStoreCSMBadVersion, powerStoreClient, fakeSecretPstore, "not supported"},
+		{"missing envs", powerStoreCSMEmptyEnv, powerStoreClient, fakeSecretPstore, "failed to find secret"},
+		{"invalid skip cert validation", csmForPowerStoreBadSkipCert(), powerStoreClient, fakeSecretPstore, "invalid value for X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION"},
+		{"invalid cert secret count", csmForPowerStoreBadCertCnt(), powerStoreClient, fakeSecretPstore, "invalid value for CERT_SECRET_COUNT"},
+		{"valid skip cert validation", csmForPowerStoreGoodSkipCert(), powerStoreClient, fakeSecretPstore, "failed to find secret csm-creds"},
 	}
 
 	powerStoreCommonEnvTest = []struct {
@@ -157,6 +186,128 @@ var (
 	}
 )
 
+func csmForPowerStoreGoodSkipCert() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
+
+	// Valid environment variables
+	envCertCount := corev1.EnvVar{
+		Name:  "CERT_SECRET_COUNT",
+		Value: "1", // Ensures the loop runs at least once
+	}
+	envSkipCertValidation := corev1.EnvVar{
+		Name:  "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION",
+		Value: "true", // Valid boolean string
+	}
+
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envCertCount, envSkipCertValidation}
+	res.Spec.Driver.AuthSecret = "csm-creds"
+	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
+
+	return res
+}
+
+func csmForPowerStoreMultipleCertSecrets() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.PStoreConfigVersion)
+	// Add log level to cover some code in GetConfigMap
+	envVarLogLevel1 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "2"}
+	envVarLogLevel2 := corev1.EnvVar{Name: "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION", Value: "false"}
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2}
+	// Add powerstore driver version
+	res.Spec.Driver.ConfigVersion = shared.PStoreConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
+	return res
+}
+
+func csmForPowerStoreWithEmptyEnv() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
+
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{}
+	res.Spec.Driver.AuthSecret = "csm-creds"
+
+	// Add pscale driver version
+	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.PowerScale
+
+	return res
+}
+
+var powerStoreCSMCommonEnvEmpty = csmv1.ContainerStorageModule{
+	ObjectMeta: metav1.ObjectMeta{
+		Name: "test-csm",
+	},
+	Spec: csmv1.ContainerStorageModuleSpec{
+		Driver: csmv1.Driver{
+			Common: &csmv1.ContainerTemplate{
+				Envs: []corev1.EnvVar{
+					{},
+				},
+			},
+		},
+	},
+}
+
+var powerStoreCSMSkipCertInvalid = csmv1.ContainerStorageModule{
+	ObjectMeta: metav1.ObjectMeta{
+		Name:      "powerstore",
+		Namespace: "default",
+	},
+	Spec: csmv1.ContainerStorageModuleSpec{
+		Driver: csmv1.Driver{
+			ConfigVersion: "v1",
+			Common: &csmv1.ContainerTemplate{
+				Envs: []corev1.EnvVar{
+					{
+						Name:  "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION",
+						Value: "notabool",
+					},
+				},
+			},
+		},
+	},
+}
+
+func csmForPowerStoreSkipCertFalse() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
+
+	// Add log level to cover some code in GetConfigMap
+	envVarLogLevel1 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "2"}
+	envVarLogLevel2 := corev1.EnvVar{Name: "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION", Value: "false"}
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2}
+
+	// Add powerstore driver version
+	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
+
+	return res
+}
+
+func csmForPowerStoreSkipCertTrue() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
+
+	// Add valid env vars
+	envVarCertCount := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "2"}
+	envVarSkipCert := corev1.EnvVar{Name: "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION", Value: "true"}
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarCertCount, envVarSkipCert}
+
+	// Set PowerStore driver type and config version
+	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
+
+	return res
+}
+
+var powerStoreCSMCommonNil = csmv1.ContainerStorageModule{
+	ObjectMeta: metav1.ObjectMeta{
+		Name: "test-csm",
+	},
+	Spec: csmv1.ContainerStorageModuleSpec{
+		Driver: csmv1.Driver{
+			Common: nil,
+		},
+	},
+}
+
 func TestPrecheckPowerStore(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range powerStorePrecheckTests {
@@ -245,4 +396,49 @@ func gopowerstoreDebug(debug string) csmv1.ContainerStorageModule {
 	}
 
 	return cr
+}
+
+func csmForPowerStoreBadSkipCert() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
+
+	// Add log level to cover some code in GetConfigMap
+	envVarLogLevel1 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "2"}
+	envVarLogLevel2 := corev1.EnvVar{Name: "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION", Value: "NotABool"}
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2}
+
+	// Add pscale driver version
+	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
+
+	return res
+}
+
+// makes a csm object with tolerations
+func csmForPowerStoreBadCertCnt() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
+
+	// Add log level to cover some code in GetConfigMap
+	envVarLogLevel1 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "thisIsNotANumber"}
+	envVarLogLevel2 := corev1.EnvVar{Name: "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION", Value: "true"}
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2}
+
+	// Add pscale driver version
+	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
+
+	return res
+}
+
+func TestGetApplyCertVolumePowerStore(t *testing.T) {
+	for _, tt := range powerStoreCertsVolumeTests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := getApplyCertVolumePowerstore(tt.csm)
+			t.Logf("Expected error: %q, Actual error: %v", tt.expectedErr, err)
+			if tt.expectedErr == "" {
+				assert.Nil(t, err)
+			} else {
+				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
+			}
+		})
+	}
 }
