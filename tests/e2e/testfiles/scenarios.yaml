@@ -1069,7 +1069,7 @@
     - "Delete custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is not installed"
 
-- scenario: "Install PowerStore Driver(Standalone), Enable Resiliency"
+- scenario: "Install PowerStore Driver(Standalone), Enable/Disable Resiliency"
   paths:
     - "testfiles/storage_csm_powerstore.yaml"
   tags:
@@ -1134,9 +1134,9 @@
     - "Validate [powerstore] driver from CR [1] is installed"
     - "Validate [replication] module from CR [1] is not installed"
     # cleanup
-    - "Enable forceRemoveDriver on CR [2]"
-    - "Delete custom resource [2]"
-    - "Validate [powerstore] driver from CR [2] is not installed"
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is not installed"
 
 - scenario: "Install Unity Driver(Standalone)"
   paths:
