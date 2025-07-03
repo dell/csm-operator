@@ -553,7 +553,11 @@ func (step *Step) validateObservabilityInstalled(cr csmv1.ContainerStorageModule
 	dpApply, err := getApplyObservabilityDeployment(csmNamespace, driverType, clusterClient.ClusterCTRLClient)
 	if err != nil {
 		return err
+	}
 	if authorizationEnabled, _ := operatorutils.IsModuleEnabled(context.TODO(), *instance, csmv1.Authorization); authorizationEnabled {
+		if err := correctlyAuthInjected(cr, dpApply.Annotations, dpApply.Spec.Template.Spec.Volumes, dpApply.Spec.Template.Spec.Containers); err != nil {
+			return fmt.Errorf("failed to check for observability authorization installation in %s: %v", clusterClient.ClusterID, err)
+		}
 	} else {
 		for _, cnt := range dpApply.Spec.Template.Spec.Containers {
 			if *cnt.Name == authString {
