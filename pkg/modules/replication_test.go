@@ -196,6 +196,32 @@ func TestReplicationPreCheck(t *testing.T) {
 			return true, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
 
+		"success - driver type PowerStore": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_powerstore_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			tmpCR.Spec.Driver.CSIDriverType = "powerstore"
+			replica := tmpCR.Spec.Modules[0]
+
+			cluster1ConfigSecret := getSecret(operatorutils.ReplicationControllerNameSpace, "test-target-cluster-1")
+			cluster2ConfigSecret := getSecret(operatorutils.ReplicationControllerNameSpace, "test-target-cluster-2")
+			configJSONFileGood := fmt.Sprintf("%s/driverconfig/%s/config.json", config.ConfigDirectory, csmv1.PowerStore)
+			driverSecret1 := shared.MakeSecretWithJSON(customResource.Name+"-config", customResource.Namespace, configJSONFileGood)
+			driverSecret2 := getSecret(customResource.Namespace, customResource.Name+"-certs-0")
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cluster1ConfigSecret, cluster2ConfigSecret, driverSecret1, driverSecret2).Build()
+
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
+				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(driverSecret1, driverSecret2).Build()
+				return clusterClient, nil
+			}
+
+			return true, replica, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+
 		"success - version provided": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
