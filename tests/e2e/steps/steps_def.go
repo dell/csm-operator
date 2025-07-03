@@ -868,8 +868,8 @@ func (step *Step) generateAndCreateSftpSecrets(_ Resource, privateKeyPath, priva
 	}
 
 	// Write key files to disk for secret creation
-	privateOut := filepath.Join(tmpDir, "sftp-secret-private.yaml")
-	publicOut := filepath.Join(tmpDir, "sftp-secret-public.yaml")
+	privateOut := filepath.Join(tmpDir, "sftp-secret-private.crt")
+	publicOut := filepath.Join(tmpDir, "sftp-secret-public.crt")
 	if err := os.WriteFile(privateOut, privateKeyData, 0o600); err != nil {
 		return fmt.Errorf("failed to write private secret file: %v", err)
 	}
