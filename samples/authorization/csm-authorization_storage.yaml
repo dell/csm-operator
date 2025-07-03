@@ -1,9 +1,9 @@
 apiVersion: csm-authorization.storage.dell.com/v1
 kind: Storage
 metadata:
-  name: powerflex
+  name: powerscale
 spec:
-  type: powerflex
+  type: powerscale
   endpoint: https://127.0.0.1
   systemID: 1a99aa999999aa9a
   storageSystemCredentials:
