@@ -210,7 +210,7 @@
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [replication] module from CR [2] is installed"
     - "Disable [replication] module from CR [1]"
-    - "Validate [replication] driver from CR [1] is installed"
+    - "Validate [powerscale] driver from CR [1] is installed"
     - "Validate [replication] module from CR [1] is not installed"
     # cleanup
     - "Enable forceRemoveDriver on CR [2]"
@@ -846,7 +846,7 @@
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Validate [replication] module from CR [1] is installed"
     - "Disable [replication] module from CR [1]"
-    - "Validate [replication] driver from CR [1] is installed"
+    - "Validate [powerflex] driver from CR [1] is installed"
     - "Validate [replication] module from CR [1] is not installed"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
@@ -1116,7 +1116,6 @@
 - scenario: "Install PowerStore Driver(Standalone), Enable/Disable Replication"
   paths:
     - "testfiles/storage_csm_powerstore.yaml"
-    - "testfiles/storage_csm_powerstore_replication.yaml"
   tags:
     - "powerstore"
     - "replication"
@@ -1128,11 +1127,11 @@
     - "Validate custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is installed"
     - "Validate [replication] module from CR [1] is not installed"
-    - "Enable [replication] module from CR [2]"
-    - "Validate [powerstore] driver from CR [2] is installed"
-    - "Validate [replication] module from CR [2] is installed"
+    - "Enable [replication] module from CR [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Validate [replication] module from CR [1] is installed"
     - "Disable [replication] module from CR [1]"
-    - "Validate [replication] driver from CR [1] is installed"
+    - "Validate [powerstore] driver from CR [1] is installed"
     - "Validate [replication] module from CR [1] is not installed"
     # cleanup
     - "Enable forceRemoveDriver on CR [2]"
