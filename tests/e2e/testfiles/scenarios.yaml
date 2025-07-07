@@ -210,7 +210,7 @@
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [replication] module from CR [2] is installed"
     - "Disable [replication] module from CR [1]"
-    - "Validate [replication] driver from CR [1] is installed"
+    - "Validate [powerscale] driver from CR [1] is installed"
     - "Validate [replication] module from CR [1] is not installed"
     # cleanup
     - "Enable forceRemoveDriver on CR [2]"
@@ -846,7 +846,7 @@
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Validate [replication] module from CR [1] is installed"
     - "Disable [replication] module from CR [1]"
-    - "Validate [replication] driver from CR [1] is installed"
+    - "Validate [powerflex] driver from CR [1] is installed"
     - "Validate [replication] module from CR [1] is not installed"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
@@ -1069,7 +1069,7 @@
     - "Delete custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is not installed"
 
-- scenario: "Install PowerStore Driver(Standalone), Enable Resiliency"
+- scenario: "Install PowerStore Driver(Standalone), Enable/Disable Resiliency"
   paths:
     - "testfiles/storage_csm_powerstore.yaml"
   tags:
@@ -1089,6 +1089,50 @@
     - "Disable [resiliency] module from CR [1]"
     - "Validate [powerstore] driver from CR [1] is installed"
     - "Validate [resiliency] module from CR [1] is not installed"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is not installed"
+
+- scenario: "Install PowerStore Driver(With Replication)"
+  paths:
+    - "testfiles/storage_csm_powerstore_replication.yaml"
+  tags:
+    - "powerstore"
+    - "replication"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Validate [replication] module from CR [1] is installed"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is not installed"
+
+- scenario: "Install PowerStore Driver(Standalone), Enable/Disable Replication"
+  paths:
+    - "testfiles/storage_csm_powerstore.yaml"
+  tags:
+    - "powerstore"
+    - "replication"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Validate [replication] module from CR [1] is not installed"
+    - "Enable [replication] module from CR [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Validate [replication] module from CR [1] is installed"
+    - "Disable [replication] module from CR [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Validate [replication] module from CR [1] is not installed"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
@@ -1619,7 +1663,6 @@
     - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
     - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
-    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [karavi] for [pmaxAuthSidecar]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
@@ -1808,7 +1851,6 @@
     - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxAuthArrayConfig]"
     - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config_auth.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxReverseProxy]"
-    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config_auth.yaml] name [powermax-reverseproxy-config] in namespace [karavi] for [pmaxReverseProxy]"
     - "Apply custom resource [3]"
     - "Validate custom resource [3]"
     - "Validate [powermax] driver from CR [3] is installed"
@@ -1846,7 +1888,6 @@
     - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
     - "Create resource with template [testfiles/storage_csm_powermax_observability_authorization.yaml] for [pmaxArrayConfig]"
     - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config_auth.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxReverseProxy]"
-    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config_auth.yaml] name [powermax-reverseproxy-config] in namespace [karavi] for [pmaxReverseProxy]"
     - "Validate custom resource [3]"
     - "Validate [powermax] driver from CR [3] is installed"
     - "Validate [authorization] module from CR [3] is installed"
