@@ -150,8 +150,6 @@ const (
 	ResiliencySideCarName = "podmon"
 	// DefaultSourceClusterID -
 	DefaultSourceClusterID = "default-source-cluster"
-	// ObservabilityNamespace - karavi
-	ObservabilityNamespace = "karavi"
 	// AuthorizationNamespace - authorization
 	AuthorizationNamespace = "authorization"
 	// PodmonControllerComponent - podmon-controller
