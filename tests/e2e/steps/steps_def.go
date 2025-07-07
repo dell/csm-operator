@@ -540,16 +540,17 @@ func (step *Step) validateObservabilityInstalled(cr csmv1.ContainerStorageModule
 		K8sClient: step.clientSet,
 	}
 
+	csmNamespace := cr.Namespace
 	clusterClient := operatorutils.GetCluster(context.TODO(), &fakeReconcile)
 
 	// check observability in all clusters
-	if err := checkObservabilityRunningPods(context.TODO(), operatorutils.ObservabilityNamespace, clusterClient.ClusterK8sClient); err != nil {
+	if err := checkObservabilityRunningPods(context.TODO(), csmNamespace, clusterClient.ClusterK8sClient); err != nil {
 		return fmt.Errorf("failed to check for observability installation in %s: %v", clusterClient.ClusterID, err)
 	}
 
 	// check observability's authorization
 	driverType := cr.Spec.Driver.CSIDriverType
-	dpApply, err := getApplyObservabilityDeployment(operatorutils.ObservabilityNamespace, driverType, clusterClient.ClusterCTRLClient)
+	dpApply, err := getApplyObservabilityDeployment(csmNamespace, driverType, clusterClient.ClusterCTRLClient)
 	if err != nil {
 		return err
 	}
@@ -575,10 +576,11 @@ func (step *Step) validateObservabilityNotInstalled(cr csmv1.ContainerStorageMod
 		K8sClient: step.clientSet,
 	}
 
+	csmNamespace := cr.Namespace
 	clusterClient := operatorutils.GetCluster(context.TODO(), &fakeReconcile)
 
 	// check observability is not installed
-	if err := checkObservabilityNoRunningPods(context.TODO(), operatorutils.ObservabilityNamespace, clusterClient.ClusterK8sClient); err != nil {
+	if err := checkObservabilityNoRunningPods(context.TODO(), csmNamespace, clusterClient.ClusterK8sClient); err != nil {
 		return fmt.Errorf("failed observability installation check %s: %v", clusterClient.ClusterID, err)
 	}
 
