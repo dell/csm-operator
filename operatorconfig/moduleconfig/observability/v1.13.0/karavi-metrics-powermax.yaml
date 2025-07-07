@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: karavi-metrics-powermax-controller
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -26,7 +26,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: karavi-metrics-powermax-controller
-    namespace: karavi
+    namespace: <CSM_NAMESPACE>
 roleRef:
   kind: ClusterRole
   name: karavi-metrics-powermax-controller
@@ -36,7 +36,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: karavi-metrics-powermax-controller
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
@@ -49,11 +49,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: karavi-metrics-powermax-controller
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
 subjects:
   - kind: ServiceAccount
     name: karavi-metrics-powermax-controller
-    namespace: karavi
+    namespace: <CSM_NAMESPACE>
 roleRef:
   kind: Role
   name: karavi-metrics-powermax-controller
@@ -66,7 +66,7 @@ metadata:
     app.kubernetes.io/name: karavi-metrics-powermax
     app.kubernetes.io/instance: karavi
   name: karavi-metrics-powermax
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
 spec:
   type: ClusterIP
   ports:
@@ -81,7 +81,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: karavi-metrics-powermax-configmap
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
 data:
   karavi-metrics-powermax.yaml: |
     COLLECTOR_ADDR: <COLLECTOR_ADDRESS>
@@ -98,7 +98,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: <DriverDefaultReleaseName>-config-params
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
 data:
   driver-config-params.yaml: |
     CSI_LOG_LEVEL: debug
@@ -108,7 +108,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: karavi-metrics-powermax
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
   labels:
     app.kubernetes.io/name: karavi-metrics-powermax
     app.kubernetes.io/instance: karavi
