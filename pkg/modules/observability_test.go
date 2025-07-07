@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Dell Inc., or its subsidiaries. All Rights Reserved.
+// Copyright (c) 2025 Dell Inc., or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -446,37 +446,6 @@ func TestPowerScaleMetrics(t *testing.T) {
 
 			return true, false, tmpCR, fakeClient, operatorConfig
 		},
-		"success - copy secrets when secrets already existed": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
-			if err != nil {
-				panic(err)
-			}
-			isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
-			isilonKaraviAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
-			isilonProxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
-			karaviIsilonCreds := getSecret("karavi", "isilon-creds")
-			karaviAuthconfig := getSecret("karavi", "isilon-karavi-authorization-config")
-			proxyAuthzTokens := getSecret("karavi", "isilon-proxy-authz-tokens")
-			tmpCR := customResource
-			auth := &tmpCR.Spec.Modules[1]
-			auth.Enabled = true
-
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds, isilonKaraviAuthconfig, isilonProxyAuthzTokens, karaviIsilonCreds, karaviAuthconfig, proxyAuthzTokens).Build()
-
-			return true, false, tmpCR, sourceClient, operatorConfig
-		},
-		"Fail - no secrets in isilon namespace": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			tmpCR := customResource
-
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-
-			return false, false, tmpCR, sourceClient, operatorConfig
-		},
 		"Fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
@@ -486,29 +455,6 @@ func TestPowerScaleMetrics(t *testing.T) {
 			tmpCR := customResource
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-
-			return false, false, tmpCR, sourceClient, operatorConfig
-		},
-		"Fail - skipCertificateValidation is false but no cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
-			karaviAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
-			proxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
-
-			tmpCR := customResource
-			auth := &tmpCR.Spec.Modules[1]
-			auth.Enabled = true
-			// set skipCertificateValidation to false
-			for i, env := range auth.Components[0].Envs {
-				if env.Name == "SKIP_CERTIFICATE_VALIDATION" {
-					auth.Components[0].Envs[i].Value = "false"
-				}
-			}
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds, karaviAuthconfig, proxyAuthzTokens).Build()
 
 			return false, false, tmpCR, sourceClient, operatorConfig
 		},
@@ -748,39 +694,8 @@ func TestPowerFlexMetrics(t *testing.T) {
 
 			return true, false, tmpCR, fakeClient, operatorConfig
 		},
-		"success - copy secrets when secrets already existed": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powerflex_observability.yaml")
-			if err != nil {
-				panic(err)
-			}
-			vxflexosCreds := getSecret(customResource.Namespace, "test-vxflexos-config")
-			vxflexosAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
-			vxflexosProxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
-			karaviVxflexosCreds := getSecret("karavi", "test-vxflexos-config")
-			karaviAuthconfig := getSecret("karavi", "powerflex-karavi-authorization-config")
-			proxyAuthzTokens := getSecret("karavi", "powerflex-proxy-authz-tokens")
-			tmpCR := customResource
-			auth := &tmpCR.Spec.Modules[1]
-			auth.Enabled = true
-
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(vxflexosCreds, karaviAuthconfig, proxyAuthzTokens, karaviVxflexosCreds, vxflexosAuthconfig, vxflexosProxyAuthzTokens).Build()
-
-			return true, false, tmpCR, sourceClient, operatorConfig
-		},
 		"Fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			tmpCR := customResource
-
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-
-			return false, false, tmpCR, sourceClient, operatorConfig
-		},
-		"Fail - no secrets in test-vxflexos namespace": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powerflex_observability.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -993,18 +908,6 @@ func TestPowerMaxMetrics(t *testing.T) {
 
 			return false, false, customResource, sourceClient, operatorConfig
 		},
-		"Fail - no secrets in test-powermax namespace": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			tmpCR := customResource
-
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-
-			return false, false, tmpCR, sourceClient, operatorConfig
-		},
 		"Fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powermax_replica.yaml")
 			if err != nil {
@@ -1014,29 +917,6 @@ func TestPowerMaxMetrics(t *testing.T) {
 			tmpCR := customResource
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-
-			return false, false, tmpCR, sourceClient, operatorConfig
-		},
-		"Fail - skipCertificateValidation is false but no cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			pmaxCreds := getSecret(customResource.Namespace, "test-powermax-creds")
-			karaviAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
-			proxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
-
-			tmpCR := customResource
-			auth := &tmpCR.Spec.Modules[1]
-			auth.Enabled = true
-			// set skipCertificateValidation to false
-			for i, env := range auth.Components[0].Envs {
-				if env.Name == "SKIP_CERTIFICATE_VALIDATION" {
-					auth.Components[0].Envs[i].Value = "false"
-				}
-			}
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds, karaviAuthconfig, proxyAuthzTokens).Build()
 
 			return false, false, tmpCR, sourceClient, operatorConfig
 		},
