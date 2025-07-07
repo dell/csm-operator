@@ -97,6 +97,10 @@ var ReplicationSupportedDrivers = map[string]SupportedDriverParam{
 		PluginIdentifier:              drivers.PowerMaxPluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerMaxConfigParamsVolumeMount,
 	},
+	string(csmv1.PowerStore): {
+		PluginIdentifier:              drivers.PowerStorePluginIdentifier,
+		DriverConfigParamsVolumeMount: drivers.PowerStoreConfigParamsVolumeMount,
+	},
 }
 
 func getRepctlPrefices(replicaModule csmv1.Module, driverType csmv1.DriverType) (string, string) {
@@ -338,6 +342,14 @@ func ReplicationPrecheck(ctx context.Context, op operatorutils.OperatorConfig, r
 		if err != nil {
 			return fmt.Errorf("failed powerflex validation: %v for cluster %s", err, clusterClient.ClusterID)
 		}
+	case csmv1.PowerStore:
+		tmpCR := cr
+		log.Infof("\nperforming pre checks for: %s", clusterClient.ClusterID)
+		err := drivers.PrecheckPowerStore(ctx, &tmpCR, op, clusterClient.ClusterCTRLClient)
+		if err != nil {
+			return fmt.Errorf("failed powerstore validation: %v for cluster %s", err, clusterClient.ClusterID)
+		}
+
 	}
 
 	return nil
