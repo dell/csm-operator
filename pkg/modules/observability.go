@@ -298,7 +298,6 @@ func getTopology(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModul
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 	YamlString = strings.ReplaceAll(YamlString, CSMNameSpace, cr.Namespace)
 	YamlString = strings.ReplaceAll(YamlString, TopologyLogLevel, logLevel)
-	YamlString = strings.ReplaceAll(YamlString, CSMNameSpace, cr.Namespace)
 
 	topoObjects, err := operatorutils.GetModuleComponentObj([]byte(YamlString))
 	if err != nil {
