@@ -19,7 +19,7 @@ This directory contains the testing infrastructure and E2E test implementation f
 
 ## Unit Tests
 
-The unit tests are quick, easy-to-run tests that verify the functinality of the methods in different packages. The only major requirement for unit tests is that Go is installed. The unit tests are automatically run by GitHub actions as part of any PR targeting the main branch, and must pass with sufficient coverage for the PR to be merged.
+The unit tests are quick, easy-to-run tests that verify the functionality of the methods in different packages. The only major requirement for unit tests is that Go is installed. The unit tests are automatically run by GitHub actions as part of any PR targeting the main branch, and must pass with sufficient coverage for the PR to be merged.
 
 To run unit tests, go to the root directory of this project and run `make <component>-unit-test`. Components include `controller` (controllers package), `module` (modules package), and `driver` (drivers package).
 
@@ -37,7 +37,6 @@ Any time changes made to the operator are being checked into the main branch, sa
 - Fill in the environment variables in `array-info.env` ([more info below](#run)).
 - The following namespaces need to be created beforehand:
   - `dell`
-  - `karavi`
   - `authorization`
   - `proxy-ns`
   - (if running sanity, powerflex, or modules suites) `test-vxflexos`
@@ -104,7 +103,7 @@ If running the Shared NFS e2e tests, further setup must be done:
 - On each of the worker nodes, setup the nfs-server service and ensure that mounting with nfs4 is enabled.
 - Install the `sshpass` command on the VM where the tests are being run.
 - Update the password within `scripts/node_credential` to the password of the worker nodes (this assumes that all nodes share the same password).
-- During e2e exection specify the `sharednfs` flag. Otherwise, the tests won't run on its own due to the above prerequisite.
+- During e2e execution specify the `sharednfs` flag. Otherwise, the tests won't run on its own due to the above prerequisite.
 
 ## Run
 
@@ -169,7 +168,7 @@ Each test has:
 - `scenario`: The name of the test to run
 - `path`: The path to the custom resources yaml file that has the specific configuration you want to test.
 - `tags`: Each test can belong to one or more groups of tests, specified by tags. To see a list of currently available tags, run `./run-e2e-test.sh -h`.
-- `steps`: Steps to take for the specific scenearios. Please note that all steps above and the ones in this sample file `tests/e2e/testfiles/values.yaml` already have a backend implementation. If you desire to use a different step, see [Develop](#develop) for how to add new E2E Test
+- `steps`: Steps to take for the specific scenarios. Please note that all steps above and the ones in this sample file `tests/e2e/testfiles/values.yaml` already have a backend implementation. If you desire to use a different step, see [Develop](#develop) for how to add new E2E Test
 - `customTest`: An array of entrypoints for users to run custom tests against their environment. There are two methods of running custom tests.
 
   - You may have `"Run custom test"` as part of your `steps` above if there is _only one custom test in the array of tests_.

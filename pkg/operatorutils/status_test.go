@@ -1054,7 +1054,7 @@ func TestObservabilityStatusCheck(t *testing.T) {
 	deployment1 := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "otel-collector",
-			Namespace: "karavi",
+			Namespace: "test-namespace",
 		},
 		Status: appsv1.DeploymentStatus{
 			ReadyReplicas: 1,
@@ -1066,7 +1066,7 @@ func TestObservabilityStatusCheck(t *testing.T) {
 	deployment2 := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "karavi-topology",
-			Namespace: "karavi",
+			Namespace: "test-namespace",
 		},
 		Status: appsv1.DeploymentStatus{
 			ReadyReplicas: 1,
@@ -1078,7 +1078,7 @@ func TestObservabilityStatusCheck(t *testing.T) {
 	deployment3 := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "karavi-metrics-powerflex",
-			Namespace: "karavi",
+			Namespace: "test-namespace",
 		},
 		Status: appsv1.DeploymentStatus{
 			ReadyReplicas: 1,
@@ -1202,7 +1202,7 @@ func TestObservabilityStatusCheckError(t *testing.T) {
 	otelDeployment := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "otel-collector",
-			Namespace: "karavi",
+			Namespace: "test-namespace",
 		},
 		Status: appsv1.DeploymentStatus{
 			ReadyReplicas: 0,
@@ -1215,7 +1215,7 @@ func TestObservabilityStatusCheckError(t *testing.T) {
 	metricsPowerflexDeployment := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "karavi-metrics-powermax",
-			Namespace: "karavi",
+			Namespace: "test-namespace",
 		},
 		Status: appsv1.DeploymentStatus{
 			ReadyReplicas: 0,
@@ -1228,7 +1228,7 @@ func TestObservabilityStatusCheckError(t *testing.T) {
 	topologyDeployment := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "karavi-topology",
-			Namespace: "karavi",
+			Namespace: "test-namespace",
 		},
 		Status: appsv1.DeploymentStatus{
 			ReadyReplicas: 0,
