@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Dell Inc., or its subsidiaries. All Rights Reserved.
+// Copyright (c) 2025 Dell Inc., or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ import (
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	csmv1 "github.com/dell/csm-operator/api/v1"
-	utils "github.com/dell/csm-operator/pkg/utils"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	"github.com/dell/csm-operator/tests/shared"
 	"github.com/dell/csm-operator/tests/shared/clientgoclient"
 	"github.com/dell/csm-operator/tests/shared/crclient"
@@ -211,20 +211,20 @@ func TestObservabilityPrecheck(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			oldNewControllerRuntimeClientWrapper := utils.NewControllerRuntimeClientWrapper
-			oldNewK8sClientWrapper := utils.NewK8sClientWrapper
+			oldNewControllerRuntimeClientWrapper := operatorutils.NewControllerRuntimeClientWrapper
+			oldNewK8sClientWrapper := operatorutils.NewK8sClientWrapper
 			defer func() {
-				utils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
-				utils.NewK8sClientWrapper = oldNewK8sClientWrapper
+				operatorutils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
+				operatorutils.NewK8sClientWrapper = oldNewK8sClientWrapper
 			}()
 
 			success, observability, tmpCR, sourceClient, fakeControllerRuntimeClient := tc(t)
-			utils.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
-			utils.NewK8sClientWrapper = func(_ []byte) (*kubernetes.Clientset, error) {
+			operatorutils.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
+			operatorutils.NewK8sClientWrapper = func(_ []byte) (*kubernetes.Clientset, error) {
 				return nil, nil
 			}
 
-			fakeReconcile := utils.FakeReconcileCSM{
+			fakeReconcile := operatorutils.FakeReconcileCSM{
 				Client:    sourceClient,
 				K8sClient: fake.NewSimpleClientset(),
 			}
@@ -240,8 +240,8 @@ func TestObservabilityPrecheck(t *testing.T) {
 }
 
 func TestObservabilityTopologyController(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -263,7 +263,7 @@ func TestObservabilityTopologyController(t *testing.T) {
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
 
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -276,7 +276,7 @@ func TestObservabilityTopologyController(t *testing.T) {
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
 
-		"Fail - observability module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"Fail - observability module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -305,8 +305,8 @@ func TestObservabilityTopologyController(t *testing.T) {
 }
 
 func TestPowerScaleMetrics(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -328,7 +328,7 @@ func TestPowerScaleMetrics(t *testing.T) {
 
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - deleting with auth": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - deleting with auth": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -355,7 +355,7 @@ func TestPowerScaleMetrics(t *testing.T) {
 
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - deleting with auth after one cycle": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - deleting with auth after one cycle": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -379,7 +379,7 @@ func TestPowerScaleMetrics(t *testing.T) {
 
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -392,7 +392,7 @@ func TestPowerScaleMetrics(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating with auth": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating with auth": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -409,7 +409,7 @@ func TestPowerScaleMetrics(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"success - update objects": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - update objects": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -446,38 +446,7 @@ func TestPowerScaleMetrics(t *testing.T) {
 
 			return true, false, tmpCR, fakeClient, operatorConfig
 		},
-		"success - copy secrets when secrets already existed": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
-			if err != nil {
-				panic(err)
-			}
-			isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
-			isilonKaraviAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
-			isilonProxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
-			karaviIsilonCreds := getSecret("karavi", "isilon-creds")
-			karaviAuthconfig := getSecret("karavi", "isilon-karavi-authorization-config")
-			proxyAuthzTokens := getSecret("karavi", "isilon-proxy-authz-tokens")
-			tmpCR := customResource
-			auth := &tmpCR.Spec.Modules[1]
-			auth.Enabled = true
-
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds, isilonKaraviAuthconfig, isilonProxyAuthzTokens, karaviIsilonCreds, karaviAuthconfig, proxyAuthzTokens).Build()
-
-			return true, false, tmpCR, sourceClient, operatorConfig
-		},
-		"Fail - no secrets in isilon namespace": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			tmpCR := customResource
-
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-
-			return false, false, tmpCR, sourceClient, operatorConfig
-		},
-		"Fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"Fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -486,29 +455,6 @@ func TestPowerScaleMetrics(t *testing.T) {
 			tmpCR := customResource
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-
-			return false, false, tmpCR, sourceClient, operatorConfig
-		},
-		"Fail - skipCertificateValidation is false but no cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
-			karaviAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
-			proxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
-
-			tmpCR := customResource
-			auth := &tmpCR.Spec.Modules[1]
-			auth.Enabled = true
-			// set skipCertificateValidation to false
-			for i, env := range auth.Components[0].Envs {
-				if env.Name == "SKIP_CERTIFICATE_VALIDATION" {
-					auth.Components[0].Envs[i].Value = "false"
-				}
-			}
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds, karaviAuthconfig, proxyAuthzTokens).Build()
 
 			return false, false, tmpCR, sourceClient, operatorConfig
 		},
@@ -529,8 +475,8 @@ func TestPowerScaleMetrics(t *testing.T) {
 }
 
 func TestOtelCollector(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -552,7 +498,7 @@ func TestOtelCollector(t *testing.T) {
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
 
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -565,7 +511,7 @@ func TestOtelCollector(t *testing.T) {
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
 
-		"success - with older otel image": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - with older otel image": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerflex_observability_with_old_otel_image.yaml")
 			if err != nil {
 				panic(err)
@@ -578,7 +524,7 @@ func TestOtelCollector(t *testing.T) {
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
 
-		"Fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"Fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -607,8 +553,8 @@ func TestOtelCollector(t *testing.T) {
 }
 
 func TestPowerFlexMetrics(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerflex_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -630,7 +576,7 @@ func TestPowerFlexMetrics(t *testing.T) {
 
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - deleting with auth": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - deleting with auth": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerflex_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -657,7 +603,7 @@ func TestPowerFlexMetrics(t *testing.T) {
 
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - deleting with auth after one cycle": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - deleting with auth after one cycle": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerflex_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -681,7 +627,7 @@ func TestPowerFlexMetrics(t *testing.T) {
 
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerflex_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -694,7 +640,7 @@ func TestPowerFlexMetrics(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating with auth": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating with auth": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerflex_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -711,7 +657,7 @@ func TestPowerFlexMetrics(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"success - update objects": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - update objects": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerflex_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -748,39 +694,8 @@ func TestPowerFlexMetrics(t *testing.T) {
 
 			return true, false, tmpCR, fakeClient, operatorConfig
 		},
-		"success - copy secrets when secrets already existed": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powerflex_observability.yaml")
-			if err != nil {
-				panic(err)
-			}
-			vxflexosCreds := getSecret(customResource.Namespace, "test-vxflexos-config")
-			vxflexosAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
-			vxflexosProxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
-			karaviVxflexosCreds := getSecret("karavi", "test-vxflexos-config")
-			karaviAuthconfig := getSecret("karavi", "powerflex-karavi-authorization-config")
-			proxyAuthzTokens := getSecret("karavi", "powerflex-proxy-authz-tokens")
-			tmpCR := customResource
-			auth := &tmpCR.Spec.Modules[1]
-			auth.Enabled = true
-
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(vxflexosCreds, karaviAuthconfig, proxyAuthzTokens, karaviVxflexosCreds, vxflexosAuthconfig, vxflexosProxyAuthzTokens).Build()
-
-			return true, false, tmpCR, sourceClient, operatorConfig
-		},
-		"Fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"Fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			tmpCR := customResource
-
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-
-			return false, false, tmpCR, sourceClient, operatorConfig
-		},
-		"Fail - no secrets in test-vxflexos namespace": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powerflex_observability.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -808,8 +723,8 @@ func TestPowerFlexMetrics(t *testing.T) {
 }
 
 func TestPowerMaxMetrics(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -831,7 +746,7 @@ func TestPowerMaxMetrics(t *testing.T) {
 
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - deleting with auth": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - deleting with auth": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -858,7 +773,7 @@ func TestPowerMaxMetrics(t *testing.T) {
 
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - deleting with auth after one cycle": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - deleting with auth after one cycle": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -882,7 +797,7 @@ func TestPowerMaxMetrics(t *testing.T) {
 
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -895,7 +810,7 @@ func TestPowerMaxMetrics(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating with auth": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating with auth": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -912,7 +827,7 @@ func TestPowerMaxMetrics(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"success - update objects": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - update objects": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -949,7 +864,7 @@ func TestPowerMaxMetrics(t *testing.T) {
 
 			return true, false, tmpCR, fakeClient, operatorConfig
 		},
-		"success - dynamically mount secret (2.14.0+)": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - dynamically mount secret (2.14.0+)": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powermax_observability_use_secret.yaml")
 			if err != nil {
 				panic(err)
@@ -963,7 +878,7 @@ func TestPowerMaxMetrics(t *testing.T) {
 
 			return true, false, customResource, sourceClient, operatorConfig
 		},
-		"success - dynamically mount configMap (2.14.0+)": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - dynamically mount configMap (2.14.0+)": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powermax_observability_use_secret.yaml")
 			if err != nil {
 				panic(err)
@@ -977,7 +892,7 @@ func TestPowerMaxMetrics(t *testing.T) {
 
 			return true, false, customResource, sourceClient, operatorConfig
 		},
-		"Fail - invalid config version": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"Fail - invalid config version": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powermax_observability_use_secret.yaml")
 			if err != nil {
 				panic(err)
@@ -993,19 +908,7 @@ func TestPowerMaxMetrics(t *testing.T) {
 
 			return false, false, customResource, sourceClient, operatorConfig
 		},
-		"Fail - no secrets in test-powermax namespace": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			tmpCR := customResource
-
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-
-			return false, false, tmpCR, sourceClient, operatorConfig
-		},
-		"Fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"Fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powermax_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -1014,29 +917,6 @@ func TestPowerMaxMetrics(t *testing.T) {
 			tmpCR := customResource
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-
-			return false, false, tmpCR, sourceClient, operatorConfig
-		},
-		"Fail - skipCertificateValidation is false but no cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			pmaxCreds := getSecret(customResource.Namespace, "test-powermax-creds")
-			karaviAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
-			proxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
-
-			tmpCR := customResource
-			auth := &tmpCR.Spec.Modules[1]
-			auth.Enabled = true
-			// set skipCertificateValidation to false
-			for i, env := range auth.Components[0].Envs {
-				if env.Name == "SKIP_CERTIFICATE_VALIDATION" {
-					auth.Components[0].Envs[i].Value = "false"
-				}
-			}
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds, karaviAuthconfig, proxyAuthzTokens).Build()
 
 			return false, false, tmpCR, sourceClient, operatorConfig
 		},
@@ -1057,8 +937,8 @@ func TestPowerMaxMetrics(t *testing.T) {
 }
 
 func TestObservabilityCertIssuer(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
-		"success - creating with self-signed cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - creating with self-signed cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerflex_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -1073,7 +953,7 @@ func TestObservabilityCertIssuer(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"success - creating with custom cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating with custom cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerflex_observability_custom_cert.yaml")
 			if err != nil {
 				panic(err)
@@ -1088,7 +968,7 @@ func TestObservabilityCertIssuer(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - creating with partial custom cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"fail - creating with partial custom cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerflex_observability_custom_cert_missing_key.yaml")
 			if err != nil {
 				panic(err)
@@ -1103,7 +983,7 @@ func TestObservabilityCertIssuer(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - observability module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"fail - observability module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -1114,7 +994,7 @@ func TestObservabilityCertIssuer(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, operatorConfig
 		},
-		"fail - observability deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"fail - observability deployment file bad yaml": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerflex_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -1126,7 +1006,7 @@ func TestObservabilityCertIssuer(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, badOperatorConfig
 		},
-		"fail - observability config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"fail - observability config file not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerflex_observability.yaml")
 			if err != nil {
 				panic(err)
@@ -1142,11 +1022,11 @@ func TestObservabilityCertIssuer(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			oldNewControllerRuntimeClientWrapper := utils.NewControllerRuntimeClientWrapper
-			oldNewK8sClientWrapper := utils.NewK8sClientWrapper
+			oldNewControllerRuntimeClientWrapper := operatorutils.NewControllerRuntimeClientWrapper
+			oldNewK8sClientWrapper := operatorutils.NewK8sClientWrapper
 			defer func() {
-				utils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
-				utils.NewK8sClientWrapper = oldNewK8sClientWrapper
+				operatorutils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
+				operatorutils.NewK8sClientWrapper = oldNewK8sClientWrapper
 			}()
 			success, isDeleting, cr, sourceClient, op := tc(t)
 

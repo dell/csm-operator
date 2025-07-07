@@ -3,7 +3,7 @@ kind: Secret
 type: kubernetes.io/tls
 metadata:
   name: <OBSERVABILITY_SECRET_PREFIX>-secret
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
 data:
   # replace with actual base64-encoded certificate
   tls.crt: <BASE64_CERTIFICATE>
@@ -14,7 +14,7 @@ apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: <OBSERVABILITY_SECRET_PREFIX>-issuer
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
 spec:
   ca:
     secretName: <OBSERVABILITY_SECRET_PREFIX>-secret
@@ -23,7 +23,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: <OBSERVABILITY_SECRET_PREFIX>
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
 spec:
   secretName: <OBSERVABILITY_SECRET_PREFIX>-tls
   duration: 2160h  # 90d

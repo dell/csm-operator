@@ -10,7 +10,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-package utils
+package operatorutils
 
 import (
 	"bytes"
@@ -150,8 +150,6 @@ const (
 	ResiliencySideCarName = "podmon"
 	// DefaultSourceClusterID -
 	DefaultSourceClusterID = "default-source-cluster"
-	// ObservabilityNamespace - karavi
-	ObservabilityNamespace = "karavi"
 	// AuthorizationNamespace - authorization
 	AuthorizationNamespace = "authorization"
 	// PodmonControllerComponent - podmon-controller
