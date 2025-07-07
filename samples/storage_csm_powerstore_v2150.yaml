@@ -253,3 +253,67 @@ spec:
             - "--mode=node"
             - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
             - "--driverPath=csi-powerstore.dellemc.com"
+    # Replication: allows to configure replication
+    # Replication CRDs must be installed before installing driver
+    - name: replication
+      # enabled: Enable/Disable replication feature
+      # Allowed values:
+      #   true: enable replication feature(install dell-csi-replicator sidecar)
+      #   false: disable replication feature(do not install dell-csi-replicator sidecar)
+      # Default value: false
+      enabled: false
+      configVersion: v1.13.0
+      components:
+        - name: dell-csi-replicator
+          # image: Image to use for dell-csi-replicator. This shouldn't be changed
+          # Allowed values: string
+          # Default value: None
+          image: quay.io/dell/container-storage-modules/dell-csi-replicator:nightly
+          envs:
+            # replicationPrefix: prefix to prepend to storage classes parameters
+            # Allowed values: string
+            # Default value: replication.storage.dell.com
+            - name: "X_CSI_REPLICATION_PREFIX"
+              value: "replication.storage.dell.com"
+            # replicationContextPrefix: prefix to use for naming of resources created by replication feature
+            # Allowed values: string
+            - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
+              value: "powerstore"
+        - name: dell-replication-controller-manager
+          # image: Defines controller image. This shouldn't be changed
+          # Allowed values: string
+          image: quay.io/dell/container-storage-modules/dell-replication-controller:nightly
+          envs:
+            # Replication log level
+            # Allowed values: "error", "warn"/"warning", "info", "debug"
+            # Default value: "debug"
+            - name: "REPLICATION_CTRL_LOG_LEVEL"
+              value: "debug"
+            # replicas: Defines number of controller replicas
+            # Allowed values: int
+            # Default value: 1
+            - name: "REPLICATION_CTRL_REPLICAS"
+              value: "1"
+            # retryIntervalMin: Initial retry interval of failed reconcile request.
+            # It doubles with each failure, upto retry-interval-max
+            # Allowed values: time
+            - name: "RETRY_INTERVAL_MIN"
+              value: "1s"
+            # RETRY_INTERVAL_MAX: Maximum retry interval of failed reconcile request
+            # Allowed values: time
+            - name: "RETRY_INTERVAL_MAX"
+              value: "5m"
+            # DISABLE_PVC_REMAP: Disable PVC remapping for replication in single cluster configuration
+            # Allowed values:
+            #   true: Disable replication feature(install dell-csi-replicator sidecar)
+            #   false: disable replication feature(do not install dell-csi-replicator sidecar)
+            # Default value: false
+            - name: "DISABLE_PVC_REMAP"
+              value: "false"
+            # REPLICATION_ALLOW_PVC_CREATION_ON_TARGET: It Creates PVC on target cluster using replicated PV.
+            # Allowed values:
+            #   true: It creates a PVC on target cluster against replicated PV
+            #   false: simply updates claimref on replicated PV on target cluster without actually creating a PVC
+            # Default value: false
+            - name: "REPLICATION_ALLOW_PVC_CREATION_ON_TARGET"
+              value: "false"
