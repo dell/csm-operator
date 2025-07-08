@@ -1243,7 +1243,6 @@ func TestAuthorizationStorageServiceVault(t *testing.T) {
 }
 
 func TestAuthorizationStorageServiceSecretProviderClass(t *testing.T) {
-
 	type checkFn func(*testing.T, ctrlClient.Client, error)
 
 	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, checkFn){
