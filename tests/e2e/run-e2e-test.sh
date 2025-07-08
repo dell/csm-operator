@@ -23,7 +23,7 @@ export PROG="${0}"
 export GINKGO_OPTS="--timeout 5h"
 export E2E_VERBOSE=false
 
-# Start with all modules false, they can be enabled by command line arguments 
+# Start with all modules false, they can be enabled by command line arguments
 export AUTHORIZATION=false
 export AUTHORIZATIONPROXYSERVER=false
 export REPLICATION=false
@@ -52,10 +52,10 @@ function getArrayInfo() {
 
 function vaultSetupAutomation() {
   echo "Removing any existing vault installation..."
-  helm delete vault || true
+  helm delete vault0 || true
   echo "Installing vault with all secrets for Authorization tests..."
   cd ./scripts/vault-automation
-  go run main.go --kubeconfig ~/.kube/config --name vault --env-config
+  go run main.go --kubeconfig ~/.kube/config --name vault0 --env-config --secrets-store-csi-driver true
   cd ../..
 }
 
@@ -189,13 +189,13 @@ while getopts ":hv-:" optchar; do
     pflex)
       export POWERFLEX=true ;;
     no-modules)
-      export NOMODULES=true 
+      export NOMODULES=true
       export AUTHORIZATION=false
       export AUTHORIZATIONPROXYSERVER=false
       export REPLICATION=false
       export OBSERVABILITY=false
       export RESILIENCY=false
-      export APPLICATIONMOBILITY=false 
+      export APPLICATIONMOBILITY=false
       ;;
     pscale)
       export POWERSCALE=true ;;
@@ -282,7 +282,7 @@ fi
 if [[ $AUTHORIZATIONPROXYSERVER == "true" ]]; then
   echo "Checking for dellctl - AUTHORIZATIONPROXYSERVER"
   checkForDellctl
-  
+
   getMasterNodeIP
   echo "Authorization proxy host: $PROXY_HOST"
   export entryExists=$(cat /etc/hosts | grep $PROXY_HOST | wc -l)

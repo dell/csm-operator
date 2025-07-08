@@ -340,26 +340,24 @@ spec:
                     SkipCertificateValidation is the flag to skip certificate
                     validation
                   type: boolean
-                storageSystemCredentials:
-                  description: |-
-                    StorageSystemCredentials is the storage arrays credenial secret
-                  properties:
-                    secretProviderClass:
-                      properties:
-                        name:
-                          type: string
-                        passwordObjectName:
-                          type: string
-                        usernameObjectName:
-                          type: string
-                      type: object
-                  type: object
                 systemID:
                   description: SystemID is the storage array system ID
                   type: string
                 type:
                   description: Type is the storage array type
                   type: string
+                vault:
+                  description: |-
+                    Vault is the credential manager for storage arrays
+                    Currently support only Hashicorp Vault
+                  properties:
+                    identifier:
+                      type: string
+                    kvEngine:
+                      type: string
+                    path:
+                      type: string
+                  type: object
               required:
                 - skipCertificateValidation
               type: object
