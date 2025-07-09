@@ -32,7 +32,7 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.14.0
+    configVersion: v2.14.1
     # replica: Define the number of PowerMax controller nodes
     # to deploy to the Kubernetes release
     # Controller count
@@ -44,7 +44,7 @@ spec:
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: quay.io/dell/container-storage-modules/csi-powermax:v2.14.0
+      image: quay.io/dell/container-storage-modules/csi-powermax:v2.14.1
       # imagePullPolicy: Policy to determine if the image should be pulled prior to starting the container.
       # Allowed values:
       #  Always: Always pull the image.
