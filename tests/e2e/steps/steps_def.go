@@ -1436,6 +1436,20 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 		return fmt.Errorf("failed to create authorization namespace: %v\nErrMessage:\n%s", err, string(b))
 	}
 
+	isOpenShift := os.Getenv("IS_OPENSHIFT")
+	if isOpenShift == "true" {
+		cmd = exec.Command("oc", "label",
+			"ns", cr.Namespace,
+			"pod-security.kubernetes.io/enforce=privileged",
+			"security.openshift.io/MinimallySufficientPodSecurityStandard=privileged",
+			"--overwrite",
+		) // #nosec G204
+		b, err := cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("failed to label authorization namespace: %v\nErrMessage:\n%s", err, string(b))
+		}
+	}
+
 	cmd = exec.Command("kubectl", "apply",
 		"--validate=false", "-f",
 		fmt.Sprintf("https://github.com/jetstack/cert-manager/releases/download/%s/cert-manager.crds.yaml",
