@@ -229,7 +229,7 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: false
-      configVersion: v1.14.1
+      configVersion: v1.14.0
       components:
         - name: karavi-authorization-proxy
           image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
