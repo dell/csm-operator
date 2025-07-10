@@ -44,7 +44,7 @@ injector:
 server:
   image:
     repository: %s
-    tag: %s
+    tag: "latest"
   service:
     port: 8400
     targetPort: 8400
@@ -78,8 +78,8 @@ ui:
 csi:
   enabled: %s
   image:
-    repository: "%s"
-    tag: "%s"
+    repository: "hashicorp/vault-csi-provider"
+    tag: "latest"
   volumeMounts:
     - name: config
       mountPath: /config
@@ -95,6 +95,14 @@ csi:
             name: kube-root-ca.crt
         - configMap:
             name: %s-config
+  daemonSet:
+    securityContext:
+      container:
+        privileged: true
+  agent:
+    image:
+      repository: %s
+      tag: "latest"
 `
 
 	policy = `
@@ -135,11 +143,6 @@ storage "file" {
 
 	// flag for vault names
 	vaultNames vaultList
-
-	// image repositories for OCP and k8s
-	imageRepository    string
-	csiImageRepository string
-	imageTag           string
 )
 
 type step func() error
@@ -474,17 +477,14 @@ func (s *sequence) configureValues() error {
 	}
 	k8sHost := b.String()
 
+	var imageRepository string
 	if s.openshift {
 		imageRepository = "registry.connect.redhat.com/hashicorp/vault"
-		csiImageRepository = "registry.connect.redhat.com/hashicorp/vault-csi-provider"
-		imageTag = "latest"
 	} else {
 		imageRepository = "hashicorp/vault"
-		csiImageRepository = "hashicorp/vault-csi-provider"
-		imageTag = "latest"
 	}
 
-	err = os.WriteFile(fmt.Sprintf("%s-values.yaml", s.name), []byte(fmt.Sprintf(values, imageRepository, imageTag, k8sHost, s.name, s.name, s.name, s.name, strconv.FormatBool(s.secretsStoreCSIDriver), csiImageRepository, imageTag, s.name, s.name, s.name)), 0644) // #nosec G306 -- this is a test automation tool
+	err = os.WriteFile(fmt.Sprintf("%s-values.yaml", s.name), []byte(fmt.Sprintf(values, imageRepository, k8sHost, s.name, s.name, s.name, s.name, strconv.FormatBool(s.secretsStoreCSIDriver), s.name, s.name, s.name, imageRepository)), 0644) // #nosec G306 -- this is a test automation tool
 	if err != nil {
 		return err
 	}

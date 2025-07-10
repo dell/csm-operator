@@ -17,7 +17,7 @@ There are multiple methods to install and run this tool:
 `--name`       name of the Vault application
 
 ## Optional Flags
-`--openshift`                   configure installation to use image `registry.connect.redhat.com/hashicorp/vault` instead of `hashicorp/vault`\
+`--openshift`                   boolean to configure installation to use image `registry.connect.redhat.com/hashicorp/vault` instead of `hashicorp/vault`\
 `--secrets-store-csi-driver`    boolean to configure the secrets-store-csi-driver daemonset (defaults to false)\
 `--validate-client-cert`        configure Vault to validate the client's certificate\
 `--csm-authorization-namespace` namespace of CSM Authorization (defaults to authorization)\
@@ -35,7 +35,7 @@ There are multiple ways to configure Vault with key/value secrets with this tool
 
 ### Install Vault without creating any key/value secrets
 ```
-# go run main.go --kubeconfig ~/.kube/config --name vaultx --secrets-store-csi-driver true
+# go run main.go --kubeconfig ~/.kube/config --name vaultx --secrets-store-csi-driver=true
 2024/10/29 19:47:20 Generating CA Certificate: vaultx-ca.pem
 2024/10/29 19:47:21 Generating Vault server certificate
 2024/10/29 19:47:23 Generating Client certificate: vaultx-client.pem, vaultx-client-key.pem
@@ -54,7 +54,7 @@ There are multiple ways to configure Vault with key/value secrets with this tool
 
 ### Install Vault and create one key/value secret
 ```
-# go run main.go --kubeconfig ~/.kube/config --name vaultx --secrets-store-csi-driver true --secret-path powerflex --username admin --password Password123!
+# go run main.go --kubeconfig ~/.kube/config --name vaultx --secrets-store-csi-driver=true --secret-path powerflex --username admin --password Password123!
 2024/10/29 19:47:20 Generating CA Certificate: vaultx-ca.pem
 2024/10/29 19:47:21 Generating Vault server certificate
 2024/10/29 19:47:23 Generating Client certificate: vaultx-client.pem, vaultx-client-key.pem
@@ -85,7 +85,7 @@ Example configuration file:
 ```
 
 ```
-# go run main.go --kubeconfig ~/.kube/config --name vaultx --secrets-store-csi-driver true --file-config /path/to/config.yaml
+# go run main.go --kubeconfig ~/.kube/config --name vaultx --secrets-store-csi-driver=true --file-config /path/to/config.yaml
 
 2025/05/20 17:20:41 Generating CA Certificate: vault0-ca.pem
 2025/05/20 17:20:43 Generating Vault server certificate
@@ -126,7 +126,7 @@ PMAX_PASS
 The variables in each set of three, three variables per platform, must be set prior to running this tool. If any of the three environment variables for a specific platform is not set, that secret will not be written in Vault.
 
 ```
-# go run main.go --kubeconfig ~/.kube/config --name vaultx --secrets-store-csi-driver true --env-config
+# go run main.go --kubeconfig ~/.kube/config --name vaultx --secrets-store-csi-driver=true --env-config
 2025/05/20 17:26:31 Generating CA Certificate: vault0-ca.pem
 2025/05/20 17:26:34 Generating Vault server certificate
 2025/05/20 17:26:36 Generating Client certificate: vault0-client.pem, vault0-client-key.pem
