@@ -55,7 +55,7 @@ function vaultSetupAutomation() {
   helm delete vault0 || true
   echo "Installing vault with all secrets for Authorization tests..."
   cd ./scripts/vault-automation
-  go run main.go --kubeconfig ~/.kube/config --name vault0 --env-config --secrets-store-csi-driver true
+  go run main.go --kubeconfig ~/.kube/config --name vault0 --env-config --secrets-store-csi-driver=true
   cd ../..
 }
 
