@@ -41,3 +41,15 @@ updates:
       github-actions:
         patterns:
           - "*"
+  # To update all the images in the operatorconfig and tests/e2e/testfiles directory
+  - package-ecosystem: "docker"
+    directories:
+      - "/operatorconfig/**/**"
+      - "/tests/e2e/testfiles/**/**"
+    schedule:
+      interval: "daily"
+    target-branch: "main"
+    groups:
+      updates:
+        patterns:
+          - "*"
