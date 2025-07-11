@@ -378,7 +378,7 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			namespace := customResource.Namespace
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
-			auth.ConfigVersion = "v2.0.0"
+			auth.ConfigVersion = "v2.3.0"
 
 			karaviAuthconfig := getSecret(namespace, "karavi-authorization-config")
 			proxyAuthzTokens := getSecret(namespace, "proxy-authz-tokens")
@@ -542,7 +542,7 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
-			auth.ConfigVersion = "v2.0.0"
+			auth.ConfigVersion = "v2.3.0"
 			karaviConfig := getSecret(customResource.Namespace, "karavi-config-secret")
 			karaviStorage := getSecret(customResource.Namespace, "karavi-storage-secret")
 			karaviTLS := getSecret(customResource.Namespace, "karavi-selfsigned-tls")
@@ -747,6 +747,37 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
+		"success - use default redis kubernetes secret": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v230.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+
+		"success - use redis secret provider class": func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_secret_provider_class.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return true, false, customResource, sourceClient, operatorConfig
+		},
+
 		"fail - authorization module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
@@ -824,7 +855,7 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 }
 
 func TestAuthorizationOpenTelemetry(t *testing.T) {
-	cr, err := getCustomResource("./testdata/cr_auth_proxy_v2.0.0.yaml")
+	cr, err := getCustomResource("./testdata/cr_auth_proxy_v2.2.0.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}

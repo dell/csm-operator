@@ -119,6 +119,8 @@ const (
 	AuthRedisSentinelValues = "<AUTHORIZATION_REDIS_SENTINEL_VALUES>"
 	// AuthRedisReplicas -
 	AuthRedisReplicas = "<AUTHORIZATION_REDIS_REPLICAS>"
+	// AuthRedisSecretName - name of SecretProviderClass object or default K8s secret
+	AuthRedisSecretName = "<AUTHORIZATION_REDIS_SECRET_NAME>"
 
 	// AuthCert - for tls secret
 	AuthCert = "<BASE64_CERTIFICATE>"
@@ -152,6 +154,7 @@ const (
 
 var (
 	redisStorageClass     string
+	redisSecretName       string
 	authHostname          string
 	proxyIngressClassName string
 	authCertificate       string
@@ -620,11 +623,18 @@ func getAuthorizationServerDeployment(op operatorutils.OperatorConfig, cr csmv1.
 			} else {
 				redisStorageClass = component.RedisStorageClass
 			}
+
+			if component.RedisSecretProviderClass == "" {
+				redisSecretName = "redis-csm-secret"
+			} else {
+				redisSecretName = component.RedisSecretProviderClass
+			}
 		}
 	}
 
 	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
 	YamlString = strings.ReplaceAll(YamlString, AuthRedisStorageClass, redisStorageClass)
+	YamlString = strings.ReplaceAll(YamlString, AuthRedisSecretName, redisSecretName)
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 	YamlString = strings.ReplaceAll(YamlString, AuthCSMNameSpace, cr.Namespace)
 
