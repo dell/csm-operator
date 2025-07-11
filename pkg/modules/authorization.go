@@ -834,15 +834,15 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 					break
 				}
 			}
-
+		} else {
 			// set volumes for kubernetes secrets
 			for _, secret := range storageSystemCredentials.Secrets {
 				volume := corev1.Volume{
 					Name: fmt.Sprintf("storage-system-secrets-%s", secret),
 					VolumeSource: corev1.VolumeSource{
-						Secret: corev1.SecretVolumeSource{
+						Secret: &corev1.SecretVolumeSource{
 							SecretName: secret,
-						}
+						},
 					},
 				}
 
@@ -850,7 +850,19 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 			}
 
 			// set volume mounts for kubernetes secrets
-			
+			for i, c := range deployment.Spec.Template.Spec.Containers {
+				if c.Name == "storage-service" {
+					for _, secret := range storageSystemCredentials.Secrets {
+						deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
+							Name:      fmt.Sprintf("storage-system-secrets-%s", secret),
+							MountPath: fmt.Sprintf("/etc/csm-authorization/%s", secret),
+							ReadOnly:  true,
+						})
+					}
+					break
+				}
+			}
+		}
 	} else {
 		// Vault is supported only till config v2.2.0 (CSM 1.14)
 		// set vault volumes
