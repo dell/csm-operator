@@ -350,10 +350,15 @@ type ContainerTemplate struct {
 	// Applicable till CSM v1.14
 	Vaults []Vault `json:"vaultConfigurations,omitempty" yaml:"vaultConfigurations,omitempty"`
 
-	// SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Secret Provider Classes"
+	// // SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers
+	// // +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Secret Provider Classes"
+	// // Applicable from CSM v1.15 onwards
+	// SecretProviderClasses []string `json:"secretProviderClasses,omitempty" yaml:"secretProviderClasses,omitempty"`
+
+	// StorageSystemCredentials contains the storage system credentials which can be either a collection of secret provider classes or a collection of kubernetes secrets used for retrieving storage system credentials
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Storage System Credentials"
 	// Applicable from CSM v1.15 onwards
-	SecretProviderClasses []string `json:"secretProviderClasses,omitempty" yaml:"secretProviderClasses,omitempty"`
+	StorageSystemCredentials []StorageSystemCredentials `json:"storageSystemCredentials,omitempty" yaml:"storageSystemCredentials,omitempty"`
 
 	// skipCertificateValidation is the flag to skip certificate validation
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Skip Certificate Validation"
@@ -502,4 +507,15 @@ type Vault struct {
 	// CertificateAuthority is the base64-encoded certificate authority for validaitng the vault certificate
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Vault Certificate Authority"
 	CertificateAuthority string `json:"certificateAuthority,omitempty" yaml:"certificateAuthority,omitempty"`
+}
+
+// StorageSystemCredentials is the configuration for the storage system credentials (either secret provider classes or kubernetes secrets)
+type StorageSystemCredentials struct {
+	// SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Secret Provider Classes"
+	SecretProviderClasses []string `json:"secretProviderClasses,omitempty" yaml:"secretProviderClasses,omitempty"`
+
+	// Secrets is a collection of kubernetes secrets
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Secrets"
+	Secrets               []string `json:"secrets,omitempty" yaml:"secrets,omitempty"`
 }
