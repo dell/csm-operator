@@ -45,15 +45,18 @@ Any time changes made to the operator are being checked into the main branch, sa
   - (if running powermax suite) `powermax`
   - (if running powerstore suite) `powerstore`
 - For Authorization V2:
-  - Vault needs to be installed on cluster
-  - edit vaultConfiguration section of testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml to point to your vault instance. For example, if I was running the vault service on the same cluster I was running the tests, I would make the following edit:
-    ```
-      - name: vault
-         vaultConfigurations:
-           - identifier: vault0
-             address: https://vault.default.svc.cluster.local:8400
-    ```
-    where "vault" is the name of the vault service running
+  - The following components must be installed on your cluster:
+    - Secrets Store CSI Driver
+    - Vault, along with its CSI Provider. You can use the `--install-vault` tag to set up the Vault.
+
+      If you already have Vault installed, you'll need to configure the `storage_csm_authorization_secret_provider_class.yaml` file in the `testfiles/authorization-templates` directory to point to your Vault instance. For example:
+      ```
+        parameters:
+          roleName: "csm-authorization"
+          vaultAddress: "https://vault.default.svc.cluster.local:8400"
+          vaultCACertPath: '/config/vault-ca.pem'
+      ```
+      where "vault" is the name of the vault service running.
 - Dellctl needs to be installed
   - See [here](https://dell.github.io/csm-docs/docs/support/cli/#installation-instructions) for instructions
 - In addition, for drivers that do not use the secret and storageclass creation steps, any required secrets, storageclasses, etc. will need to be created beforehand as well as required namespaces.
@@ -86,9 +89,7 @@ If running the Application Mobility e2e tests, (the sanity suite includes a few 
 
 If running the Authorization proxy server e2e tests, further setup must be done:
 
-- have a vault server running configured with the authorization namespace. This is documented in the CSM documentation.
-- update V2 CRs with vault address.
-- the scenario "Install Authorization Proxy Server V2 With Multiple Vaults" requires 2 separate vault instances to be running.
+- When running tests on an OpenShift cluster, update the `PROXY_HOST` entry in the driver CRs with `router-internal-default.openshift-ingress.svc.cluster.local`.
 
 Notes:
 
