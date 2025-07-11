@@ -382,6 +382,9 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Sentinel StatefulSet Name"
 	Sentinel string `json:"sentinel,omitempty" yaml:"sentinel,omitempty"`
 
+	// RedisSecretProviderClass is the name of the SecretProviderClass Object for redis
+	RedisSecretProviderClass string `json:"redisSecretProviderClass,omitempty" yaml:"redisSecretProviderClass,omitempty"`
+
 	// ReplicaCount is the replica count for app mobility
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Application Mobility Replica Count"
 	ReplicaCount string `json:"replicaCount,omitempty" yaml:"replicaCount,omitempty"`

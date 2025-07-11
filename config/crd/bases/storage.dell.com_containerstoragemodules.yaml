@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.5
+    controller-gen.kubebuilder.io/version: v0.18.0
   name: containerstoragemodules.storage.dell.com
 spec:
   group: storage.dell.com
@@ -381,6 +381,11 @@ spec:
                             RedisReplicas is the number of replicas for the
                             redis deployment
                           type: integer
+                        redisSecretProviderClass:
+                          description:
+                            RedisSecretProviderClass is the name of the SecretProviderClass
+                            Object for redis
+                          type: string
                         replicaCount:
                           description: ReplicaCount is the replica count for app mobility
                           type: string
@@ -848,6 +853,11 @@ spec:
                             RedisReplicas is the number of replicas for the
                             redis deployment
                           type: integer
+                        redisSecretProviderClass:
+                          description:
+                            RedisSecretProviderClass is the name of the SecretProviderClass
+                            Object for redis
+                          type: string
                         replicaCount:
                           description: ReplicaCount is the replica count for app mobility
                           type: string
@@ -1337,6 +1347,11 @@ spec:
                               RedisReplicas is the number of replicas for
                               the redis deployment
                             type: integer
+                          redisSecretProviderClass:
+                            description:
+                              RedisSecretProviderClass is the name of the
+                              SecretProviderClass Object for redis
+                            type: string
                           replicaCount:
                             description: ReplicaCount is the replica count for app mobility
                             type: string
@@ -1800,6 +1815,11 @@ spec:
                             RedisReplicas is the number of replicas for the
                             redis deployment
                           type: integer
+                        redisSecretProviderClass:
+                          description:
+                            RedisSecretProviderClass is the name of the SecretProviderClass
+                            Object for redis
+                          type: string
                         replicaCount:
                           description: ReplicaCount is the replica count for app mobility
                           type: string
@@ -2273,6 +2293,11 @@ spec:
                               RedisReplicas is the number of replicas for
                               the redis deployment
                             type: integer
+                          redisSecretProviderClass:
+                            description:
+                              RedisSecretProviderClass is the name of the
+                              SecretProviderClass Object for redis
+                            type: string
                           replicaCount:
                             description: ReplicaCount is the replica count for app mobility
                             type: string
@@ -2774,6 +2799,11 @@ spec:
                                 RedisReplicas is the number of replicas for
                                 the redis deployment
                               type: integer
+                            redisSecretProviderClass:
+                              description:
+                                RedisSecretProviderClass is the name of the
+                                SecretProviderClass Object for redis
+                              type: string
                             replicaCount:
                               description:
                                 ReplicaCount is the replica count for app
@@ -3263,6 +3293,11 @@ spec:
                                 RedisReplicas is the number of replicas for
                                 the redis deployment
                               type: integer
+                            redisSecretProviderClass:
+                              description:
+                                RedisSecretProviderClass is the name of the
+                                SecretProviderClass Object for redis
+                              type: string
                             replicaCount:
                               description:
                                 ReplicaCount is the replica count for app

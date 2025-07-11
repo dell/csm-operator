@@ -69,13 +69,21 @@ spec:
           # openTelemetryCollectorAddress: the OTLP receiving endpoint using gRPC
           openTelemetryCollectorAddress: ""
         - name: redis
+          # Redis secret configuration:
+          # Use a SecretProviderClass for Redis credentials;
+          # otherwise, a default Kubernetes secret is used.
+          redisSecretProviderClass: ""
           redis: docker.io/redis:7.4.0-alpine
           commander: docker.io/rediscommander/redis-commander:latest
           redisName: redis-csm
           redisCommander: rediscommander
           sentinel: sentinel
           redisReplicas: 5
-        # You must specify exactly one option for the storageSystemCredentials field, e.g. secretProviderClasses
+
+        # Storage system credentials can be provided in one of two ways:
+        # 1. Using a SecretProviderClass (for dynamic secrets from external providers)
+        # 2. Using a Kubernetes Secret (for static credentials)
+        # Only one of the two can be specified at a time.
         - name: storage-system-credentials
           secretProviderClasses:
             # list of secret provider classes for retrieving secrets from external providers
