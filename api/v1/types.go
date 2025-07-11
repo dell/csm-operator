@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2024 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -347,7 +347,13 @@ type ContainerTemplate struct {
 
 	// Vaults are the vault configurations
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Vault Configurations"
+	// Applicable till CSM v1.14
 	Vaults []Vault `json:"vaultConfigurations,omitempty" yaml:"vaultConfigurations,omitempty"`
+
+	// SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Secret Provider Classes"
+	// Applicable from CSM v1.15 onwards
+	SecretProviderClasses []string `json:"secretProviderClasses,omitempty" yaml:"secretProviderClasses,omitempty"`
 
 	// skipCertificateValidation is the flag to skip certificate validation
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Skip Certificate Validation"

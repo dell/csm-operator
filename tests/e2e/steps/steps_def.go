@@ -29,6 +29,7 @@ import (
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
 	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
+	"golang.org/x/mod/semver"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -1435,6 +1436,20 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 		return fmt.Errorf("failed to create authorization namespace: %v\nErrMessage:\n%s", err, string(b))
 	}
 
+	isOpenShift := os.Getenv("IS_OPENSHIFT")
+	if isOpenShift == "true" {
+		cmd = exec.Command("oc", "label",
+			"ns", cr.Namespace,
+			"pod-security.kubernetes.io/enforce=privileged",
+			"security.openshift.io/MinimallySufficientPodSecurityStandard=privileged",
+			"--overwrite",
+		) // #nosec G204
+		b, err := cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("failed to label authorization namespace: %v\nErrMessage:\n%s", err, string(b))
+		}
+	}
+
 	cmd = exec.Command("kubectl", "apply",
 		"--validate=false", "-f",
 		fmt.Sprintf("https://github.com/jetstack/cert-manager/releases/download/%s/cert-manager.crds.yaml",
@@ -1480,6 +1495,14 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	b, err = cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to create local storage for redis: %v\nErrMessage:\n%s", err, string(b))
+	}
+
+	cmd = exec.Command("kubectl", "create",
+		"-f", "testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml",
+	) // #nosec G204
+	b, err = cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to create secret provider class: %v\nErrMessage:\n%s", err, string(b))
 	}
 
 	return nil
@@ -1533,16 +1556,20 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	address := proxyHost
 	fmt.Printf("Address: %s\n", address)
 
-	return step.AuthorizationV2Resources(storageType, driver, driverNamespace, address, port, csmTenantName)
+	return step.AuthorizationV2Resources(storageType, driver, driverNamespace, address, port, csmTenantName, cr.Spec.Modules[0].ConfigVersion)
 }
 
 // AuthorizationV2Resources creates resources using CRs and dellctl for V2 versions of Authorization Proxy Server
-func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName string) error {
+func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName, configVersion string) error {
 	var (
 		crMap               = ""
 		templateFile        = "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
 		updatedTemplateFile = ""
 	)
+
+	if semver.Compare(configVersion, "v2.3.0") == -1 {
+		templateFile = "testfiles/authorization-templates/storage_csm_authorization_v2_template_vault.yaml"
+	}
 
 	if driver == "powerflex" {
 		crMap = "pflexAuthCRs"
