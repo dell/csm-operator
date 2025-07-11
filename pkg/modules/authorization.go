@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2024 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -137,6 +137,8 @@ const (
 	AuthRedisComponent = "redis"
 	// AuthVaultComponent - vault component
 	AuthVaultComponent = "vault"
+	// AuthStorageSystemCredentialsComponent - storage-system-credentials component
+	AuthStorageSystemCredentialsComponent = "storage-system-credentials"
 
 	// AuthLocalStorageClass -
 	AuthLocalStorageClass = "csm-authorization-local-storage"
@@ -754,15 +756,19 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		return err
 	}
 
-	err = applyDeleteVaultCertificates(ctx, isDeleting, cr, ctrlClient)
-	if err != nil {
-		return fmt.Errorf("applying/deleting vault certificates: %w", err)
+	// Vault is supported only till config v2.2.0 (CSM 1.14)
+	if semver.Compare(authModule.ConfigVersion, "v2.3.0") == -1 {
+		err = applyDeleteVaultCertificates(ctx, isDeleting, cr, ctrlClient)
+		if err != nil {
+			return fmt.Errorf("applying/deleting vault certificates: %w", err)
+		}
 	}
 
 	replicas := 0
 	sentinels := ""
 	image := ""
 	vaults := []csmv1.Vault{}
+	var secretProviderClasses []string
 	leaderElection := true
 	otelCollector := ""
 	for _, component := range authModule.Components {
@@ -780,6 +786,8 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 			sentinels = strings.Join(sentinelValues, ", ")
 		case AuthVaultComponent:
 			vaults = component.Vaults
+		case AuthStorageSystemCredentialsComponent:
+			secretProviderClasses = component.SecretProviderClasses
 		default:
 			continue
 		}
@@ -789,58 +797,94 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	// #nosec G115
 	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, int32(replicas))
 
-	// set vault volumes
-
-	for _, vault := range vaults {
-		volume := corev1.Volume{
-			Name: fmt.Sprintf("vault-client-certificate-%s", vault.Identifier),
-			VolumeSource: corev1.VolumeSource{
-				Projected: &corev1.ProjectedVolumeSource{
-					Sources: []corev1.VolumeProjection{{}},
-				},
-			},
-		}
-
-		if vault.CertificateAuthority != "" {
-			volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{
-				Secret: &corev1.SecretProjection{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: fmt.Sprintf("vault-certificate-authority-%s", vault.Identifier),
+	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
+	if semver.Compare(authModule.ConfigVersion, "v2.3.0") >= 0 {
+		// set volumes for secret provider classes
+		readOnly := true
+		for _, providerClass := range secretProviderClasses {
+			volume := corev1.Volume{
+				Name: fmt.Sprintf("secrets-store-inline-%s", providerClass),
+				VolumeSource: corev1.VolumeSource{
+					CSI: &corev1.CSIVolumeSource{
+						Driver:   "secrets-store.csi.k8s.io",
+						ReadOnly: &readOnly,
+						VolumeAttributes: map[string]string{
+							"secretProviderClass": providerClass,
+						},
 					},
 				},
-			})
+			}
+
+			deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volume)
 		}
 
-		if vault.ClientCertificate != "" && vault.ClientKey != "" {
-			volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{
-				Secret: &corev1.SecretProjection{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: fmt.Sprintf("vault-client-certificate-%s", vault.Identifier),
-					},
-				},
-			})
-		} else {
-			volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{
-				Secret: &corev1.SecretProjection{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: fmt.Sprintf("storage-service-selfsigned-tls-%s", vault.Identifier),
-					},
-				},
-			})
+		// set volume mounts for secret provider classes
+		for i, c := range deployment.Spec.Template.Spec.Containers {
+			if c.Name == "storage-service" {
+				for _, providerClass := range secretProviderClasses {
+					deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
+						Name:      fmt.Sprintf("secrets-store-inline-%s", providerClass),
+						MountPath: fmt.Sprintf("/etc/csm-authorization/%s", providerClass),
+						ReadOnly:  true,
+					})
+				}
+				break
+			}
 		}
+	} else {
+		// Vault is supported only till config v2.2.0 (CSM 1.14)
+		// set vault volumes
+		for _, vault := range vaults {
+			volume := corev1.Volume{
+				Name: fmt.Sprintf("vault-client-certificate-%s", vault.Identifier),
+				VolumeSource: corev1.VolumeSource{
+					Projected: &corev1.ProjectedVolumeSource{
+						Sources: []corev1.VolumeProjection{{}},
+					},
+				},
+			}
 
-		deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volume)
-	}
-
-	for i, c := range deployment.Spec.Template.Spec.Containers {
-		if c.Name == "storage-service" {
-			for _, vault := range vaults {
-				deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
-					Name:      fmt.Sprintf("vault-client-certificate-%s", vault.Identifier),
-					MountPath: fmt.Sprintf("/etc/vault/%s", vault.Identifier),
+			if vault.CertificateAuthority != "" {
+				volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{
+					Secret: &corev1.SecretProjection{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: fmt.Sprintf("vault-certificate-authority-%s", vault.Identifier),
+						},
+					},
 				})
 			}
-			break
+
+			if vault.ClientCertificate != "" && vault.ClientKey != "" {
+				volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{
+					Secret: &corev1.SecretProjection{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: fmt.Sprintf("vault-client-certificate-%s", vault.Identifier),
+						},
+					},
+				})
+			} else {
+				volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{
+					Secret: &corev1.SecretProjection{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: fmt.Sprintf("storage-service-selfsigned-tls-%s", vault.Identifier),
+						},
+					},
+				})
+			}
+
+			deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volume)
+		}
+
+		for i, c := range deployment.Spec.Template.Spec.Containers {
+			if c.Name == "storage-service" {
+				for _, vault := range vaults {
+					deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
+						Name:      fmt.Sprintf("vault-client-certificate-%s", vault.Identifier),
+						MountPath: fmt.Sprintf("/etc/vault/%s", vault.Identifier),
+					})
+				}
+				break
+			}
 		}
 	}
 
@@ -869,12 +913,15 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		}
 	}
 
-	// set arguments
+	// Vault is supported only till config v2.2.0 (CSM 1.14)
 	var vaultArgs []string
-	for _, vault := range vaults {
-		vaultArgs = append(vaultArgs, fmt.Sprintf("--vault=%s,%s,%s,%t", vault.Identifier, vault.Address, vault.Role, vault.SkipCertificateValidation))
+	if semver.Compare(authModule.ConfigVersion, "v2.3.0") == -1 {
+		for _, vault := range vaults {
+			vaultArgs = append(vaultArgs, fmt.Sprintf("--vault=%s,%s,%s,%t", vault.Identifier, vault.Address, vault.Role, vault.SkipCertificateValidation))
+		}
 	}
 
+	// set arguments
 	args := []string{
 		"--redis-sentinel=$(SENTINELS)",
 		"--redis-password=$(REDIS_PASSWORD)",

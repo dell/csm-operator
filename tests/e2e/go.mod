@@ -8,6 +8,7 @@ require (
 	github.com/dell/csm-operator v0.0.0
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.36.3
+	golang.org/x/mod v0.25.0
 	k8s.io/api v0.33.0
 	k8s.io/apimachinery v0.33.0
 	k8s.io/client-go v0.33.0
@@ -107,7 +108,6 @@ require (
 	go.uber.org/zap v1.27.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67 // indirect
-	golang.org/x/mod v0.25.0 // indirect
 	golang.org/x/net v0.38.0 // indirect
 	golang.org/x/oauth2 v0.28.0 // indirect
 	golang.org/x/sync v0.14.0 // indirect
