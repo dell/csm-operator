@@ -768,7 +768,8 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	sentinels := ""
 	image := ""
 	vaults := []csmv1.Vault{}
-	var secretProviderClasses []string
+	// var secretProviderClasses []string
+	storageSystemCredentials := csmv1.StorageSystemCredentials{}
 	leaderElection := true
 	otelCollector := ""
 	for _, component := range authModule.Components {
@@ -787,7 +788,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		case AuthVaultComponent:
 			vaults = component.Vaults
 		case AuthStorageSystemCredentialsComponent:
-			secretProviderClasses = component.SecretProviderClasses
+			storageSystemCredentials = component.StorageSystemCredentials
 		default:
 			continue
 		}
@@ -799,38 +800,57 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 
 	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
 	if semver.Compare(authModule.ConfigVersion, "v2.3.0") >= 0 {
-		// set volumes for secret provider classes
+		// Determine whether to read from secret provider classes or kubernetes secrets
 		readOnly := true
-		for _, providerClass := range secretProviderClasses {
-			volume := corev1.Volume{
-				Name: fmt.Sprintf("secrets-store-inline-%s", providerClass),
-				VolumeSource: corev1.VolumeSource{
-					CSI: &corev1.CSIVolumeSource{
-						Driver:   "secrets-store.csi.k8s.io",
-						ReadOnly: &readOnly,
-						VolumeAttributes: map[string]string{
-							"secretProviderClass": providerClass,
+		if len(storageSystemCredentials.SecretProviderClasses) > 0 {
+			// set volumes for secret provider classes
+			for _, providerClass := range storageSystemCredentials.SecretProviderClasses {
+				volume := corev1.Volume{
+					Name: fmt.Sprintf("secrets-store-inline-%s", providerClass),
+					VolumeSource: corev1.VolumeSource{
+						CSI: &corev1.CSIVolumeSource{
+							Driver:   "secrets-store.csi.k8s.io",
+							ReadOnly: &readOnly,
+							VolumeAttributes: map[string]string{
+								"secretProviderClass": providerClass,
+							},
 						},
 					},
-				},
-			}
-
-			deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volume)
-		}
-
-		// set volume mounts for secret provider classes
-		for i, c := range deployment.Spec.Template.Spec.Containers {
-			if c.Name == "storage-service" {
-				for _, providerClass := range secretProviderClasses {
-					deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
-						Name:      fmt.Sprintf("secrets-store-inline-%s", providerClass),
-						MountPath: fmt.Sprintf("/etc/csm-authorization/%s", providerClass),
-						ReadOnly:  true,
-					})
 				}
-				break
+
+				deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volume)
 			}
-		}
+
+			// set volume mounts for secret provider classes
+			for i, c := range deployment.Spec.Template.Spec.Containers {
+				if c.Name == "storage-service" {
+					for _, providerClass := range storageSystemCredentials.SecretProviderClasses {
+						deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
+							Name:      fmt.Sprintf("secrets-store-inline-%s", providerClass),
+							MountPath: fmt.Sprintf("/etc/csm-authorization/%s", providerClass),
+							ReadOnly:  true,
+						})
+					}
+					break
+				}
+			}
+
+			// set volumes for kubernetes secrets
+			for _, secret := range storageSystemCredentials.Secrets {
+				volume := corev1.Volume{
+					Name: fmt.Sprintf("storage-system-secrets-%s", secret),
+					VolumeSource: corev1.VolumeSource{
+						Secret: corev1.SecretVolumeSource{
+							SecretName: secret,
+						}
+					},
+				}
+
+				deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volume)
+			}
+
+			// set volume mounts for kubernetes secrets
+			
 	} else {
 		// Vault is supported only till config v2.2.0 (CSM 1.14)
 		// set vault volumes
