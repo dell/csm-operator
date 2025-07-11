@@ -358,7 +358,7 @@ type ContainerTemplate struct {
 	// StorageSystemCredentials contains the storage system credentials which can be either a collection of secret provider classes or a collection of kubernetes secrets used for retrieving storage system credentials
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Storage System Credentials"
 	// Applicable from CSM v1.15 onwards
-	StorageSystemCredentials []StorageSystemCredentials `json:"storageSystemCredentials,omitempty" yaml:"storageSystemCredentials,omitempty"`
+	StorageSystemCredentials StorageSystemCredentials `json:"storageSystemCredentials,omitempty" yaml:"storageSystemCredentials,omitempty"`
 
 	// skipCertificateValidation is the flag to skip certificate validation
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Skip Certificate Validation"
