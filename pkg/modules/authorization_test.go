@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2024 Dell Inc., or its subsidiaries. All Rights Reserved.
+// Copyright (c) 2022-2025 Dell Inc., or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
@@ -1227,6 +1228,163 @@ func TestAuthorizationStorageServiceVault(t *testing.T) {
 				}
 			}
 
+			return false, customResource, sourceClient, checkFn
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			isDeleting, cr, sourceClient, checkFn := tc(t)
+
+			err := authorizationStorageServiceV2(context.TODO(), isDeleting, cr, sourceClient)
+			checkFn(t, sourceClient, err)
+		})
+	}
+}
+
+func TestAuthorizationStorageServiceSecretProviderClass(t *testing.T) {
+	type checkFn func(*testing.T, ctrlClient.Client, error)
+
+	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, checkFn){
+		"mounts added for secret provider classes with v2.3.0": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, checkFn) {
+			secretProviderClasses := []string{"secret-provider-class-1", "secret-provider-class-2"}
+
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_secret_provider_class.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			checkFn := func(t *testing.T, client ctrlClient.Client, err error) {
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				storageService := &appsv1.Deployment{}
+				err = client.Get(context.Background(), types.NamespacedName{Name: "storage-service", Namespace: "authorization"}, storageService)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				foundSecretProviderClassVolume := false
+				foundSecretProviderClassVolumeMount := false
+				for _, spc := range secretProviderClasses {
+					for _, volume := range storageService.Spec.Template.Spec.Volumes {
+						if volume.Name == fmt.Sprintf("secrets-store-inline-%s", spc) {
+							foundSecretProviderClassVolume = true
+							if volume.VolumeSource.CSI.VolumeAttributes["secretProviderClass"] != spc {
+								t.Fatalf("expected volume.VolumeSource.CSI.VolumeAttributes[\"secretProviderClass\"] to be %s", spc)
+							}
+						}
+					}
+
+					if !foundSecretProviderClassVolume {
+						t.Errorf("expected volume for secret provider class %s, wasn't found", fmt.Sprintf("secrets-store-inline-%s", spc))
+					}
+
+					for i, container := range storageService.Spec.Template.Spec.Containers {
+						if container.Name == "storage-service" {
+							for _, volumeMount := range storageService.Spec.Template.Spec.Containers[i].VolumeMounts {
+								if volumeMount.Name == fmt.Sprintf("secrets-store-inline-%s", spc) {
+									foundSecretProviderClassVolumeMount = true
+									if volumeMount.MountPath != fmt.Sprintf("/etc/csm-authorization/%s", spc) {
+										t.Fatalf("expected volumeMount.MountPath to be %s", spc)
+									}
+									if volumeMount.ReadOnly != true {
+										t.Fatalf("expected volumeMount.ReadOnly to be true")
+									}
+								}
+							}
+							break
+						}
+					}
+
+					if !foundSecretProviderClassVolumeMount {
+						t.Errorf("expected volume mount for secret provider class %s, wasn't found", fmt.Sprintf("secrets-store-inline-%s", spc))
+					}
+				}
+			}
+			return false, customResource, sourceClient, checkFn
+		},
+
+		"vault configurations ignored for v2.3.0": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, checkFn) {
+			vaultIdentifiers := []string{"vault0"}
+			vaultArgs := []string{"--vault=vault0,https://10.0.0.1:8400,csm-authorization,true", "--vault=vault1,https://10.0.0.2:8400,csm-authorization,true"}
+			selfSignedVault0Issuer := "storage-service-selfsigned-vault0"
+			selfSignedVault0Certificate := "storage-service-selfsigned-vault0"
+
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_secret_provider_class.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			checkFn := func(t *testing.T, client ctrlClient.Client, err error) {
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				storageService := &appsv1.Deployment{}
+				err = client.Get(context.Background(), types.NamespacedName{Name: "storage-service", Namespace: "authorization"}, storageService)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				foundVaultClientVolume := false
+				for _, id := range vaultIdentifiers {
+					for _, volume := range storageService.Spec.Template.Spec.Volumes {
+						if volume.Name == fmt.Sprintf("vault-client-certificate-%s", id) {
+							foundVaultClientVolume = true
+							break
+						}
+					}
+
+					if foundVaultClientVolume {
+						t.Errorf("expected no volume for %s, but found", fmt.Sprintf("vault-client-certificate-%s", id))
+					}
+				}
+
+				foundVaultArgs := false
+				for _, vaultArg := range vaultArgs {
+					for _, c := range storageService.Spec.Template.Spec.Containers {
+						if c.Name == "storage-service" {
+							for _, arg := range c.Args {
+								if arg == vaultArg {
+									foundVaultArgs = true
+									break
+								}
+							}
+							break
+						}
+					}
+
+					if foundVaultArgs {
+						t.Errorf("expected arg %s to be not found", vaultArg)
+					}
+				}
+
+				issuer := &certmanagerv1.Issuer{}
+				err = client.Get(context.Background(), types.NamespacedName{Name: selfSignedVault0Issuer, Namespace: "authorization"}, issuer)
+				if !apierrors.IsNotFound(err) {
+					t.Errorf("expected not found error for issuer %s, but got %v", selfSignedVault0Issuer, err)
+				}
+
+				certificate := &certmanagerv1.Certificate{}
+				err = client.Get(context.Background(), types.NamespacedName{Name: selfSignedVault0Certificate, Namespace: "authorization"}, certificate)
+				if !apierrors.IsNotFound(err) {
+					t.Errorf("expected not found error for certificate %s, but got %v", selfSignedVault0Certificate, err)
+				}
+			}
 			return false, customResource, sourceClient, checkFn
 		},
 	}

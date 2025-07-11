@@ -42,6 +42,9 @@ var (
 injector:
   enabled: false
 server:
+  image:
+    repository: %s
+    tag: "latest"
   service:
     port: 8400
     targetPort: 8400
@@ -71,6 +74,35 @@ server:
             name: %s-config
 ui:
   enabled: true
+# secrets-store-csi-driver-provider-vault
+csi:
+  enabled: %s
+  image:
+    repository: "hashicorp/vault-csi-provider"
+    tag: "latest"
+  volumeMounts:
+    - name: config
+      mountPath: /config
+  volumes:
+    - name: config
+      projected:
+        sources:
+        - secret:
+            name: %s-ca
+        - secret:
+            name: %s-tls
+        - configMap:
+            name: kube-root-ca.crt
+        - configMap:
+            name: %s-config
+  daemonSet:
+    securityContext:
+      container:
+        privileged: true
+  agent:
+    image:
+      repository: %s
+      tag: "latest"
 `
 
 	policy = `
@@ -119,9 +151,10 @@ type sequence struct {
 	steps []step
 	name  string
 
-	kubeconfig string
-	namespace  string
-	kube       *kubernetes.Clientset
+	kubeconfig            string
+	secretsStoreCSIDriver bool
+	namespace             string
+	kube                  *kubernetes.Clientset
 
 	caCert *x509.Certificate
 	caKey  *rsa.PrivateKey
@@ -140,6 +173,7 @@ type sequence struct {
 	password           string
 	fileConfig         string
 	envConfig          bool
+	openshift          bool
 }
 
 type vaultList []string
@@ -157,6 +191,7 @@ func main() {
 	// init flags
 	flag.Var(&vaultNames, "name", "Name of the vault instance")
 	kubeconfig := flag.String("kubeconfig", "", "Path to kubeconfig")
+	secretsStoreCSIDriver := flag.Bool("secrets-store-csi-driver", false, "Enable secrets-store-csi-driver for vault")
 	validateClientCert := flag.Bool("validate-client-cert", false, "Validate client certificate")
 	csmAuthorizationNamespace := flag.String("csm-authorization-namespace", "authorization", "CSM Authorization namespace")
 	secretPath := flag.String("secret-path", "", "Vault secret path")
@@ -164,6 +199,7 @@ func main() {
 	password := flag.String("password", "", "storage password")
 	fileConfig := flag.String("file-config", "", "path to credential config")
 	envConfig := flag.Bool("env-config", false, "use environment variables for credential config")
+	openshift := flag.Bool("openshift", false, "Set to true for OpenShift")
 	flag.Parse()
 
 	if len(vaultNames) == 0 {
@@ -189,16 +225,18 @@ func main() {
 	// execute steps for each vault
 	for _, name := range vaultNames {
 		seq := &sequence{
-			name:               name,
-			kubeconfig:         *kubeconfig,
-			namespace:          *csmAuthorizationNamespace,
-			kube:               kube,
-			validateClientCert: *validateClientCert,
-			secretPath:         *secretPath,
-			username:           *username,
-			password:           *password,
-			fileConfig:         *fileConfig,
-			envConfig:          *envConfig,
+			name:                  name,
+			kubeconfig:            *kubeconfig,
+			secretsStoreCSIDriver: *secretsStoreCSIDriver,
+			namespace:             *csmAuthorizationNamespace,
+			kube:                  kube,
+			validateClientCert:    *validateClientCert,
+			secretPath:            *secretPath,
+			username:              *username,
+			password:              *password,
+			fileConfig:            *fileConfig,
+			envConfig:             *envConfig,
+			openshift:             *openshift,
 		}
 		seq.steps = []step{
 			seq.generateCACert,
@@ -439,7 +477,14 @@ func (s *sequence) configureValues() error {
 	}
 	k8sHost := b.String()
 
-	err = os.WriteFile(fmt.Sprintf("%s-values.yaml", s.name), []byte(fmt.Sprintf(values, k8sHost, s.name, s.name, s.name, s.name)), 0644) // #nosec G306 -- this is a test automation tool
+	var imageRepository string
+	if s.openshift {
+		imageRepository = "registry.connect.redhat.com/hashicorp/vault"
+	} else {
+		imageRepository = "hashicorp/vault"
+	}
+
+	err = os.WriteFile(fmt.Sprintf("%s-values.yaml", s.name), []byte(fmt.Sprintf(values, imageRepository, k8sHost, s.name, s.name, s.name, s.name, strconv.FormatBool(s.secretsStoreCSIDriver), s.name, s.name, s.name, imageRepository)), 0644) // #nosec G306 -- this is a test automation tool
 	if err != nil {
 		return err
 	}

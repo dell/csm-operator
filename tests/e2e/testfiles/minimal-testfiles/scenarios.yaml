@@ -290,7 +290,7 @@
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerflex_auth.yaml"
-    - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
   tags:
     - "authorization"
     - "authorizationproxyserver"
@@ -299,6 +299,7 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
+    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [pflexAuthCRs]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server for [powerflex] for CR [1]"
@@ -574,7 +575,7 @@
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerscale_auth2.0.yaml"
-    - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
   tags:
     - "authorization"
     - "authorizationproxyserver"
@@ -583,6 +584,7 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
+    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [pscaleAuthCRs]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server for [powerscale] for CR [1]"
@@ -867,7 +869,7 @@
 - scenario: "Install Powermax Driver (Minimal, With Authorization v2)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
-    - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powermax_reverseproxy_authorization_v2.yaml"
   tags:
     - "authorizationproxyserver"
@@ -877,6 +879,7 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
+    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [pmaxAuthCRs]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server for [powermax] for CR [1]"
@@ -901,7 +904,7 @@
 - scenario: "Install Powermax Driver without powermax-array-config.yaml (Minimal, With Authorization v2)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
-    - "testfiles/authorization-templates/storage_csm_authorization_v2_crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powermax_reverseproxy_authorization_v2.yaml"
   tags:
     - "authorizationproxyserver"
@@ -911,6 +914,7 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
+    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [pmaxAuthCRs]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server for [powermax] for CR [1]"

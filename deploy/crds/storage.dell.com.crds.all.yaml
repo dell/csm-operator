@@ -453,6 +453,13 @@ spec:
                             RoleServiceReplicas is the number of replicas for
                             the role service deployment
                           type: integer
+                        secretProviderClasses:
+                          description: >-
+                            SecretProviderClasses is a collection of secret provider classes
+                            for retrieving secrets from external providers
+                          items:
+                            type: string
+                          type: array
                         sentinel:
                           description: Sentinel is the name of the sentinel statefulSet
                           type: string
@@ -974,6 +981,13 @@ spec:
                             RoleServiceReplicas is the number of replicas for
                             the role service deployment
                           type: integer
+                        secretProviderClasses:
+                          description: >-
+                            SecretProviderClasses is a collection of secret provider classes
+                            for retrieving secrets from external providers
+                          items:
+                            type: string
+                          type: array
                         sentinel:
                           description: Sentinel is the name of the sentinel statefulSet
                           type: string
@@ -1520,6 +1534,13 @@ spec:
                               RoleServiceReplicas is the number of replicas for
                               the role service deployment
                             type: integer
+                          secretProviderClasses:
+                            description: >-
+                              SecretProviderClasses is a collection of secret provider classes
+                              for retrieving secrets from external providers
+                            items:
+                              type: string
+                            type: array
                           sentinel:
                             description: Sentinel is the name of the sentinel statefulSet
                             type: string
@@ -2039,6 +2060,13 @@ spec:
                             RoleServiceReplicas is the number of replicas for
                             the role service deployment
                           type: integer
+                        secretProviderClasses:
+                          description: >-
+                            SecretProviderClasses is a collection of secret provider classes
+                            for retrieving secrets from external providers
+                          items:
+                            type: string
+                          type: array
                         sentinel:
                           description: Sentinel is the name of the sentinel statefulSet
                           type: string
@@ -2567,6 +2595,13 @@ spec:
                               RoleServiceReplicas is the number of replicas for
                               the role service deployment
                             type: integer
+                          secretProviderClasses:
+                            description: >-
+                              SecretProviderClasses is a collection of secret provider classes
+                              for retrieving secrets from external providers
+                            items:
+                              type: string
+                            type: array
                           sentinel:
                             description: Sentinel is the name of the sentinel statefulSet
                             type: string
@@ -3130,6 +3165,13 @@ spec:
                                 RoleServiceReplicas is the number of replicas
                                 for the role service deployment
                               type: integer
+                            secretProviderClasses:
+                              description: >-
+                                SecretProviderClasses is a collection of secret provider classes
+                                for retrieving secrets from external providers
+                              items:
+                                type: string
+                              type: array
                             sentinel:
                               description: Sentinel is the name of the sentinel statefulSet
                               type: string
@@ -3687,6 +3729,13 @@ spec:
                                 RoleServiceReplicas is the number of replicas
                                 for the role service deployment
                               type: integer
+                            secretProviderClasses:
+                              description: >-
+                                SecretProviderClasses is a collection of secret provider classes
+                                for retrieving secrets from external providers
+                              items:
+                                type: string
+                              type: array
                             sentinel:
                               description: Sentinel is the name of the sentinel statefulSet
                               type: string
