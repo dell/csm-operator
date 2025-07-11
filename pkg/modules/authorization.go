@@ -768,8 +768,8 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	sentinels := ""
 	image := ""
 	vaults := []csmv1.Vault{}
-	// var secretProviderClasses []string
-	storageSystemCredentials := csmv1.StorageSystemCredentials{}
+	var secretProviderClasses []string
+	var secrets []string
 	leaderElection := true
 	otelCollector := ""
 	for _, component := range authModule.Components {
@@ -788,7 +788,8 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		case AuthVaultComponent:
 			vaults = component.Vaults
 		case AuthStorageSystemCredentialsComponent:
-			storageSystemCredentials = component.StorageSystemCredentials
+			secretProviderClasses = component.SecretProviderClasses
+			secrets = component.Secrets
 		default:
 			continue
 		}
@@ -802,9 +803,9 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	if semver.Compare(authModule.ConfigVersion, "v2.3.0") >= 0 {
 		// Determine whether to read from secret provider classes or kubernetes secrets
 		readOnly := true
-		if len(storageSystemCredentials.SecretProviderClasses) > 0 {
+		if len(secretProviderClasses) > 0 {
 			// set volumes for secret provider classes
-			for _, providerClass := range storageSystemCredentials.SecretProviderClasses {
+			for _, providerClass := range secretProviderClasses {
 				volume := corev1.Volume{
 					Name: fmt.Sprintf("secrets-store-inline-%s", providerClass),
 					VolumeSource: corev1.VolumeSource{
@@ -824,7 +825,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 			// set volume mounts for secret provider classes
 			for i, c := range deployment.Spec.Template.Spec.Containers {
 				if c.Name == "storage-service" {
-					for _, providerClass := range storageSystemCredentials.SecretProviderClasses {
+					for _, providerClass := range secretProviderClasses {
 						deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
 							Name:      fmt.Sprintf("secrets-store-inline-%s", providerClass),
 							MountPath: fmt.Sprintf("/etc/csm-authorization/%s", providerClass),
@@ -836,7 +837,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 			}
 		} else {
 			// set volumes for kubernetes secrets
-			for _, secret := range storageSystemCredentials.Secrets {
+			for _, secret := range secrets {
 				volume := corev1.Volume{
 					Name: fmt.Sprintf("storage-system-secrets-%s", secret),
 					VolumeSource: corev1.VolumeSource{
@@ -852,7 +853,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 			// set volume mounts for kubernetes secrets
 			for i, c := range deployment.Spec.Template.Spec.Containers {
 				if c.Name == "storage-service" {
-					for _, secret := range storageSystemCredentials.Secrets {
+					for _, secret := range secrets {
 						deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
 							Name:      fmt.Sprintf("storage-system-secrets-%s", secret),
 							MountPath: fmt.Sprintf("/etc/csm-authorization/%s", secret),
