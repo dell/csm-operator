@@ -141,6 +141,8 @@ const (
 	AuthVaultComponent = "vault"
 	// AuthStorageSystemCredentialsComponent - storage-system-credentials component
 	AuthStorageSystemCredentialsComponent = "storage-system-credentials"
+	// defaultRedisSecretName - name of default redis K8s secret
+	defaultRedisSecretName = "redis-csm-secret"
 
 	// AuthLocalStorageClass -
 	AuthLocalStorageClass = "csm-authorization-local-storage"
@@ -625,7 +627,12 @@ func getAuthorizationServerDeployment(op operatorutils.OperatorConfig, cr csmv1.
 			}
 
 			if component.RedisSecretProviderClass == "" {
-				redisSecretName = "redis-csm-secret"
+				redisSecretName = defaultRedisSecretName
+				redisSecret, err := createRedisK8sSecret(cr)
+				if err != nil {
+					return YamlString, fmt.Errorf("failed to create default redis kubernetes secret: %w", err)
+				}
+				YamlString += "\n---\n" + redisSecret
 			} else {
 				redisSecretName = component.RedisSecretProviderClass
 			}
@@ -846,7 +853,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: &corev1.SecretKeySelector{
 					LocalObjectReference: corev1.LocalObjectReference{
-						Name: "redis-csm-secret",
+						Name: defaultRedisSecretName,
 					},
 					Key: "password",
 				},
@@ -1778,4 +1785,28 @@ func setIngressRules(cr csmv1.ContainerStorageModule) ([]networking.IngressRule,
 	rules = append(rules, noHostRule...)
 
 	return rules, nil
+}
+
+func createRedisK8sSecret(cr csmv1.ContainerStorageModule) (string, error) {
+	redisSecret := corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      defaultRedisSecretName,
+			Namespace: cr.Namespace,
+		},
+		Type: corev1.SecretTypeBasicAuth,
+		StringData: map[string]string{
+			"password": "K@ravi123!",
+			"commander_user": "dev",
+		},
+	}
+
+	secretBytes, err := yaml.Marshal(redisSecret)
+	if err != nil {
+		return "", fmt.Errorf("marshaling redis secret: %v", err)
+	}
+
+	return string(secretBytes), nil
 }
