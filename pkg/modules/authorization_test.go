@@ -1480,6 +1480,58 @@ func TestAuthorizationStorageServiceSecret(t *testing.T) {
 	}
 }
 
+func TestAuthorizationStorageServiceSecretAndSecretProviderClass(t *testing.T) {
+	type checkFn func(*testing.T, ctrlClient.Client, error)
+
+	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, checkFn){
+		"not allowed to use secrets AND secret provider classes with v2.3.0": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, checkFn) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_k8s_secret_and_secret_provider_class.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			checkFn := func(t *testing.T, client ctrlClient.Client, err error) {
+				assert.Error(t, err)
+				assert.EqualError(t, err, "Exactly one of SecretProviderClasses or Secrets must be specified in the CSM Authorization CR — not both, not neither.")
+			}
+			return false, customResource, sourceClient, checkFn
+		},
+		"need exactly one of secrets or secret provider classes with v2.3.0": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, checkFn) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_no_k8s_secret_and_secret_provider_class.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			checkFn := func(t *testing.T, client ctrlClient.Client, err error) {
+				assert.Error(t, err)
+				assert.EqualError(t, err, "Exactly one of SecretProviderClasses or Secrets must be specified in the CSM Authorization CR — not both, not neither.")
+			}
+			return false, customResource, sourceClient, checkFn
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			isDeleting, cr, sourceClient, checkFn := tc(t)
+
+			err := authorizationStorageServiceV2(context.TODO(), isDeleting, cr, sourceClient)
+			checkFn(t, sourceClient, err)
+		})
+	}
+}
+
 func TestAuthorizationIngress(t *testing.T) {
 	isOpenShift := true
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client){
