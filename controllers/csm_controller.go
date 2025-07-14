@@ -798,13 +798,18 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			_ = drivers.RemoveVolume(&node.DaemonSetApplyConfig, drivers.ScaleioBinPath)
 		}
 
-		for _, env := range cr.Spec.Driver.Node.Envs {
-			if env.Name == "X_CSI_SDC_SFTP_REPO_ENABLED" {
-				if env.Value != "true" {
-					_ = drivers.RemoveInitVolume(&node.DaemonSetApplyConfig, drivers.SftpKeys)
+		if (cr.Spec.Driver.Node != nil) && cr.Spec.Driver.Node.Envs != nil {
+			for _, env := range cr.Spec.Driver.Node.Envs {
+				if env.Name == "X_CSI_SDC_SFTP_REPO_ENABLED" {
+					if env.Value != "true" {
+						_ = drivers.RemoveInitVolume(&node.DaemonSetApplyConfig, drivers.SftpKeys)
+					}
+					break
 				}
-				break
 			}
+		} else {
+			// if envs are not specified, we assume that sftp is disabled
+			_ = drivers.RemoveInitVolume(&node.DaemonSetApplyConfig, drivers.SftpKeys)
 		}
 	}
 
