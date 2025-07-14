@@ -1399,6 +1399,163 @@ func TestAuthorizationStorageServiceSecretProviderClass(t *testing.T) {
 	}
 }
 
+func TestAuthorizationStorageServiceSecret(t *testing.T) {
+	type checkFn func(*testing.T, ctrlClient.Client, error)
+
+	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, checkFn){
+		"mounts added for kubernetes secrets with v2.3.0": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, checkFn) {
+			secrets := []string{"secret-1", "secret-2"}
+
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_k8s_secret.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			checkFn := func(t *testing.T, client ctrlClient.Client, err error) {
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				storageService := &appsv1.Deployment{}
+				err = client.Get(context.Background(), types.NamespacedName{Name: "storage-service", Namespace: "authorization"}, storageService)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				foundK8sSecretVolume := false
+				foundK8sSecretVolumeMount := false
+				for _, secret := range secrets {
+					for _, volume := range storageService.Spec.Template.Spec.Volumes {
+						if volume.Name == fmt.Sprintf("storage-system-secrets-%s", secret) {
+							foundK8sSecretVolume = true
+							if volume.VolumeSource.Secret.SecretName != secret {
+								t.Fatalf("expected volume.VolumeSource.Secret.SecretName to be %s", secret)
+							}
+						}
+					}
+
+					if !foundK8sSecretVolume {
+						t.Errorf("expected volume for kubernetes secret %s, wasn't found", fmt.Sprintf("storage-system-secrets-%s", secret))
+					}
+
+					for i, container := range storageService.Spec.Template.Spec.Containers {
+						if container.Name == "storage-service" {
+							for _, volumeMount := range storageService.Spec.Template.Spec.Containers[i].VolumeMounts {
+								if volumeMount.Name == fmt.Sprintf("storage-system-secrets-%s", secret) {
+									foundK8sSecretVolumeMount = true
+									if volumeMount.MountPath != fmt.Sprintf("/etc/csm-authorization/%s", secret) {
+										t.Fatalf("expected volumeMount.MountPath to be %s", secret)
+									}
+									if volumeMount.ReadOnly != true {
+										t.Fatalf("expected volumeMount.ReadOnly to be true")
+									}
+								}
+							}
+							break
+						}
+					}
+
+					if !foundK8sSecretVolumeMount {
+						t.Errorf("expected volume mount for kubernetes secret %s, wasn't found", fmt.Sprintf("storage-system-secrets-%s", secret))
+					}
+				}
+			}
+			return false, customResource, sourceClient, checkFn
+		},
+
+		"vault configurations ignored for v2.3.0": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, checkFn) {
+			vaultIdentifiers := []string{"vault0"}
+			vaultArgs := []string{"--vault=vault0,https://10.0.0.1:8400,csm-authorization,true", "--vault=vault1,https://10.0.0.2:8400,csm-authorization,true"}
+			selfSignedVault0Issuer := "storage-service-selfsigned-vault0"
+			selfSignedVault0Certificate := "storage-service-selfsigned-vault0"
+
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_k8s_secret.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			checkFn := func(t *testing.T, client ctrlClient.Client, err error) {
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				storageService := &appsv1.Deployment{}
+				err = client.Get(context.Background(), types.NamespacedName{Name: "storage-service", Namespace: "authorization"}, storageService)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				foundVaultClientVolume := false
+				for _, id := range vaultIdentifiers {
+					for _, volume := range storageService.Spec.Template.Spec.Volumes {
+						if volume.Name == fmt.Sprintf("vault-client-certificate-%s", id) {
+							foundVaultClientVolume = true
+							break
+						}
+					}
+
+					if foundVaultClientVolume {
+						t.Errorf("expected no volume for %s, but found", fmt.Sprintf("vault-client-certificate-%s", id))
+					}
+				}
+
+				foundVaultArgs := false
+				for _, vaultArg := range vaultArgs {
+					for _, c := range storageService.Spec.Template.Spec.Containers {
+						if c.Name == "storage-service" {
+							for _, arg := range c.Args {
+								if arg == vaultArg {
+									foundVaultArgs = true
+									break
+								}
+							}
+							break
+						}
+					}
+
+					if foundVaultArgs {
+						t.Errorf("expected arg %s to be not found", vaultArg)
+					}
+				}
+
+				issuer := &certmanagerv1.Issuer{}
+				err = client.Get(context.Background(), types.NamespacedName{Name: selfSignedVault0Issuer, Namespace: "authorization"}, issuer)
+				if !apierrors.IsNotFound(err) {
+					t.Errorf("expected not found error for issuer %s, but got %v", selfSignedVault0Issuer, err)
+				}
+
+				certificate := &certmanagerv1.Certificate{}
+				err = client.Get(context.Background(), types.NamespacedName{Name: selfSignedVault0Certificate, Namespace: "authorization"}, certificate)
+				if !apierrors.IsNotFound(err) {
+					t.Errorf("expected not found error for certificate %s, but got %v", selfSignedVault0Certificate, err)
+				}
+			}
+			return false, customResource, sourceClient, checkFn
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			isDeleting, cr, sourceClient, checkFn := tc(t)
+
+			err := authorizationStorageServiceV2(context.TODO(), isDeleting, cr, sourceClient)
+			checkFn(t, sourceClient, err)
+		})
+	}
+}
+
 func TestAuthorizationIngress(t *testing.T) {
 	isOpenShift := true
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client){
