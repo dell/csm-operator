@@ -795,8 +795,18 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		}
 	}
 
+	// Either SecretProviderClasses OR Secrets must be specified (mutually exclusive) from config v2.3.0 (CSM 1.15) onwards
+	if semver.Compare(authModule.ConfigVersion, "v2.3.0") >= 0 {
+		hasSPC := len(secretProviderClasses) > 0
+		hasSecrets := len(secrets) > 0
+
+		if hasSPC == hasSecrets {
+			return fmt.Errorf("Exactly one of SecretProviderClasses or Secrets must be specified in the CSM Authorization CR — not both, not neither.")
+		}
+	}
+
 	// conversion to int32 is safe for a value up to 2147483647
-	// #nosec G115
+	// #nosec G115gg
 	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, int32(replicas))
 
 	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
