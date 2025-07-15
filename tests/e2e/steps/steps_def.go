@@ -1534,7 +1534,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	return nil
 }
 
-func (step *Step) configureAuthorizationProxyServer(res Resource, driver, crNumStr string, storageTemplateNumStr ...string) error {
+func (step *Step) configureAuthorizationProxyServer(res Resource, driver, crNumStr string) error {
 	fmt.Println("=== Configuring Authorization Proxy Server ===")
 
 	crNum, _ := strconv.Atoi(crNumStr)
@@ -1546,14 +1546,13 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver, crNumS
 		driverNamespace = ""
 		proxyHost       = ""
 		csmTenantName   = ""
+		storageTemplate = ""
 	)
-
-	storageTemplate := "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
-	// Optional param storageTemplateNumStr can be a storage template file path, otherwise it is nil and we use the default storage template in
-	// AuthorizationV2Resources
-	if storageTemplateNumStr != nil {
-		storageTemplateNum, _ := strconv.Atoi(storageTemplateNumStr[0])
-		storageTemplate = res.Scenario.Paths[storageTemplateNum-1]
+	
+	if strings.Contains(res.Scenario.Scenario, "With Kubernetes Secret") {
+		storageTemplate = "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
+	} else {
+		storageTemplate = "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
 	}
 
 	// if tests are running multiple scenarios that require differently configured auth servers, we will not be able to use one set of vars
