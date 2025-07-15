@@ -1534,7 +1534,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	return nil
 }
 
-func (step *Step) configureAuthorizationProxyServer(res Resource, driver string, crNumStr string) error {
+func (step *Step) configureAuthorizationProxyServer(res Resource, driver, crNumStr, storageTemplate string) error {
 	fmt.Println("=== Configuring Authorization Proxy Server ===")
 
 	crNum, _ := strconv.Atoi(crNumStr)
@@ -1582,14 +1582,14 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	address := proxyHost
 	fmt.Printf("Address: %s\n", address)
 
-	return step.AuthorizationV2Resources(storageType, driver, driverNamespace, address, port, csmTenantName, cr.Spec.Modules[0].ConfigVersion)
+	return step.AuthorizationV2Resources(storageType, driver, driverNamespace, address, port, csmTenantName, cr.Spec.Modules[0].ConfigVersion, storageTemplate)
 }
 
 // AuthorizationV2Resources creates resources using CRs and dellctl for V2 versions of Authorization Proxy Server
-func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName, configVersion string) error {
+func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName, configVersion, storageTemplate string) error {
 	var (
 		crMap               = ""
-		templateFile        = "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
+		templateFile        = storageTemplate
 		updatedTemplateFile = ""
 	)
 

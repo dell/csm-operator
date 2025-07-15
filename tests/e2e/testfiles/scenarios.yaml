@@ -36,6 +36,7 @@
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_k8s_secret.yaml"
     - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
   tags:
     - "authorizationproxyserver"
   steps:
@@ -45,7 +46,7 @@
     - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [authorization] for [pflex]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
-    - "Configure authorization-proxy-server for [powerflex] for CR [1]"
+    - "Configure authorization-proxy-server for [powerflex] for CR [1] with storage template [3]"
     - "Delete Authorization CRs for [powerflex]"
     - "Delete custom resource [1]"
     - "Validate [authorization] module pods from CR [1] is not installed"
