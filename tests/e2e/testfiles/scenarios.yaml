@@ -1146,6 +1146,48 @@
     - "Delete custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is not installed"
 
+- scenario: "Install PowerStore Driver(With Observability)"
+  paths:
+    - "testfiles/storage_csm_powerstore_observability.yaml"
+  tags:
+    - "observability"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-creds] in namespace [powerstore] for [pstore]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is installed"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is not installed"
+
+- scenario: "Install PowerStore Driver(Standalone), Enable/Disable Observability"
+  paths:
+    - "testfiles/storage_csm_powerstore.yaml"
+  tags:
+    - "powerstore"
+    - "observability"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-creds] in namespace [powerstore] for [pstore]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is not installed"
+    - "Enable [observability] module from CR [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is installed"
+    - "Disable [observability] module from CR [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is not installed"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is not installed"
+
 - scenario: "Install Unity Driver(Standalone)"
   paths:
     - "testfiles/storage_csm_unity.yaml"
