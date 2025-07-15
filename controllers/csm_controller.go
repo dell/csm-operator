@@ -33,13 +33,13 @@ import (
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/logger"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	"github.com/dell/csm-operator/pkg/resources/configmap"
 	"github.com/dell/csm-operator/pkg/resources/csidriver"
 	"github.com/dell/csm-operator/pkg/resources/daemonset"
 	"github.com/dell/csm-operator/pkg/resources/deployment"
 	"github.com/dell/csm-operator/pkg/resources/rbac"
 	"github.com/dell/csm-operator/pkg/resources/serviceaccount"
-	"github.com/dell/csm-operator/pkg/utils"
 	"go.uber.org/zap"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -66,6 +66,7 @@ type ContainerStorageModuleReconciler struct {
 	client.Client
 	// k8s client, implements client-go/kubernetes interface, responsible for apply, which
 	// client.Client does not provides
+<<<<<<< HEAD
 	K8sClient     kubernetes.Interface
 	Scheme        *runtime.Scheme
 	Log           *zap.SugaredLogger
@@ -73,14 +74,25 @@ type ContainerStorageModuleReconciler struct {
 	updateCount   int32
 	trcID         string
 	EventRecorder record.EventRecorder
+=======
+	K8sClient            kubernetes.Interface
+	Scheme               *runtime.Scheme
+	Log                  *zap.SugaredLogger
+	Config               operatorutils.OperatorConfig
+	updateCount          int32
+	trcID                string
+	EventRecorder        record.EventRecorder
+	ContentWatchChannels map[string]chan struct{}
+	ContentWatchLock     sync.Mutex
+>>>>>>> e7eee990 (Rename package to fix golangci-lint check error (#1031))
 }
 
 // DriverConfig  -
 type DriverConfig struct {
 	Driver     *storagev1.CSIDriver
 	ConfigMap  *corev1.ConfigMap
-	Node       *utils.NodeYAML
-	Controller *utils.ControllerYAML
+	Node       *operatorutils.NodeYAML
+	Controller *operatorutils.ControllerYAML
 }
 
 const (
@@ -246,7 +258,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 	r.trcID = fmt.Sprintf("%d", r.GetUpdateCount())
 	name := req.Name + "-" + r.trcID
 	ctx, log := logger.GetNewContextWithLogger(name)
-	unitTestRun := utils.DetermineUnitTestRun(ctx)
+	unitTestRun := operatorutils.DetermineUnitTestRun(ctx)
 
 	log.Info("################Starting Reconcile##############")
 	csm := new(csmv1.ContainerStorageModule)
@@ -266,7 +278,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 		return reconcile.Result{}, nil
 	}
 
-	operatorConfig := &utils.OperatorConfig{
+	operatorConfig := &operatorutils.OperatorConfig{
 		IsOpenShift:     r.Config.IsOpenShift,
 		K8sVersion:      r.Config.K8sVersion,
 		ConfigDirectory: r.Config.ConfigDirectory,
@@ -279,7 +291,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 	}
 
 	// Set default components if using miminal manifest (without components)
-	err = utils.LoadDefaultComponents(ctx, csm, *operatorConfig)
+	err = operatorutils.LoadDefaultComponents(ctx, csm, *operatorConfig)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -289,7 +301,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 	if err != nil {
 		csm.GetCSMStatus().State = constants.InvalidConfig
 		r.EventRecorder.Event(csm, corev1.EventTypeWarning, csmv1.EventUpdated, fmt.Sprintf("Failed Prechecks: %s", err))
-		return utils.HandleValidationError(ctx, csm, r, err)
+		return operatorutils.HandleValidationError(ctx, csm, r, err)
 	}
 
 	if csm.IsBeingDeleted() {
@@ -350,19 +362,19 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 	}
 
 	newStatus := csm.GetCSMStatus()
-	requeue := utils.HandleSuccess(ctx, csm, r, newStatus, oldStatus)
+	requeue := operatorutils.HandleSuccess(ctx, csm, r, newStatus, oldStatus)
 
 	// Update the driver
 	syncErr := r.SyncCSM(ctx, *csm, *operatorConfig, r.Client)
 	if syncErr == nil && !requeue.Requeue {
-		err = utils.UpdateStatus(ctx, csm, r, newStatus)
+		err = operatorutils.UpdateStatus(ctx, csm, r, newStatus)
 		if err != nil && !unitTestRun {
 			log.Error(err, "Failed to update CR status")
-			utils.LogEndReconcile()
+			operatorutils.LogEndReconcile()
 			return reconcile.Result{Requeue: true}, err
 		}
 		r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "install/update storage component: %s completed OK", csm.Name)
-		utils.LogEndReconcile()
+		operatorutils.LogEndReconcile()
 		return reconcile.Result{}, nil
 	}
 
@@ -374,7 +386,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 	// Failed deployment
 	r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, csmv1.EventUpdated, "Failed install: %s", syncErr.Error())
 
-	utils.LogEndReconcile()
+	operatorutils.LogEndReconcile()
 	return reconcile.Result{Requeue: true}, syncErr
 }
 
@@ -439,7 +451,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 		newStatus.ControllerStatus.Desired = strconv.Itoa(int(desired))
 		newStatus.ControllerStatus.Failed = strconv.Itoa(int(numberUnavailable))
 
-		err = utils.UpdateStatus(ctx, csm, r, newStatus)
+		err = operatorutils.UpdateStatus(ctx, csm, r, newStatus)
 		if err != nil {
 			log.Debugw("deployment status ", "pods", err.Error())
 		} else {
@@ -479,7 +491,7 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(_ interface{}, obj i
 		log.Infow("csm prev status ", "state", csm.Status)
 		newStatus := csm.GetCSMStatus()
 
-		err = utils.UpdateStatus(ctx, csm, r, newStatus)
+		err = operatorutils.UpdateStatus(ctx, csm, r, newStatus)
 		state := csm.GetCSMStatus().State
 		stamp := fmt.Sprintf("at %d", time.Now().UnixNano())
 		if state != "0" && err != nil {
@@ -532,7 +544,7 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 
 		log.Infow("csm prev status ", "state", csm.Status)
 		newStatus := csm.GetCSMStatus()
-		err = utils.UpdateStatus(ctx, csm, r, newStatus)
+		err = operatorutils.UpdateStatus(ctx, csm, r, newStatus)
 		if err != nil {
 			log.Debugw("daemonset status ", "pods", err.Error())
 		} else {
@@ -606,7 +618,7 @@ func (r *ContainerStorageModuleReconciler) addFinalizer(ctx context.Context, ins
 	return r.Update(ctx, instance)
 }
 
-func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx context.Context, newCR *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, _ *DriverConfig) error {
+func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx context.Context, newCR *csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, _ *DriverConfig) error {
 	log := logger.GetLogger(ctx)
 	log.Info("Checking if standalone modules need clean up")
 
@@ -630,7 +642,7 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 
 		// Check if replica needs to be uninstalled
 		if replicaEnabled(oldCR) && !replicaEnabled(newCR) {
-			clusterClient := utils.GetCluster(ctx, r)
+			clusterClient := operatorutils.GetCluster(ctx, r)
 			if err != nil {
 				return err
 			}
@@ -644,21 +656,21 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 			}
 		}
 		// check if observability needs to be uninstalled
-		oldObservabilityEnabled, oldObs := utils.IsModuleEnabled(ctx, *oldCR, csmv1.Observability)
-		newObservabilityEnabled, _ := utils.IsModuleEnabled(ctx, *newCR, csmv1.Observability)
+		oldObservabilityEnabled, oldObs := operatorutils.IsModuleEnabled(ctx, *oldCR, csmv1.Observability)
+		newObservabilityEnabled, _ := operatorutils.IsModuleEnabled(ctx, *newCR, csmv1.Observability)
 		// check if observability components need to be uninstalled
 		components := []string{}
 		if oldObservabilityEnabled && newObservabilityEnabled {
 			for _, comp := range oldObs.Components {
-				oldCompEnabled := utils.IsModuleComponentEnabled(ctx, *oldCR, csmv1.Observability, comp.Name)
-				newCompEnabled := utils.IsModuleComponentEnabled(ctx, *newCR, csmv1.Observability, comp.Name)
+				oldCompEnabled := operatorutils.IsModuleComponentEnabled(ctx, *oldCR, csmv1.Observability, comp.Name)
+				newCompEnabled := operatorutils.IsModuleComponentEnabled(ctx, *newCR, csmv1.Observability, comp.Name)
 				if oldCompEnabled && !newCompEnabled {
 					components = append(components, comp.Name)
 				}
 			}
 		}
 		if (oldObservabilityEnabled && !newObservabilityEnabled) || len(components) > 0 {
-			clusterClient := utils.GetCluster(ctx, r)
+			clusterClient := operatorutils.GetCluster(ctx, r)
 
 			// remove module observability
 			log.Infow("Deleting observability")
@@ -669,11 +681,11 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 		}
 
 		// check if application mobility needs to be uninstalled
-		oldApplicationmobilityEnabled, _ := utils.IsModuleEnabled(ctx, *oldCR, csmv1.ApplicationMobility)
-		newApplicationmobilityEnabled, _ := utils.IsModuleEnabled(ctx, *newCR, csmv1.ApplicationMobility)
+		oldApplicationmobilityEnabled, _ := operatorutils.IsModuleEnabled(ctx, *oldCR, csmv1.ApplicationMobility)
+		newApplicationmobilityEnabled, _ := operatorutils.IsModuleEnabled(ctx, *newCR, csmv1.ApplicationMobility)
 
 		if oldApplicationmobilityEnabled && !newApplicationmobilityEnabled {
-			clusterClient := utils.GetCluster(ctx, r)
+			clusterClient := operatorutils.GetCluster(ctx, r)
 
 			log.Infow("Deleting application mobility")
 			if err := r.reconcileAppMobility(ctx, true, operatorConfig, *oldCR, clusterClient.ClusterCTRLClient); err != nil {
@@ -698,11 +710,11 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 }
 
 // SyncCSM - Sync the current installation - this can lead to a create or update
-func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ctrlClient client.Client) error {
+func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
 
 	// Create/Update Authorization Proxy Server
-	authorizationEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.AuthorizationServer)
+	authorizationEnabled, _ := operatorutils.IsModuleEnabled(ctx, cr, csmv1.AuthorizationServer)
 	if authorizationEnabled {
 		log.Infow("Create/Update authorization")
 		if err := r.reconcileAuthorizationCRDS(ctx, operatorConfig, cr, ctrlClient); err != nil {
@@ -714,7 +726,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		return nil
 	}
 
-	if appmobilityEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.ApplicationMobility); appmobilityEnabled {
+	if appmobilityEnabled, _ := operatorutils.IsModuleEnabled(ctx, cr, csmv1.ApplicationMobility); appmobilityEnabled {
 		log.Infow("Create/Update application mobility")
 		if err := r.reconcileAppMobilityCRDS(ctx, operatorConfig, cr, ctrlClient); err != nil {
 			return fmt.Errorf("failed to deploy application mobility: %v", err)
@@ -725,7 +737,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	}
 
 	// Create/Update Reverseproxy Server
-	if reverseProxyEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.ReverseProxy); reverseProxyEnabled && !modules.IsReverseProxySidecar() {
+	if reverseProxyEnabled, _ := operatorutils.IsModuleEnabled(ctx, cr, csmv1.ReverseProxy); reverseProxyEnabled && !modules.IsReverseProxySidecar() {
 		log.Infow("Trying Create/Update reverseproxy...")
 		if err := r.reconcileReverseProxyServer(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
 			return fmt.Errorf("failed to deploy reverseproxy proxy server: %v", err)
@@ -733,7 +745,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	}
 
 	// Install/update the Replication CRDs
-	if replicationEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.Replication); replicationEnabled {
+	if replicationEnabled, _ := operatorutils.IsModuleEnabled(ctx, cr, csmv1.Replication); replicationEnabled {
 		log.Infow("Create/Update Replication CRDs")
 		if err := r.reconcileReplicationCRDS(ctx, operatorConfig, cr, ctrlClient); err != nil {
 			return fmt.Errorf("failed to deploy replication CRDs: %v", err)
@@ -808,8 +820,8 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		}
 	}
 
-	clusterClient := utils.GetCluster(ctx, r)
-	replicationEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.Replication)
+	clusterClient := operatorutils.GetCluster(ctx, r)
+	replicationEnabled, _ := operatorutils.IsModuleEnabled(ctx, cr, csmv1.Replication)
 
 	for _, m := range cr.Spec.Modules {
 		if m.Enabled {
@@ -980,7 +992,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	}
 
 	// if Observability is enabled, create or update obs components: topology, metrics of PowerScale and PowerFlex
-	if observabilityEnabled, _ := utils.IsModuleEnabled(ctx, cr, csmv1.Observability); observabilityEnabled {
+	if observabilityEnabled, _ := operatorutils.IsModuleEnabled(ctx, cr, csmv1.Observability); observabilityEnabled {
 		log.Infow("Create/Update observability")
 
 		if err = r.reconcileObservability(ctx, false, operatorConfig, cr, nil, clusterClient.ClusterCTRLClient, clusterClient.ClusterK8sClient); err != nil {
@@ -993,25 +1005,25 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 
 // reconcileObservability - Delete/Create/Update observability components
 // isDeleting - true: Delete; false: Create/Update
-func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, components []string, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
+func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, components []string, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
 	log := logger.GetLogger(ctx)
 
 	// if components is empty, reconcile all enabled components
 	if len(components) == 0 {
-		if enabled, obs := utils.IsModuleEnabled(ctx, cr, csmv1.Observability); enabled {
+		if enabled, obs := operatorutils.IsModuleEnabled(ctx, cr, csmv1.Observability); enabled {
 			for _, comp := range obs.Components {
-				if utils.IsModuleComponentEnabled(ctx, cr, csmv1.Observability, comp.Name) {
+				if operatorutils.IsModuleComponentEnabled(ctx, cr, csmv1.Observability, comp.Name) {
 					components = append(components, comp.Name)
 				}
 			}
 		}
 	}
-	comp2reconFunc := map[string]func(context.Context, bool, utils.OperatorConfig, csmv1.ContainerStorageModule, client.Client) error{
+	comp2reconFunc := map[string]func(context.Context, bool, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, client.Client) error{
 		modules.ObservabilityTopologyName:         modules.ObservabilityTopology,
 		modules.ObservabilityOtelCollectorName:    modules.OtelCollector,
 		modules.ObservabilityCertManagerComponent: modules.CommonCertManager,
 	}
-	metricsComp2reconFunc := map[string]func(context.Context, bool, utils.OperatorConfig, csmv1.ContainerStorageModule, client.Client, kubernetes.Interface) error{
+	metricsComp2reconFunc := map[string]func(context.Context, bool, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, client.Client, kubernetes.Interface) error{
 		modules.ObservabilityMetricsPowerScaleName: modules.PowerScaleMetrics,
 		modules.ObservabilityMetricsPowerFlexName:  modules.PowerFlexMetrics,
 		modules.ObservabilityMetricsPowerMaxName:   modules.PowerMaxMetrics,
@@ -1043,17 +1055,17 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 }
 
 // reconcileAuthorization - deploy authorization proxy server
-func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
 
-	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthCertManagerComponent) {
+	if operatorutils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthCertManagerComponent) {
 		log.Infow("Reconcile authorization cert-manager")
 		if err := modules.CommonCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile cert-manager for authorization: %v", err)
 		}
 	}
 
-	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
+	if operatorutils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
 		log.Infow("Reconcile authorization proxy-server")
 		if err := modules.AuthorizationServerDeployment(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile authorization proxy server: %v", err)
@@ -1066,11 +1078,11 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 
 	if r.Config.IsOpenShift {
 		log.Infow("Using OpenShift default ingress controller")
-		if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
+		if operatorutils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
 			log.Warnw("openshift environment, skipping deployment of nginx ingress controller")
 		}
 	} else {
-		if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
+		if operatorutils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
 			log.Infow("Reconcile authorization NGINX Ingress Controller")
 			if err := modules.NginxIngressController(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 				return fmt.Errorf("unable to reconcile nginx ingress controller for authorization: %v", err)
@@ -1079,7 +1091,7 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 	}
 
 	// Authorization Ingress rules
-	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
+	if operatorutils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
 		log.Infow("Reconcile authorization Ingresses")
 		if err := modules.AuthorizationIngress(ctx, isDeleting, r.Config.IsOpenShift, cr, r, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile authorization ingress rules: %v", err)
@@ -1094,11 +1106,11 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 	return nil
 }
 
-func (r *ContainerStorageModuleReconciler) reconcileAppMobilityCRDS(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+func (r *ContainerStorageModuleReconciler) reconcileAppMobilityCRDS(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
 
 	// AppMobility installs Application Mobility CRDS
-	if utils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobCtrlMgrComponent) {
+	if operatorutils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobCtrlMgrComponent) {
 		log.Infow("Reconcile Application Mobility CRDS")
 		if err := modules.AppMobCrdDeploy(ctx, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile Application Mobility CRDs: %v", err)
@@ -1112,11 +1124,11 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobilityCRDS(ctx context.
 }
 
 // reconcileAuthorizationCRDS - reconcile Authorization CRDs
-func (r *ContainerStorageModuleReconciler) reconcileAuthorizationCRDS(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+func (r *ContainerStorageModuleReconciler) reconcileAuthorizationCRDS(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
 
 	// Install Authorization CRDs
-	if utils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
+	if operatorutils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
 		log.Infow("Reconcile Authorization CRDS")
 		if err := modules.AuthCrdDeploy(ctx, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile Authorization CRDs: %v", err)
@@ -1127,11 +1139,11 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorizationCRDS(ctx contex
 }
 
 // reconcileAppMobility - deploy Application Mobility
-func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
 
 	// AppMobility installs Application Mobility Controller Manager
-	if utils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobCtrlMgrComponent) {
+	if operatorutils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobCtrlMgrComponent) {
 		log.Infow("Reconcile Application Mobility Controller Manager")
 		if err := modules.AppMobilityWebhookService(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to deploy WebhookService for Application Mobility: %v", err)
@@ -1139,7 +1151,7 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Cont
 		if err := modules.ControllerManagerMetricService(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to deploy MetricService for Application Mobility: %v", err)
 		}
-		if utils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobCertManagerComponent) {
+		if operatorutils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobCertManagerComponent) {
 			if err := modules.CommonCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 				return fmt.Errorf("unable to reconcile cert-manager for Application Mobility: %v", err)
 			}
@@ -1153,7 +1165,7 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Cont
 	}
 
 	// Appmobility installs velero
-	if utils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobVeleroComponent) {
+	if operatorutils.IsAppMobilityComponentEnabled(ctx, cr, r, csmv1.ApplicationMobility, modules.AppMobVeleroComponent) {
 		log.Infow("Reconcile application mobility velero")
 		if err := modules.AppMobilityVelero(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 			return fmt.Errorf("unable to reconcile velero for Application Mobility: %v", err)
@@ -1166,7 +1178,7 @@ func (r *ContainerStorageModuleReconciler) reconcileAppMobility(ctx context.Cont
 	return nil
 }
 
-func (r *ContainerStorageModuleReconciler) reconcileReplicationCRDS(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+func (r *ContainerStorageModuleReconciler) reconcileReplicationCRDS(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	if err := modules.ReplicationCrdDeploy(ctx, op, cr, ctrlClient); err != nil {
 		return fmt.Errorf("unable to reconcile replication CRDs: %v", err)
 	}
@@ -1175,15 +1187,15 @@ func (r *ContainerStorageModuleReconciler) reconcileReplicationCRDS(ctx context.
 
 func getDriverConfig(ctx context.Context,
 	cr csmv1.ContainerStorageModule,
-	operatorConfig utils.OperatorConfig,
+	operatorConfig operatorutils.OperatorConfig,
 	ctrlClient client.Client,
 ) (*DriverConfig, error) {
 	var (
 		err        error
 		driver     *storagev1.CSIDriver
 		configMap  *corev1.ConfigMap
-		node       *utils.NodeYAML
-		controller *utils.ControllerYAML
+		node       *operatorutils.NodeYAML
+		controller *operatorutils.ControllerYAML
 		log        = logger.GetLogger(ctx)
 	)
 
@@ -1230,7 +1242,7 @@ func getDriverConfig(ctx context.Context,
 }
 
 // reconcileReverseProxyServer - deploy reverse proxy server
-func (r *ContainerStorageModuleReconciler) reconcileReverseProxyServer(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+func (r *ContainerStorageModuleReconciler) reconcileReverseProxyServer(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
 	log.Infow("Reconcile reverseproxy proxy")
 	if err := modules.ReverseProxyServer(ctx, isDeleting, op, cr, ctrlClient); err != nil {
@@ -1239,68 +1251,68 @@ func (r *ContainerStorageModuleReconciler) reconcileReverseProxyServer(ctx conte
 	return nil
 }
 
-func removeDriverFromCluster(ctx context.Context, cluster utils.ClusterConfig, driverConfig *DriverConfig) error {
+func removeDriverFromCluster(ctx context.Context, cluster operatorutils.ClusterConfig, driverConfig *DriverConfig) error {
 	log := logger.GetLogger(ctx)
 	var err error
 
 	log.Infow("removing driver from", cluster.ClusterID)
 
-	if err = utils.DeleteObject(ctx, &driverConfig.Node.Rbac.ServiceAccount, cluster.ClusterCTRLClient); err != nil {
+	if err = operatorutils.DeleteObject(ctx, &driverConfig.Node.Rbac.ServiceAccount, cluster.ClusterCTRLClient); err != nil {
 		log.Errorw("error delete node service account", "Error", err.Error())
 		return err
 	}
 
-	if err = utils.DeleteObject(ctx, &driverConfig.Controller.Rbac.ServiceAccount, cluster.ClusterCTRLClient); err != nil {
+	if err = operatorutils.DeleteObject(ctx, &driverConfig.Controller.Rbac.ServiceAccount, cluster.ClusterCTRLClient); err != nil {
 		log.Errorw("error delete controller service account", "Error", err.Error())
 		return err
 	}
 
-	if err = utils.DeleteObject(ctx, &driverConfig.Node.Rbac.ClusterRole, cluster.ClusterCTRLClient); err != nil {
+	if err = operatorutils.DeleteObject(ctx, &driverConfig.Node.Rbac.ClusterRole, cluster.ClusterCTRLClient); err != nil {
 		log.Errorw("error delete node cluster role", "Error", err.Error())
 		return err
 	}
 
-	if err = utils.DeleteObject(ctx, &driverConfig.Controller.Rbac.ClusterRole, cluster.ClusterCTRLClient); err != nil {
+	if err = operatorutils.DeleteObject(ctx, &driverConfig.Controller.Rbac.ClusterRole, cluster.ClusterCTRLClient); err != nil {
 		log.Errorw("error delete controller cluster role", "Error", err.Error())
 		return err
 	}
 
-	if err = utils.DeleteObject(ctx, &driverConfig.Node.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
+	if err = operatorutils.DeleteObject(ctx, &driverConfig.Node.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
 		log.Errorw("error delete node cluster role binding", "Error", err.Error())
 		return err
 	}
 
-	if err = utils.DeleteObject(ctx, &driverConfig.Controller.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
+	if err = operatorutils.DeleteObject(ctx, &driverConfig.Controller.Rbac.ClusterRoleBinding, cluster.ClusterCTRLClient); err != nil {
 		log.Errorw("error delete controller cluster role binding", "Error", err.Error())
 		return err
 	}
 
-	if err = utils.DeleteObject(ctx, &driverConfig.Node.Rbac.Role, cluster.ClusterCTRLClient); err != nil {
+	if err = operatorutils.DeleteObject(ctx, &driverConfig.Node.Rbac.Role, cluster.ClusterCTRLClient); err != nil {
 		log.Errorw("error delete node role", "Error", err.Error())
 		return err
 	}
 
-	if err = utils.DeleteObject(ctx, &driverConfig.Controller.Rbac.Role, cluster.ClusterCTRLClient); err != nil {
+	if err = operatorutils.DeleteObject(ctx, &driverConfig.Controller.Rbac.Role, cluster.ClusterCTRLClient); err != nil {
 		log.Errorw("error delete controller cluster role", "Error", err.Error())
 		return err
 	}
 
-	if err = utils.DeleteObject(ctx, &driverConfig.Node.Rbac.RoleBinding, cluster.ClusterCTRLClient); err != nil {
+	if err = operatorutils.DeleteObject(ctx, &driverConfig.Node.Rbac.RoleBinding, cluster.ClusterCTRLClient); err != nil {
 		log.Errorw("error delete node role binding", "Error", err.Error())
 		return err
 	}
 
-	if err = utils.DeleteObject(ctx, &driverConfig.Controller.Rbac.RoleBinding, cluster.ClusterCTRLClient); err != nil {
+	if err = operatorutils.DeleteObject(ctx, &driverConfig.Controller.Rbac.RoleBinding, cluster.ClusterCTRLClient); err != nil {
 		log.Errorw("error delete controller role binding", "Error", err.Error())
 		return err
 	}
 
-	if err = utils.DeleteObject(ctx, driverConfig.ConfigMap, cluster.ClusterCTRLClient); err != nil {
+	if err = operatorutils.DeleteObject(ctx, driverConfig.ConfigMap, cluster.ClusterCTRLClient); err != nil {
 		log.Errorw("error delete configmap", "Error", err.Error())
 		return err
 	}
 
-	if err = utils.DeleteObject(ctx, driverConfig.Driver, cluster.ClusterCTRLClient); err != nil {
+	if err = operatorutils.DeleteObject(ctx, driverConfig.Driver, cluster.ClusterCTRLClient); err != nil {
 		log.Errorw("error delete csi driver", "Error", err.Error())
 		return err
 	}
@@ -1339,7 +1351,7 @@ func removeDriverFromCluster(ctx context.Context, cluster utils.ClusterConfig, d
 	return nil
 }
 
-func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, instance csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
+func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, instance csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig) error {
 	log := logger.GetLogger(ctx)
 
 	// Get Driver resources
@@ -1353,14 +1365,14 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		return nil
 	}
 
-	clusterClient := utils.GetCluster(ctx, r)
+	clusterClient := operatorutils.GetCluster(ctx, r)
 	if err != nil {
 		return err
 	}
 	if err = removeDriverFromCluster(ctx, clusterClient, driverConfig); err != nil {
 		return err
 	}
-	replicationEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.Replication)
+	replicationEnabled, _ := operatorutils.IsModuleEnabled(ctx, instance, csmv1.Replication)
 	if replicationEnabled {
 		log.Infow("Deleting Replication controller")
 		if err = modules.ReplicationManagerController(ctx, true, operatorConfig, instance, clusterClient.ClusterCTRLClient); err != nil {
@@ -1379,7 +1391,7 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	}
 
 	// remove module observability
-	if observabilityEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.Observability); observabilityEnabled {
+	if observabilityEnabled, _ := operatorutils.IsModuleEnabled(ctx, instance, csmv1.Observability); observabilityEnabled {
 		log.Infow("Deleting observability")
 		if err = r.reconcileObservability(ctx, true, operatorConfig, instance, nil, clusterClient.ClusterCTRLClient, clusterClient.ClusterK8sClient); err != nil {
 			return err
@@ -1397,23 +1409,23 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 }
 
 // removeModule - remove standalone modules
-func (r *ContainerStorageModuleReconciler) removeModule(ctx context.Context, instance csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig, ctrlClient client.Client) error {
+func (r *ContainerStorageModuleReconciler) removeModule(ctx context.Context, instance csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
 
-	if authorizationEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.AuthorizationServer); authorizationEnabled {
+	if authorizationEnabled, _ := operatorutils.IsModuleEnabled(ctx, instance, csmv1.AuthorizationServer); authorizationEnabled {
 		log.Infow("Deleting Authorization Proxy Server")
 		if err := r.reconcileAuthorization(ctx, true, operatorConfig, instance, ctrlClient); err != nil {
 			return err
 		}
 	}
 
-	if appMobilityEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.ApplicationMobility); appMobilityEnabled {
+	if appMobilityEnabled, _ := operatorutils.IsModuleEnabled(ctx, instance, csmv1.ApplicationMobility); appMobilityEnabled {
 		log.Infow("Deleting Application Mobility")
 		if err := r.reconcileAppMobility(ctx, true, operatorConfig, instance, ctrlClient); err != nil {
 			return err
 		}
 	}
-	if reverseproxyEnabled, _ := utils.IsModuleEnabled(ctx, instance, csmv1.ReverseProxy); reverseproxyEnabled && !modules.IsReverseProxySidecar() {
+	if reverseproxyEnabled, _ := operatorutils.IsModuleEnabled(ctx, instance, csmv1.ReverseProxy); reverseproxyEnabled && !modules.IsReverseProxySidecar() {
 		log.Infow("Deleting ReverseProxy")
 		if err := r.reconcileReverseProxyServer(ctx, true, operatorConfig, instance, ctrlClient); err != nil {
 			return err
@@ -1424,7 +1436,7 @@ func (r *ContainerStorageModuleReconciler) removeModule(ctx context.Context, ins
 }
 
 // PreChecks - validate input values
-func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) error {
+func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig) error {
 	log := logger.GetLogger(ctx)
 	// Check drivers
 	switch cr.Spec.Driver.CSIDriverType {
@@ -1551,7 +1563,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 }
 
 // Check for upgrade/if upgrade is appropriate
-func (r *ContainerStorageModuleReconciler) checkUpgrade(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig utils.OperatorConfig) (bool, error) {
+func (r *ContainerStorageModuleReconciler) checkUpgrade(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig) (bool, error) {
 	log := logger.GetLogger(ctx)
 
 	// If it is an upgrade/downgrade, check to see if we meet the minimum version using GetUpgradeInfo, which returns the minimum version required
@@ -1568,12 +1580,12 @@ func (r *ContainerStorageModuleReconciler) checkUpgrade(ctx context.Context, cr 
 				log.Error("Cannot switch between Authorization v1 and v2")
 				return false, nil
 			}
-			return utils.IsValidUpgrade(ctx, oldVersion, newVersion, csmv1.Authorization, operatorConfig)
+			return operatorutils.IsValidUpgrade(ctx, oldVersion, newVersion, csmv1.Authorization, operatorConfig)
 		}
 		if cr.HasModule(csmv1.ApplicationMobility) {
 			newVersion := cr.GetModule(csmv1.ApplicationMobility).ConfigVersion
 			modules.ApplicationMobilityOldVersion = oldVersion
-			return utils.IsValidUpgrade(ctx, oldVersion, newVersion, csmv1.ApplicationMobility, operatorConfig)
+			return operatorutils.IsValidUpgrade(ctx, oldVersion, newVersion, csmv1.ApplicationMobility, operatorConfig)
 		}
 		driverType := cr.Spec.Driver.CSIDriverType
 		if driverType == csmv1.PowerScale {
@@ -1581,7 +1593,7 @@ func (r *ContainerStorageModuleReconciler) checkUpgrade(ctx context.Context, cr 
 			driverType = csmv1.PowerScaleName
 		}
 		newVersion := cr.Spec.Driver.ConfigVersion
-		return utils.IsValidUpgrade(ctx, oldVersion, newVersion, driverType, operatorConfig)
+		return operatorutils.IsValidUpgrade(ctx, oldVersion, newVersion, driverType, operatorConfig)
 
 	}
 	log.Infow("proceeding with fresh driver install")
