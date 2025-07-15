@@ -577,7 +577,7 @@ func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 	fsPollFrequency := "10"
 	zipkinURI := ""
 	zipkinServiceName := "metrics-powerstore"
-	zipkinProbility := "0"
+	zipkinProbability := "0"
 	logLevel := "INFO"
 	logFormat := "TEXT"
 	otelCollectorAddress := "otel-collector:55680"
@@ -605,7 +605,7 @@ func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 				} else if strings.Contains(ZipkinServiceName, env.Name) {
 					zipkinServiceName = env.Value
 				} else if strings.Contains(ZipkinProbability, env.Name) {
-					zipkinProbility = env.Value
+					zipkinProbability = env.Value
 				} else if strings.Contains(PstoreLogLevel, env.Name) {
 					logLevel = env.Value
 				} else if strings.Contains(PstoreLogFormat, env.Name) {
@@ -627,7 +627,7 @@ func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 	YamlString = strings.ReplaceAll(YamlString, PstoreFileSystemPollFrequency, fsPollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, ZipkinURI, zipkinURI)
 	YamlString = strings.ReplaceAll(YamlString, ZipkinServiceName, zipkinServiceName)
-	YamlString = strings.ReplaceAll(YamlString, zipkinProbility, zipkinProbility)
+	YamlString = strings.ReplaceAll(YamlString, ZipkinProbability, zipkinProbability)
 	YamlString = strings.ReplaceAll(YamlString, PstoreLogLevel, logLevel)
 	YamlString = strings.ReplaceAll(YamlString, PstoreLogFormat, logFormat)
 	YamlString = strings.ReplaceAll(YamlString, OtelCollectorAddress, otelCollectorAddress)
