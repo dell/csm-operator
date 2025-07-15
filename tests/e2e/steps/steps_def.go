@@ -1534,11 +1534,14 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	return nil
 }
 
-func (step *Step) configureAuthorizationProxyServer(res Resource, driver, crNumStr, storageTemplate string) error {
+func (step *Step) configureAuthorizationProxyServer(res Resource, driver, crNumStr, storageTemplateNumStr string) error {
 	fmt.Println("=== Configuring Authorization Proxy Server ===")
 
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	storageTemplateNum, _ := strconv.Atoi(storageTemplateNumStr)
+	storageTemplate := res.Scenario.Paths[storageTemplateNum-1]
 
 	var err error
 	var (
