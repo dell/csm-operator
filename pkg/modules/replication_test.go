@@ -15,7 +15,7 @@ import (
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	drivers "github.com/dell/csm-operator/pkg/drivers"
-	utils "github.com/dell/csm-operator/pkg/utils"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	"github.com/dell/csm-operator/tests/shared"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -34,7 +34,7 @@ import (
 )
 
 // where to find all the yaml files
-var config = utils.OperatorConfig{
+var config = operatorutils.OperatorConfig{
 	ConfigDirectory: "../../tests/config",
 }
 
@@ -44,8 +44,8 @@ func TestReplicationInjectDeployment(t *testing.T) {
 		return CheckApplyContainersReplica(dp.Spec.Template.Spec.Containers, cr)
 	}
 
-	tests := map[string]func(t *testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule){
-		"success - greenfield injection": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+	tests := map[string]func(t *testing.T) (bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule){
+		"success - greenfield injection": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -56,7 +56,7 @@ func TestReplicationInjectDeployment(t *testing.T) {
 			}
 			return true, controllerYAML.Deployment, operatorConfig, customResource
 		},
-		"success - powermax injection": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+		"success - powermax injection": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powermax_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -67,7 +67,7 @@ func TestReplicationInjectDeployment(t *testing.T) {
 			}
 			return true, controllerYAML.Deployment, operatorConfig, customResource
 		},
-		"fail - bad config path": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+		"fail - bad config path": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -101,8 +101,8 @@ func TestReplicationInjectDeployment(t *testing.T) {
 func TestReplicationInjectClusterRole(t *testing.T) {
 	ctx := context.Background()
 
-	tests := map[string]func(t *testing.T) (bool, rbacv1.ClusterRole, utils.OperatorConfig, csmv1.ContainerStorageModule){
-		"success - greenfield injection": func(*testing.T) (bool, rbacv1.ClusterRole, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+	tests := map[string]func(t *testing.T) (bool, rbacv1.ClusterRole, operatorutils.OperatorConfig, csmv1.ContainerStorageModule){
+		"success - greenfield injection": func(*testing.T) (bool, rbacv1.ClusterRole, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -113,7 +113,7 @@ func TestReplicationInjectClusterRole(t *testing.T) {
 			}
 			return true, controllerYAML.Rbac.ClusterRole, operatorConfig, customResource
 		},
-		"fail - bad config path": func(*testing.T) (bool, rbacv1.ClusterRole, utils.OperatorConfig, csmv1.ContainerStorageModule) {
+		"fail - bad config path": func(*testing.T) (bool, rbacv1.ClusterRole, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			tmpOperatorConfig := operatorConfig
 			tmpOperatorConfig.ConfigDirectory = "bad/path"
 
@@ -155,8 +155,8 @@ func TestReplicationPreCheck(t *testing.T) {
 			tmpCR := customResource
 			replica := tmpCR.Spec.Modules[0]
 
-			cluster1ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-1")
-			cluster2ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-2")
+			cluster1ConfigSecret := getSecret(operatorutils.ReplicationControllerNameSpace, "test-target-cluster-1")
+			cluster2ConfigSecret := getSecret(operatorutils.ReplicationControllerNameSpace, "test-target-cluster-2")
 			driverSecret1 := getSecret(customResource.Namespace, customResource.Name+"-creds")
 			driverSecret2 := getSecret(customResource.Namespace, customResource.Name+"-certs-0")
 
@@ -180,8 +180,8 @@ func TestReplicationPreCheck(t *testing.T) {
 			tmpCR.Spec.Driver.CSIDriverType = "powerflex"
 			replica := tmpCR.Spec.Modules[0]
 
-			cluster1ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-1")
-			cluster2ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-2")
+			cluster1ConfigSecret := getSecret(operatorutils.ReplicationControllerNameSpace, "test-target-cluster-1")
+			cluster2ConfigSecret := getSecret(operatorutils.ReplicationControllerNameSpace, "test-target-cluster-2")
 			configJSONFileGood := fmt.Sprintf("%s/driverconfig/%s/config.json", config.ConfigDirectory, csmv1.PowerFlex)
 			driverSecret1 := shared.MakeSecretWithJSON(customResource.Name+"-config", customResource.Namespace, configJSONFileGood)
 			driverSecret2 := getSecret(customResource.Namespace, customResource.Name+"-certs-0")
@@ -206,8 +206,8 @@ func TestReplicationPreCheck(t *testing.T) {
 			replica := tmpCR.Spec.Modules[0]
 			replica.ConfigVersion = "v1.10.0"
 
-			cluster1ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-1")
-			cluster2ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-2")
+			cluster1ConfigSecret := getSecret(operatorutils.ReplicationControllerNameSpace, "test-target-cluster-1")
+			cluster2ConfigSecret := getSecret(operatorutils.ReplicationControllerNameSpace, "test-target-cluster-2")
 			driverSecret1 := getSecret(customResource.Namespace, customResource.Name+"-creds")
 			driverSecret2 := getSecret(customResource.Namespace, customResource.Name+"-certs-0")
 
@@ -230,8 +230,8 @@ func TestReplicationPreCheck(t *testing.T) {
 			replica := tmpCR.Spec.Modules[0]
 			replica.ConfigVersion = "v1.9.0"
 
-			cluster1ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-1")
-			cluster2ConfigSecret := getSecret(utils.ReplicationControllerNameSpace, "test-target-cluster-2")
+			cluster1ConfigSecret := getSecret(operatorutils.ReplicationControllerNameSpace, "test-target-cluster-1")
+			cluster2ConfigSecret := getSecret(operatorutils.ReplicationControllerNameSpace, "test-target-cluster-2")
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cluster1ConfigSecret, cluster2ConfigSecret).Build()
 
@@ -323,20 +323,20 @@ func TestReplicationPreCheck(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			oldNewControllerRuntimeClientWrapper := utils.NewControllerRuntimeClientWrapper
-			oldNewK8sClientWrapper := utils.NewK8sClientWrapper
+			oldNewControllerRuntimeClientWrapper := operatorutils.NewControllerRuntimeClientWrapper
+			oldNewK8sClientWrapper := operatorutils.NewK8sClientWrapper
 			defer func() {
-				utils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
-				utils.NewK8sClientWrapper = oldNewK8sClientWrapper
+				operatorutils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
+				operatorutils.NewK8sClientWrapper = oldNewK8sClientWrapper
 			}()
 
 			success, replica, tmpCR, sourceClient, fakeControllerRuntimeClient := tc(t)
-			utils.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
-			utils.NewK8sClientWrapper = func(_ []byte) (*kubernetes.Clientset, error) {
+			operatorutils.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
+			operatorutils.NewK8sClientWrapper = func(_ []byte) (*kubernetes.Clientset, error) {
 				return nil, nil
 			}
 
-			fakeReconcile := utils.FakeReconcileCSM{
+			fakeReconcile := operatorutils.FakeReconcileCSM{
 				Client:    sourceClient,
 				K8sClient: fake.NewSimpleClientset(),
 			}
@@ -352,8 +352,8 @@ func TestReplicationPreCheck(t *testing.T) {
 }
 
 func TestReplicationManagerController(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -375,7 +375,7 @@ func TestReplicationManagerController(t *testing.T) {
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
 
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, utils.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -417,7 +417,7 @@ func TestReplicationConfigmap(t *testing.T) {
 
 	// Call the function we want to test
 	// we can't use test config, as it doesn't have versionvalues
-	realConfig := utils.OperatorConfig{
+	realConfig := operatorutils.OperatorConfig{
 		ConfigDirectory: "../../operatorconfig",
 	}
 	objs, err := CreateReplicationConfigmap(context.Background(), cr, realConfig, fakeClient)
@@ -472,7 +472,7 @@ func TestReplicationConfigmap(t *testing.T) {
 }
 
 func TestGetReplicationCrdDeploy(t *testing.T) {
-	realConfig := utils.OperatorConfig{
+	realConfig := operatorutils.OperatorConfig{
 		ConfigDirectory: "../../operatorconfig",
 	}
 
@@ -487,9 +487,9 @@ func TestGetReplicationCrdDeploy(t *testing.T) {
 }
 
 func TestReplicationCrdDeployAndDelete(t *testing.T) {
-	tests := map[string]func(t *testing.T) (utils.OperatorConfig, csmv1.ContainerStorageModule, bool){
-		"success case": func(_ *testing.T) (utils.OperatorConfig, csmv1.ContainerStorageModule, bool) {
-			operConfig := utils.OperatorConfig{
+	tests := map[string]func(t *testing.T) (operatorutils.OperatorConfig, csmv1.ContainerStorageModule, bool){
+		"success case": func(_ *testing.T) (operatorutils.OperatorConfig, csmv1.ContainerStorageModule, bool) {
+			operConfig := operatorutils.OperatorConfig{
 				ConfigDirectory: "../../operatorconfig",
 			}
 			customResource, err := getCustomResource("./testdata/cr_powermax_replica.yaml")
@@ -498,8 +498,8 @@ func TestReplicationCrdDeployAndDelete(t *testing.T) {
 			}
 			return operConfig, customResource, true
 		},
-		"failure invalid config dir": func(_ *testing.T) (utils.OperatorConfig, csmv1.ContainerStorageModule, bool) {
-			operConfig := utils.OperatorConfig{
+		"failure invalid config dir": func(_ *testing.T) (operatorutils.OperatorConfig, csmv1.ContainerStorageModule, bool) {
+			operConfig := operatorutils.OperatorConfig{
 				ConfigDirectory: "../../DIRDONTEXIST",
 			}
 			customResource, err := getCustomResource("./testdata/cr_powermax_replica.yaml")
@@ -508,8 +508,8 @@ func TestReplicationCrdDeployAndDelete(t *testing.T) {
 			}
 			return operConfig, customResource, false
 		},
-		"failure case no repl cr": func(_ *testing.T) (utils.OperatorConfig, csmv1.ContainerStorageModule, bool) {
-			operConfig := utils.OperatorConfig{
+		"failure case no repl cr": func(_ *testing.T) (operatorutils.OperatorConfig, csmv1.ContainerStorageModule, bool) {
+			operConfig := operatorutils.OperatorConfig{
 				ConfigDirectory: "../../operatorconfig",
 			}
 			customResource := csmv1.ContainerStorageModule{}
