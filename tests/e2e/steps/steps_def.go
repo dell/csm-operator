@@ -836,7 +836,7 @@ func (step *Step) setUpSecretFromFile(_ Resource, templateFile, name, namespace,
 	}
 
 	// create new secret
-	fileArg := "--from-file=config=" + templateFile
+	fileArg := "--from-file=" + templateFile
 	err = execCommand("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
 	if err != nil {
 		return fmt.Errorf("failed to create secret from file %s: %v", templateFile, err)
