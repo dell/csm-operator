@@ -1291,7 +1291,7 @@ func (suite *CSMControllerTestSuite) TestContentWatch() {
 		panic(err)
 	}
 	close(StopWatch)
-	version, err := utils.GetModuleDefaultVersion("v2.12.0", "csi-isilon", csmv1.Authorization, "../operatorconfig")
+	version, err := operatorutils.GetModuleDefaultVersion("v2.12.0", "csi-isilon", csmv1.Authorization, "../operatorconfig")
 	assert.NotNil(suite.T(), err)
 	assert.NotNil(suite.T(), version)
 }
