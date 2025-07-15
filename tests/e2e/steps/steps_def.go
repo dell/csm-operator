@@ -1534,14 +1534,11 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	return nil
 }
 
-func (step *Step) configureAuthorizationProxyServer(res Resource, driver, crNumStr, storageTemplateNumStr string) error {
+func (step *Step) configureAuthorizationProxyServer(res Resource, driver, crNumStr string, storageTemplateNumStr ...string) error {
 	fmt.Println("=== Configuring Authorization Proxy Server ===")
 
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
-
-	storageTemplateNum, _ := strconv.Atoi(storageTemplateNumStr)
-	storageTemplate := res.Scenario.Paths[storageTemplateNum-1]
 
 	var err error
 	var (
@@ -1550,6 +1547,14 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver, crNumS
 		proxyHost       = ""
 		csmTenantName   = ""
 	)
+
+	storageTemplate := "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
+	// Optional param storageTemplateNumStr can be a storage template file path, otherwise it is nil and we use the default storage template in
+	// AuthorizationV2Resources
+	if storageTemplateNumStr != nil {
+		storageTemplateNum, _ := strconv.Atoi(storageTemplateNumStr[0])
+		storageTemplate = res.Scenario.Paths[storageTemplateNum-1]
+	}
 
 	// if tests are running multiple scenarios that require differently configured auth servers, we will not be able to use one set of vars
 	// this section is for powerflex, other drivers can add their sections as required.
@@ -1589,7 +1594,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver, crNumS
 }
 
 // AuthorizationV2Resources creates resources using CRs and dellctl for V2 versions of Authorization Proxy Server
-func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName, configVersion, storageTemplate string) error {
+func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName, configVersion string, storageTemplate string) error {
 	var (
 		crMap               = ""
 		templateFile        = storageTemplate
