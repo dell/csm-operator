@@ -80,6 +80,8 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Set up ephemeral volume properties \[([^"]*)\] for \[([^"]*)\]`, step.setupEphemeralVolumeProperties)
 
 	// Configure authorization-proxy-server for [powerflex]
+	runner.addStep(`^Configure authorization-proxy-server for \[([^"]*)\] for CR \[(\d+)\]$`, step.configureAuthorizationProxyServer)
+	// Additional optional param to configureAuthorizationProxyServer can be a storage template file path
 	runner.addStep(`^Configure authorization-proxy-server for \[([^"]*)\] for CR \[(\d+)\] with storage template \[(\d+)\]$`, step.configureAuthorizationProxyServer)
 	// Authorization Proxy Server V2 additional steps
 	runner.addStep(`^Install Authorization CRDs \[(\d+)\]$`, step.createCustomResourceDefinition)

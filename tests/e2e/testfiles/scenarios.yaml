@@ -13,7 +13,7 @@
     - "Validate [storages] CRD for Authorization is installed"
     - "Delete Authorization CRDs [1]"
 
-- scenario: "Install Authorization Proxy Server V2 (With Secret Provider Class (default))"
+- scenario: "Install Authorization Proxy Server V2"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
