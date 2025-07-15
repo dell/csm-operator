@@ -811,6 +811,40 @@ func (step *Step) setUpSecret(_ Resource, templateFile, name, namespace, crType 
 	return nil
 }
 
+func (step *Step) setUpSecretFromFile(_ Resource, templateFile, name, namespace, crType string) error {
+	// if secret exists - delete it
+	if secretExists(namespace, name) {
+		err := execCommand("kubectl", "delete", "secret", "-n", namespace, name)
+		if err != nil {
+			return fmt.Errorf("failed to delete secret: %s", err.Error())
+		}
+	}
+
+	// find which map to use for secret values
+	mapValues, err := determineMap(crType)
+	if err != nil {
+		return err
+	}
+
+	for key := range mapValues {
+		val := os.Getenv(mapValues[key])
+
+		err := replaceInFile(key, val, templateFile)
+		if err != nil {
+			return err
+		}
+	}
+
+	// create new secret
+	fileArg := "--from-file=config=" + templateFile
+	err = execCommand("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
+	if err != nil {
+		return fmt.Errorf("failed to create secret from file %s: %v", templateFile, err)
+	}
+
+	return nil
+}
+
 func (step *Step) generateAndCreateSftpSecrets(_ Resource, privateKeyPath, privateSecretName, publicSecretName, namespace, crType string) error {
 	tmpDir := filepath.Join("temp", "sftp", fmt.Sprintf("%d", time.Now().UnixNano()))
 	defer os.RemoveAll(tmpDir)
