@@ -21,7 +21,7 @@ import (
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
-	utils "github.com/dell/csm-operator/pkg/utils"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -130,7 +130,7 @@ func getAppMobilityModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error)
 }
 
 // getVeleroCrdDeploy - applies and deploy VeleroCrd manifest
-func getVeleroCrdDeploy(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getVeleroCrdDeploy(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	yamlString := ""
 
 	appMob, err := getAppMobilityModule(cr)
@@ -150,19 +150,19 @@ func getVeleroCrdDeploy(op utils.OperatorConfig, cr csmv1.ContainerStorageModule
 }
 
 // VeleroCrdDeploy - apply and delete Velero crds deployment
-func VeleroCrdDeploy(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func VeleroCrdDeploy(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	yamlString, err := getVeleroCrdDeploy(op, cr)
 	if err != nil {
 		return err
 	}
 
-	ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
+	ctrlObjects, err := operatorutils.GetModuleComponentObj([]byte(yamlString))
 	if err != nil {
 		return err
 	}
 
 	for _, ctrlObj := range ctrlObjects {
-		if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+		if err := operatorutils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
 			return err
 		}
 	}
@@ -171,7 +171,7 @@ func VeleroCrdDeploy(ctx context.Context, op utils.OperatorConfig, cr csmv1.Cont
 }
 
 // getAppMobCrdDeploy - apply and deploy app mobility crd manifest
-func getAppMobCrdDeploy(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getAppMobCrdDeploy(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	yamlString := ""
 
 	appMob, err := getAppMobilityModule(cr)
@@ -194,19 +194,19 @@ func getAppMobCrdDeploy(op utils.OperatorConfig, cr csmv1.ContainerStorageModule
 }
 
 // AppMobCrdDeploy - apply and delete Velero crds deployment
-func AppMobCrdDeploy(ctx context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func AppMobCrdDeploy(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	yamlString, err := getAppMobCrdDeploy(op, cr)
 	if err != nil {
 		return err
 	}
 
-	ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
+	ctrlObjects, err := operatorutils.GetModuleComponentObj([]byte(yamlString))
 	if err != nil {
 		return err
 	}
 
 	for _, ctrlObj := range ctrlObjects {
-		if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+		if err := operatorutils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
 			return err
 		}
 	}
@@ -215,7 +215,7 @@ func AppMobCrdDeploy(ctx context.Context, op utils.OperatorConfig, cr csmv1.Cont
 }
 
 // getAppMobilityModuleDeployment - updates deployment manifest with app mobility CRD values
-func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getAppMobilityModuleDeployment(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	yamlString := ""
 	appMob, err := getAppMobilityModule(cr)
 	if err != nil {
@@ -271,7 +271,7 @@ func getAppMobilityModuleDeployment(op utils.OperatorConfig, cr csmv1.ContainerS
 }
 
 // AppMobilityDeployment - apply and delete controller manager deployment
-func AppMobilityDeployment(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func AppMobilityDeployment(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	yamlString, err := getAppMobilityModuleDeployment(op, cr)
 	if err != nil {
 		return err
@@ -286,7 +286,7 @@ func AppMobilityDeployment(ctx context.Context, isDeleting bool, op utils.Operat
 }
 
 // getControllerManagerMetricService - updates metric manifest with app mobility CRD values
-func getControllerManagerMetricService(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getControllerManagerMetricService(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	yamlString := ""
 
 	appMob, err := getAppMobilityModule(cr)
@@ -307,7 +307,7 @@ func getControllerManagerMetricService(op utils.OperatorConfig, cr csmv1.Contain
 }
 
 // ControllerManagerMetricService - apply and delete Controller manager metric service deployment
-func ControllerManagerMetricService(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func ControllerManagerMetricService(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	yamlString, err := getControllerManagerMetricService(op, cr)
 	if err != nil {
 		return err
@@ -322,7 +322,7 @@ func ControllerManagerMetricService(ctx context.Context, isDeleting bool, op uti
 }
 
 // getAppMobilityWebhookService - gets the app mobility webhook service manifest
-func getAppMobilityWebhookService(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getAppMobilityWebhookService(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	yamlString := ""
 	appMob, err := getAppMobilityModule(cr)
 	if err != nil {
@@ -342,7 +342,7 @@ func getAppMobilityWebhookService(op utils.OperatorConfig, cr csmv1.ContainerSto
 }
 
 // AppMobilityWebhookService - apply/delete app mobility's webhook service
-func AppMobilityWebhookService(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func AppMobilityWebhookService(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	yamlString, err := getAppMobilityWebhookService(op, cr)
 	if err != nil {
 		return err
@@ -357,7 +357,7 @@ func AppMobilityWebhookService(ctx context.Context, isDeleting bool, op utils.Op
 }
 
 // getIssuerCertService - gets the app mobility cert manager's issuer and certificate manifest
-func getIssuerCertService(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getIssuerCertService(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	yamlString := ""
 	appMob, err := getAppMobilityModule(cr)
 	if err != nil {
@@ -377,7 +377,7 @@ func getIssuerCertService(op utils.OperatorConfig, cr csmv1.ContainerStorageModu
 }
 
 // IssuerCertService - apply and delete the app mobility issuer and certificate service
-func IssuerCertService(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func IssuerCertService(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	yamlString, err := getIssuerCertService(op, cr)
 	if err != nil {
 		return err
@@ -392,7 +392,7 @@ func IssuerCertService(ctx context.Context, isDeleting bool, op utils.OperatorCo
 }
 
 // ApplicationMobilityPrecheck - runs precheck for CSM Application Mobility
-func ApplicationMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, appMob csmv1.Module, _ csmv1.ContainerStorageModule, r utils.ReconcileCSM) error {
+func ApplicationMobilityPrecheck(ctx context.Context, op operatorutils.OperatorConfig, appMob csmv1.Module, _ csmv1.ContainerStorageModule, r operatorutils.ReconcileCSM) error {
 	log := logger.GetLogger(ctx)
 
 	// check if provided version is supported
@@ -421,7 +421,7 @@ func ApplicationMobilityPrecheck(ctx context.Context, op utils.OperatorConfig, a
 }
 
 // AppMobilityCertManager - Install/Delete cert-manager
-func AppMobilityCertManager(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func AppMobilityCertManager(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	yamlString, err := getCertManager(op, cr)
 	if err != nil {
 		return err
@@ -436,7 +436,7 @@ func AppMobilityCertManager(ctx context.Context, isDeleting bool, op utils.Opera
 }
 
 // CreateVeleroAccess - Install/Delete velero-secret yaml from operator config
-func CreateVeleroAccess(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func CreateVeleroAccess(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	yamlString, err := getCreateVeleroAccess(op, cr)
 	if err != nil {
 		return err
@@ -451,7 +451,7 @@ func CreateVeleroAccess(ctx context.Context, isDeleting bool, op utils.OperatorC
 }
 
 // getCreateVeleroAccess - gets the velero-secret manifest from operatorconfig
-func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getCreateVeleroAccess(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	yamlString := ""
 
 	appMob, err := getAppMobilityModule(cr)
@@ -501,7 +501,7 @@ func getCreateVeleroAccess(op utils.OperatorConfig, cr csmv1.ContainerStorageMod
 }
 
 // AppMobilityVelero - Install/Delete velero along with its features - use volume snapshot location and cleanup crds
-func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func AppMobilityVelero(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	var useSnap bool
 	var nodeAgent bool
 	envCredName := ""
@@ -537,7 +537,7 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 						// if createWithInstall is enabled then create a secret
 						if cred.CreateWithInstall {
 							compCredName = string(cred.Name)
-							foundCred, _ := utils.GetSecret(ctx, compCredName, cr.Namespace, ctrlClient)
+							foundCred, _ := operatorutils.GetSecret(ctx, compCredName, cr.Namespace, ctrlClient)
 							if foundCred == nil {
 								// creation of a secret
 								err := CreateVeleroAccess(ctx, isDeleting, op, cr, ctrlClient)
@@ -546,7 +546,7 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 								}
 							}
 						} else {
-							foundCred, err := utils.GetSecret(ctx, envCredName, cr.Namespace, ctrlClient)
+							foundCred, err := operatorutils.GetSecret(ctx, envCredName, cr.Namespace, ctrlClient)
 							if foundCred == nil {
 								log.Errorw("\n The secret : %s ", envCredName, " cannot be found in the provided namespace")
 								return fmt.Errorf("\n Unable to deploy velero-secret for Application Mobility: %v", err)
@@ -566,19 +566,19 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 			return err
 		}
 
-		volumeSnapshotLoc, _ := utils.GetVolumeSnapshotLocation(ctx, vsName, cr.Namespace, ctrlClient)
+		volumeSnapshotLoc, _ := operatorutils.GetVolumeSnapshotLocation(ctx, vsName, cr.Namespace, ctrlClient)
 		if volumeSnapshotLoc != nil {
 			log.Infow("\n Volume Snapshot location Name : ", volumeSnapshotLoc.Name, " already exists and being re-used")
 		}
 
-		ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString2))
+		ctrlObjects, err := operatorutils.GetModuleComponentObj([]byte(yamlString2))
 		if err != nil {
 			return err
 		}
 
 		for _, ctrlObj := range ctrlObjects {
 			if !isDeleting {
-				if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+				if err := operatorutils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
 					return err
 				}
 			}
@@ -611,7 +611,7 @@ func AppMobilityVelero(ctx context.Context, isDeleting bool, op utils.OperatorCo
 }
 
 // getVelero - gets the velero-deployment manifest
-func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getVelero(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	yamlString := ""
 
 	appMob, err := getAppMobilityModule(cr)
@@ -683,7 +683,7 @@ func getVelero(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string
 }
 
 // getUseVolumeSnapshot - gets the velero - volume snapshot location manifest
-func getUseVolumeSnapshot(_ context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, _ crclient.Client) (string, string, error) {
+func getUseVolumeSnapshot(_ context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, _ crclient.Client) (string, string, error) {
 	yamlString := ""
 
 	appMob, err := getAppMobilityModule(cr)
@@ -732,7 +732,7 @@ func getUseVolumeSnapshot(_ context.Context, op utils.OperatorConfig, cr csmv1.C
 }
 
 // getBackupStorageLoc - gets the velero Backup Storage Location manifest
-func getBackupStorageLoc(_ context.Context, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, _ crclient.Client) (string, string, error) {
+func getBackupStorageLoc(_ context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, _ crclient.Client) (string, string, error) {
 	yamlString := ""
 
 	appMob, err := getAppMobilityModule(cr)
@@ -796,26 +796,26 @@ func getBackupStorageLoc(_ context.Context, op utils.OperatorConfig, cr csmv1.Co
 }
 
 // UseBackupStorageLoc - Apply/Delete velero-backupstoragelocation yaml from operator config
-func UseBackupStorageLoc(ctx context.Context, isDeleting bool, op utils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func UseBackupStorageLoc(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	log := logger.GetLogger(ctx)
 	bslName, yamlString, err := getBackupStorageLoc(ctx, op, cr, ctrlClient)
 	if err != nil {
 		return err
 	}
 
-	backupStorageLoc, _ := utils.GetBackupStorageLocation(ctx, bslName, cr.Namespace, ctrlClient)
+	backupStorageLoc, _ := operatorutils.GetBackupStorageLocation(ctx, bslName, cr.Namespace, ctrlClient)
 	if backupStorageLoc != nil {
 		log.Infow("\n Backup Storage Name : ", backupStorageLoc.Name, "already exists and being re-used")
 	}
 
-	ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
+	ctrlObjects, err := operatorutils.GetModuleComponentObj([]byte(yamlString))
 	if err != nil {
 		return err
 	}
 
 	for _, ctrlObj := range ctrlObjects {
 		if !isDeleting {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+			if err := operatorutils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
 		}
@@ -825,7 +825,7 @@ func UseBackupStorageLoc(ctx context.Context, isDeleting bool, op utils.Operator
 }
 
 // getNodeAgent - gets node-agent services manifests
-func getNodeAgent(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getNodeAgent(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	yamlString := ""
 
 	appMob, err := getAppMobilityModule(cr)
@@ -875,18 +875,18 @@ func getNodeAgent(op utils.OperatorConfig, cr csmv1.ContainerStorageModule) (str
 
 // applyDeleteObjects - Applies/Deletes the object based on boolean value
 func applyDeleteObjects(ctx context.Context, ctrlClient crclient.Client, yamlString string, isDeleting bool) error {
-	ctrlObjects, err := utils.GetModuleComponentObj([]byte(yamlString))
+	ctrlObjects, err := operatorutils.GetModuleComponentObj([]byte(yamlString))
 	if err != nil {
 		return err
 	}
 
 	for _, ctrlObj := range ctrlObjects {
 		if isDeleting {
-			if err := utils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+			if err := operatorutils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
 		} else {
-			if err := utils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+			if err := operatorutils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
 		}
@@ -896,7 +896,7 @@ func applyDeleteObjects(ctx context.Context, ctrlClient crclient.Client, yamlStr
 }
 
 // RemoveOldDaemonset is used to remove Daemonset if switching between AM versions
-func RemoveOldDaemonset(ctx context.Context, op utils.OperatorConfig, oldVersion string, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func RemoveOldDaemonset(ctx context.Context, op operatorutils.OperatorConfig, oldVersion string, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	log := logger.GetLogger(ctx)
 	// need to delete the old Daemonset, which is found in versions v1.0.3 or lower
 	log.Infof("removing application-mobility-node-agent daemonset from %s namespace", cr.Namespace)
