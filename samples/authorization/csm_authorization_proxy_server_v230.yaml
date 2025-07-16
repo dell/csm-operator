@@ -75,7 +75,7 @@ spec:
           redisCommander: rediscommander
           sentinel: sentinel
           redisReplicas: 5
-        # Use either secretProviderClasses OR secrets  
+        # Use either secretProviderClasses OR secrets
         - name: storage-system-credentials
           secretProviderClasses:
             # list of secret provider classes for retrieving secrets from external providers
