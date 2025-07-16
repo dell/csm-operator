@@ -145,6 +145,7 @@ var (
 	jumpUpgradeConfigVersion   = shared.JumpUpgradeConfigVersion
 	jumpDowngradeConfigVersion = shared.JumpDowngradeConfigVersion
 	invalidConfigVersion       = shared.BadConfigVersion
+	PmaxConfigVersion          = shared.PmaxConfigVersion
 
 	req = reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -789,7 +790,7 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 	csmBadType := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csmBadType.Spec.Driver.CSIDriverType = "wrongdriver"
 	csmWoType := shared.MakeCSM(csmName, suite.namespace, configVersion)
-	csm := shared.MakeCSM(csmName, suite.namespace, "v2.14.1")
+	csm := shared.MakeCSM(csmName, suite.namespace, PmaxConfigVersion)
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerMax
 	modules.IsReverseProxySidecar = func() bool { return true }
 
@@ -2307,7 +2308,7 @@ func (suite *CSMControllerTestSuite) makeFakeResiliencyCSM(name, ns string, with
 	err := suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
-	csm := shared.MakeCSM(name, ns, "v2.14.1")
+	csm := shared.MakeCSM(name, ns, PmaxConfigVersion)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = v1.DriverType(driverType)
 
