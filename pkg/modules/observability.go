@@ -254,7 +254,7 @@ var defaultVolumeConfigName = map[csmv1.DriverType]string{
 	csmv1.PowerScale:     "isilon-creds",
 	csmv1.PowerFlexName:  "vxflexos-config",
 	csmv1.PowerFlex:      "vxflexos-config",
-	csmv1.PowerStore:     "powerstore-creds",
+	csmv1.PowerStore:     "powerstore-config",
 }
 
 var defaultSecretsName = map[csmv1.DriverType]string{
@@ -263,7 +263,7 @@ var defaultSecretsName = map[csmv1.DriverType]string{
 	csmv1.PowerFlex:      "<DriverDefaultReleaseName>-config",
 	csmv1.PowerFlexName:  "<DriverDefaultReleaseName>-config",
 	csmv1.PowerMax:       "<DriverDefaultReleaseName>-creds",
-	csmv1.PowerStore:     "<DriverDefaultReleaseName>-creds",
+	csmv1.PowerStore:     "<DriverDefaultReleaseName>-config",
 }
 
 var defaultAuthSecretsName = []string{"karavi-authorization-config", "proxy-authz-tokens", "proxy-server-root-certificate"}
