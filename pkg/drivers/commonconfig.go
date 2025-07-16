@@ -153,13 +153,9 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 			}
 		}
 		if !removeContainer {
-<<<<<<< HEAD
-			utils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &containers[i])
-			utils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &containers[i])
-=======
+
 			operatorutils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &c)
 			operatorutils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &c)
->>>>>>> e7eee990 (Rename package to fix golangci-lint check error (#1031))
 			newcontainers = append(newcontainers, c)
 		}
 

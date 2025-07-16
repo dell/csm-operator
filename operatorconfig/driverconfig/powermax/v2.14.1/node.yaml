@@ -92,6 +92,7 @@ spec:
     metadata:
       labels:
         app: <DriverDefaultReleaseName>-node
+        csmNamespace: <CSM_NAMESPACE>
       annotations:
         kubectl.kubernetes.io/default-container: driver
     spec:
@@ -108,8 +109,8 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: quay.io/dell/container-storage-modules/csi-powermax:v2.14.0
-          imagePullPolicy: IfNotPresent
+          image: quay.io/dell/container-storage-modules/csi-powermax:v2.14.1
+          imagePullPolicy: Always
           env:
             - name: X_CSI_POWERMAX_DRIVER_NAME
               value: csi-powermax.dellemc.com
@@ -117,10 +118,8 @@ spec:
               value: unix://<KUBELET_CONFIG_DIR>/plugins/powermax.emc.dell.com/csi_sock
             - name: X_CSI_MANAGED_ARRAYS
               value: "<X_CSI_MANAGED_ARRAY>"
-            - name: X_CSI_TRANSPORT_PROTOCOL
-              value: "<X_CSI_TRANSPORT_PROTOCOL>"
-            - name: X_CSI_POWERMAX_PORTGROUPS
-              value: "<X_CSI_POWERMAX_PORTGROUPS>"
+            - name: X_CSI_POWERMAX_ENDPOINT
+              value: "<X_CSI_POWERMAX_ENDPOINT>"
             - name: X_CSI_K8S_CLUSTER_PREFIX
               value: "CSM"
             - name: X_CSI_MODE
@@ -128,17 +127,7 @@ spec:
             - name: X_CSI_PRIVATE_MOUNT_DIR
               value: "<KUBELET_CONFIG_DIR>/plugins/powermax.emc.dell.com/disks"
             - name: X_CSI_POWERMAX_SKIP_CERTIFICATE_VALIDATION
-              value: true
-            - name: X_CSI_POWERMAX_USER
-              valueFrom:
-                secretKeyRef:
-                  name: powermax-creds
-                  key: username
-            - name: X_CSI_POWERMAX_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: powermax-creds
-                  key: password
+              value: "true"
             - name: X_CSI_POWERMAX_NODENAME
               valueFrom:
                 fieldRef:
@@ -152,6 +141,8 @@ spec:
               value: noderoot
             - name: X_CSI_GRPC_MAX_THREADS
               value: "50"
+            - name: X_CSI_TRANSPORT_PROTOCOL
+              value: "<X_CSI_TRANSPORT_PROTOCOL>"
             - name: SSL_CERT_DIR
               value: /certs
             - name: X_CSI_POWERMAX_CONFIG_PATH
@@ -164,6 +155,8 @@ spec:
               value: "<X_CSI_IG_NODENAME_TEMPLATE>"
             - name: X_CSI_IG_MODIFY_HOSTNAME
               value: "<X_CSI_IG_MODIFY_HOSTNAME>"
+            - name: X_CSI_POWERMAX_PORTGROUPS
+              value: "<X_CSI_POWERMAX_PORTGROUPS>"
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
             - name: X_CSI_MAX_VOLUMES_PER_NODE
@@ -195,6 +188,7 @@ spec:
           volumeMounts:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/powermax.emc.dell.com
+              mountPropagation: "Bidirectional"
             - name: volumedevices-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi/volumeDevices
               mountPropagation: "Bidirectional"
@@ -221,7 +215,7 @@ spec:
             - name: tls-secret
               mountPath: /app/tls
         - name: registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
