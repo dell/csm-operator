@@ -2307,7 +2307,7 @@ func (suite *CSMControllerTestSuite) makeFakeResiliencyCSM(name, ns string, with
 	err := suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
-	csm := shared.MakeCSM(name, ns, configVersion)
+	csm := shared.MakeCSM(name, ns, "v2.14.1")
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = v1.DriverType(driverType)
 
