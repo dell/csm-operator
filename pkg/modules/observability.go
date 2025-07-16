@@ -184,19 +184,19 @@ const (
 	// PstoreFileSystemPollFrequency - polling frequency to get file system capacity metrics data
 	PstoreFileSystemPollFrequency string = "<POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY>"
 
-	// PstoreLogLevel - the level for the Powerstore metrics
+	// PstoreLogLevel - the log level for the Powerstore metrics
 	PstoreLogLevel string = "<POWERSTORE_LOG_LEVEL>"
 
-	//PstoreLogFormat - the log format for Powerstore metrics
+	// PstoreLogFormat - the log format for the Powerstore metrics
 	PstoreLogFormat string = "<POWERSTORE_LOG_FORMAT>"
 
-	//ZipkinURI - Zipkin URI for Powerstore metrics
+	// ZipkinURI - Zipkin URI for Powerstore metrics
 	ZipkinURI string = "<ZIPKIN_URI>"
 
-	//ZipkinServiceName - Zipkin service name for Powerstore metrics
+	// ZipkinServiceName - Zipkin service name for Powerstore metrics
 	ZipkinServiceName string = "<ZIPKIN_SERVICE_NAME>"
 
-	//ZipkinProbability - Zipkin probability for Powerstore metrics
+	// ZipkinProbability - Zipkin probability for Powerstore metrics
 	ZipkinProbability string = "<ZIPKIN_PROBABILITY>"
 
 	// SelfSignedCert - self-signed certificate file
@@ -575,9 +575,9 @@ func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 	spacePollFrequency := "30"
 	arrayPollFrequency := "20"
 	fsPollFrequency := "30"
-	zipkinUri := "http://zipkin:9411"
-	zipkinServiceName := "Powerstore"
-	zipkinProbility := "0.5"
+	zipkinURI := ""
+	zipkinServiceName := "metrics-powerstore"
+	zipkinProbility := "0"
 	logLevel := "INFO"
 	logFormat := "TEXT"
 	otelCollectorAddress := "otel-collector:55680"
@@ -601,7 +601,7 @@ func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 				} else if strings.Contains(PstoreFileSystemPollFrequency, env.Name) {
 					fsPollFrequency = env.Value
 				} else if strings.Contains(ZipkinURI, env.Name) {
-					zipkinUri = env.Value
+					zipkinURI = env.Value
 				} else if strings.Contains(ZipkinServiceName, env.Name) {
 					zipkinServiceName = env.Value
 				} else if strings.Contains(ZipkinProbability, env.Name) {
@@ -625,11 +625,11 @@ func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 	YamlString = strings.ReplaceAll(YamlString, PstoreSpacePollFrequency, spacePollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, PstoreArrayPollFrequency, arrayPollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, PstoreFileSystemPollFrequency, fsPollFrequency)
-	YamlString = strings.ReplaceAll(YamlString, ZipkinURI, zipkinUri)
+	YamlString = strings.ReplaceAll(YamlString, ZipkinURI, zipkinURI)
 	YamlString = strings.ReplaceAll(YamlString, ZipkinServiceName, zipkinServiceName)
 	YamlString = strings.ReplaceAll(YamlString, zipkinProbility, zipkinProbility)
-	YamlString = strings.ReplaceAll(YamlString, PowerscaleLogLevel, logLevel)
-	YamlString = strings.ReplaceAll(YamlString, PowerscaleLogFormat, logFormat)
+	YamlString = strings.ReplaceAll(YamlString, PstoreLogLevel, logLevel)
+	YamlString = strings.ReplaceAll(YamlString, PstoreLogFormat, logFormat)
 	YamlString = strings.ReplaceAll(YamlString, OtelCollectorAddress, otelCollectorAddress)
 	YamlString = strings.ReplaceAll(YamlString, DriverDefaultReleaseName, cr.Name)
 
