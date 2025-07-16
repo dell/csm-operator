@@ -33,6 +33,20 @@ roleRef:
   name: csm-auth-proxy-server
   apiGroup: rbac.authorization.k8s.io
 ---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: proxy-server-tokenreview-binding
+  namespace: <NAMESPACE>
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: proxy-server
+    namespace: <NAMESPACE>
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -64,7 +78,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: <AUTHORIZATION_REDIS_SECRET_NAME>
-                  key: password
+                  key: <AUTHORIZATION_REDIS_PASSWORD_KEY>
           args:
             - '--redis-sentinel=$(SENTINELS)'
             - '--redis-password=$(REDIS_PASSWORD)'
@@ -118,6 +132,26 @@ spec:
       targetPort: 8080
 ---
 # Tenant Service
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tenant-service
+  namespace: <NAMESPACE>
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tenant-service-tokenreview-binding
+  namespace: <NAMESPACE>
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: tenant-service
+    namespace: <NAMESPACE>
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -137,6 +171,7 @@ spec:
         app: tenant-service
         csmNamespace: <CSM_NAMESPACE>
     spec:
+      serviceAccountName: tenant-service
       containers:
         - name: tenant-service
           image: <AUTHORIZATION_TENANT_SERVICE_IMAGE>
@@ -148,7 +183,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: <AUTHORIZATION_REDIS_SECRET_NAME>
-                  key: password
+                  key: <AUTHORIZATION_REDIS_PASSWORD_KEY>
           args:
             - '--redis-sentinel=$(SENTINELS)'
             - '--redis-password=$(REDIS_PASSWORD)'
@@ -518,6 +553,26 @@ spec:
 ---
 # Redis
 apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: redis
+  namespace: <NAMESPACE>
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: redis-tokenreview-binding
+  namespace: <NAMESPACE>
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: redis
+    namespace: <NAMESPACE>
+---
+apiVersion: v1
 kind: Service
 metadata:
   name: <AUTHORIZATION_REDIS_NAME>
@@ -559,7 +614,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: <AUTHORIZATION_REDIS_SECRET_NAME>
-                  key: password
+                  key: <AUTHORIZATION_REDIS_PASSWORD_KEY>
           command: ['sh', '-c']
           args:
             - |
@@ -647,22 +702,22 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: <AUTHORIZATION_REDIS_SECRET_NAME>
-                  key: password
+                  key: <AUTHORIZATION_REDIS_PASSWORD_KEY>
             - name: SENTINEL_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: <AUTHORIZATION_REDIS_SECRET_NAME>
-                  key: password
+                  key: <AUTHORIZATION_REDIS_PASSWORD_KEY>
             - name: HTTP_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: <AUTHORIZATION_REDIS_SECRET_NAME>
-                  key: password
+                  key: <AUTHORIZATION_REDIS_PASSWORD_KEY>
             - name: HTTP_USER
               valueFrom:
                 secretKeyRef:
                   name: <AUTHORIZATION_REDIS_SECRET_NAME>
-                  key: commander_user
+                  key: <AUTHORIZATION_REDIS_USERNAME_KEY>
           ports:
             - name: <AUTHORIZATION_REDIS_COMMANDER>
               containerPort: 8081
@@ -698,6 +753,26 @@ spec:
       targetPort: 8081
 ---
 # Sentinel
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sentinel
+  namespace: <NAMESPACE>
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sentinel-tokenreview-binding
+  namespace: <NAMESPACE>
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: sentinel
+    namespace: <NAMESPACE>
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -725,7 +800,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: <AUTHORIZATION_REDIS_SECRET_NAME>
-                  key: password
+                  key: <AUTHORIZATION_REDIS_PASSWORD_KEY>
           args:
             - |
               replicas=$( expr $((<AUTHORIZATION_REDIS_REPLICAS>)) - 1)

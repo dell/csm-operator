@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"structs"
 	"time"
 
 	certificate "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
@@ -121,6 +122,10 @@ const (
 	AuthRedisReplicas = "<AUTHORIZATION_REDIS_REPLICAS>"
 	// AuthRedisSecretName - name of SecretProviderClass object or default K8s secret
 	AuthRedisSecretName = "<AUTHORIZATION_REDIS_SECRET_NAME>"
+	// AuthRedisUsernameKey - username key in K8s secret
+	AuthRedisUsernameKey = "<AUTHORIZATION_REDIS_USERNAME_KEY>"
+	// AuthRedisPasswordKey - password key in K8s secret
+	AuthRedisPasswordKey = "<AUTHORIZATION_REDIS_PASSWORD_KEY>"
 
 	// AuthCert - for tls secret
 	AuthCert = "<BASE64_CERTIFICATE>"
@@ -569,6 +574,10 @@ func AuthorizationServerPrecheck(ctx context.Context, op operatorutils.OperatorC
 // getAuthorizationServerDeployment - apply dynamic values to the deployment manifest before installation
 func getAuthorizationServerDeployment(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
+	var (
+		redisUsernameKey string
+		redisPasswordKey string
+	)
 	auth, err := getAuthorizationModule(cr)
 	if err != nil {
 		return YamlString, err
@@ -626,15 +635,39 @@ func getAuthorizationServerDeployment(op operatorutils.OperatorConfig, cr csmv1.
 				redisStorageClass = component.RedisStorageClass
 			}
 
-			if component.RedisSecretProviderClass == "" {
-				redisSecretName = defaultRedisSecretName
-				redisSecret, err := createRedisK8sSecret(cr)
-				if err != nil {
-					return YamlString, fmt.Errorf("failed to create default redis kubernetes secret: %w", err)
+			// create redis kubernetes secret or use a secret provider class
+			for _, config := range component.RedisSecretProviderClass {
+				if component.RedisSecretProviderClass == nil && config.RedisSecretName == "" {
+					redisSecretName = defaultRedisSecretName
+					redisSecret := createRedisK8sSecret(cr, config.RedisUsernameKey, config.RedisPasswordKey)
+					secretYaml, err := yaml.Marshal(redisSecret)
+					if err != nil {
+						return YamlString, fmt.Errorf("failed to marshal redis kubernetes secret: %w", err)
+					}
+
+					YamlString += fmt.Sprintf("\n---\n%s", secretYaml)
+				} else {
+					redisSecretName = config.RedisSecretName
+					redisUsernameKey = config.RedisUsernameKey
+					redisPasswordKey = config.RedisPasswordKey
+
+					crtlObjects, err := addRedisSecretProviderVolumesAndMounts(cr, op, redisSecretName)
+					if err != nil {
+						return YamlString, fmt.Errorf("failed to add redis secret provider volumes and mounts: %w", err)
+					}
+
+					var updatedYamlString []string
+					for _, ctrlObj := range crtlObjects {
+						yamlBytes, err := yaml.Marshal(ctrlObj)
+						if err != nil {
+							return YamlString, fmt.Errorf("failed to marshal object: %w", err)
+						}
+
+						updatedYamlString = append(updatedYamlString, string(yamlBytes))
+					}
+
+					YamlString += strings.Join(updatedYamlString, "\n---\n")
 				}
-				YamlString += "\n---\n" + redisSecret
-			} else {
-				redisSecretName = component.RedisSecretProviderClass
 			}
 		}
 	}
@@ -642,6 +675,8 @@ func getAuthorizationServerDeployment(op operatorutils.OperatorConfig, cr csmv1.
 	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
 	YamlString = strings.ReplaceAll(YamlString, AuthRedisStorageClass, redisStorageClass)
 	YamlString = strings.ReplaceAll(YamlString, AuthRedisSecretName, redisSecretName)
+	YamlString = strings.ReplaceAll(YamlString, AuthRedisUsernameKey, redisUsernameKey)
+	YamlString = strings.ReplaceAll(YamlString, AuthRedisPasswordKey, redisPasswordKey)
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 	YamlString = strings.ReplaceAll(YamlString, AuthCSMNameSpace, cr.Namespace)
 
@@ -843,27 +878,37 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	}
 
 	// set redis envs
-	redis := []corev1.EnvVar{
-		{
-			Name:  "SENTINELS",
-			Value: sentinels,
-		},
-		{
-			Name: "REDIS_PASSWORD",
-			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: defaultRedisSecretName,
-					},
-					Key: "password",
+	for _, component := range authModule.Components {
+		for _, config := range component.RedisSecretProviderClass {
+			if config.RedisSecretName == "" {
+				redisSecretName	= defaultRedisSecretName
+			} else {
+				redisSecretName = config.RedisSecretName
+			}
+
+			redis := []corev1.EnvVar{
+				{
+					Name:  "SENTINELS",
+					Value: sentinels,
 				},
-			},
-		},
-	}
-	for i, c := range deployment.Spec.Template.Spec.Containers {
-		if c.Name == "storage-service" {
-			deployment.Spec.Template.Spec.Containers[i].Env = append(deployment.Spec.Template.Spec.Containers[i].Env, redis...)
-			break
+				{
+					Name: "REDIS_PASSWORD",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: redisSecretName,
+							},
+							Key: config.RedisPasswordKey,
+						},
+					},
+				},
+			}
+			for i, c := range deployment.Spec.Template.Spec.Containers {
+				if c.Name == "storage-service" {
+					deployment.Spec.Template.Spec.Containers[i].Env = append(deployment.Spec.Template.Spec.Containers[i].Env, redis...)
+					break
+				}
+			}
 		}
 	}
 
@@ -1533,7 +1578,7 @@ func AuthCrdDeploy(ctx context.Context, op operatorutils.OperatorConfig, cr csmv
 }
 
 func createSelfSignedIssuer(cr csmv1.ContainerStorageModule, name string) *certificate.Issuer {
-	issuer := &certificate.Issuer{
+	return &certificate.Issuer{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Issuer",
 		},
@@ -1549,12 +1594,10 @@ func createSelfSignedIssuer(cr csmv1.ContainerStorageModule, name string) *certi
 			},
 		},
 	}
-
-	return issuer
 }
 
 func createSelfSignedCertificate(cr csmv1.ContainerStorageModule, hosts []string, name string, secretName string, issuerName string) *certificate.Certificate {
-	certificate := &certificate.Certificate{
+	return &certificate.Certificate{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Certificate",
 		},
@@ -1591,8 +1634,6 @@ func createSelfSignedCertificate(cr csmv1.ContainerStorageModule, hosts []string
 			},
 		},
 	}
-
-	return certificate
 }
 
 func createIngress(isOpenShift bool, cr csmv1.ContainerStorageModule) (*networking.Ingress, error) {
@@ -1787,8 +1828,8 @@ func setIngressRules(cr csmv1.ContainerStorageModule) ([]networking.IngressRule,
 	return rules, nil
 }
 
-func createRedisK8sSecret(cr csmv1.ContainerStorageModule) (string, error) {
-	redisSecret := corev1.Secret{
+func createRedisK8sSecret(cr csmv1.ContainerStorageModule, usernameKey, passworkKey string) corev1.Secret {
+	return corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Secret",
 		},
@@ -1798,15 +1839,118 @@ func createRedisK8sSecret(cr csmv1.ContainerStorageModule) (string, error) {
 		},
 		Type: corev1.SecretTypeBasicAuth,
 		StringData: map[string]string{
-			"password": "K@ravi123!",
-			"commander_user": "dev",
+			passworkKey: "K@ravi123!",
+			usernameKey: "dev",
 		},
 	}
+}
 
-	secretBytes, err := yaml.Marshal(redisSecret)
+func redisVolume(redisSecretName string) corev1.Volume {
+	volumeName := "secrets-store-inline-redis"
+	readOnly := true
+	return corev1.Volume{
+		Name: volumeName,
+		VolumeSource: corev1.VolumeSource{
+			CSI: &corev1.CSIVolumeSource{
+				Driver:   "secrets-store.csi.k8s.io",
+				ReadOnly: &readOnly,
+				VolumeAttributes: map[string]string{
+					"secretProviderClass": redisSecretName,
+				},
+			},
+		},
+	}
+}
+
+func redisVolumeMount() corev1.VolumeMount {
+	volumeName := "secrets-store-inline-redis"
+	return corev1.VolumeMount{
+		Name:      volumeName,
+		MountPath: "/etc/csm-authorization/redis",
+		ReadOnly:  true,
+	}
+}
+
+func getObjectNamesForRedis(cr csmv1.ContainerStorageModule) map[string]struct{} {
+	name := make(map[string]struct{})
+
+	auth, err := getAuthorizationModule(cr)
 	if err != nil {
-		return "", fmt.Errorf("marshaling redis secret: %v", err)
+		return nil
 	}
 
-	return string(secretBytes), nil
+	for _, component := range auth.Components {
+		switch component.Name {
+		case "proxy-server":
+			name["proxy-server"] = struct{}{}
+		case "storage-service":
+			name["storage-service"] = struct{}{}
+		case "tenant-service":
+			name["tenant-service"] = struct{}{}
+		case component.RedisName:
+			if component.RedisName != "" {
+				name[component.RedisName] = struct{}{}
+			}
+		case component.Sentinel:
+			if component.Sentinel != "" {
+				name[component.Sentinel] = struct{}{}
+			}
+		case component.RedisCommander:
+			if component.RedisCommander != "" {
+				name[component.RedisCommander] = struct{}{}
+			}
+		}
+	}
+
+	return nil
+}
+
+// addRedisSecretProviderVolumesAndMounts - add volume and volume mount for redis secret provider to deployments and statefulsets
+func addRedisSecretProviderVolumesAndMounts(cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, redisSecretName string) ([]string, error) {
+	if redisSecretName == "" {
+		return nil, nil
+	}
+
+	YamlString, err := getAuthorizationServerDeployment(op, cr)
+	if err != nil {
+		return nil, err
+	}
+
+	ctrlObjects, err := operatorutils.GetModuleComponentObj([]byte(YamlString))
+	if err != nil {
+		return nil, err
+	}
+
+	names := getObjectNamesForRedis(cr)
+
+	for _, ctrlObj := range ctrlObjects {
+		switch object := ctrlObj.(type) {
+		case *appsv1.Deployment:
+			if _, ok := names[object.Name]; ok {
+				// add volume for redis secret provider class
+				redisVolume := redisVolume(redisSecretName)
+				object.Spec.Template.Spec.Volumes = append(object.Spec.Template.Spec.Volumes, redisVolume)
+
+				// set volume mount for redis secret provider class
+				for i := range object.Spec.Template.Spec.Containers {
+					redisVolumeMount := redisVolumeMount()
+					object.Spec.Template.Spec.Containers[i].VolumeMounts = append(object.Spec.Template.Spec.Containers[i].VolumeMounts, redisVolumeMount)
+				}
+			}
+		case *appsv1.StatefulSet:
+			if _, ok := names[object.Name]; ok {
+				// add volume for redis secret provider class
+				redisVolume := redisVolume(redisSecretName)
+				object.Spec.Template.Spec.Volumes = append(object.Spec.Template.Spec.Volumes, redisVolume)
+
+				// set volume mount for redis secret provider class
+				for i := range object.Spec.Template.Spec.Containers {
+					redisVolumeMount := redisVolumeMount()
+					object.Spec.Template.Spec.Containers[i].VolumeMounts = append(object.Spec.Template.Spec.Containers[i].VolumeMounts, redisVolumeMount)
+				}
+			}
+		}
+	}
+
+	return nil, nil
 }
