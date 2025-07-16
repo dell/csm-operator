@@ -1481,7 +1481,7 @@ func TestAuthorizationStorageServiceSecret(t *testing.T) {
 }
 
 func TestAuthorizationStorageServiceSecretAndSecretProviderClass(t *testing.T) {
-	type checkFn func(*testing.T, ctrlClient.Client, error)
+	type checkFn func(*testing.T, error)
 
 	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, checkFn){
 		"not allowed to use secrets AND secret provider classes with v2.3.0": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, checkFn) {
@@ -1496,9 +1496,9 @@ func TestAuthorizationStorageServiceSecretAndSecretProviderClass(t *testing.T) {
 			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			checkFn := func(t *testing.T, client ctrlClient.Client, err error) {
+			checkFn := func(t *testing.T, err error) {
 				assert.Error(t, err)
-				assert.EqualError(t, err, "Exactly one of SecretProviderClasses or Secrets must be specified in the CSM Authorization CR — not both, not neither.")
+				assert.EqualError(t, err, "exactly one of SecretProviderClasses or Secrets must be specified in the CSM Authorization CR — not both, not neither")
 			}
 			return false, customResource, sourceClient, checkFn
 		},
@@ -1514,9 +1514,9 @@ func TestAuthorizationStorageServiceSecretAndSecretProviderClass(t *testing.T) {
 			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			checkFn := func(t *testing.T, client ctrlClient.Client, err error) {
+			checkFn := func(t *testing.T, err error) {
 				assert.Error(t, err)
-				assert.EqualError(t, err, "Exactly one of SecretProviderClasses or Secrets must be specified in the CSM Authorization CR — not both, not neither.")
+				assert.EqualError(t, err, "exactly one of SecretProviderClasses or Secrets must be specified in the CSM Authorization CR — not both, not neither")
 			}
 			return false, customResource, sourceClient, checkFn
 		},
@@ -1527,7 +1527,7 @@ func TestAuthorizationStorageServiceSecretAndSecretProviderClass(t *testing.T) {
 			isDeleting, cr, sourceClient, checkFn := tc(t)
 
 			err := authorizationStorageServiceV2(context.TODO(), isDeleting, cr, sourceClient)
-			checkFn(t, sourceClient, err)
+			checkFn(t, err)
 		})
 	}
 }

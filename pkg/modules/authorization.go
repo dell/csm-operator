@@ -801,7 +801,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		hasSecrets := len(secrets) > 0
 
 		if hasSPC == hasSecrets {
-			return fmt.Errorf("Exactly one of SecretProviderClasses or Secrets must be specified in the CSM Authorization CR — not both, not neither.")
+			return fmt.Errorf("exactly one of SecretProviderClasses or Secrets must be specified in the CSM Authorization CR — not both, not neither")
 		}
 	}
 
