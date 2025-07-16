@@ -29,7 +29,7 @@ spec:
     - name: "csireverseproxy"
       # enabled: Always set to true
       enabled: true
-      configVersion: v2.13.0
+      configVersion: v2.13.1
       components:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy

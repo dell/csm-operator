@@ -1966,7 +1966,7 @@ func getReverseProxyModuleWithSecret() []csmv1.Module {
 		{
 			Name:          csmv1.ReverseProxy,
 			Enabled:       true,
-			ConfigVersion: "v2.13.0",
+			ConfigVersion: "v2.13.1",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name:    string(csmv1.ReverseProxyServer),
