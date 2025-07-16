@@ -60,7 +60,15 @@ spec:
               annotations:
                 "label": "value"
         - name: redis
-          redisSecretProviderClass: redis-secret-provider-class
+          # Redis secret configuration:
+          # Use a SecretProviderClass for Redis credentials; otherwise, a default Kubernetes secret is used.
+          redisSecretProviderClass:
+            # The name of the Kubernetes secret created by the CSI driver
+            - redisSecretName: redis-secret-provider-class
+              # The key in the secret that holds the Redis username
+              redisUsernameKey: username
+              # The key in the secret that holds the Redis password
+              redisPasswordKey: password
           redis: redis:6.0.8-alpine
           commander: rediscommander/redis-commander:latest
           redisName: redis-csm
