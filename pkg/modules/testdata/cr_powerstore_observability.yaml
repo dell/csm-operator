@@ -16,8 +16,8 @@
 apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
-  name: powerstore
-  namespace: powerstore
+  name: test-powerstore
+  namespace: test-powerstore
 spec:
   driver:
     csiDriverType: "powerstore"
@@ -62,20 +62,21 @@ spec:
         # Default value: false
         - name: "GOPOWERSTORE_DEBUG"
           value: "false"
-        # X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION: It determines if driver is going to skip verification of TLS certificates.
-        # This value acts as a default value for skipCertificateValidation, if not specified for a cluster config in secret
+        # CERT_SECRET_COUNT: Represents number of certificate secrets, which user is going to create for
+        # ssl authentication. (powerstore-cert-0..powerstore-cert-n)
+        # This field is only verified if X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION is set to false
+        # Allowed values: n, where n > 0
+        # Default value: None
+        - name: CERT_SECRET_COUNT
+          value: "1"
+        # X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION: Specifies if the driver is going to validate certs.
+        # If it is set to false, then a secret powerstore-certs has to be created with an X.509 certificate of CA which signed the certificate.
         # Allowed values:
         #   true: skip certificate verification
         #   false: verify certificates
         # Default value: true
         - name: X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION
           value: "true"
-        # certSecretCount: Represents number of certificate secrets, which user is going to create for
-        # ssl authentication. (powerstore-cert-0..powerstore-cert-n)
-        # Allowed values: n, where n > 0
-        # Default value: None
-        - name: "CERT_SECRET_COUNT"
-          value: "1"
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
@@ -208,125 +209,17 @@ spec:
       #   operator: "Exists"
       #   effect: "NoSchedule"
   modules:
-    - name: resiliency
-      # enabled: Enable/Disable Resiliency feature
-      # Allowed values:
-      #   true: enable Resiliency feature(deploy podmon sidecar)
-      #   false: disable Resiliency feature(do not deploy podmon sidecar)
-      # Default value: false
-      enabled: false
-      configVersion: v1.14.0
-      components:
-        - name: podmon-controller
-          image: quay.io/dell/container-storage-modules/podmon:v1.14.0
-          imagePullPolicy: IfNotPresent
-          args:
-            - "--labelvalue=csi-powerstore"
-            - "--arrayConnectivityPollRate=60"
-            - "--skipArrayConnectionValidation=false"
-            - "--driverPodLabelValue=dell-storage"
-            - "--ignoreVolumelessPods=false"
-            - "--arrayConnectivityConnectionLossThreshold=3"
-            # Below 4 args should not be modified.
-            - "--csisock=unix:/var/run/csi/csi.sock"
-            - "--mode=controller"
-            - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
-            - "--driverPath=csi-powerstore.dellemc.com"
-        - name: podmon-node
-          image: quay.io/dell/container-storage-modules/podmon:v1.14.0
-          imagePullPolicy: IfNotPresent
-          envs:
-            # podmonAPIPort: Defines the port to be used within the kubernetes cluster
-            # Allowed values: Any valid and free port (string)
-            # Default value: 8083
-            - name: "X_CSI_PODMON_API_PORT"
-              value: "8083"
-          args:
-            - "--labelvalue=csi-powerstore"
-            - "--arrayConnectivityPollRate=60"
-            - "--leaderelection=false"
-            - "--driverPodLabelValue=dell-storage"
-            - "--ignoreVolumelessPods=false"
-            # Below 4 args should not be modified.
-            - "--csisock=unix:/var/lib/kubelet/plugins/csi-powerstore.dellemc.com/csi_sock"
-            - "--mode=node"
-            - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
-            - "--driverPath=csi-powerstore.dellemc.com"
-    # Replication: allows to configure replication
-    # Replication CRDs must be installed before installing driver
-    - name: replication
-      # enabled: Enable/Disable replication feature
-      # Allowed values:
-      #   true: enable replication feature(install dell-csi-replicator sidecar)
-      #   false: disable replication feature(do not install dell-csi-replicator sidecar)
-      # Default value: false
-      enabled: false
-      configVersion: v1.13.0
-      components:
-        - name: dell-csi-replicator
-          # image: Image to use for dell-csi-replicator. This shouldn't be changed
-          # Allowed values: string
-          # Default value: None
-          image: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.13.0
-          envs:
-            # replicationPrefix: prefix to prepend to storage classes parameters
-            # Allowed values: string
-            # Default value: replication.storage.dell.com
-            - name: "X_CSI_REPLICATION_PREFIX"
-              value: "replication.storage.dell.com"
-            # replicationContextPrefix: prefix to use for naming of resources created by replication feature
-            # Allowed values: string
-            - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
-              value: "powerstore"
-        - name: dell-replication-controller-manager
-          # image: Defines controller image. This shouldn't be changed
-          # Allowed values: string
-          image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0
-          envs:
-            # Replication log level
-            # Allowed values: "error", "warn"/"warning", "info", "debug"
-            # Default value: "debug"
-            - name: "REPLICATION_CTRL_LOG_LEVEL"
-              value: "debug"
-            # replicas: Defines number of controller replicas
-            # Allowed values: int
-            # Default value: 1
-            - name: "REPLICATION_CTRL_REPLICAS"
-              value: "1"
-            # retryIntervalMin: Initial retry interval of failed reconcile request.
-            # It doubles with each failure, upto retry-interval-max
-            # Allowed values: time
-            - name: "RETRY_INTERVAL_MIN"
-              value: "1s"
-            # RETRY_INTERVAL_MAX: Maximum retry interval of failed reconcile request
-            # Allowed values: time
-            - name: "RETRY_INTERVAL_MAX"
-              value: "5m"
-            # DISABLE_PVC_REMAP: Disable PVC remapping for replication in single cluster configuration
-            # Allowed values:
-            #   true: Disable replication feature(install dell-csi-replicator sidecar)
-            #   false: disable replication feature(do not install dell-csi-replicator sidecar)
-            # Default value: false
-            - name: "DISABLE_PVC_REMAP"
-              value: "false"
-            # REPLICATION_ALLOW_PVC_CREATION_ON_TARGET: It Creates PVC on target cluster using replicated PV.
-            # Allowed values:
-            #   true: It creates a PVC on target cluster against replicated PV
-            #   false: simply updates claimref on replicated PV on target cluster without actually creating a PVC
-            # Default value: false
-            - name: "REPLICATION_ALLOW_PVC_CREATION_ON_TARGET"
-              value: "false"
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
       # Default value: false
-      enabled: false
+      enabled: true
       configVersion: v1.13.0
       components:
         - name: topology
           # enabled: Enable/Disable topology
           # Default value: false
-          enabled: false
+          enabled: true
           # image: Defines karavi-topology image. This shouldn't be changed
           # Allowed values: string
           image: quay.io/dell/container-storage-modules/csm-topology:nightly
@@ -347,7 +240,7 @@ spec:
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
           # Default value: false
-          enabled: false
+          enabled: true
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
           image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:v0.127.0
@@ -371,11 +264,11 @@ spec:
           #   true: enable deployment of cert-manager
           #   false: disable deployment of cert-manager only if it's already deployed
           # Default value: false
-          enabled: false
+          enabled: true
         - name: metrics-powerstore
           # enabled: Enable/Disable PowerStore metrics
           # Default value: false
-          enabled: false
+          enabled: true
           # image: Defines PowerStore metrics image. This shouldn't be changed
           # Allowed values: string
           image: quay.io/dell/container-storage-modules/csm-metrics-powerstore:nightly
