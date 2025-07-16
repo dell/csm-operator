@@ -145,6 +145,7 @@ var (
 	jumpUpgradeConfigVersion   = shared.JumpUpgradeConfigVersion
 	jumpDowngradeConfigVersion = shared.JumpDowngradeConfigVersion
 	invalidConfigVersion       = shared.BadConfigVersion
+	PmaxConfigVersion          = shared.PmaxConfigVersion
 
 	req = reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -789,7 +790,7 @@ func (suite *CSMControllerTestSuite) TestRemoveDriver() {
 	csmBadType := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csmBadType.Spec.Driver.CSIDriverType = "wrongdriver"
 	csmWoType := shared.MakeCSM(csmName, suite.namespace, configVersion)
-	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm := shared.MakeCSM(csmName, suite.namespace, PmaxConfigVersion)
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerMax
 	modules.IsReverseProxySidecar = func() bool { return true }
 
@@ -1291,7 +1292,7 @@ func (suite *CSMControllerTestSuite) TestContentWatch() {
 		panic(err)
 	}
 	close(StopWatch)
-	version, err := utils.GetModuleDefaultVersion("v2.12.0", "csi-isilon", csmv1.Authorization, "../operatorconfig")
+	version, err := operatorutils.GetModuleDefaultVersion("v2.12.0", "csi-isilon", csmv1.Authorization, "../operatorconfig")
 	assert.NotNil(suite.T(), err)
 	assert.NotNil(suite.T(), version)
 }
@@ -1965,7 +1966,7 @@ func getReverseProxyModuleWithSecret() []csmv1.Module {
 		{
 			Name:          csmv1.ReverseProxy,
 			Enabled:       true,
-			ConfigVersion: "v2.13.0",
+			ConfigVersion: "v2.13.1",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name:    string(csmv1.ReverseProxyServer),
@@ -2307,7 +2308,7 @@ func (suite *CSMControllerTestSuite) makeFakeResiliencyCSM(name, ns string, with
 	err := suite.fakeClient.Create(ctx, sec)
 	assert.Nil(suite.T(), err)
 
-	csm := shared.MakeCSM(name, ns, configVersion)
+	csm := shared.MakeCSM(name, ns, PmaxConfigVersion)
 	csm.Spec.Driver.Common.Image = "image"
 	csm.Spec.Driver.CSIDriverType = v1.DriverType(driverType)
 

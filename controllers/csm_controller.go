@@ -66,15 +66,6 @@ type ContainerStorageModuleReconciler struct {
 	client.Client
 	// k8s client, implements client-go/kubernetes interface, responsible for apply, which
 	// client.Client does not provides
-<<<<<<< HEAD
-	K8sClient     kubernetes.Interface
-	Scheme        *runtime.Scheme
-	Log           *zap.SugaredLogger
-	Config        utils.OperatorConfig
-	updateCount   int32
-	trcID         string
-	EventRecorder record.EventRecorder
-=======
 	K8sClient            kubernetes.Interface
 	Scheme               *runtime.Scheme
 	Log                  *zap.SugaredLogger
@@ -84,7 +75,6 @@ type ContainerStorageModuleReconciler struct {
 	EventRecorder        record.EventRecorder
 	ContentWatchChannels map[string]chan struct{}
 	ContentWatchLock     sync.Mutex
->>>>>>> e7eee990 (Rename package to fix golangci-lint check error (#1031))
 }
 
 // DriverConfig  -
@@ -106,7 +96,7 @@ const (
 	CSMFinalizerName = "finalizer.dell.emc.com"
 
 	// CSMVersion -
-	CSMVersion = "v1.14.0"
+	CSMVersion = "v1.14.1"
 )
 
 var (

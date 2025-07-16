@@ -8,22 +8,13 @@ require (
 	github.com/dell/csm-operator v0.0.0
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.36.3
-<<<<<<< HEAD
-	golang.org/x/mod v0.24.0
-=======
->>>>>>> e7eee990 (Rename package to fix golangci-lint check error (#1031))
 	k8s.io/api v0.33.0
 	k8s.io/apimachinery v0.33.0
 	k8s.io/client-go v0.33.0
 	k8s.io/kubernetes v1.33.0
 	k8s.io/utils v0.0.0-20241210054802-24370beab758
-<<<<<<< HEAD
-	sigs.k8s.io/controller-runtime v0.20.1
-	sigs.k8s.io/yaml v1.4.0
-=======
 	sigs.k8s.io/controller-runtime v0.21.0
 	sigs.k8s.io/yaml v1.5.0
->>>>>>> e7eee990 (Rename package to fix golangci-lint check error (#1031))
 )
 
 require (

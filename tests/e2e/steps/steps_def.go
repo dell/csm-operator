@@ -29,12 +29,7 @@ import (
 
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
-<<<<<<< HEAD
-	"github.com/dell/csm-operator/pkg/utils"
-	"golang.org/x/mod/semver"
-=======
 	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
->>>>>>> e7eee990 (Rename package to fix golangci-lint check error (#1031))
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
