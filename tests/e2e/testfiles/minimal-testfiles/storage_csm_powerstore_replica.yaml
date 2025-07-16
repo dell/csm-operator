@@ -13,18 +13,5 @@ spec:
       image: "quay.io/dell/container-storage-modules/csi-powerstore:nightly"
       imagePullPolicy: Always
   modules:
-    - name: resiliency
-      enabled: false
     - name: replication
       enabled: false
-    - name: observability
-      enabled: false
-      components:
-        - name: topology
-          enabled: false
-        - name: otel-collector
-          enabled: false
-        - name: cert-manager
-          enabled: false
-        - name: metrics-powerstore
-          enabled: false  

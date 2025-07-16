@@ -31,7 +31,8 @@ spec:
     configVersion: v2.15.0
     authSecret: powerstore-config
     # Controller count
-    replicas: 1 # resiliency test will fail with 2 replicas.
+    # resiliency test will fail with 2 replicas.
+    replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
@@ -337,19 +338,19 @@ spec:
               value: "10"
             # POWERSTORE_SPACE_POLL_FREQUENCY: set polling frequency to get cluster capacity metrics data
             # Allowed values: int
-            # Default value: 20
+            # Default value: 10
             - name: "POWERSTORE_SPACE_POLL_FREQUENCY"
-              value: "20"
+              value: "10"
             # POWERSTORE_ARRAY_POLL_FREQUENCY: set polling frequency to get array capacity metrics data
             # Allowed values: int
-            # Default value: 20
+            # Default value: 10
             - name: "POWERSTORE_ARRAY_POLL_FREQUENCY"
-              value: "30"
+              value: "10"
             # POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY: set polling frequency to get file system capacity metrics data
-            # Allowed values: ture, false
-            # Default value: true
+            # Allowed values: int
+            # Default value: 10
             - name: " POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY"
-              value: "true"
+              value: "10"
             # PowerStore metrics log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
             # Default value: "INFO"
@@ -360,18 +361,18 @@ spec:
             # Default value: "TEXT"
             - name: "POWERSTORE_LOG_FORMAT"
               value: "TEXT"
-            # ZIPKIN_URI : set Zipkin uri
+            # ZIPKIN_URI : URI of a Zipkin instance where tracing data can be forwarded
             # Allowed values : String
             # Default value: Empty
             - name: "ZIPKIN_URI"
               value: ""
-            # ZIPKIN_SERVICE_NAME : set Zipkin service name
+            # ZIPKIN_SERVICE_NAME : Service name used for Zipkin tracing dataService name used for Zipkin tracing data
             # Allowed values : String
             # Default value: "metrics-powerStore"
             - name: "ZIPKIN_SERVICE_NAME"
               value: "metrics-powerstore"
-            # ZIPKIN_PROBABILITY : set Zipkin probability
-            # Allowed values : String
+            # ZIPKIN_PROBABILITY : Percentage of trace information to send to Zipkin (Valid range: 0.0 to 1.0)
+            # Allowed values : int
             # Default value: "0"
             - name: "ZIPKIN_PROBABILITY"
               value: "0"
