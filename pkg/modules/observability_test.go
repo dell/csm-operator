@@ -760,7 +760,7 @@ func TestPowerStoreMetrics(t *testing.T) {
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
 		"Fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powerstore_replication.yaml")
+			customResource, err := getCustomResource("./testdata/cr_powerstore_replica.yaml")
 			if err != nil {
 				panic(err)
 			}
