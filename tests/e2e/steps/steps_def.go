@@ -1548,8 +1548,8 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver, crNumS
 		csmTenantName   = ""
 		storageTemplate = ""
 	)
-	
-	if strings.Contains(res.Scenario.Scenario, "With Kubernetes Secret") {
+
+	if strings.Contains(res.Scenario.Scenario, "Kubernetes Secret") {
 		storageTemplate = "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
 	} else {
 		storageTemplate = "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
