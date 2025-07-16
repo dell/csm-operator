@@ -32,11 +32,16 @@ spec:
     authSecret: powerstore-config
     # Controller count
 <<<<<<< HEAD
+<<<<<<< HEAD
     # resiliency test will fail with 2 replicas.
     replicas: 1
 =======
     replicas: 1 # resiliency test will fail with 2 replicas.
 >>>>>>> e1b40332 (Observability code support)
+=======
+    # resiliency test will fail with 2 replicas.
+    replicas: 1
+>>>>>>> b11dedf9 (more changes)
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
@@ -347,6 +352,7 @@ spec:
             # POWERSTORE_SPACE_POLL_FREQUENCY: set polling frequency to get cluster capacity metrics data
             # Allowed values: int
 <<<<<<< HEAD
+<<<<<<< HEAD
             # Default value: 10
             - name: "POWERSTORE_SPACE_POLL_FREQUENCY"
               value: "10"
@@ -362,19 +368,26 @@ spec:
               value: "10"
 =======
             # Default value: 20
+=======
+            # Default value: 10
+>>>>>>> b11dedf9 (more changes)
             - name: "POWERSTORE_SPACE_POLL_FREQUENCY"
-              value: "20"
+              value: "10"
             # POWERSTORE_ARRAY_POLL_FREQUENCY: set polling frequency to get array capacity metrics data
             # Allowed values: int
-            # Default value: 20
+            # Default value: 10
             - name: "POWERSTORE_ARRAY_POLL_FREQUENCY"
-              value: "30"
+              value: "10"
             # POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY: set polling frequency to get file system capacity metrics data
-            # Allowed values: ture, false
-            # Default value: true
+            # Allowed values: int
+            # Default value: 10
             - name: " POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY"
+<<<<<<< HEAD
               value: "true"
 >>>>>>> e1b40332 (Observability code support)
+=======
+              value: "10"
+>>>>>>> b11dedf9 (more changes)
             # PowerStore metrics log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
             # Default value: "INFO"
@@ -386,23 +399,32 @@ spec:
             - name: "POWERSTORE_LOG_FORMAT"
               value: "TEXT"
 <<<<<<< HEAD
+<<<<<<< HEAD
             # ZIPKIN_URI : URI of a Zipkin instance where tracing data can be forwarded
 =======
             # ZIPKIN_URI : set Zipkin uri
 >>>>>>> e1b40332 (Observability code support)
+=======
+            # ZIPKIN_URI : URI of a Zipkin instance where tracing data can be forwarded
+>>>>>>> b11dedf9 (more changes)
             # Allowed values : String
             # Default value: Empty
             - name: "ZIPKIN_URI"
               value: ""
 <<<<<<< HEAD
+<<<<<<< HEAD
             # ZIPKIN_SERVICE_NAME : Service name used for Zipkin tracing dataService name used for Zipkin tracing data
 =======
             # ZIPKIN_SERVICE_NAME : set Zipkin service name
 >>>>>>> e1b40332 (Observability code support)
+=======
+            # ZIPKIN_SERVICE_NAME : Service name used for Zipkin tracing dataService name used for Zipkin tracing data
+>>>>>>> b11dedf9 (more changes)
             # Allowed values : String
             # Default value: "metrics-powerStore"
             - name: "ZIPKIN_SERVICE_NAME"
               value: "metrics-powerstore"
+<<<<<<< HEAD
 <<<<<<< HEAD
             # ZIPKIN_PROBABILITY : Percentage of trace information to send to Zipkin (Valid range: 0.0 to 1.0)
             # Allowed values : int
@@ -410,6 +432,10 @@ spec:
             # ZIPKIN_PROBABILITY : set Zipkin probability
             # Allowed values : String
 >>>>>>> e1b40332 (Observability code support)
+=======
+            # ZIPKIN_PROBABILITY : Percentage of trace information to send to Zipkin (Valid range: 0.0 to 1.0)
+            # Allowed values : int
+>>>>>>> b11dedf9 (more changes)
             # Default value: "0"
             - name: "ZIPKIN_PROBABILITY"
               value: "0"
