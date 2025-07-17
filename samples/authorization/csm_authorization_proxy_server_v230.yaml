@@ -75,7 +75,7 @@ spec:
           redisCommander: rediscommander
           sentinel: sentinel
           redisReplicas: 5
-        # You must specify exactly one option for the storageSystemCredentials field, e.g. secretProviderClass
+        # You must specify exactly one option for the storageSystemCredentials field, e.g. secretProviderClasses
         - name: storage-system-credentials
           secretProviderClasses:
             # list of secret provider classes for retrieving secrets from external providers
@@ -83,6 +83,7 @@ spec:
             - secret-provider-class-2
           # secrets:
           #   - secret-1
+          #   - secret-2
 ---
 apiVersion: v1
 kind: ConfigMap

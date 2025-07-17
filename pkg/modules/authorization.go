@@ -812,10 +812,9 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
 	if semver.Compare(authModule.ConfigVersion, "v2.3.0") >= 0 {
 		// Determine whether to read from secret provider classes or kubernetes secrets
-		readOnly := true
 		if len(secretProviderClasses) > 0 {
 			// set volumes for secret provider classes
-			mountSecretProviderClassVolumes(secretProviderClasses, readOnly, &deployment)
+			mountSecretProviderClassVolumes(secretProviderClasses, &deployment)
 		} else {
 			// set volumes for kubernetes secrets
 			mountSecretVolumes(secrets, &deployment)
@@ -996,7 +995,8 @@ func mountSecretVolumes(secrets []string, deployment *appsv1.Deployment) {
 	}
 }
 
-func mountSecretProviderClassVolumes(secretProviderClasses []string, readOnly bool, deployment *appsv1.Deployment) {
+func mountSecretProviderClassVolumes(secretProviderClasses []string, deployment *appsv1.Deployment) {
+	readOnly := true
 	for _, providerClass := range secretProviderClasses {
 		volume := corev1.Volume{
 			Name: fmt.Sprintf("secrets-store-inline-%s", providerClass),
