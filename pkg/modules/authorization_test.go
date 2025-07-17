@@ -11,6 +11,7 @@ package modules
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -753,14 +754,13 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 				panic(err)
 			}
 
-			tmpCR := customResource
 			err = certmanagerv1.AddToScheme(scheme.Scheme)
 			if err != nil {
 				panic(err)
 			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return true, false, tmpCR, sourceClient, operatorConfig
+			return true, false, customResource, sourceClient, operatorConfig
 		},
 
 		"success - use redis secret provider class": func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
@@ -2093,5 +2093,90 @@ func TestAuthorizationCrdDeploy(t *testing.T) {
 				assert.Error(t, err)
 			}
 		})
+	}
+}
+
+func TestCreateRedisK8sSecret(t *testing.T) {
+    cr := csmv1.ContainerStorageModule{
+        ObjectMeta: metav1.ObjectMeta{
+            Namespace: "test-namespace",
+        },
+    }
+
+    secret := createRedisK8sSecret(cr, "username", "password")
+
+    if secret.Name != defaultRedisSecretName {
+        t.Errorf("expected secret name %s, got %s", defaultRedisSecretName, secret.Name)
+    }
+    if secret.Namespace != "test-namespace" {
+        t.Errorf("expected namespace 'test-namespace', got %s", secret.Namespace)
+    }
+    if secret.Type != corev1.SecretTypeBasicAuth {
+        t.Errorf("expected secret type BasicAuth, got %s", secret.Type)
+    }
+    if secret.StringData["username"] != "dev" {
+        t.Errorf("expected username 'dev', got %s", secret.StringData["username"])
+    }
+    if secret.StringData["password"] != "K@ravi123!" {
+        t.Errorf("expected password 'K@ravi123!', got %s", secret.StringData["password"])
+    }
+}
+
+func TestRedisVolume(t *testing.T) {
+    secretName := "redis-secret"
+    volume := redisVolume(secretName)
+
+    if volume.Name != "secrets-store-inline-redis" {
+        t.Errorf("expected volume name 'secrets-store-inline-redis', got %s", volume.Name)
+    }
+    if volume.VolumeSource.CSI == nil {
+        t.Fatal("expected CSI volume source, got nil")
+    }
+    if volume.VolumeSource.CSI.Driver != "secrets-store.csi.k8s.io" {
+        t.Errorf("expected CSI driver 'secrets-store.csi.k8s.io', got %s", volume.VolumeSource.CSI.Driver)
+    }
+    if volume.VolumeSource.CSI.VolumeAttributes["secretProviderClass"] != secretName {
+        t.Errorf("expected secretProviderClass '%s', got %s", secretName, volume.VolumeSource.CSI.VolumeAttributes["secretProviderClass"])
+    }
+}
+
+func TestRedisVolumeMount(t *testing.T) {
+    mount := redisVolumeMount()
+
+    if mount.Name != "secrets-store-inline-redis" {
+        t.Errorf("expected mount name 'secrets-store-inline-redis', got %s", mount.Name)
+    }
+    if mount.MountPath != "/etc/csm-authorization/redis" {
+        t.Errorf("expected mount path '/etc/csm-authorization/redis', got %s", mount.MountPath)
+    }
+    if !mount.ReadOnly {
+        t.Error("expected mount to be read-only")
+    }
+}
+
+func TestGetObjectNamesForRedis(t *testing.T) {
+	customResource, err := getCustomResource("./testdata/cr_auth_proxy_v230.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	err = certmanagerv1.AddToScheme(scheme.Scheme)
+	if err != nil {
+		panic(err)
+	}
+
+	expected := map[string]struct{}{
+		"proxy-server":    {},
+		"storage-service": {},
+		"tenant-service":  {},
+		"redis-csm":       {},
+		"sentinel":        {},
+		"rediscommander":  {},
+	}
+
+	actual := getObjectNamesForRedis(customResource)
+
+	if !reflect.DeepEqual(actual, expected) {
+		t.Errorf("Expected names map %v, but got %v", expected, actual)
 	}
 }

@@ -39,7 +39,7 @@ spec:
           storageService: quay.io/dell/container-storage-modules/csm-authorization-storage:nightly
           storageServiceReplicas: 1
           opa: docker.io/openpolicyagent/opa:0.70.0
-          opaKubeMgmt: docker.io/openpolicyagent/kube-mgmt:8.5.7
+          opaKubeMgmt: docker.io/openpolicyagent/kube-mgmt:8.5.11
           authorizationController: quay.io/dell/container-storage-modules/csm-authorization-controller:nightly
           authorizationControllerReplicas: 1
           leaderElection: true
@@ -78,7 +78,7 @@ spec:
               redisUsernameKey: username
               # The key in the secret that holds the Redis password
               redisPasswordKey: password
-          redis: docker.io/redis:7.4.0-alpine
+          redis: docker.io/redis:7.4.3-alpine
           commander: docker.io/rediscommander/redis-commander:latest
           redisName: redis-csm
           redisCommander: rediscommander
