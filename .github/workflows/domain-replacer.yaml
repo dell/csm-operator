@@ -1,0 +1,20 @@
+# Copyright (c) 2024 Dell Inc., or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+
+# Reusable workflow to update the GitHub domains from external to internal
+name: Domain Replacer
+
+# yamllint sees the below line as a true or false value instead of an 'on' trigger
+on:  # yamllint disable-line rule:truthy
+  workflow_call:
+jobs:
+  # go version update
+  domain-update:
+    uses: hoppea2/common-github-actions/.github/workflows/domain-replacer.yaml@main
+    name: Update GitHub Domains
+    secrets: inherit
