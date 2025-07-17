@@ -27,4 +27,4 @@ spec:
         - name: cert-manager
           enabled: false
         - name: metrics-powerstore
-          enabled: false  
+          enabled: false
