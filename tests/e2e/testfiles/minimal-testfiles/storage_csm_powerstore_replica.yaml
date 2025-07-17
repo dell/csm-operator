@@ -15,4 +15,3 @@ spec:
   modules:
     - name: replication
       enabled: true
-
