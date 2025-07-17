@@ -32,7 +32,7 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.14.0
+    configVersion: v2.14.1
     # replica: Define the number of PowerMax controller nodes
     # to deploy to the Kubernetes release
     # Allowed values: n, where n > 0
@@ -239,7 +239,7 @@ spec:
   modules:
     # CSI Powermax Reverseproxy is a mandatory module for Powermax
     - name: csireverseproxy
-      configVersion: v2.13.0
+      configVersion: v2.13.1
       components:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy

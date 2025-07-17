@@ -117,7 +117,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: quay.io/dell/container-storage-modules/csi-powerstore:v2.14.0
+          image: quay.io/dell/container-storage-modules/csi-powerstore:v2.14.1
           imagePullPolicy: IfNotPresent
           command: ["/csi-powerstore"]
           args:

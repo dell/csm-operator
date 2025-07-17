@@ -258,7 +258,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: quay.io/dell/container-storage-modules/csi-powermax:v2.14.0
+          image: quay.io/dell/container-storage-modules/csi-powermax:v2.14.1
           imagePullPolicy: IfNotPresent
           command: ["/csi-powermax.sh"]
           env:
