@@ -777,7 +777,7 @@ func TestPowerStoreMetrics(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			success, isDeleting, cr, sourceClient, op := tc(t)
 			k8sClient := clientgoclient.NewFakeClient(sourceClient)
-			err := PowerFlexMetrics(ctx, isDeleting, op, cr, sourceClient, k8sClient)
+			err := PowerStoreMetrics(ctx, isDeleting, op, cr, sourceClient, k8sClient)
 			if success {
 				assert.NoError(t, err)
 			} else {

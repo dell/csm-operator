@@ -14,13 +14,13 @@ spec:
       imagePullPolicy: Always
   modules:
     - name: observability
-      enabled: false
+      enabled: true
       components:
         - name: topology
-          enabled: false
+          enabled: true
         - name: otel-collector
-          enabled: false
+          enabled: true
         - name: cert-manager
-          enabled: false
+          enabled: true
         - name: metrics-powerstore
-          enabled: false  
+          enabled: true
