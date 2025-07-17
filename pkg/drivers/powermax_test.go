@@ -29,7 +29,7 @@ import (
 )
 
 var (
-	powerMaxCSM                   = csmForPowerMax()
+	powerMaxCSM                   = csmForPowerMax("")
 	powerMaxReverseProxySecret    = csmWithReverseProxySecret()
 	powerMaxBadReverseProxySecret = csmWithBadReverseProxySecret()
 	powerMaxCSMNoProxy            = csmForPowerMaxNOProxy()
@@ -256,14 +256,6 @@ func csmForPowerMaxNOProxy() csmv1.ContainerStorageModule {
 	res.Spec.Driver.ConfigVersion = shared.PmaxConfigVersion
 	res.Spec.Driver.CSIDriverType = csmv1.PowerMax
 
-	return res
-}
-
-// makes a csm object with proxy
-func csmForPowerMax() csmv1.ContainerStorageModule {
-	res := csmForPowerMaxNOProxy()
-	revproxy := shared.MakeReverseProxyModule(shared.ConfigVersion)
-	res.Spec.Modules = append(res.Spec.Modules, revproxy)
 	return res
 }
 

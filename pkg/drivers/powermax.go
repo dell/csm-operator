@@ -47,7 +47,6 @@ const (
 	// CSIPmaxManagedArray and following  used for replacing user values in config files
 	CSIPmaxManagedArray    = "<X_CSI_MANAGED_ARRAY>"
 	CSIPmaxEndpoint        = "<X_CSI_POWERMAX_ENDPOINT>"
-	CSIPmaxClusterPrefix   = "<X_CSI_K8S_CLUSTER_PREFIX>"
 	CSIPmaxDebug           = "<X_CSI_POWERMAX_DEBUG>"
 	CSIPmaxPortGroup       = "<X_CSI_POWERMAX_PORTGROUPS>"
 	CSIPmaxProtocol        = "<X_CSI_TRANSPORT_PROTOCOL>"
@@ -174,7 +173,6 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 	// Parameters to initialise CR values
 	managedArray := ""
 	endpoint := ""
-	clusterPrefix := ""
 	debug := "false"
 	portGroup := ""
 	protocol := ""
@@ -201,9 +199,6 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 				}
 				if env.Name == "X_CSI_POWERMAX_ENDPOINT" {
 					endpoint = env.Value
-				}
-				if env.Name == "X_CSI_K8S_CLUSTER_PREFIX" {
-					clusterPrefix = env.Value
 				}
 				if env.Name == "X_CSI_POWERMAX_DEBUG" {
 					debug = env.Value
@@ -267,7 +262,6 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxManagedArray, managedArray)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxEndpoint, endpoint)
-		yamlString = strings.ReplaceAll(yamlString, CSIPmaxClusterPrefix, clusterPrefix)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxPortGroup, portGroup)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxProtocol, protocol)
@@ -291,9 +285,6 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 				}
 				if env.Name == "X_CSI_POWERMAX_ENDPOINT" {
 					endpoint = env.Value
-				}
-				if env.Name == "X_CSI_K8S_CLUSTER_PREFIX" {
-					clusterPrefix = env.Value
 				}
 				if env.Name == "X_CSI_POWERMAX_DEBUG" {
 					debug = env.Value
@@ -346,7 +337,6 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxManagedArray, managedArray)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxEndpoint, endpoint)
-		yamlString = strings.ReplaceAll(yamlString, CSIPmaxClusterPrefix, clusterPrefix)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxPortGroup, portGroup)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxProtocol, protocol)
