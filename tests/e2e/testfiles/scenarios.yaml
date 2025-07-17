@@ -73,6 +73,8 @@
   tags:
     - "powerscale"
     - "sanity"
+    - "n-1"
+    - "n-2"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
@@ -178,6 +180,8 @@
   tags:
     - "powerscale"
     - "replication"
+    - "n-1"
+    - "n-2"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
@@ -238,6 +242,8 @@
     - "testfiles/storage_csm_powerscale_observability.yaml"
   tags:
     - "observability"
+    - "n-1"
+    - "n-2"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
@@ -299,6 +305,8 @@
   tags:
     - "powerflex"
     - "sanity"
+    - "n-1"
+    - "n-2"
   config:
     enableSftpSDC: false
   steps:
@@ -456,6 +464,8 @@
     - "testfiles/storage_csm_powerflex_health_monitor.yaml"
   tags:
     - "powerflex"
+    - "n-1"
+    - "n-2"
   config:
     enableSftpSDC: false
   steps:
@@ -569,6 +579,8 @@
     - "authorization"
     - "powerscale"
     - "observability"
+    - "n-1"
+    - "n-2"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [3]"
@@ -715,6 +727,8 @@
   tags:
     - "observability"
     - "powerflex"
+    - "n-1"
+    - "n-2"
   config:
     enableSftpSDC: false
   steps:
@@ -809,6 +823,8 @@
     - "powerflex"
     - "replication"
     - "sanity"
+    - "n-1"
+    - "n-2"
   config:
     enableSftpSDC: false
   steps:
@@ -912,6 +928,8 @@
     - "powerflex"
     - "resiliency"
     - "sanity"
+    - "n-1"
+    - "n-2"
   config:
     enableSftpSDC: false
   steps:
@@ -961,6 +979,8 @@
   tags:
     - "powerscale"
     - "resiliency"
+    - "n-1"
+    - "n-2"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
@@ -1036,6 +1056,8 @@
   tags:
     - "powerstore"
     - "sanity"
+    - "n-1"
+    - "n-2"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
@@ -1056,6 +1078,8 @@
   tags:
     - "powerstore"
     - "resiliency"
+    - "n-1"
+    - "n-2"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
@@ -1100,6 +1124,8 @@
   tags:
     - "unity"
     - "sanity"
+    - "n-1"
+    - "n-2"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
@@ -1321,6 +1347,8 @@
     - "testfiles/storage_csm_powermax.yaml"
   tags:
     - "powermax"
+    - "n-1"
+    - "n-2"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
@@ -1340,6 +1368,7 @@
     - "testfiles/storage_csm_powermax.yaml"
   tags:
     - "powermax"
+    - "n-1"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
@@ -1358,6 +1387,7 @@
     - "testfiles/storage_csm_powermax_secret.yaml"
   tags:
     - "powermax"
+    - "n-1"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
@@ -1394,6 +1424,7 @@
   tags:
     - "powermax"
     - "observability"
+    - "n-1"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
@@ -1474,6 +1505,7 @@
   tags:
     - "powermax"
     - "observability"
+    - "n-1"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
@@ -1612,6 +1644,7 @@
   tags:
     - "powermax"
     - "observability"
+    - "n-2"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
@@ -1659,6 +1692,7 @@
     - "authorizationproxyserver"
     - "authorization"
     - "powermax"
+    - "n-2"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [2]"
@@ -1694,6 +1728,7 @@
     - "authorizationproxyserver"
     - "authorization"
     - "powermax"
+    - "n-1"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [2]"
@@ -1891,6 +1926,7 @@
   tags:
     - "powermax"
     - "resiliency"
+    - "n-1"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
