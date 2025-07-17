@@ -14,4 +14,4 @@ spec:
       imagePullPolicy: Always
   modules:
     - name: replication
-      enabled: false
+      enabled: true
