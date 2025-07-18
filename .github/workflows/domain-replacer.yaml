@@ -11,10 +11,9 @@ name: Domain Replacer
 
 # yamllint sees the below line as a true or false value instead of an 'on' trigger
 on:  # yamllint disable-line rule:truthy
-  workflow_call:
+  workflow_dispatch:
 jobs:
   # go version update
   domain-update:
     uses: hoppea2/common-github-actions/.github/workflows/domain-replacer.yaml@main
     name: Update GitHub Domains
-    secrets: inherit
