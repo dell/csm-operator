@@ -6,11 +6,13 @@ spec:
   type: powerscale
   endpoint: https://127.0.0.1
   systemID: 1a99aa999999aa9a
+  # You must specify exactly one option for the storageSystemCredentials field, e.g. secretProviderClass
   storageSystemCredentials:
     secretProviderClass:
       name: secretProviderClassName
       usernameObjectName: ""
       passwordObjectName: ""
+    # secret: "secret-1"
   skipCertificateValidation: true
   pollInterval: 30s
   isiPath: /ifs/data/csi

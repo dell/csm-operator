@@ -190,6 +190,11 @@ func (in *ContainerTemplate) DeepCopyInto(out *ContainerTemplate) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.Secrets != nil {
+		in, out := &in.Secrets, &out.Secrets
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.ComponentCred != nil {
 		in, out := &in.ComponentCred, &out.ComponentCred
 		*out = make([]Credential, len(*in))
