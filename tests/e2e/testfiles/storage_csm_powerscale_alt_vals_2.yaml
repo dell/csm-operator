@@ -348,6 +348,16 @@ spec:
             # Default value: true
             - name: "POWERSCALE_PERFORMANCE_METRICS_ENABLED"
               value: "true"
+            # POWERSCALE_TOPOLOGY_METRICS_ENABLED: enable/disable collection of topology metrics
+            # Allowed values: ture, false
+            # Default value: true
+            - name: "POWERSCALE_TOPOLOGY_METRICS_ENABLED"
+              value: "true"
+            # POWERSCALE_TOPOLOGY_METRICS_POLL_FREQUENCY: set polling frequency to get topology metrics data
+            # Allowed values: int
+            # Default value: 30
+            - name: "POWERSCALE_TOPOLOGY_METRICS_POLL_FREQUENCY"
+              value: "30"            
             # POWERSCALE_CLUSTER_CAPACITY_POLL_FREQUENCY: set polling frequency to get cluster capacity metrics data
             # Allowed values: int
             # Default value: 30
