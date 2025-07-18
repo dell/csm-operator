@@ -1527,7 +1527,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		// This variable will be set correctly if the reverseproxy is found in the manifests.
 		modules.ResetDeployAsSidecar()
 	default:
-		// Go to checkUpgrade if it is standalone module i.e. app mobility or authorizatio proxy server
+		// Go to checkUpgrade if it is standalone module i.e. app mobility or authorization proxy server
 		if cr.HasModule(csmv1.ApplicationMobility) || cr.HasModule(csmv1.AuthorizationServer) {
 			break
 		}
