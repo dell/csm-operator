@@ -596,10 +596,10 @@ func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 					volumePollFrequency = env.Value
 				} else if strings.Contains(PstoreSpacePollFrequency, env.Name) {
 					spacePollFrequency = env.Value
-				} else if strings.Contains(PstoreArrayPollFrequency, env.Name) {
-					arrayPollFrequency = env.Value
 				} else if strings.Contains(PstoreFileSystemPollFrequency, env.Name) {
 					fsPollFrequency = env.Value
+				} else if strings.Contains(PstoreArrayPollFrequency, env.Name) {
+					arrayPollFrequency = env.Value
 				} else if strings.Contains(ZipkinURI, env.Name) {
 					zipkinURI = env.Value
 				} else if strings.Contains(ZipkinServiceName, env.Name) {
