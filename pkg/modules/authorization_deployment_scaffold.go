@@ -19,7 +19,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
-func getProxyServerScaffold(name, seninelName, namespace, proxyImage, opaImage, opaKubeMgmtImage, redisPasswordKey string, replicas int32) appsv1.Deployment {
+func getProxyServerScaffold(name, seninelName, namespace, proxyImage, opaImage, opaKubeMgmtImage, redisSecretName, redisPasswordKey string, replicas int32, sentinelReplicas int) appsv1.Deployment {
 	return appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -56,7 +56,7 @@ func getProxyServerScaffold(name, seninelName, namespace, proxyImage, opaImage, 
 							Env: []corev1.EnvVar{
 								{
 									Name: "SENTINELS",
-									Value: buildSentinelContainerEnv(int(replicas), seninelName, namespace).Value,
+									Value: buildSentinelContainerEnv(sentinelReplicas, seninelName, namespace).Value,
 								},
 								{
 									Name:  "REDIS_PASSWORD",
@@ -238,7 +238,7 @@ func getStorageServiceScaffold(name string, namespace string, image string, repl
 	}
 }
 
-func getTenantServiceScaffold(name, namespace, seninelName, image, redisPasswordKey string, replicas int32) appsv1.Deployment {
+func getTenantServiceScaffold(name, namespace, seninelName, image, redisSecretName, redisPasswordKey string, replicas int32, sentinelReplicas int) appsv1.Deployment {
 	return appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -275,7 +275,7 @@ func getTenantServiceScaffold(name, namespace, seninelName, image, redisPassword
 							Env: []corev1.EnvVar{
 								{
 									Name: "SENTINELS",
-									Value: buildSentinelContainerEnv(int(replicas), seninelName, namespace).Value,
+									Value: buildSentinelContainerEnv(sentinelReplicas, seninelName, namespace).Value,
 								},
 								{
 									Name:  "REDIS_PASSWORD",
@@ -484,10 +484,11 @@ func getAuthorizationRedisStatefulsetScaffold(crName, name, namespace, image, re
 	}
 }
 
-func getAuthorizationRediscommanderDeploymentScaffold(crName, name, namespace, image, redisUsernameKey, redisPasswordKey string, replicas int32) appsv1.Deployment {
+func getAuthorizationRediscommanderDeploymentScaffold(crName, name, namespace, image, redisSecretName, redisUsernameKey, redisPasswordKey, sentinelName string, sentinelReplicas int) appsv1.Deployment {
 	runAsNonRoot := true
 	readOnlyRootFilesystem := false
 	allowPrivilegeEscalation := false
+	var replicas int32 = 1
 	return appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -522,7 +523,7 @@ func getAuthorizationRediscommanderDeploymentScaffold(crName, name, namespace, i
 							Env: []corev1.EnvVar{
 								{
 									Name:  "SENTINELS",
-									Value: buildSentinelContainerEnv(int(replicas), name, namespace).Value,
+									Value: buildSentinelContainerEnv(sentinelReplicas, sentinelName, namespace).Value,
 								},
 								{
 									Name:  "K8S_SIGTERM",
@@ -615,7 +616,7 @@ func getAuthorizationRediscommanderDeploymentScaffold(crName, name, namespace, i
 	}
 }
 
-func getAuthorizationSentinelStatefulsetScaffold(crName, name, image, redisSecretName, redisPasswordKey string, replicas int32) appsv1.StatefulSet {
+func getAuthorizationSentinelStatefulsetScaffold(crName, name, namespace, image, redisSecretName, redisPasswordKey string, replicas int32) appsv1.StatefulSet {
 	return appsv1.StatefulSet{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "StatefulSet",
@@ -623,6 +624,7 @@ func getAuthorizationSentinelStatefulsetScaffold(crName, name, image, redisSecre
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
+			Namespace: namespace,
 		},
 		Spec: appsv1.StatefulSetSpec{
 			ServiceName: name,
@@ -645,6 +647,7 @@ func getAuthorizationSentinelStatefulsetScaffold(crName, name, image, redisSecre
 						{
 							Name:            "config",
 							Image:           image,
+							ImagePullPolicy: "Always",
 							Env: []corev1.EnvVar{
 								{
 									Name: "REDIS_PASSWORD",
