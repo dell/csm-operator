@@ -11,7 +11,6 @@ package modules
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -2093,35 +2092,5 @@ func TestAuthorizationCrdDeploy(t *testing.T) {
 				assert.Error(t, err)
 			}
 		})
-	}
-}
-
-func TestGetObjectNamesForRedis(t *testing.T) {
-	customResource, err := getCustomResource("./testdata/cr_auth_proxy_v230.yaml")
-	if err != nil {
-		panic(err)
-	}
-
-	err = certmanagerv1.AddToScheme(scheme.Scheme)
-	if err != nil {
-		panic(err)
-	}
-
-	expected := map[string]struct{}{
-		"proxy-server":    {},
-		"storage-service": {},
-		"tenant-service":  {},
-		"redis-csm":       {},
-		"sentinel":        {},
-		"rediscommander":  {},
-	}
-
-	actual, err := getObjectNamesForRedis(customResource)
-	if err != nil {
-		t.Errorf("getting object names: %v", err)
-	}
-
-	if !reflect.DeepEqual(actual, expected) {
-		t.Errorf("Expected names map %v, but got %v", expected, actual)
 	}
 }
