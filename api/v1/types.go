@@ -350,10 +350,17 @@ type ContainerTemplate struct {
 	// Applicable till CSM v1.14
 	Vaults []Vault `json:"vaultConfigurations,omitempty" yaml:"vaultConfigurations,omitempty"`
 
-	// SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers
+	// SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Secret Provider Classes"
 	// Applicable from CSM v1.15 onwards
+	// Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
 	SecretProviderClasses []string `json:"secretProviderClasses,omitempty" yaml:"secretProviderClasses,omitempty"`
+
+	// Secrets is a collection of kubernetes secrets for storage system credentials
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Secrets"
+	// Applicable from CSM v1.15 onwards
+	// Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
+	Secrets []string `json:"secrets,omitempty" yaml:"secrets,omitempty"`
 
 	// skipCertificateValidation is the flag to skip certificate validation
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Skip Certificate Validation"
