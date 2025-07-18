@@ -59,6 +59,7 @@ var (
 		{"unity common is nil", unityCSMInvalidValue, csmv1.Unity, "node.yaml", ""},
 		{"file does not exist", csm, fakeDriver, "NonExist.yaml", "no such file or directory"},
 		{"pmax happy path", pmaxCSM, csmv1.PowerMax, "node.yaml", ""},
+		{"pmax common env without node section", csmForPowerMax("common-env-override-no-node"), csmv1.PowerMax, "node.yaml", ""},
 		{"config file is invalid", csm, badDriver, "bad.yaml", "unmarshal"},
 	}
 )
@@ -153,6 +154,22 @@ func TestGetNode(t *testing.T) {
 				if tt.driverName == "powerflex" {
 					assert.Equal(t, true, foundInitMdm)
 				}
+
+				if tt.name == "pmax common env without node section" {
+					// expect driver container to have overridden env vars defined under the CSM driver.common section
+					foundEnv := false
+					for _, c := range node.DaemonSetApplyConfig.Spec.Template.Spec.Containers {
+						if *c.Name == "driver" {
+							for _, e := range c.Env {
+								if e.Name != nil && e.Value != nil && *e.Name == "X_CSI_K8S_CLUSTER_PREFIX" && *e.Value == "UNIT-TEST" {
+									foundEnv = true
+								}
+							}
+						}
+					}
+					assert.Equal(t, true, foundEnv)
+				}
+
 			} else {
 				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
 			}

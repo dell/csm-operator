@@ -166,6 +166,20 @@ func csmForPowerFlex(customCSMName string) csmv1.ContainerStorageModule {
 	return res
 }
 
+// makes a csm object with proxy
+func csmForPowerMax(customization string) csmv1.ContainerStorageModule {
+	res := csmForPowerMaxNOProxy()
+	revproxy := shared.MakeReverseProxyModule(shared.ConfigVersion)
+	res.Spec.Modules = append(res.Spec.Modules, revproxy)
+
+	if customization == "common-env-override-no-node" {
+		res.Spec.Driver.Common.Envs = []corev1.EnvVar{{Name: "X_CSI_K8S_CLUSTER_PREFIX", Value: "UNIT-TEST"}}
+		res.Spec.Driver.Node = nil
+	}
+
+	return res
+}
+
 func csmWithPowerstore(driver csmv1.DriverType, version string) csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
