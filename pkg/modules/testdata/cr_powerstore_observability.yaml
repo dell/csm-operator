@@ -1,0 +1,65 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: powerstore
+  namespace: powerstore
+spec:
+  driver:
+    csiDriverType: "powerstore"
+    configVersion: v2.15.0
+    authSecret: powerstore-creds
+    replicas: 1
+    common:
+      image: "quay.io/dell/container-storage-modules/csi-powerstore:nightly"
+      imagePullPolicy: IfNotPresent
+  modules:
+    - name: observability
+      enabled: true
+      configVersion: v1.13.0
+      components:
+        - name: topology
+          enabled: true
+          image: quay.io/dell/container-storage-modules/csm-topology:nightly
+          certificate: ""
+          privateKey: ""
+          envs:
+            - name: "TOPOLOGY_LOG_LEVEL"
+              value: "INFO"
+        - name: otel-collector
+          enabled: true
+          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:v0.127.0
+          certificate: ""
+          privateKey: ""
+          envs:
+            - name: "NGINX_PROXY_IMAGE"
+              value: "docker.io/nginxinc/nginx-unprivileged:1.27"
+        - name: cert-manager
+          enabled: true
+        - name: metrics-powerstore
+          enabled: true
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerstore:nightly
+          envs:
+            - name: "POWERSTORE_MAX_CONCURRENT_QUERIES"
+              value: "10"
+            - name: "POWERSTORE_VOLUME_METRICS_ENABLED"
+              value: "true"
+            - name: "POWERSTORE_VOLUME_IO_POLL_FREQUENCY"
+              value: "10"
+            - name: "POWERSTORE_SPACE_POLL_FREQUENCY"
+              value: "10"
+            - name: "POWERSTORE_ARRAY_POLL_FREQUENCY"
+              value: "10"
+            - name: " POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY"
+              value: "10"
+            - name: "POWERSTORE_LOG_LEVEL"
+              value: "INFO"
+            - name: "POWERSTORE_LOG_FORMAT"
+              value: "TEXT"
+            - name: "ZIPKIN_URI"
+              value: ""
+            - name: "ZIPKIN_SERVICE_NAME"
+              value: "metrics-powerstore"
+            - name: "ZIPKIN_PROBABILITY"
+              value: "0"
+            - name: "COLLECTOR_ADDRESS"
+              value: "otel-collector:55680"
