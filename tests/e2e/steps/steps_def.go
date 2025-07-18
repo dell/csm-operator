@@ -811,6 +811,40 @@ func (step *Step) setUpSecret(_ Resource, templateFile, name, namespace, crType 
 	return nil
 }
 
+func (step *Step) setUpSecretFromFile(_ Resource, templateFile, name, namespace, crType string) error {
+	// if secret exists - delete it
+	if secretExists(namespace, name) {
+		err := execCommand("kubectl", "delete", "secret", "-n", namespace, name)
+		if err != nil {
+			return fmt.Errorf("failed to delete secret: %s", err.Error())
+		}
+	}
+
+	// find which map to use for secret values
+	mapValues, err := determineMap(crType)
+	if err != nil {
+		return err
+	}
+
+	for key := range mapValues {
+		val := os.Getenv(mapValues[key])
+
+		err := replaceInFile(key, val, templateFile)
+		if err != nil {
+			return err
+		}
+	}
+
+	// create new secret
+	fileArg := "--from-file=" + templateFile
+	err = execCommand("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
+	if err != nil {
+		return fmt.Errorf("failed to create secret from file %s: %v", templateFile, err)
+	}
+
+	return nil
+}
+
 func (step *Step) generateAndCreateSftpSecrets(_ Resource, privateKeyPath, privateSecretName, publicSecretName, namespace, crType string) error {
 	tmpDir := filepath.Join("temp", "sftp", fmt.Sprintf("%d", time.Now().UnixNano()))
 	defer os.RemoveAll(tmpDir)
@@ -1497,18 +1531,10 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 		return fmt.Errorf("failed to create local storage for redis: %v\nErrMessage:\n%s", err, string(b))
 	}
 
-	cmd = exec.Command("kubectl", "create",
-		"-f", "testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml",
-	) // #nosec G204
-	b, err = cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to create secret provider class: %v\nErrMessage:\n%s", err, string(b))
-	}
-
 	return nil
 }
 
-func (step *Step) configureAuthorizationProxyServer(res Resource, driver string, crNumStr string) error {
+func (step *Step) configureAuthorizationProxyServer(res Resource, driver, crNumStr string) error {
 	fmt.Println("=== Configuring Authorization Proxy Server ===")
 
 	crNum, _ := strconv.Atoi(crNumStr)
@@ -1520,7 +1546,14 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 		driverNamespace = ""
 		proxyHost       = ""
 		csmTenantName   = ""
+		storageTemplate = ""
 	)
+
+	if strings.Contains(res.Scenario.Scenario, "Kubernetes Secret") {
+		storageTemplate = "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
+	} else {
+		storageTemplate = "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
+	}
 
 	// if tests are running multiple scenarios that require differently configured auth servers, we will not be able to use one set of vars
 	// this section is for powerflex, other drivers can add their sections as required.
@@ -1556,14 +1589,14 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	address := proxyHost
 	fmt.Printf("Address: %s\n", address)
 
-	return step.AuthorizationV2Resources(storageType, driver, driverNamespace, address, port, csmTenantName, cr.Spec.Modules[0].ConfigVersion)
+	return step.AuthorizationV2Resources(storageType, driver, driverNamespace, address, port, csmTenantName, cr.Spec.Modules[0].ConfigVersion, storageTemplate)
 }
 
 // AuthorizationV2Resources creates resources using CRs and dellctl for V2 versions of Authorization Proxy Server
-func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName, configVersion string) error {
+func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName, configVersion string, storageTemplate string) error {
 	var (
 		crMap               = ""
-		templateFile        = "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
+		templateFile        = storageTemplate
 		updatedTemplateFile = ""
 	)
 
