@@ -869,6 +869,8 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 	powerflexCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	powerflexCSM.Spec.Driver.CSIDriverType = csmv1.PowerFlex
 	suite.makeFakeCSM(csmName, suite.namespace, false, []csmv1.Module{})
+	minimalPowerFlexCSM := powerflexCSM
+	minimalPowerFlexCSM.Spec.Driver.Node = nil
 
 	resiliencyCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	resiliencyCSM.Spec.Modules = getResiliencyModule()
@@ -895,6 +897,7 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 		{"resiliency module happy path", resiliencyCSM, operatorConfig, ""},
 		{"replication module happy path", replicationCSM, operatorConfig, ""},
 		{"replication module bad op conf", replicationCSM, badOperatorConfig, "failed to deploy replication"},
+		{"minimal Pflex conf", minimalPowerFlexCSM, operatorConfig, ""},
 	}
 
 	for _, tt := range syncCSMTests {
