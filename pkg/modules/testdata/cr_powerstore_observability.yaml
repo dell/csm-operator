@@ -27,7 +27,7 @@ spec:
               value: "INFO"
         - name: otel-collector
           enabled: true
-          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:v0.127.0
+          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.127.0
           certificate: ""
           privateKey: ""
           envs:
@@ -49,7 +49,7 @@ spec:
               value: "10"
             - name: "POWERSTORE_ARRAY_POLL_FREQUENCY"
               value: "10"
-            - name: " POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY"
+            - name: "POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY"
               value: "10"
             - name: "POWERSTORE_LOG_LEVEL"
               value: "INFO"
