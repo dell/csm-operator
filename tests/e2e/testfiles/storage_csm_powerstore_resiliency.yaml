@@ -348,7 +348,7 @@ spec:
             # POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY: set polling frequency to get file system capacity metrics data
             # Allowed values: int
             # Default value: 10
-            - name: " POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY"
+            - name: "POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY"
               value: "10"
             # PowerStore metrics log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC

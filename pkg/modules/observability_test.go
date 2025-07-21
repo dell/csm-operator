@@ -759,6 +759,26 @@ func TestPowerStoreMetrics(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
+		"success - deleting with auth after one cycle": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerstore_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			pstoreCreds := getSecret(customResource.Namespace, "test-powerstore-config")
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(pstoreCreds).Build()
+			k8sClient := clientgoclient.NewFakeClient(sourceClient)
+
+			// pre-run to generate objects
+			err = PowerStoreMetrics(ctx, false, operatorConfig, tmpCR, sourceClient, k8sClient)
+			if err != nil {
+				panic(err)
+			}
+
+			return true, true, tmpCR, sourceClient, operatorConfig
+		},
 		"Fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerstore_replica.yaml")
 			if err != nil {
