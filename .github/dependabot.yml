@@ -50,6 +50,7 @@ updates:
       - "/operatorconfig/driverconfig/powerscale/v2.15.0/**"
       - "/operatorconfig/driverconfig/powerstore/v2.15.0/**"
       - "/operatorconfig/driverconfig/unity/v2.15.0/**"
+      - "/samples/v2.15.0/**/**"
       - "/tests/e2e/testfiles/**"
     schedule:
       interval: "daily"
