@@ -9,6 +9,8 @@
 package modules
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"testing"
 
@@ -226,8 +228,10 @@ func TestGetAuthorizationRedisStatefulsetScaffold(t *testing.T) {
 	redisSecretName := "redis-secret"
 	redisPasswordKey := "password"
 	replicas := int32(3)
+	hash := sha256.Sum256([]byte("data"))
+	checksum := hex.EncodeToString(hash[:])
 
-	sts := getAuthorizationRedisStatefulsetScaffold(crName, name, namespace, image, redisSecretName, redisPasswordKey, replicas)
+	sts := getAuthorizationRedisStatefulsetScaffold(crName, name, namespace, image, redisSecretName, redisPasswordKey, checksum, replicas)
 
 	if sts.Name != name {
 		t.Errorf("expected name %s, got %s", name, sts.Name)
@@ -262,8 +266,10 @@ func TestGetAuthorizationRediscommanderDeploymentScaffold(t *testing.T) {
 	redisUsernameKey := "username"
 	redisPasswordKey := "password"
 	replicas := 5
+	hash := sha256.Sum256([]byte("data"))
+	checksum := hex.EncodeToString(hash[:])
 
-	deploy := getAuthorizationRediscommanderDeploymentScaffold(crName, name, namespace, image, redisSecretName, redisUsernameKey, redisPasswordKey, sentinelName, replicas)
+	deploy := getAuthorizationRediscommanderDeploymentScaffold(crName, name, namespace, image, redisSecretName, redisUsernameKey, redisPasswordKey, sentinelName, checksum, replicas)
 
 	envVars := deploy.Spec.Template.Spec.Containers[0].Env
 	found := false
@@ -287,8 +293,10 @@ func TestGetAuthorizationSentinelStatefulsetScaffold(t *testing.T) {
 	redisSecretName := "redis-secret"
 	redisPasswordKey := "password"
 	replicas := int32(3)
+	hash := sha256.Sum256([]byte("data"))
+	checksum := hex.EncodeToString(hash[:])
 
-	sts := getAuthorizationSentinelStatefulsetScaffold(crName, name, namespace, image, redisSecretName, redisPasswordKey, replicas)
+	sts := getAuthorizationSentinelStatefulsetScaffold(crName, name, namespace, image, redisSecretName, redisPasswordKey, checksum, replicas)
 
 	if sts.Name != name {
 		t.Errorf("expected name %s, got %s", name, sts.Name)

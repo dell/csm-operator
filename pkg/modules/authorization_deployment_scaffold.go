@@ -337,7 +337,7 @@ func getTenantServiceScaffold(name, namespace, seninelName, image, redisSecretNa
 	}
 }
 
-func getAuthorizationRedisStatefulsetScaffold(crName, name, namespace, image, redisSecretName, redisPasswordKey string, replicas int32) appsv1.StatefulSet {
+func getAuthorizationRedisStatefulsetScaffold(crName, name, namespace, image, redisSecretName, redisPasswordKey, checksum string, replicas int32) appsv1.StatefulSet {
 	volName := "redis-primary-volume"
 
 	return appsv1.StatefulSet{
@@ -362,6 +362,9 @@ func getAuthorizationRedisStatefulsetScaffold(crName, name, namespace, image, re
 					Labels: map[string]string{
 						"csm": crName,
 						"app": name,
+					},
+					Annotations: map[string]string{
+						"checksum/secret": checksum,
 					},
 				},
 				Spec: corev1.PodSpec{
@@ -484,7 +487,7 @@ func getAuthorizationRedisStatefulsetScaffold(crName, name, namespace, image, re
 	}
 }
 
-func getAuthorizationRediscommanderDeploymentScaffold(crName, name, namespace, image, redisSecretName, redisUsernameKey, redisPasswordKey, sentinelName string, sentinelReplicas int) appsv1.Deployment {
+func getAuthorizationRediscommanderDeploymentScaffold(crName, name, namespace, image, redisSecretName, redisUsernameKey, redisPasswordKey, sentinelName, checksum string, sentinelReplicas int) appsv1.Deployment {
 	runAsNonRoot := true
 	readOnlyRootFilesystem := false
 	allowPrivilegeEscalation := false
@@ -511,6 +514,9 @@ func getAuthorizationRediscommanderDeploymentScaffold(crName, name, namespace, i
 						"csm": crName,
 						"app":  name,
 						"tier": "backend",
+					},
+					Annotations: map[string]string{
+						"checksum/secret": checksum,
 					},
 				},
 				Spec: corev1.PodSpec{
@@ -616,7 +622,7 @@ func getAuthorizationRediscommanderDeploymentScaffold(crName, name, namespace, i
 	}
 }
 
-func getAuthorizationSentinelStatefulsetScaffold(crName, name, namespace, image, redisSecretName, redisPasswordKey string, replicas int32) appsv1.StatefulSet {
+func getAuthorizationSentinelStatefulsetScaffold(crName, name, namespace, image, redisSecretName, redisPasswordKey, checksum string, replicas int32) appsv1.StatefulSet {
 	return appsv1.StatefulSet{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "StatefulSet",
@@ -639,6 +645,9 @@ func getAuthorizationSentinelStatefulsetScaffold(crName, name, namespace, image,
 					Labels: map[string]string{
 						"csm": crName,
 						"app": name,
+					},
+					Annotations: map[string]string{
+						"checksum/secret": checksum,
 					},
 				},
 				Spec: corev1.PodSpec{
@@ -757,8 +766,6 @@ func getAuthorizationSentinelStatefulsetScaffold(crName, name, namespace, image,
 		},
 	}
 }
-
-var buildSentinelEnvFunc = buildSentinelContainerEnv
 
 func buildSentinelContainerEnv(replicas int, sentinelName, namespace string) corev1.EnvVar {
 	var endpoints []string

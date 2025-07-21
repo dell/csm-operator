@@ -14,7 +14,9 @@ package modules
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -625,7 +627,7 @@ func getAuthorizationServerDeployment(op operatorutils.OperatorConfig, cr csmv1.
 				redisStorageClass = component.RedisStorageClass
 			}
 
-			// create redis kubernetes secret or use a secret provider class
+			// create redis kubernetes secret
 			for _, config := range component.RedisSecretProviderClass {
 				if config.RedisSecretName == "" {
 					redisSecretName = defaultRedisSecretName
@@ -1142,6 +1144,7 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 					redisPasswordKey = config.RedisPasswordKey
 				} else {
 					redisSecretName = config.RedisSecretName
+					redisUsernameKey = config.RedisUsernameKey
 					redisPasswordKey = config.RedisPasswordKey
 				}
 			}
@@ -1209,6 +1212,7 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 					redisPasswordKey = config.RedisPasswordKey
 				} else {
 					redisSecretName = config.RedisSecretName
+					redisUsernameKey = config.RedisUsernameKey
 					redisPasswordKey = config.RedisPasswordKey
 				}
 			}
@@ -1219,7 +1223,7 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 
 	// conversion to int32 is safe for a value up to 2147483647
 	// #nosec G115
-	deployment := getTenantServiceScaffold(cr.Name, cr.Namespace,sentinelName, image, redisSecretName, redisPasswordKey, int32(replicas), sentinelReplicas)
+	deployment := getTenantServiceScaffold(cr.Name, cr.Namespace, sentinelName, image, redisSecretName, redisPasswordKey, int32(replicas), sentinelReplicas)
 
 	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
 	for _, component := range authModule.Components {
@@ -1273,6 +1277,7 @@ func applyDeleteAuthorizationRedisStatefulsetV2(ctx context.Context, isDeleting 
 					redisPasswordKey = config.RedisPasswordKey
 				} else {
 					redisSecretName = config.RedisSecretName
+					redisUsernameKey = config.RedisUsernameKey
 					redisPasswordKey = config.RedisPasswordKey
 				}
 			}
@@ -1281,9 +1286,14 @@ func applyDeleteAuthorizationRedisStatefulsetV2(ctx context.Context, isDeleting 
 		}
 	}
 
+	checksum, err := getRedisChecksumFromSecretData(ctx, ctrlClient, cr, redisSecretName, redisUsernameKey, redisPasswordKey)
+	if err != nil {
+		return fmt.Errorf("getting redis secret checksum: %w", err)
+	}
+
 	// conversion to int32 is safe for a value up to 2147483647
 	// #nosec G115
-	deployment := getAuthorizationRedisStatefulsetScaffold(cr.Name, redisName, cr.Namespace, image, redisSecretName, redisPasswordKey, int32(replicas))
+	deployment := getAuthorizationRedisStatefulsetScaffold(cr.Name, redisName, cr.Namespace, image, redisSecretName, redisPasswordKey, checksum, int32(replicas))
 
 	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
 	for _, component := range authModule.Components {
@@ -1348,9 +1358,14 @@ func applyDeleteAuthorizationRediscommanderDeploymentV2(ctx context.Context, isD
 		}
 	}
 
+	checksum, err := getRedisChecksumFromSecretData(ctx, ctrlClient, cr, redisSecretName, redisUsernameKey, redisPasswordKey)
+	if err != nil {
+		return fmt.Errorf("getting redis secret checksum: %w", err)
+	}
+
 	// conversion to int32 is safe for a value up to 2147483647
 	// #nosec G115
-	deployment := getAuthorizationRediscommanderDeploymentScaffold(cr.Name, rediscommanderName, cr.Namespace, image, redisSecretName, redisUsernameKey, redisPasswordKey, sentinelName, sentinelReplicas)
+	deployment := getAuthorizationRediscommanderDeploymentScaffold(cr.Name, rediscommanderName, cr.Namespace, image, redisSecretName, redisUsernameKey, redisPasswordKey, sentinelName, checksum, sentinelReplicas)
 
 	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
 	for _, component := range authModule.Components {
@@ -1394,7 +1409,7 @@ func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleti
 		switch component.Name {
 		case AuthRedisComponent:
 			sentinelName = component.Sentinel
-			image = component.Commander
+			image = component.Redis
 			replicas = component.RedisReplicas
 			// create redis kubernetes secret or use a secret provider class
 			for _, config := range component.RedisSecretProviderClass {
@@ -1404,6 +1419,7 @@ func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleti
 					redisPasswordKey = config.RedisPasswordKey
 				} else {
 					redisSecretName = config.RedisSecretName
+					redisUsernameKey = config.RedisUsernameKey
 					redisPasswordKey = config.RedisPasswordKey
 				}
 			}
@@ -1412,9 +1428,14 @@ func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleti
 		}
 	}
 
+	checksum, err := getRedisChecksumFromSecretData(ctx, ctrlClient, cr, redisSecretName, redisUsernameKey, redisPasswordKey)
+	if err != nil {
+		return fmt.Errorf("getting redis secret checksum: %w", err)
+	}
+
 	// conversion to int32 is safe for a value up to 2147483647
 	// #nosec G115
-	deployment := getAuthorizationSentinelStatefulsetScaffold(cr.Name, sentinelName, cr.Namespace, image, redisSecretName, redisPasswordKey, int32(replicas))
+	deployment := getAuthorizationSentinelStatefulsetScaffold(cr.Name, sentinelName, cr.Namespace, image, redisSecretName, redisPasswordKey, checksum, int32(replicas))
 
 	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
 	for _, component := range authModule.Components {
@@ -2094,4 +2115,47 @@ func setIngressRules(cr csmv1.ContainerStorageModule) ([]networking.IngressRule,
 	rules = append(rules, noHostRule...)
 
 	return rules, nil
+}
+
+func getRedisChecksumFromSecretData(ctx context.Context, ctrlClient crclient.Client, cr csmv1.ContainerStorageModule, secretName string, keys ...string) (string, error) {
+	log := logger.GetLogger(ctx)
+	redisSecret := &corev1.Secret{}
+
+	err := ctrlClient.Get(ctx, types.NamespacedName{
+		Name:      secretName,
+		Namespace: cr.GetNamespace(),
+	}, redisSecret)
+	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			log.Info("Redis secret not found; assuming it was deleted.")
+			return "", nil
+		}
+		log.Warn(err, "Failed to query for redis secret, it could have been deleted.")
+		return "", err
+	}
+
+	rendered := corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      redisSecret.Name,
+			Namespace: redisSecret.Namespace,
+		},
+		Type:       redisSecret.Type,
+		StringData: map[string]string{},
+	}
+
+	for key, val := range redisSecret.Data {
+		rendered.StringData[key] = string(val)
+	}
+
+	yamlBytes, err := yaml.Marshal(rendered)
+	if err != nil {
+		return "", err
+	}
+
+	hash := sha256.Sum256(yamlBytes)
+	return hex.EncodeToString(hash[:]), nil
 }
