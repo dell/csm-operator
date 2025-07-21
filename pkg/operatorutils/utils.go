@@ -156,8 +156,6 @@ const (
 	PodmonControllerComponent = "podmon-controller"
 	// PodmonNodeComponent - podmon-node
 	PodmonNodeComponent = "podmon-node"
-	// ApplicationMobilityNamespace - application-mobility
-	ApplicationMobilityNamespace = "application-mobility"
 	// ExistingNamespace - existing namespace
 	ExistingNamespace = "<ExistingNameSpace>"
 	// ClientNamespace - client namespace
