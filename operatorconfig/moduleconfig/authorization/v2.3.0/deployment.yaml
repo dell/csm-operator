@@ -37,7 +37,6 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: proxy-server-tokenreview-binding
-  namespace: <NAMESPACE>
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -72,7 +71,6 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: tenant-service-tokenreview-binding
-  namespace: <NAMESPACE>
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -235,7 +233,6 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: storage-service-tokenreview-binding
-  namespace: <NAMESPACE>
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -441,7 +438,6 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: redis-tokenreview-binding
-  namespace: <NAMESPACE>
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -491,7 +487,6 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: sentinel-tokenreview-binding
-  namespace: <NAMESPACE>
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole

@@ -61,13 +61,14 @@ spec:
                 "label": "value"
         - name: redis
           # Redis secret configuration:
-          # Use a SecretProviderClass for Redis credentials; otherwise, a default Kubernetes secret is used.
+          # If using a CSI driver, specify the SecretProviderClass.
+          # Otherwise, a default Kubernetes secret will be used for Redis credentials.
           redisSecretProviderClass:
-            # The name of the Kubernetes secret created by the CSI driver
+            # Optional: Name of the Kubernetes secret (created by the CSI driver) that contains Redis credentials.
             - redisSecretName: redis-secret-provider-class
-              # The key in the secret that holds the Redis username
+              # Required: Key in the secret that stores the Redis username.
               redisUsernameKey: username
-              # The key in the secret that holds the Redis password
+              # Required: Key in the secret that stores the Redis password.
               redisPasswordKey: password
           redis: redis:6.0.8-alpine
           commander: rediscommander/redis-commander:latest

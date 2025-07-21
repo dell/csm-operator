@@ -33,6 +33,7 @@ import (
 	"github.com/dell/csm-operator/pkg/logger"
 	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	"golang.org/x/mod/semver"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -1286,7 +1287,7 @@ func applyDeleteAuthorizationRedisStatefulsetV2(ctx context.Context, isDeleting 
 		}
 	}
 
-	checksum, err := getRedisChecksumFromSecretData(ctx, ctrlClient, cr, redisSecretName, redisUsernameKey, redisPasswordKey)
+	checksum, err := getRedisChecksumFromSecretData(ctx, ctrlClient, cr, redisSecretName)
 	if err != nil {
 		return fmt.Errorf("getting redis secret checksum: %w", err)
 	}
@@ -1358,7 +1359,7 @@ func applyDeleteAuthorizationRediscommanderDeploymentV2(ctx context.Context, isD
 		}
 	}
 
-	checksum, err := getRedisChecksumFromSecretData(ctx, ctrlClient, cr, redisSecretName, redisUsernameKey, redisPasswordKey)
+	checksum, err := getRedisChecksumFromSecretData(ctx, ctrlClient, cr, redisSecretName)
 	if err != nil {
 		return fmt.Errorf("getting redis secret checksum: %w", err)
 	}
@@ -1403,12 +1404,14 @@ func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleti
 	}
 
 	sentinelName := ""
+	redisName := ""
 	image := ""
 	replicas := 0
 	for _, component := range authModule.Components {
 		switch component.Name {
 		case AuthRedisComponent:
 			sentinelName = component.Sentinel
+			redisName = component.RedisName
 			image = component.Redis
 			replicas = component.RedisReplicas
 			// create redis kubernetes secret or use a secret provider class
@@ -1428,14 +1431,14 @@ func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleti
 		}
 	}
 
-	checksum, err := getRedisChecksumFromSecretData(ctx, ctrlClient, cr, redisSecretName, redisUsernameKey, redisPasswordKey)
+	checksum, err := getRedisChecksumFromSecretData(ctx, ctrlClient, cr, redisSecretName)
 	if err != nil {
 		return fmt.Errorf("getting redis secret checksum: %w", err)
 	}
 
 	// conversion to int32 is safe for a value up to 2147483647
 	// #nosec G115
-	deployment := getAuthorizationSentinelStatefulsetScaffold(cr.Name, sentinelName, cr.Namespace, image, redisSecretName, redisPasswordKey, checksum, int32(replicas))
+	deployment := getAuthorizationSentinelStatefulsetScaffold(cr.Name, sentinelName, redisName, cr.Namespace, image, redisSecretName, redisPasswordKey, checksum, int32(replicas))
 
 	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
 	for _, component := range authModule.Components {
@@ -2117,7 +2120,7 @@ func setIngressRules(cr csmv1.ContainerStorageModule) ([]networking.IngressRule,
 	return rules, nil
 }
 
-func getRedisChecksumFromSecretData(ctx context.Context, ctrlClient crclient.Client, cr csmv1.ContainerStorageModule, secretName string, keys ...string) (string, error) {
+func getRedisChecksumFromSecretData(ctx context.Context, ctrlClient crclient.Client, cr csmv1.ContainerStorageModule, secretName string) (string, error) {
 	log := logger.GetLogger(ctx)
 	redisSecret := &corev1.Secret{}
 

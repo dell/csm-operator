@@ -394,22 +394,21 @@ func getAuthorizationRedisStatefulsetScaffold(crName, name, namespace, image, re
 								`cp /csm-auth-redis-cm/redis.conf /etc/redis/redis.conf
 								echo "masterauth $REDIS_PASSWORD" >> /etc/redis/redis.conf
 								echo "requirepass $REDIS_PASSWORD" >> /etc/redis/redis.conf
-
 								echo "Finding master..."
-								MASTER_FDQN=$(hostname  -f | sed -e 's/{{ .Values.redis.name }}-[0-9]\./{{ .Values.redis.name }}-0./')
+								MASTER_FDQN=$(hostname  -f | sed -e 's/redis-csm-[0-9]\./redis-csm-0./')
 								echo "Master at " $MASTER_FQDN
 								if [ "$(redis-cli -h sentinel -p 5000 ping)" != "PONG" ]; then
-								echo "No sentinel found..."
-								if [ "$(hostname)" = "{{ .Values.redis.name }}-0" ]; then
-									echo "This is Redis master, not updating redis.conf..."
-								else
-									echo "This is Redis replica, updating redis.conf..."
+									echo "No sentinel found."
+									if [ "$(hostname)" = "redis-csm-0" ]; then
+									echo "This is redis master, not updating config..."
+									else
+									echo "This is redis slave, updating redis.conf..."
 									echo "replicaof $MASTER_FDQN 6379" >> /etc/redis/redis.conf
-								fi
+									fi
 								else
-								echo "Sentinel found, finding master..."
-								MASTER="$(redis-cli -h sentinel -p 5000 sentinel get-master-addr-by-name mymaster | grep -E '(^redis-csm-\d{1,})|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})')"
-								echo "replicaof $MASTER_FDQN 6379" >> /etc/redis/redis.conf
+									echo "Sentinel found, finding master"
+									MASTER="$(redis-cli -h sentinel -p 5000 sentinel get-master-addr-by-name mymaster | grep -E '(^redis-csm-\d{1,})|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})')"
+									echo "replicaof $MASTER_FDQN 6379" >> /etc/redis/redis.conf
 								fi
 								`,
 							},
@@ -622,29 +621,29 @@ func getAuthorizationRediscommanderDeploymentScaffold(crName, name, namespace, i
 	}
 }
 
-func getAuthorizationSentinelStatefulsetScaffold(crName, name, namespace, image, redisSecretName, redisPasswordKey, checksum string, replicas int32) appsv1.StatefulSet {
+func getAuthorizationSentinelStatefulsetScaffold(crName, sentinelName, redisName, namespace, image, redisSecretName, redisPasswordKey, checksum string, replicas int32) appsv1.StatefulSet {
 	return appsv1.StatefulSet{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "StatefulSet",
 			APIVersion: "apps/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
+			Name:      sentinelName,
 			Namespace: namespace,
 		},
 		Spec: appsv1.StatefulSetSpec{
-			ServiceName: name,
+			ServiceName: sentinelName,
 			Replicas:    &replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					"app": name,
+					"app": sentinelName,
 				},
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
 						"csm": crName,
-						"app": name,
+						"app": sentinelName,
 					},
 					Annotations: map[string]string{
 						"checksum/secret": checksum,
@@ -669,39 +668,59 @@ func getAuthorizationSentinelStatefulsetScaffold(crName, name, namespace, image,
 										},
 									},
 								},
+								{
+									Name: "REPLICAS",
+									Value: string(replicas),
+								},
+								{
+									Name: "AUTHORIZATION_REDIS_NAME",
+									Value: redisName,
+								},
 							},
 							Command: []string{
 								"sh", "-c",
 							},
 							Args: []string{
-								`replicas=$( expr {{ .Values.replicas | int }} - 1)
+								`replicas=$( expr $(REPLICAS) - 1)
 								for i in $(seq 0 $replicas)
 								do
-									node=$( echo "{{ .Values.name }}-$i.{{ .Values.name }}" )
+									node=$( echo "$(AUTHORIZATION_REDIS_NAME)-$i.$(AUTHORIZATION_REDIS_NAME)" )
 									nodes=$( echo "$nodes*$node" )
 								done
 								loop=$(echo $nodes | sed -e "s/"*"/\n/g")
-
-								foundMaster="false"
-								while [ "$foundMaster" != "true" ]
+								foundMaster=false
+								while [ "$foundMaster" = "false" ]
 								do
 									for i in $loop
 									do
 										echo "Finding master at $i"
+										ROLE=$(redis-cli --no-auth-warning --raw -h $i -a $REDIS_PASSWORD info replication | awk '{print $1}' | grep role | cut -d ":" -f2)
+										if [ "$ROLE" = "master" ]; then
+											MASTER=$i.authorization.svc.cluster.local
+											echo "Master found at $MASTER..."
+											foundMaster=true
+											break
+										else
 										MASTER=$(redis-cli --no-auth-warning --raw -h $i -a $REDIS_PASSWORD info replication | awk '{print $1}' | grep master_host: | cut -d ":" -f2)
 										if [ "$MASTER" = "" ]; then
 											echo "Master not found..."
-											echo "Sleeping 5 seconds for pods to come up..."
+											echo "Waiting 5 seconds for redis pods to come up..."
 											sleep 5
 											MASTER=
 										else
 											echo "Master found at $MASTER..."
-											foundMaster="true"
+											foundMaster=true
 											break
 										fi
+										fi
 									done
+									if [ "$foundMaster" = "true" ]; then
+									break
+									else
+									echo "Master not found, wait for 30s before attempting again"
+									sleep 30
+									fi
 								done
-
 								echo "sentinel monitor mymaster $MASTER 6379 2" >> /tmp/master
 								echo "port 5000
 								sentinel resolve-hostnames yes
@@ -725,13 +744,13 @@ func getAuthorizationSentinelStatefulsetScaffold(crName, name, namespace, image,
 					},
 					Containers: []corev1.Container{
 						{
-							Name:    name,
+							Name:    sentinelName,
 							Image:   image,
 							Command: []string{"redis-sentinel"},
 							Args:    []string{"/etc/redis/sentinel.conf"},
 							Ports: []corev1.ContainerPort{
 								{
-									Name:          name,
+									Name:          sentinelName,
 									ContainerPort: 5000,
 								},
 							},
@@ -775,7 +794,6 @@ func buildSentinelContainerEnv(replicas int, sentinelName, namespace string) cor
 	}
 
 	return corev1.EnvVar{
-		Name:  "SENTINELS",
 		Value: strings.Join(endpoints, ","),
 	}
 }

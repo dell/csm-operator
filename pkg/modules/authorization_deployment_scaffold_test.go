@@ -288,6 +288,7 @@ func TestGetAuthorizationRediscommanderDeploymentScaffold(t *testing.T) {
 func TestGetAuthorizationSentinelStatefulsetScaffold(t *testing.T) {
 	crName := "test-cr"
 	name := "sentinel"
+	redisName := "redis-csm"
 	namespace := "default"
 	image := "redis:7.0"
 	redisSecretName := "redis-secret"
@@ -296,7 +297,7 @@ func TestGetAuthorizationSentinelStatefulsetScaffold(t *testing.T) {
 	hash := sha256.Sum256([]byte("data"))
 	checksum := hex.EncodeToString(hash[:])
 
-	sts := getAuthorizationSentinelStatefulsetScaffold(crName, name, namespace, image, redisSecretName, redisPasswordKey, checksum, replicas)
+	sts := getAuthorizationSentinelStatefulsetScaffold(crName, name, redisName, namespace, image, redisSecretName, redisPasswordKey, checksum, replicas)
 
 	if sts.Name != name {
 		t.Errorf("expected name %s, got %s", name, sts.Name)

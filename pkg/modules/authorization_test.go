@@ -2094,3 +2094,32 @@ func TestAuthorizationCrdDeploy(t *testing.T) {
 		})
 	}
 }
+
+func TestGetRedisChecksumFromSecretData(t *testing.T) {
+	ctx := context.TODO()
+	namespace := "default"
+	secretName := "redis-secret"
+
+	redisSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: namespace,
+		},
+		Data: map[string][]byte{
+			"password": []byte("test"),
+			"username": []byte("test"),
+		},
+	}
+
+	fakeClient := ctrlClientFake.NewClientBuilder().WithObjects(redisSecret).Build()
+	cr := csmv1.ContainerStorageModule{}
+	cr.Namespace = namespace
+
+	checksum, err := getRedisChecksumFromSecretData(ctx, fakeClient, cr, secretName)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if checksum == "" {
+		t.Fatal("expected checksum, got empty string")
+	}
+}
