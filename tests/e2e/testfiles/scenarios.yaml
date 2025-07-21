@@ -32,6 +32,25 @@
     - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [2]"
 
+- scenario: "Install Authorization Proxy Server V2 (With Kubernetes Secret)"
+  paths:
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_k8s_secret.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+  tags:
+    - "authorizationproxyserver"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [2]"
+    - "Create [authorization-proxy-server] prerequisites from CR [1]"
+    - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [authorization] for [pflex]"
+    - "Apply custom resource [1]"
+    - "Validate [authorization-proxy-server] module from CR [1] is installed"
+    - "Configure authorization-proxy-server for [powerflex] for CR [1]"
+    - "Delete Authorization CRs for [powerflex]"
+    - "Delete custom resource [1]"
+    - "Validate [authorization] module pods from CR [1] is not installed"
+    - "Delete Authorization CRDs [2]"
+
 - scenario: "Install Authorization Proxy Server V2 With Default Redis Storage Class"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_default_redis.yaml"
@@ -547,6 +566,40 @@
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server for [powerscale] for CR [1]"
+    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] name [isilon-creds-auth] in namespace [isilon] for [pscaleAuth]"
+    - "Create Secret with template [testfiles/powerscale-templates/karavi-authorization-config.json] name [karavi-authorization-config] in namespace [isilon] for [pscaleAuthSidecar]"
+    - "Apply custom resource [2]"
+    - "Validate custom resource [2]"
+    - "Validate [powerscale] driver from CR [2] is installed"
+    - "Validate [authorization] module from CR [2] is installed"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [2]"
+    - "Delete custom resource [2]"
+    - "Validate [powerscale] driver from CR [2] is not installed"
+    - "Delete Authorization CRs for [powerscale]"
+    - "Delete custom resource [1]"
+    - "Validate [authorization] module pods from CR [1] is not installed"
+    - "Delete Authorization CRDs [3]"
+
+- scenario: "Install PowerScale Driver (With Authorization V2 and Kubernetes Secret)"
+  paths:
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_k8s_secret.yaml"
+    - "testfiles/storage_csm_powerscale_auth.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+  tags:
+    - "authorization"
+    - "authorizationproxyserver"
+    - "powerscale"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [3]"
+    - "Create [authorization-proxy-server] prerequisites from CR [1]"
+    - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [authorization] for [pscale]"
+    - "Apply custom resource [1]"
+    - "Validate [authorization-proxy-server] module from CR [1] is installed"
+    - "Configure authorization-proxy-server for [powerscale] for CR [1]"
+    - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [isilon] for [pscale]"
     - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] name [isilon-creds-auth] in namespace [isilon] for [pscaleAuth]"
     - "Create Secret with template [testfiles/powerscale-templates/karavi-authorization-config.json] name [karavi-authorization-config] in namespace [isilon] for [pscaleAuthSidecar]"

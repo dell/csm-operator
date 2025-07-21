@@ -769,6 +769,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	image := ""
 	vaults := []csmv1.Vault{}
 	var secretProviderClasses []string
+	var secrets []string
 	leaderElection := true
 	otelCollector := ""
 	for _, component := range authModule.Components {
@@ -788,8 +789,19 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 			vaults = component.Vaults
 		case AuthStorageSystemCredentialsComponent:
 			secretProviderClasses = component.SecretProviderClasses
+			secrets = component.Secrets
 		default:
 			continue
+		}
+	}
+
+	// Either SecretProviderClasses OR Secrets must be specified (mutually exclusive) from config v2.3.0 (CSM 1.15) onwards
+	if semver.Compare(authModule.ConfigVersion, "v2.3.0") >= 0 {
+		hasSPC := len(secretProviderClasses) > 0
+		hasSecrets := len(secrets) > 0
+
+		if hasSPC == hasSecrets {
+			return fmt.Errorf("exactly one of SecretProviderClasses or Secrets must be specified in the CSM Authorization CR — not both, not neither")
 		}
 	}
 
@@ -799,93 +811,18 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 
 	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
 	if semver.Compare(authModule.ConfigVersion, "v2.3.0") >= 0 {
-		// set volumes for secret provider classes
-		readOnly := true
-		for _, providerClass := range secretProviderClasses {
-			volume := corev1.Volume{
-				Name: fmt.Sprintf("secrets-store-inline-%s", providerClass),
-				VolumeSource: corev1.VolumeSource{
-					CSI: &corev1.CSIVolumeSource{
-						Driver:   "secrets-store.csi.k8s.io",
-						ReadOnly: &readOnly,
-						VolumeAttributes: map[string]string{
-							"secretProviderClass": providerClass,
-						},
-					},
-				},
-			}
-
-			deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volume)
-		}
-
-		// set volume mounts for secret provider classes
-		for i, c := range deployment.Spec.Template.Spec.Containers {
-			if c.Name == "storage-service" {
-				for _, providerClass := range secretProviderClasses {
-					deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
-						Name:      fmt.Sprintf("secrets-store-inline-%s", providerClass),
-						MountPath: fmt.Sprintf("/etc/csm-authorization/%s", providerClass),
-						ReadOnly:  true,
-					})
-				}
-				break
-			}
+		// Determine whether to read from secret provider classes or kubernetes secrets
+		if len(secretProviderClasses) > 0 {
+			// set volumes for secret provider classes
+			mountSecretProviderClassVolumes(secretProviderClasses, &deployment)
+		} else {
+			// set volumes for kubernetes secrets
+			mountSecretVolumes(secrets, &deployment)
 		}
 	} else {
 		// Vault is supported only till config v2.2.0 (CSM 1.14)
 		// set vault volumes
-		for _, vault := range vaults {
-			volume := corev1.Volume{
-				Name: fmt.Sprintf("vault-client-certificate-%s", vault.Identifier),
-				VolumeSource: corev1.VolumeSource{
-					Projected: &corev1.ProjectedVolumeSource{
-						Sources: []corev1.VolumeProjection{{}},
-					},
-				},
-			}
-
-			if vault.CertificateAuthority != "" {
-				volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{
-					Secret: &corev1.SecretProjection{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: fmt.Sprintf("vault-certificate-authority-%s", vault.Identifier),
-						},
-					},
-				})
-			}
-
-			if vault.ClientCertificate != "" && vault.ClientKey != "" {
-				volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{
-					Secret: &corev1.SecretProjection{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: fmt.Sprintf("vault-client-certificate-%s", vault.Identifier),
-						},
-					},
-				})
-			} else {
-				volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{
-					Secret: &corev1.SecretProjection{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: fmt.Sprintf("storage-service-selfsigned-tls-%s", vault.Identifier),
-						},
-					},
-				})
-			}
-
-			deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volume)
-		}
-
-		for i, c := range deployment.Spec.Template.Spec.Containers {
-			if c.Name == "storage-service" {
-				for _, vault := range vaults {
-					deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
-						Name:      fmt.Sprintf("vault-client-certificate-%s", vault.Identifier),
-						MountPath: fmt.Sprintf("/etc/vault/%s", vault.Identifier),
-					})
-				}
-				break
-			}
-		}
+		mountVaultVolumes(vaults, &deployment)
 	}
 
 	// set redis envs
@@ -972,6 +909,124 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		return fmt.Errorf("applying storage-service deployment: %w", err)
 	}
 	return nil
+}
+
+func mountVaultVolumes(vaults []csmv1.Vault, deployment *appsv1.Deployment) {
+	for _, vault := range vaults {
+		volume := corev1.Volume{
+			Name: fmt.Sprintf("vault-client-certificate-%s", vault.Identifier),
+			VolumeSource: corev1.VolumeSource{
+				Projected: &corev1.ProjectedVolumeSource{
+					Sources: []corev1.VolumeProjection{{}},
+				},
+			},
+		}
+
+		if vault.CertificateAuthority != "" {
+			volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{
+				Secret: &corev1.SecretProjection{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: fmt.Sprintf("vault-certificate-authority-%s", vault.Identifier),
+					},
+				},
+			})
+		}
+
+		if vault.ClientCertificate != "" && vault.ClientKey != "" {
+			volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{
+				Secret: &corev1.SecretProjection{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: fmt.Sprintf("vault-client-certificate-%s", vault.Identifier),
+					},
+				},
+			})
+		} else {
+			volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{
+				Secret: &corev1.SecretProjection{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: fmt.Sprintf("storage-service-selfsigned-tls-%s", vault.Identifier),
+					},
+				},
+			})
+		}
+
+		deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volume)
+	}
+
+	for i, c := range deployment.Spec.Template.Spec.Containers {
+		if c.Name == "storage-service" {
+			for _, vault := range vaults {
+				deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
+					Name:      fmt.Sprintf("vault-client-certificate-%s", vault.Identifier),
+					MountPath: fmt.Sprintf("/etc/vault/%s", vault.Identifier),
+				})
+			}
+			break
+		}
+	}
+}
+
+func mountSecretVolumes(secrets []string, deployment *appsv1.Deployment) {
+	for _, secret := range secrets {
+		volume := corev1.Volume{
+			Name: fmt.Sprintf("storage-system-secrets-%s", secret),
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: secret,
+				},
+			},
+		}
+
+		deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volume)
+	}
+
+	// set volume mounts for kubernetes secrets
+	for i, c := range deployment.Spec.Template.Spec.Containers {
+		if c.Name == "storage-service" {
+			for _, secret := range secrets {
+				deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
+					Name:      fmt.Sprintf("storage-system-secrets-%s", secret),
+					MountPath: fmt.Sprintf("/etc/csm-authorization/%s", secret),
+					ReadOnly:  true,
+				})
+			}
+			break
+		}
+	}
+}
+
+func mountSecretProviderClassVolumes(secretProviderClasses []string, deployment *appsv1.Deployment) {
+	readOnly := true
+	for _, providerClass := range secretProviderClasses {
+		volume := corev1.Volume{
+			Name: fmt.Sprintf("secrets-store-inline-%s", providerClass),
+			VolumeSource: corev1.VolumeSource{
+				CSI: &corev1.CSIVolumeSource{
+					Driver:   "secrets-store.csi.k8s.io",
+					ReadOnly: &readOnly,
+					VolumeAttributes: map[string]string{
+						"secretProviderClass": providerClass,
+					},
+				},
+			},
+		}
+
+		deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volume)
+	}
+
+	// set volume mounts for secret provider classes
+	for i, c := range deployment.Spec.Template.Spec.Containers {
+		if c.Name == "storage-service" {
+			for _, providerClass := range secretProviderClasses {
+				deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
+					Name:      fmt.Sprintf("secrets-store-inline-%s", providerClass),
+					MountPath: fmt.Sprintf("/etc/csm-authorization/%s", providerClass),
+					ReadOnly:  true,
+				})
+			}
+			break
+		}
+	}
 }
 
 // getStorageServiceScaffold returns the storage-service deployment with the common elements between v1 and v2

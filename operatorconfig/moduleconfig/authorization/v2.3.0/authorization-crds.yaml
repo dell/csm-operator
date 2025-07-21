@@ -325,7 +325,12 @@ spec:
               description: StorageSpec defines the desired state of Storage
               properties:
                 endpoint:
-                  description: EndPoint is the storage array endpoint
+                  description: |-
+                    EndPoint is the storage array endpoint.
+                    Example:
+                    PowerFlex: https://[URL]
+                    PowerMax: https://[URL]:[PORT]
+                    PowerScale: https://[URL]:[PORT]
                   type: string
                 isiPath:
                   description: |-
@@ -333,7 +338,9 @@ spec:
                     Needed only for PowerScale
                   type: string
                 pollInterval:
-                  description: PollInterval is the interval to poll the storage array
+                  description:
+                    PollInterval is the polling frequency to test the storage
+                    connectivity
                   type: string
                 skipCertificateValidation:
                   description:
@@ -343,7 +350,10 @@ spec:
                 storageSystemCredentials:
                   description: |-
                     StorageSystemCredentials is the storage arrays credenial secret
+                    Currently supports SecretProviderClasses and Kubernetes Secrets
                   properties:
+                    secret:
+                      type: string
                     secretProviderClass:
                       properties:
                         name:
@@ -354,14 +364,22 @@ spec:
                           type: string
                       type: object
                   type: object
+                  x-kubernetes-validations:
+                    - message: Exactly one of secretProviderClass or secret must be set.
+                      rule: has(self.secretProviderClass) != has(self.secret)
                 systemID:
-                  description: SystemID is the storage array system ID
+                  description: |-
+                    SystemID is the storage array unique identifier. It can vary from storage type to storage type.
+                    Please contact the storage administrator for more details on how to obtain it.
                   type: string
                 type:
-                  description: Type is the storage array type
+                  description:
+                    "Type is the storage array type, Example: powerflex,
+                    powermax, powerscale"
                   type: string
               required:
                 - skipCertificateValidation
+                - storageSystemCredentials
               type: object
             status:
               description: StorageStatus defines the observed state of Storage
