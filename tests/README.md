@@ -65,7 +65,7 @@ Any time changes made to the operator are being checked into the main branch, sa
 - Ginkgo v2 is installed. To install, go to `tests/e2e` and run the following commands:
 
 ```bash
-go install github.com/onsi/ginkgo/v2/ginkgo
+go install github.com/onsi/ginkgo/v2/ginkgo@latest
 go get github.com/onsi/gomega/...
 ```
 

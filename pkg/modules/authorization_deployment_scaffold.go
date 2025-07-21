@@ -10,6 +10,7 @@ package modules
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
@@ -19,6 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
+
 func getProxyServerScaffold(name, seninelName, namespace, proxyImage, opaImage, opaKubeMgmtImage, redisSecretName, redisPasswordKey string, replicas int32, sentinelReplicas int) appsv1.Deployment {
 	return appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -55,11 +57,11 @@ func getProxyServerScaffold(name, seninelName, namespace, proxyImage, opaImage, 
 							ImagePullPolicy: "Always",
 							Env: []corev1.EnvVar{
 								{
-									Name: "SENTINELS",
+									Name:  "SENTINELS",
 									Value: buildSentinelContainerEnv(sentinelReplicas, seninelName, namespace).Value,
 								},
 								{
-									Name:  "REDIS_PASSWORD",
+									Name: "REDIS_PASSWORD",
 									ValueFrom: &corev1.EnvVarSource{
 										SecretKeyRef: &corev1.SecretKeySelector{
 											LocalObjectReference: corev1.LocalObjectReference{
@@ -94,8 +96,8 @@ func getProxyServerScaffold(name, seninelName, namespace, proxyImage, opaImage, 
 							},
 						},
 						{
-							Name: "opa",
-							Image: opaImage,
+							Name:            "opa",
+							Image:           opaImage,
 							ImagePullPolicy: "Always",
 							Args: []string{
 								"run",
@@ -105,24 +107,24 @@ func getProxyServerScaffold(name, seninelName, namespace, proxyImage, opaImage, 
 							},
 							Ports: []corev1.ContainerPort{
 								{
-									Name: "http",
+									Name:          "http",
 									ContainerPort: 8181,
 								},
 							},
 						},
 						{
-							Name: "kube-mgmt",
-							Image: opaKubeMgmtImage,
+							Name:            "kube-mgmt",
+							Image:           opaKubeMgmtImage,
 							ImagePullPolicy: "Always",
 							Env: []corev1.EnvVar{
 								{
-									Name: "NAMESPACE",
+									Name:  "NAMESPACE",
 									Value: namespace,
 								},
 							},
 							Args: []string{
 								"--namespaces=$(NAMESPACE)",
-        						"--enable-data",
+								"--enable-data",
 							},
 						},
 					},
@@ -274,11 +276,11 @@ func getTenantServiceScaffold(name, namespace, seninelName, image, redisSecretNa
 							ImagePullPolicy: "Always",
 							Env: []corev1.EnvVar{
 								{
-									Name: "SENTINELS",
+									Name:  "SENTINELS",
 									Value: buildSentinelContainerEnv(sentinelReplicas, seninelName, namespace).Value,
 								},
 								{
-									Name:  "REDIS_PASSWORD",
+									Name: "REDIS_PASSWORD",
 									ValueFrom: &corev1.EnvVarSource{
 										SecretKeyRef: &corev1.SecretKeySelector{
 											LocalObjectReference: corev1.LocalObjectReference{
@@ -510,7 +512,7 @@ func getAuthorizationRediscommanderDeploymentScaffold(crName, name, namespace, i
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"csm": crName,
+						"csm":  crName,
 						"app":  name,
 						"tier": "backend",
 					},
@@ -602,8 +604,8 @@ func getAuthorizationRediscommanderDeploymentScaffold(crName, name, namespace, i
 								},
 							},
 							SecurityContext: &corev1.SecurityContext{
-								RunAsNonRoot:   &runAsNonRoot,
-								ReadOnlyRootFilesystem: &readOnlyRootFilesystem,
+								RunAsNonRoot:             &runAsNonRoot,
+								ReadOnlyRootFilesystem:   &readOnlyRootFilesystem,
 								AllowPrivilegeEscalation: &allowPrivilegeEscalation,
 								Capabilities: &corev1.Capabilities{
 									Drop: []corev1.Capability{
@@ -669,11 +671,11 @@ func getAuthorizationSentinelStatefulsetScaffold(crName, sentinelName, redisName
 									},
 								},
 								{
-									Name: "REPLICAS",
-									Value: string(replicas),
+									Name:  "REPLICAS",
+									Value: strconv.Itoa(int(replicas)),
 								},
 								{
-									Name: "AUTHORIZATION_REDIS_NAME",
+									Name:  "AUTHORIZATION_REDIS_NAME",
 									Value: redisName,
 								},
 							},
@@ -681,12 +683,14 @@ func getAuthorizationSentinelStatefulsetScaffold(crName, sentinelName, redisName
 								"sh", "-c",
 							},
 							Args: []string{
-								`replicas=$( expr $(REPLICAS) - 1)
-								for i in $(seq 0 $replicas)
+								`replicas=$( expr "$REPLICAS" - 1)
+								nodes=""
+								for i in $(seq 0 "$replicas")
 								do
-									node=$( echo "$(AUTHORIZATION_REDIS_NAME)-$i.$(AUTHORIZATION_REDIS_NAME)" )
-									nodes=$( echo "$nodes*$node" )
+									node="${AUTHORIZATION_REDIS_NAME}-${i}.${AUTHORIZATION_REDIS_NAME}"
+									nodes="${nodes}*${node}"
 								done
+								echo "Nodes: $node"
 								loop=$(echo $nodes | sed -e "s/"*"/\n/g")
 								foundMaster=false
 								while [ "$foundMaster" = "false" ]
