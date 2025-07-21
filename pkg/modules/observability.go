@@ -475,7 +475,7 @@ func PowerScaleMetrics(ctx context.Context, isDeleting bool, op operatorutils.Op
 		deploymentObj := &appsv1.Deployment{}
 		if err = ctrlClient.Get(ctx, deploymentKey, deploymentObj); err == nil {
 			if err = ctrlClient.Delete(ctx, deploymentObj); err != nil && !k8serrors.IsNotFound(err) {
-				return fmt.Errorf("error delete deployment: %v", err)
+				return fmt.Errorf("error deleting deployment: %v", err)
 			}
 		} else {
 			log.Infow("error getting deployment", "deploymentKey", deploymentKey)
@@ -540,7 +540,7 @@ func PowerStoreMetrics(ctx context.Context, isDeleting bool, op operatorutils.Op
 		deploymentObj := &appsv1.Deployment{}
 		if err = ctrlClient.Get(ctx, deploymentKey, deploymentObj); err == nil {
 			if err = ctrlClient.Delete(ctx, deploymentObj); err != nil && !k8serrors.IsNotFound(err) {
-				return fmt.Errorf("error delete deployment: %v", err)
+				return fmt.Errorf("error deleting deployment: %v", err)
 			}
 		} else {
 			log.Infow("error getting deployment", "deploymentKey", deploymentKey)
@@ -809,7 +809,7 @@ func PowerFlexMetrics(ctx context.Context, isDeleting bool, op operatorutils.Ope
 		deploymentObj := &appsv1.Deployment{}
 		if err = ctrlClient.Get(ctx, deploymentKey, deploymentObj); err == nil {
 			if err = ctrlClient.Delete(ctx, deploymentObj); err != nil && !k8serrors.IsNotFound(err) {
-				return fmt.Errorf("error delete deployment: %v", err)
+				return fmt.Errorf("error deleting deployment: %v", err)
 			}
 		} else {
 			log.Infow("error getting deployment", "deploymentKey", deploymentKey)
@@ -1049,7 +1049,7 @@ func PowerMaxMetrics(ctx context.Context, isDeleting bool, op operatorutils.Oper
 		deploymentObj := &appsv1.Deployment{}
 		if err = ctrlClient.Get(ctx, deploymentKey, deploymentObj); err == nil {
 			if err = ctrlClient.Delete(ctx, deploymentObj); err != nil && !k8serrors.IsNotFound(err) {
-				return fmt.Errorf("error delete deployment: %v", err)
+				return fmt.Errorf("error deleting deployment: %v", err)
 			}
 		} else {
 			log.Infow("error getting deployment", "deploymentKey", deploymentKey)
