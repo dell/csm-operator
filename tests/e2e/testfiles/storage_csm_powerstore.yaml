@@ -17,8 +17,8 @@
 apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
-  name: powerstore
-  namespace: powerstore
+  name: test-powerstore
+  namespace: test-powerstore
 spec:
   driver:
     csiDriverType: "powerstore"
@@ -29,7 +29,6 @@ spec:
       fSGroupPolicy: "ReadWriteOnceWithFSType"
       storageCapacity: false
     configVersion: v2.15.0
-    authSecret: powerstore-config
     # Controller count
     # resiliency test will fail with 2 replicas.
     replicas: 1
