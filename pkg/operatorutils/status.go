@@ -40,7 +40,6 @@ var dMutex sync.RWMutex
 
 var checkModuleStatus = map[csmv1.ModuleType]func(context.Context, *csmv1.ContainerStorageModule, ReconcileCSM, *csmv1.ContainerStorageModuleStatus) (bool, error){
 	csmv1.Observability:       observabilityStatusCheck,
-	csmv1.ApplicationMobility: appMobStatusCheck,
 	csmv1.AuthorizationServer: authProxyStatusCheck,
 }
 
@@ -68,7 +67,7 @@ func getDeploymentStatus(ctx context.Context, instance *csmv1.ContainerStorageMo
 	log.Infof("getting deployment status for cluster: %s", clusterClient.ClusterID)
 	msg += fmt.Sprintf("error message for %s \n", clusterClient.ClusterID)
 
-	if instance.GetName() == "" || isAuthorizationProxyServer(instance) || instance.GetName() == string(csmv1.ApplicationMobility) {
+	if instance.GetName() == "" || isAuthorizationProxyServer(instance) {
 		log.Infof("Not a driver instance, will not check deploymentstatus")
 		return emptyStatus, nil
 	}
@@ -210,7 +209,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 	// Auth proxy has no daemonset. Putting this if/else in here and setting nodeStatusGood to true by
 	// default is a little hacky but will be fixed when we refactor the status code in CSM 1.10 or 1.11
 	log.Infof("instance.GetName() is %s", instance.GetName())
-	if instance.GetName() != "" && !isAuthorizationProxyServer(instance) && instance.GetName() != string(csmv1.ApplicationMobility) {
+	if instance.GetName() != "" && !isAuthorizationProxyServer(instance) {
 		expected, nodeStatus, daemonSetErr := getDaemonSetStatus(ctx, instance, r)
 		newStatus.NodeStatus = nodeStatus
 		if daemonSetErr != nil {
@@ -429,124 +428,6 @@ func WaitForNginxController(ctx context.Context, instance csmv1.ContainerStorage
 	log.Infow("Polling status of NGINX ingress controller")
 
 	return wait.PollUntilContextTimeout(ctx, time.Second, timeout, true, getNginxControllerStatus(ctx, instance, r))
-}
-
-// statusForAppMob - calculate success state for application-mobility module
-func appMobStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus) (bool, error) {
-	log := logger.GetLogger(ctx)
-	veleroEnabled := false
-	certEnabled := false
-	var certManagerRunning bool
-	var certManagerCainInjectorRunning bool
-	var certManagerWebhookRunning bool
-	appMobRunning := false
-	veleroRunning := false
-	var daemonRunning bool
-	var readyPods int
-	var notreadyPods int
-	for _, m := range instance.Spec.Modules {
-		if m.Name == csmv1.ApplicationMobility {
-			for _, c := range m.Components {
-				if c.Name == "velero" {
-					if *c.Enabled {
-						veleroEnabled = true
-					}
-				}
-				if c.Name == "cert-manager" {
-					if *c.Enabled {
-						certEnabled = true
-					}
-				}
-
-			}
-		}
-	}
-
-	namespace := instance.GetNamespace()
-	opts := []client.ListOption{
-		client.InNamespace(namespace),
-	}
-
-	deploymentList := &appsv1.DeploymentList{}
-	err := r.GetClient().List(ctx, deploymentList, opts...)
-	if err != nil {
-		return false, err
-	}
-
-	checkFn := func(deployment *appsv1.Deployment) bool {
-		return deployment.Status.ReadyReplicas == *deployment.Spec.Replicas
-	}
-
-	for _, deployment := range deploymentList.Items {
-		deployment := deployment
-		log.Infof("Checking deployment: %s", deployment.Name)
-		switch deployment.Name {
-		case "cert-manager":
-			if certEnabled {
-				certManagerRunning = checkFn(&deployment)
-			}
-		case "cert-manager-cainjector":
-			if certEnabled {
-				certManagerCainInjectorRunning = checkFn(&deployment)
-			}
-		case "cert-manager-webhook":
-			if certEnabled {
-				certManagerWebhookRunning = checkFn(&deployment)
-			}
-		case "application-mobility-controller-manager":
-			appMobRunning = checkFn(&deployment)
-		case "application-mobility-velero":
-			if veleroEnabled {
-				veleroRunning = checkFn(&deployment)
-			}
-		}
-
-	}
-
-	label := "node-agent"
-	opts = []client.ListOption{
-		client.InNamespace(instance.GetNamespace()),
-		client.MatchingLabels{"name": label},
-	}
-
-	podList := &corev1.PodList{}
-	err = r.GetClient().List(ctx, podList, opts...)
-	if err != nil {
-		return false, err
-	}
-
-	for _, pod := range podList.Items {
-		log.Infof("Checking Daemonset pod: %s and status: %s", pod.Name, pod.Status.Phase)
-		if pod.Status.Phase == corev1.PodRunning {
-			readyPods++
-		} else {
-			notreadyPods++
-		}
-	}
-
-	if notreadyPods > 0 {
-		daemonRunning = false
-	} else {
-		daemonRunning = true
-	}
-
-	if certEnabled && veleroEnabled {
-		return appMobRunning && certManagerRunning && certManagerCainInjectorRunning && certManagerWebhookRunning && veleroRunning && daemonRunning, nil
-	}
-
-	if !certEnabled && !veleroEnabled {
-		return appMobRunning && daemonRunning, nil
-	}
-
-	if !certEnabled && veleroEnabled {
-		return appMobRunning && daemonRunning && veleroRunning, nil
-	}
-
-	if certEnabled && !veleroEnabled {
-		return appMobRunning && certManagerCainInjectorRunning && certManagerRunning && certManagerWebhookRunning && daemonRunning, nil
-	}
-
-	return false, nil
 }
 
 // observabilityStatusCheck - calculate success state for observability module

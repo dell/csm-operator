@@ -2916,46 +2916,6 @@ func TestContains(t *testing.T) {
 	}
 }
 
-func TestIsAppMobilityComponentEnabled(t *testing.T) {
-	// Test case: component is enabled
-	instance := csmv1.ContainerStorageModule{
-		Spec: csmv1.ContainerStorageModuleSpec{
-			Modules: []csmv1.Module{
-				{
-					Name:    csmv1.ApplicationMobility,
-					Enabled: true,
-					Components: []csmv1.ContainerTemplate{
-						{
-							Name:    "application-mobility-controller-manager",
-							Enabled: &[]bool{true}[0],
-						},
-					},
-				},
-			},
-		},
-	}
-	expected := true
-	result := IsAppMobilityComponentEnabled(context.Background(), instance, nil, csmv1.ApplicationMobility, "application-mobility-controller-manager")
-	if result != expected {
-		t.Errorf("Expected %v, but got %v", expected, result)
-	}
-
-	// Test case: component is disabled
-	instance.Spec.Modules[0].Components[0].Enabled = &[]bool{false}[0]
-	expected = false
-	result = IsAppMobilityComponentEnabled(context.Background(), instance, nil, csmv1.ApplicationMobility, "application-mobility-controller-manager")
-	if result != expected {
-		t.Errorf("Expected %v, but got %v", expected, result)
-	}
-
-	// Test case: module is disabled
-	instance.Spec.Modules[0].Enabled = false
-	result = IsAppMobilityComponentEnabled(context.Background(), instance, nil, csmv1.ApplicationMobility, "application-mobility-controller-manager")
-	if result != expected {
-		t.Errorf("Expected %v, but got %v", expected, result)
-	}
-}
-
 func TestIsResiliencyModuleEnabled(t *testing.T) {
 	// Test case: resiliency module is enabled
 	instance := csmv1.ContainerStorageModule{
