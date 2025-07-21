@@ -12,6 +12,7 @@ This directory contains the testing infrastructure and E2E test implementation f
     - [Array Information](#array-information)
     - [Application Mobility Prerequisites](#application-mobility-prerequisites)
     - [Authorization Proxy Server Prerequisites](#authorization-proxy-server-prerequisites)
+    - [Shared NFS Prerequisites](#shared-nfs-prerequisites)
   - [Run](#run)
     - [Scenarios File](#scenarios-file)
   - [Developing E2E Tests](#developing-e2e-tests)
@@ -48,8 +49,9 @@ Any time changes made to the operator are being checked into the main branch, sa
   - The following components must be installed on your cluster:
     - Secrets Store CSI Driver
     - Vault, along with its CSI Provider. You can use the `--install-vault` tag to set up the Vault.
+      - Configure array system credentials and redis db credentials in Vault.
 
-      If you already have Vault installed, you'll need to configure the `storage_csm_authorization_secret_provider_class.yaml` file in the `testfiles/authorization-templates` directory to point to your Vault instance. For example:
+      You'll need to configure the `storage_csm_authorization_secret_provider_class.yaml` file in the `testfiles/authorization-templates` directory to point to your Vault instance and paths of credentials. For example:
       ```
         parameters:
           roleName: "csm-authorization"
