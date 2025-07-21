@@ -1,0 +1,29 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: powerstore
+  namespace: powerstore
+spec:
+  driver:
+    csiDriverType: "powerstore"
+    configVersion: v2.15.0
+    forceRemoveDriver: true
+  modules:
+    - name: resiliency
+      # enabled: Enable/Disable Resiliency feature
+      enabled: false
+    - name: replication
+      # enabled: Enable/Disable Replication feature
+      enabled: false
+    - name: observability
+      # enabled: Enable/Disable observability
+      enabled: false
+      components:
+        - name: topology
+          enabled: false
+        - name: otel-collector
+          enabled: false
+        - name: cert-manager
+          enabled: false
+        - name: metrics-powerstore
+          enabled: false
