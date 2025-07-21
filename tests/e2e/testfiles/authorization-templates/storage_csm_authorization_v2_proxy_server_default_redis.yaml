@@ -66,6 +66,15 @@ spec:
               # additional annotations for the proxy-server ingress
               annotations: {}
         - name: redis
+          # Redis secret configuration:
+          # Use a SecretProviderClass for Redis credentials; otherwise, a default Kubernetes secret is used.
+          redisSecretProviderClass:
+            # The name of the Kubernetes secret created by the CSI driver
+            - redisSecretName: array-creds
+              # The key in the secret that holds the Redis username
+              redisUsernameKey: username
+              # The key in the secret that holds the Redis password
+              redisPasswordKey: password
           redis: redis:7.4.3-alpine
           commander: rediscommander/redis-commander:latest
           redisName: redis-csm
