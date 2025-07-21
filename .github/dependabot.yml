@@ -41,3 +41,21 @@ updates:
       github-actions:
         patterns:
           - "*"
+  # To update all the images in the operatorconfig and tests/e2e/testfiles directory
+  - package-ecosystem: "docker"
+    directories:
+      # Update the version to latest post release to stay up to date
+      - "/operatorconfig/driverconfig/powerflex/v2.15.0/**"
+      - "/operatorconfig/driverconfig/powermax/v2.15.0/**"
+      - "/operatorconfig/driverconfig/powerscale/v2.15.0/**"
+      - "/operatorconfig/driverconfig/powerstore/v2.15.0/**"
+      - "/operatorconfig/driverconfig/unity/v2.15.0/**"
+      - "/samples/v2.15.0/**/**"
+      - "/tests/e2e/testfiles/**"
+    schedule:
+      interval: "daily"
+    target-branch: "main"
+    groups:
+      updates:
+        patterns:
+          - "*"
