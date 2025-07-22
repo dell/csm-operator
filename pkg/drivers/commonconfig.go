@@ -114,17 +114,15 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 					c.Image = &image
 				}
 			}
-			if cr.Spec.Driver.Common != nil || cr.Spec.Driver.Controller != nil {
-				var commonEnvs, controllerEnvs []corev1.EnvVar
-				if cr.Spec.Driver.Common != nil {
-					commonEnvs = cr.Spec.Driver.Common.Envs
-				}
-				if cr.Spec.Driver.Controller != nil {
-					controllerEnvs = cr.Spec.Driver.Controller.Envs
-				}
-				containers[i].Env = operatorutils.ReplaceAllApplyCustomEnvs(c.Env, commonEnvs, controllerEnvs)
-				c.Env = containers[i].Env
+			var commonEnvs, controllerEnvs []corev1.EnvVar
+			if cr.Spec.Driver.Common != nil {
+				commonEnvs = cr.Spec.Driver.Common.Envs
 			}
+			if cr.Spec.Driver.Controller != nil {
+				controllerEnvs = cr.Spec.Driver.Controller.Envs
+			}
+			containers[i].Env = operatorutils.ReplaceAllApplyCustomEnvs(c.Env, commonEnvs, controllerEnvs)
+			c.Env = containers[i].Env
 		}
 
 		removeContainer := false
@@ -248,7 +246,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 		dnspolicy := corev1.DNSPolicy(cr.Spec.Driver.DNSPolicy)
 		nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.DNSPolicy = &dnspolicy
 	}
-	var defaultDNSPolicy corev1.DNSPolicy = corev1.DNSClusterFirstWithHostNet
+	defaultDNSPolicy := corev1.DNSClusterFirstWithHostNet
 	if cr.Spec.Driver.DNSPolicy == "" {
 		nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.DNSPolicy = &defaultDNSPolicy
 	}
@@ -256,7 +254,6 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	if cr.Spec.Driver.Node != nil && len(cr.Spec.Driver.Node.Tolerations) != 0 {
 		tols := make([]acorev1.TolerationApplyConfiguration, 0)
 		for _, t := range cr.Spec.Driver.Node.Tolerations {
-			fmt.Printf("[BRUH] toleration t: %+v\n", t)
 			toleration := acorev1.Toleration()
 			toleration.WithKey(t.Key)
 			toleration.WithOperator(t.Operator)
@@ -279,19 +276,22 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	newcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
 	for i, c := range containers {
 		if c.Name != nil && string(*c.Name) == "driver" {
-			// Check if Common is not nil before accessing its fields
 			if cr.Spec.Driver.Common != nil {
 				// With minimal, this will override the node image if the driver image is overridden.
 				if cr.Spec.Driver.Common.Image != "" {
 					image := string(cr.Spec.Driver.Common.Image)
 					c.Image = &image
 				}
-
-				if cr.Spec.Driver.Node != nil {
-					containers[i].Env = operatorutils.ReplaceAllApplyCustomEnvs(c.Env, cr.Spec.Driver.Common.Envs, cr.Spec.Driver.Node.Envs)
-					c.Env = containers[i].Env
-				}
 			}
+			var commonEnvs, nodeEnvs []corev1.EnvVar
+			if cr.Spec.Driver.Common != nil {
+				commonEnvs = cr.Spec.Driver.Common.Envs
+			}
+			if cr.Spec.Driver.Node != nil {
+				nodeEnvs = cr.Spec.Driver.Node.Envs
+			}
+			containers[i].Env = operatorutils.ReplaceAllApplyCustomEnvs(c.Env, commonEnvs, nodeEnvs)
+			c.Env = containers[i].Env
 		}
 		removeContainer := false
 		if string(*c.Name) == "sdc-monitor" {
