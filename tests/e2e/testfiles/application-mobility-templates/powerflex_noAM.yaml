@@ -47,7 +47,7 @@ spec:
       # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
-        image: quay.io/dell/storage/powerflex/sdc:4.5.2.1
+        image: quay.io/dell/storage/powerflex/sdc:4.5.4
         envs:
           - name: HOST_PID
             value: "1"
@@ -146,7 +146,7 @@ spec:
       #   operator: "Exists"
       #   effect: "NoSchedule"
     initContainers:
-      - image: quay.io/dell/storage/powerflex/sdc:4.5.2.1
+      - image: quay.io/dell/storage/powerflex/sdc:4.5.4
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
@@ -180,7 +180,7 @@ spec:
           enabled: true
         # enabled: Enable/Disable Velero
         - name: velero
-          image: velero/velero:v1.14.0
+          image: velero/velero:v1.16.1
           imagePullPolicy: IfNotPresent
           enabled: true
           useVolumeSnapshot: false
@@ -234,4 +234,4 @@ spec:
           # initContainer image for the configuration provider aws
           # digest for velero/velero-plugin-for-aws:v1.10.0
         - name: velero-plugin-for-aws
-          image: velero/velero-plugin-for-aws@sha256:0b4fe36bbd5c7e484750bf21e25274cecbb72b30b097a72dc3e599430590bdfc
+          image: velero/velero-plugin-for-aws@sha256:b9735c9d08c3244c462bb81263ff5f4ad4e24b96865338c14733a59e3624dfaf

@@ -9,7 +9,7 @@ nodeAgent:
   privileged: false
 image:
   repository: velero/velero
-  tag: v1.14.0
+  tag: v1.16.1
   pullPolicy: IfNotPresent
 credentials:
   useSecret: true
@@ -37,7 +37,7 @@ initContainers:
       - mountPath: /target
         name: plugins
   - name: velero-plugin-for-aws
-    image: velero/velero-plugin-for-aws@sha256:0b4fe36bbd5c7e484750bf21e25274cecbb72b30b097a72dc3e599430590bdfc
+    image: velero/velero-plugin-for-aws@sha256:b9735c9d08c3244c462bb81263ff5f4ad4e24b96865338c14733a59e3624dfaf
     volumeMounts:
       - mountPath: /target
         name: plugins
