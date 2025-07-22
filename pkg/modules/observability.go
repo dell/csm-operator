@@ -499,7 +499,7 @@ func PowerStoreMetrics(ctx context.Context, isDeleting bool, op operatorutils.Op
 		return err
 	}
 
-	// update secret volume and inject authorization to deployment
+	// update deployment for powerstore metrics
 	var dpApply *confv1.DeploymentApplyConfiguration
 	foundDp := false
 	for i, obj := range powerstoreMetricsObjects {
