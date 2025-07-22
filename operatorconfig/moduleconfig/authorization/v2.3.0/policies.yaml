@@ -281,7 +281,7 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: redis-csm-cm
+  name: redis-cm
   namespace: <NAMESPACE>
   labels:
     openpolicyagent.org/policy: rego
