@@ -49,6 +49,9 @@ const (
 	// ObservabilityMetricsPowerMaxName - component metrics-powermax
 	ObservabilityMetricsPowerMaxName string = "metrics-powermax"
 
+	// ObservabilityMetricsPowerStoreName - component metrics-powerstore
+	ObservabilityMetricsPowerStoreName string = "metrics-powerstore"
+
 	// TopologyLogLevel -
 	TopologyLogLevel string = "<TOPOLOGY_LOG_LEVEL>"
 
@@ -160,6 +163,42 @@ const (
 	// PMaxObsYamlFile - powermax metrics yaml file
 	PMaxObsYamlFile string = "karavi-metrics-powermax.yaml"
 
+	// PstoreObsYamlFile - powerstore metrics yaml file
+	PstoreObsYamlFile string = "karavi-metrics-powerstore.yaml"
+
+	// PstoreMaxConcurrentQueries - number of concurrent queries
+	PstoreMaxConcurrentQueries string = "<POWERSTORE_MAX_CONCURRENT_QUERIES>"
+
+	// PstoreVolumeEnabled - enable/disable volume metrics
+	PstoreVolumeEnabled string = "<POWERSTORE_VOLUME_METRICS_ENABLED>"
+
+	// PstoreVolumeIoPollFrequency - polling frequency to get volume IO metrics
+	PstoreVolumeIoPollFrequency string = "<POWERSTORE_VOLUME_IO_POLL_FREQUENCY>"
+
+	// PstoreSpacePollFrequency - polling frequency to get cluster capacity metrics data
+	PstoreSpacePollFrequency string = "<POWERSTORE_SPACE_POLL_FREQUENCY>"
+
+	// PstoreArrayPollFrequency - polling frequency to get array capacity metrics data
+	PstoreArrayPollFrequency string = "<POWERSTORE_ARRAY_POLL_FREQUENCY>"
+
+	// PstoreFileSystemPollFrequency - polling frequency to get file system capacity metrics data
+	PstoreFileSystemPollFrequency string = "<POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY>"
+
+	// PstoreLogLevel - the log level for the Powerstore metrics
+	PstoreLogLevel string = "<POWERSTORE_LOG_LEVEL>"
+
+	// PstoreLogFormat - the log format for the Powerstore metrics
+	PstoreLogFormat string = "<POWERSTORE_LOG_FORMAT>"
+
+	// ZipkinURI - Zipkin URI for Powerstore metrics
+	ZipkinURI string = "<ZIPKIN_URI>"
+
+	// ZipkinServiceName - Zipkin service name for Powerstore metrics
+	ZipkinServiceName string = "<ZIPKIN_SERVICE_NAME>"
+
+	// ZipkinProbability - Zipkin probability for Powerstore metrics
+	ZipkinProbability string = "<ZIPKIN_PROBABILITY>"
+
 	// SelfSignedCert - self-signed certificate file
 	SelfSignedCert string = "selfsigned-cert.yaml"
 
@@ -200,6 +239,10 @@ var ObservabilitySupportedDrivers = map[string]SupportedDriverParam{
 		PluginIdentifier:              drivers.PowerFlexPluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerFlexConfigParamsVolumeMount,
 	},
+	"powerstore": {
+		PluginIdentifier:              drivers.PowerStorePluginIdentifier,
+		DriverConfigParamsVolumeMount: drivers.PowerStoreConfigParamsVolumeMount,
+	},
 	string(csmv1.PowerMax): {
 		PluginIdentifier:              drivers.PowerMaxPluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerMaxConfigParamsVolumeMount,
@@ -211,6 +254,7 @@ var defaultVolumeConfigName = map[csmv1.DriverType]string{
 	csmv1.PowerScale:     "isilon-creds",
 	csmv1.PowerFlexName:  "vxflexos-config",
 	csmv1.PowerFlex:      "vxflexos-config",
+	csmv1.PowerStore:     "powerstore-config",
 }
 
 var defaultSecretsName = map[csmv1.DriverType]string{
@@ -219,6 +263,7 @@ var defaultSecretsName = map[csmv1.DriverType]string{
 	csmv1.PowerFlex:      "<DriverDefaultReleaseName>-config",
 	csmv1.PowerFlexName:  "<DriverDefaultReleaseName>-config",
 	csmv1.PowerMax:       "<DriverDefaultReleaseName>-creds",
+	csmv1.PowerStore:     "<DriverDefaultReleaseName>-config",
 }
 
 var defaultAuthSecretsName = []string{"karavi-authorization-config", "proxy-authz-tokens", "proxy-server-root-certificate"}
@@ -430,7 +475,7 @@ func PowerScaleMetrics(ctx context.Context, isDeleting bool, op operatorutils.Op
 		deploymentObj := &appsv1.Deployment{}
 		if err = ctrlClient.Get(ctx, deploymentKey, deploymentObj); err == nil {
 			if err = ctrlClient.Delete(ctx, deploymentObj); err != nil && !k8serrors.IsNotFound(err) {
-				return fmt.Errorf("error delete deployment: %v", err)
+				return fmt.Errorf("error deleting deployment: %v", err)
 			}
 		} else {
 			log.Infow("error getting deployment", "deploymentKey", deploymentKey)
@@ -443,6 +488,158 @@ func PowerScaleMetrics(ctx context.Context, isDeleting bool, op operatorutils.Op
 	}
 
 	return nil
+}
+
+// PowerStoreMetrics - delete or update powerstore metrics objects
+func PowerStoreMetrics(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
+	log := logger.GetLogger(ctx)
+
+	powerstoreMetricsObjects, err := getPowerStoreMetricsObjects(op, cr)
+	if err != nil {
+		return err
+	}
+
+	// update deployment for powerstore metrics
+	var dpApply *confv1.DeploymentApplyConfiguration
+	foundDp := false
+	for i, obj := range powerstoreMetricsObjects {
+		if deployment, ok := obj.(*appsv1.Deployment); ok {
+			dpApply, err = parseObservabilityMetricsDeployment(ctx, deployment, op, cr)
+			if err != nil {
+				return err
+			}
+			foundDp = true
+			powerstoreMetricsObjects[i] = powerstoreMetricsObjects[len(powerstoreMetricsObjects)-1]
+			powerstoreMetricsObjects = powerstoreMetricsObjects[:len(powerstoreMetricsObjects)-1]
+			break
+		}
+	}
+	if !foundDp {
+		return fmt.Errorf("could not find deployment obj")
+	}
+
+	for _, ctrlObj := range powerstoreMetricsObjects {
+		if isDeleting {
+			if err := operatorutils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		} else {
+			if err := operatorutils.ApplyCTRLObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		}
+	}
+
+	// update Deployment
+	if isDeleting {
+		// Delete Deployment
+		deploymentKey := client.ObjectKey{
+			Namespace: *dpApply.Namespace,
+			Name:      *dpApply.Name,
+		}
+		deploymentObj := &appsv1.Deployment{}
+		if err = ctrlClient.Get(ctx, deploymentKey, deploymentObj); err == nil {
+			if err = ctrlClient.Delete(ctx, deploymentObj); err != nil && !k8serrors.IsNotFound(err) {
+				return fmt.Errorf("error deleting deployment: %v", err)
+			}
+		} else {
+			log.Infow("error getting deployment", "deploymentKey", deploymentKey)
+		}
+	} else {
+		// Create/Update Deployment
+		if err = deployment.SyncDeployment(ctx, *dpApply, k8sClient, cr.Name); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// getPowerStoreMetricsObjects - get powerstore metrics yaml string
+func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]crclient.Object, error) {
+	obs, err := getObservabilityModule(cr)
+	if err != nil {
+		return nil, err
+	}
+
+	buf, err := readConfigFile(obs, cr, op, PstoreObsYamlFile)
+	if err != nil {
+		return nil, err
+	}
+	YamlString := string(buf)
+
+	obsPstoreImage := ""
+	maxConcurrentQueries := "10"
+	volumeEnabled := "true"
+	volumePollFrequency := "10"
+	spacePollFrequency := "10"
+	arrayPollFrequency := "10"
+	fsPollFrequency := "10"
+	zipkinURI := ""
+	zipkinServiceName := "metrics-powerstore"
+	zipkinProbability := "0"
+	logLevel := "INFO"
+	logFormat := "TEXT"
+	otelCollectorAddress := "otel-collector:55680"
+
+	for _, component := range obs.Components {
+		if component.Name == ObservabilityMetricsPowerStoreName {
+			if component.Image != "" {
+				obsPstoreImage = string(component.Image)
+			}
+			for _, env := range component.Envs {
+				if strings.Contains(PstoreMaxConcurrentQueries, env.Name) {
+					maxConcurrentQueries = env.Value
+				} else if strings.Contains(PstoreVolumeEnabled, env.Name) {
+					volumeEnabled = env.Value
+				} else if strings.Contains(PstoreVolumeIoPollFrequency, env.Name) {
+					volumePollFrequency = env.Value
+				} else if strings.Contains(PstoreSpacePollFrequency, env.Name) {
+					spacePollFrequency = env.Value
+				} else if strings.Contains(PstoreArrayPollFrequency, env.Name) {
+					arrayPollFrequency = env.Value
+				} else if strings.Contains(PstoreFileSystemPollFrequency, env.Name) {
+					fsPollFrequency = env.Value
+				} else if strings.Contains(ZipkinURI, env.Name) {
+					zipkinURI = env.Value
+				} else if strings.Contains(ZipkinServiceName, env.Name) {
+					zipkinServiceName = env.Value
+				} else if strings.Contains(ZipkinProbability, env.Name) {
+					zipkinProbability = env.Value
+				} else if strings.Contains(PstoreLogLevel, env.Name) {
+					logLevel = env.Value
+				} else if strings.Contains(PstoreLogFormat, env.Name) {
+					logFormat = env.Value
+				} else if strings.Contains(OtelCollectorAddress, env.Name) {
+					otelCollectorAddress = env.Value
+				}
+			}
+		}
+	}
+
+	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+	YamlString = strings.ReplaceAll(YamlString, CSMNameSpace, cr.Namespace)
+	YamlString = strings.ReplaceAll(YamlString, PstoreMaxConcurrentQueries, maxConcurrentQueries)
+	YamlString = strings.ReplaceAll(YamlString, PstoreVolumeEnabled, volumeEnabled)
+	YamlString = strings.ReplaceAll(YamlString, PstoreVolumeIoPollFrequency, volumePollFrequency)
+	YamlString = strings.ReplaceAll(YamlString, PstoreSpacePollFrequency, spacePollFrequency)
+	YamlString = strings.ReplaceAll(YamlString, PstoreArrayPollFrequency, arrayPollFrequency)
+	YamlString = strings.ReplaceAll(YamlString, PstoreFileSystemPollFrequency, fsPollFrequency)
+	YamlString = strings.ReplaceAll(YamlString, ZipkinURI, zipkinURI)
+	YamlString = strings.ReplaceAll(YamlString, ZipkinServiceName, zipkinServiceName)
+	YamlString = strings.ReplaceAll(YamlString, ZipkinProbability, zipkinProbability)
+	YamlString = strings.ReplaceAll(YamlString, PstoreLogLevel, logLevel)
+	YamlString = strings.ReplaceAll(YamlString, PstoreLogFormat, logFormat)
+	YamlString = strings.ReplaceAll(YamlString, OtelCollectorAddress, otelCollectorAddress)
+	YamlString = strings.ReplaceAll(YamlString, DriverDefaultReleaseName, cr.Name)
+
+	metricsObjects, err := operatorutils.GetModuleComponentObj([]byte(YamlString))
+	if err != nil {
+		return nil, err
+	}
+	operatorutils.SetContainerImage(metricsObjects, "karavi-metrics-powerstore", "karavi-metrics-powerstore", obsPstoreImage)
+
+	return metricsObjects, nil
 }
 
 // getPowerScaleMetricsObjects - get powerscale metrics yaml string
@@ -612,7 +809,7 @@ func PowerFlexMetrics(ctx context.Context, isDeleting bool, op operatorutils.Ope
 		deploymentObj := &appsv1.Deployment{}
 		if err = ctrlClient.Get(ctx, deploymentKey, deploymentObj); err == nil {
 			if err = ctrlClient.Delete(ctx, deploymentObj); err != nil && !k8serrors.IsNotFound(err) {
-				return fmt.Errorf("error delete deployment: %v", err)
+				return fmt.Errorf("error deleting deployment: %v", err)
 			}
 		} else {
 			log.Infow("error getting deployment", "deploymentKey", deploymentKey)
@@ -852,7 +1049,7 @@ func PowerMaxMetrics(ctx context.Context, isDeleting bool, op operatorutils.Oper
 		deploymentObj := &appsv1.Deployment{}
 		if err = ctrlClient.Get(ctx, deploymentKey, deploymentObj); err == nil {
 			if err = ctrlClient.Delete(ctx, deploymentObj); err != nil && !k8serrors.IsNotFound(err) {
-				return fmt.Errorf("error delete deployment: %v", err)
+				return fmt.Errorf("error deleting deployment: %v", err)
 			}
 		} else {
 			log.Infow("error getting deployment", "deploymentKey", deploymentKey)
