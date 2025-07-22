@@ -21,7 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func getProxyServerScaffold(name, seninelName, namespace, proxyImage, opaImage, opaKubeMgmtImage, redisSecretName, redisPasswordKey string, replicas int32, sentinelReplicas int) appsv1.Deployment {
+func getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage, opaKubeMgmtImage, redisSecretName, redisPasswordKey string, replicas int32, sentinelReplicas int) appsv1.Deployment {
 	return appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -57,10 +57,6 @@ func getProxyServerScaffold(name, seninelName, namespace, proxyImage, opaImage, 
 							ImagePullPolicy: "Always",
 							Env: []corev1.EnvVar{
 								{
-									Name:  "SENTINELS",
-									Value: buildSentinelContainerEnv(sentinelReplicas, seninelName, namespace).Value,
-								},
-								{
 									Name: "REDIS_PASSWORD",
 									ValueFrom: &corev1.EnvVarSource{
 										SecretKeyRef: &corev1.SecretKeySelector{
@@ -73,11 +69,11 @@ func getProxyServerScaffold(name, seninelName, namespace, proxyImage, opaImage, 
 								},
 							},
 							Args: []string{
-								"--redis-sentinel=$(SENTINELS)",
+								fmt.Sprintf("--redis-sentinel=%s", buildSentinelList(sentinelReplicas, sentinelName, namespace)),
 								"--redis-password=$(REDIS_PASSWORD)",
-								"--tenant-service=tenant-service.{{ .Release.Namespace }}.svc.cluster.local:50051",
-								"--role-service=role-service.{{ .Release.Namespace }}.svc.cluster.local:50051",
-								"--storage-service=storage-service.{{ .Release.Namespace }}.svc.cluster.local:50051",
+								fmt.Sprintf("--tenant-service=tenant-service.%s.svc.cluster.local:50051", namespace),
+								fmt.Sprintf("--role-service=role-service.%s.svc.cluster.local:50051", namespace),
+								fmt.Sprintf("--storage-service=storage-service.%s.svc.cluster.local:50051", namespace),
 							},
 							Ports: []corev1.ContainerPort{
 								{
@@ -123,7 +119,7 @@ func getProxyServerScaffold(name, seninelName, namespace, proxyImage, opaImage, 
 								},
 							},
 							Args: []string{
-								"--namespaces=$(NAMESPACE)",
+								fmt.Sprintf("--namespaces=%s", namespace),
 								"--enable-data",
 							},
 						},
@@ -276,10 +272,6 @@ func getTenantServiceScaffold(name, namespace, seninelName, image, redisSecretNa
 							ImagePullPolicy: "Always",
 							Env: []corev1.EnvVar{
 								{
-									Name:  "SENTINELS",
-									Value: buildSentinelContainerEnv(sentinelReplicas, seninelName, namespace).Value,
-								},
-								{
 									Name: "REDIS_PASSWORD",
 									ValueFrom: &corev1.EnvVarSource{
 										SecretKeyRef: &corev1.SecretKeySelector{
@@ -292,7 +284,7 @@ func getTenantServiceScaffold(name, namespace, seninelName, image, redisSecretNa
 								},
 							},
 							Args: []string{
-								"--redis-sentinel=$(SENTINELS)",
+								fmt.Sprintf("--redis-sentinel=%s", buildSentinelList(sentinelReplicas, seninelName, namespace)),
 								"--redis-password=$(REDIS_PASSWORD)",
 							},
 							Ports: []corev1.ContainerPort{
@@ -389,16 +381,14 @@ func getAuthorizationRedisStatefulsetScaffold(crName, name, namespace, image, re
 									},
 								},
 							},
-							Command: []string{
-								"sh", "-c",
-							},
+							Command: []string{"sh", "-c"},
 							Args: []string{
 								`cp /csm-auth-redis-cm/redis.conf /etc/redis/redis.conf
 								echo "masterauth $REDIS_PASSWORD" >> /etc/redis/redis.conf
 								echo "requirepass $REDIS_PASSWORD" >> /etc/redis/redis.conf
 								echo "Finding master..."
 								MASTER_FDQN=$(hostname  -f | sed -e 's/redis-csm-[0-9]\./redis-csm-0./')
-								echo "Master at " $MASTER_FQDN
+								echo "Master at " $MASTER_FDQN
 								if [ "$(redis-cli -h sentinel -p 5000 ping)" != "PONG" ]; then
 									echo "No sentinel found."
 									if [ "$(hostname)" = "redis-csm-0" ]; then
@@ -530,7 +520,7 @@ func getAuthorizationRediscommanderDeploymentScaffold(crName, name, namespace, i
 							Env: []corev1.EnvVar{
 								{
 									Name:  "SENTINELS",
-									Value: buildSentinelContainerEnv(sentinelReplicas, sentinelName, namespace).Value,
+									Value: fmt.Sprintf("%s", buildSentinelList(sentinelReplicas, sentinelName, namespace)),
 								},
 								{
 									Name:  "K8S_SIGTERM",
@@ -679,19 +669,17 @@ func getAuthorizationSentinelStatefulsetScaffold(crName, sentinelName, redisName
 									Value: redisName,
 								},
 							},
-							Command: []string{
-								"sh", "-c",
-							},
+							Command: []string{"sh", "-c"},
 							Args: []string{
 								`replicas=$( expr "$REPLICAS" - 1)
 								nodes=""
 								for i in $(seq 0 "$replicas")
 								do
-									node="${AUTHORIZATION_REDIS_NAME}-${i}.${AUTHORIZATION_REDIS_NAME}"
-									nodes="${nodes}*${node}"
+									node=$( echo "$AUTHORIZATION_REDIS_NAME"-$i."$AUTHORIZATION_REDIS_NAME" )
+									nodes=$( echo "$nodes*$node" )
 								done
-								echo "Nodes: $node"
 								loop=$(echo $nodes | sed -e "s/"*"/\n/g")
+								echo "$loop"
 								foundMaster=false
 								while [ "$foundMaster" = "false" ]
 								do
@@ -790,16 +778,13 @@ func getAuthorizationSentinelStatefulsetScaffold(crName, sentinelName, redisName
 	}
 }
 
-func buildSentinelContainerEnv(replicas int, sentinelName, namespace string) corev1.EnvVar {
-	var endpoints []string
-	for i := range replicas {
-		endpoint := fmt.Sprintf("%s-%d.%s.%s.svc.cluster.local:5000", sentinelName, i, sentinelName, namespace)
-		endpoints = append(endpoints, endpoint)
+func buildSentinelList(replicas int, sentinelName, namespace string) string {
+	var sentinels []string
+	for i := 0; i < replicas; i++ {
+		sentinel := fmt.Sprintf("%s-%d.%s.%s.svc.cluster.local:5000", sentinelName, i, sentinelName, namespace)
+		sentinels = append(sentinels, sentinel)
 	}
-
-	return corev1.EnvVar{
-		Value: strings.Join(endpoints, ","),
-	}
+	return strings.Join(sentinels, ",")
 }
 
 func createRedisK8sSecret(cr csmv1.ContainerStorageModule, usernameKey, passworkKey string) corev1.Secret {
