@@ -17,5 +17,3 @@ jobs:
   domain-update:
     uses: hoppea2/common-github-actions/.github/workflows/domain-replacer.yaml@main
     name: Update GitHub Domains
-    with:
-      replacement_domain: ${{ secrets.INTERNALDOMAIN }}
