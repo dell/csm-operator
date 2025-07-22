@@ -21,7 +21,7 @@ import (
 
 func TestGetProxyServerScaffold(t *testing.T) {
 	name := "test-csm"
-	sentinelName := "redis-sentinel"
+	sentinelName := "sentinel"
 	namespace := "test-namespace"
 	proxyImage := "proxy-image:latest"
 	opaImage := "opa-image:latest"
@@ -43,22 +43,20 @@ func TestGetProxyServerScaffold(t *testing.T) {
 		t.Errorf("expected replicas %d, got %d", replicas, *deploy.Spec.Replicas)
 	}
 
-	// Check container count
 	if len(deploy.Spec.Template.Spec.Containers) != 3 {
 		t.Errorf("expected 3 containers, got %d", len(deploy.Spec.Template.Spec.Containers))
 	}
 
-	// Check environment variable
 	envVars := deploy.Spec.Template.Spec.Containers[0].Env
 	found := false
 	for _, env := range envVars {
-		if env.Name == "SENTINELS" {
+		if env.Name == "REDIS_PASSWORD" {
 			found = true
 			break
 		}
 	}
 	if !found {
-		t.Error("expected SENTINELS env var not found")
+		t.Error("expected REDIS_PASSWORD env var not found")
 	}
 }
 
@@ -129,7 +127,7 @@ func TestGetStorageServiceScaffold(t *testing.T) {
 func TestGetTenantServiceScaffold(t *testing.T) {
 	name := "test-csm"
 	namespace := "test-namespace"
-	sentinelName := "redis-sentinel"
+	sentinelName := "sentinel"
 	image := "tenant-service:latest"
 	redisSecretName := "redis-secret"
 	redisPasswordKey := "redis-password"
@@ -168,19 +166,13 @@ func TestGetTenantServiceScaffold(t *testing.T) {
 	}
 
 	// Env vars
-	var foundSentinels, foundRedisPassword bool
+	var foundRedisPassword bool
 	for _, env := range container.Env {
-		if env.Name == "SENTINELS" {
-			foundSentinels = true
-		}
 		if env.Name == "REDIS_PASSWORD" && env.ValueFrom != nil && env.ValueFrom.SecretKeyRef != nil {
 			if env.ValueFrom.SecretKeyRef.Key == redisPasswordKey {
 				foundRedisPassword = true
 			}
 		}
-	}
-	if !foundSentinels {
-		t.Error("expected SENTINELS env var not found")
 	}
 	if !foundRedisPassword {
 		t.Error("expected REDIS_PASSWORD env var with correct secret key not found")
@@ -188,7 +180,7 @@ func TestGetTenantServiceScaffold(t *testing.T) {
 
 	// Args
 	expectedArgs := []string{
-		"--redis-sentinel=$(SENTINELS)",
+		"--redis-sentinel=sentinel-0.sentinel.test-namespace.svc.cluster.local:5000,sentinel-1.sentinel.test-namespace.svc.cluster.local:5000,sentinel-2.sentinel.test-namespace.svc.cluster.local:5000,sentinel-3.sentinel.test-namespace.svc.cluster.local:5000,sentinel-4.sentinel.test-namespace.svc.cluster.local:5000",
 		"--redis-password=$(REDIS_PASSWORD)",
 	}
 	if len(container.Args) != len(expectedArgs) {

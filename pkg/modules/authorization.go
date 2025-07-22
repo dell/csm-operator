@@ -142,7 +142,7 @@ const (
 	// AuthStorageSystemCredentialsComponent - storage-system-credentials component
 	AuthStorageSystemCredentialsComponent = "storage-system-credentials"
 	// defaultRedisSecretName - name of default redis K8s secret
-	defaultRedisSecretName = "redis-csm-secret"
+	defaultRedisSecretName = "redis-csm-secret" // #nosec G101 -- This is a false positive
 
 	// AuthLocalStorageClass -
 	AuthLocalStorageClass = "csm-authorization-local-storage"

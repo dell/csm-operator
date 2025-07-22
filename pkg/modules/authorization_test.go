@@ -762,7 +762,7 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			return true, false, customResource, sourceClient, operatorConfig
 		},
 
-		"success - use redis secret provider class": func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+		"success - use redis secret provider class": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_secret_provider_class.yaml")
 			if err != nil {
 				panic(err)
