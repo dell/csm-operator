@@ -2024,7 +2024,7 @@ func getAuthProxyServerOCP() []csmv1.Module {
 					RedisStorageClass: "test-storage",
 				},
 				{
-					Name: "storage-system-credentials",
+					Name:                  "storage-system-credentials",
 					SecretProviderClasses: []string{"secret-provider-class-1", "secret-provider-class-2"},
 				},
 			},
