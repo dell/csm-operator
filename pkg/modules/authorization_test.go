@@ -378,7 +378,7 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			namespace := customResource.Namespace
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
-			auth.ConfigVersion = "v2.0.0"
+			auth.ConfigVersion = "v2.3.0"
 
 			karaviAuthconfig := getSecret(namespace, "karavi-authorization-config")
 			proxyAuthzTokens := getSecret(namespace, "proxy-authz-tokens")
@@ -542,7 +542,7 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
-			auth.ConfigVersion = "v2.0.0"
+			auth.ConfigVersion = "v2.3.0"
 			karaviConfig := getSecret(customResource.Namespace, "karavi-config-secret")
 			karaviStorage := getSecret(customResource.Namespace, "karavi-storage-secret")
 			karaviTLS := getSecret(customResource.Namespace, "karavi-selfsigned-tls")
@@ -747,6 +747,36 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
+		"success - use default redis kubernetes secret": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v230.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return true, false, customResource, sourceClient, operatorConfig
+		},
+
+		"success - use redis secret provider class": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_secret_provider_class.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return true, false, customResource, sourceClient, operatorConfig
+		},
+
 		"fail - authorization module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
@@ -824,7 +854,7 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 }
 
 func TestAuthorizationOpenTelemetry(t *testing.T) {
-	cr, err := getCustomResource("./testdata/cr_auth_proxy_v2.0.0.yaml")
+	cr, err := getCustomResource("./testdata/cr_auth_proxy_v2.2.0.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2062,5 +2092,34 @@ func TestAuthorizationCrdDeploy(t *testing.T) {
 				assert.Error(t, err)
 			}
 		})
+	}
+}
+
+func TestGetRedisChecksumFromSecretData(t *testing.T) {
+	ctx := context.TODO()
+	namespace := "default"
+	secretName := "redis-secret"
+
+	redisSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: namespace,
+		},
+		Data: map[string][]byte{
+			"password": []byte("test"),
+			"username": []byte("test"),
+		},
+	}
+
+	fakeClient := ctrlClientFake.NewClientBuilder().WithObjects(redisSecret).Build()
+	cr := csmv1.ContainerStorageModule{}
+	cr.Namespace = namespace
+
+	checksum, err := getRedisChecksumFromSecretData(ctx, fakeClient, cr, secretName)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if checksum == "" {
+		t.Fatal("expected checksum, got empty string")
 	}
 }

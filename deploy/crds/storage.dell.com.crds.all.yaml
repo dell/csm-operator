@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.5
+    controller-gen.kubebuilder.io/version: v0.18.0
   name: containerstoragemodules.storage.dell.com
 spec:
   group: storage.dell.com
@@ -304,6 +304,28 @@ spec:
                         redisReplicas:
                           description: RedisReplicas is the number of replicas for the redis deployment
                           type: integer
+                        redisSecretProviderClass:
+                          description: |-
+                            RedisSecretProviderClass is the SecretProviderClass Object details for redis
+                            Applicable from CSM v1.15 onwards
+                          items:
+                            description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
+                            properties:
+                              redisPasswordKey:
+                                description: RedisPasswordKey is the key in the secret that holds the Redis password
+                                type: string
+                              redisSecretName:
+                                description: RedisSecretName is the name of the Kubernetes secret created by the CSI driver
+                                type: string
+                              redisUsernameKey:
+                                description: RedisUsernameKey is the key in the secret that holds the Redis username
+                                type: string
+                            required:
+                              - redisPasswordKey
+                              - redisUsernameKey
+                            type: object
+                          maxItems: 1
+                          type: array
                         replicaCount:
                           description: ReplicaCount is the replica count for app mobility
                           type: string
@@ -671,6 +693,28 @@ spec:
                         redisReplicas:
                           description: RedisReplicas is the number of replicas for the redis deployment
                           type: integer
+                        redisSecretProviderClass:
+                          description: |-
+                            RedisSecretProviderClass is the SecretProviderClass Object details for redis
+                            Applicable from CSM v1.15 onwards
+                          items:
+                            description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
+                            properties:
+                              redisPasswordKey:
+                                description: RedisPasswordKey is the key in the secret that holds the Redis password
+                                type: string
+                              redisSecretName:
+                                description: RedisSecretName is the name of the Kubernetes secret created by the CSI driver
+                                type: string
+                              redisUsernameKey:
+                                description: RedisUsernameKey is the key in the secret that holds the Redis username
+                                type: string
+                            required:
+                              - redisPasswordKey
+                              - redisUsernameKey
+                            type: object
+                          maxItems: 1
+                          type: array
                         replicaCount:
                           description: ReplicaCount is the replica count for app mobility
                           type: string
@@ -1054,6 +1098,28 @@ spec:
                           redisReplicas:
                             description: RedisReplicas is the number of replicas for the redis deployment
                             type: integer
+                          redisSecretProviderClass:
+                            description: |-
+                              RedisSecretProviderClass is the SecretProviderClass Object details for redis
+                              Applicable from CSM v1.15 onwards
+                            items:
+                              description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
+                              properties:
+                                redisPasswordKey:
+                                  description: RedisPasswordKey is the key in the secret that holds the Redis password
+                                  type: string
+                                redisSecretName:
+                                  description: RedisSecretName is the name of the Kubernetes secret created by the CSI driver
+                                  type: string
+                                redisUsernameKey:
+                                  description: RedisUsernameKey is the key in the secret that holds the Redis username
+                                  type: string
+                              required:
+                                - redisPasswordKey
+                                - redisUsernameKey
+                              type: object
+                            maxItems: 1
+                            type: array
                           replicaCount:
                             description: ReplicaCount is the replica count for app mobility
                             type: string
@@ -1419,6 +1485,28 @@ spec:
                         redisReplicas:
                           description: RedisReplicas is the number of replicas for the redis deployment
                           type: integer
+                        redisSecretProviderClass:
+                          description: |-
+                            RedisSecretProviderClass is the SecretProviderClass Object details for redis
+                            Applicable from CSM v1.15 onwards
+                          items:
+                            description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
+                            properties:
+                              redisPasswordKey:
+                                description: RedisPasswordKey is the key in the secret that holds the Redis password
+                                type: string
+                              redisSecretName:
+                                description: RedisSecretName is the name of the Kubernetes secret created by the CSI driver
+                                type: string
+                              redisUsernameKey:
+                                description: RedisUsernameKey is the key in the secret that holds the Redis username
+                                type: string
+                            required:
+                              - redisPasswordKey
+                              - redisUsernameKey
+                            type: object
+                          maxItems: 1
+                          type: array
                         replicaCount:
                           description: ReplicaCount is the replica count for app mobility
                           type: string
@@ -1790,6 +1878,28 @@ spec:
                           redisReplicas:
                             description: RedisReplicas is the number of replicas for the redis deployment
                             type: integer
+                          redisSecretProviderClass:
+                            description: |-
+                              RedisSecretProviderClass is the SecretProviderClass Object details for redis
+                              Applicable from CSM v1.15 onwards
+                            items:
+                              description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
+                              properties:
+                                redisPasswordKey:
+                                  description: RedisPasswordKey is the key in the secret that holds the Redis password
+                                  type: string
+                                redisSecretName:
+                                  description: RedisSecretName is the name of the Kubernetes secret created by the CSI driver
+                                  type: string
+                                redisUsernameKey:
+                                  description: RedisUsernameKey is the key in the secret that holds the Redis username
+                                  type: string
+                              required:
+                                - redisPasswordKey
+                                - redisUsernameKey
+                              type: object
+                            maxItems: 1
+                            type: array
                           replicaCount:
                             description: ReplicaCount is the replica count for app mobility
                             type: string
@@ -2181,6 +2291,28 @@ spec:
                             redisReplicas:
                               description: RedisReplicas is the number of replicas for the redis deployment
                               type: integer
+                            redisSecretProviderClass:
+                              description: |-
+                                RedisSecretProviderClass is the SecretProviderClass Object details for redis
+                                Applicable from CSM v1.15 onwards
+                              items:
+                                description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
+                                properties:
+                                  redisPasswordKey:
+                                    description: RedisPasswordKey is the key in the secret that holds the Redis password
+                                    type: string
+                                  redisSecretName:
+                                    description: RedisSecretName is the name of the Kubernetes secret created by the CSI driver
+                                    type: string
+                                  redisUsernameKey:
+                                    description: RedisUsernameKey is the key in the secret that holds the Redis username
+                                    type: string
+                                required:
+                                  - redisPasswordKey
+                                  - redisUsernameKey
+                                type: object
+                              maxItems: 1
+                              type: array
                             replicaCount:
                               description: ReplicaCount is the replica count for app mobility
                               type: string
@@ -2557,6 +2689,28 @@ spec:
                             redisReplicas:
                               description: RedisReplicas is the number of replicas for the redis deployment
                               type: integer
+                            redisSecretProviderClass:
+                              description: |-
+                                RedisSecretProviderClass is the SecretProviderClass Object details for redis
+                                Applicable from CSM v1.15 onwards
+                              items:
+                                description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
+                                properties:
+                                  redisPasswordKey:
+                                    description: RedisPasswordKey is the key in the secret that holds the Redis password
+                                    type: string
+                                  redisSecretName:
+                                    description: RedisSecretName is the name of the Kubernetes secret created by the CSI driver
+                                    type: string
+                                  redisUsernameKey:
+                                    description: RedisUsernameKey is the key in the secret that holds the Redis username
+                                    type: string
+                                required:
+                                  - redisPasswordKey
+                                  - redisUsernameKey
+                                type: object
+                              maxItems: 1
+                              type: array
                             replicaCount:
                               description: ReplicaCount is the replica count for app mobility
                               type: string
