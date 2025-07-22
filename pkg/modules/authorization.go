@@ -900,14 +900,13 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	// set redis envs
 	for _, component := range authModule.Components {
 		for _, config := range component.RedisSecretProviderClass {
+			redisUsernameKey = config.RedisUsernameKey
+			redisPasswordKey = config.RedisPasswordKey
+
 			if config.RedisSecretName == "" {
 				redisSecretName = defaultRedisSecretName
-				redisUsernameKey = config.RedisUsernameKey
-				redisPasswordKey = config.RedisPasswordKey
 			} else {
 				redisSecretName = config.RedisSecretName
-				redisUsernameKey = config.RedisUsernameKey
-				redisPasswordKey = config.RedisPasswordKey
 			}
 
 			redis := []corev1.EnvVar{
@@ -1139,14 +1138,13 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 			sentinelName = component.Sentinel
 			// create redis kubernetes secret or use a secret provider class
 			for _, config := range component.RedisSecretProviderClass {
+				redisUsernameKey = config.RedisUsernameKey
+				redisPasswordKey = config.RedisPasswordKey
+
 				if config.RedisSecretName == "" {
 					redisSecretName = defaultRedisSecretName
-					redisUsernameKey = config.RedisUsernameKey
-					redisPasswordKey = config.RedisPasswordKey
 				} else {
 					redisSecretName = config.RedisSecretName
-					redisUsernameKey = config.RedisUsernameKey
-					redisPasswordKey = config.RedisPasswordKey
 				}
 			}
 		default:
@@ -1207,14 +1205,13 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 			sentinelReplicas = component.RedisReplicas
 			// create redis kubernetes secret or use a secret provider class
 			for _, config := range component.RedisSecretProviderClass {
+				redisUsernameKey = config.RedisUsernameKey
+				redisPasswordKey = config.RedisPasswordKey
+
 				if config.RedisSecretName == "" {
 					redisSecretName = defaultRedisSecretName
-					redisUsernameKey = config.RedisUsernameKey
-					redisPasswordKey = config.RedisPasswordKey
 				} else {
 					redisSecretName = config.RedisSecretName
-					redisUsernameKey = config.RedisUsernameKey
-					redisPasswordKey = config.RedisPasswordKey
 				}
 			}
 		default:
@@ -1272,14 +1269,13 @@ func applyDeleteAuthorizationRedisStatefulsetV2(ctx context.Context, isDeleting 
 			replicas = component.RedisReplicas
 			// create redis kubernetes secret or use a secret provider class
 			for _, config := range component.RedisSecretProviderClass {
+				redisUsernameKey = config.RedisUsernameKey
+				redisPasswordKey = config.RedisPasswordKey
+
 				if config.RedisSecretName == "" {
 					redisSecretName = defaultRedisSecretName
-					redisUsernameKey = config.RedisUsernameKey
-					redisPasswordKey = config.RedisPasswordKey
 				} else {
 					redisSecretName = config.RedisSecretName
-					redisUsernameKey = config.RedisUsernameKey
-					redisPasswordKey = config.RedisPasswordKey
 				}
 			}
 		default:
@@ -1294,7 +1290,7 @@ func applyDeleteAuthorizationRedisStatefulsetV2(ctx context.Context, isDeleting 
 
 	// conversion to int32 is safe for a value up to 2147483647
 	// #nosec G115
-	deployment := getAuthorizationRedisStatefulsetScaffold(cr.Name, redisName, cr.Namespace, image, redisSecretName, redisPasswordKey, checksum, int32(replicas))
+	statefulset := getAuthorizationRedisStatefulsetScaffold(cr.Name, redisName, cr.Namespace, image, redisSecretName, redisPasswordKey, checksum, int32(replicas))
 
 	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
 	for _, component := range authModule.Components {
@@ -1302,23 +1298,23 @@ func applyDeleteAuthorizationRedisStatefulsetV2(ctx context.Context, isDeleting 
 			if config.RedisSecretName != "" {
 				// add volume for redis secret provider class
 				redisVolume := redisVolume(redisSecretName)
-				deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, redisVolume)
+				statefulset.Spec.Template.Spec.Volumes = append(statefulset.Spec.Template.Spec.Volumes, redisVolume)
 
 				// set volume mount for redis secret provider class
-				for i := range deployment.Spec.Template.Spec.Containers {
+				for i := range statefulset.Spec.Template.Spec.Containers {
 					redisVolumeMount := redisVolumeMount()
-					deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, redisVolumeMount)
+					statefulset.Spec.Template.Spec.Containers[i].VolumeMounts = append(statefulset.Spec.Template.Spec.Containers[i].VolumeMounts, redisVolumeMount)
 				}
 			}
 		}
 	}
 
-	deploymentBytes, err := yaml.Marshal(&deployment)
+	statefulsetBytes, err := yaml.Marshal(&statefulset)
 	if err != nil {
 		return fmt.Errorf("marshalling redis statefulset: %w", err)
 	}
 
-	err = applyDeleteObjects(ctx, ctrlClient, string(deploymentBytes), isDeleting)
+	err = applyDeleteObjects(ctx, ctrlClient, string(statefulsetBytes), isDeleting)
 	if err != nil {
 		return fmt.Errorf("applying redis statefulset: %w", err)
 	}
@@ -1344,14 +1340,13 @@ func applyDeleteAuthorizationRediscommanderDeploymentV2(ctx context.Context, isD
 			sentinelReplicas = component.RedisReplicas
 			// create redis kubernetes secret or use a secret provider class
 			for _, config := range component.RedisSecretProviderClass {
+				redisUsernameKey = config.RedisUsernameKey
+				redisPasswordKey = config.RedisPasswordKey
+
 				if config.RedisSecretName == "" {
 					redisSecretName = defaultRedisSecretName
-					redisUsernameKey = config.RedisUsernameKey
-					redisPasswordKey = config.RedisPasswordKey
 				} else {
 					redisSecretName = config.RedisSecretName
-					redisUsernameKey = config.RedisUsernameKey
-					redisPasswordKey = config.RedisPasswordKey
 				}
 			}
 		default:
@@ -1416,14 +1411,12 @@ func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleti
 			replicas = component.RedisReplicas
 			// create redis kubernetes secret or use a secret provider class
 			for _, config := range component.RedisSecretProviderClass {
+				redisUsernameKey = config.RedisUsernameKey
+				redisPasswordKey = config.RedisPasswordKey
 				if config.RedisSecretName == "" {
 					redisSecretName = defaultRedisSecretName
-					redisUsernameKey = config.RedisUsernameKey
-					redisPasswordKey = config.RedisPasswordKey
 				} else {
 					redisSecretName = config.RedisSecretName
-					redisUsernameKey = config.RedisUsernameKey
-					redisPasswordKey = config.RedisPasswordKey
 				}
 			}
 		default:
@@ -1438,7 +1431,7 @@ func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleti
 
 	// conversion to int32 is safe for a value up to 2147483647
 	// #nosec G115
-	deployment := getAuthorizationSentinelStatefulsetScaffold(cr.Name, sentinelName, redisName, cr.Namespace, image, redisSecretName, redisPasswordKey, checksum, int32(replicas))
+	statefulset := getAuthorizationSentinelStatefulsetScaffold(cr.Name, sentinelName, redisName, cr.Namespace, image, redisSecretName, redisPasswordKey, checksum, int32(replicas))
 
 	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
 	for _, component := range authModule.Components {
@@ -1446,23 +1439,23 @@ func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleti
 			if config.RedisSecretName != "" {
 				// add volume for redis secret provider class
 				redisVolume := redisVolume(redisSecretName)
-				deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, redisVolume)
+				statefulset.Spec.Template.Spec.Volumes = append(statefulset.Spec.Template.Spec.Volumes, redisVolume)
 
 				// set volume mount for redis secret provider class
-				for i := range deployment.Spec.Template.Spec.Containers {
+				for i := range statefulset.Spec.Template.Spec.Containers {
 					redisVolumeMount := redisVolumeMount()
-					deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, redisVolumeMount)
+					statefulset.Spec.Template.Spec.Containers[i].VolumeMounts = append(statefulset.Spec.Template.Spec.Containers[i].VolumeMounts, redisVolumeMount)
 				}
 			}
 		}
 	}
 
-	deploymentBytes, err := yaml.Marshal(&deployment)
+	statefulsetBytes, err := yaml.Marshal(&statefulset)
 	if err != nil {
 		return fmt.Errorf("marshalling sentinel statefulset: %w", err)
 	}
 
-	err = applyDeleteObjects(ctx, ctrlClient, string(deploymentBytes), isDeleting)
+	err = applyDeleteObjects(ctx, ctrlClient, string(statefulsetBytes), isDeleting)
 	if err != nil {
 		return fmt.Errorf("applying sentinel statefulset: %w", err)
 	}

@@ -385,6 +385,7 @@ type ContainerTemplate struct {
 	// RedisSecretProviderClass is the SecretProviderClass Object details for redis
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis SecretProviderClass details"
 	// Applicable from CSM v1.15 onwards
+	// +kubebuilder:validation:MaxItems=1
 	RedisSecretProviderClass []RedisSecretProviderClass `json:"redisSecretProviderClass,omitempty" yaml:"redisSecretProviderClass,omitempty"`
 
 	// ReplicaCount is the replica count for app mobility
@@ -462,11 +463,13 @@ type RedisSecretProviderClass struct {
 
 	// RedisUsernameKey is the key in the secret that holds the Redis username
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Username Key"
-	RedisUsernameKey string `json:"redisUsernameKey,omitempty" yaml:"redisUsernameKey,omitempty"`
+	// +kubebuilder:validation:Required
+	RedisUsernameKey string `json:"redisUsernameKey" yaml:"redisUsernameKey"`
 
 	// RedisPasswordKey is the key in the secret that holds the Redis password
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Password Key"
-	RedisPasswordKey string `json:"redisPasswordKey,omitempty" yaml:"redisPasswordKey,omitempty"`
+	// +kubebuilder:validation:Required
+	RedisPasswordKey string `json:"redisPasswordKey" yaml:"redisPasswordKey"`
 }
 
 // CSIDriverSpec struct
