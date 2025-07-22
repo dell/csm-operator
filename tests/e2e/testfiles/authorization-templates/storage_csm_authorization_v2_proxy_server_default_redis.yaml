@@ -39,7 +39,7 @@ spec:
           storageService: quay.io/dell/container-storage-modules/csm-authorization-storage:nightly
           storageServiceReplicas: 1
           opa: docker.io/openpolicyagent/opa:0.70.0
-          opaKubeMgmt: openpolicyagent/kube-mgmt:8.5.7
+          opaKubeMgmt: openpolicyagent/kube-mgmt:8.5.11
           authorizationController: quay.io/dell/container-storage-modules/csm-authorization-controller:nightly
           authorizationControllerReplicas: 1
           leaderElection: true
@@ -66,7 +66,16 @@ spec:
               # additional annotations for the proxy-server ingress
               annotations: {}
         - name: redis
-          redis: redis:7.4.0-alpine
+          # Redis secret configuration:
+          # Use a SecretProviderClass for Redis credentials; otherwise, a default Kubernetes secret is used.
+          redisSecretProviderClass:
+            # The name of the Kubernetes secret created by the CSI driver
+            - redisSecretName: array-creds
+              # The key in the secret that holds the Redis username
+              redisUsernameKey: username
+              # The key in the secret that holds the Redis password
+              redisPasswordKey: password
+          redis: redis:7.4.3-alpine
           commander: rediscommander/redis-commander:latest
           redisName: redis-csm
           redisCommander: redicommander

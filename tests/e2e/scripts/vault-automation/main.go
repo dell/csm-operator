@@ -582,7 +582,7 @@ func (s *sequence) configureVaultRole() error {
 	log.Printf("Configuring role %s\n", s.name)
 
 	var b bytes.Buffer
-	vaultCmd := fmt.Sprintf("vault write auth/kubernetes/role/csm-authorization token_ttl=60s bound_service_account_names=storage-service bound_service_account_namespaces=%s policies=csm-authorization", s.namespace)
+	vaultCmd := fmt.Sprintf("vault write auth/kubernetes/role/csm-authorization token_ttl=60s bound_service_account_names=storage-service,tenant-service,proxy-server,sentinel,redis bound_service_account_namespaces=%s policies=csm-authorization", s.namespace)
 	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", "sh", "-c", vaultCmd) // #nosec G204 -- this is a test automation tool
 	cmd.Stdout = &b
 	cmd.Stderr = &b

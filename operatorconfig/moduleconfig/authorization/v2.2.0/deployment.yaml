@@ -331,7 +331,6 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: storage-service-tokenreview-binding
-  namespace: <NAMESPACE>
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -580,7 +579,7 @@ spec:
 
               echo "Finding master..."
               MASTER_FDQN=`hostname  -f | sed -e 's/redis-csm-[0-9]\./redis-csm-0./'`
-              echo "Master at " $MASTER_FQDN
+              echo "Master at " $MASTER_FDQN
               if [ "$(redis-cli -h sentinel -p 5000 ping)" != "PONG" ]; then
                 echo "No sentinel found."
 
