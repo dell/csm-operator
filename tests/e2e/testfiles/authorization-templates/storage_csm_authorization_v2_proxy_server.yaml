@@ -95,7 +95,6 @@ metadata:
   namespace: authorization
 data:
   csm-config-params.yaml: |-
-    CONCURRENT_POWERFLEX_REQUESTS: 10
+    CONCURRENT_STORAGE_REQUESTS: 10
     LOG_LEVEL: debug
     STORAGE_CAPACITY_POLL_INTERVAL: 30s
-    CONCURRENT_POWERSCALE_REQUESTS: 10
