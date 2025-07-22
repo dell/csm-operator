@@ -33,6 +33,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"golang.org/x/mod/semver"
 	"k8s.io/apimachinery/pkg/types"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"k8s.io/kubernetes/test/e2e/framework"
@@ -1410,7 +1411,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver string,
 	address := proxyHost
 	// For v1.9.1 and earlier, use the old address
 	configVersion := cr.GetModule(csmv1.AuthorizationServer).ConfigVersion
-	isOldVersion, _ := utils.MinVersionCheck(configVersion, "v1.9.1")
+	isOldVersion, _ := operatorutils.MinVersionCheck(configVersion, "v1.9.1")
 	if isOldVersion {
 		address = "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
 	}
