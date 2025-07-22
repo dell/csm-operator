@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
+// getProxyServerScaffold returns proxy-server deployment for authorization v2
 func getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage, opaKubeMgmtImage, redisSecretName, redisPasswordKey string, replicas int32, sentinelReplicas int) appsv1.Deployment {
 	return appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -236,6 +237,7 @@ func getStorageServiceScaffold(name string, namespace string, image string, repl
 	}
 }
 
+// getTenantServiceScaffold returns tenant-service deployment for authorization v2
 func getTenantServiceScaffold(name, namespace, seninelName, image, redisSecretName, redisPasswordKey string, replicas int32, sentinelReplicas int) appsv1.Deployment {
 	return appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -331,6 +333,7 @@ func getTenantServiceScaffold(name, namespace, seninelName, image, redisSecretNa
 	}
 }
 
+// getAuthorizationRedisStatefulsetScaffold returns redis statefulset for authorization v2
 func getAuthorizationRedisStatefulsetScaffold(crName, name, namespace, image, redisSecretName, redisPasswordKey, checksum string, replicas int32) appsv1.StatefulSet {
 	volName := "redis-primary-volume"
 
@@ -478,6 +481,7 @@ func getAuthorizationRedisStatefulsetScaffold(crName, name, namespace, image, re
 	}
 }
 
+// getAuthorizationRediscommanderDeploymentScaffold returns a redis commander deployment for authorization v2
 func getAuthorizationRediscommanderDeploymentScaffold(crName, name, namespace, image, redisSecretName, redisUsernameKey, redisPasswordKey, sentinelName, checksum string, sentinelReplicas int) appsv1.Deployment {
 	runAsNonRoot := true
 	readOnlyRootFilesystem := false
@@ -613,6 +617,7 @@ func getAuthorizationRediscommanderDeploymentScaffold(crName, name, namespace, i
 	}
 }
 
+// getAuthorizationSentinelStatefulsetScaffold returns sentinel statefulset for authorization v2
 func getAuthorizationSentinelStatefulsetScaffold(crName, sentinelName, redisName, namespace, image, redisSecretName, redisPasswordKey, checksum string, replicas int32) appsv1.StatefulSet {
 	return appsv1.StatefulSet{
 		TypeMeta: metav1.TypeMeta{
@@ -778,6 +783,7 @@ func getAuthorizationSentinelStatefulsetScaffold(crName, sentinelName, redisName
 	}
 }
 
+// buildSentinelList builds a comma separated list of sentinel addresses
 func buildSentinelList(replicas int, sentinelName, namespace string) string {
 	var sentinels []string
 	for i := 0; i < replicas; i++ {
@@ -787,6 +793,7 @@ func buildSentinelList(replicas int, sentinelName, namespace string) string {
 	return strings.Join(sentinels, ",")
 }
 
+// createRedisK8sSecret creates a k8s secret for redis
 func createRedisK8sSecret(cr csmv1.ContainerStorageModule, usernameKey, passworkKey string) corev1.Secret {
 	return corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
@@ -804,6 +811,7 @@ func createRedisK8sSecret(cr csmv1.ContainerStorageModule, usernameKey, passwork
 	}
 }
 
+// redisVolume adds volume in a pod container for the redis SecretProviderClass
 func redisVolume(redisSecretName string) corev1.Volume {
 	volumeName := "secrets-store-inline-redis"
 	readOnly := true
@@ -821,6 +829,7 @@ func redisVolume(redisSecretName string) corev1.Volume {
 	}
 }
 
+// redisVolumeMount adds a volume mount in a pod container for the redis SecretProviderClass
 func redisVolumeMount() corev1.VolumeMount {
 	volumeName := "secrets-store-inline-redis"
 	return corev1.VolumeMount{

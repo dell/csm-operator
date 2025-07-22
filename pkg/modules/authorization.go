@@ -921,7 +921,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 							LocalObjectReference: corev1.LocalObjectReference{
 								Name: redisSecretName,
 							},
-							Key: config.RedisPasswordKey,
+							Key: redisPasswordKey,
 						},
 					},
 				},
