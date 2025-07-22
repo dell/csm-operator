@@ -722,6 +722,91 @@ func TestPowerFlexMetrics(t *testing.T) {
 	}
 }
 
+func TestPowerStoreMetrics(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerstore_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+			powerstoreCreds := getSecret(customResource.Namespace, "test-powerstore-config")
+
+			tmpCR := customResource
+
+			cr := &rbacv1.ClusterRole{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "ClusterRole",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "karavi-metrics-powerstore-controller",
+				},
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr, powerstoreCreds).Build()
+
+			return true, true, tmpCR, sourceClient, operatorConfig
+		},
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerstore_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+			powerstoreCreds := getSecret(customResource.Namespace, "test-powerstore-config")
+
+			tmpCR := customResource
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(powerstoreCreds).Build()
+
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+		"success - deleting after one cycle": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerstore_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			pstoreCreds := getSecret(customResource.Namespace, "test-powerstore-config")
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(pstoreCreds).Build()
+			k8sClient := clientgoclient.NewFakeClient(sourceClient)
+
+			// pre-run to generate objects
+			err = PowerStoreMetrics(ctx, false, operatorConfig, tmpCR, sourceClient, k8sClient)
+			if err != nil {
+				panic(err)
+			}
+
+			return true, true, tmpCR, sourceClient, operatorConfig
+		},
+		"Fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerstore_replica.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, tmpCR, sourceClient, operatorConfig
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			success, isDeleting, cr, sourceClient, op := tc(t)
+			k8sClient := clientgoclient.NewFakeClient(sourceClient)
+			err := PowerStoreMetrics(ctx, isDeleting, op, cr, sourceClient, k8sClient)
+			if success {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
 func TestPowerMaxMetrics(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
 		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {

@@ -38,6 +38,7 @@ var defaultObservabilityDeploymentName = map[csmv1.DriverType]string{
 	csmv1.PowerFlexName:  "karavi-metrics-powerflex",
 	csmv1.PowerFlex:      "karavi-metrics-powerflex",
 	csmv1.PowerMax:       "karavi-metrics-powermax",
+	csmv1.PowerStore:     "karavi-metrics-powerstore",
 }
 
 // CustomTest -
