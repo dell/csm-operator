@@ -1,5 +1,8 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6008e5e800ab15394eeba996ab4ad224d6684bc4
 apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
@@ -16,6 +19,7 @@ spec:
       imagePullPolicy: IfNotPresent
   modules:
     - name: observability
+<<<<<<< HEAD
 =======
 #
 #
@@ -56,12 +60,17 @@ spec:
 >>>>>>> cba349cc (additional changes)
 =======
 >>>>>>> b11dedf9 (more changes)
+=======
+>>>>>>> 6008e5e800ab15394eeba996ab4ad224d6684bc4
       enabled: true
       configVersion: v1.13.0
       components:
         - name: topology
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6008e5e800ab15394eeba996ab4ad224d6684bc4
           enabled: true
           image: quay.io/dell/container-storage-modules/csm-topology:nightly
           certificate: ""
@@ -105,6 +114,7 @@ spec:
               value: "metrics-powerstore"
             - name: "ZIPKIN_PROBABILITY"
               value: "0"
+<<<<<<< HEAD
 =======
           # enabled: Enable/Disable topology
           # Default value: false
@@ -160,5 +170,7 @@ spec:
 >>>>>>> cba349cc (additional changes)
 =======
 >>>>>>> b11dedf9 (more changes)
+=======
+>>>>>>> 6008e5e800ab15394eeba996ab4ad224d6684bc4
             - name: "COLLECTOR_ADDRESS"
               value: "otel-collector:55680"
