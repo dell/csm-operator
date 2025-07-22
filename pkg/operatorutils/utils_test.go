@@ -1448,26 +1448,6 @@ spec:
             - containerPort: 8080
 ---
 apiVersion: v1
-kind: BackupStorageLocation
-metadata:
-  name: my-bsl
-spec:
-  provider: aws
-  objectStorage:
-    bucket: my-bucket
-    region: us-east-1
----
-apiVersion: v1
-kind: VolumeSnapshotLocation
-metadata:
-  name: my-vsl
-spec:
-  provider: aws
-  objectStorage:
-    bucket: my-bucket
-    region: us-east-1
----
-apiVersion: v1
 kind: Issuer
 metadata:
   name: my-issuer
@@ -1544,8 +1524,8 @@ spec:
 		t.Fatalf("Failed to get module component objects: %v", err)
 	}
 
-	if len(ctrlObjects) != 25 {
-		t.Errorf("Expected 25 objects, got %d", len(ctrlObjects))
+	if len(ctrlObjects) != 23 {
+		t.Errorf("Expected 23 objects, got %d", len(ctrlObjects))
 	}
 
 	for _, obj := range ctrlObjects {
@@ -1854,14 +1834,6 @@ func TestGetModuleComponentObjWithErrors(t *testing.T) {
 		{
 			name: "DaemonSet yaml returns error",
 			kind: "DaemonSet",
-		},
-		{
-			name: "BackupStorageLocation yaml returns error",
-			kind: "BackupStorageLocation",
-		},
-		{
-			name: "VolumeSnapshotLocation yaml returns error",
-			kind: "VolumeSnapshotLocation",
 		},
 		{
 			name: "Issuer yaml returns error",
