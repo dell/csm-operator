@@ -882,7 +882,7 @@ spec:
             - name: RELATED_IMAGE_topology
               value: quay.io/dell/container-storage-modules/csm-topology:v1.13.0
             - name: RELATED_IMAGE_otel-collector
-              value: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:v0.127.0
+              value: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.130.0
             - name: RELATED_IMAGE_metrics-powerscale
               value: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.10.0
             - name: RELATED_IMAGE_metrics-powermax
