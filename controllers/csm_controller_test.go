@@ -36,7 +36,6 @@ import (
 	"github.com/dell/csm-operator/tests/shared/crclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -179,10 +178,6 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 	unittestLogger.Info("Init unit test...")
 
 	err := csmv1.AddToScheme(scheme.Scheme)
-	if err != nil {
-		panic(err)
-	}
-	err = velerov1.AddToScheme(scheme.Scheme)
 	if err != nil {
 		panic(err)
 	}

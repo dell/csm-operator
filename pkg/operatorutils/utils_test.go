@@ -27,7 +27,6 @@ import (
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/stretchr/testify/assert"
-	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	admissionregistration "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -85,7 +84,6 @@ func fullFakeClient() crclient.WithWatch {
 	_ = csmv1.AddToScheme(scheme)  // for CSM objects
 	_ = corev1.AddToScheme(scheme) // for namespaces
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(velerov1.AddToScheme(scheme))
 
 	// Create a fake ctrlClient
 	ctrlClient := fake.NewClientBuilder().
@@ -715,41 +713,6 @@ func TestSetContainerImage(t *testing.T) {
 		})
 	}
 }
-
-func TestGetBackupStorageLocation(t *testing.T) {
-	ctx := context.Background()
-	fakeClient := fullFakeClient()
-
-	// Test case: BackupStorageLocation does not exist
-	name := "test-backup-storage"
-	namespace := "test-namespace"
-	_, err := GetBackupStorageLocation(ctx, name, namespace, fakeClient)
-	if err == nil {
-		t.Errorf("Expected error, got nil")
-	}
-
-	// Test case: BackupStorageLocation exists
-	backupStorage := &velerov1.BackupStorageLocation{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-	}
-	if err := fakeClient.Create(ctx, backupStorage); err != nil {
-		t.Errorf("Failed to create BackupStorageLocation: %v", err)
-	}
-	backupStorage, err = GetBackupStorageLocation(ctx, name, namespace, fakeClient)
-	if err != nil {
-		t.Errorf("Failed to get BackupStorageLocation: %v", err)
-	}
-	if backupStorage.Name != name {
-		t.Errorf("Expected name %s, got %s", name, backupStorage.Name)
-	}
-	if backupStorage.Namespace != namespace {
-		t.Errorf("Expected namespace %s, got %s", namespace, backupStorage.Namespace)
-	}
-}
-
 func TestUpdateSideCarApply(t *testing.T) {
 	// Test case: update sidecar with matching name
 	sc1env1 := "sidecar1-env1"
@@ -1650,14 +1613,6 @@ spec:
 		case *appsv1.DaemonSet:
 			if v.Name != "my-daemonset" {
 				t.Errorf("Expected daemon set name 'my-daemonset', got %s", v.Name)
-			}
-		case *velerov1.BackupStorageLocation:
-			if v.Name != "my-bsl" {
-				t.Errorf("Expected backup storage location name 'my-bsl', got %s", v.Name)
-			}
-		case *velerov1.VolumeSnapshotLocation:
-			if v.Name != "my-vsl" {
-				t.Errorf("Expected volume snapshot location name 'my-vsl', got %s", v.Name)
 			}
 		case *certmanagerv1.Issuer:
 			if v.Name != "my-issuer" {
@@ -2943,40 +2898,6 @@ func TestIsResiliencyModuleEnabled(t *testing.T) {
 		t.Errorf("Expected %v, but got %v", expected, result)
 	}
 }
-
-func TestGetVolumeSnapshotLocation(t *testing.T) {
-	// Test case: snapshot location exists
-	ctx := context.Background()
-	fakeClient := fullFakeClient()
-
-	snapshotLocation := &velerov1.VolumeSnapshotLocation{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-snapshot-location",
-			Namespace: "test-namespace",
-		},
-	}
-	if err := fakeClient.Create(ctx, snapshotLocation); err != nil {
-		t.Errorf("Failed to create VolumeSnapshotLocation: %v", err)
-	}
-
-	snapshotLocation, err := GetVolumeSnapshotLocation(ctx, "test-snapshot-location", "test-namespace", fakeClient)
-	if err != nil {
-		t.Errorf("Failed to get VolumeSnapshotLocation: %v", err)
-	}
-	if snapshotLocation.Name != "test-snapshot-location" {
-		t.Errorf("Expected name %s, got %s", "test-snapshot-location", snapshotLocation.Name)
-	}
-	if snapshotLocation.Namespace != "test-namespace" {
-		t.Errorf("Expected namespace %s, got %s", "test-namespace", snapshotLocation.Namespace)
-	}
-
-	// Test case: snapshot location does not exist
-	_, err = GetVolumeSnapshotLocation(ctx, "non-existent-snapshot-location", "test-namespace", fakeClient)
-	if err == nil {
-		t.Errorf("Expected error, but got nil")
-	}
-}
-
 func TestGetSecret(t *testing.T) {
 	ctx := context.Background()
 	ctrlClient := fullFakeClient()

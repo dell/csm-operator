@@ -28,7 +28,6 @@ import (
 	goYAML "gopkg.in/yaml.v3"
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
-	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	admissionregistration "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -578,22 +577,6 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 			ctrlObjects = append(ctrlObjects, &ds)
 
-		case "BackupStorageLocation":
-			var bsl velerov1.BackupStorageLocation
-			if err := yamlUnmarshal(raw, &bsl); err != nil {
-				return ctrlObjects, err
-			}
-
-			ctrlObjects = append(ctrlObjects, &bsl)
-
-		case "VolumeSnapshotLocation":
-			var vs velerov1.VolumeSnapshotLocation
-			if err := yamlUnmarshal(raw, &vs); err != nil {
-				return ctrlObjects, err
-			}
-
-			ctrlObjects = append(ctrlObjects, &vs)
-
 		case "Issuer":
 			var is certmanagerv1.Issuer
 			if err := yamlUnmarshal(raw, &is); err != nil {
@@ -978,30 +961,6 @@ func GetSecret(ctx context.Context, name, namespace string, ctrlClient crclient.
 		return nil, fmt.Errorf("no secrets found or error: %v", err)
 	}
 	return found, nil
-}
-
-// GetVolumeSnapshotLocation - check if the Volume Snapshot Location is present
-func GetVolumeSnapshotLocation(ctx context.Context, name, namespace string, ctrlClient crclient.Client) (*velerov1.VolumeSnapshotLocation, error) {
-	snapshotLocation := &velerov1.VolumeSnapshotLocation{}
-	err := ctrlClient.Get(ctx, t1.NamespacedName{Namespace: namespace, Name: name},
-		snapshotLocation,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return snapshotLocation, nil
-}
-
-// GetBackupStorageLocation - check if the Backup Storage Location is present
-func GetBackupStorageLocation(ctx context.Context, name, namespace string, ctrlClient crclient.Client) (*velerov1.BackupStorageLocation, error) {
-	backupStorage := &velerov1.BackupStorageLocation{}
-	err := ctrlClient.Get(ctx, t1.NamespacedName{Namespace: namespace, Name: name},
-		backupStorage,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return backupStorage, nil
 }
 
 // IsModuleEnabled - check if the module is enabled
