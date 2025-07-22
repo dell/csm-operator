@@ -207,7 +207,7 @@ spec:
               mountPath: <X_CSI_NFS_EXPORT_DIRECTORY>
               mountPropagation: "Bidirectional"
         - name: registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
