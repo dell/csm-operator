@@ -1083,6 +1083,11 @@ func mountSecretVolumes(secrets []string, deployment *appsv1.Deployment) {
 // configureSecretProviderClass configures the secret provider class volumes and mounts in the deployment
 // and sets the necessary annotations for Conjur secrets
 func configureSecretProviderClass(secretProviderClasses csmv1.StorageSystemSecretProviderClasses, deployment *appsv1.Deployment) {
+	configureVaultSecretProvider(secretProviderClasses, deployment)
+	configureConjurSecretProvider(secretProviderClasses, deployment)
+}
+
+func configureVaultSecretProvider(secretProviderClasses csmv1.StorageSystemSecretProviderClasses, deployment *appsv1.Deployment) {
 	readOnly := true
 	for _, vault := range secretProviderClasses.Vaults {
 		volume := corev1.Volume{
@@ -1101,6 +1106,21 @@ func configureSecretProviderClass(secretProviderClasses csmv1.StorageSystemSecre
 		deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volume)
 	}
 
+	for i, c := range deployment.Spec.Template.Spec.Containers {
+		if c.Name == "storage-service" {
+			for _, vault := range secretProviderClasses.Vaults {
+				deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
+					Name:      fmt.Sprintf("secrets-store-inline-%s", vault),
+					MountPath: fmt.Sprintf("/etc/csm-authorization/%s", vault),
+					ReadOnly:  true,
+				})
+			}
+		}
+	}
+}
+
+func configureConjurSecretProvider(secretProviderClasses csmv1.StorageSystemSecretProviderClasses, deployment *appsv1.Deployment) {
+	readOnly := true
 	for _, conjur := range secretProviderClasses.Conjurs {
 		volume := corev1.Volume{
 			Name: fmt.Sprintf("secrets-store-inline-%s", conjur.Name),
@@ -1118,17 +1138,8 @@ func configureSecretProviderClass(secretProviderClasses csmv1.StorageSystemSecre
 		deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volume)
 	}
 
-	// set volume mounts for secret provider classes
 	for i, c := range deployment.Spec.Template.Spec.Containers {
 		if c.Name == "storage-service" {
-			for _, vault := range secretProviderClasses.Vaults {
-				deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
-					Name:      fmt.Sprintf("secrets-store-inline-%s", vault),
-					MountPath: fmt.Sprintf("/etc/csm-authorization/%s", vault),
-					ReadOnly:  true,
-				})
-			}
-
 			annotationFormat := "- %s: %s"
 			var secretStringBuilder strings.Builder
 			for _, conjur := range secretProviderClasses.Conjurs {
@@ -1145,7 +1156,6 @@ func configureSecretProviderClass(secretProviderClasses csmv1.StorageSystemSecre
 				}
 			}
 
-			// for conjur, the conjur.org/secrets annotation needs to be set
 			if secretPaths := secretStringBuilder.String(); secretPaths != "" {
 				annotations := deployment.Spec.Template.ObjectMeta.Annotations
 				if annotations == nil {
