@@ -1820,7 +1820,7 @@ func getObservabilityModule() []csmv1.Module {
 		{
 			Name:          csmv1.Observability,
 			Enabled:       true,
-			ConfigVersion: "v1.10.0",
+			ConfigVersion: "v1.13.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name:    "topology",
@@ -1872,7 +1872,7 @@ func getReplicaModule() []csmv1.Module {
 		{
 			Name:          csmv1.Replication,
 			Enabled:       true,
-			ConfigVersion: "v1.12.0",
+			ConfigVersion: "v1.13.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: operatorutils.ReplicationSideCarName,
@@ -1887,7 +1887,7 @@ func getResiliencyModule() []csmv1.Module {
 		{
 			Name:          csmv1.Resiliency,
 			Enabled:       true,
-			ConfigVersion: "v1.13.0",
+			ConfigVersion: "v1.14.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: operatorutils.ResiliencySideCarName,
@@ -2001,7 +2001,7 @@ func getReverseProxyModule() []csmv1.Module {
 		{
 			Name:          csmv1.ReverseProxy,
 			Enabled:       true,
-			ConfigVersion: "v2.11.0",
+			ConfigVersion: "v2.13.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name:    string(csmv1.ReverseProxyServer),
