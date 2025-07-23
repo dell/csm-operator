@@ -98,7 +98,7 @@ spec:
             allowPrivilegeEscalation: true
             capabilities:
               add: ["SYS_ADMIN"]
-          image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.14.0
+          image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.14.1
           imagePullPolicy: IfNotPresent
           command: ["/csi-vxflexos.sh"]
           args:
@@ -130,6 +130,8 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: spec.nodeName
+            - name: X_CSI_PROBE_TIMEOUT
+              value: <X_CSI_PROBE_TIMEOUT>
           volumeMounts:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com

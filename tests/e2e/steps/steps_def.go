@@ -26,6 +26,7 @@ import (
 	"time"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
+	"golang.org/x/mod/semver"
 
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/modules"
@@ -33,7 +34,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"golang.org/x/mod/semver"
 	"k8s.io/apimachinery/pkg/types"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"k8s.io/kubernetes/test/e2e/framework"

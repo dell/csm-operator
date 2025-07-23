@@ -80,6 +80,9 @@ const (
 
 	// PowerFlexSdcRepoEnabled - will be used to control the GOSCALEIO_SHOWHTTP variable
 	PowerFlexSdcRepoEnabled string = "<X_CSI_SDC_SFTP_REPO_ENABLED>"
+
+	// PowerFlexProbeTimeout - will be used to control the X_CSI_PROBE_TIMEOUT variable
+	PowerFlexProbeTimeout string = "<X_CSI_PROBE_TIMEOUT>"
 )
 
 // PrecheckPowerFlex do input validation
@@ -312,6 +315,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	sftpRepoAddress := "sftp://0.0.0.0"
 	sftpRepoUser := ""
 	sftpEnabled := ""
+	probeTimeout := "10s"
 
 	if cr.Spec.Driver.Common != nil {
 		for _, env := range cr.Spec.Driver.Common.Envs {
@@ -320,6 +324,9 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 			}
 			if env.Name == "GOSCALEIO_SHOWHTTP" {
 				showHTTP = env.Value
+			}
+			if env.Name == "X_CSI_PROBE_TIMEOUT" {
+				probeTimeout = env.Value
 			}
 		}
 	}
@@ -342,6 +349,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexCSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexShowHTTP, showHTTP)
+		yamlString = strings.ReplaceAll(yamlString, PowerFlexProbeTimeout, probeTimeout)
 
 	case "Node":
 		if cr.Spec.Driver.Node != nil {
@@ -387,6 +395,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexSftpRepoAddress, sftpRepoAddress)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexSftpRepoUser, sftpRepoUser)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexSdcRepoEnabled, sftpEnabled)
+		yamlString = strings.ReplaceAll(yamlString, PowerFlexProbeTimeout, probeTimeout)
 
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {

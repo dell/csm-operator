@@ -135,6 +135,9 @@ spec:
     metadata:
       labels:
         name: <DriverDefaultReleaseName>-controller
+        csmNamespace: <CSM_NAMESPACE>
+      annotations:
+        kubectl.kubernetes.io/default-container: driver
     spec:
       affinity:
         nodeSelector:
@@ -237,7 +240,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.14.0
+          image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.14.1
           imagePullPolicy: IfNotPresent
           command: ["/csi-vxflexos.sh"]
           args:
@@ -260,6 +263,12 @@ spec:
               value: <X_CSI_QUOTA_ENABLED>
             - name: X_CSI_POWERFLEX_EXTERNAL_ACCESS
               value: <X_CSI_POWERFLEX_EXTERNAL_ACCESS>
+            - name: GOSCALEIO_DEBUG
+              value: <GOSCALEIO_DEBUG>
+            - name: GOSCALEIO_SHOWHTTP
+              value: <GOSCALEIO_SHOWHTTP>
+            - name: X_CSI_PROBE_TIMEOUT
+              value: <X_CSI_PROBE_TIMEOUT>
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi

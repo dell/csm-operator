@@ -226,6 +226,23 @@ var (
 			fileType: "Node",
 			expected: "false",
 		},
+		{
+			name:       "update common X_CSI_PROBE_TIMEOUT value in CR",
+			yamlString: "X_CSI_PROBE_TIMEOUT=<X_CSI_PROBE_TIMEOUT>",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{Name: "X_CSI_PROBE_TIMEOUT", Value: "5s"},
+							},
+						},
+					},
+				},
+			},
+			fileType: "Controller",
+			expected: "X_CSI_PROBE_TIMEOUT=5s",
+		},
 	}
 )
 
