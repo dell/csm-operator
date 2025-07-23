@@ -351,7 +351,7 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Secret Provider Classes"
 	// Applicable from CSM v1.15 onwards
 	// Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
-	SecretProviderClasses []StorageSystemSecretProviderClass `json:"secretProviderClasses,omitempty" yaml:"secretProviderClasses,omitempty"`
+	SecretProviderClasses StorageSystemSecretProviderClasses `json:"secretProviderClasses,omitempty" yaml:"secretProviderClasses,omitempty"`
 
 	// Secrets is a collection of kubernetes secrets for storage system credentials
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Secrets"
@@ -442,7 +442,7 @@ type RedisSecretProviderClass struct {
 }
 
 // StorageSystemSecretProviderClass is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
-type StorageSystemSecretProviderClass struct {
+type StorageSystemSecretProviderClasses struct {
 	// Vault is the list SecretProviderClass names provided by Vault
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Vault SecretProviderClass Names"
 	Vaults []string `json:"vault,omitempty" yaml:"vault,omitempty"`

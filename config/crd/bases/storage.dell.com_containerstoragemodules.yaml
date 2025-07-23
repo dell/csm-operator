@@ -427,53 +427,47 @@ spec:
                             SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
                             Applicable from CSM v1.15 onwards
                             Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
-                          items:
-                            description:
-                              StorageSystemSecretProviderClass is a collection
-                              of secret provider classes for retrieving secrets from
-                              external providers for storage system credentials
-                            properties:
-                              conjur:
-                                description:
-                                  Conjur is the list SecretProviderClass
-                                  names provided by Conjur
-                                items:
-                                  properties:
-                                    name:
-                                      description: Name is the name of the Conjur SecretProviderClass
-                                      type: string
-                                    paths:
-                                      description:
-                                        Paths is the list of paths to the
-                                        secrets in Conjur
-                                      items:
-                                        properties:
-                                          passwordPath:
-                                            description:
-                                              PasswordPath is the path to
-                                              the password in the secret
-                                            type: string
-                                          usernamePath:
-                                            description:
-                                              UsernamePath is the path to
-                                              the username in the secret
-                                            type: string
-                                        required:
-                                          - passwordPath
-                                          - usernamePath
-                                        type: object
-                                      type: array
-                                  type: object
-                                type: array
-                              vault:
-                                description:
-                                  Vault is the list SecretProviderClass names
-                                  provided by Vault
-                                items:
-                                  type: string
-                                type: array
-                            type: object
-                          type: array
+                          properties:
+                            conjur:
+                              description:
+                                Conjur is the list SecretProviderClass names
+                                provided by Conjur
+                              items:
+                                properties:
+                                  name:
+                                    description: Name is the name of the Conjur SecretProviderClass
+                                    type: string
+                                  paths:
+                                    description:
+                                      Paths is the list of paths to the secrets
+                                      in Conjur
+                                    items:
+                                      properties:
+                                        passwordPath:
+                                          description:
+                                            PasswordPath is the path to the
+                                            password in the secret
+                                          type: string
+                                        usernamePath:
+                                          description:
+                                            UsernamePath is the path to the
+                                            username in the secret
+                                          type: string
+                                      required:
+                                        - passwordPath
+                                        - usernamePath
+                                      type: object
+                                    type: array
+                                type: object
+                              type: array
+                            vault:
+                              description:
+                                Vault is the list SecretProviderClass names
+                                provided by Vault
+                              items:
+                                type: string
+                              type: array
+                          type: object
                         secrets:
                           description: |-
                             Secrets is a collection of kubernetes secrets for storage system credentials
@@ -968,53 +962,47 @@ spec:
                             SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
                             Applicable from CSM v1.15 onwards
                             Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
-                          items:
-                            description:
-                              StorageSystemSecretProviderClass is a collection
-                              of secret provider classes for retrieving secrets from
-                              external providers for storage system credentials
-                            properties:
-                              conjur:
-                                description:
-                                  Conjur is the list SecretProviderClass
-                                  names provided by Conjur
-                                items:
-                                  properties:
-                                    name:
-                                      description: Name is the name of the Conjur SecretProviderClass
-                                      type: string
-                                    paths:
-                                      description:
-                                        Paths is the list of paths to the
-                                        secrets in Conjur
-                                      items:
-                                        properties:
-                                          passwordPath:
-                                            description:
-                                              PasswordPath is the path to
-                                              the password in the secret
-                                            type: string
-                                          usernamePath:
-                                            description:
-                                              UsernamePath is the path to
-                                              the username in the secret
-                                            type: string
-                                        required:
-                                          - passwordPath
-                                          - usernamePath
-                                        type: object
-                                      type: array
-                                  type: object
-                                type: array
-                              vault:
-                                description:
-                                  Vault is the list SecretProviderClass names
-                                  provided by Vault
-                                items:
-                                  type: string
-                                type: array
-                            type: object
-                          type: array
+                          properties:
+                            conjur:
+                              description:
+                                Conjur is the list SecretProviderClass names
+                                provided by Conjur
+                              items:
+                                properties:
+                                  name:
+                                    description: Name is the name of the Conjur SecretProviderClass
+                                    type: string
+                                  paths:
+                                    description:
+                                      Paths is the list of paths to the secrets
+                                      in Conjur
+                                    items:
+                                      properties:
+                                        passwordPath:
+                                          description:
+                                            PasswordPath is the path to the
+                                            password in the secret
+                                          type: string
+                                        usernamePath:
+                                          description:
+                                            UsernamePath is the path to the
+                                            username in the secret
+                                          type: string
+                                      required:
+                                        - passwordPath
+                                        - usernamePath
+                                      type: object
+                                    type: array
+                                type: object
+                              type: array
+                            vault:
+                              description:
+                                Vault is the list SecretProviderClass names
+                                provided by Vault
+                              items:
+                                type: string
+                              type: array
+                          type: object
                         secrets:
                           description: |-
                             Secrets is a collection of kubernetes secrets for storage system credentials
@@ -1531,55 +1519,47 @@ spec:
                               SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
                               Applicable from CSM v1.15 onwards
                               Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
-                            items:
-                              description:
-                                StorageSystemSecretProviderClass is a collection
-                                of secret provider classes for retrieving secrets from
-                                external providers for storage system credentials
-                              properties:
-                                conjur:
-                                  description:
-                                    Conjur is the list SecretProviderClass
-                                    names provided by Conjur
-                                  items:
-                                    properties:
-                                      name:
-                                        description:
-                                          Name is the name of the Conjur
-                                          SecretProviderClass
-                                        type: string
-                                      paths:
-                                        description:
-                                          Paths is the list of paths to the
-                                          secrets in Conjur
-                                        items:
-                                          properties:
-                                            passwordPath:
-                                              description:
-                                                PasswordPath is the path
-                                                to the password in the secret
-                                              type: string
-                                            usernamePath:
-                                              description:
-                                                UsernamePath is the path
-                                                to the username in the secret
-                                              type: string
-                                          required:
-                                            - passwordPath
-                                            - usernamePath
-                                          type: object
-                                        type: array
-                                    type: object
-                                  type: array
-                                vault:
-                                  description:
-                                    Vault is the list SecretProviderClass
-                                    names provided by Vault
-                                  items:
-                                    type: string
-                                  type: array
-                              type: object
-                            type: array
+                            properties:
+                              conjur:
+                                description:
+                                  Conjur is the list SecretProviderClass
+                                  names provided by Conjur
+                                items:
+                                  properties:
+                                    name:
+                                      description: Name is the name of the Conjur SecretProviderClass
+                                      type: string
+                                    paths:
+                                      description:
+                                        Paths is the list of paths to the
+                                        secrets in Conjur
+                                      items:
+                                        properties:
+                                          passwordPath:
+                                            description:
+                                              PasswordPath is the path to
+                                              the password in the secret
+                                            type: string
+                                          usernamePath:
+                                            description:
+                                              UsernamePath is the path to
+                                              the username in the secret
+                                            type: string
+                                        required:
+                                          - passwordPath
+                                          - usernamePath
+                                        type: object
+                                      type: array
+                                  type: object
+                                type: array
+                              vault:
+                                description:
+                                  Vault is the list SecretProviderClass names
+                                  provided by Vault
+                                items:
+                                  type: string
+                                type: array
+                            type: object
                           secrets:
                             description: |-
                               Secrets is a collection of kubernetes secrets for storage system credentials
@@ -2070,53 +2050,47 @@ spec:
                             SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
                             Applicable from CSM v1.15 onwards
                             Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
-                          items:
-                            description:
-                              StorageSystemSecretProviderClass is a collection
-                              of secret provider classes for retrieving secrets from
-                              external providers for storage system credentials
-                            properties:
-                              conjur:
-                                description:
-                                  Conjur is the list SecretProviderClass
-                                  names provided by Conjur
-                                items:
-                                  properties:
-                                    name:
-                                      description: Name is the name of the Conjur SecretProviderClass
-                                      type: string
-                                    paths:
-                                      description:
-                                        Paths is the list of paths to the
-                                        secrets in Conjur
-                                      items:
-                                        properties:
-                                          passwordPath:
-                                            description:
-                                              PasswordPath is the path to
-                                              the password in the secret
-                                            type: string
-                                          usernamePath:
-                                            description:
-                                              UsernamePath is the path to
-                                              the username in the secret
-                                            type: string
-                                        required:
-                                          - passwordPath
-                                          - usernamePath
-                                        type: object
-                                      type: array
-                                  type: object
-                                type: array
-                              vault:
-                                description:
-                                  Vault is the list SecretProviderClass names
-                                  provided by Vault
-                                items:
-                                  type: string
-                                type: array
-                            type: object
-                          type: array
+                          properties:
+                            conjur:
+                              description:
+                                Conjur is the list SecretProviderClass names
+                                provided by Conjur
+                              items:
+                                properties:
+                                  name:
+                                    description: Name is the name of the Conjur SecretProviderClass
+                                    type: string
+                                  paths:
+                                    description:
+                                      Paths is the list of paths to the secrets
+                                      in Conjur
+                                    items:
+                                      properties:
+                                        passwordPath:
+                                          description:
+                                            PasswordPath is the path to the
+                                            password in the secret
+                                          type: string
+                                        usernamePath:
+                                          description:
+                                            UsernamePath is the path to the
+                                            username in the secret
+                                          type: string
+                                      required:
+                                        - passwordPath
+                                        - usernamePath
+                                      type: object
+                                    type: array
+                                type: object
+                              type: array
+                            vault:
+                              description:
+                                Vault is the list SecretProviderClass names
+                                provided by Vault
+                              items:
+                                type: string
+                              type: array
+                          type: object
                         secrets:
                           description: |-
                             Secrets is a collection of kubernetes secrets for storage system credentials
@@ -2617,55 +2591,47 @@ spec:
                               SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
                               Applicable from CSM v1.15 onwards
                               Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
-                            items:
-                              description:
-                                StorageSystemSecretProviderClass is a collection
-                                of secret provider classes for retrieving secrets from
-                                external providers for storage system credentials
-                              properties:
-                                conjur:
-                                  description:
-                                    Conjur is the list SecretProviderClass
-                                    names provided by Conjur
-                                  items:
-                                    properties:
-                                      name:
-                                        description:
-                                          Name is the name of the Conjur
-                                          SecretProviderClass
-                                        type: string
-                                      paths:
-                                        description:
-                                          Paths is the list of paths to the
-                                          secrets in Conjur
-                                        items:
-                                          properties:
-                                            passwordPath:
-                                              description:
-                                                PasswordPath is the path
-                                                to the password in the secret
-                                              type: string
-                                            usernamePath:
-                                              description:
-                                                UsernamePath is the path
-                                                to the username in the secret
-                                              type: string
-                                          required:
-                                            - passwordPath
-                                            - usernamePath
-                                          type: object
-                                        type: array
-                                    type: object
-                                  type: array
-                                vault:
-                                  description:
-                                    Vault is the list SecretProviderClass
-                                    names provided by Vault
-                                  items:
-                                    type: string
-                                  type: array
-                              type: object
-                            type: array
+                            properties:
+                              conjur:
+                                description:
+                                  Conjur is the list SecretProviderClass
+                                  names provided by Conjur
+                                items:
+                                  properties:
+                                    name:
+                                      description: Name is the name of the Conjur SecretProviderClass
+                                      type: string
+                                    paths:
+                                      description:
+                                        Paths is the list of paths to the
+                                        secrets in Conjur
+                                      items:
+                                        properties:
+                                          passwordPath:
+                                            description:
+                                              PasswordPath is the path to
+                                              the password in the secret
+                                            type: string
+                                          usernamePath:
+                                            description:
+                                              UsernamePath is the path to
+                                              the username in the secret
+                                            type: string
+                                        required:
+                                          - passwordPath
+                                          - usernamePath
+                                        type: object
+                                      type: array
+                                  type: object
+                                type: array
+                              vault:
+                                description:
+                                  Vault is the list SecretProviderClass names
+                                  provided by Vault
+                                items:
+                                  type: string
+                                type: array
+                            type: object
                           secrets:
                             description: |-
                               Secrets is a collection of kubernetes secrets for storage system credentials
@@ -3196,55 +3162,49 @@ spec:
                                 SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
                                 Applicable from CSM v1.15 onwards
                                 Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
-                              items:
-                                description:
-                                  StorageSystemSecretProviderClass is a collection
-                                  of secret provider classes for retrieving secrets
-                                  from external providers for storage system credentials
-                                properties:
-                                  conjur:
-                                    description:
-                                      Conjur is the list SecretProviderClass
-                                      names provided by Conjur
-                                    items:
-                                      properties:
-                                        name:
-                                          description:
-                                            Name is the name of the Conjur
-                                            SecretProviderClass
-                                          type: string
-                                        paths:
-                                          description:
-                                            Paths is the list of paths to
-                                            the secrets in Conjur
-                                          items:
-                                            properties:
-                                              passwordPath:
-                                                description:
-                                                  PasswordPath is the path
-                                                  to the password in the secret
-                                                type: string
-                                              usernamePath:
-                                                description:
-                                                  UsernamePath is the path
-                                                  to the username in the secret
-                                                type: string
-                                            required:
-                                              - passwordPath
-                                              - usernamePath
-                                            type: object
-                                          type: array
-                                      type: object
-                                    type: array
-                                  vault:
-                                    description:
-                                      Vault is the list SecretProviderClass
-                                      names provided by Vault
-                                    items:
-                                      type: string
-                                    type: array
-                                type: object
-                              type: array
+                              properties:
+                                conjur:
+                                  description:
+                                    Conjur is the list SecretProviderClass
+                                    names provided by Conjur
+                                  items:
+                                    properties:
+                                      name:
+                                        description:
+                                          Name is the name of the Conjur
+                                          SecretProviderClass
+                                        type: string
+                                      paths:
+                                        description:
+                                          Paths is the list of paths to the
+                                          secrets in Conjur
+                                        items:
+                                          properties:
+                                            passwordPath:
+                                              description:
+                                                PasswordPath is the path
+                                                to the password in the secret
+                                              type: string
+                                            usernamePath:
+                                              description:
+                                                UsernamePath is the path
+                                                to the username in the secret
+                                              type: string
+                                          required:
+                                            - passwordPath
+                                            - usernamePath
+                                          type: object
+                                        type: array
+                                    type: object
+                                  type: array
+                                vault:
+                                  description:
+                                    Vault is the list SecretProviderClass
+                                    names provided by Vault
+                                  items:
+                                    type: string
+                                  type: array
+                              type: object
                             secrets:
                               description: |-
                                 Secrets is a collection of kubernetes secrets for storage system credentials
@@ -3761,55 +3721,49 @@ spec:
                                 SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
                                 Applicable from CSM v1.15 onwards
                                 Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
-                              items:
-                                description:
-                                  StorageSystemSecretProviderClass is a collection
-                                  of secret provider classes for retrieving secrets
-                                  from external providers for storage system credentials
-                                properties:
-                                  conjur:
-                                    description:
-                                      Conjur is the list SecretProviderClass
-                                      names provided by Conjur
-                                    items:
-                                      properties:
-                                        name:
-                                          description:
-                                            Name is the name of the Conjur
-                                            SecretProviderClass
-                                          type: string
-                                        paths:
-                                          description:
-                                            Paths is the list of paths to
-                                            the secrets in Conjur
-                                          items:
-                                            properties:
-                                              passwordPath:
-                                                description:
-                                                  PasswordPath is the path
-                                                  to the password in the secret
-                                                type: string
-                                              usernamePath:
-                                                description:
-                                                  UsernamePath is the path
-                                                  to the username in the secret
-                                                type: string
-                                            required:
-                                              - passwordPath
-                                              - usernamePath
-                                            type: object
-                                          type: array
-                                      type: object
-                                    type: array
-                                  vault:
-                                    description:
-                                      Vault is the list SecretProviderClass
-                                      names provided by Vault
-                                    items:
-                                      type: string
-                                    type: array
-                                type: object
-                              type: array
+                              properties:
+                                conjur:
+                                  description:
+                                    Conjur is the list SecretProviderClass
+                                    names provided by Conjur
+                                  items:
+                                    properties:
+                                      name:
+                                        description:
+                                          Name is the name of the Conjur
+                                          SecretProviderClass
+                                        type: string
+                                      paths:
+                                        description:
+                                          Paths is the list of paths to the
+                                          secrets in Conjur
+                                        items:
+                                          properties:
+                                            passwordPath:
+                                              description:
+                                                PasswordPath is the path
+                                                to the password in the secret
+                                              type: string
+                                            usernamePath:
+                                              description:
+                                                UsernamePath is the path
+                                                to the username in the secret
+                                              type: string
+                                          required:
+                                            - passwordPath
+                                            - usernamePath
+                                          type: object
+                                        type: array
+                                    type: object
+                                  type: array
+                                vault:
+                                  description:
+                                    Vault is the list SecretProviderClass
+                                    names provided by Vault
+                                  items:
+                                    type: string
+                                  type: array
+                              type: object
                             secrets:
                               description: |-
                                 Secrets is a collection of kubernetes secrets for storage system credentials
