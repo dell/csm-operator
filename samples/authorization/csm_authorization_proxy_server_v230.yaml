@@ -39,7 +39,7 @@ spec:
           storageService: quay.io/dell/container-storage-modules/csm-authorization-storage:nightly
           storageServiceReplicas: 1
           opa: docker.io/openpolicyagent/opa:0.70.0
-          opaKubeMgmt: docker.io/openpolicyagent/kube-mgmt:8.5.7
+          opaKubeMgmt: docker.io/openpolicyagent/kube-mgmt:8.5.11
           authorizationController: quay.io/dell/container-storage-modules/csm-authorization-controller:nightly
           authorizationControllerReplicas: 1
           leaderElection: true
@@ -69,13 +69,27 @@ spec:
           # openTelemetryCollectorAddress: the OTLP receiving endpoint using gRPC
           openTelemetryCollectorAddress: ""
         - name: redis
-          redis: docker.io/redis:7.4.0-alpine
+          # Redis secret configuration:
+          # If using a CSI driver, specify the SecretProviderClass.
+          # Otherwise, a default Kubernetes secret will be used for Redis credentials.
+          redisSecretProviderClass:
+            # Optional: Name of the Kubernetes secret (created by the CSI driver) that contains Redis credentials.
+            - redisSecretName: ""
+              # Required: Key in the secret that stores the Redis username.
+              redisUsernameKey: username
+              # Required: Key in the secret that stores the Redis password.
+              redisPasswordKey: password
+          redis: docker.io/redis:7.4.3-alpine
           commander: docker.io/rediscommander/redis-commander:latest
           redisName: redis-csm
           redisCommander: rediscommander
           sentinel: sentinel
           redisReplicas: 5
-        # You must specify exactly one option for the storageSystemCredentials field, e.g. secretProviderClasses
+
+        # Storage system credentials can be provided in one of two ways:
+        # 1. Using a SecretProviderClass (for dynamic secrets from external providers)
+        # 2. Using a Kubernetes Secret (for static credentials)
+        # Only one of the two can be specified at a time.
         - name: storage-system-credentials
           secretProviderClasses:
             # list of secret provider classes for retrieving secrets from external providers
@@ -92,7 +106,6 @@ metadata:
   namespace: authorization
 data:
   csm-config-params.yaml: |-
-    CONCURRENT_POWERFLEX_REQUESTS: 10
-    CONCURRENT_POWERSCALE_REQUESTS: 10
+    CONCURRENT_STORAGE_REQUESTS: 10
     LOG_LEVEL: debug
     STORAGE_CAPACITY_POLL_INTERVAL: 30m

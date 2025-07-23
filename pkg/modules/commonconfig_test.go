@@ -59,7 +59,7 @@ func getCustomResource(path string) (csmv1.ContainerStorageModule, error) {
 	customResource := csmv1.ContainerStorageModule{}
 	err = yaml.Unmarshal(b, &customResource)
 	if err != nil {
-		return customResource, fmt.Errorf("failed to read unmarshal CSM Custom resource: %v", err)
+		return customResource, fmt.Errorf("failed to unmarshal CSM Custom resource: %v", err)
 	}
 
 	return customResource, nil

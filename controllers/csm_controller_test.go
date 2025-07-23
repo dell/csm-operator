@@ -1902,7 +1902,7 @@ func getAuthModule() []csmv1.Module {
 		{
 			Name:          csmv1.Authorization,
 			Enabled:       true,
-			ConfigVersion: "v2.0.0",
+			ConfigVersion: "v2.3.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: "karavi-authorization-proxy",
@@ -1960,7 +1960,7 @@ func getAuthProxyServerOCP() []csmv1.Module {
 		{
 			Name:              csmv1.AuthorizationServer,
 			Enabled:           true,
-			ConfigVersion:     "v2.0.0",
+			ConfigVersion:     "v2.3.0",
 			ForceRemoveModule: true,
 			Components: []csmv1.ContainerTemplate{
 				{
@@ -1986,6 +1986,10 @@ func getAuthProxyServerOCP() []csmv1.Module {
 				{
 					Name:              "redis",
 					RedisStorageClass: "test-storage",
+				},
+				{
+					Name:                  "storage-system-credentials",
+					SecretProviderClasses: []string{"secret-provider-class-1", "secret-provider-class-2"},
 				},
 			},
 		},

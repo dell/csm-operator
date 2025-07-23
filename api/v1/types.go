@@ -379,6 +379,12 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Sentinel StatefulSet Name"
 	Sentinel string `json:"sentinel,omitempty" yaml:"sentinel,omitempty"`
 
+	// RedisSecretProviderClass is the SecretProviderClass Object details for redis
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis SecretProviderClass details"
+	// Applicable from CSM v1.15 onwards
+	// +kubebuilder:validation:MaxItems=1
+	RedisSecretProviderClass []RedisSecretProviderClass `json:"redisSecretProviderClass,omitempty" yaml:"redisSecretProviderClass,omitempty"`
+
 	// Certificate is a certificate used for a certificate/private-key pair
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Certificate for certificate/private-key pair"
 	Certificate string `json:"certificate,omitempty" yaml:"certificate,omitempty"`
@@ -416,6 +422,23 @@ type ProxyServerIngress struct {
 	// Annotations is an unstructured key value map that stores additional annotations for the ingress
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Annotations"
 	Annotations map[string]string `json:"annotations,omitempty" yaml:"annotations,omitempty"`
+}
+
+// RedisSecretProviderClass is the redis secret configuration for CSM Authorization
+type RedisSecretProviderClass struct {
+	// RedisSecretName is the name of the Kubernetes secret created by the CSI driver
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Secret Name"
+	RedisSecretName string `json:"redisSecretName,omitempty" yaml:"redisSecretName,omitempty"`
+
+	// RedisUsernameKey is the key in the secret that holds the Redis username
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Username Key"
+	// +kubebuilder:validation:Required
+	RedisUsernameKey string `json:"redisUsernameKey" yaml:"redisUsernameKey"`
+
+	// RedisPasswordKey is the key in the secret that holds the Redis password
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Password Key"
+	// +kubebuilder:validation:Required
+	RedisPasswordKey string `json:"redisPasswordKey" yaml:"redisPasswordKey"`
 }
 
 // CSIDriverSpec struct

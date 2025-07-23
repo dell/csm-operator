@@ -11,6 +11,7 @@ This directory contains the testing infrastructure and E2E test implementation f
   - [Prerequisites](#prerequisites)
     - [Array Information](#array-information)
     - [Authorization Proxy Server Prerequisites](#authorization-proxy-server-prerequisites)
+    - [Shared NFS Prerequisites](#shared-nfs-prerequisites)
   - [Run](#run)
     - [Scenarios File](#scenarios-file)
   - [Developing E2E Tests](#developing-e2e-tests)
@@ -47,8 +48,9 @@ Any time changes made to the operator are being checked into the main branch, sa
   - The following components must be installed on your cluster:
     - Secrets Store CSI Driver
     - Vault, along with its CSI Provider. You can use the `--install-vault` tag to set up the Vault.
+      - Configure array system credentials and redis db credentials in Vault.
 
-      If you already have Vault installed, you'll need to configure the `storage_csm_authorization_secret_provider_class.yaml` file in the `testfiles/authorization-templates` directory to point to your Vault instance. For example:
+      You'll need to configure the `storage_csm_authorization_secret_provider_class.yaml` file in the `testfiles/authorization-templates` directory to point to your Vault instance and paths of credentials. For example:
       ```
         parameters:
           roleName: "csm-authorization"
@@ -62,7 +64,7 @@ Any time changes made to the operator are being checked into the main branch, sa
 - Ginkgo v2 is installed. To install, go to `tests/e2e` and run the following commands:
 
 ```bash
-go install github.com/onsi/ginkgo/v2/ginkgo
+go install github.com/onsi/ginkgo/v2/ginkgo@latest
 go get github.com/onsi/gomega/...
 ```
 
