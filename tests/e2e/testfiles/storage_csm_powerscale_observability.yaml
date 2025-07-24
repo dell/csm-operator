@@ -375,7 +375,7 @@ spec:
             # Allowed values: int
             # Default value: 30
             - name: "POWERSCALE_TOPOLOGY_METRICS_POLL_FREQUENCY"
-              value: "30"            
+              value: "30"
             - name: "POWERSCALE_CLUSTER_CAPACITY_POLL_FREQUENCY"
               value: "30"
             # POWERSCALE_CLUSTER_PERFORMANCE_POLL_FREQUENCY: set polling frequency to get cluster performance metrics data
