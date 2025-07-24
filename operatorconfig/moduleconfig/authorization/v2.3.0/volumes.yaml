@@ -1,6 +1,3 @@
-- name: karavi-authorization-config
-  secret:
-    secretName: karavi-authorization-config
 - name: proxy-server-root-certificate
   secret:
     secretName: proxy-server-root-certificate
