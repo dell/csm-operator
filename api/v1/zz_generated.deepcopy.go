@@ -220,7 +220,11 @@ func (in *ContainerTemplate) DeepCopyInto(out *ContainerTemplate) {
 		*out = make([]Vault, len(*in))
 		copy(*out, *in)
 	}
-	in.SecretProviderClasses.DeepCopyInto(&out.SecretProviderClasses)
+	if in.SecretProviderClasses != nil {
+		in, out := &in.SecretProviderClasses, &out.SecretProviderClasses
+		*out = new(StorageSystemSecretProviderClasses)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.Secrets != nil {
 		in, out := &in.Secrets, &out.Secrets
 		*out = make([]string, len(*in))
