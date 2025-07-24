@@ -50,7 +50,7 @@ spec:
                 systemType:
                   description: |-
                     SystemType is the type of the storage array
-                    Example powerflex, powermax, powerscale
+                    Example powerflex, powermax, powerscale, powerstore
                   type: string
               type: object
             status:
@@ -330,7 +330,8 @@ spec:
                     Example:
                     PowerFlex: https://[URL]
                     PowerMax: https://[URL]:[PORT]
-                    PowerScale: https://[URL]:[PORT]
+                    PowerScale: https://[URL]:[PORT]                    
+                    PowerStore: https://[URL]:[PORT]
                   type: string
                 isiPath:
                   description: |-
@@ -375,7 +376,7 @@ spec:
                 type:
                   description:
                     "Type is the storage array type, Example: powerflex,
-                    powermax, powerscale"
+                    powermax, powerscale, powerstore"
                   type: string
               required:
                 - skipCertificateValidation

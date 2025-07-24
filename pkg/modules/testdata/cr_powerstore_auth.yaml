@@ -1,0 +1,31 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: test-powerstore
+  namespace: test-powerstore
+spec:
+  driver:
+    csiDriverType: "powerstore"
+    csiDriverSpec:
+      # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
+      # Allowed values: ReadWriteOnceWithFSType, File , None
+      # Default value: ReadWriteOnceWithFSType
+      fSGroupPolicy: "File"
+    configVersion: v2.15.0
+    replicas: 1
+    dnsPolicy: ClusterFirstWithHostNet
+    forceRemoveDriver: true
+  modules:
+    - name: authorization
+      # enable: Enable/Disable csm-authorization
+      enabled: true
+      components:
+        - name: karavi-authorization-proxy
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.2.0
+          envs:
+            # proxyHost: hostname of the csm-authorization server
+            - name: "PROXY_HOST"
+              value: "testing-proxy-host"
+            # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
+            - name: "SKIP_CERTIFICATE_VALIDATION"
+              value: "true"

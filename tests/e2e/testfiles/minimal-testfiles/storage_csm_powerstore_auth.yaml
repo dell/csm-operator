@@ -1,0 +1,25 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: powerstore
+  namespace: powerstore
+spec:
+  driver:
+    # resiliency test will fail with 2 replicas.
+    replicas: 1
+    csiDriverType: "powerstore"
+    configVersion: v2.15.0
+    common:
+      image: "quay.io/dell/container-storage-modules/csi-powerstore:nightly"
+      imagePullPolicy: Always
+  modules:
+    # Authorization: enable csm-authorization for RBAC
+    - name: authorization
+      # enable: Enable/Disable csm-authorization
+      enabled: true
+      configVersion: v2.3.0
+      components:
+        - name: karavi-authorization-proxy
+          envs:
+            - name: "PROXY_HOST"
+              value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"

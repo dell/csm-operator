@@ -17,13 +17,15 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.11.1
+    configVersion: v2.14.0
     # Controller count
+    # Allowed values: n, where n > 0
+    # Default value: 2
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: "registry.connect.redhat.com/dell-emc/csi-unity@sha256:7f2abaf2c6dd92abc2824f4adc0aac929844452692e9c99cd7cdb99df1f7e129"
+      image: "registry.connect.redhat.com/dell-emc/dell-csm-unity@sha256:c1b93c49f535f247c884904c00f8b9be9aacc6fc1133bf0044efee0938407f31"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS - Flag to enable sharing of volumes across multiple pods within the same node in RWO access mode.
@@ -55,6 +57,13 @@ spec:
         # Default value: "info"
         - name: CSI_LOG_LEVEL
           value: info
+        # GOUNITY_DEBUG: Enable/disable debug logs from gounity library.
+        # Default value: false
+        - name: "GOUNITY_DEBUG"
+          value: "false"
+        # GOUNITY_SHOWHTTP: Enable/disable HTTP requests and responses from gounity library.
+        - name: "GOUNITY_SHOWHTTP"
+          value: "false"
         # CSI driver log format
         # Allowed values: "TEXT" or "JSON"
         # Default value: "TEXT"
@@ -84,19 +93,20 @@ spec:
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
-        image: registry.k8s.io/sig-storage/csi-provisioner@sha256:405a14e1aa702f7ea133cea459e8395fe40a6125c088c55569e696d48e1bd385
+        image: registry.k8s.io/sig-storage/csi-provisioner@sha256:672e45d6a55678abc1d102de665b5cbd63848e75dc7896f238c8eaaf3c7d322f
         args: ["--volume-name-prefix=csivol"]
       - name: attacher
-        image: registry.k8s.io/sig-storage/csi-attacher@sha256:b4d611100ece2f9bc980d1cb19c2285b8868da261e3b1ee8f45448ab5512ab94
+        image: registry.k8s.io/sig-storage/csi-attacher@sha256:a399393ff5bd156277c56bae0c08389b1a1b95b7fd6ea44a316ce55e0dd559d7
       - name: registrar
-        image: registry.k8s.io/sig-storage/csi-node-driver-registrar@sha256:f25af73ee708ff9c82595ae99493cdef9295bd96953366cddf36305f82555dac
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar@sha256:8e66117d3b5e336901fc2ff508b3eb6105f8cf3b70f631e8102441e9562c8875
       - name: resizer
-        image: registry.k8s.io/sig-storage/csi-resizer@sha256:a541e6cc2d8b011bb21b1d4ffec6b090e85270cce6276ee302d86153eec0af43
+        image: registry.k8s.io/sig-storage/csi-resizer@sha256:2a0b297cc7c4cd376ac7413df339ff2fdaa1ec9d099aed92b5ea1f031ef7f639
       - name: snapshotter
-        image: registry.k8s.io/sig-storage/csi-snapshotter@sha256:2e04046334baf9be425bb0fa1d04c2d1720d770825eedbdbcdb10d430da4ad8c
+        image: registry.k8s.io/sig-storage/csi-snapshotter@sha256:339a83a86e6e1eead14413fe494b43de8bc48243d146c2810b39dd741d26ca6a
       - name: csi-metadata-retriever
-        image: registry.connect.redhat.com/dell-emc/csi-metadata-retriever@sha256:abf97fc03ff59147ef0cd9ec3e58fcd5ef499aa9c13da53a8b99731884cb87d9
+        image: registry.connect.redhat.com/dell-emc/dell-csm-metadata-retriever@sha256:a8412f649ffca3aa72f5c9f5f2c3eb5dac5d742dfa5d3f4e0ef4bd81d72f2956
       # health monitor is disabled by default, refer to driver documentation before enabling it
+      # Default monitor-interval: 60s
       - name: external-health-monitor
         # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
         # Configure when the storageCapacity is set as "true"
@@ -106,7 +116,7 @@ spec:
 
         enabled: false
         args: ["--monitor-interval=60s"]
-        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller@sha256:97e806babd29424737464aaafdc3ede91119c077ddc0b7ecf423c5dca4833d84
+        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller@sha256:65d118e955cfa0827d0f727fe161a7469e0e1c6829c347a484130aeb6e45f377
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin - volume condition.
@@ -161,7 +171,14 @@ spec:
       # Leave as blank to install controller on worker nodes
       # Default value: None
       tolerations:
-      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
-      # - key: "node-role.kubernetes.io/control-plane"
-      #   operator: "Exists"
-      #   effect: "NoSchedule"
+# Uncomment if CSM for Resiliency and CSI Driver pods monitor is enabled
+#  - key: "offline.unity.storage.dell.com"
+#    operator: "Exists"
+#    effect: "NoSchedule"
+# - key: "unity.podmon.storage.dell.com"
+#   operator: "Exists"
+#   effect: "NoSchedule"
+# Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+# - key: "node-role.kubernetes.io/control-plane"
+#   operator: "Exists"
+#   effect: "NoSchedule"
