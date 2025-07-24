@@ -1416,7 +1416,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	return nil
 }
 
-func (step *Step) configureAuthorizationProxyServer(res Resource, driver, crNumStr string) error {
+func (step *Step) configureAuthorizationProxyServer(res Resource, authConfigurationPath, driver, crNumStr string) error {
 	fmt.Println("=== Configuring Authorization Proxy Server ===")
 
 	crNum, _ := strconv.Atoi(crNumStr)
@@ -1428,14 +1428,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver, crNumS
 		driverNamespace = ""
 		proxyHost       = ""
 		csmTenantName   = ""
-		storageTemplate = ""
 	)
-
-	if strings.Contains(res.Scenario.Scenario, "Kubernetes Secret") {
-		storageTemplate = "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
-	} else {
-		storageTemplate = "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
-	}
 
 	// if tests are running multiple scenarios that require differently configured auth servers, we will not be able to use one set of vars
 	// this section is for powerflex, other drivers can add their sections as required.
@@ -1471,14 +1464,14 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver, crNumS
 	address := proxyHost
 	fmt.Printf("Address: %s\n", address)
 
-	return step.AuthorizationV2Resources(storageType, driver, driverNamespace, address, port, csmTenantName, cr.Spec.Modules[0].ConfigVersion, storageTemplate)
+	return step.AuthorizationV2Resources(res, storageType, driver, driverNamespace, address, port, csmTenantName, cr.Spec.Modules[0].ConfigVersion, authConfigurationPath)
 }
 
 // AuthorizationV2Resources creates resources using CRs and dellctl for V2 versions of Authorization Proxy Server
-func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName, configVersion string, storageTemplate string) error {
+func (step *Step) AuthorizationV2Resources(res Resource, storageType, driver, driverNamespace, proxyHost, port, csmTenantName, configVersion string, configurationTemplate string) error {
 	var (
 		crMap               = ""
-		templateFile        = storageTemplate
+		templateFile        = configurationTemplate
 		updatedTemplateFile = ""
 	)
 
@@ -1497,7 +1490,8 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powermax.yaml"
 	}
 
-	err := execShell(fmt.Sprintf("mkdir -p temp/authorization-templates && cp %s %s", templateFile, updatedTemplateFile))
+	pathNum, _ := strconv.Atoi(configurationTemplate)
+	err := execShell(fmt.Sprintf("mkdir -p temp/authorization-templates && cp %s %s", res.Scenario.Paths[pathNum-1], updatedTemplateFile))
 	if err != nil {
 		return fmt.Errorf("failed to copy template file %s to %s: %v", templateFile, updatedTemplateFile, err)
 	}
