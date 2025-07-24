@@ -368,19 +368,29 @@ spec:
               value: "10"
             # POWERSTORE_SPACE_POLL_FREQUENCY: set polling frequency to get cluster capacity metrics data
             # Allowed values: int
-            # Default value: 10
+            # Default value: 300
             - name: "POWERSTORE_SPACE_POLL_FREQUENCY"
-              value: "10"
+              value: "300"
             # POWERSTORE_ARRAY_POLL_FREQUENCY: set polling frequency to get array capacity metrics data
             # Allowed values: int
-            # Default value: 10
+            # Default value: 300
             - name: "POWERSTORE_ARRAY_POLL_FREQUENCY"
-              value: "10"
+              value: "300"
             # POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY: set polling frequency to get file system capacity metrics data
             # Allowed values: int
-            # Default value: 10
+            # Default value: 20
             - name: "POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY"
-              value: "10"
+              value: "20"
+            # POWERSTORE_TOPOLOGY_METRICS_ENABLED : enable/disable collection of topology metrics
+            # Allowed values: true, false
+            # Default value: true
+            - name: "POWERSTORE_TOPOLOGY_METRICS_ENABLED"
+              value: "true"
+            # POWERSTORE_TOPOLOGY_POLL_FREQUENCY : set polling frequency to get topology metrics
+            # Allowed values: int
+            # Default value: 30
+            - name: "POWERSTORE_TOPOLOGY_POLL_FREQUENCY"
+              value: "30"
             # PowerStore metrics log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
             # Default value: "INFO"
@@ -402,10 +412,10 @@ spec:
             - name: "ZIPKIN_SERVICE_NAME"
               value: "metrics-powerstore"
             # ZIPKIN_PROBABILITY : Percentage of trace information to send to Zipkin (Valid range: 0.0 to 1.0)
-            # Allowed values : int
-            # Default value: "0"
+            # Allowed values : float
+            # Default value: "0.0"
             - name: "ZIPKIN_PROBABILITY"
-              value: "0"
+              value: "0.0"
             # Otel collector address
             # Allowed values: String
             # Default value: "otel-collector:55680"

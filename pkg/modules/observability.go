@@ -184,6 +184,12 @@ const (
 	// PstoreFileSystemPollFrequency - polling frequency to get file system capacity metrics data
 	PstoreFileSystemPollFrequency string = "<POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY>"
 
+	// PstoreTopologyEnabled - enable/disable topology metrics
+	PstoreTopologyEnabled string = "<POWERSTORE_TOPOLOGY_METRICS_ENABLED>"
+
+	// PstoreTopologyPollFrequency - polling frequency to get topology capacity metrics data
+	PstoreTopologyPollFrequency string = "<POWERSTORE_TOPOLOGY_POLL_FREQUENCY>"
+
 	// PstoreLogLevel - the log level for the Powerstore metrics
 	PstoreLogLevel string = "<POWERSTORE_LOG_LEVEL>"
 
@@ -572,12 +578,14 @@ func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 	maxConcurrentQueries := "10"
 	volumeEnabled := "true"
 	volumePollFrequency := "10"
-	spacePollFrequency := "10"
-	arrayPollFrequency := "10"
-	fsPollFrequency := "10"
+	spacePollFrequency := "300"
+	arrayPollFrequency := "300"
+	fsPollFrequency := "20"
+	topologyEnabled := "true"
+	topologyPollFrequency := "30"
 	zipkinURI := ""
 	zipkinServiceName := "metrics-powerstore"
-	zipkinProbability := "0"
+	zipkinProbability := "0.0"
 	logLevel := "INFO"
 	logFormat := "TEXT"
 	otelCollectorAddress := "otel-collector:55680"
@@ -600,6 +608,10 @@ func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 					arrayPollFrequency = env.Value
 				} else if strings.Contains(PstoreFileSystemPollFrequency, env.Name) {
 					fsPollFrequency = env.Value
+				} else if strings.Contains(PstoreTopologyEnabled, env.Name) {
+					topologyEnabled = env.Value
+				} else if strings.Contains(PstoreTopologyPollFrequency, env.Name) {
+					topologyPollFrequency = env.Value
 				} else if strings.Contains(ZipkinURI, env.Name) {
 					zipkinURI = env.Value
 				} else if strings.Contains(ZipkinServiceName, env.Name) {
@@ -625,6 +637,8 @@ func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 	YamlString = strings.ReplaceAll(YamlString, PstoreSpacePollFrequency, spacePollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, PstoreArrayPollFrequency, arrayPollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, PstoreFileSystemPollFrequency, fsPollFrequency)
+	YamlString = strings.ReplaceAll(YamlString, PstoreTopologyEnabled, topologyEnabled)
+	YamlString = strings.ReplaceAll(YamlString, PstoreTopologyPollFrequency, topologyPollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, ZipkinURI, zipkinURI)
 	YamlString = strings.ReplaceAll(YamlString, ZipkinServiceName, zipkinServiceName)
 	YamlString = strings.ReplaceAll(YamlString, ZipkinProbability, zipkinProbability)
