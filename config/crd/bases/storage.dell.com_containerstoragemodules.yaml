@@ -453,9 +453,6 @@ spec:
                                             UsernamePath is the path to the
                                             username in the secret
                                           type: string
-                                      required:
-                                        - passwordPath
-                                        - usernamePath
                                       type: object
                                     type: array
                                 type: object
@@ -988,9 +985,6 @@ spec:
                                             UsernamePath is the path to the
                                             username in the secret
                                           type: string
-                                      required:
-                                        - passwordPath
-                                        - usernamePath
                                       type: object
                                     type: array
                                 type: object
@@ -1545,9 +1539,6 @@ spec:
                                               UsernamePath is the path to
                                               the username in the secret
                                             type: string
-                                        required:
-                                          - passwordPath
-                                          - usernamePath
                                         type: object
                                       type: array
                                   type: object
@@ -2076,9 +2067,6 @@ spec:
                                             UsernamePath is the path to the
                                             username in the secret
                                           type: string
-                                      required:
-                                        - passwordPath
-                                        - usernamePath
                                       type: object
                                     type: array
                                 type: object
@@ -2617,9 +2605,6 @@ spec:
                                               UsernamePath is the path to
                                               the username in the secret
                                             type: string
-                                        required:
-                                          - passwordPath
-                                          - usernamePath
                                         type: object
                                       type: array
                                   type: object
@@ -3190,9 +3175,6 @@ spec:
                                                 UsernamePath is the path
                                                 to the username in the secret
                                               type: string
-                                          required:
-                                            - passwordPath
-                                            - usernamePath
                                           type: object
                                         type: array
                                     type: object
@@ -3749,9 +3731,6 @@ spec:
                                                 UsernamePath is the path
                                                 to the username in the secret
                                               type: string
-                                          required:
-                                            - passwordPath
-                                            - usernamePath
                                           type: object
                                         type: array
                                     type: object

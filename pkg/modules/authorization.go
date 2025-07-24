@@ -823,7 +823,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	sentinels := ""
 	image := ""
 	vaults := []csmv1.Vault{}
-	var secretProviderClasses csmv1.StorageSystemSecretProviderClasses
+	var secretProviderClasses *csmv1.StorageSystemSecretProviderClasses
 	var secrets []string
 	leaderElection := true
 	otelCollector := ""
@@ -852,7 +852,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 
 	// Either SecretProviderClasses OR Secrets must be specified (mutually exclusive) from config v2.3.0 (CSM 1.15) onwards
 	if semver.Compare(authModule.ConfigVersion, "v2.3.0") >= 0 {
-		hasSPC := len(secretProviderClasses.Vaults) > 0 || len(secretProviderClasses.Conjurs) > 0
+		hasSPC := secretProviderClasses != nil && (len(secretProviderClasses.Vaults) > 0 || len(secretProviderClasses.Conjurs) > 0)
 		hasSecrets := len(secrets) > 0
 
 		if hasSPC == hasSecrets {
@@ -867,7 +867,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
 	if semver.Compare(authModule.ConfigVersion, "v2.3.0") >= 0 {
 		// Determine whether to read from secret provider classes or kubernetes secrets
-		if len(secretProviderClasses.Vaults) > 0 || len(secretProviderClasses.Conjurs) > 0 {
+		if secretProviderClasses != nil && (len(secretProviderClasses.Vaults) > 0 || len(secretProviderClasses.Conjurs) > 0) {
 			// set volumes for secret provider classes
 			configureSecretProviderClass(secretProviderClasses, &deployment)
 		} else {
@@ -1080,14 +1080,13 @@ func mountSecretVolumes(secrets []string, deployment *appsv1.Deployment) {
 	}
 }
 
-// configureSecretProviderClass configures the secret provider class volumes and mounts in the deployment
-// and sets the necessary annotations for Conjur secrets
-func configureSecretProviderClass(secretProviderClasses csmv1.StorageSystemSecretProviderClasses, deployment *appsv1.Deployment) {
+// configureSecretProviderClass configures the secret provider class volumes, mounts, and annotations in the deployment
+func configureSecretProviderClass(secretProviderClasses *csmv1.StorageSystemSecretProviderClasses, deployment *appsv1.Deployment) {
 	configureVaultSecretProvider(secretProviderClasses, deployment)
 	configureConjurSecretProvider(secretProviderClasses, deployment)
 }
 
-func configureVaultSecretProvider(secretProviderClasses csmv1.StorageSystemSecretProviderClasses, deployment *appsv1.Deployment) {
+func configureVaultSecretProvider(secretProviderClasses *csmv1.StorageSystemSecretProviderClasses, deployment *appsv1.Deployment) {
 	readOnly := true
 	for _, vault := range secretProviderClasses.Vaults {
 		volume := corev1.Volume{
@@ -1119,7 +1118,7 @@ func configureVaultSecretProvider(secretProviderClasses csmv1.StorageSystemSecre
 	}
 }
 
-func configureConjurSecretProvider(secretProviderClasses csmv1.StorageSystemSecretProviderClasses, deployment *appsv1.Deployment) {
+func configureConjurSecretProvider(secretProviderClasses *csmv1.StorageSystemSecretProviderClasses, deployment *appsv1.Deployment) {
 	readOnly := true
 	for _, conjur := range secretProviderClasses.Conjurs {
 		volume := corev1.Volume{
@@ -1150,6 +1149,9 @@ func configureConjurSecretProvider(secretProviderClasses csmv1.StorageSystemSecr
 				})
 
 				for _, path := range conjur.Paths {
+					if secretStringBuilder.String() != "" {
+						secretStringBuilder.WriteString("\n")
+					}
 					secretStringBuilder.WriteString(fmt.Sprintf(annotationFormat, path.UsernamePath, path.UsernamePath))
 					secretStringBuilder.WriteString("\n")
 					secretStringBuilder.WriteString(fmt.Sprintf(annotationFormat, path.PasswordPath, path.PasswordPath))

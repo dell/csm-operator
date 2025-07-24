@@ -351,7 +351,7 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Secret Provider Classes"
 	// Applicable from CSM v1.15 onwards
 	// Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
-	SecretProviderClasses StorageSystemSecretProviderClasses `json:"secretProviderClasses,omitempty" yaml:"secretProviderClasses,omitempty"`
+	SecretProviderClasses *StorageSystemSecretProviderClasses `json:"secretProviderClasses,omitempty" yaml:"secretProviderClasses,omitempty"`
 
 	// Secrets is a collection of kubernetes secrets for storage system credentials
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Secrets"
@@ -465,12 +465,10 @@ type ConjurSecretProviderClass struct {
 type ConjurCredentialPath struct {
 	// UsernamePath is the path to the username in the secret
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Conjur Username Path"
-	// +kubebuilder:validation:Required
 	UsernamePath string `json:"usernamePath,omitempty" yaml:"usernamePath,omitempty"`
 
 	// PasswordPath is the path to the password in the secret
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Conjur Password Path"
-	// +kubebuilder:validation:Required
 	PasswordPath string `json:"passwordPath,omitempty" yaml:"passwordPath,omitempty"`
 }
 

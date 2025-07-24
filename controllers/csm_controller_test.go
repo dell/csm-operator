@@ -1988,8 +1988,8 @@ func getAuthProxyServerOCP() []csmv1.Module {
 				},
 				{
 					Name: "storage-system-credentials",
-					SecretProviderClasses: []csmv1.StorageSystemSecretProviderClass{
-						{Vaults: []string{"secret-provider-class-1", "secret-provider-class-2"}},
+					SecretProviderClasses: &csmv1.StorageSystemSecretProviderClasses{
+						Vaults: []string{"secret-provider-class-1", "secret-provider-class-2"},
 					},
 				},
 			},
