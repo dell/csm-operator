@@ -36,6 +36,12 @@ const (
 	// PowerFlexConfigParamsVolumeMount -
 	PowerFlexConfigParamsVolumeMount = "vxflexos-config-params"
 
+	// PowerFlexConfigVolumeMount -
+    PowerFlexConfigVolumeMount = "vxflexos-configs"
+
+    // PowerFlexConfigVolumeMountPath -
+    PowerFlexConfigVolumeMountPath = "/vxflexos-configs"
+
 	// CsiSdcEnabled - Flag to enable/disable SDC
 	CsiSdcEnabled = "<X_CSI_SDC_ENABLED>"
 

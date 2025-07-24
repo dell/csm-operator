@@ -192,18 +192,26 @@ var AuthorizationSupportedDrivers = map[string]SupportedDriverParam{
 	"powerscale": {
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
+		DriverConfigVolumeMount:       drivers.PowerScaleConfigVolumeMount,
+		DriverConfigVolumeMountPath:   drivers.PowerScaleConfigVolumeMountPath,
 	},
 	"isilon": {
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
+		DriverConfigVolumeMount:       drivers.PowerScaleConfigVolumeMount,
+		DriverConfigVolumeMountPath:   drivers.PowerScaleConfigVolumeMountPath,
 	},
 	"powerflex": {
 		PluginIdentifier:              drivers.PowerFlexPluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerFlexConfigParamsVolumeMount,
+		DriverConfigVolumeMount:       drivers.PowerFlexConfigVolumeMount,
+		DriverConfigVolumeMountPath:   drivers.PowerFlexConfigVolumeMountPath,
 	},
 	"vxflexos": {
 		PluginIdentifier:              drivers.PowerFlexPluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerFlexConfigParamsVolumeMount,
+		DriverConfigVolumeMount:       drivers.PowerFlexConfigVolumeMount,
+		DriverConfigVolumeMountPath:   drivers.PowerFlexConfigVolumeMountPath,
 	},
 	"powermax": {
 		PluginIdentifier:              drivers.PowerMaxPluginIdentifier,
@@ -376,11 +384,18 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.OperatorCo
 			}
 		}
 	}
+
+	SupportedDriverParams := AuthorizationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)]
 	for i, c := range container.VolumeMounts {
-		if *c.Name == DefaultDriverConfigParamsVolumeMount {
-			newName := AuthorizationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)].DriverConfigParamsVolumeMount
+		switch *c.Name {
+		case DefaultDriverConfigParamsVolumeMount:
+			newName := SupportedDriverParams.DriverConfigParamsVolumeMount
 			container.VolumeMounts[i].Name = &newName
-			break
+		case DefaultDriverConfigVolumeMount:
+			newConfigName := SupportedDriverParams.DriverConfigVolumeMount
+			container.VolumeMounts[i].Name = &newConfigName
+			newConfigPath := SupportedDriverParams.DriverConfigVolumeMountPath
+			container.VolumeMounts[i].MountPath = &newConfigPath
 		}
 	}
 
@@ -531,7 +546,7 @@ func AuthorizationPrecheck(ctx context.Context, op operatorutils.OperatorConfig,
 		}
 	}
 
-	secrets := []string{"karavi-authorization-config", "proxy-authz-tokens"}
+	secrets := []string{"proxy-authz-tokens"}
 	if !skipCertValid {
 		secrets = append(secrets, "proxy-server-root-certificate")
 	}
