@@ -70,7 +70,7 @@ spec:
           # Use a SecretProviderClass for Redis credentials; otherwise, a default Kubernetes secret is used.
           redisSecretProviderClass:
             # The name of the Kubernetes secret created by the CSI driver
-            - redisSecretName: array-creds
+            - redisSecretName: ""
               # The key in the secret that holds the Redis username
               redisUsernameKey: username
               # The key in the secret that holds the Redis password
@@ -84,8 +84,11 @@ spec:
 
         - name: storage-system-credentials
           secretProviderClasses:
-            vault:
-              - array-creds
+            conjur:
+              - name: array-creds
+                paths:
+                  - passwordPath: secrets/usr
+                    usernamePath: secrets/pwd
 
 ---
 apiVersion: v1
