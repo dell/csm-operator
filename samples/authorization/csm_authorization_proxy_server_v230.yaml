@@ -95,10 +95,9 @@ spec:
             # list of secret provider classes for retrieving secrets from external providers
             - secret-provider-class-1
             - secret-provider-class-2
-          # secrets:
-          #   - secret-1
-          #   - secret-2
-
+#           secrets:
+#             - secret-1
+#             - secret-2
 ---
 apiVersion: v1
 kind: ConfigMap
