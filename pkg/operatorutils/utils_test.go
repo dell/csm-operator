@@ -713,6 +713,7 @@ func TestSetContainerImage(t *testing.T) {
 		})
 	}
 }
+
 func TestUpdateSideCarApply(t *testing.T) {
 	// Test case: update sidecar with matching name
 	sc1env1 := "sidecar1-env1"
@@ -2870,6 +2871,7 @@ func TestIsResiliencyModuleEnabled(t *testing.T) {
 		t.Errorf("Expected %v, but got %v", expected, result)
 	}
 }
+
 func TestGetSecret(t *testing.T) {
 	ctx := context.Background()
 	ctrlClient := fullFakeClient()

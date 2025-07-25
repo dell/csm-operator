@@ -733,6 +733,7 @@ func TestWaitForNginxController(t *testing.T) {
 		})
 	}
 }
+
 func TestObservabilityStatusCheck(t *testing.T) {
 	// Create a fake context.Context
 	ctx := context.Background()
