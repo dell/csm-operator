@@ -424,7 +424,7 @@ spec:
             # Allowed values: int
             # Default value: 30
             - name: "POWERSCALE_TOPOLOGY_METRICS_POLL_FREQUENCY"
-              value: 30
+              value: "30"
             # POWERSCALE_CAPACITY_METRICS_ENABLED: enable/disable collection of capacity metrics
             # Allowed values: ture, false
             # Default value: true
