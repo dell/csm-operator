@@ -709,6 +709,8 @@ func getPowerScaleMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 					topologyEnabled = env.Value
 				} else if strings.Contains(PowerscaleTopologyMetricsPollFrequency, env.Name) {
 					topologyPollFrequency = env.Value
+				} else if strings.Contains(PowerscaleClusterCapacityPollFrequency, env.Name) {
+					clusterCapacityPollFrequency = env.Value
 				} else if strings.Contains(PowerscaleClusterPerformancePollFrequency, env.Name) {
 					clusterPerformancePollFrequency = env.Value
 				} else if strings.Contains(PowerscaleQuotaCapacityPollFrequency, env.Name) {
