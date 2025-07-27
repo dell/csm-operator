@@ -77,6 +77,16 @@ spec:
           # Default value: None
           storageclass: ""
 
+        - name: jwt
+          # JWT signing secret configuration:
+          # If using a CSI driver, specify the SecretProviderClass.
+          # Otherwise, a default Kubernetes secret will be used for JWT signing secret.
+          jwtSigningSecretProviderClass:
+             # The name of the Kubernetes secret created by the CSI driver
+            - jwtSigningSecretName: jwt-signing-secret-provider-class
+              # The key in the secret that holds the Redis username
+              jwtSigningSecretKey: secret
+
         - name: storage-system-credentials
           secretProviderClasses:
             # list of secret provider classes for retrieving secrets from external providers

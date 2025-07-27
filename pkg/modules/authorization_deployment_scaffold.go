@@ -9,11 +9,13 @@
 package modules
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
+	"github.com/dell/csm-operator/pkg/logger"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -794,7 +796,7 @@ func buildSentinelList(replicas int, sentinelName, namespace string) string {
 }
 
 // createRedisK8sSecret creates a k8s secret for redis
-func createRedisK8sSecret(cr csmv1.ContainerStorageModule, usernameKey, passworkKey string) corev1.Secret {
+func createRedisK8sSecret(cr csmv1.ContainerStorageModule, usernameKey, passwordKey string) corev1.Secret {
 	return corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Secret",
@@ -805,7 +807,7 @@ func createRedisK8sSecret(cr csmv1.ContainerStorageModule, usernameKey, passwork
 		},
 		Type: corev1.SecretTypeBasicAuth,
 		StringData: map[string]string{
-			passworkKey: "K@ravi123!",
+			passwordKey: "K@ravi123!",
 			usernameKey: "dev",
 		},
 	}
@@ -836,5 +838,54 @@ func redisVolumeMount() corev1.VolumeMount {
 		Name:      volumeName,
 		MountPath: "/etc/csm-authorization/redis",
 		ReadOnly:  true,
+	}
+}
+
+// jwtVolume adds volume in a pod container for the jwt signing secret SecretProviderClass
+func jwtVolume(jwtSigningSecretName string) corev1.Volume {
+	volumeName := "secrets-store-inline-jwt"
+	readOnly := true
+	return corev1.Volume{
+		Name: volumeName,
+		VolumeSource: corev1.VolumeSource{
+			CSI: &corev1.CSIVolumeSource{
+				Driver:   "secrets-store.csi.k8s.io",
+				ReadOnly: &readOnly,
+				VolumeAttributes: map[string]string{
+					"secretProviderClass": jwtSigningSecretName,
+				},
+			},
+		},
+	}
+}
+
+// jwtVolumeMount adds a volume mount in a pod container for the jwt signing secret SecretProviderClass
+func jwtVolumeMount() corev1.VolumeMount {
+	volumeName := "secrets-store-inline-jwt"
+	return corev1.VolumeMount{
+		Name:      volumeName,
+		MountPath: "/etc/csm-authorization/config",
+		ReadOnly:  false,
+	}
+}
+
+// createRedisK8sSecret creates a k8s secret for redis
+func createJWTSigningK8sSecret(ctx context.Context, cr csmv1.ContainerStorageModule, jwtSigningSecretKey string) corev1.Secret {
+	log := logger.GetLogger(ctx)
+	jwtSecretString := "web:\n  " + jwtSigningSecretKey + ": secret"
+	log.Infof("Auth deployment - jwtSecretBytes: %s", jwtSecretString)
+
+	return corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      defaultJWTSigningSecretName,
+			Namespace: cr.Namespace,
+		},
+		Type: corev1.SecretTypeOpaque,
+		StringData: map[string]string{
+			"config.yaml": jwtSecretString,
+		},
 	}
 }

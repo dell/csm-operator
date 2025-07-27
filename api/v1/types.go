@@ -388,6 +388,12 @@ type ContainerTemplate struct {
 	// +kubebuilder:validation:MaxItems=1
 	RedisSecretProviderClass []RedisSecretProviderClass `json:"redisSecretProviderClass,omitempty" yaml:"redisSecretProviderClass,omitempty"`
 
+	// JWTSigningSecretProviderClass is the SecretProviderClass Object details for jwt signing secret
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="JWT Signing Secret SecretProviderClass details"
+	// Applicable from CSM v1.15 onwards
+	// +kubebuilder:validation:MaxItems=1
+	JWTSigningSecretProviderClass []JWTSigningSecretProviderClass `json:"jwtSigningSecretProviderClass,omitempty" yaml:"jwtSigningSecretProviderClass,omitempty"`
+
 	// ReplicaCount is the replica count for app mobility
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Application Mobility Replica Count"
 	ReplicaCount string `json:"replicaCount,omitempty" yaml:"replicaCount,omitempty"`
@@ -470,6 +476,18 @@ type RedisSecretProviderClass struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Password Key"
 	// +kubebuilder:validation:Required
 	RedisPasswordKey string `json:"redisPasswordKey" yaml:"redisPasswordKey"`
+}
+
+// JWTSigningSecretProviderClass is the jwt signing secret configuration for CSM Authorization
+type JWTSigningSecretProviderClass struct {
+	// JWTSigningSecretName is the name of the Kubernetes secret created by the CSI driver
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="JWT Signing Secret Name"
+	JWTSigningSecretName string `json:"jwtSigningSecretName,omitempty" yaml:"jwtSigningSecretName,omitempty"`
+
+	// JWTSigningSecretKey is the key in the secret that holds the JWT Signing secret
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="JWT Signing Secret Key"
+	// +kubebuilder:validation:Required
+	JWTSigningSecretKey string `json:"jwtSigningSecretKey" yaml:"jwtSigningSecretKey"`
 }
 
 // CSIDriverSpec struct

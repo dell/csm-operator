@@ -86,6 +86,16 @@ spec:
           sentinel: sentinel
           redisReplicas: 5
 
+        - name: jwt
+          # JWT signing secret configuration:
+          # If using a CSI driver, specify the SecretProviderClass.
+          # Otherwise, a default Kubernetes secret will be used for JWT signing secret.
+          jwtSigningSecretProviderClass:
+             # The name of the Kubernetes secret created by the CSI driver
+            - jwtSigningSecretName: ""
+              # The key in the secret that holds the Redis username
+              jwtSigningSecretKey: secret
+
         # Storage system credentials can be provided in one of two ways:
         # 1. Using a SecretProviderClass (for dynamic secrets from external providers)
         # 2. Using a Kubernetes Secret (for static credentials)

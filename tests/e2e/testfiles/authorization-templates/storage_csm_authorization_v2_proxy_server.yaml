@@ -82,6 +82,13 @@ spec:
           sentinel: sentinel
           redisReplicas: 5
 
+        - name: jwt
+          jwtSigningSecretProviderClass:
+             # The name of the Kubernetes secret created by the CSI driver
+            - jwtSigningSecretName: array-creds
+              # The key in the secret that holds the Redis username
+              jwtSigningSecretKey: secret
+
         - name: storage-system-credentials
           secretProviderClasses:
             # list of secret provider classes for retrieving secrets from external providers
