@@ -2597,10 +2597,14 @@ func (suite *CSMControllerTestSuite) TestReconcileReplicationCRDSReturnError() {
 	assert.ErrorContains(suite.T(), err, "unable to reconcile replication CRDs")
 }
 
+// customClient is our custom client that we will pass to removeDriverFromCluster
+// this lets us control what Delete/Get/ etc returns from within removeDriverFromCluster
 type customClient struct {
 	client.Client
 }
 
+// Delete method is modified to return an error when the name contains "failed-deletion"
+// this lets us control when to return an error from removeDriverFromCluster
 func (c customClient) Delete(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
 	if strings.Contains(obj.GetName(), "failed-deletion") {
 		return fmt.Errorf("failed to delete: %s", obj.GetName())
@@ -2608,10 +2612,13 @@ func (c customClient) Delete(ctx context.Context, obj client.Object, opts ...cli
 	return nil
 }
 
-// want Get(context.Context, client.ObjectKey, client.Object, ...client.GetOption)
+// Get method is modified to always return no error
+// This is so we can test out errors when an object exists but cannot be deleted
 func (c customClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
 	return nil
 }
+
+// this test tries running removeDriverFromCluster when different components fail to delete
 func Test_removeDriverFromCluster(t *testing.T) {
 	type args struct {
 		ctx          context.Context
@@ -2624,7 +2631,7 @@ func Test_removeDriverFromCluster(t *testing.T) {
 		expectedErr string
 	}{
 		{
-			name: "test failed delete",
+			name: "Fail to delete controller service account",
 			args: args{
 				ctx: context.TODO(),
 				cluster: operatorutils.ClusterConfig{
@@ -2634,25 +2641,9 @@ func Test_removeDriverFromCluster(t *testing.T) {
 					},
 				},
 				driverConfig: &DriverConfig{
-					Driver: &storagev1.CSIDriver{
-						// CSIDriver spec
-					},
-					ConfigMap: &corev1.ConfigMap{
-						// ConfigMap spec
-					},
-					Node: &operatorutils.NodeYAML{
-						Rbac: operatorutils.RbacYAML{
-							ServiceAccount: corev1.ServiceAccount{
-								TypeMeta: metav1.TypeMeta{
-									Kind:       "ServiceAccount",
-									APIVersion: "v1",
-								},
-								ObjectMeta: metav1.ObjectMeta{
-									Name: "controller-service-account",
-								},
-							},
-						},
-					},
+					Driver:    &storagev1.CSIDriver{},
+					ConfigMap: &corev1.ConfigMap{},
+					Node:      &operatorutils.NodeYAML{},
 					Controller: &operatorutils.ControllerYAML{
 						Rbac: operatorutils.RbacYAML{
 							ServiceAccount: corev1.ServiceAccount{
@@ -2662,6 +2653,144 @@ func Test_removeDriverFromCluster(t *testing.T) {
 								},
 								ObjectMeta: metav1.ObjectMeta{
 									Name: "failed-deletion-controller-service-account",
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedErr: "failed to delete",
+		},
+		{
+			name: "Fail to delete controller cluster role",
+			args: args{
+				ctx: context.TODO(),
+				cluster: operatorutils.ClusterConfig{
+					ClusterID: "test",
+					ClusterCTRLClient: customClient{
+						Client: fake.NewClientBuilder().Build(),
+					},
+				},
+				driverConfig: &DriverConfig{
+					Driver:    &storagev1.CSIDriver{},
+					ConfigMap: &corev1.ConfigMap{},
+					Node:      &operatorutils.NodeYAML{},
+					Controller: &operatorutils.ControllerYAML{
+						Rbac: operatorutils.RbacYAML{
+							ClusterRole: rbacv1.ClusterRole{
+								TypeMeta: metav1.TypeMeta{
+									Kind:       "ClusterRole",
+									APIVersion: "rbac.authorization.k8s.io/v1",
+								},
+								ObjectMeta: metav1.ObjectMeta{
+									Name: "failed-deletion-controller-cluster-role",
+								},
+								Rules: []rbacv1.PolicyRule{
+									{
+										APIGroups: []string{""},
+										Resources: []string{"pods"},
+										Verbs:     []string{"get", "watch", "list"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedErr: "failed to delete",
+		},
+		{
+			name: "Fail to delete controller cluster role binding",
+			args: args{
+				ctx: context.TODO(),
+				cluster: operatorutils.ClusterConfig{
+					ClusterID: "test",
+					ClusterCTRLClient: customClient{
+						Client: fake.NewClientBuilder().Build(),
+					},
+				},
+				driverConfig: &DriverConfig{
+					Driver:    &storagev1.CSIDriver{},
+					ConfigMap: &corev1.ConfigMap{},
+					Node:      &operatorutils.NodeYAML{},
+					Controller: &operatorutils.ControllerYAML{
+						Rbac: operatorutils.RbacYAML{
+							ClusterRoleBinding: rbacv1.ClusterRoleBinding{
+								TypeMeta: metav1.TypeMeta{
+									Kind:       "ClusterRole",
+									APIVersion: "rbac.authorization.k8s.io/v1",
+								},
+								ObjectMeta: metav1.ObjectMeta{
+									Name: "failed-deletion-controller-cluster-role-binding",
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedErr: "failed to delete",
+		},
+		{
+			name: "Fail to delete controller role",
+			args: args{
+				ctx: context.TODO(),
+				cluster: operatorutils.ClusterConfig{
+					ClusterID: "test",
+					ClusterCTRLClient: customClient{
+						Client: fake.NewClientBuilder().Build(),
+					},
+				},
+				driverConfig: &DriverConfig{
+					Driver:    &storagev1.CSIDriver{},
+					ConfigMap: &corev1.ConfigMap{},
+					Node:      &operatorutils.NodeYAML{},
+					Controller: &operatorutils.ControllerYAML{
+						Rbac: operatorutils.RbacYAML{
+							Role: rbacv1.Role{
+								TypeMeta: metav1.TypeMeta{
+									Kind:       "ClusterRole",
+									APIVersion: "rbac.authorization.k8s.io/v1",
+								},
+								ObjectMeta: metav1.ObjectMeta{
+									Name: "failed-deletion-controller-cluster-role",
+								},
+								Rules: []rbacv1.PolicyRule{
+									{
+										APIGroups: []string{""},
+										Resources: []string{"pods"},
+										Verbs:     []string{"get", "watch", "list"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedErr: "failed to delete",
+		},
+		{
+			name: "Fail to delete controller role binding",
+			args: args{
+				ctx: context.TODO(),
+				cluster: operatorutils.ClusterConfig{
+					ClusterID: "test",
+					ClusterCTRLClient: customClient{
+						Client: fake.NewClientBuilder().Build(),
+					},
+				},
+				driverConfig: &DriverConfig{
+					Driver:    &storagev1.CSIDriver{},
+					ConfigMap: &corev1.ConfigMap{},
+					Node:      &operatorutils.NodeYAML{},
+					Controller: &operatorutils.ControllerYAML{
+						Rbac: operatorutils.RbacYAML{
+							RoleBinding: rbacv1.RoleBinding{
+								TypeMeta: metav1.TypeMeta{
+									Kind:       "ClusterRole",
+									APIVersion: "rbac.authorization.k8s.io/v1",
+								},
+								ObjectMeta: metav1.ObjectMeta{
+									Name: "failed-deletion-controller-cluster-role-binding",
 								},
 							},
 						},
