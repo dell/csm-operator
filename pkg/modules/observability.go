@@ -70,6 +70,12 @@ const (
 	// PowerscalePerformanceMetricsEnabled - enable/disable collection of performance metrics
 	PowerscalePerformanceMetricsEnabled string = "<POWERSCALE_PERFORMANCE_METRICS_ENABLED>"
 
+	// PowerscaleTopologyMetricsEnabled - enable/disable collection of topology metrics
+	PowerscaleTopologyMetricsEnabled string = "<POWERSCALE_TOPOLOGY_METRICS_ENABLED>"
+
+	// PowerscaleTopologyMetricsPollFrequency - polling frequency to get topology metrics data
+	PowerscaleTopologyMetricsPollFrequency string = "<POWERSCALE_TOPOLOGY_METRICS_POLL_FREQUENCY>"
+
 	// PowerscaleClusterCapacityPollFrequency - polling frequency to get cluster capacity data
 	PowerscaleClusterCapacityPollFrequency string = "<POWERSCALE_CLUSTER_CAPACITY_POLL_FREQUENCY>"
 
@@ -675,6 +681,8 @@ func getPowerScaleMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 	maxConcurrentQueries := "10"
 	capacityEnabled := "true"
 	performanceEnabled := "true"
+	topologyEnabled := "true"
+	topologyPollFrequency := "30"
 	clusterCapacityPollFrequency := "30"
 	clusterPerformancePollFrequency := "20"
 	quotaCapacityPollFrequency := "30"
@@ -697,6 +705,10 @@ func getPowerScaleMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 					capacityEnabled = env.Value
 				} else if strings.Contains(PowerscalePerformanceMetricsEnabled, env.Name) {
 					performanceEnabled = env.Value
+				} else if strings.Contains(PowerscaleTopologyMetricsEnabled, env.Name) {
+					topologyEnabled = env.Value
+				} else if strings.Contains(PowerscaleTopologyMetricsPollFrequency, env.Name) {
+					topologyPollFrequency = env.Value
 				} else if strings.Contains(PowerscaleClusterCapacityPollFrequency, env.Name) {
 					clusterCapacityPollFrequency = env.Value
 				} else if strings.Contains(PowerscaleClusterPerformancePollFrequency, env.Name) {
@@ -724,6 +736,8 @@ func getPowerScaleMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 	YamlString = strings.ReplaceAll(YamlString, PowerScaleMaxConcurrentQueries, maxConcurrentQueries)
 	YamlString = strings.ReplaceAll(YamlString, PowerscaleCapacityMetricsEnabled, capacityEnabled)
 	YamlString = strings.ReplaceAll(YamlString, PowerscalePerformanceMetricsEnabled, performanceEnabled)
+	YamlString = strings.ReplaceAll(YamlString, PowerscaleTopologyMetricsEnabled, topologyEnabled)
+	YamlString = strings.ReplaceAll(YamlString, PowerscaleTopologyMetricsPollFrequency, topologyPollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, PowerscaleClusterCapacityPollFrequency, clusterCapacityPollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, PowerscaleClusterPerformancePollFrequency, clusterPerformancePollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, PowerscaleQuotaCapacityPollFrequency, quotaCapacityPollFrequency)
