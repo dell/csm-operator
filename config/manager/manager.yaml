@@ -41,9 +41,9 @@ spec:
               name: RELATED_IMAGE_csi-powerstore
             - value: quay.io/dell/container-storage-modules/csi-unity:v2.14.0
               name: RELATED_IMAGE_csi-unity
-            - value: quay.io/dell/container-storage-modules/csi-vxflexos:v2.14.0
+            - value: quay.io/dell/container-storage-modules/csi-vxflexos:v2.14.1
               name: RELATED_IMAGE_csi-vxflexos
-            - value: quay.io/dell/storage/powerflex/sdc:4.5.2.1
+            - value: quay.io/dell/storage/powerflex/sdc:4.5.4
               name: RELATED_IMAGE_sdc
             - name: RELATED_IMAGE_karavi-authorization-proxy
               value: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.2.0
