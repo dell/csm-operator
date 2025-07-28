@@ -136,16 +136,18 @@ var (
 
 	csmName = "csm"
 
-	configVersion              = shared.ConfigVersion
-	appMobConfigVersion        = shared.AppMobConfigVersion
-	pFlexConfigVersion         = shared.PFlexConfigVersion
-	oldConfigVersion           = shared.OldConfigVersion
-	upgradeConfigVersion       = shared.UpgradeConfigVersion
-	downgradeConfigVersion     = shared.DowngradeConfigVersion
-	jumpUpgradeConfigVersion   = shared.JumpUpgradeConfigVersion
-	jumpDowngradeConfigVersion = shared.JumpDowngradeConfigVersion
-	invalidConfigVersion       = shared.BadConfigVersion
-	PmaxConfigVersion          = shared.PmaxConfigVersion
+	configVersion               = shared.ConfigVersion
+	appMobConfigVersion         = shared.AppMobConfigVersion
+	pFlexConfigVersion          = shared.PFlexConfigVersion
+	oldConfigVersion            = shared.OldConfigVersion
+	upgradeConfigVersion        = shared.UpgradeConfigVersion
+	downgradeConfigVersion      = shared.DowngradeConfigVersion
+	jumpUpgradeConfigVersion    = shared.JumpUpgradeConfigVersion
+	jumpDowngradeConfigVersion  = shared.JumpDowngradeConfigVersion
+	invalidConfigVersion        = shared.BadConfigVersion
+	PmaxConfigVersion           = shared.PmaxConfigVersion
+	resiliencyCSMConfigVersion  = shared.ResiliencyCSMConfigVersion
+	replicationCSMConfigVersion = shared.ReplicationCSMConfigVersion
 
 	req = reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -866,17 +868,17 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 
 	// added for the powerflex on openshift case
 	r.Config.IsOpenShift = true
-	powerflexCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	powerflexCSM := shared.MakeCSM(csmName, suite.namespace, pFlexConfigVersion)
 	powerflexCSM.Spec.Driver.CSIDriverType = csmv1.PowerFlex
 	suite.makeFakeCSM(csmName, suite.namespace, false, []csmv1.Module{})
 	minimalPowerFlexCSM := powerflexCSM
 	minimalPowerFlexCSM.Spec.Driver.Node = nil
 
-	resiliencyCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	resiliencyCSM := shared.MakeCSM(csmName, suite.namespace, resiliencyCSMConfigVersion)
 	resiliencyCSM.Spec.Modules = getResiliencyModule()
 	resiliencyCSM.Spec.Driver.CSIDriverType = csmv1.PowerFlex
 
-	replicationCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	replicationCSM := shared.MakeCSM(csmName, suite.namespace, replicationCSMConfigVersion)
 	replicationCSM.Spec.Modules = getReplicaModule()
 	replicationCSM.Spec.Driver.CSIDriverType = csmv1.PowerFlex
 
