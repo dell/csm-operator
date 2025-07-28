@@ -2605,7 +2605,7 @@ type customClient struct {
 
 // Delete method is modified to return an error when the name contains "failed-deletion"
 // this lets us control when to return an error from removeDriverFromCluster
-func (c customClient) Delete(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
+func (c customClient) Delete(_ context.Context, obj client.Object, opts ...client.DeleteOption) error {
 	if strings.Contains(obj.GetName(), "failed-deletion") {
 		return fmt.Errorf("failed to delete: %s", obj.GetName())
 	}
@@ -2614,7 +2614,7 @@ func (c customClient) Delete(ctx context.Context, obj client.Object, opts ...cli
 
 // Get method is modified to always return no error
 // This is so we can test out errors when an object exists but cannot be deleted
-func (c customClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+func (c customClient) Get(_ context.Context, _ client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 	return nil
 }
 
