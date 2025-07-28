@@ -23,14 +23,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dell/csm-operator/pkg/constants"
-	"github.com/dell/csm-operator/pkg/modules"
-	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
-
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	v1 "github.com/dell/csm-operator/api/v1"
+	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/logger"
+	"github.com/dell/csm-operator/pkg/modules"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	"github.com/dell/csm-operator/tests/shared"
 	"github.com/dell/csm-operator/tests/shared/clientgoclient"
 	"github.com/dell/csm-operator/tests/shared/crclient"
@@ -42,14 +41,14 @@ import (
 	storagev1 "k8s.io/api/storage/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/scheme"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -2596,4 +2595,92 @@ func (suite *CSMControllerTestSuite) TestReconcileReplicationCRDSReturnError() {
 	err := reconciler.reconcileReplicationCRDS(ctx, operatorutils.OperatorConfig{}, csm, suite.fakeClient)
 	assert.NotNil(suite.T(), err)
 	assert.ErrorContains(suite.T(), err, "unable to reconcile replication CRDs")
+}
+
+type customClient struct {
+	client.Client
+}
+
+func (c customClient) Delete(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
+	if strings.Contains(obj.GetName(), "failed-deletion") {
+		return fmt.Errorf("failed to delete: %s", obj.GetName())
+	}
+	return nil
+}
+
+// want Get(context.Context, client.ObjectKey, client.Object, ...client.GetOption)
+func (c customClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+	return nil
+}
+func Test_removeDriverFromCluster(t *testing.T) {
+	type args struct {
+		ctx          context.Context
+		cluster      operatorutils.ClusterConfig
+		driverConfig *DriverConfig
+	}
+	tests := []struct {
+		name        string
+		args        args
+		expectedErr string
+	}{
+		{
+			name: "test failed delete",
+			args: args{
+				ctx: context.TODO(),
+				cluster: operatorutils.ClusterConfig{
+					ClusterID: "test",
+					ClusterCTRLClient: customClient{
+						Client: fake.NewClientBuilder().Build(),
+					},
+				},
+				driverConfig: &DriverConfig{
+					Driver: &storagev1.CSIDriver{
+						// CSIDriver spec
+					},
+					ConfigMap: &corev1.ConfigMap{
+						// ConfigMap spec
+					},
+					Node: &operatorutils.NodeYAML{
+						Rbac: operatorutils.RbacYAML{
+							ServiceAccount: corev1.ServiceAccount{
+								TypeMeta: metav1.TypeMeta{
+									Kind:       "ServiceAccount",
+									APIVersion: "v1",
+								},
+								ObjectMeta: metav1.ObjectMeta{
+									Name: "controller-service-account",
+								},
+							},
+						},
+					},
+					Controller: &operatorutils.ControllerYAML{
+						Rbac: operatorutils.RbacYAML{
+							ServiceAccount: corev1.ServiceAccount{
+								TypeMeta: metav1.TypeMeta{
+									Kind:       "ServiceAccount",
+									APIVersion: "v1",
+								},
+								ObjectMeta: metav1.ObjectMeta{
+									Name: "failed-deletion-controller-service-account",
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedErr: "failed to delete",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := removeDriverFromCluster(tt.args.ctx, tt.args.cluster, tt.args.driverConfig)
+			if tt.expectedErr == "" {
+				if err != nil {
+					t.Errorf("removeDriverFromCluster() returned error = %v, but no error was expected", err)
+				}
+			} else {
+				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
+			}
+		})
+	}
 }
