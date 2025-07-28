@@ -673,7 +673,7 @@ func GetDriverYaml(YamlString, kind string) (interface{}, error) {
 
 		case "Role":
 			var crole rbacv1.Role
-			err := yaml.Unmarshal(raw, &crole)
+			err := yamlUnmarshal(raw, &crole)
 			if err != nil {
 				return nil, err
 			}
@@ -681,7 +681,7 @@ func GetDriverYaml(YamlString, kind string) (interface{}, error) {
 
 		case "RoleBinding":
 			var rb rbacv1.RoleBinding
-			err := yaml.Unmarshal(raw, &rb)
+			err := yamlUnmarshal(raw, &rb)
 			if err != nil {
 				return nil, err
 			}
