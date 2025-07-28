@@ -6,4 +6,4 @@ metadata:
 spec:
   driver:
     csiDriverType: "powerflex"
-    configVersion: v2.14.0
+    configVersion: v2.14.1
