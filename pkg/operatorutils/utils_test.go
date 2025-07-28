@@ -1938,6 +1938,16 @@ func TestGetDriverYamlWithErrors(t *testing.T) {
 			set:  "DaemonSet",
 		},
 		{
+			name: "Role yaml returns error",
+			kind: "Role",
+			set:  "Deployment",
+		},
+		{
+			name: "RoleBinding yaml returns error",
+			kind: "RoleBinding",
+			set:  "Deployment",
+		},
+		{
 			name: "Invalid kind returns error",
 			kind: "Service",
 			set:  "Invalid",
