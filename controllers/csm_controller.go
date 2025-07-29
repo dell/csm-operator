@@ -74,6 +74,7 @@ type ContainerStorageModuleReconciler struct {
 	EventRecorder        record.EventRecorder
 	ContentWatchChannels map[string]chan struct{}
 	ContentWatchLock     sync.Mutex
+	CsmEditLock          sync.Mutex
 }
 
 // DriverConfig  -
@@ -450,6 +451,8 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 		}
 
 		csm := new(csmv1.ContainerStorageModule)
+		r.CsmEditLock.Lock()
+		defer r.CsmEditLock.Unlock()
 		err := r.Client.Get(ctx, namespacedName, csm)
 		if err != nil {
 			log.Error("deployment get csm", "error", err.Error())
@@ -496,6 +499,8 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(_ interface{}, obj i
 			Namespace: ns,
 		}
 		csm := new(csmv1.ContainerStorageModule)
+		r.CsmEditLock.Lock()
+		defer r.CsmEditLock.Unlock()
 		err := r.Client.Get(ctx, namespacedName, csm)
 		if err != nil {
 			r.Log.Errorw("daemonset get csm", "error", err.Error())
@@ -549,6 +554,8 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 		}
 
 		csm := new(csmv1.ContainerStorageModule)
+		r.CsmEditLock.Lock()
+		defer r.CsmEditLock.Unlock()
 		err := r.Client.Get(ctx, namespacedName, csm)
 		if err != nil {
 			r.Log.Error("daemonset get csm", "error", err.Error())
@@ -567,7 +574,7 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 
 // ContentWatch - watch updates on deployments, deamonsets, and pods
 func (r *ContainerStorageModuleReconciler) ContentWatch(csm *csmv1.ContainerStorageModule) (chan struct{}, error) {
-	sharedInformerFactory := sinformer.NewSharedInformerFactoryWithOptions(r.K8sClient, time.Duration(time.Hour))
+	sharedInformerFactory := sinformer.NewSharedInformerFactoryWithOptions(r.K8sClient, time.Duration(3*time.Minute))
 
 	updateFn := func(oldObj interface{}, newObj interface{}) {
 		r.informerUpdate(csm, oldObj, newObj, r.handleDaemonsetUpdate, r.handleDeploymentUpdate, r.handlePodsUpdate)

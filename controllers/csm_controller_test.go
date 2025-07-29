@@ -1292,6 +1292,7 @@ func (suite *CSMControllerTestSuite) createReconciler() (reconciler *ContainerSt
 		EventRecorder:        record.NewFakeRecorder(100),
 		ContentWatchChannels: map[string]chan struct{}{},
 		ContentWatchLock:     sync.Mutex{},
+		CsmEditLock:          sync.Mutex{},
 	}
 
 	return reconciler
