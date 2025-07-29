@@ -136,9 +136,9 @@ storage "file" {
 	powermaxSecretPath   = "PMAX_VAULT_STORAGE_PATH"   // #nosec G101 -- env var, not hardcode
 	powermaxUsername     = "PMAX_USER"                 // #nosec G101 -- env var, not hardcode
 	powermaxPassword     = "PMAX_PASS"                 // #nosec G101 -- env var, not hardcode
-	powerstoreSecretPath = "PSTORE_VAULT_STORAGE_PATH"   // #nosec G101 -- env var, not hardcode
-	powerstoreUsername   = "PSTORE_USER"                 // #nosec G101 -- env var, not hardcode
-	powerstorePassword   = "PSTORE_PASS"                 // #nosec G101 -- env var, not hardcode
+	powerstoreSecretPath = "PSTORE_VAULT_STORAGE_PATH" // #nosec G101 -- env var, not hardcode
+	powerstoreUsername   = "PSTORE_USER"               // #nosec G101 -- env var, not hardcode
+	powerstorePassword   = "PSTORE_PASS"               // #nosec G101 -- env var, not hardcode
 	// timestamps to create certificates
 	notBefore = time.Now()
 	notAfter  = notBefore.Add(8766 * time.Hour)
