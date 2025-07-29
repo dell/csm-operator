@@ -870,6 +870,7 @@ func versionParser(version string) (int, int, error) {
 // MinVersionCheck checks if the provided version meets or exceeds the minimum required version.
 //
 // Args:
+<<<<<<< HEAD
 //
 //	minVersion string: The minimum required version in the format "vA.B.C".
 //	version string: The version to be checked in the format "vA.B.C".
@@ -878,6 +879,14 @@ func versionParser(version string) (int, int, error) {
 //
 //	bool: True if the version meets or exceeds the minimum required version, false otherwise.
 //	error: Any error encountered during version parsing.
+=======
+//   minVersion string: The minimum required version in the format "vA.B.C".
+//   version string: The version to be checked in the format "vA.B.C".
+//
+// Returns:
+//   bool: True if the version meets or exceeds the minimum required version, false otherwise.
+//   error: Any error encountered during version parsing.
+>>>>>>> 824e39ab (swap versions)
 func MinVersionCheck(minVersion string, version string) (bool, error) {
 	minMajorVersion, minMinorVersion, err := versionParser(minVersion)
 	if err != nil {
