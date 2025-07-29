@@ -546,7 +546,19 @@ func AuthorizationPrecheck(ctx context.Context, op operatorutils.OperatorConfig,
 		}
 	}
 
-	secrets := []string{"proxy-authz-tokens"}
+	var secrets []string 
+
+	// Karavi authorization config is not used in config v2.3.0 and later (CSM 1.15)
+	condensedSecretVersion, err := operatorutils.MinVersionCheck("v2.3.0", auth.ConfigVersion)
+	if err != nil {
+		return err
+	}
+	if condensedSecretVersion {
+		secrets = []string{"proxy-authz-tokens"}
+	} else {
+		secrets = []string{"karavi-authorization-config", "proxy-authz-tokens"}
+	}
+	
 	if !skipCertValid {
 		secrets = append(secrets, "proxy-server-root-certificate")
 	}
