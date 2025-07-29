@@ -315,6 +315,7 @@ func main() {
 		Config:               operatorConfig,
 		ContentWatchChannels: make(map[string]chan struct{}),
 		ContentWatchLock:     sync.Mutex{},
+		CsmEditLock:          sync.Mutex{},
 	}
 
 	setupWithManager := getSetupWithManagerFn(r)
