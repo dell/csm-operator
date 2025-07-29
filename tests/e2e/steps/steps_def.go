@@ -1625,7 +1625,6 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powerstore.yaml"
 	}
 
-
 	err := execShell(fmt.Sprintf("mkdir -p temp/authorization-templates && cp %s %s", templateFile, updatedTemplateFile))
 	if err != nil {
 		return fmt.Errorf("failed to copy template file %s to %s: %v", templateFile, updatedTemplateFile, err)
