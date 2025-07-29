@@ -28,22 +28,20 @@ import (
 
 // ConfigVersions used for all unit tests
 const (
-	PFlexConfigVersion          string = "v2.14.1"
-	DowngradeConfigVersion      string = "v2.13.1"
-	ConfigVersion               string = "v2.14.0"
-	UpgradeConfigVersion        string = "v2.12.0"
-	JumpUpgradeConfigVersion    string = "v2.13.0"
-	JumpDowngradeConfigVersion  string = "v2.12.0"
-	OldConfigVersion            string = "v2.2.0"
-	BadConfigVersion            string = "v0"
-	PStoreConfigVersion         string = "v2.14.1"
-	UnityConfigVersion          string = "v2.14.0"
-	PScaleConfigVersion         string = "v2.14.0"
-	PmaxConfigVersion           string = "v2.14.1"
-	AuthServerConfigVersion     string = "v2.1.0"
-	AppMobConfigVersion         string = "v1.1.0"
-	ResiliencyCSMConfigVersion  string = "v2.14.1"
-	ReplicationCSMConfigVersion string = "v2.14.1"
+	PFlexConfigVersion         string = "v2.14.1"
+	DowngradeConfigVersion     string = "v2.13.1"
+	ConfigVersion              string = "v2.14.0"
+	UpgradeConfigVersion       string = "v2.12.0"
+	JumpUpgradeConfigVersion   string = "v2.13.0"
+	JumpDowngradeConfigVersion string = "v2.12.0"
+	OldConfigVersion           string = "v2.2.0"
+	BadConfigVersion           string = "v0"
+	PStoreConfigVersion        string = "v2.14.1"
+	UnityConfigVersion         string = "v2.14.0"
+	PScaleConfigVersion        string = "v2.14.0"
+	PmaxConfigVersion          string = "v2.14.1"
+	AuthServerConfigVersion    string = "v2.1.0"
+	AppMobConfigVersion        string = "v1.1.0"
 )
 
 // StorageKey is used to store a runtime object. It's used for both clientgo client and controller runtime client
