@@ -256,6 +256,8 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 	log.Infow("reconcile for", "Namespace", req.Namespace, "Name", req.Name, "Attempt", r.GetUpdateCount())
 
 	// Fetch the ContainerStorageModuleReconciler instance
+	r.CsmEditLock.Lock()
+	defer r.CsmEditLock.Unlock()
 	err := r.Client.Get(ctx, req.NamespacedName, csm)
 	if err != nil {
 		if k8serror.IsNotFound(err) {
