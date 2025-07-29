@@ -1161,10 +1161,10 @@ metadata:
                     "value": "false"
                   }
                 ],
-                "image": "quay.io/dell/container-storage-modules/csi-vxflexos:v2.14.0",
+                "image": "quay.io/dell/container-storage-modules/csi-vxflexos:v2.14.1",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.14.0",
+              "configVersion": "v2.14.1",
               "controller": {
                 "envs": [
                   {
@@ -4345,7 +4345,7 @@ spec:
                       - name: RELATED_IMAGE_csi-unity
                         value: quay.io/dell/container-storage-modules/csi-unity:v2.14.0
                       - name: RELATED_IMAGE_csi-vxflexos
-                        value: quay.io/dell/container-storage-modules/csi-vxflexos:v2.14.0
+                        value: quay.io/dell/container-storage-modules/csi-vxflexos:v2.14.1
                       - name: RELATED_IMAGE_sdc
                         value: quay.io/dell/storage/powerflex/sdc:4.5.2.1
                       - name: RELATED_IMAGE_karavi-authorization-proxy
@@ -4465,9 +4465,9 @@ spec:
       name: csi-powerstore
     - image: quay.io/dell/container-storage-modules/csi-unity:v2.14.0
       name: csi-unity
-    - image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.14.0
+    - image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.14.1
       name: csi-vxflexos
-    - image: quay.io/dell/storage/powerflex/sdc:4.5.2.1
+    - image: quay.io/dell/storage/powerflex/sdc:4.5.4
       name: sdc
     - image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.2.0
       name: karavi-authorization-proxy
