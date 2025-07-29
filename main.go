@@ -302,6 +302,9 @@ func main() {
 	recorder := eventBroadcaster.NewRecorder(clientgoscheme.Scheme, corev1.EventSource{Component: "csm"})
 
 	expRateLimiter := workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](5*time.Millisecond, 120*time.Second)
+	//queue := workqueue.DefaultTypedControllerRateLimiter([reconcile.Request], (5*time.Millisecond, 120*time.Second))
+	rateLimiter := workqueue.DefaultTypedControllerRateLimiter[reconcile.Result]()
+	queue := workqueue.NewTypedRateLimitingQueue[reconcile.Result](rateLimiter)
 
 	r := &controllers.ContainerStorageModuleReconciler{
 		Client:               mgr.GetClient(),
@@ -312,6 +315,7 @@ func main() {
 		Config:               operatorConfig,
 		ContentWatchChannels: make(map[string]chan struct{}),
 		ContentWatchLock:     sync.Mutex{},
+		Queue:                queue,
 	}
 
 	setupWithManager := getSetupWithManagerFn(r)

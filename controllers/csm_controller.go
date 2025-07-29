@@ -17,7 +17,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -46,7 +45,6 @@ import (
 	storagev1 "k8s.io/api/storage/v1"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	t1 "k8s.io/apimachinery/pkg/types"
 	sinformer "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
@@ -74,6 +72,7 @@ type ContainerStorageModuleReconciler struct {
 	EventRecorder        record.EventRecorder
 	ContentWatchChannels map[string]chan struct{}
 	ContentWatchLock     sync.Mutex
+	Queue                workqueue.TypedRateLimitingInterface[reconcile.Result]
 }
 
 // DriverConfig  -
@@ -391,56 +390,13 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 	dMutex.Lock()
 	defer dMutex.Unlock()
 
-	old, _ := oldObj.(*appsv1.Deployment)
 	d, _ := obj.(*appsv1.Deployment)
 	name := d.Spec.Template.Labels[constants.CsmLabel]
 	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
-	ctx, log := logger.GetNewContextWithLogger(key)
+	_, log := logger.GetNewContextWithLogger(key)
 
-	log.Debugw("deployment modified generation", d.Name, d.Generation, old.Generation)
-
-	desired := d.Status.Replicas
-	available := d.Status.AvailableReplicas
-	ready := d.Status.ReadyReplicas
-	numberUnavailable := d.Status.UnavailableReplicas
-
-	// Replicas:               2 desired | 2 updated | 2 total | 2 available | 0 unavailable
-
-	log.Infow("deployment", "deployment name", d.Name, "desired", desired)
-	log.Infow("deployment", "deployment name", d.Name, "numberReady", ready)
-	log.Infow("deployment", "deployment name", d.Name, "available", available)
-	log.Infow("deployment", "deployment name", d.Name, "numberUnavailable", numberUnavailable)
-
-	ns := d.Spec.Template.Labels[constants.CsmNamespaceLabel]
-
-	if ns != "" {
-		log.Debugw("csm being modified in handledeployment", "namespace", ns, "name", name)
-		namespacedName := t1.NamespacedName{
-			Name:      name,
-			Namespace: ns,
-		}
-
-		csm := new(csmv1.ContainerStorageModule)
-		err := r.Client.Get(ctx, namespacedName, csm)
-		if err != nil {
-			log.Error("deployment get csm", "error", err.Error())
-		}
-
-		newStatus := csm.GetCSMStatus()
-
-		// Updating controller status manually as controller runtime API is not updating csm object with latest data
-		// TODO: Can remove this once the controller runtime repo has a fix for updating the object passed
-		newStatus.ControllerStatus.Available = strconv.Itoa(int(available))
-		newStatus.ControllerStatus.Desired = strconv.Itoa(int(desired))
-		newStatus.ControllerStatus.Failed = strconv.Itoa(int(numberUnavailable))
-
-		err = operatorutils.UpdateStatus(ctx, csm, r, newStatus)
-		if err != nil {
-			log.Debugw("deployment status ", "pods", err.Error())
-		} else {
-			r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "Driver deployment running OK")
-		}
-	}
+	log.Infof("handleDeploymentUpdate detected deployment update for deployment: %s in namespace %s", obj.(*appsv1.Deployment).Name, obj.(*appsv1.Deployment).Namespace)
+	r.Queue.Add(reconcile.Result{RequeueAfter: 5 * time.Second})
 }
 
 func (r *ContainerStorageModuleReconciler) handlePodsUpdate(_ interface{}, obj interface{}) {
@@ -449,104 +405,37 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(_ interface{}, obj i
 
 	p, _ := obj.(*corev1.Pod)
 	name := p.GetLabels()[constants.CsmLabel]
-	// if this pod is an obs. pod, namespace might not match csm namespace
-	ns := p.GetLabels()[constants.CsmNamespaceLabel]
+	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
+	_, log := logger.GetNewContextWithLogger(key)
 
-	if ns != "" {
-		key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
-		ctx, log := logger.GetNewContextWithLogger(key)
-
-		if !p.ObjectMeta.DeletionTimestamp.IsZero() {
-			log.Debugw("driver delete invoked", "stopping pod with name", p.Name)
-			return
-		}
-		log.Infow("pod modified for driver", "name", p.Name)
-
-		namespacedName := t1.NamespacedName{
-			Name:      name,
-			Namespace: ns,
-		}
-		csm := new(csmv1.ContainerStorageModule)
-		err := r.Client.Get(ctx, namespacedName, csm)
-		if err != nil {
-			r.Log.Errorw("daemonset get csm", "error", err.Error())
-		}
-		log.Infow("csm prev status ", "state", csm.Status)
-		newStatus := csm.GetCSMStatus()
-
-		err = operatorutils.UpdateStatus(ctx, csm, r, newStatus)
-		state := csm.GetCSMStatus().State
-		stamp := fmt.Sprintf("at %d", time.Now().UnixNano())
-		if state != "0" && err != nil {
-			log.Infow("pod status ", "state", err.Error())
-			r.EventRecorder.Eventf(csm, corev1.EventTypeWarning, csmv1.EventUpdated, "%s Pod error details %s", stamp, err.Error())
-		} else {
-			r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "%s Driver pods running OK", stamp)
-		}
-	}
+	log.Infof("handlePodsUpdate detected pod update for pod: %s in namespace %s", obj.(*corev1.Pod).Name, obj.(*corev1.Pod).Namespace)
+	r.Queue.Add(reconcile.Result{RequeueAfter: 5 * time.Second})
 }
 
 func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interface{}, obj interface{}) {
 	dMutex.Lock()
 	defer dMutex.Unlock()
 
-	old, _ := oldObj.(*appsv1.DaemonSet)
 	d, _ := obj.(*appsv1.DaemonSet)
 	name := d.Spec.Template.Labels[constants.CsmLabel]
-
 	key := name + "-" + fmt.Sprintf("%d", r.GetUpdateCount())
-	ctx, log := logger.GetNewContextWithLogger(key)
+	_, log := logger.GetNewContextWithLogger(key)
 
-	log.Debugw("daemonset modified generation", "new", d.Generation, "old", old.Generation)
-
-	desired := d.Status.DesiredNumberScheduled
-	available := d.Status.NumberAvailable
-	ready := d.Status.NumberReady
-	numberUnavailable := d.Status.NumberUnavailable
-
-	log.Infow("daemonset ", "name", d.Name, "namespace", d.Namespace)
-	log.Infow("daemonset ", "desired", desired)
-	log.Infow("daemonset ", "numberReady", ready)
-	log.Infow("daemonset ", "available", available)
-	log.Infow("daemonset ", "numberUnavailable", numberUnavailable)
-
-	ns := d.Spec.Template.Labels[constants.CsmNamespaceLabel]
-
-	if ns != "" {
-		r.Log.Debugw("daemonset ", "ns", ns, "name", name)
-		namespacedName := t1.NamespacedName{
-			Name:      name,
-			Namespace: ns,
-		}
-
-		csm := new(csmv1.ContainerStorageModule)
-		err := r.Client.Get(ctx, namespacedName, csm)
-		if err != nil {
-			r.Log.Error("daemonset get csm", "error", err.Error())
-		}
-
-		log.Infow("csm prev status ", "state", csm.Status)
-		newStatus := csm.GetCSMStatus()
-		err = operatorutils.UpdateStatus(ctx, csm, r, newStatus)
-		if err != nil {
-			log.Debugw("daemonset status ", "pods", err.Error())
-		} else {
-			r.EventRecorder.Eventf(csm, corev1.EventTypeNormal, csmv1.EventCompleted, "Driver daemonset running OK")
-		}
-	}
+	log.Infof("handleDaemonsetUpdate detected daemonset update for daemonset: %s in namespace %s", obj.(*appsv1.DaemonSet).Name, obj.(*appsv1.DaemonSet).Namespace)
+	r.Queue.Add(reconcile.Result{RequeueAfter: 5 * time.Second})
 }
 
 // ContentWatch - watch updates on deployments, deamonsets, and pods
 func (r *ContainerStorageModuleReconciler) ContentWatch(csm *csmv1.ContainerStorageModule) (chan struct{}, error) {
 	sharedInformerFactory := sinformer.NewSharedInformerFactoryWithOptions(r.K8sClient, time.Duration(time.Hour))
 
-	updateFn := func(oldObj interface{}, newObj interface{}) {
+	/*updateFn := func(oldObj interface{}, newObj interface{}) {
 		r.informerUpdate(csm, oldObj, newObj, r.handleDaemonsetUpdate, r.handleDeploymentUpdate, r.handlePodsUpdate)
-	}
+	}*/
 
 	daemonsetInformer := sharedInformerFactory.Apps().V1().DaemonSets().Informer()
 	_, err := daemonsetInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		UpdateFunc: updateFn,
+		UpdateFunc: r.handleDaemonsetUpdate,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("ContentWatch failed adding event handler to daemonsetInformer: %v", err)
@@ -554,7 +443,7 @@ func (r *ContainerStorageModuleReconciler) ContentWatch(csm *csmv1.ContainerStor
 
 	deploymentInformer := sharedInformerFactory.Apps().V1().Deployments().Informer()
 	_, err = deploymentInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		UpdateFunc: updateFn,
+		UpdateFunc: r.handleDeploymentUpdate,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("ContentWatch failed adding event handler to deploymentInformer: %v", err)
@@ -562,7 +451,7 @@ func (r *ContainerStorageModuleReconciler) ContentWatch(csm *csmv1.ContainerStor
 
 	podsInformer := sharedInformerFactory.Core().V1().Pods().Informer()
 	_, err = podsInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		UpdateFunc: updateFn,
+		UpdateFunc: r.handlePodsUpdate,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("ContentWatch failed adding event handler to podsInformer: %v", err)
