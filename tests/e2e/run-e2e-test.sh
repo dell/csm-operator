@@ -29,7 +29,6 @@ export AUTHORIZATIONPROXYSERVER=false
 export REPLICATION=false
 export OBSERVABILITY=false
 export RESILIENCY=false
-export APPLICATIONMOBILITY=false
 export ZONING=false
 export SHAREDNFS=false
 
@@ -148,7 +147,6 @@ function usage() {
   echo "  --obs                                        use to run e2e observability suite"
   echo "  --auth-proxy                                 use to run e2e auth-proxy suite"
   echo "  --resiliency                                 use to run e2e resiliency suite"
-  echo "  --app-mobility                               use to run e2e application-mobility suite"
   echo "  --no-modules                                 use to run e2e suite without any modules"
   echo "  --pflex                                      use to run e2e powerflex suite"
   echo "  --pscale                                     use to run e2e powerscale suite"
@@ -184,8 +182,6 @@ while getopts ":hv-:" optchar; do
       export AUTHORIZATIONPROXYSERVER=true ;;
     resiliency)
       export RESILIENCY=true ;;
-    app-mobility)
-      export APPLICATIONMOBILITY=true ;;
     pflex)
       export POWERFLEX=true ;;
     no-modules)
@@ -195,7 +191,6 @@ while getopts ":hv-:" optchar; do
       export REPLICATION=false
       export OBSERVABILITY=false
       export RESILIENCY=false
-      export APPLICATIONMOBILITY=false
       ;;
     pscale)
       export POWERSCALE=true ;;
@@ -272,10 +267,6 @@ echo "IS_OPENSHIFT: $IS_OPENSHIFT"
 
 getArrayInfo
 checkForScenariosFile
-if [[ $APPLICATIONMOBILITY == "true" ]]; then
-  echo "Checking for dellctl - APPLICATIONMOBILITY"
-  checkForDellctl
-fi
 if [[ $INSTALL_VAULT == "true" ]]; then
   vaultSetupAutomation
 fi

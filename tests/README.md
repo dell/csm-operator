@@ -10,7 +10,6 @@ This directory contains the testing infrastructure and E2E test implementation f
   - [E2E Tests](#e2e-tests)
   - [Prerequisites](#prerequisites)
     - [Array Information](#array-information)
-    - [Application Mobility Prerequisites](#application-mobility-prerequisites)
     - [Authorization Proxy Server Prerequisites](#authorization-proxy-server-prerequisites)
     - [Shared NFS Prerequisites](#shared-nfs-prerequisites)
   - [Run](#run)
@@ -71,21 +70,11 @@ go get github.com/onsi/gomega/...
 
 ### Array Information
 
-For PowerFlex, Unity, PowerScale, PowerStore, Authorization, and Application-Mobility, system-specific information (array login credentials, system IDs, endpoints, etc.) need to be provided in e2e/array-info.env so that all the required resources (secrets, storageclasses, etc.) can be created by the tests. Example values have been inserted; please replace these with values from your system. Refer to [CSM documentation](https://dell.github.io/csm-docs/docs/) for any further questions about driver or module pre-requisites.
+For PowerFlex, Unity, PowerScale, PowerStore, and Authorization system-specific information (array login credentials, system IDs, endpoints, etc.) need to be provided in e2e/array-info.env so that all the required resources (secrets, storageclasses, etc.) can be created by the tests. Example values have been inserted; please replace these with values from your system. Refer to [CSM documentation](https://dell.github.io/csm-docs/docs/) for any further questions about driver or module pre-requisites.
 
 In the case of end-to-end tests that involve PowerFlex zoning functionality, a second PowerFlex array will be necessary with its credentials provided in e2e/array-info.env.
 
 Please note that, if tests are stopped in the middle of a run, some files in `testfiles/*-templates` folders may remain in a partially modified state and break subsequent test runs. To undo these changes, you can run `git checkout -- <template file>`.
-
-### Application Mobility Prerequisites
-
-If running the Application Mobility e2e tests, (the sanity suite includes a few simple app-mobility tests), further setup must be done:
-
-- have a MinIO object storage setup, with default credentials
-  - At least 2 buckets set up, if instance only has one bucket, set ALT_BUCKET_NAME = BUCKET_NAME
-- have all required licenses installed in your testing environment
-- have the latest Application Mobility controller and plugin images
-  The application-mobility repo has information on all of these pre-requisites up, including a script to install minio.
 
 ### Authorization Proxy Server Prerequisites
 
@@ -115,7 +104,7 @@ The tests are run by the `run-e2e-test.sh` script in the `tests/e2e` directory.
 - Ensure you meet all [prerequisites](https://github.com/dell/csm-operator/blob/main/tests/README.md#prerequisites).
 - Change to the `tests/e2e` directory.
 - Create a file named `array-info.env` and populate it with your array information. Use `array-info.env.sample` as a template.
-- If you do not have `dellctl` (for app-mobility and authorization proxy server) accessible through your `PATH` variable, pass the path to the executable to the script, like so, `run-e2e-test.sh --dellctl=/path/to/dellctl`, and they will be added to `/usr/local/bin`
+- If you do not have `dellctl` (for authorization proxy server) accessible through your `PATH` variable, pass the path to the executable to the script, like so, `run-e2e-test.sh --dellctl=/path/to/dellctl`, and they will be added to `/usr/local/bin`
 - Decide on the test suites you want to run, based on the changes made. Available test suites can be seen by running `run-e2e-test.sh -h` If multiple suites are specified, the union (not intersection) of those suites will be run.
 - Run the e2e tests by executing the `run-e2e-test.sh` script with desired options. Three examples are provided:
 
