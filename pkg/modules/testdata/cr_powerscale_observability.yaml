@@ -65,7 +65,7 @@ spec:
             # Default value: true
             - name: "POWERSCALE_PERFORMANCE_METRICS_ENABLED"
               value: "true"
-           # POWERSCALE_TOPOLOGY_METRICS_ENABLED: enable/disable collection of topology metrics
+            # POWERSCALE_TOPOLOGY_METRICS_ENABLED: enable/disable collection of topology metrics
             # Allowed values: ture, false
             # Default value: true
             - name: "POWERSCALE_TOPOLOGY_METRICS_ENABLED"

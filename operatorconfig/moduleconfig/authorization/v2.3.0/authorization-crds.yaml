@@ -330,7 +330,7 @@ spec:
                     Example:
                     PowerFlex: https://[URL]
                     PowerMax: https://[URL]:[PORT]
-                    PowerScale: https://[URL]:[PORT]                    
+                    PowerScale: https://[URL]:[PORT]
                     PowerStore: https://[URL]:[PORT]
                   type: string
                 isiPath:
