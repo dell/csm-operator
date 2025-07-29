@@ -42,7 +42,7 @@ var (
 	tagsSpecified []string
 	stepRunner    *step.Runner
 	beautify      string
-	moduleTags    = []string{"authorization", "replication", "observability", "authorizationproxyserver", "resiliency", "applicationmobility"}
+	moduleTags    = []string{"authorization", "replication", "observability", "authorizationproxyserver", "resiliency"}
 )
 
 func Contains(slice []string, str string) bool {
@@ -96,7 +96,7 @@ func TestE2E(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	tagEnvVars := []string{"NOMODULES", "AUTHORIZATION", "REPLICATION", "OBSERVABILITY", "AUTHORIZATIONPROXYSERVER", "RESILIENCY", "APPLICATIONMOBILITY", "POWERFLEX", "POWERSCALE", "POWERMAX", "POWERSTORE", "UNITY", "SANITY", "ZONING", "SHAREDNFS"}
+	tagEnvVars := []string{"NOMODULES", "AUTHORIZATION", "REPLICATION", "OBSERVABILITY", "AUTHORIZATIONPROXYSERVER", "RESILIENCY", "POWERFLEX", "POWERSCALE", "POWERMAX", "POWERSTORE", "UNITY", "SANITY", "ZONING", "SHAREDNFS"}
 	By("Getting test environment variables")
 	valuesFile := os.Getenv(valuesFileEnvVar)
 	Expect(valuesFile).NotTo(BeEmpty(), "Missing environment variable required for tests. E2E_SCENARIOS_FILE must be set.")
