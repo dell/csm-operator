@@ -105,46 +105,6 @@ spec:
                             The interval which the reconcile of each controller
                             is run
                           type: string
-                        credentials:
-                          description:
-                            ComponentCred is to store the velero credential
-                            contents
-                          items:
-                            description: Credential struct
-                            properties:
-                              createWithInstall:
-                                description:
-                                  CreateWithInstall is used to indicate wether
-                                  or not to create a secret for objectstore
-                                type: boolean
-                              name:
-                                description:
-                                  Name is the name of secret which contains
-                                  credentials to access objectstore
-                                type: string
-                              secretContents:
-                                description:
-                                  SecretContents contains credentials to
-                                  access objectstore
-                                properties:
-                                  aws_access_key_id:
-                                    description:
-                                      AccessKeyID is a name of key ID to
-                                      access objectstore
-                                    type: string
-                                  aws_secret_access_key:
-                                    description:
-                                      AccessKey contains the key to access
-                                      objectstore
-                                    type: string
-                                type: object
-                            type: object
-                          type: array
-                        deployNodeAgent:
-                          description:
-                            DeployNodeAgent is to enable/disable node-agent
-                            services
-                          type: boolean
                         enabled:
                           description:
                             Enabled is used to indicate wether or not to
@@ -299,9 +259,6 @@ spec:
                             LeaderElection is boolean flag to enable leader
                             election
                           type: boolean
-                        licenseName:
-                          description: LicenseName is the name of the license for app-mobility
-                          type: string
                         name:
                           description: Name is the name of Container
                           type: string
@@ -312,11 +269,6 @@ spec:
                             NodeSelector is a selector which must be true for the pod to fit on a node.
                             Selector which must match a node's labels for the pod to be scheduled on that node.
                           type: object
-                        objectStoreSecretName:
-                          description:
-                            ObjectStoreSecretName is the name of the secret
-                            for the object store for app-mobility
-                          type: string
                         opa:
                           description: Opa is the image tag for the Container
                           type: string
@@ -411,9 +363,6 @@ spec:
                             type: object
                           maxItems: 1
                           type: array
-                        replicaCount:
-                          description: ReplicaCount is the replica count for app mobility
-                          type: string
                         roleService:
                           description: RoleService is the image tag for the Container
                           type: string
@@ -508,11 +457,6 @@ spec:
                                 type: string
                             type: object
                           type: array
-                        useVolumeSnapshot:
-                          description:
-                            UseSnapshot is to check whether volume snapshot
-                            is enabled under velero component
-                          type: boolean
                         vaultConfigurations:
                           description: |-
                             Vaults are the vault configurations
@@ -553,11 +497,6 @@ spec:
                                 type: boolean
                             type: object
                           type: array
-                        veleroNamespace:
-                          description:
-                            VeleroNamespace is the namespace that Velero
-                            is installed in
-                          type: string
                       type: object
                     configVersion:
                       description:
@@ -602,46 +541,6 @@ spec:
                             The interval which the reconcile of each controller
                             is run
                           type: string
-                        credentials:
-                          description:
-                            ComponentCred is to store the velero credential
-                            contents
-                          items:
-                            description: Credential struct
-                            properties:
-                              createWithInstall:
-                                description:
-                                  CreateWithInstall is used to indicate wether
-                                  or not to create a secret for objectstore
-                                type: boolean
-                              name:
-                                description:
-                                  Name is the name of secret which contains
-                                  credentials to access objectstore
-                                type: string
-                              secretContents:
-                                description:
-                                  SecretContents contains credentials to
-                                  access objectstore
-                                properties:
-                                  aws_access_key_id:
-                                    description:
-                                      AccessKeyID is a name of key ID to
-                                      access objectstore
-                                    type: string
-                                  aws_secret_access_key:
-                                    description:
-                                      AccessKey contains the key to access
-                                      objectstore
-                                    type: string
-                                type: object
-                            type: object
-                          type: array
-                        deployNodeAgent:
-                          description:
-                            DeployNodeAgent is to enable/disable node-agent
-                            services
-                          type: boolean
                         enabled:
                           description:
                             Enabled is used to indicate wether or not to
@@ -796,9 +695,6 @@ spec:
                             LeaderElection is boolean flag to enable leader
                             election
                           type: boolean
-                        licenseName:
-                          description: LicenseName is the name of the license for app-mobility
-                          type: string
                         name:
                           description: Name is the name of Container
                           type: string
@@ -809,11 +705,6 @@ spec:
                             NodeSelector is a selector which must be true for the pod to fit on a node.
                             Selector which must match a node's labels for the pod to be scheduled on that node.
                           type: object
-                        objectStoreSecretName:
-                          description:
-                            ObjectStoreSecretName is the name of the secret
-                            for the object store for app-mobility
-                          type: string
                         opa:
                           description: Opa is the image tag for the Container
                           type: string
@@ -908,9 +799,6 @@ spec:
                             type: object
                           maxItems: 1
                           type: array
-                        replicaCount:
-                          description: ReplicaCount is the replica count for app mobility
-                          type: string
                         roleService:
                           description: RoleService is the image tag for the Container
                           type: string
@@ -1005,11 +893,6 @@ spec:
                                 type: string
                             type: object
                           type: array
-                        useVolumeSnapshot:
-                          description:
-                            UseSnapshot is to check whether volume snapshot
-                            is enabled under velero component
-                          type: boolean
                         vaultConfigurations:
                           description: |-
                             Vaults are the vault configurations
@@ -1050,11 +933,6 @@ spec:
                                 type: boolean
                             type: object
                           type: array
-                        veleroNamespace:
-                          description:
-                            VeleroNamespace is the namespace that Velero
-                            is installed in
-                          type: string
                       type: object
                     csiDriverSpec:
                       description: CSIDriverSpec is the specification for CSIDriver
@@ -1117,46 +995,6 @@ spec:
                               The interval which the reconcile of each controller
                               is run
                             type: string
-                          credentials:
-                            description:
-                              ComponentCred is to store the velero credential
-                              contents
-                            items:
-                              description: Credential struct
-                              properties:
-                                createWithInstall:
-                                  description:
-                                    CreateWithInstall is used to indicate
-                                    wether or not to create a secret for objectstore
-                                  type: boolean
-                                name:
-                                  description:
-                                    Name is the name of secret which contains
-                                    credentials to access objectstore
-                                  type: string
-                                secretContents:
-                                  description:
-                                    SecretContents contains credentials to
-                                    access objectstore
-                                  properties:
-                                    aws_access_key_id:
-                                      description:
-                                        AccessKeyID is a name of key ID to
-                                        access objectstore
-                                      type: string
-                                    aws_secret_access_key:
-                                      description:
-                                        AccessKey contains the key to access
-                                        objectstore
-                                      type: string
-                                  type: object
-                              type: object
-                            type: array
-                          deployNodeAgent:
-                            description:
-                              DeployNodeAgent is to enable/disable node-agent
-                              services
-                            type: boolean
                           enabled:
                             description:
                               Enabled is used to indicate wether or not to
@@ -1313,11 +1151,6 @@ spec:
                               LeaderElection is boolean flag to enable leader
                               election
                             type: boolean
-                          licenseName:
-                            description:
-                              LicenseName is the name of the license for
-                              app-mobility
-                            type: string
                           name:
                             description: Name is the name of Container
                             type: string
@@ -1328,11 +1161,6 @@ spec:
                               NodeSelector is a selector which must be true for the pod to fit on a node.
                               Selector which must match a node's labels for the pod to be scheduled on that node.
                             type: object
-                          objectStoreSecretName:
-                            description:
-                              ObjectStoreSecretName is the name of the secret
-                              for the object store for app-mobility
-                            type: string
                           opa:
                             description: Opa is the image tag for the Container
                             type: string
@@ -1427,9 +1255,6 @@ spec:
                               type: object
                             maxItems: 1
                             type: array
-                          replicaCount:
-                            description: ReplicaCount is the replica count for app mobility
-                            type: string
                           roleService:
                             description: RoleService is the image tag for the Container
                             type: string
@@ -1524,11 +1349,6 @@ spec:
                                   type: string
                               type: object
                             type: array
-                          useVolumeSnapshot:
-                            description:
-                              UseSnapshot is to check whether volume snapshot
-                              is enabled under velero component
-                            type: boolean
                           vaultConfigurations:
                             description: |-
                               Vaults are the vault configurations
@@ -1571,11 +1391,6 @@ spec:
                                   type: boolean
                               type: object
                             type: array
-                          veleroNamespace:
-                            description:
-                              VeleroNamespace is the namespace that Velero
-                              is installed in
-                            type: string
                         type: object
                       type: array
                     node:
@@ -1614,46 +1429,6 @@ spec:
                             The interval which the reconcile of each controller
                             is run
                           type: string
-                        credentials:
-                          description:
-                            ComponentCred is to store the velero credential
-                            contents
-                          items:
-                            description: Credential struct
-                            properties:
-                              createWithInstall:
-                                description:
-                                  CreateWithInstall is used to indicate wether
-                                  or not to create a secret for objectstore
-                                type: boolean
-                              name:
-                                description:
-                                  Name is the name of secret which contains
-                                  credentials to access objectstore
-                                type: string
-                              secretContents:
-                                description:
-                                  SecretContents contains credentials to
-                                  access objectstore
-                                properties:
-                                  aws_access_key_id:
-                                    description:
-                                      AccessKeyID is a name of key ID to
-                                      access objectstore
-                                    type: string
-                                  aws_secret_access_key:
-                                    description:
-                                      AccessKey contains the key to access
-                                      objectstore
-                                    type: string
-                                type: object
-                            type: object
-                          type: array
-                        deployNodeAgent:
-                          description:
-                            DeployNodeAgent is to enable/disable node-agent
-                            services
-                          type: boolean
                         enabled:
                           description:
                             Enabled is used to indicate wether or not to
@@ -1808,9 +1583,6 @@ spec:
                             LeaderElection is boolean flag to enable leader
                             election
                           type: boolean
-                        licenseName:
-                          description: LicenseName is the name of the license for app-mobility
-                          type: string
                         name:
                           description: Name is the name of Container
                           type: string
@@ -1821,11 +1593,6 @@ spec:
                             NodeSelector is a selector which must be true for the pod to fit on a node.
                             Selector which must match a node's labels for the pod to be scheduled on that node.
                           type: object
-                        objectStoreSecretName:
-                          description:
-                            ObjectStoreSecretName is the name of the secret
-                            for the object store for app-mobility
-                          type: string
                         opa:
                           description: Opa is the image tag for the Container
                           type: string
@@ -1920,9 +1687,6 @@ spec:
                             type: object
                           maxItems: 1
                           type: array
-                        replicaCount:
-                          description: ReplicaCount is the replica count for app mobility
-                          type: string
                         roleService:
                           description: RoleService is the image tag for the Container
                           type: string
@@ -2017,11 +1781,6 @@ spec:
                                 type: string
                             type: object
                           type: array
-                        useVolumeSnapshot:
-                          description:
-                            UseSnapshot is to check whether volume snapshot
-                            is enabled under velero component
-                          type: boolean
                         vaultConfigurations:
                           description: |-
                             Vaults are the vault configurations
@@ -2062,11 +1821,6 @@ spec:
                                 type: boolean
                             type: object
                           type: array
-                        veleroNamespace:
-                          description:
-                            VeleroNamespace is the namespace that Velero
-                            is installed in
-                          type: string
                       type: object
                     replicas:
                       default: 2
@@ -2113,46 +1867,6 @@ spec:
                               The interval which the reconcile of each controller
                               is run
                             type: string
-                          credentials:
-                            description:
-                              ComponentCred is to store the velero credential
-                              contents
-                            items:
-                              description: Credential struct
-                              properties:
-                                createWithInstall:
-                                  description:
-                                    CreateWithInstall is used to indicate
-                                    wether or not to create a secret for objectstore
-                                  type: boolean
-                                name:
-                                  description:
-                                    Name is the name of secret which contains
-                                    credentials to access objectstore
-                                  type: string
-                                secretContents:
-                                  description:
-                                    SecretContents contains credentials to
-                                    access objectstore
-                                  properties:
-                                    aws_access_key_id:
-                                      description:
-                                        AccessKeyID is a name of key ID to
-                                        access objectstore
-                                      type: string
-                                    aws_secret_access_key:
-                                      description:
-                                        AccessKey contains the key to access
-                                        objectstore
-                                      type: string
-                                  type: object
-                              type: object
-                            type: array
-                          deployNodeAgent:
-                            description:
-                              DeployNodeAgent is to enable/disable node-agent
-                              services
-                            type: boolean
                           enabled:
                             description:
                               Enabled is used to indicate wether or not to
@@ -2309,11 +2023,6 @@ spec:
                               LeaderElection is boolean flag to enable leader
                               election
                             type: boolean
-                          licenseName:
-                            description:
-                              LicenseName is the name of the license for
-                              app-mobility
-                            type: string
                           name:
                             description: Name is the name of Container
                             type: string
@@ -2324,11 +2033,6 @@ spec:
                               NodeSelector is a selector which must be true for the pod to fit on a node.
                               Selector which must match a node's labels for the pod to be scheduled on that node.
                             type: object
-                          objectStoreSecretName:
-                            description:
-                              ObjectStoreSecretName is the name of the secret
-                              for the object store for app-mobility
-                            type: string
                           opa:
                             description: Opa is the image tag for the Container
                             type: string
@@ -2423,9 +2127,6 @@ spec:
                               type: object
                             maxItems: 1
                             type: array
-                          replicaCount:
-                            description: ReplicaCount is the replica count for app mobility
-                            type: string
                           roleService:
                             description: RoleService is the image tag for the Container
                             type: string
@@ -2520,11 +2221,6 @@ spec:
                                   type: string
                               type: object
                             type: array
-                          useVolumeSnapshot:
-                            description:
-                              UseSnapshot is to check whether volume snapshot
-                              is enabled under velero component
-                            type: boolean
                           vaultConfigurations:
                             description: |-
                               Vaults are the vault configurations
@@ -2567,11 +2263,6 @@ spec:
                                   type: boolean
                               type: object
                             type: array
-                          veleroNamespace:
-                            description:
-                              VeleroNamespace is the namespace that Velero
-                              is installed in
-                            type: string
                         type: object
                       type: array
                     snapshotClass:
@@ -2642,46 +2333,6 @@ spec:
                                 The interval which the reconcile of each
                                 controller is run
                               type: string
-                            credentials:
-                              description:
-                                ComponentCred is to store the velero credential
-                                contents
-                              items:
-                                description: Credential struct
-                                properties:
-                                  createWithInstall:
-                                    description:
-                                      CreateWithInstall is used to indicate
-                                      wether or not to create a secret for objectstore
-                                    type: boolean
-                                  name:
-                                    description:
-                                      Name is the name of secret which contains
-                                      credentials to access objectstore
-                                    type: string
-                                  secretContents:
-                                    description:
-                                      SecretContents contains credentials
-                                      to access objectstore
-                                    properties:
-                                      aws_access_key_id:
-                                        description:
-                                          AccessKeyID is a name of key ID
-                                          to access objectstore
-                                        type: string
-                                      aws_secret_access_key:
-                                        description:
-                                          AccessKey contains the key to access
-                                          objectstore
-                                        type: string
-                                    type: object
-                                type: object
-                              type: array
-                            deployNodeAgent:
-                              description:
-                                DeployNodeAgent is to enable/disable node-agent
-                                services
-                              type: boolean
                             enabled:
                               description:
                                 Enabled is used to indicate wether or not
@@ -2839,11 +2490,6 @@ spec:
                                 LeaderElection is boolean flag to enable
                                 leader election
                               type: boolean
-                            licenseName:
-                              description:
-                                LicenseName is the name of the license for
-                                app-mobility
-                              type: string
                             name:
                               description: Name is the name of Container
                               type: string
@@ -2854,11 +2500,6 @@ spec:
                                 NodeSelector is a selector which must be true for the pod to fit on a node.
                                 Selector which must match a node's labels for the pod to be scheduled on that node.
                               type: object
-                            objectStoreSecretName:
-                              description:
-                                ObjectStoreSecretName is the name of the
-                                secret for the object store for app-mobility
-                              type: string
                             opa:
                               description: Opa is the image tag for the Container
                               type: string
@@ -2954,11 +2595,6 @@ spec:
                                 type: object
                               maxItems: 1
                               type: array
-                            replicaCount:
-                              description:
-                                ReplicaCount is the replica count for app
-                                mobility
-                              type: string
                             roleService:
                               description: RoleService is the image tag for the Container
                               type: string
@@ -3053,11 +2689,6 @@ spec:
                                     type: string
                                 type: object
                               type: array
-                            useVolumeSnapshot:
-                              description:
-                                UseSnapshot is to check whether volume snapshot
-                                is enabled under velero component
-                              type: boolean
                             vaultConfigurations:
                               description: |-
                                 Vaults are the vault configurations
@@ -3101,11 +2732,6 @@ spec:
                                     type: boolean
                                 type: object
                               type: array
-                            veleroNamespace:
-                              description:
-                                VeleroNamespace is the namespace that Velero
-                                is installed in
-                              type: string
                           type: object
                         type: array
                       configVersion:
@@ -3161,46 +2787,6 @@ spec:
                                 The interval which the reconcile of each
                                 controller is run
                               type: string
-                            credentials:
-                              description:
-                                ComponentCred is to store the velero credential
-                                contents
-                              items:
-                                description: Credential struct
-                                properties:
-                                  createWithInstall:
-                                    description:
-                                      CreateWithInstall is used to indicate
-                                      wether or not to create a secret for objectstore
-                                    type: boolean
-                                  name:
-                                    description:
-                                      Name is the name of secret which contains
-                                      credentials to access objectstore
-                                    type: string
-                                  secretContents:
-                                    description:
-                                      SecretContents contains credentials
-                                      to access objectstore
-                                    properties:
-                                      aws_access_key_id:
-                                        description:
-                                          AccessKeyID is a name of key ID
-                                          to access objectstore
-                                        type: string
-                                      aws_secret_access_key:
-                                        description:
-                                          AccessKey contains the key to access
-                                          objectstore
-                                        type: string
-                                    type: object
-                                type: object
-                              type: array
-                            deployNodeAgent:
-                              description:
-                                DeployNodeAgent is to enable/disable node-agent
-                                services
-                              type: boolean
                             enabled:
                               description:
                                 Enabled is used to indicate wether or not
@@ -3358,11 +2944,6 @@ spec:
                                 LeaderElection is boolean flag to enable
                                 leader election
                               type: boolean
-                            licenseName:
-                              description:
-                                LicenseName is the name of the license for
-                                app-mobility
-                              type: string
                             name:
                               description: Name is the name of Container
                               type: string
@@ -3373,11 +2954,6 @@ spec:
                                 NodeSelector is a selector which must be true for the pod to fit on a node.
                                 Selector which must match a node's labels for the pod to be scheduled on that node.
                               type: object
-                            objectStoreSecretName:
-                              description:
-                                ObjectStoreSecretName is the name of the
-                                secret for the object store for app-mobility
-                              type: string
                             opa:
                               description: Opa is the image tag for the Container
                               type: string
@@ -3473,11 +3049,6 @@ spec:
                                 type: object
                               maxItems: 1
                               type: array
-                            replicaCount:
-                              description:
-                                ReplicaCount is the replica count for app
-                                mobility
-                              type: string
                             roleService:
                               description: RoleService is the image tag for the Container
                               type: string
@@ -3572,11 +3143,6 @@ spec:
                                     type: string
                                 type: object
                               type: array
-                            useVolumeSnapshot:
-                              description:
-                                UseSnapshot is to check whether volume snapshot
-                                is enabled under velero component
-                              type: boolean
                             vaultConfigurations:
                               description: |-
                                 Vaults are the vault configurations
@@ -3620,11 +3186,6 @@ spec:
                                     type: boolean
                                 type: object
                               type: array
-                            veleroNamespace:
-                              description:
-                                VeleroNamespace is the namespace that Velero
-                                is installed in
-                              type: string
                           type: object
                         type: array
                       name:

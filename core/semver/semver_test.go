@@ -334,3 +334,9 @@ func TestString(t *testing.T) {
 	got := v.String()
 	assert.Equal(t, "1.8.1+dirty", got)
 }
+
+func TestGitDescribeFunc(t *testing.T) {
+	got, err := gitDescribeFunc()
+	assert.NotEmpty(t, got)
+	assert.Nil(t, err)
+}

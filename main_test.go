@@ -1087,6 +1087,13 @@ func TestMainStartError(_ *testing.T) {
 	<-osExitCalled
 }
 
+func TestInitFlags(t *testing.T) {
+	opts := initFlags()
+	// Should be set to true
+	devFlag := opts.Development
+	assert.Equal(t, true, devFlag)
+}
+
 type mockManager struct {
 	cluster.Cluster
 	startFn           func(ctx context.Context) error
