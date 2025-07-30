@@ -550,25 +550,25 @@ func AuthorizationServerPrecheck(ctx context.Context, op operatorutils.OperatorC
 		}
 	}
 
-	// Check for secrets
-	// var proxyServerSecrets []string
-	// switch semver.Major(auth.ConfigVersion) {
-	// case "v2":
-	// 	proxyServerSecrets = []string{"karavi-config-secret"}
-	// case "v1":
-	// 	proxyServerSecrets = []string{"karavi-config-secret", "karavi-storage-secret"}
-	// default:
-	// 	return fmt.Errorf("authorization major version %s not supported", semver.Major(auth.ConfigVersion))
-	// }
-	// for _, name := range proxyServerSecrets {
-	// 	found := &corev1.Secret{}
-	// 	err := r.GetClient().Get(ctx, types.NamespacedName{Name: name, Namespace: cr.GetNamespace()}, found)
-	// 	if err != nil {
-	// 		if k8serrors.IsNotFound(err) {
-	// 			return fmt.Errorf("failed to find secret %s", name)
-	// 		}
-	// 	}
-	// }
+	for _, component := range auth.Components {
+		if component.Name == AuthJWTSigningSecretComponent {
+			for _, config := range component.JWTSigningSecretProviderClass {
+				if config.JWTSigningSecretName == "" {
+					// Check for secrets
+					var proxyServerSecrets = []string{"karavi-config-secret"}
+					for _, name := range proxyServerSecrets {
+						found := &corev1.Secret{}
+						err := r.GetClient().Get(ctx, types.NamespacedName{Name: name, Namespace: cr.GetNamespace()}, found)
+						if err != nil {
+							if k8serrors.IsNotFound(err) {
+								return fmt.Errorf("failed to find secret %s", name)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 
 	log.Infof("preformed pre-checks for %s proxy server", auth.Name)
 	return nil
@@ -592,30 +592,6 @@ func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.Oper
 	authNamespace := cr.Namespace
 
 	for _, component := range auth.Components {
-		// jwt secret component
-		log.Infof("Auth deployment - component name: %s", component.Name)
-		if component.Name == AuthJWTSigningSecretComponent {
-			// create jwt signing kubernetes secret
-			log.Infof("Auth deployment - component: %v", component)
-			for _, config := range component.JWTSigningSecretProviderClass {
-				log.Infof("Auth deployment - JWTSigningSecretName: %s", config.JWTSigningSecretName)
-				if config.JWTSigningSecretName == "" {
-					jwtSigningSecretName = defaultJWTSigningSecretName
-					jwtSigningSecretKey = config.JWTSigningSecretKey
-					log.Infof("Auth deployment - jwtSigningSecretName %s", jwtSigningSecretName)
-					log.Infof("Auth deployment - jwtSigningSecretKey %s", jwtSigningSecretKey)
-					jwtSigningSecret := createJWTSigningK8sSecret(ctx, cr, config.JWTSigningSecretKey)
-					secretYaml, err := yaml.Marshal(jwtSigningSecret)
-					log.Infof("Auth deployment - secretYaml %v", string(secretYaml))
-					if err != nil {
-						return YamlString, fmt.Errorf("failed to marshal jwt signing kubernetes secret: %w", err)
-					}
-
-					YamlString += fmt.Sprintf("\n---\n%s", secretYaml)
-					log.Infof("Auth deployment - YamlString %s", YamlString)
-				}
-			}
-		}
 
 		// proxy-server component
 		if component.Name == AuthProxyServerComponent {
@@ -801,10 +777,15 @@ func authorizationStorageServiceV1(ctx context.Context, isDeleting bool, cr csmv
 		switch component.Name {
 		case AuthProxyServerComponent:
 			image = component.StorageService
+		case AuthJWTSigningSecretComponent:
+			// create jwt signing kubernetes secret or use a secret provider class
+			for _, config := range component.JWTSigningSecretProviderClass {
+				jwtSigningSecretName = config.JWTSigningSecretName
+			}
 		}
 	}
 
-	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, 1)
+	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, 1, jwtSigningSecretName)
 
 	// set karavi-storage-secret volume
 	deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, corev1.Volume{
@@ -879,6 +860,11 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		case AuthStorageSystemCredentialsComponent:
 			secretProviderClasses = component.SecretProviderClasses
 			secrets = component.Secrets
+		case AuthJWTSigningSecretComponent:
+			// create jwt signing kubernetes secret or use a secret provider class
+			for _, config := range component.JWTSigningSecretProviderClass {
+				jwtSigningSecretName = config.JWTSigningSecretName
+			}
 		default:
 			continue
 		}
@@ -896,7 +882,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 
 	// conversion to int32 is safe for a value up to 2147483647
 	// #nosec G115
-	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, int32(replicas))
+	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, int32(replicas), jwtSigningSecretName)
 
 	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
 	if semver.Compare(authModule.ConfigVersion, "v2.3.0") >= 0 {
@@ -1202,13 +1188,7 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 		case AuthJWTSigningSecretComponent:
 			// create jwt signing kubernetes secret or use a secret provider class
 			for _, config := range component.JWTSigningSecretProviderClass {
-				jwtSigningSecretKey = config.JWTSigningSecretKey
-
-				if config.JWTSigningSecretName == "" {
-					jwtSigningSecretName = defaultJWTSigningSecretName
-				} else {
-					jwtSigningSecretName = config.JWTSigningSecretName
-				}
+				jwtSigningSecretName = config.JWTSigningSecretName
 			}
 		default:
 			continue
@@ -1217,7 +1197,7 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 
 	// conversion to int32 is safe for a value up to 2147483647
 	// #nosec G115
-	deployment := getProxyServerScaffold(cr.Name, sentinelName, cr.Namespace, proxyImage, opaImage, opaKubeMgmtImage, redisSecretName, redisPasswordKey, int32(replicas), sentinels)
+	deployment := getProxyServerScaffold(cr.Name, sentinelName, cr.Namespace, proxyImage, opaImage, opaKubeMgmtImage, jwtSigningSecretName, redisSecretName, redisPasswordKey, int32(replicas), sentinels)
 
 	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
 	for _, component := range authModule.Components {
@@ -1296,13 +1276,7 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 		case AuthJWTSigningSecretComponent:
 			// create jwt signing kubernetes secret or use a secret provider class
 			for _, config := range component.JWTSigningSecretProviderClass {
-				jwtSigningSecretKey = config.JWTSigningSecretKey
-
-				if config.JWTSigningSecretName == "" {
-					jwtSigningSecretName = defaultJWTSigningSecretName
-				} else {
-					jwtSigningSecretName = config.JWTSigningSecretName
-				}
+				jwtSigningSecretName = config.JWTSigningSecretName
 			}
 		default:
 			continue
@@ -1311,7 +1285,7 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 
 	// conversion to int32 is safe for a value up to 2147483647
 	// #nosec G115
-	deployment := getTenantServiceScaffold(cr.Name, cr.Namespace, sentinelName, image, redisSecretName, redisPasswordKey, int32(replicas), sentinelReplicas)
+	deployment := getTenantServiceScaffold(cr.Name, cr.Namespace, sentinelName, image, jwtSigningSecretName, redisSecretName, redisPasswordKey, int32(replicas), sentinelReplicas)
 
 	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
 	for _, component := range authModule.Components {
