@@ -303,22 +303,27 @@ func ObservabilityPrecheck(ctx context.Context, op operatorutils.OperatorConfig,
 // ObservabilityTopology - delete or update topology objectstools
 func ObservabilityTopology(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
-	topoObjects, err := getTopology(op, cr)
-	if err != nil {
-		return err
-	}
+	configVersion := cr.Spec.Driver.ConfigVersion
+	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
+		topoObjects, err := getTopology(op, cr)
+		if err != nil {
+			return err
+		}
 
-	for _, ctrlObj := range topoObjects {
-		log.Infow("current topoObject is ", "ctrlObj", ctrlObj)
-		if isDeleting {
-			if err := operatorutils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		} else {
-			if err := operatorutils.ApplyCTRLObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
+		for _, ctrlObj := range topoObjects {
+			log.Infow("current topoObject is ", "ctrlObj", ctrlObj)
+			if isDeleting {
+				if err := operatorutils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+					return err
+				}
+			} else {
+				if err := operatorutils.ApplyCTRLObject(ctx, ctrlObj, ctrlClient); err != nil {
+					return err
+				}
 			}
 		}
+	} else {
+		return fmt.Errorf("CSM Operator does not suport topology deployment from CSM 1.15 onwards")
 	}
 
 	return nil
