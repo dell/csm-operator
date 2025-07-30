@@ -9,9 +9,9 @@ spec:
   systemID: "REPLACE_SYSTEM_ID"
   storageSystemCredentials:
     secretProviderClass:
-      name: array-creds
-      usernameObjectName: "secrets/usr"
-      passwordObjectName: "secrets/pwd"
+      name: conjur
+      usernameObjectName: REPLACE_USERNAME_OBJECT_NAME
+      passwordObjectName: REPLACE_PASSWORD_OBJECT_NAME
   skipCertificateValidation: true
   pollInterval: 30s
   isiPath: REPLACE_STORAGE_POOL_PATH

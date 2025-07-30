@@ -85,11 +85,8 @@ spec:
         - name: storage-system-credentials
           secretProviderClasses:
             conjur:
-              - name: array-creds
-                paths:
-                  - passwordPath: secrets/usr
-                    usernamePath: secrets/pwd
-
+              - name: conjur
+                paths: []
 ---
 apiVersion: v1
 kind: ConfigMap

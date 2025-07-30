@@ -10,8 +10,8 @@ spec:
   storageSystemCredentials:
     secretProviderClass:
       name: array-creds
-      usernameObjectName: REPLACE_USERNAME_OBJECT_NAME
-      passwordObjectName: REPLACE_PASSWORD_OBJECT_NAME
+      usernameObjectName: "usr"
+      passwordObjectName: "pass"
   skipCertificateValidation: true
   pollInterval: 30s
   isiPath: REPLACE_STORAGE_POOL_PATH
