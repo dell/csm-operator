@@ -1037,6 +1037,7 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 		modules.ObservabilityOtelCollectorName:    modules.OtelCollector,
 		modules.ObservabilityCertManagerComponent: modules.CommonCertManager,
 	}
+	// This will be deleted once we remove the old CSM versions which support topology
 	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
 		comp2reconFunc[modules.ObservabilityTopologyName] = modules.ObservabilityTopology
 	}
@@ -1051,8 +1052,13 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 		log.Infow(fmt.Sprintf("reconcile %s", comp))
 		var err error
 		switch comp {
-		case modules.ObservabilityTopologyName, modules.ObservabilityOtelCollectorName, modules.ObservabilityCertManagerComponent:
+		case modules.ObservabilityOtelCollectorName, modules.ObservabilityCertManagerComponent:
 			err = comp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient)
+		// This will be deleted once we remove the old CSM versions which support topology
+		case modules.ObservabilityTopologyName:
+			if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
+				err = comp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient)
+			}
 		case modules.ObservabilityMetricsPowerScaleName, modules.ObservabilityMetricsPowerFlexName, modules.ObservabilityMetricsPowerMaxName, modules.ObservabilityMetricsPowerStoreName:
 			err = metricsComp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient, k8sClient)
 		default:
