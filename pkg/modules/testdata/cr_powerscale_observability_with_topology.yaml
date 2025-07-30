@@ -1,0 +1,122 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: isilon
+  namespace: isilon
+spec:
+  driver:
+    csiDriverType: "isilon"
+    configVersion: v2.14.0
+    authSecret: isilon-creds
+    replicas: 1
+    common:
+      image: "quay.io/dell/container-storage-modules/csi-isilon:v2.14.0"
+      imagePullPolicy: IfNotPresent
+  modules:
+    # observability: allows to configure observability
+    - name: observability
+      # enabled: Enable/Disable observability
+      enabled: true
+      configVersion: v1.12.0
+      components:
+        - name: otel-collector
+          # enabled: Enable/Disable OpenTelemetry Collector
+          enabled: false
+          # image: Defines otel-collector image. This shouldn't be changed
+          # Allowed values: string
+          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.130.1
+          envs:
+            # image of nginx proxy image
+            # Allowed values: string
+            # Default value: "nginxinc/nginx-unprivileged:1.27"
+            - name: "NGINX_PROXY_IMAGE"
+              value: "nginxinc/nginx-unprivileged:1.27"
+        - name: metrics-powerscale
+          # enabled: Enable/Disable PowerScale metrics
+          enabled: true
+          # image: Defines PowerScale metrics image. This shouldn't be changed
+          # Allowed values: string
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.9.0
+          envs:
+            # POWERSCALE_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerScale
+            # Allowed values: int
+            # Default value: 10
+            - name: "POWERSCALE_MAX_CONCURRENT_QUERIES"
+              value: "10"
+            # POWERSCALE_CAPACITY_METRICS_ENABLED: enable/disable collection of capacity metrics
+            # Allowed values: true, false
+            # Default value: true
+            - name: "POWERSCALE_CAPACITY_METRICS_ENABLED"
+              value: "true"
+            # POWERSCALE_PERFORMANCE_METRICS_ENABLED: enable/disable collection of performance metrics
+            # Allowed values: true, false
+            # Default value: true
+            - name: "POWERSCALE_PERFORMANCE_METRICS_ENABLED"
+              value: "true"
+            # POWERSCALE_TOPOLOGY_METRICS_ENABLED: enable/disable collection of topology metrics
+            # Allowed values: ture, false
+            # Default value: true
+            - name: "POWERSCALE_TOPOLOGY_METRICS_ENABLED"
+              value: "true"
+            # POWERSCALE_TOPOLOGY_METRICS_POLL_FREQUENCY: set polling frequency to get topology metrics data
+            # Allowed values: int
+            # Default value: 30
+            - name: "POWERSCALE_TOPOLOGY_METRICS_POLL_FREQUENCY"
+              value: "30"
+            # POWERSCALE_CLUSTER_CAPACITY_POLL_FREQUENCY: set polling frequency to get cluster capacity metrics data
+            # Allowed values: int
+            # Default value: 30
+            - name: "POWERSCALE_CLUSTER_CAPACITY_POLL_FREQUENCY"
+              value: "30"
+            # POWERSCALE_CLUSTER_PERFORMANCE_POLL_FREQUENCY: set polling frequency to get cluster performance metrics data
+            # Allowed values: int
+            # Default value: 20
+            - name: "POWERSCALE_CLUSTER_PERFORMANCE_POLL_FREQUENCY"
+              value: "20"
+            # POWERSCALE_QUOTA_CAPACITY_POLL_FREQUENCY: set polling frequency to get Quota capacity metrics data
+            # Allowed values: int
+            - name: "POWERSCALE_QUOTA_CAPACITY_POLL_FREQUENCY"
+              value: "30"
+            # ISICLIENT_INSECURE: set true/false to skip/verify OneFS API server's certificates
+            # Allowed values: true, false
+            # Default value: true
+            - name: "ISICLIENT_INSECURE"
+              value: "true"
+            # ISICLIENT_AUTH_TYPE: set 0/1 to enables session-based/basic Authentication
+            # Allowed values: true, false
+            # Default value: true
+            - name: "ISICLIENT_AUTH_TYPE"
+              value: "1"
+            # ISICLIENT_VERBOSE: set 0/1/2 decide High/Medium/Low content of the OneFS REST API message should be logged in debug level logs
+            # Allowed values: 0,1,2
+            # Default value: 0
+            - name: "ISICLIENT_VERBOSE"
+              value: "0"
+            # PowerScale metrics log level
+            # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
+            # Default value: "INFO"
+            - name: "POWERSCALE_LOG_LEVEL"
+              value: "INFO"
+            # PowerScale Metrics Output logs in the specified format
+            # Valid values: TEXT, JSON
+            # Default value: "TEXT"
+            - name: "POWERSCALE_LOG_FORMAT"
+              value: "TEXT"
+            # Otel collector address
+            # Allowed values: String
+            # Default value: "otel-collector:55680"
+            - name: "COLLECTOR_ADDRESS"
+              value: "otel-collector:55680"
+    - name: authorization
+      # enable: Enable/Disable csm-authorization
+      enabled: false
+      components:
+        - name: karavi-authorization-proxy
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.2.0
+          envs:
+            # proxyHost: hostname of the csm-authorization server
+            - name: "PROXY_HOST"
+              value: "testing-proxy-host"
+            # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
+            - name: "SKIP_CERTIFICATE_VALIDATION"
+              value: "true"
