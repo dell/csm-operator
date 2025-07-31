@@ -169,7 +169,7 @@ function usage() {
   echo "  --minimal                                    use minimal testfiles scenarios"
   echo "  --sharednfs                                  use to run e2e sharednfs suite (pre-requisite, the nodes need to have nfs-server setup)"
   echo "  --install-vault                              use to install authorization vault instance with secrets for authorization tests"
-  echo "  --install-vault                              use to install authorization conjur instance with secrets for authorization tests"
+  echo "  --install-conjur                             use to install authorization conjur instance with secrets for authorization tests"
   echo "  --add-tag=<scenario tag>                     use to specify scenarios to run by one of their tags"
   echo
 
