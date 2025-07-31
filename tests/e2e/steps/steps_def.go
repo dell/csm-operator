@@ -73,7 +73,6 @@ var (
 	pmaxStorageMap         = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_RESOURCE_POOL": "PMAX_POOL_V1", "REPLACE_SERVICE_LEVEL": "PMAX_SERVICE_LEVEL"}
 	pmaxReverseProxyMap    = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
 	authSidecarRootCertMap = map[string]string{}
-	amConfigMap            = map[string]string{"REPLACE_ALT_BUCKET_NAME": "ALT_BUCKET_NAME", "REPLACE_BUCKET_NAME": "BUCKET_NAME", "REPLACE_S3URL": "BACKEND_STORAGE_URL", "REPLACE_CONTROLLER_IMAGE": "AM_CONTROLLER_IMAGE", "REPLACE_PLUGIN_IMAGE": "AM_PLUGIN_IMAGE"}
 	pmaxArrayConfigMap     = map[string]string{"REPLACE_PORTGROUPS": "PMAX_PORTGROUPS", "REPLACE_PROTOCOL": "PMAX_PROTOCOL", "REPLACE_ARRAYS": "PMAX_ARRAYS", "REPLACE_ENDPOINT": "PMAX_ENDPOINT"}
 	pmaxAuthArrayConfigMap = map[string]string{"REPLACE_PORTGROUPS": "PMAX_PORTGROUPS", "REPLACE_PROTOCOL": "PMAX_PROTOCOL", "REPLACE_ARRAYS": "PMAX_ARRAYS", "REPLACE_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
 	// Auth V2
@@ -198,70 +197,7 @@ func (step *Step) installThirdPartyModule(_ Resource, thirdPartyModule string) e
 		if err != nil {
 			return fmt.Errorf("cert-manager install failed: %v", err)
 		}
-	} else if thirdPartyModule == "velero" {
-		cmd1 := exec.Command("helm", "repo", "add", "vmware-tanzu", "https://vmware-tanzu.github.io/helm-charts")
-		err1 := cmd1.Run()
-		if err1 != nil {
-			return fmt.Errorf("installation of velero %v failed", err1)
-		}
-
-		amNamespace := os.Getenv("AM_NS")
-		if amNamespace == "" {
-			amNamespace = "test-vxflexos"
-		}
-
-		// Cleanup backupstoragelocations and volumesnapshotlocation before installing velero
-		cmd := exec.Command("kubectl", "get", "backupstoragelocations.velero.io", "default", "-n", amNamespace) // #nosec G204
-		err := cmd.Run()
-		if err == nil {
-			cmd1 = exec.Command("kubectl", "delete", "backupstoragelocations.velero.io", "default", "-n", amNamespace) // #nosec G204
-			err1 = cmd1.Run()
-			if err1 != nil {
-				return fmt.Errorf("installation of velero failed: %v", err1)
-			}
-		}
-
-		cmd = exec.Command("kubectl", "get", "volumesnapshotlocations.velero.io", "default", "-n", amNamespace) // #nosec G204
-		err = cmd.Run()
-		if err == nil {
-			cmd1 = exec.Command("kubectl", "delete", "volumesnapshotlocations.velero.io", "default", "-n", amNamespace) // #nosec G204
-			err1 = cmd1.Run()
-			if err1 != nil {
-				return fmt.Errorf("installation of velero failed: %v", err1)
-			}
-		}
-
-		cmd2 := exec.Command("helm", "install", "velero", "vmware-tanzu/velero", "--namespace="+amNamespace, "--create-namespace",
-			"-f", getRenderedFilePath("testfiles/application-mobility-templates/velero-values.yaml")) // #nosec G204
-		err2 := cmd2.Run()
-		if err2 != nil {
-			return fmt.Errorf("installation of velero failed: %v", err2)
-		}
-	} else if thirdPartyModule == "sample-app" {
-
-		cmd := exec.Command("kubectl", "get", "ns", "ns1") // #nosec G204
-		err := cmd.Run()
-		if err != nil {
-			cmd = exec.Command("kubectl", "create", "ns", "ns1") // #nosec G204
-			err = cmd.Run()
-			if err != nil {
-				return err
-			}
-		}
-
-		// create a stateful set with one pod and one volume for AM testing, requires pflex driver installed and op-e2e-vxflexos SC created
-		cmd2 := exec.Command("kubectl", "apply", "-n", "ns1", "-f", "testfiles/sample-application/test-sts.yaml")
-		err = cmd2.Run()
-		if err != nil {
-			return err
-		}
-
-		// give wp time to setup before we create backup/restores
-		fmt.Println("Sleeping 20 seconds to allow stateful set time to create")
-		time.Sleep(20 * time.Second)
-
 	}
-
 	return nil
 }
 
@@ -277,24 +213,6 @@ func (step *Step) uninstallThirdPartyModule(res Resource, thirdPartyModule strin
 				return fmt.Errorf("cert-manager uninstall failed: %v", err)
 			}
 		}
-	} else if thirdPartyModule == "velero" {
-		amNamespace := os.Getenv("AM_NS")
-		if amNamespace == "" {
-			amNamespace = "test-vxflexos"
-		}
-
-		cmd := exec.Command("helm", "delete", "velero", "--namespace="+amNamespace) // #nosec G204
-		err := cmd.Run()
-		if err != nil {
-			return fmt.Errorf("uninstallation of velero %v failed", err)
-		}
-	} else if thirdPartyModule == "sample-app" {
-		cmd := exec.Command("kubectl", "delete", "-n", "ns1", "-f", "testfiles/sample-application/test-sts.yaml") // #nosec G204
-		err := cmd.Run()
-		if err != nil {
-			return fmt.Errorf("uninstallation of stateful set failed:  %v", err)
-		}
-
 	}
 	return nil
 }
@@ -471,10 +389,6 @@ func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr 
 
 			case csmv1.Resiliency:
 				return step.validateResiliencyInstalled(cr)
-
-			case csmv1.ApplicationMobility:
-				return step.validateAppMobInstalled(cr)
-
 			default:
 				return fmt.Errorf("%s module is not found", module)
 			}
@@ -516,8 +430,6 @@ func (step *Step) validateModuleNotInstalled(res Resource, module string, crNumS
 
 			case csmv1.Resiliency:
 				return step.validateResiliencyNotInstalled(cr)
-			case csmv1.ApplicationMobility:
-				return step.validateApplicationMobilityNotInstalled(cr)
 			}
 		}
 	}
@@ -1010,8 +922,6 @@ func determineMap(crType string) (map[string]string, error) {
 		mapValues = pmaxAuthArrayConfigMap
 	} else if crType == "authSidecarCert" {
 		mapValues = authSidecarRootCertMap
-	} else if crType == "application-mobility" {
-		mapValues = amConfigMap
 	} else if crType == "pflexAuthCRs" {
 		mapValues = pflexCrMap
 	} else if crType == "pscaleAuthCRs" {
@@ -1413,34 +1323,6 @@ func (step *Step) validateAuthorizationProxyServerNotInstalled(cr csmv1.Containe
 	return nil
 }
 
-func (step *Step) validateAppMobInstalled(cr csmv1.ContainerStorageModule) error {
-	// providing additional time to get appmob pods up to running
-	time.Sleep(10 * time.Second)
-	instance := new(csmv1.ContainerStorageModule)
-	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
-		Namespace: cr.Namespace,
-		Name:      cr.Name,
-	}, instance,
-	); err != nil {
-		return err
-	}
-
-	fakeReconcile := operatorutils.FakeReconcileCSM{
-		Client:    step.ctrlClient,
-		K8sClient: step.clientSet,
-	}
-
-	clusterClient := operatorutils.GetCluster(context.TODO(), &fakeReconcile)
-
-	if err := checkApplicationMobilityPods(context.TODO(), cr.Namespace, clusterClient.ClusterK8sClient); err != nil {
-		return fmt.Errorf("failed to check for App-mob installation in %s: %v", clusterClient.ClusterID, err)
-	}
-
-	// provide few seconds for cluster to settle down
-	time.Sleep(10 * time.Second)
-	return nil
-}
-
 func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error {
 	fmt.Println("=== Creating Authorization Proxy Server Prerequisites ===")
 
@@ -1779,29 +1661,6 @@ func (step *Step) validateResiliencyNotInstalled(cr csmv1.ContainerStorageModule
 	return nil
 }
 
-// Render the AM CR template into a temporary file with the same name
-func (step *Step) configureAMInstall(_ Resource, templateFile string) error {
-	fileString, err := renderTemplate("application-mobility", templateFile)
-	if err != nil {
-		return err
-	}
-
-	filePath, err := writeRenderedFile(templateFile, fileString)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("Rendered template %s into %s\n", templateFile, filePath)
-
-	// Setup RH registry authentication secret. Calling it here,
-	// since configureAMInstall is used to setup each AM test.
-	err = setupAMImagePullSecret()
-	if err != nil {
-		return fmt.Errorf("failed to setup RH registry authentication for App Mobility: %v", err)
-	}
-
-	return nil
-}
-
 // Render the Powerflex SFTP CR template into a temporary file with the same name
 func (step *Step) configurePowerflexSftpInstall(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
@@ -1817,52 +1676,6 @@ func (step *Step) configurePowerflexSftpInstall(res Resource, crNumStr string) e
 	}
 	fmt.Printf("Rendered template %s into %s\n", crFilePath, filePath)
 
-	return nil
-}
-
-// For authentication to registry.redhat.io, create an image pull secret and
-// associate it with the service account vxflexos-app-mobility-controller,
-// that is used by the AM controller manager.
-// Normally, this service account is created by Operator, but we create it here
-// in advance to set imagePullSecrets.
-func setupAMImagePullSecret() error {
-	if os.Getenv("RH_REGISTRY_USERNAME") == "" || os.Getenv("RH_REGISTRY_PASSWORD") == "" {
-		return fmt.Errorf("env variable RH_REGISTRY_USERNAME or RH_REGISTRY_PASSWORD is not set," +
-			" set it in array-info.env before continuing")
-	}
-
-	// Create or update the image pull secret
-	err := execShell(`kubectl -n test-vxflexos create secret docker-registry rhregcred \
---docker-server="https://registry.redhat.io" --docker-username="$RH_REGISTRY_USERNAME" \
---docker-password="$RH_REGISTRY_PASSWORD" --dry-run=client -o yaml --save-config | kubectl apply -f -`)
-	if err != nil {
-		return fmt.Errorf("failed to create rh image pull secret: %v", err)
-	}
-
-	// Create or update the service account and associate it with the image pull secret
-	err = execShell(`kubectl create --dry-run=client -o yaml --save-config \
--f testfiles/application-mobility-templates/controller-manager-sa.yaml | kubectl apply -f -`)
-	if err != nil {
-		return fmt.Errorf("failed to create am controller manager service account: %v", err)
-	}
-
-	return nil
-}
-
-func (step *Step) validateApplicationMobilityNotInstalled(cr csmv1.ContainerStorageModule) error {
-	fakeReconcile := operatorutils.FakeReconcileCSM{
-		Client:    step.ctrlClient,
-		K8sClient: step.clientSet,
-	}
-
-	clusterClient := operatorutils.GetCluster(context.TODO(), &fakeReconcile)
-
-	err := checkApplicationMobilityPods(context.TODO(), cr.Namespace, clusterClient.ClusterK8sClient)
-	if err == nil {
-		return fmt.Errorf("AM pods found in namespace: %s", cr.Namespace)
-	}
-
-	fmt.Println("All AM pods removed ")
 	return nil
 }
 

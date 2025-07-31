@@ -2070,7 +2070,7 @@ func TestAuthorizationCrdDeploy(t *testing.T) {
 			return false, tmpCR, sourceClient, badOperatorConfig
 		},
 		"fail - auth module not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			customResource, err := getCustomResource("./testdata/cr_powerstore_replica.yaml")
 			if err != nil {
 				panic(err)
 			}
