@@ -19,12 +19,6 @@ spec:
 apiVersion: csm-authorization.storage.dell.com/v1
 kind: CSMRole
 metadata:
-  labels:
-    app.kubernetes.io/name: role
-    app.kubernetes.io/instance: role-sample
-    app.kubernetes.io/part-of: csm-authorization
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/created-by: csm-authorization
   name: REPLACE_ROLE_NAME
   namespace: authorization
 spec:
@@ -36,12 +30,6 @@ spec:
 apiVersion: csm-authorization.storage.dell.com/v1
 kind: CSMTenant
 metadata:
-  labels:
-    app.kubernetes.io/name: csmtenant
-    app.kubernetes.io/instance: csmtenant-sample
-    app.kubernetes.io/part-of: csm-authorization
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/created-by: csm-authorization
   name: REPLACE_TENANT_NAME
   namespace: authorization
 spec:
