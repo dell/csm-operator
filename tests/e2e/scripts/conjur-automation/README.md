@@ -18,6 +18,8 @@ helm install csi-secrets-store \
     secrets-store-csi-driver/secrets-store-csi-driver \
     --wait \
     --namespace kube-system \
+    --set 'enableSecretRotation=true' \
+    --set 'syncSecret.enabled=true' \
     --set 'tokenRequests[0].audience=conjur'
 ```
 
