@@ -3350,3 +3350,25 @@ func Test_getDefaultComponents(t *testing.T) {
 		})
 	}
 }
+
+func TestGetEnvironmentVariable(t *testing.T) {
+	// Test case: Environment variable is set
+	os.Setenv("TEST_VAR", "test_value")
+	value, err := GetEnvironmentVariable("TEST_VAR")
+	if err != nil {
+		t.Errorf("Expected no error, but got %v", err)
+	}
+	if value != "test_value" {
+		t.Errorf("Expected value 'test_value', but got '%s'", value)
+	}
+	os.Unsetenv("TEST_VAR")
+
+	// Test case: Environment variable is not set
+	_, err = GetEnvironmentVariable("NON_EXISTENT_VAR")
+	if err == nil {
+		t.Errorf("Expected error, but got nil")
+	}
+	if err.Error() != "environment variable is not defined" {
+		t.Errorf("Expected error message 'environment variable is not defined', but got '%s'", err.Error())
+	}
+}
