@@ -889,7 +889,7 @@ spec:
               value: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.14.0
             - name: RELATED_IMAGE_metadataretriever
               value: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0
-          image: quay.io/dell/container-storage-modules/dell-csm-operator:v1.10.0
+          image: quay.io/dell/container-storage-modules/dell-csm-operator:nightly
           imagePullPolicy: Always
           livenessProbe:
             httpGet:
