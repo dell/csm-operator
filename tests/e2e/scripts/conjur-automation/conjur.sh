@@ -61,7 +61,6 @@ helm install \
    --set securityContext.allowPrivilegeEscalation=true \
    --set service.external.enabled=false \
    --wait \
-   --debug \
    conjur \
    https://github.com/cyberark/conjur-oss-helm-chart/releases/download/v"$VERSION"/conjur-oss-"$VERSION".tgz
 
