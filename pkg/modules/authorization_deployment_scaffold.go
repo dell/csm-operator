@@ -191,9 +191,13 @@ func getStorageServiceScaffold(name string, namespace string, image string, repl
 }
 
 // getTenantServiceScaffold returns tenant-service deployment for authorization v2
+<<<<<<< HEAD
 func getTenantServiceScaffold(name, namespace, sentinelName, image, configSecretName, redisSecretName, redisPasswordKey string, replicas int32, sentinelReplicas int) appsv1.Deployment {
 	volumes, volumeMounts := createConfigSecretVolumeAndVolumeMnts(configSecretName)
 
+=======
+func getTenantServiceScaffold(name, namespace, sentinelName, image, redisSecretName, redisPasswordKey string, replicas int32, sentinelReplicas int) appsv1.Deployment {
+>>>>>>> 339c5c0f (add logging and env variables for sentinel)
 	return appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -326,6 +330,7 @@ func getAuthorizationRedisStatefulsetScaffold(crName, name, namespace, image, re
 							},
 							Command: []string{"sh", "-c"},
 							Args: []string{
+<<<<<<< HEAD
 								`echo "Initializing Redis configuration..."
 								cp /csm-auth-redis-cm/redis.conf /etc/redis/redis.conf
 								echo "masterauth $REDIS_PASSWORD" >> /etc/redis/redis.conf
@@ -370,6 +375,24 @@ func getAuthorizationRedisStatefulsetScaffold(crName, name, namespace, image, re
 									MASTER_FQDN="$AUTHORIZATION_REDIS_NAME-0.$AUTHORIZATION_REDIS_NAME.$NAMESPACE.svc.cluster.local"
 									if [ "$(hostname)" != "$AUTHORIZATION_REDIS_NAME-0" ]; then
 										echo "replicaof $MASTER_FQDN 6379" >> /etc/redis/redis.conf
+=======
+								`cp /csm-auth-redis-cm/redis.conf /etc/redis/redis.conf
+
+								echo "masterauth $REDIS_PASSWORD" >> /etc/redis/redis.conf
+								echo "requirepass $REDIS_PASSWORD" >> /etc/redis/redis.conf
+
+								echo "Finding master..."
+								MASTER_FDQN=$(hostname  -f | sed -e 's/redis-csm-[0-9]\./redis-csm-0./')
+								echo "Master at " $MASTER_FDQN
+								if [ "$(redis-cli -h sentinel -p 5000 ping)" != "PONG" ]; then
+									echo "No sentinel found."
+
+									if [ "$(hostname)" = "redis-csm-0" ]; then
+									echo "This is redis master, not updating config..."
+									else
+									echo "This is redis slave, updating redis.conf..."
+									echo "replicaof $MASTER_FDQN 6379" >> /etc/redis/redis.conf
+>>>>>>> 339c5c0f (add logging and env variables for sentinel)
 									fi
 								fi
 								`,
@@ -661,10 +684,18 @@ func getAuthorizationSentinelStatefulsetScaffold(crName, sentinelName, redisName
 									SENTINEL="$AUTHORIZATION_SENTINEL_NAME-$i.$AUTHORIZATION_SENTINEL_NAME.$NAMESPACE.svc.cluster.local"
 									SENTINELS="$SENTINELS $SENTINEL"
 								done
+<<<<<<< HEAD
 
 								echo "Sentinel nodes: $SENTINELS"
 
 								for retry in $(seq 0 $MAX_RETRIES)
+=======
+								loop=$(echo $nodes | sed -e "s/"*"/\n/g")
+
+								foundMaster=false
+
+								while [ "$foundMaster" = "false" ]
+>>>>>>> 339c5c0f (add logging and env variables for sentinel)
 								do
 									for sentinel in $SENTINELS
 									do
@@ -690,20 +721,32 @@ func getAuthorizationSentinelStatefulsetScaffold(crName, sentinelName, redisName
 										fi
 									done
 
+<<<<<<< HEAD
 									if [ "$MASTER_FOUND" = "true" ]; then
 										break
+=======
+									if [ "$foundMaster" = "true" ]; then
+									break
+									else
+									echo "Master not found, wait for 30s before attempting again"
+									sleep 30
+>>>>>>> 339c5c0f (add logging and env variables for sentinel)
 									fi
 
 									echo "Retrying in 5 seconds... ($retry/$MAX_RETRIES)"
 									sleep 5
 								done
 
+<<<<<<< HEAD
 								if [ "$MASTER_FOUND" != "true" ]; then
 									echo "No master found after $MAX_RETRIES retries. Defaulting to first Redis pod."
 									MASTER="$AUTHORIZATION_REDIS_NAME-0.$AUTHORIZATION_REDIS_NAME.$NAMESPACE.svc.cluster.local"
 								fi
 
 								echo "Generating /etc/redis/sentinel.conf for master $MASTER"
+=======
+								echo "sentinel monitor mymaster $MASTER 6379 2" >> /tmp/master
+>>>>>>> 339c5c0f (add logging and env variables for sentinel)
 								echo "port 5000
 								sentinel resolve-hostnames yes
 								sentinel announce-hostnames yes

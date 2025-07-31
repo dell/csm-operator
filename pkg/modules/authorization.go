@@ -546,7 +546,7 @@ func AuthorizationPrecheck(ctx context.Context, op operatorutils.OperatorConfig,
 		}
 	}
 
-	var secrets []string 
+	var secrets []string
 
 	// Karavi authorization config is not used in config v2.3.0 and later (CSM 1.15)
 	condensedSecretVersion, err := operatorutils.MinVersionCheck("v2.3.0", auth.ConfigVersion)
@@ -558,7 +558,7 @@ func AuthorizationPrecheck(ctx context.Context, op operatorutils.OperatorConfig,
 	} else {
 		secrets = []string{"karavi-authorization-config", "proxy-authz-tokens"}
 	}
-	
+
 	if !skipCertValid {
 		secrets = append(secrets, "proxy-server-root-certificate")
 	}
@@ -965,6 +965,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		log.Info("Using Vault for storage system credentials")
 		// Vault is supported only till config v2.2.0 (CSM 1.14)
 		// set vault volumes
+		log.Infof("Using Vault for storage system credentials")
 		mountVaultVolumes(vaults, &deployment)
 	}
 
