@@ -26,6 +26,7 @@ helm install csi-secrets-store \
 # Prerequisites
 - helm
 - kubectl
+- jq
 - docker or podman
 
 # Running
