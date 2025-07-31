@@ -332,7 +332,7 @@ metadata:
                         "value": "docker.io/nginxinc/nginx-unprivileged:1.27"
                       }
                     ],
-                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.124.0",
+                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.130.0",
                     "name": "otel-collector",
                     "privateKey": ""
                   },
@@ -727,7 +727,7 @@ metadata:
                         "value": "docker.io/nginxinc/nginx-unprivileged:1.27"
                       }
                     ],
-                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.124.0",
+                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.130.0",
                     "name": "otel-collector",
                     "privateKey": ""
                   },
@@ -993,6 +993,149 @@ metadata:
                 "configVersion": "v1.14.0",
                 "enabled": false,
                 "name": "resiliency"
+              },
+              {
+                "components": [
+                  {
+                    "envs": [
+                      {
+                        "name": "X_CSI_REPLICATION_PREFIX",
+                        "value": "replication.storage.dell.com"
+                      },
+                      {
+                        "name": "X_CSI_REPLICATION_CONTEXT_PREFIX",
+                        "value": "powerstore"
+                      }
+                    ],
+                    "image": "quay.io/dell/container-storage-modules/dell-csi-replicator:v1.13.0",
+                    "name": "dell-csi-replicator"
+                  },
+                  {
+                    "envs": [
+                      {
+                        "name": "REPLICATION_CTRL_LOG_LEVEL",
+                        "value": "debug"
+                      },
+                      {
+                        "name": "REPLICATION_CTRL_REPLICAS",
+                        "value": "1"
+                      },
+                      {
+                        "name": "RETRY_INTERVAL_MIN",
+                        "value": "1s"
+                      },
+                      {
+                        "name": "RETRY_INTERVAL_MAX",
+                        "value": "5m"
+                      }
+                    ],
+                    "image": "quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0",
+                    "name": "dell-replication-controller-manager"
+                  }
+                ],
+                "configVersion": "v1.13.0",
+                "enabled": false,
+                "name": "replication"
+              },
+              {
+                "components": [
+                  {
+                    "certificate": "",
+                    "enabled": false,
+                    "envs": [
+                      {
+                        "name": "TOPOLOGY_LOG_LEVEL",
+                        "value": "INFO"
+                      }
+                    ],
+                    "image": "quay.io/dell/container-storage-modules/csm-topology:v1.13.0",
+                    "name": "topology",
+                    "privateKey": ""
+                  },
+                  {
+                    "certificate": "",
+                    "enabled": false,
+                    "envs": [
+                      {
+                        "name": "NGINX_PROXY_IMAGE",
+                        "value": "docker.io/nginxinc/nginx-unprivileged:1.27"
+                      }
+                    ],
+                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.130.0",
+                    "name": "otel-collector",
+                    "privateKey": ""
+                  },
+                  {
+                    "enabled": false,
+                    "name": "cert-manager"
+                  },
+                  {
+                    "enabled": false,
+                    "envs": [
+                      {
+                        "name": "POWERSTORE_MAX_CONCURRENT_QUERIES",
+                        "value": "10"
+                      },
+                      {
+                        "name": "POWERSTORE_VOLUME_METRICS_ENABLED",
+                        "value": "true"
+                      },
+                      {
+                        "name": "POWERSTORE_VOLUME_IO_POLL_FREQUENCY",
+                        "value": "10"
+                      },
+                      {
+                        "name": "POWERSTORE_SPACE_POLL_FREQUENCY",
+                        "value": "300"
+                      },
+                      {
+                        "name": "POWERSTORE_ARRAY_POLL_FREQUENCY",
+                        "value": "300"
+                      },
+                      {
+                        "name": "POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY",
+                        "value": "20"
+                      },
+                      {
+                        "name": "POWERSTORE_TOPOLOGY_METRICS_ENABLED",
+                        "value": "true"
+                      },
+                      {
+                        "name": "POWERSTORE_TOPOLOGY_POLL_FREQUENCY",
+                        "value": "30"
+                      },
+                      {
+                        "name": "POWERSTORE_LOG_LEVEL",
+                        "value": "INFO"
+                      },
+                      {
+                        "name": "POWERSTORE_LOG_FORMAT",
+                        "value": "TEXT"
+                      },
+                      {
+                        "name": "ZIPKIN_URI",
+                        "value": ""
+                      },
+                      {
+                        "name": "ZIPKIN_SERVICE_NAME",
+                        "value": "metrics-powerstore"
+                      },
+                      {
+                        "name": "ZIPKIN_PROBABILITY",
+                        "value": "0.0"
+                      },
+                      {
+                        "name": "COLLECTOR_ADDRESS",
+                        "value": "otel-collector:55680"
+                      },
+                    ],
+                    "image": "quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.12.0",
+                    "name": "metrics-powerstore"
+                  }
+                ],
+                "configVersion": "v1.13.0",
+                "enabled": false,
+                "name": "observability"
               }
             ]
           }
@@ -1329,7 +1472,7 @@ metadata:
                         "value": "docker.io/nginxinc/nginx-unprivileged:1.27"
                       }
                     ],
-                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.124.0",
+                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.130.0",
                     "name": "otel-collector",
                     "privateKey": ""
                   },
@@ -3789,14 +3932,17 @@ spec:
                       - name: RELATED_IMAGE_topology
                         value: quay.io/dell/container-storage-modules/csm-topology:v1.13.0
                       - name: RELATED_IMAGE_otel-collector
-                        value: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.124.0
+                        value: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.130.0
                       - name: RELATED_IMAGE_metrics-powerscale
                         value: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.10.0
                       - name: RELATED_IMAGE_metrics-powermax
                         value: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.8.0
                       - name: RELATED_IMAGE_metrics-powerflex
                         value: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.13.0
-                      - name: RELATED_IMAGE_podmon-node
+                      - name: RELATED_IMAGE_metrics-powerstore
+                        value: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.12.0
+                      - name: RELATED_IMAGE_metrics-unity
+                      - name: RELATED_IMAGE_podmon-node                      
                         value: quay.io/dell/container-storage-modules/podmon:v1.14.0
                       - name: RELATED_IMAGE_kube-rbac-proxy
                         value: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
@@ -3909,7 +4055,7 @@ spec:
       name: dell-replication-controller-manager
     - image: quay.io/dell/container-storage-modules/csm-topology:v1.13.0
       name: topology
-    - image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.124.0
+    - image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.130.0
       name: otel-collector
     - image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.10.0
       name: metrics-powerscale
@@ -3917,6 +4063,8 @@ spec:
       name: metrics-powermax
     - image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.13.0
       name: metrics-powerflex
+    - image: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.12.0
+      name: metrics-powerstore
     - image: quay.io/dell/container-storage-modules/podmon:v1.14.0
       name: podmon-node
     - image: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
