@@ -1353,16 +1353,28 @@ func removeVaultFromStorageService(ctx context.Context, cr csmv1.ContainerStorag
 	return nil
 }
 
-func getDeployment(cr csmv1.ContainerStorageModule, ctrlClient client.Client) (*appsv1.Deployment, error) {
+func getDeployment(ctx context.Context, ctrlClient client.Client, deploymentName, namespace string) (*appsv1.Deployment, error) {
 	dp := &appsv1.Deployment{}
-	if err := ctrlClient.Get(context.TODO(), client.ObjectKey{
-		Namespace: cr.Namespace,
-		Name:      cr.Name,
+	if err := ctrlClient.Get(ctx, client.ObjectKey{
+		Namespace: namespace,
+		Name:      deploymentName,
 	}, dp); err != nil {
 		return nil, err
 	}
 
 	return dp, nil
+}
+
+func getCsmObject(ctx context.Context, ctrlClient client.Client, csmObjectName, namespace string) (*csmv1.ContainerStorageModule, error) {
+	csmObject := &csmv1.ContainerStorageModule{}
+	if err := ctrlClient.Get(ctx, client.ObjectKey{
+		Namespace: namespace,
+		Name:      csmObjectName,
+	}, csmObject); err != nil {
+		return nil, err
+	}
+
+	return csmObject, nil
 }
 
 func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
