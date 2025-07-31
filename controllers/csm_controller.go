@@ -96,6 +96,9 @@ const (
 
 	// CSMVersion -
 	CSMVersion = "v1.15.0"
+
+	// RefreshEnvVar - environment variable name for watcher timed refreshes
+	RefreshEnvVar = "refreshIntervalMinutes"
 )
 
 var (
@@ -538,14 +541,28 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 
 // ContentWatch - watch updates on deployments, deamonsets, and pods
 func (r *ContainerStorageModuleReconciler) ContentWatch(csm *csmv1.ContainerStorageModule) (chan struct{}, error) {
-	sharedInformerFactory := sinformer.NewSharedInformerFactoryWithOptions(r.K8sClient, time.Duration(3*time.Minute))
+	_, log := logger.GetNewContextWithLogger("ContentWatch")
+	refreshMinutes, err := operatorutils.GetEnvironmentVariable(RefreshEnvVar)
+	if err != nil {
+		log.Info("Refresh time environment variable not set, defaulting to 60 minutes")
+		refreshMinutes = "60"
+	}
+	refreshMinutesInt, err := strconv.Atoi(refreshMinutes)
+	if err != nil {
+		log.Info("Refresh time environment variable not a valid number, defaulting to 60 minutes")
+		refreshMinutesInt = 60
+	} else {
+		log.Info("Refresh time for ContentWatch set to ", refreshMinutesInt, " minutes")
+	}
+	refreshTime := time.Duration(refreshMinutesInt) * time.Minute
+	sharedInformerFactory := sinformer.NewSharedInformerFactoryWithOptions(r.K8sClient, time.Duration(refreshTime))
 
 	updateFn := func(oldObj interface{}, newObj interface{}) {
 		r.informerUpdate(csm, oldObj, newObj, r.handleDaemonsetUpdate, r.handleDeploymentUpdate, r.handlePodsUpdate)
 	}
 
 	daemonsetInformer := sharedInformerFactory.Apps().V1().DaemonSets().Informer()
-	_, err := daemonsetInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, err = daemonsetInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: updateFn,
 	})
 	if err != nil {
