@@ -1,6 +1,16 @@
 # csm-authorization-conjur
 Install Conjur and Conjur CSI Provider in Kubernetes/Openshift configured for CSM Authorization
 
+This does not install the Secrets Store CSI Driver. Use the command below to do so.
+
+```
+helm install csi-secrets-store \
+    secrets-store-csi-driver/secrets-store-csi-driver \
+    --wait \
+    --namespace kube-system \
+    --set 'tokenRequests[0].audience=conjur'
+```
+
 # Prerequisites
 - helm
 - kubectl
