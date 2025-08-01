@@ -900,7 +900,7 @@ spec:
           command:
             - /manager
           env:
-            - name: refreshIntervalMinutes
+            - name: REFRESH_INTERVAL_MINUTES
               value: "60"
           image: quay.io/dell/container-storage-modules/dell-csm-operator:nightly
           imagePullPolicy: Always
