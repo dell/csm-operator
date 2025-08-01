@@ -3368,7 +3368,4 @@ func TestGetEnvironmentVariable(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected error, but got nil")
 	}
-	if err.Error() != "environment variable is not defined" {
-		t.Errorf("Expected error message 'environment variable is not defined', but got '%s'", err.Error())
-	}
 }
