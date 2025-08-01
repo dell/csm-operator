@@ -61,7 +61,7 @@ spec:
               name: RELATED_IMAGE_dell-csi-replicator
             - value: quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0
               name: RELATED_IMAGE_dell-replication-controller-manager
-            - value: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.130.1
+            - value: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.131.0
               name: RELATED_IMAGE_otel-collector
             - value: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.10.0
               name: RELATED_IMAGE_metrics-powerscale
