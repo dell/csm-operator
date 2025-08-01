@@ -277,17 +277,17 @@ func (suite *CSMControllerTestSuite) TestContentWatch() {
 	reconciler := suite.createReconciler()
 
 	// test case: environment variable set to non-default val
-	os.Setenv(RefreshEnvVar, "3")
+	os.Setenv(REFRESH_TIMER_ENV_VAR, "3")
 	_, err := reconciler.ContentWatch(&csm)
 	assert.Nil(suite.T(), err)
 
 	// test case: environment variable set to non-number val
-	os.Setenv(RefreshEnvVar, "dummy")
+	os.Setenv(REFRESH_TIMER_ENV_VAR, "dummy")
 	_, err = reconciler.ContentWatch(&csm)
 	assert.Nil(suite.T(), err)
 
 	// test case: environment variable unset
-	os.Unsetenv(RefreshEnvVar)
+	os.Unsetenv(REFRESH_TIMER_ENV_VAR)
 	_, err = reconciler.ContentWatch(&csm)
 	assert.Nil(suite.T(), err)
 }

@@ -1216,7 +1216,7 @@ func SetContainerImage(objects []crclient.Object, deploymentName, containerName,
 func GetEnvironmentVariable(varName string) (string, error) {
 	value := os.Getenv(varName)
 	if value == "" {
-		return "", errors.New("environment variable is not defined")
+		return "", errors.New("environment variable is not defined: " + varName)
 	}
 	return value, nil
 }

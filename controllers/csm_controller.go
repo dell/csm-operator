@@ -97,8 +97,8 @@ const (
 	// CSMVersion -
 	CSMVersion = "v1.15.0"
 
-	// RefreshEnvVar - environment variable name for watcher timed refreshes
-	RefreshEnvVar = "refreshIntervalMinutes"
+	// REFRESH_TIMER_ENV_VAR - environment variable name for watcher timed refreshes
+	REFRESH_TIMER_ENV_VAR = "refreshIntervalMinutes"
 )
 
 var (
@@ -542,14 +542,14 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 // ContentWatch - watch updates on deployments, deamonsets, and pods
 func (r *ContainerStorageModuleReconciler) ContentWatch(csm *csmv1.ContainerStorageModule) (chan struct{}, error) {
 	_, log := logger.GetNewContextWithLogger("ContentWatch")
-	refreshMinutes, err := operatorutils.GetEnvironmentVariable(RefreshEnvVar)
+	refreshMinutes, err := operatorutils.GetEnvironmentVariable(REFRESH_TIMER_ENV_VAR)
 	if err != nil {
 		log.Info("Refresh time environment variable not set, defaulting to 60 minutes")
 		refreshMinutes = "60"
 	}
 	refreshMinutesInt, err := strconv.Atoi(refreshMinutes)
 	if err != nil {
-		log.Info("Refresh time environment variable not a valid number, defaulting to 60 minutes")
+		log.Error("Refresh time environment variable not a valid number, defaulting to 60 minutes")
 		refreshMinutesInt = 60
 	} else {
 		log.Info("Refresh time for ContentWatch set to ", refreshMinutesInt, " minutes")
