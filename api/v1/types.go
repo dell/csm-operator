@@ -31,7 +31,7 @@ type DriverType string
 // ModuleType - type representing the type of the modules. e.g. - authorization, podmon
 type ModuleType string
 
-// ObservabilityComponentType - type representing the type of components inside observability module. e.g. - topology
+// ObservabilityComponentType - type representing the type of components inside observability module. e.g. - otel-collector
 type ObservabilityComponentType string
 
 // ClientType - the type of the client

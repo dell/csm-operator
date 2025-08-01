@@ -16,8 +16,6 @@ spec:
     - name: observability
       enabled: true
       components:
-        - name: topology
-          enabled: true
         - name: otel-collector
           enabled: true
         - name: cert-manager
