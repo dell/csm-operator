@@ -319,7 +319,7 @@ spec:
           enabled: false
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
-          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.130.1
+          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.131.0
           envs:
             # image of nginx proxy image
             # Allowed values: string
