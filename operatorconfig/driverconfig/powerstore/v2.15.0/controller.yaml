@@ -176,7 +176,7 @@ spec:
             - "--leader-election"
             - "--worker-threads=130"
             - "--resync=10s"
-            - "--timeout=300s"
+            - "--timeout=960s"
           env:
             - name: ADDRESS
               value: /var/run/csi/csi.sock
