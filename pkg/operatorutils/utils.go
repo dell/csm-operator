@@ -16,6 +16,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -1208,4 +1209,14 @@ func SetContainerImage(objects []crclient.Object, deploymentName, containerName,
 			}
 		}
 	}
+}
+
+// fetch an environment variable's value by name
+// or return an error if it is not defined/empty string
+func GetEnvironmentVariable(varName string) (string, error) {
+	value := os.Getenv(varName)
+	if value == "" {
+		return "", errors.New("environment variable is not defined: " + varName)
+	}
+	return value, nil
 }
