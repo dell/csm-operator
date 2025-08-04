@@ -1304,6 +1304,45 @@ func configureConjurSecretProvider(secretProviderClasses *csmv1.StorageSystemSec
 	}
 }
 
+// mountRedisVolumesInDeployment mounts redis volumes for an authorizationdeployment
+func mountRedisVolumesInDeployment(authModule csmv1.Module, deployment *appsv1.Deployment) {
+	// redis secret provider class
+	for _, component := range authModule.Components {
+		for _, config := range component.RedisSecretProviderClass {
+			if config.RedisSecretName != "" {
+				// add volume for redis secret provider class
+				redisVolume := redisVolume(redisSecretName)
+				deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, redisVolume)
+
+				// set volume mount for redis secret provider class
+				for i := range deployment.Spec.Template.Spec.Containers {
+					redisVolumeMount := redisVolumeMount()
+					deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, redisVolumeMount)
+				}
+			}
+		}
+	}
+}
+
+// mountRedisVolumesInStatefulset mounts redis volumes for an authorization statefulset
+func mountRedisVolumesInStatefulset(authModule csmv1.Module, statefulset *appsv1.StatefulSet) {
+	for _, component := range authModule.Components {
+		for _, config := range component.RedisSecretProviderClass {
+			if config.RedisSecretName != "" {
+				// add volume for redis secret provider class
+				redisVolume := redisVolume(redisSecretName)
+				statefulset.Spec.Template.Spec.Volumes = append(statefulset.Spec.Template.Spec.Volumes, redisVolume)
+
+				// set volume mount for redis secret provider class
+				for i := range statefulset.Spec.Template.Spec.Containers {
+					redisVolumeMount := redisVolumeMount()
+					statefulset.Spec.Template.Spec.Containers[i].VolumeMounts = append(statefulset.Spec.Template.Spec.Containers[i].VolumeMounts, redisVolumeMount)
+				}
+			}
+		}
+	}
+}
+
 // remove vault certificates, args, and volumes/volume mounts if upgrading from verions < v2.3.0
 func removeVaultFromStorageService(ctx context.Context, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, dp *appsv1.Deployment) error {
 	// remove vault certificates

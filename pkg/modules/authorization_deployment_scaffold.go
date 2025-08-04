@@ -756,9 +756,12 @@ func getAuthorizationSentinelStatefulsetScaffold(crName, sentinelName, redisName
 								sentinel parallel-syncs mymaster 2
 								sentinel auth-pass mymaster $REDIS_PASSWORD
 								" > /etc/redis/sentinel.conf
+<<<<<<< HEAD
 
 								echo "Sentinel configuration:"
 								cat /etc/redis/sentinel.conf
+=======
+>>>>>>> e3600635 (revert cm name and consolidate redis)
 								`,
 							},
 							VolumeMounts: []corev1.VolumeMount{
