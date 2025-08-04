@@ -351,7 +351,7 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Secret Provider Classes"
 	// Applicable from CSM v1.15 onwards
 	// Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
-	SecretProviderClasses []string `json:"secretProviderClasses,omitempty" yaml:"secretProviderClasses,omitempty"`
+	SecretProviderClasses *StorageSystemSecretProviderClasses `json:"secretProviderClasses,omitempty" yaml:"secretProviderClasses,omitempty"`
 
 	// Secrets is a collection of kubernetes secrets for storage system credentials
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Secrets"
@@ -439,6 +439,37 @@ type RedisSecretProviderClass struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Password Key"
 	// +kubebuilder:validation:Required
 	RedisPasswordKey string `json:"redisPasswordKey" yaml:"redisPasswordKey"`
+}
+
+// StorageSystemSecretProviderClass is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
+type StorageSystemSecretProviderClasses struct {
+	// Vault is the list SecretProviderClass names provided by Vault
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Vault SecretProviderClass Names"
+	Vaults []string `json:"vault,omitempty" yaml:"vault,omitempty"`
+
+	// Conjur is the list SecretProviderClass names provided by Conjur
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Conjur SecretProviderClasses"
+	Conjurs []ConjurSecretProviderClass `json:"conjur,omitempty" yaml:"conjur,omitempty"`
+}
+
+type ConjurSecretProviderClass struct {
+	// Name is the name of the Conjur SecretProviderClass
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Conjur SecretProviderClass Name"
+	Name string `json:"name,omitempty" yaml:"name,omitempty"`
+
+	// Paths is the list of paths to the secrets in Conjur
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Conjur Credential Paths"
+	Paths []ConjurCredentialPath `json:"paths,omitempty" yaml:"paths,omitempty"`
+}
+
+type ConjurCredentialPath struct {
+	// UsernamePath is the path to the username in the secret
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Conjur Username Path"
+	UsernamePath string `json:"usernamePath,omitempty" yaml:"usernamePath,omitempty"`
+
+	// PasswordPath is the path to the password in the secret
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Conjur Password Path"
+	PasswordPath string `json:"passwordPath,omitempty" yaml:"passwordPath,omitempty"`
 }
 
 // CSIDriverSpec struct

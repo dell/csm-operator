@@ -332,11 +332,6 @@ rules:
       - certificates
     verbs:
       - "*"
-      - create
-      - delete
-      - deletecollection
-      - patch
-      - update
   - apiGroups:
       - cert-manager.io
     resources:
@@ -358,11 +353,6 @@ rules:
       - clusterissuers
     verbs:
       - "*"
-      - get
-      - list
-      - patch
-      - update
-      - watch
   - apiGroups:
       - cert-manager.io
     resources:
@@ -391,14 +381,6 @@ rules:
       - issuers
     verbs:
       - "*"
-      - create
-      - delete
-      - deletecollection
-      - get
-      - list
-      - patch
-      - update
-      - watch
   - apiGroups:
       - cert-manager.io
     resourceNames:
