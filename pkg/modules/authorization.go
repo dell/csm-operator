@@ -1378,13 +1378,14 @@ func removeVaultFromStorageService(ctx context.Context, cr csmv1.ContainerStorag
 	var newVolumes []corev1.Volume
 	for _, volume := range dp.Spec.Template.Spec.Volumes {
 		if !strings.Contains(volume.Name, "vault-client-certificate-") {
+			volume.VolumeSource.Projected = nil // Clear projected sources if they exists
 			newVolumes = append(newVolumes, volume)
 		}
 	}
 	dp.Spec.Template.Spec.Volumes = newVolumes
 
 	// Update the deployment
-	err = ctrlClient.Update(context.Background(), dp)
+	err = ctrlClient.Update(ctx, dp)
 	if err != nil {
 		return fmt.Errorf("updating storage service deployment for upgrading: %w", err)
 	}
