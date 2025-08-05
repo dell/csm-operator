@@ -33,6 +33,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"k8s.io/kubernetes/test/e2e/framework"
@@ -76,9 +77,9 @@ var (
 	pmaxArrayConfigMap     = map[string]string{"REPLACE_PORTGROUPS": "PMAX_PORTGROUPS", "REPLACE_PROTOCOL": "PMAX_PROTOCOL", "REPLACE_ARRAYS": "PMAX_ARRAYS", "REPLACE_ENDPOINT": "PMAX_ENDPOINT"}
 	pmaxAuthArrayConfigMap = map[string]string{"REPLACE_PORTGROUPS": "PMAX_PORTGROUPS", "REPLACE_PROTOCOL": "PMAX_PROTOCOL", "REPLACE_ARRAYS": "PMAX_ARRAYS", "REPLACE_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
 	// Auth V2
-	pflexCrMap  = map[string]string{"REPLACE_STORAGE_NAME": "PFLEX_STORAGE", "REPLACE_STORAGE_TYPE": "PFLEX_STORAGE", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_SYSTEM_ID": "PFLEX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PFLEX_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PFLEX_ROLE", "REPLACE_QUOTA": "PFLEX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PFLEX_POOL", "REPLACE_TENANT_NAME": "PFLEX_TENANT", "REPLACE_TENANT_ROLES": "PFLEX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PFLEX_TENANT_PREFIX"}
-	pscaleCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PSCALE_STORAGE", "REPLACE_STORAGE_TYPE": "PSCALE_STORAGE", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_SYSTEM_ID": "PSCALE_CLUSTER", "REPLACE_VAULT_STORAGE_PATH": "PSCALE_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PSCALE_ROLE", "REPLACE_QUOTA": "PSCALE_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PSCALE_POOL_V2", "REPLACE_TENANT_NAME": "PSCALE_TENANT", "REPLACE_TENANT_ROLES": "PSCALE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PSCALE_TENANT_PREFIX"}
-	pmaxCrMap   = map[string]string{"REPLACE_STORAGE_NAME": "PMAX_STORAGE", "REPLACE_STORAGE_TYPE": "PMAX_STORAGE", "REPLACE_ENDPOINT": "PMAX_ENDPOINT", "REPLACE_SYSTEM_ID": "PMAX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PMAX_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PMAX_ROLE", "REPLACE_QUOTA": "PMAX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PMAX_POOL_V2", "REPLACE_TENANT_NAME": "PMAX_TENANT", "REPLACE_TENANT_ROLES": "PMAX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PMAX_TENANT_PREFIX"}
+	pflexCrMap  = map[string]string{"REPLACE_STORAGE_NAME": "PFLEX_STORAGE", "REPLACE_STORAGE_TYPE": "PFLEX_STORAGE", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_SYSTEM_ID": "PFLEX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PFLEX_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PFLEX_ROLE", "REPLACE_QUOTA": "PFLEX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PFLEX_POOL", "REPLACE_TENANT_NAME": "PFLEX_TENANT", "REPLACE_TENANT_ROLES": "PFLEX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PFLEX_TENANT_PREFIX", "REPLACE_USERNAME_OBJECT_NAME": "secrets/powerflex-username", "REPLACE_PASSWORD_OBJECT_NAME": "secrets/powerflex-password"}
+	pscaleCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PSCALE_STORAGE", "REPLACE_STORAGE_TYPE": "PSCALE_STORAGE", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_SYSTEM_ID": "PSCALE_CLUSTER", "REPLACE_VAULT_STORAGE_PATH": "PSCALE_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PSCALE_ROLE", "REPLACE_QUOTA": "PSCALE_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PSCALE_POOL_V2", "REPLACE_TENANT_NAME": "PSCALE_TENANT", "REPLACE_TENANT_ROLES": "PSCALE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PSCALE_TENANT_PREFIX", "REPLACE_USERNAME_OBJECT_NAME": "secrets/powerscale-username", "REPLACE_PASSWORD_OBJECT_NAME": "secrets/powerscale-password"}
+	pmaxCrMap   = map[string]string{"REPLACE_STORAGE_NAME": "PMAX_STORAGE", "REPLACE_STORAGE_TYPE": "PMAX_STORAGE", "REPLACE_ENDPOINT": "PMAX_ENDPOINT", "REPLACE_SYSTEM_ID": "PMAX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PMAX_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PMAX_ROLE", "REPLACE_QUOTA": "PMAX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PMAX_POOL_V2", "REPLACE_TENANT_NAME": "PMAX_TENANT", "REPLACE_TENANT_ROLES": "PMAX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PMAX_TENANT_PREFIX", "REPLACE_USERNAME_OBJECT_NAME": "secrets/powermax-username", "REPLACE_PASSWORD_OBJECT_NAME": "secrets/powermax-password"}
 
 	pstoreSecretMap          = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_GLOBALID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_ENDPOINT", "REPLACE_PROTOCOL": "PSTORE_PROTOCOL"}
 	pstoreEphemeralVolumeMap = map[string]string{"REPLACE_GLOBALID": "PSTORE_GLOBALID"}
@@ -162,6 +163,111 @@ func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
 	}
 
 	if _, err := kubectl.RunKubectlInput(cr.Namespace, string(crBuff), "apply", "--validate=true", "-f", "-"); err != nil {
+		return fmt.Errorf("failed to apply CR %s in namespace %s: %v", cr.Name, cr.Namespace, err)
+	}
+
+	return nil
+}
+
+func (step *Step) applyAuthorizationConjur(res Resource, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	crFilePath := res.Scenario.Paths[crNum-1]
+
+	// If the specified file is a template, assume it was rendered to a temporary file earlier.
+	// Attempt to read the rendered file first. If it doesn't exist, assume the specified file
+	// is not a template and should be applied as-is.
+
+	tempFilePath := getRenderedFilePath(crFilePath)
+	crBuff, err := os.ReadFile(tempFilePath) // #nosec G304
+	if os.IsNotExist(err) {
+		// There is no corresponding rendered file, use crFilePath
+		crBuff, err = os.ReadFile(crFilePath) // #nosec G304
+	}
+	if err != nil {
+		return fmt.Errorf("failed to read testdata: %v", err)
+	}
+
+	customResource := csmv1.ContainerStorageModule{}
+	err = yaml.Unmarshal(crBuff, &customResource)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal CSM custom resource: %v", err)
+	}
+
+	// set the conjur paths in the Authorization CR
+loop:
+	for moduleIndex, module := range customResource.Spec.Modules {
+		if module.Name == "authorization-proxy-server" {
+			for compIndex, comp := range module.Components {
+				if comp.Name == "storage-system-credentials" {
+					powerflexUsername := os.Getenv("PFLEX_USER")
+					powerflexPassword := os.Getenv("PFLEX_PASS")
+					powermaxUsername := os.Getenv("PMAX_USER")
+					powermaxPassword := os.Getenv("PMAX_PASS")
+					powerscaleUsername := os.Getenv("PSCALE_USER")
+					powerscalePassword := os.Getenv("PSCALE_PASS")
+
+					var conjurPaths []csmv1.ConjurCredentialPath
+					if powerflexUsername != "" && powerflexPassword != "" {
+						conjurPaths = append(conjurPaths, csmv1.ConjurCredentialPath{
+							UsernamePath: "secrets/powerflex-username",
+							PasswordPath: "secrets/powerflex-password",
+						})
+					}
+
+					if powermaxUsername != "" && powermaxPassword != "" {
+						conjurPaths = append(conjurPaths, csmv1.ConjurCredentialPath{
+							UsernamePath: "secrets/powermax-username",
+							PasswordPath: "secrets/powermax-password",
+						})
+					}
+
+					if powerscaleUsername != "" && powerscalePassword != "" {
+						conjurPaths = append(conjurPaths, csmv1.ConjurCredentialPath{
+							UsernamePath: "secrets/powerscale-username",
+							PasswordPath: "secrets/powerscale-password",
+						})
+					}
+
+					customResource.Spec.Modules[moduleIndex].Components[compIndex].SecretProviderClasses.Conjurs[0].Paths = conjurPaths
+					break loop
+				}
+			}
+		}
+	}
+
+	dataBytes := `
+CONCURRENT_STORAGE_REQUESTS: 10
+LOG_LEVEL: debug
+STORAGE_CAPACITY_POLL_INTERVAL: 30s`
+	cm := &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ConfigMap",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "csm-config-params",
+			Namespace: "authorization",
+		},
+		Data: map[string]string{
+			"csm-config-params.yaml": dataBytes,
+		},
+	}
+
+	cmBuff, err := yaml.Marshal(cm)
+	if err != nil {
+		return fmt.Errorf("marshalling %s: %v", customResource.Name, err)
+	}
+
+	authBuff, err := yaml.Marshal(customResource)
+	if err != nil {
+		return fmt.Errorf("marshalling %s: %v", customResource.Name, err)
+	}
+
+	buff := string(cmBuff) + "\n---\n" + string(authBuff)
+
+	if _, err := kubectl.RunKubectlInput(cr.Namespace, buff, "apply", "--validate=true", "-f", "-"); err != nil {
 		return fmt.Errorf("failed to apply CR %s in namespace %s: %v", cr.Name, cr.Namespace, err)
 	}
 
@@ -866,12 +972,6 @@ func deleteSecretIfExists(namespace, secretName string) error {
 }
 
 func renderTemplate(crType string, templateFile string) (string, error) {
-	// find which map to use for secret values
-	mapValues, err := determineMap(crType)
-	if err != nil {
-		return "", err
-	}
-
 	// read the template into memory
 	fileContent, err := os.ReadFile(templateFile) // #nosec G304
 	if err != nil {
@@ -880,6 +980,16 @@ func renderTemplate(crType string, templateFile string) (string, error) {
 
 	// Convert the file content to a string
 	fileString := string(fileContent)
+
+	if crType == "" {
+		return fileString, nil
+	}
+
+	// find which map to use for secret values
+	mapValues, err := determineMap(crType)
+	if err != nil {
+		return "", err
+	}
 
 	// Replace all fields in temporary (in memory) string
 	for key, val := range mapValues {
@@ -936,6 +1046,8 @@ func determineMap(crType string) (map[string]string, error) {
 		mapValues = unitySecretMap
 	} else if crType == "unityEphemeral" {
 		mapValues = unityEphemeralVolumeMap
+	} else if crType == "''" {
+		return mapValues, nil
 	} else {
 		return mapValues, fmt.Errorf("type: %s is not supported", crType)
 	}
@@ -1416,7 +1528,7 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	return nil
 }
 
-func (step *Step) configureAuthorizationProxyServer(res Resource, driver, crNumStr string) error {
+func (step *Step) configureAuthorizationProxyServer(res Resource, authConfigurationPath, driver, crNumStr string) error {
 	fmt.Println("=== Configuring Authorization Proxy Server ===")
 
 	crNum, _ := strconv.Atoi(crNumStr)
@@ -1428,14 +1540,7 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver, crNumS
 		driverNamespace = ""
 		proxyHost       = ""
 		csmTenantName   = ""
-		storageTemplate = ""
 	)
-
-	if strings.Contains(res.Scenario.Scenario, "Kubernetes Secret") {
-		storageTemplate = "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
-	} else {
-		storageTemplate = "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
-	}
 
 	// if tests are running multiple scenarios that require differently configured auth servers, we will not be able to use one set of vars
 	// this section is for powerflex, other drivers can add their sections as required.
@@ -1471,14 +1576,14 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, driver, crNumS
 	address := proxyHost
 	fmt.Printf("Address: %s\n", address)
 
-	return step.AuthorizationV2Resources(storageType, driver, driverNamespace, address, port, csmTenantName, cr.Spec.Modules[0].ConfigVersion, storageTemplate)
+	return step.AuthorizationV2Resources(res, storageType, driver, driverNamespace, address, port, csmTenantName, cr.Spec.Modules[0].ConfigVersion, authConfigurationPath)
 }
 
 // AuthorizationV2Resources creates resources using CRs and dellctl for V2 versions of Authorization Proxy Server
-func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace, proxyHost, port, csmTenantName, configVersion string, storageTemplate string) error {
+func (step *Step) AuthorizationV2Resources(res Resource, storageType, driver, driverNamespace, proxyHost, port, csmTenantName, configVersion string, configurationTemplate string) error {
 	var (
 		crMap               = ""
-		templateFile        = storageTemplate
+		templateFile        = configurationTemplate
 		updatedTemplateFile = ""
 	)
 
@@ -1497,7 +1602,8 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powermax.yaml"
 	}
 
-	err := execShell(fmt.Sprintf("mkdir -p temp/authorization-templates && cp %s %s", templateFile, updatedTemplateFile))
+	pathNum, _ := strconv.Atoi(configurationTemplate)
+	err := execShell(fmt.Sprintf("mkdir -p temp/authorization-templates && cp %s %s", res.Scenario.Paths[pathNum-1], updatedTemplateFile))
 	if err != nil {
 		return fmt.Errorf("failed to copy template file %s to %s: %v", templateFile, updatedTemplateFile, err)
 	}
@@ -1540,6 +1646,14 @@ func (step *Step) AuthorizationV2Resources(storageType, driver, driverNamespace,
 			}
 
 			val = val + ":" + port
+		}
+
+		if key == "REPLACE_USERNAME_OBJECT_NAME" {
+			val = fmt.Sprintf("secrets/%s-username", driver)
+		}
+
+		if key == "REPLACE_PASSWORD_OBJECT_NAME" {
+			val = fmt.Sprintf("secrets/%s-password", driver)
 		}
 
 		err := replaceInFile(key, val, updatedTemplateFile)

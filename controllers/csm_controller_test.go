@@ -271,6 +271,27 @@ func (suite *CSMControllerTestSuite) TestResiliencyReconcileError() {
 	}
 }
 
+func (suite *CSMControllerTestSuite) TestContentWatch() {
+	// Arrange
+	csm := shared.MakeCSM(csmName, suite.namespace, shared.PmaxConfigVersion)
+	reconciler := suite.createReconciler()
+
+	// test case: environment variable set to non-default val
+	os.Setenv(RefreshEnvVar, "3")
+	_, err := reconciler.ContentWatch(&csm)
+	assert.Nil(suite.T(), err)
+
+	// test case: environment variable set to non-number val
+	os.Setenv(RefreshEnvVar, "dummy")
+	_, err = reconciler.ContentWatch(&csm)
+	assert.Nil(suite.T(), err)
+
+	// test case: environment variable unset
+	os.Unsetenv(RefreshEnvVar)
+	_, err = reconciler.ContentWatch(&csm)
+	assert.Nil(suite.T(), err)
+}
+
 func (suite *CSMControllerTestSuite) TestReverseProxyReconcile() {
 	suite.makeFakeRevProxyCSM(csmName, suite.namespace, true, getReverseProxyModule(), string(v1.PowerMax))
 	suite.runFakeCSMManager("", false)
@@ -1987,8 +2008,10 @@ func getAuthProxyServerOCP() []csmv1.Module {
 					RedisStorageClass: "test-storage",
 				},
 				{
-					Name:                  "storage-system-credentials",
-					SecretProviderClasses: []string{"secret-provider-class-1", "secret-provider-class-2"},
+					Name: "storage-system-credentials",
+					SecretProviderClasses: &csmv1.StorageSystemSecretProviderClasses{
+						Vaults: []string{"secret-provider-class-1", "secret-provider-class-2"},
+					},
 				},
 			},
 		},
