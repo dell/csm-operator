@@ -315,24 +315,11 @@ metadata:
                     "enabled": false,
                     "envs": [
                       {
-                        "name": "TOPOLOGY_LOG_LEVEL",
-                        "value": "INFO"
-                      }
-                    ],
-                    "image": "quay.io/dell/container-storage-modules/csm-topology:v1.13.0",
-                    "name": "topology",
-                    "privateKey": ""
-                  },
-                  {
-                    "certificate": "",
-                    "enabled": false,
-                    "envs": [
-                      {
                         "name": "NGINX_PROXY_IMAGE",
                         "value": "docker.io/nginxinc/nginx-unprivileged:1.27"
                       }
                     ],
-                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.124.0",
+                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.131.0",
                     "name": "otel-collector",
                     "privateKey": ""
                   },
@@ -710,24 +697,11 @@ metadata:
                     "enabled": false,
                     "envs": [
                       {
-                        "name": "TOPOLOGY_LOG_LEVEL",
-                        "value": "INFO"
-                      }
-                    ],
-                    "image": "quay.io/dell/container-storage-modules/csm-topology:v1.13.0",
-                    "name": "topology",
-                    "privateKey": ""
-                  },
-                  {
-                    "certificate": "",
-                    "enabled": false,
-                    "envs": [
-                      {
                         "name": "NGINX_PROXY_IMAGE",
                         "value": "docker.io/nginxinc/nginx-unprivileged:1.27"
                       }
                     ],
-                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.124.0",
+                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.131.0",
                     "name": "otel-collector",
                     "privateKey": ""
                   },
@@ -1312,24 +1286,11 @@ metadata:
                     "enabled": false,
                     "envs": [
                       {
-                        "name": "TOPOLOGY_LOG_LEVEL",
-                        "value": "INFO"
-                      }
-                    ],
-                    "image": "quay.io/dell/container-storage-modules/csm-topology:v1.13.0",
-                    "name": "topology",
-                    "privateKey": ""
-                  },
-                  {
-                    "certificate": "",
-                    "enabled": false,
-                    "envs": [
-                      {
                         "name": "NGINX_PROXY_IMAGE",
                         "value": "docker.io/nginxinc/nginx-unprivileged:1.27"
                       }
                     ],
-                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.124.0",
+                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.131.0",
                     "name": "otel-collector",
                     "privateKey": ""
                   },
@@ -3785,10 +3746,8 @@ spec:
                         value: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.13.0
                       - name: RELATED_IMAGE_dell-replication-controller-manager
                         value: quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0
-                      - name: RELATED_IMAGE_topology
-                        value: quay.io/dell/container-storage-modules/csm-topology:v1.13.0
                       - name: RELATED_IMAGE_otel-collector
-                        value: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.124.0
+                        value: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.131.0
                       - name: RELATED_IMAGE_metrics-powerscale
                         value: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.10.0
                       - name: RELATED_IMAGE_metrics-powermax
@@ -3906,9 +3865,7 @@ spec:
       name: dell-csi-replicator
     - image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0
       name: dell-replication-controller-manager
-    - image: quay.io/dell/container-storage-modules/csm-topology:v1.13.0
-      name: topology
-    - image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.124.0
+    - image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.131.0
       name: otel-collector
     - image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.10.0
       name: metrics-powerscale
