@@ -6,18 +6,18 @@ metadata:
 spec:
   driver:
     csiDriverType: "isilon"
-    configVersion: v2.15.0
+    configVersion: v2.14.0
     authSecret: isilon-creds
     replicas: 1
     common:
-      image: "quay.io/dell/container-storage-modules/csi-isilon:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-isilon:v2.14.0"
       imagePullPolicy: IfNotPresent
   modules:
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
       enabled: true
-      configVersion: v1.13.0
+      configVersion: v1.12.0
       components:
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
