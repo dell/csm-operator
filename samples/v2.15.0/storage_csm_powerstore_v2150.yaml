@@ -77,9 +77,9 @@ spec:
         # Default value: true
         - name: X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION
           value: "true"
-        # X_CSI_POWERSTORE_API_TIMEOUT: Specifies timeout for API calls in seconds. Default value: 5
-        # - name: X_CSI_POWERSTORE_API_TIMEOUT
-        #   value: "25"
+        # X_CSI_POWERSTORE_API_TIMEOUT: Defines the timeout for PowerStore API calls in seconds. Default value: 5
+        - name: X_CSI_POWERSTORE_API_TIMEOUT
+          value: "5"
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
