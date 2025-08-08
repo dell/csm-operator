@@ -1,6 +1,6 @@
 #
 #
-# Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ spec:
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: "quay.io/dell/container-storage-modules/csi-powerstore:nightly"
+      image: "registry.connect.redhat.com/dell-emc/dell-csm-powerstore@sha256:5a7538443a01c6a1a6be4766d2e3d376eec9e564e238282f25ab987229406bb5"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_POWERSTORE_NODE_NAME_PREFIX
@@ -62,41 +62,26 @@ spec:
         # Default value: false
         - name: "GOPOWERSTORE_DEBUG"
           value: "false"
-        # CERT_SECRET_COUNT: Represents number of certificate secrets, which user is going to create for
-        # ssl authentication. (powerstore-cert-0..powerstore-cert-n)
-        # This field is only verified if X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION is set to false
-        # Allowed values: n, where n > 0
-        # Default value: None
-        - name: CERT_SECRET_COUNT
-          value: "1"
-        # X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION: Specifies if the driver is going to validate certs.
-        # If it is set to false, then a secret powerstore-certs has to be created with an X.509 certificate of CA which signed the certificate.
-        # Allowed values:
-        #   true: skip certificate verification
-        #   false: verify certificates
-        # Default value: true
-        - name: X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION
-          value: "true"
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
-        image: registry.k8s.io/sig-storage/csi-provisioner:v5.3.0
+        image: registry.k8s.io/sig-storage/csi-provisioner@sha256:672e45d6a55678abc1d102de665b5cbd63848e75dc7896f238c8eaaf3c7d322f
         args: ["--volume-name-prefix=csivol"]
       - name: attacher
-        image: registry.k8s.io/sig-storage/csi-attacher:v4.9.0
+        image: registry.k8s.io/sig-storage/csi-attacher@sha256:a399393ff5bd156277c56bae0c08389b1a1b95b7fd6ea44a316ce55e0dd559d7
       - name: registrar
-        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar@sha256:8e66117d3b5e336901fc2ff508b3eb6105f8cf3b70f631e8102441e9562c8875
       - name: resizer
-        image: registry.k8s.io/sig-storage/csi-resizer:v1.14.0
+        image: registry.k8s.io/sig-storage/csi-resizer@sha256:2a0b297cc7c4cd376ac7413df339ff2fdaa1ec9d099aed92b5ea1f031ef7f639
       - name: snapshotter
-        image: registry.k8s.io/sig-storage/csi-snapshotter:v8.3.0
+        image: registry.k8s.io/sig-storage/csi-snapshotter@sha256:339a83a86e6e1eead14413fe494b43de8bc48243d146c2810b39dd741d26ca6a
       - name: csi-metadata-retriever
-        image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.11.0
+        image: registry.connect.redhat.com/dell-emc/dell-csm-metadata-retriever@sha256:a8412f649ffca3aa72f5c9f5f2c3eb5dac5d742dfa5d3f4e0ef4bd81d72f2956
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
         args: ["--monitor-interval=60s"]
-        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.15.0
+        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller@sha256:65d118e955cfa0827d0f727fe161a7469e0e1c6829c347a484130aeb6e45f377
     # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
     # Configure only when the storageCapacity is set as "true"
     # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
@@ -217,7 +202,7 @@ spec:
       configVersion: v2.3.0
       components:
         - name: karavi-authorization-proxy
-          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
+          image: registry.connect.redhat.com/dell-emc/dell-csm-authorization-sidecar@sha256:dd8aac3380d1d0664f7bbeb63da36443a57da12f9a26e435f33b8a33bdea4cb9
           envs:
             # proxyHost: hostname of the csm-authorization server
             # Default value: none
@@ -234,10 +219,10 @@ spec:
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
       enabled: false
-      configVersion: v1.14.0
+      configVersion: v1.13.0
       components:
         - name: podmon-controller
-          image: quay.io/dell/container-storage-modules/podmon:nightly
+          image: registry.connect.redhat.com/dell-emc/dell-csm-podmon@sha256:5c3f5e473b9f3ce5797a61b2466d16d8b9c488e69ee35ac336c424bef8979abc
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-powerstore"
@@ -252,7 +237,7 @@ spec:
             - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
             - "--driverPath=csi-powerstore.dellemc.com"
         - name: podmon-node
-          image: quay.io/dell/container-storage-modules/podmon:nightly
+          image: registry.connect.redhat.com/dell-emc/dell-csm-podmon@sha256:5c3f5e473b9f3ce5797a61b2466d16d8b9c488e69ee35ac336c424bef8979abc
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
@@ -271,180 +256,3 @@ spec:
             - "--mode=node"
             - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
             - "--driverPath=csi-powerstore.dellemc.com"
-    # Replication: allows to configure replication
-    # Replication CRDs must be installed before installing driver
-    - name: replication
-      # enabled: Enable/Disable replication feature
-      # Allowed values:
-      #   true: enable replication feature(install dell-csi-replicator sidecar)
-      #   false: disable replication feature(do not install dell-csi-replicator sidecar)
-      # Default value: false
-      enabled: false
-      configVersion: v1.13.0
-      components:
-        - name: dell-csi-replicator
-          # image: Image to use for dell-csi-replicator. This shouldn't be changed
-          # Allowed values: string
-          # Default value: None
-          image: quay.io/dell/container-storage-modules/dell-csi-replicator:nightly
-          envs:
-            # replicationPrefix: prefix to prepend to storage classes parameters
-            # Allowed values: string
-            # Default value: replication.storage.dell.com
-            - name: "X_CSI_REPLICATION_PREFIX"
-              value: "replication.storage.dell.com"
-            # replicationContextPrefix: prefix to use for naming of resources created by replication feature
-            # Allowed values: string
-            - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
-              value: "powerstore"
-        - name: dell-replication-controller-manager
-          # image: Defines controller image. This shouldn't be changed
-          # Allowed values: string
-          image: quay.io/dell/container-storage-modules/dell-replication-controller:nightly
-          envs:
-            # Replication log level
-            # Allowed values: "error", "warn"/"warning", "info", "debug"
-            # Default value: "debug"
-            - name: "REPLICATION_CTRL_LOG_LEVEL"
-              value: "debug"
-            # replicas: Defines number of controller replicas
-            # Allowed values: int
-            # Default value: 1
-            - name: "REPLICATION_CTRL_REPLICAS"
-              value: "1"
-            # retryIntervalMin: Initial retry interval of failed reconcile request.
-            # It doubles with each failure, upto retry-interval-max
-            # Allowed values: time
-            - name: "RETRY_INTERVAL_MIN"
-              value: "1s"
-            # RETRY_INTERVAL_MAX: Maximum retry interval of failed reconcile request
-            # Allowed values: time
-            - name: "RETRY_INTERVAL_MAX"
-              value: "5m"
-            # DISABLE_PVC_REMAP: Disable PVC remapping for replication in single cluster configuration
-            # Allowed values:
-            #   true: Disable replication feature(install dell-csi-replicator sidecar)
-            #   false: disable replication feature(do not install dell-csi-replicator sidecar)
-            # Default value: false
-            - name: "DISABLE_PVC_REMAP"
-              value: "false"
-            # REPLICATION_ALLOW_PVC_CREATION_ON_TARGET: It Creates PVC on target cluster using replicated PV.
-            # Allowed values:
-            #   true: It creates a PVC on target cluster against replicated PV
-            #   false: simply updates claimref on replicated PV on target cluster without actually creating a PVC
-            # Default value: false
-            - name: "REPLICATION_ALLOW_PVC_CREATION_ON_TARGET"
-              value: "false"
-    # observability: allows to configure observability
-    - name: observability
-      # enabled: Enable/Disable observability
-      # Default value: false
-      enabled: false
-      configVersion: v1.13.0
-      components:
-        - name: otel-collector
-          # enabled: Enable/Disable OpenTelemetry Collector
-          # Default value: false
-          enabled: false
-          # image: Defines otel-collector image. This shouldn't be changed
-          # Allowed values: string
-          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.131.1
-          # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
-          #  for self-signed certs, leave empty string
-          # Allowed values: string
-          certificate: ""
-          # privateKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
-          #  for self-signed certs, leave empty string
-          # Allowed values: string
-          privateKey: ""
-          envs:
-            # image of nginx proxy image
-            # Allowed values: string
-            # Default value: "docker.io/nginxinc/nginx-unprivileged:1.27"
-            - name: "NGINX_PROXY_IMAGE"
-              value: "docker.io/nginxinc/nginx-unprivileged:1.27"
-        - name: cert-manager
-          # enabled: Enable/Disable cert-manager
-          # Allowed values:
-          #   true: enable deployment of cert-manager
-          #   false: disable deployment of cert-manager only if it's already deployed
-          # Default value: false
-          enabled: false
-        - name: metrics-powerstore
-          # enabled: Enable/Disable PowerStore metrics
-          # Default value: false
-          enabled: false
-          # image: Defines PowerStore metrics image. This shouldn't be changed
-          # Allowed values: string
-          image: quay.io/dell/container-storage-modules/csm-metrics-powerstore:nightly
-          envs:
-            # POWERSTORE_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerStore
-            # Allowed values: int
-            # Default value: 10
-            - name: "POWERSTORE_MAX_CONCURRENT_QUERIES"
-              value: "10"
-            # POWERSTORE_VOLUME_METRICS_ENABLED: enable/disable collection of volume metrics
-            # Allowed values: true, false
-            # Default value: true
-            - name: "POWERSTORE_VOLUME_METRICS_ENABLED"
-              value: "true"
-            # POWERSTORE_VOLUME_IO_POLL_FREQUENCY: set polling frequency to get volume IO metrics
-            # Allowed values: String
-            # Default value: true
-            - name: "POWERSTORE_VOLUME_IO_POLL_FREQUENCY"
-              value: "10"
-            # POWERSTORE_SPACE_POLL_FREQUENCY: set polling frequency to get cluster capacity metrics data
-            # Allowed values: int
-            # Default value: 300
-            - name: "POWERSTORE_SPACE_POLL_FREQUENCY"
-              value: "300"
-            # POWERSTORE_ARRAY_POLL_FREQUENCY: set polling frequency to get array capacity metrics data
-            # Allowed values: int
-            # Default value: 300
-            - name: "POWERSTORE_ARRAY_POLL_FREQUENCY"
-              value: "300"
-            # POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY: set polling frequency to get file system capacity metrics data
-            # Allowed values: int
-            # Default value: 20
-            - name: "POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY"
-              value: "20"
-            # POWERSTORE_TOPOLOGY_METRICS_ENABLED : enable/disable collection of topology metrics
-            # Allowed values: true, false
-            # Default value: true
-            - name: "POWERSTORE_TOPOLOGY_METRICS_ENABLED"
-              value: "true"
-            # POWERSTORE_TOPOLOGY_POLL_FREQUENCY : set polling frequency to get topology metrics
-            # Allowed values: int
-            # Default value: 30
-            - name: "POWERSTORE_TOPOLOGY_POLL_FREQUENCY"
-              value: "30"
-            # PowerStore metrics log level
-            # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
-            # Default value: "INFO"
-            - name: "POWERSTORE_LOG_LEVEL"
-              value: "INFO"
-            # PowerStore Metrics Output logs in the specified format
-            # Valid values: TEXT, JSON
-            # Default value: "TEXT"
-            - name: "POWERSTORE_LOG_FORMAT"
-              value: "TEXT"
-            # ZIPKIN_URI : URI of a Zipkin instance where tracing data can be forwarded
-            # Allowed values : String
-            # Default value: Empty
-            - name: "ZIPKIN_URI"
-              value: ""
-            # ZIPKIN_SERVICE_NAME : Service name used for Zipkin tracing dataService name used for Zipkin tracing data
-            # Allowed values : String
-            # Default value: "metrics-powerStore"
-            - name: "ZIPKIN_SERVICE_NAME"
-              value: "metrics-powerstore"
-            # ZIPKIN_PROBABILITY : Percentage of trace information to send to Zipkin (Valid range: 0.0 to 1.0)
-            # Allowed values : float
-            # Default value: "0.0"
-            - name: "ZIPKIN_PROBABILITY"
-              value: "0.0"
-            # Otel collector address
-            # Allowed values: String
-            # Default value: "otel-collector:55680"
-            - name: "COLLECTOR_ADDRESS"
-              value: "otel-collector:55680"

@@ -1565,6 +1565,13 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, authConfigurat
 		csmTenantName = os.Getenv("PMAX_TENANT")
 	}
 
+	if driver == "powerstore" {
+		_ = os.Setenv("PSTORE_STORAGE", "powerstore")
+		_ = os.Setenv("DRIVER_NAMESPACE", "powerstore")
+		storageType = os.Getenv("PSTORE_STORAGE")
+		csmTenantName = os.Getenv("PSTORE_TENANT")
+	}
+
 	proxyHost = os.Getenv("PROXY_HOST")
 	driverNamespace = os.Getenv("DRIVER_NAMESPACE")
 
@@ -1600,6 +1607,9 @@ func (step *Step) AuthorizationV2Resources(res Resource, storageType, driver, dr
 	} else if driver == "powermax" {
 		crMap = "pmaxAuthCRs"
 		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powermax.yaml"
+	} else if driver == "powerstore" {
+		crMap = "pstoreAuthCRs"
+		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powerstore.yaml"
 	}
 
 	pathNum, _ := strconv.Atoi(configurationTemplate)
@@ -1813,6 +1823,8 @@ func (step *Step) deleteAuthorizationCRs(_ Resource, driver string) error {
 		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powerscale.yaml"
 	} else if driver == "powermax" {
 		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powermax.yaml"
+	} else if driver == "powerstore" {
+		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powerstore.yaml"
 	}
 
 	cmd := exec.Command("kubectl", "delete", "-f", updatedTemplateFile)
