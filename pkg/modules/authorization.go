@@ -827,7 +827,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	sentinels := ""
 	image := ""
 	vaults := []csmv1.Vault{}
-	var secretProviderClasses []string
+	var secretProviderClasses *csmv1.StorageSystemSecretProviderClasses
 	var secrets []string
 	leaderElection := true
 	otelCollector := ""
@@ -856,7 +856,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 
 	// Either SecretProviderClasses OR Secrets must be specified (mutually exclusive) from config v2.3.0 (CSM 1.15) onwards
 	if semver.Compare(authModule.ConfigVersion, "v2.3.0") >= 0 {
-		hasSPC := len(secretProviderClasses) > 0
+		hasSPC := secretProviderClasses != nil && (len(secretProviderClasses.Vaults) > 0 || len(secretProviderClasses.Conjurs) > 0)
 		hasSecrets := len(secrets) > 0
 
 		if hasSPC == hasSecrets {
@@ -871,9 +871,9 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
 	if semver.Compare(authModule.ConfigVersion, "v2.3.0") >= 0 {
 		// Determine whether to read from secret provider classes or kubernetes secrets
-		if len(secretProviderClasses) > 0 {
+		if secretProviderClasses != nil && (len(secretProviderClasses.Vaults) > 0 || len(secretProviderClasses.Conjurs) > 0) {
 			// set volumes for secret provider classes
-			mountSecretProviderClassVolumes(secretProviderClasses, &deployment)
+			configureSecretProviderClass(secretProviderClasses, &deployment)
 		} else {
 			// set volumes for kubernetes secrets
 			mountSecretVolumes(secrets, &deployment)
@@ -1084,17 +1084,23 @@ func mountSecretVolumes(secrets []string, deployment *appsv1.Deployment) {
 	}
 }
 
-func mountSecretProviderClassVolumes(secretProviderClasses []string, deployment *appsv1.Deployment) {
+// configureSecretProviderClass configures the secret provider class volumes, mounts, and annotations in the deployment
+func configureSecretProviderClass(secretProviderClasses *csmv1.StorageSystemSecretProviderClasses, deployment *appsv1.Deployment) {
+	configureVaultSecretProvider(secretProviderClasses, deployment)
+	configureConjurSecretProvider(secretProviderClasses, deployment)
+}
+
+func configureVaultSecretProvider(secretProviderClasses *csmv1.StorageSystemSecretProviderClasses, deployment *appsv1.Deployment) {
 	readOnly := true
-	for _, providerClass := range secretProviderClasses {
+	for _, vault := range secretProviderClasses.Vaults {
 		volume := corev1.Volume{
-			Name: fmt.Sprintf("secrets-store-inline-%s", providerClass),
+			Name: fmt.Sprintf("secrets-store-inline-%s", vault),
 			VolumeSource: corev1.VolumeSource{
 				CSI: &corev1.CSIVolumeSource{
 					Driver:   "secrets-store.csi.k8s.io",
 					ReadOnly: &readOnly,
 					VolumeAttributes: map[string]string{
-						"secretProviderClass": providerClass,
+						"secretProviderClass": vault,
 					},
 				},
 			},
@@ -1103,15 +1109,66 @@ func mountSecretProviderClassVolumes(secretProviderClasses []string, deployment 
 		deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volume)
 	}
 
-	// set volume mounts for secret provider classes
 	for i, c := range deployment.Spec.Template.Spec.Containers {
 		if c.Name == "storage-service" {
-			for _, providerClass := range secretProviderClasses {
+			for _, vault := range secretProviderClasses.Vaults {
 				deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
-					Name:      fmt.Sprintf("secrets-store-inline-%s", providerClass),
-					MountPath: fmt.Sprintf("/etc/csm-authorization/%s", providerClass),
+					Name:      fmt.Sprintf("secrets-store-inline-%s", vault),
+					MountPath: fmt.Sprintf("/etc/csm-authorization/%s", vault),
 					ReadOnly:  true,
 				})
+			}
+		}
+	}
+}
+
+func configureConjurSecretProvider(secretProviderClasses *csmv1.StorageSystemSecretProviderClasses, deployment *appsv1.Deployment) {
+	readOnly := true
+	for _, conjur := range secretProviderClasses.Conjurs {
+		volume := corev1.Volume{
+			Name: fmt.Sprintf("secrets-store-inline-%s", conjur.Name),
+			VolumeSource: corev1.VolumeSource{
+				CSI: &corev1.CSIVolumeSource{
+					Driver:   "secrets-store.csi.k8s.io",
+					ReadOnly: &readOnly,
+					VolumeAttributes: map[string]string{
+						"secretProviderClass": conjur.Name,
+					},
+				},
+			},
+		}
+
+		deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volume)
+	}
+
+	for i, c := range deployment.Spec.Template.Spec.Containers {
+		if c.Name == "storage-service" {
+			annotationFormat := "- %s: %s"
+			var secretStringBuilder strings.Builder
+			for _, conjur := range secretProviderClasses.Conjurs {
+				deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
+					Name:      fmt.Sprintf("secrets-store-inline-%s", conjur.Name),
+					MountPath: fmt.Sprintf("/etc/csm-authorization/%s", conjur.Name),
+					ReadOnly:  true,
+				})
+
+				for _, path := range conjur.Paths {
+					if secretStringBuilder.String() != "" {
+						secretStringBuilder.WriteString("\n")
+					}
+					secretStringBuilder.WriteString(fmt.Sprintf(annotationFormat, path.UsernamePath, path.UsernamePath))
+					secretStringBuilder.WriteString("\n")
+					secretStringBuilder.WriteString(fmt.Sprintf(annotationFormat, path.PasswordPath, path.PasswordPath))
+				}
+			}
+
+			if secretPaths := secretStringBuilder.String(); secretPaths != "" {
+				annotations := deployment.Spec.Template.ObjectMeta.Annotations
+				if annotations == nil {
+					annotations = make(map[string]string)
+				}
+				annotations["conjur.org/secrets"] = secretPaths
+				deployment.Spec.Template.ObjectMeta.Annotations = annotations
 			}
 			break
 		}

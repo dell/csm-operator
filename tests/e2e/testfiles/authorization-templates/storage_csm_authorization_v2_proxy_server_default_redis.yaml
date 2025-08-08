@@ -89,8 +89,8 @@ spec:
 
         - name: storage-system-credentials
           secretProviderClasses:
-            # list of secret provider classes for retrieving secrets from external providers
-            - array-creds
+            vault:
+              - array-creds
 
 ---
 apiVersion: v1
