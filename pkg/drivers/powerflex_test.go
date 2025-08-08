@@ -72,6 +72,8 @@ var (
 		{"duplicate system id", csmForPowerFlex("dupl-sysid"), powerFlexClient, shared.MakeSecretWithJSON("dupl-sysid-config", pFlexNS, configJSONFileDuplSysID), "Duplicate SystemID"},
 		{"empty config", csmForPowerFlex("empty"), powerFlexClient, shared.MakeSecretWithJSON("empty-config", pFlexNS, configJSONFileEmpty), "Arrays details are not provided"},
 		{"bad config", csmForPowerFlex("bad"), powerFlexClient, shared.MakeSecretWithJSON("bad-config", pFlexNS, configJSONFileBad), "unable to parse"},
+		{"Auth and Replication enabled with valid prefix", csmForPowerFlex("auth-repl-valid-prefix"), powerFlexClient, shared.MakeSecretWithJSON("auth-repl-valid-prefix-config", pFlexNS, configJSONFileGood), ""},
+		{"Auth and Replication enabled with invalid prefix", csmForPowerFlex("auth-repl-invalid-prefix"), powerFlexClient, shared.MakeSecretWithJSON("auth-repl-invalid-prefix-config", pFlexNS, configJSONFileGood), "Volume name prefix cannot be longer than 5 characters with Authorization and Replication modules enabled."},
 	}
 
 	modifyPowerflexCRTests = []struct {
