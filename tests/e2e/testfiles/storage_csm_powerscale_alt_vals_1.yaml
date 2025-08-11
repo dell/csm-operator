@@ -104,6 +104,11 @@ spec:
         - name: "CSI_LOG_LEVEL"
           value: "error"
           # value: "debug"
+        # NETWORK_LABEL_INTERVAL: Interval to monitor and reconcile network interface labels on nodes.
+        # Allowed values: Number followed by unit of time (s,m,h)
+        # Default value: 1h
+        - name: "NETWORK_LABEL_INTERVAL"
+          value: "1h"
     controller:
       envs:
         # X_CSI_ISI_QUOTA_ENABLED: Indicates whether the provisioner should attempt to set (later unset) quota

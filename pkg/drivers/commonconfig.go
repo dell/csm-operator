@@ -483,6 +483,16 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 		}
 	}
 
+	if cr.Spec.Driver.CSIDriverType == "powerscale" {
+		if cr.Spec.Driver.Common != nil {
+			for _, env := range cr.Spec.Driver.Common.Envs {
+				if env.Name == "NETWORK_LABEL_INTERVAL" {
+					cmValue += fmt.Sprintf("\n%s: %s", env.Name, env.Value)
+				}
+			}
+		}
+	}
+
 	configMapData = map[string]string{
 		"driver-config-params.yaml": cmValue,
 	}
