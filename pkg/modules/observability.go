@@ -231,7 +231,7 @@ const (
 )
 
 // ComponentNameToSecretPrefix - map from component name to secret prefix
-var ComponentNameToSecretPrefix = map[string]string{ObservabilityOtelCollectorName: "otel-collector", ObservabilityTopologyName: "karavi-topology"}
+var ComponentNameToSecretPrefix = map[string]string{ObservabilityOtelCollectorName: "otel-collector", ObservabilityTopologyName: "karavi-topology", ObservabilityMetricsPowerStoreName: "karavi-metrics-powerstore"}
 
 // ObservabilitySupportedDrivers is a map containing the CSI Drivers supported by CSM Replication. The key is driver name and the value is the driver plugin identifier
 var ObservabilitySupportedDrivers = map[string]SupportedDriverParam{
@@ -992,7 +992,7 @@ func IssuerCertServiceObs(ctx context.Context, isDeleting bool, op operatorutils
 	}
 
 	for _, component := range obs.Components {
-		if (component.Name == ObservabilityOtelCollectorName && *(component.Enabled)) || (component.Name == ObservabilityTopologyName && *(component.Enabled)) {
+		if (component.Name == ObservabilityOtelCollectorName && *(component.Enabled)) || (component.Name == ObservabilityTopologyName && *(component.Enabled)) || (component.Name == ObservabilityMetricsPowerStoreName && *(component.Enabled)) {
 			yamlString, err := getIssuerCertServiceObs(op, obs, component.Name, cr)
 			if err != nil {
 				return err
