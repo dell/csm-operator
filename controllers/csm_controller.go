@@ -96,6 +96,9 @@ const (
 
 	// CSMVersion -
 	CSMVersion = "v1.15.0"
+
+	// RefreshEnvVar - environment variable name for watcher timed refreshes
+	RefreshEnvVar = "REFRESH_INTERVAL_MINUTES"
 )
 
 var (
@@ -538,14 +541,28 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 
 // ContentWatch - watch updates on deployments, deamonsets, and pods
 func (r *ContainerStorageModuleReconciler) ContentWatch(csm *csmv1.ContainerStorageModule) (chan struct{}, error) {
-	sharedInformerFactory := sinformer.NewSharedInformerFactoryWithOptions(r.K8sClient, time.Duration(time.Hour))
+	_, log := logger.GetNewContextWithLogger("ContentWatch")
+	refreshMinutes, err := operatorutils.GetEnvironmentVariable(RefreshEnvVar)
+	if err != nil {
+		log.Info("Refresh time environment variable not set, defaulting to 60 minutes")
+		refreshMinutes = "60"
+	}
+	refreshMinutesInt, err := strconv.Atoi(refreshMinutes)
+	if err != nil {
+		log.Error("Refresh time environment variable not a valid number, defaulting to 60 minutes")
+		refreshMinutesInt = 60
+	} else {
+		log.Info("Refresh time for ContentWatch set to ", refreshMinutesInt, " minutes")
+	}
+	refreshTime := time.Duration(refreshMinutesInt) * time.Minute
+	sharedInformerFactory := sinformer.NewSharedInformerFactoryWithOptions(r.K8sClient, time.Duration(refreshTime))
 
 	updateFn := func(oldObj interface{}, newObj interface{}) {
 		r.informerUpdate(csm, oldObj, newObj, r.handleDaemonsetUpdate, r.handleDeploymentUpdate, r.handlePodsUpdate)
 	}
 
 	daemonsetInformer := sharedInformerFactory.Apps().V1().DaemonSets().Informer()
-	_, err := daemonsetInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, err = daemonsetInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: updateFn,
 	})
 	if err != nil {
@@ -1005,6 +1022,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, components []string, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
 	log := logger.GetLogger(ctx)
 
+	configVersion := cr.Spec.Driver.ConfigVersion
 	// if components is empty, reconcile all enabled components
 	if len(components) == 0 {
 		if enabled, obs := operatorutils.IsModuleEnabled(ctx, cr, csmv1.Observability); enabled {
@@ -1016,9 +1034,12 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 		}
 	}
 	comp2reconFunc := map[string]func(context.Context, bool, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, client.Client) error{
-		modules.ObservabilityTopologyName:         modules.ObservabilityTopology,
 		modules.ObservabilityOtelCollectorName:    modules.OtelCollector,
 		modules.ObservabilityCertManagerComponent: modules.CommonCertManager,
+	}
+	// This will be deleted once we remove the old CSM versions which support topology
+	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
+		comp2reconFunc[modules.ObservabilityTopologyName] = modules.ObservabilityTopology
 	}
 	metricsComp2reconFunc := map[string]func(context.Context, bool, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, client.Client, kubernetes.Interface) error{
 		modules.ObservabilityMetricsPowerScaleName: modules.PowerScaleMetrics,
@@ -1031,8 +1052,13 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 		log.Infow(fmt.Sprintf("reconcile %s", comp))
 		var err error
 		switch comp {
-		case modules.ObservabilityTopologyName, modules.ObservabilityOtelCollectorName, modules.ObservabilityCertManagerComponent:
+		case modules.ObservabilityOtelCollectorName, modules.ObservabilityCertManagerComponent:
 			err = comp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient)
+		// This will be deleted once we remove the old CSM versions which support topology
+		case modules.ObservabilityTopologyName:
+			if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
+				err = comp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient)
+			}
 		case modules.ObservabilityMetricsPowerScaleName, modules.ObservabilityMetricsPowerFlexName, modules.ObservabilityMetricsPowerMaxName, modules.ObservabilityMetricsPowerStoreName:
 			err = metricsComp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient, k8sClient)
 		default:
