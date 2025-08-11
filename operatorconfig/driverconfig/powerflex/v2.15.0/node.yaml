@@ -143,6 +143,8 @@ spec:
                   fieldPath: spec.nodeName
             - name: RELEASE_NAME
               value: <DriverDefaultReleaseName>
+            - name: X_CSI_PROBE_TIMEOUT
+              value: <X_CSI_PROBE_TIMEOUT>
           volumeMounts:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com

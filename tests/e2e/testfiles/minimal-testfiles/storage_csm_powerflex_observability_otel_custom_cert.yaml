@@ -13,18 +13,12 @@ spec:
       # enabled: Enable/Disable observability
       enabled: true
       components:
-        - name: topology
-          # enabled: Enable/Disable topology
-          enabled: false
-          # image: Defines karavi-topology image. This shouldn't be changed
-          # Allowed values: string
-          image: quay.io/dell/container-storage-modules/csm-topology:nightly
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
           enabled: true
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
-          image: otel/opentelemetry-collector:0.131.0
+          image: otel/opentelemetry-collector:0.131.1
           # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
           #  for self-signed certs, leave empty string
           # Allowed values: string

@@ -44,6 +44,7 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Install \[([^"]*)\]$`, step.installThirdPartyModule)
 	runner.addStep(`^Uninstall \[([^"]*)\]$`, step.uninstallThirdPartyModule)
 	runner.addStep(`^Apply custom resource \[(\d+)\]$`, step.applyCustomResource)
+	runner.addStep(`^Apply Authorization with Conjur custom resource \[(\d+)\]$`, step.applyAuthorizationConjur)
 	runner.addStep(`^Validate \[(\d+)\] CSM has forceRemoveDriver set to true$`, step.validateForceRemoveDriverEnabled)
 	runner.addStep(`^Validate \[(\d+)\] CSM has forceRemoveDriver set to false$`, step.validateForceRemoveDriverDisabled)
 	runner.addStep(`^Upgrade from custom resource \[(\d+)\] to \[(\d+)\]$`, step.upgradeCustomResource)
@@ -80,7 +81,7 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Set up ephemeral volume properties \[([^"]*)\] for \[([^"]*)\]`, step.setupEphemeralVolumeProperties)
 
 	// Configure authorization-proxy-server for [powerflex]
-	runner.addStep(`^Configure authorization-proxy-server for \[([^"]*)\] for CR \[(\d+)\]$`, step.configureAuthorizationProxyServer)
+	runner.addStep(`^Configure authorization-proxy-server with template \[([^"]*)\] for \[([^"]*)\] for CR \[(\d+)\]$`, step.configureAuthorizationProxyServer)
 	// Authorization Proxy Server V2 additional steps
 	runner.addStep(`^Install Authorization CRDs \[(\d+)\]$`, step.createCustomResourceDefinition)
 	runner.addStep(`^Validate \[([^"]*)\] CRD for Authorization is installed$`, step.validateCustomResourceDefinition)
