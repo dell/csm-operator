@@ -89,10 +89,10 @@ spec:
         # Default value: "debug"
         - name: "CSI_LOG_LEVEL"
           value: "debug"
-        # NETWORK_LABEL_INTERVAL: Interval to monitor and reconcile network interface labels on nodes.
+        # AZ_RECONCILE_INTERVAL: Interval to monitor and reconcile network interface labels on nodes.
         # Allowed values: Number followed by unit of time (s,m,h)
         # Default value: 1h
-        - name: "NETWORK_LABEL_INTERVAL"
+        - name: "AZ_RECONCILE_INTERVAL"
           value: "1h"
     controller:
       envs:
