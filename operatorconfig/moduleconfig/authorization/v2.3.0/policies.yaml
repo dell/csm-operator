@@ -380,3 +380,70 @@ data:
       # Set the snapshot name which creates an entry in the list.
       snapshot := req.name
     }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: powerstore-volumes-create
+  namespace: <NAMESPACE>
+  labels:
+    openpolicyagent.org/policy: rego
+data:
+  volumes-powerstore-create.rego: |
+    package karavi.volumes.powerstore.create
+
+    import data.karavi.common
+
+    default allow = false
+
+    allow {
+      count(permitted_roles) != 0
+      count(deny) == 0
+    }
+
+    deny[msg] {
+      common.roles == {}
+      msg := sprintf("no configured roles", [])
+    }
+
+    deny[msg] {
+      count(permitted_roles) == 0
+      msg := sprintf(
+        "no roles in [%s] allow the %s Kb request on %s/%s/",
+        [
+          input.claims.roles,
+          input.request.size,
+          input.systemtype,
+          input.storagesystemid,
+        ],
+      )
+    }
+
+    permitted_roles[v] = y {
+      claimed_roles := split(input.claims.roles, ",")
+
+      some i
+      a := claimed_roles[i]
+      common.roles[a]
+
+      v := claimed_roles[i]
+      
+      quota := common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagesystemid]
+      quota >= to_number(input.request.size)
+
+      y := to_number(common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagesystemid])
+    }
+
+    permitted_roles[v] = y {
+      claimed_roles := split(input.claims.roles, ",")
+
+      some i
+      a := claimed_roles[i]
+      common.roles[a]
+
+      v := claimed_roles[i]
+      common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagesystemid] == 0
+      y := to_number(common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagesystemid])
+    }
+
+
