@@ -89,67 +89,24 @@ const (
 func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, ct client.Client) error {
 	log := logger.GetLogger(ctx)
 
-	// // Check if Authorization and Replication modules are enabled and volume name prefix is less than 5 characters
-	// for _, module := range cr.Spec.Modules {
-	// 	if module.Name == "authorization" && module.Enabled {
-	// 		for _, replicationModule := range cr.Spec.Modules {
-	// 			if replicationModule.Name == "replication" && replicationModule.Enabled {
-	// 				for _, sideCar := range cr.Spec.Driver.SideCars {
-	// 					if sideCar.Name == "provisioner" {
-	// 						for _, arg := range sideCar.Args {
-	// 							if strings.Contains(arg, "--volume-name-prefix=") {
-	// 								prefix := strings.Split(arg, "--volume-name-prefix=")[1]
-	// 								if len(prefix) > 5 {
-	// 									log.Errorw("PreCheckPowerFlex failed: Authorization and Replication modules cannot be enabled together with invalid volume name prefix")
-	// 									return fmt.Errorf("Authorization and Replication modules cannot be enabled together and volume name prefix cannot be longer than 5 characters")
-	// 								}
-	// 							}
-	// 						}
-	// 					}
-	// 				}
-	// 				log.Errorw("PreCheckPowerFlex failed: Authorization and Replication modules cannot be enabled together")
-	// 				return fmt.Errorf("Authorization and Replication modules cannot be enabled together")
-	// 			}
-	// 		}
-	// 	}
-	// }
+	const (
+		Authorization csmv1.ModuleType = "authorization"
+		Replication   csmv1.ModuleType = "replication"
+	)
 
-	// const (
-// 		Authorization csmv1.ModuleType = "authorization"
-// 		Replication   csmv1.ModuleType = "replication"
-// 	)
-//
-// 	// Check if Authorization and Replication modules are enabled
-// 	authorizationEnabled := containsModule(cr.Spec.Modules, Authorization)
-// 	replicationEnabled := containsModule(cr.Spec.Modules, Replication)
-//
-// 	if authorizationEnabled && replicationEnabled {
-// 		// Check if volume name prefix is valid
-// 		prefix := getVolumeNamePrefix(cr.Spec.Driver.SideCars)
-// 		if len(prefix) > 5 {
-// 			log.Errorw("PreCheckPowerFlex failed: Volume name prefix cannot be longer than 5 characters with Authorization and Replication modules enabled.", "prefix", prefix)
-// 			return fmt.Errorf("Volume name prefix cannot be longer than 5 characters with Authorization and Replication modules enabled.")
-// 		}
-// 	}
-//
-        const (
-            Authorization csmv1.ModuleType = "authorization"
-            Replication   csmv1.ModuleType = "replication"
-        )
+	// Check if both Authorization and Replication modules are enabled
+	authEnabled := isModuleEnabled(cr.Spec.Modules, Authorization)
+	replEnabled := isModuleEnabled(cr.Spec.Modules, Replication)
 
-        // Check if both Authorization and Replication modules are enabled
-        authEnabled := isModuleEnabled(cr.Spec.Modules, Authorization)
-        replEnabled := isModuleEnabled(cr.Spec.Modules, Replication)
+	if authEnabled && replEnabled {
+		prefix := getVolumeNamePrefix(cr.Spec.Driver.SideCars)
+		if len(prefix) > 5 {
+			log.Errorw("PreCheckPowerFlex failed: Volume name prefix too long", "prefix", prefix)
+			return fmt.Errorf("volume name prefix '%s' cannot exceed 5 characters when both Authorization and Replication modules are enabled", prefix)
+		}
+	}
 
-        if authEnabled && replEnabled {
-            prefix := getVolumeNamePrefix(cr.Spec.Driver.SideCars)
-            if len(prefix) > 5 {
-                log.Errorw("PreCheckPowerFlex failed: Volume name prefix too long", "prefix", prefix)
-                return fmt.Errorf("volume name prefix '%s' cannot exceed 5 characters when both Authorization and Replication modules are enabled", prefix)
-            }
-        }
-
-        // Check if driver version is supported by doing a stat on a config file
+	// Check if driver version is supported by doing a stat on a config file
 	configFilePath := fmt.Sprintf("%s/driverconfig/%s/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, csmv1.PowerFlex, cr.Spec.Driver.ConfigVersion)
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		log.Errorw("PreCheckPowerFlex failed in version check", "Error", err.Error())
@@ -165,52 +122,29 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 	return nil
 }
 
-
 // isModuleEnabled checks if a module is enabled in the list
 func isModuleEnabled(modules []csmv1.Module, name csmv1.ModuleType) bool {
-    for _, m := range modules {
-        if m.Name == name && m.Enabled {
-            return true
-        }
-    }
-    return false
+	for _, m := range modules {
+		if m.Name == name && m.Enabled {
+			return true
+		}
+	}
+	return false
 }
 
 // getVolumeNamePrefix extracts the volume name prefix from the provisioner sidecar args
 func getVolumeNamePrefix(sideCars []csmv1.ContainerTemplate) string {
-    for _, sc := range sideCars {
-        if sc.Name == "provisioner" {
-            for _, arg := range sc.Args {
-                if strings.HasPrefix(arg, "--volume-name-prefix=") {
-                    return strings.TrimPrefix(arg, "--volume-name-prefix=")
-                }
-            }
-        }
-    }
-    return ""
+	for _, sc := range sideCars {
+		if sc.Name == "provisioner" {
+			for _, arg := range sc.Args {
+				if strings.HasPrefix(arg, "--volume-name-prefix=") {
+					return strings.TrimPrefix(arg, "--volume-name-prefix=")
+				}
+			}
+		}
+	}
+	return ""
 }
-
-// func containsModule(modules []csmv1.Module, moduleName csmv1.ModuleType) bool {
-// 	for _, module := range modules {
-// 		if module.Name == moduleName && module.Enabled {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }
-//
-// func getVolumeNamePrefix(sideCars []csmv1.ContainerTemplate) string {
-// 	for _, sideCar := range sideCars {
-// 		if sideCar.Name == "provisioner" {
-// 			for _, arg := range sideCar.Args {
-// 				if strings.Contains(arg, "--volume-name-prefix=") {
-// 					return strings.Split(arg, "--volume-name-prefix=")[1]
-// 				}
-// 			}
-// 		}
-// 	}
-// 	return ""
-// }
 
 func SetSDCinitContainers(ctx context.Context, cr csmv1.ContainerStorageModule, ct client.Client) (csmv1.ContainerStorageModule, error) {
 	mdmVar, _ := GetMDMFromSecret(ctx, &cr, ct)

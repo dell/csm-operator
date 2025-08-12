@@ -145,6 +145,12 @@ func csmForPowerFlex(customCSMName string) csmv1.ContainerStorageModule {
 		Tolerations:     []corev1.Toleration{},
 	}}
 
+	// Add sdc-monitor Sidecar
+	res.Spec.Driver.SideCars = []csmv1.ContainerTemplate{{
+		Name: "provisioner",
+		Args: []string{},
+	}}
+
 	// res.Spec.Driver.CSIDriverSpec.FSGroupPolicy == "ReadWriteOnceWithFSType"
 
 	// Add pflex driver version
@@ -155,27 +161,21 @@ func csmForPowerFlex(customCSMName string) csmv1.ContainerStorageModule {
 
 	// Add Authorization and Replication modules
 	if strings.Contains(customCSMName, "auth-repl") {
-		res.Spec.Modules = append(res.Spec.Modules, csmv1.Module{
-			Name:        "authorization",
-			Enabled:     &trueBool,
-			Image:       "image",
-			Args:        []string{},
-			Envs:        []corev1.EnvVar{},
-			Tolerations: []corev1.Toleration{},
-		})
-		res.Spec.Modules = append(res.Spec.Modules, csmv1.Module{
-			Name:        "replication",
-			Enabled:     &trueBool,
-			Image:       "image",
-			Args:        []string{},
-			Envs:        []corev1.EnvVar{},
-			Tolerations: []corev1.Toleration{},
-		})
+		res.Spec.Modules = []csmv1.Module{
+			{
+				Name:    csmv1.Authorization,
+				Enabled: true,
+			},
+			{
+				Name:    csmv1.Replication,
+				Enabled: true,
+			},
+		}
 
 		// Add --volume-name-prefix
-		if strings.Contains(customCSMName, "valid-prefix") {
+		if strings.Contains(customCSMName, "auth-repl-valid") {
 			res.Spec.Driver.SideCars[0].Args = append(res.Spec.Driver.SideCars[0].Args, "--volume-name-prefix=abc")
-		} else if strings.Contains(customCSMName, "invalid-prefix") {
+		} else if strings.Contains(customCSMName, "auth-repl-invalid") {
 			res.Spec.Driver.SideCars[0].Args = append(res.Spec.Driver.SideCars[0].Args, "--volume-name-prefix=abcdefghij")
 		}
 	}
