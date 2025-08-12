@@ -418,7 +418,7 @@ spec:
           # Default value: false
           enabled: false
           # image: Defines PowerMax metrics image. This shouldn't be changed
-          image: quay.io/dell/container-storage-modules/csm-metrics-powermax:nightly
+          image: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.8.0
           envs:
             # POWERMAX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerMax
             # Allowed values: int
