@@ -459,7 +459,7 @@ spec:
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
             # Default value: "INFO"
             - name: "POWERMAX_LOG_LEVEL"
-              value: "DEBUG"
+              value: "INFO"
             # PowerMax Metrics Output logs in the specified format
             # Valid values: TEXT, JSON
             # Default value: "TEXT"
