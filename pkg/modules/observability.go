@@ -160,6 +160,12 @@ const (
 	// PmaxConcurrentQueries - number of concurrent queries
 	PmaxConcurrentQueries string = "<POWERMAX_MAX_CONCURRENT_QUERIES>"
 
+	// PmaxTopologyMetricsEnabled - enable/disable collection of topology metrics
+	PmaxTopologyMetricsEnabled string = "<POWERMAX_TOPOLOGY_METRICS_ENABLED>"
+
+	// PmaxTopologyMetricsPollFrequency - polling frequency to get topology metrics data
+	PmaxTopologyMetricsPollFrequency string = "<POWERMAX_TOPOLOGY_METRICS_POLL_FREQUENCY>"
+
 	// PmaxLogLevel - the level for the Powermax metrics
 	PmaxLogLevel string = "<POWERMAX_LOG_LEVEL>"
 
@@ -1170,6 +1176,8 @@ func getPowerMaxMetricsObject(op operatorutils.OperatorConfig, cr csmv1.Containe
 	maxConcurrentQueries := "10"
 	capacityEnabled := "true"
 	perfEnabled := "true"
+	topologyEnabled := "true"
+	topologyPollFrequency := "30"
 	capacityPollFrequency := "10"
 	perfPollFrequency := "10"
 	logFormat := "TEXT"
@@ -1194,6 +1202,10 @@ func getPowerMaxMetricsObject(op operatorutils.OperatorConfig, cr csmv1.Containe
 					perfEnabled = env.Value
 				} else if strings.Contains(PmaxPerformancePollFreq, env.Name) {
 					perfPollFrequency = env.Value
+				} else if strings.Contains(PmaxTopologyMetricsEnabled, env.Name) {
+					topologyEnabled = env.Value
+				} else if strings.Contains(PmaxTopologyMetricsPollFrequency, env.Name) {
+					topologyPollFrequency = env.Value
 				} else if strings.Contains(ReverseProxyConfigMap, env.Name) {
 					revproxyConfigMap = env.Value
 				} else if strings.Contains(PmaxLogFormat, env.Name) {
@@ -1214,6 +1226,8 @@ func getPowerMaxMetricsObject(op operatorutils.OperatorConfig, cr csmv1.Containe
 	YamlString = strings.ReplaceAll(YamlString, PmaxCapacityPollFreq, capacityPollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, PmaxPerformanceMetricsEnabled, perfEnabled)
 	YamlString = strings.ReplaceAll(YamlString, PmaxPerformancePollFreq, perfPollFrequency)
+	YamlString = strings.ReplaceAll(YamlString, PmaxTopologyMetricsEnabled, topologyEnabled)
+	YamlString = strings.ReplaceAll(YamlString, PmaxTopologyMetricsPollFrequency, topologyPollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, OtelCollectorAddress, otelCollectorAddress)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyConfigMap, revproxyConfigMap)
 	YamlString = strings.ReplaceAll(YamlString, DriverDefaultReleaseName, cr.Name)
