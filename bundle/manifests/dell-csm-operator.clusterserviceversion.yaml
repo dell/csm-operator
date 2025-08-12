@@ -3899,7 +3899,6 @@ spec:
                         value: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.13.0
                       - name: RELATED_IMAGE_metrics-powerstore
                         value: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.12.0
-                      - name: RELATED_IMAGE_metrics-unity
                       - name: RELATED_IMAGE_podmon-node                      
                         value: quay.io/dell/container-storage-modules/podmon:v1.14.0
                       - name: RELATED_IMAGE_kube-rbac-proxy
@@ -4011,8 +4010,6 @@ spec:
       name: dell-csi-replicator
     - image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0
       name: dell-replication-controller-manager
-    - image: quay.io/dell/container-storage-modules/csm-topology:v1.13.0
-      name: topology
     - image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.131.0
       name: otel-collector
     - image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.10.0
