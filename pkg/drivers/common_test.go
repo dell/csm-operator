@@ -145,7 +145,7 @@ func csmForPowerFlex(customCSMName string) csmv1.ContainerStorageModule {
 		Tolerations:     []corev1.Toleration{},
 	}}
 
-	// Add sdc-monitor Sidecar
+	// Add provisioner Sidecar
 	res.Spec.Driver.SideCars = []csmv1.ContainerTemplate{{
 		Name: "provisioner",
 		Args: []string{},
