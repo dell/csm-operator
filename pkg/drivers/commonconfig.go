@@ -483,7 +483,7 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 		}
 	}
 
-	if cr.Spec.Driver.CSIDriverType == "powerscale" {
+	if cr.Spec.Driver.CSIDriverType == csmv1.PowerScale || cr.Spec.Driver.CSIDriverType == csmv1.PowerScaleName {
 		if cr.Spec.Driver.Common != nil {
 			for _, env := range cr.Spec.Driver.Common.Envs {
 				if env.Name == "AZ_RECONCILE_INTERVAL" {
