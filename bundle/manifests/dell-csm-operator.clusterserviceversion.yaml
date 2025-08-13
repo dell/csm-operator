@@ -925,6 +925,27 @@ metadata:
               {
                 "components": [
                   {
+                    "envs": [
+                      {
+                        "name": "PROXY_HOST",
+                        "value": "csm-authorization.com"
+                      },
+                      {
+                        "name": "SKIP_CERTIFICATE_VALIDATION",
+                        "value": "true"
+                      }
+                    ],
+                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0",
+                    "name": "karavi-authorization-proxy"
+                  }
+                ],
+                "configVersion": "v2.3.0",
+                "enabled": false,
+                "name": "authorization"
+              },            
+              {
+                "components": [
+                  {
                     "args": [
                       "--labelvalue=csi-powerstore",
                       "--arrayConnectivityPollRate=60",
