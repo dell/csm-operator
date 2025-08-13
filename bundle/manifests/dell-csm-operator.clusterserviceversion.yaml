@@ -1012,7 +1012,7 @@ metadata:
                 "name": "replication"
               },
               {
-                "components": [                
+                "components": [
                   {
                     "certificate": "",
                     "enabled": false,
