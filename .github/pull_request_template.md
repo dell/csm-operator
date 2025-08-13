@@ -18,7 +18,8 @@ List the GitHub issues impacted by this PR:
 - [ ] I have made corresponding changes to the documentation
 - [ ] I have added tests that prove my fix is effective or that my feature works
 - [ ] I have maintained backward compatibility
-- [ ] I have executed the relevant end-to-end test scenarios
+- [ ] I have executed the relevant operator end-to-end test scenarios
+- [ ] I have executed the openshift end-to-end test scenarios
 
 # How Has This Been Tested?
 Please describe the tests that you ran to verify your changes. Please also list any relevant details for your test configuration
