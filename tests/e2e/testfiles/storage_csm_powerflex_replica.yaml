@@ -107,8 +107,8 @@ spec:
           value: "false"
         # X_CSI_APPROVE_SDC_ENABLED: Enables/Disable SDC approval
         # Allowed values:
-        #    true: enable SDC approval
-        #    false: disable SDC approval
+        #    true: enable SDC approval based on either GUID or IP address, depending on the restricted SDC mode configured in PowerFlex system
+        #    false: disable SDC approval based on either GUID or IP address, depending on the restricted SDC mode configured in PowerFlex system
         # Default value: false
         - name: X_CSI_APPROVE_SDC_ENABLED
           value: "false"
