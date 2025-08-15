@@ -16,6 +16,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -28,7 +29,6 @@ import (
 	goYAML "gopkg.in/yaml.v3"
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
-	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	admissionregistration "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -156,8 +156,6 @@ const (
 	PodmonControllerComponent = "podmon-controller"
 	// PodmonNodeComponent - podmon-node
 	PodmonNodeComponent = "podmon-node"
-	// ApplicationMobilityNamespace - application-mobility
-	ApplicationMobilityNamespace = "application-mobility"
 	// ExistingNamespace - existing namespace
 	ExistingNamespace = "<ExistingNameSpace>"
 	// ClientNamespace - client namespace
@@ -580,22 +578,6 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 
 			ctrlObjects = append(ctrlObjects, &ds)
 
-		case "BackupStorageLocation":
-			var bsl velerov1.BackupStorageLocation
-			if err := yamlUnmarshal(raw, &bsl); err != nil {
-				return ctrlObjects, err
-			}
-
-			ctrlObjects = append(ctrlObjects, &bsl)
-
-		case "VolumeSnapshotLocation":
-			var vs velerov1.VolumeSnapshotLocation
-			if err := yamlUnmarshal(raw, &vs); err != nil {
-				return ctrlObjects, err
-			}
-
-			ctrlObjects = append(ctrlObjects, &vs)
-
 		case "Issuer":
 			var is certmanagerv1.Issuer
 			if err := yamlUnmarshal(raw, &is); err != nil {
@@ -692,7 +674,7 @@ func GetDriverYaml(YamlString, kind string) (interface{}, error) {
 
 		case "Role":
 			var crole rbacv1.Role
-			err := yaml.Unmarshal(raw, &crole)
+			err := yamlUnmarshal(raw, &crole)
 			if err != nil {
 				return nil, err
 			}
@@ -700,7 +682,7 @@ func GetDriverYaml(YamlString, kind string) (interface{}, error) {
 
 		case "RoleBinding":
 			var rb rbacv1.RoleBinding
-			err := yaml.Unmarshal(raw, &rb)
+			err := yamlUnmarshal(raw, &rb)
 			if err != nil {
 				return nil, err
 			}
@@ -982,30 +964,6 @@ func GetSecret(ctx context.Context, name, namespace string, ctrlClient crclient.
 	return found, nil
 }
 
-// GetVolumeSnapshotLocation - check if the Volume Snapshot Location is present
-func GetVolumeSnapshotLocation(ctx context.Context, name, namespace string, ctrlClient crclient.Client) (*velerov1.VolumeSnapshotLocation, error) {
-	snapshotLocation := &velerov1.VolumeSnapshotLocation{}
-	err := ctrlClient.Get(ctx, t1.NamespacedName{Namespace: namespace, Name: name},
-		snapshotLocation,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return snapshotLocation, nil
-}
-
-// GetBackupStorageLocation - check if the Backup Storage Location is present
-func GetBackupStorageLocation(ctx context.Context, name, namespace string, ctrlClient crclient.Client) (*velerov1.BackupStorageLocation, error) {
-	backupStorage := &velerov1.BackupStorageLocation{}
-	err := ctrlClient.Get(ctx, t1.NamespacedName{Namespace: namespace, Name: name},
-		backupStorage,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return backupStorage, nil
-}
-
 // IsModuleEnabled - check if the module is enabled
 func IsModuleEnabled(_ context.Context, instance csmv1.ContainerStorageModule, mod csmv1.ModuleType) (bool, csmv1.Module) {
 	for _, m := range instance.Spec.Modules {
@@ -1052,22 +1010,6 @@ func AddModuleComponent(instance *csmv1.ContainerStorageModule, mod csmv1.Module
 			instance.Spec.Modules[i].Components = append(instance.Spec.Modules[i].Components, component)
 		}
 	}
-}
-
-// IsAppMobilityComponentEnabled - check if Application Mobility componenets are enabled
-func IsAppMobilityComponentEnabled(ctx context.Context, instance csmv1.ContainerStorageModule, _ ReconcileCSM, mod csmv1.ModuleType, componentType string) bool {
-	appMobilityEnabled, appmobility := IsModuleEnabled(ctx, instance, mod)
-	if !appMobilityEnabled {
-		return false
-	}
-
-	for _, c := range appmobility.Components {
-		if c.Name == componentType && *c.Enabled {
-			return true
-		}
-	}
-
-	return false
 }
 
 // Contains - check if slice contains the specified string
@@ -1267,4 +1209,14 @@ func SetContainerImage(objects []crclient.Object, deploymentName, containerName,
 			}
 		}
 	}
+}
+
+// fetch an environment variable's value by name
+// or return an error if it is not defined/empty string
+func GetEnvironmentVariable(varName string) (string, error) {
+	value := os.Getenv(varName)
+	if value == "" {
+		return "", errors.New("environment variable is not defined: " + varName)
+	}
+	return value, nil
 }

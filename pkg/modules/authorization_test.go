@@ -1276,7 +1276,7 @@ func TestAuthorizationStorageServiceSecretProviderClass(t *testing.T) {
 	type checkFn func(*testing.T, ctrlClient.Client, error)
 
 	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, checkFn){
-		"mounts added for secret provider classes with v2.3.0": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, checkFn) {
+		"mounts added for secret provider classes with v2.3.0 - vault": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, checkFn) {
 			secretProviderClasses := []string{"secret-provider-class-1", "secret-provider-class-2"}
 
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_secret_provider_class.yaml")
@@ -1413,6 +1413,77 @@ func TestAuthorizationStorageServiceSecretProviderClass(t *testing.T) {
 				err = client.Get(context.Background(), types.NamespacedName{Name: selfSignedVault0Certificate, Namespace: "authorization"}, certificate)
 				if !apierrors.IsNotFound(err) {
 					t.Errorf("expected not found error for certificate %s, but got %v", selfSignedVault0Certificate, err)
+				}
+			}
+			return false, customResource, sourceClient, checkFn
+		},
+
+		"mounts added for secret provider classes with v2.3.0 - conjur": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, checkFn) {
+			secretProviderClasses := []string{"secret-provider-class", "secret-provider-class-2"}
+			annotations := "- secrets/usr: secrets/usr\n- secrets/pwd: secrets/pwd\n- secrets/usr2: secrets/usr2\n- secrets/pwd2: secrets/pwd2\n- secrets/usr3: secrets/usr3\n- secrets/pwd3: secrets/pwd3"
+
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_secret_provider_class_conjur.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			checkFn := func(t *testing.T, client ctrlClient.Client, err error) {
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				storageService := &appsv1.Deployment{}
+				err = client.Get(context.Background(), types.NamespacedName{Name: "storage-service", Namespace: "authorization"}, storageService)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				foundSecretProviderClassVolume := false
+				foundSecretProviderClassVolumeMount := false
+				for _, spc := range secretProviderClasses {
+					for _, volume := range storageService.Spec.Template.Spec.Volumes {
+						if volume.Name == fmt.Sprintf("secrets-store-inline-%s", spc) {
+							foundSecretProviderClassVolume = true
+							if volume.VolumeSource.CSI.VolumeAttributes["secretProviderClass"] != spc {
+								t.Fatalf("expected volume.VolumeSource.CSI.VolumeAttributes[\"secretProviderClass\"] to be %s", spc)
+							}
+						}
+					}
+
+					if !foundSecretProviderClassVolume {
+						t.Errorf("expected volume for secret provider class %s, wasn't found", fmt.Sprintf("secrets-store-inline-%s", spc))
+					}
+
+					for i, container := range storageService.Spec.Template.Spec.Containers {
+						if container.Name == "storage-service" {
+							for _, volumeMount := range storageService.Spec.Template.Spec.Containers[i].VolumeMounts {
+								if volumeMount.Name == fmt.Sprintf("secrets-store-inline-%s", spc) {
+									foundSecretProviderClassVolumeMount = true
+									if volumeMount.MountPath != fmt.Sprintf("/etc/csm-authorization/%s", spc) {
+										t.Fatalf("expected volumeMount.MountPath to be %s", spc)
+									}
+									if volumeMount.ReadOnly != true {
+										t.Fatalf("expected volumeMount.ReadOnly to be true")
+									}
+								}
+							}
+							break
+						}
+					}
+
+					if !foundSecretProviderClassVolumeMount {
+						t.Errorf("expected volume mount for secret provider class %s, wasn't found", fmt.Sprintf("secrets-store-inline-%s", spc))
+					}
+				}
+
+				if storageService.Spec.Template.Annotations["conjur.org/secrets"] != annotations {
+					t.Errorf("expected annotations %s, got %s", annotations, storageService.Spec.Template.Annotations["conjur.org/secrets"])
 				}
 			}
 			return false, customResource, sourceClient, checkFn
@@ -2070,7 +2141,7 @@ func TestAuthorizationCrdDeploy(t *testing.T) {
 			return false, tmpCR, sourceClient, badOperatorConfig
 		},
 		"fail - auth module not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_application_mobility.yaml")
+			customResource, err := getCustomResource("./testdata/cr_powerstore_replica.yaml")
 			if err != nil {
 				panic(err)
 			}

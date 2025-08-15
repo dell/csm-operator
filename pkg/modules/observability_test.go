@@ -131,7 +131,7 @@ func TestObservabilityPrecheck(t *testing.T) {
 
 			tmpCR := customResource
 			observability := tmpCR.Spec.Modules[0]
-			observability.ConfigVersion = "v1.10.0"
+			observability.ConfigVersion = "v1.13.0"
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds).Build()
 			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
@@ -241,8 +241,8 @@ func TestObservabilityPrecheck(t *testing.T) {
 
 func TestObservabilityTopologyController(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+		"Success - deleting topology component for old csm": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_observability_with_topology.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -263,8 +263,8 @@ func TestObservabilityTopologyController(t *testing.T) {
 			return true, true, tmpCR, sourceClient, operatorConfig
 		},
 
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+		"Success - creating topology component for old csm": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_observability_with_topology.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -274,6 +274,41 @@ func TestObservabilityTopologyController(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+
+		"Fail - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			cr := &rbacv1.ClusterRole{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "ClusterRole",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "karavi-observability-topology-controller",
+				},
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
+
+			return false, true, tmpCR, sourceClient, operatorConfig
+		},
+
+		"Fail - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, tmpCR, sourceClient, operatorConfig
 		},
 
 		"Fail - observability module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {

@@ -27,11 +27,22 @@ NAMESPACE=$(echo $NS_STRING | cut -d ' ' -f2)
 log separator
 echo "Deleting the Operator Deployment"
 log separator
-kubectl delete -f ${DEPLOYDIR}/operator.yaml
+kubectl delete -f ${DEPLOYDIR}/operator.yaml --ignore-not-found
 echo
 
 log separator
 echo "Deleting the Operator CRDs"
 log separator
-kubectl delete -f ${DEPLOYDIR}/crds/storage.dell.com.crds.all.yaml
+kubectl delete -f ${DEPLOYDIR}/crds/storage.dell.com.crds.all.yaml --ignore-not-found
+echo
+
+
+# Cleanup for resources that existed in previous versions of operator.yaml
+# but are no longer defined in the current one. Since the new manifest is unaware of them,
+# they won't be deleted by `kubectl delete -f operator.yaml` and must be removed manually
+log separator
+echo "Deleting unused pre-v1.15 resources"
+log separator
+kubectl delete clusterrolebinding dell-csm-operator-application-mobility-velero-server-rolebinding --ignore-not-found
+kubectl delete clusterrole dell-csm-operator-application-mobility-velero-server --ignore-not-found
 echo

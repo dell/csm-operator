@@ -29,11 +29,11 @@ export AUTHORIZATIONPROXYSERVER=false
 export REPLICATION=false
 export OBSERVABILITY=false
 export RESILIENCY=false
-export APPLICATIONMOBILITY=false
 export ZONING=false
 export SHAREDNFS=false
 
 export INSTALL_VAULT=false
+export INSTALL_CONJUR=false
 
 export PROXY_HOST="csm-authorization.com"
 
@@ -56,6 +56,17 @@ function vaultSetupAutomation() {
   echo "Installing vault with all secrets for Authorization tests..."
   cd ./scripts/vault-automation
   go run main.go --kubeconfig ~/.kube/config --name vault0 --env-config --secrets-store-csi-driver=true
+  cd ../..
+}
+
+function conjurSetupAutomation() {
+  echo "Removing any existing conjur installation..."
+  helm delete conjur || true
+  helm delete conjur-csi-provider || true
+  echo "Installing conjur with all secrets for Authorization tests..."
+  cd ./scripts/conjur-automation
+  ./conjur.sh --control-node $CLUSTER_IP --env-config
+  mv -f conjur-spc.yaml ../../testfiles/authorization-templates/storage_csm_authorization_secret_provider_class_conjur.yaml
   cd ../..
 }
 
@@ -148,7 +159,6 @@ function usage() {
   echo "  --obs                                        use to run e2e observability suite"
   echo "  --auth-proxy                                 use to run e2e auth-proxy suite"
   echo "  --resiliency                                 use to run e2e resiliency suite"
-  echo "  --app-mobility                               use to run e2e application-mobility suite"
   echo "  --no-modules                                 use to run e2e suite without any modules"
   echo "  --pflex                                      use to run e2e powerflex suite"
   echo "  --pscale                                     use to run e2e powerscale suite"
@@ -159,6 +169,7 @@ function usage() {
   echo "  --minimal                                    use minimal testfiles scenarios"
   echo "  --sharednfs                                  use to run e2e sharednfs suite (pre-requisite, the nodes need to have nfs-server setup)"
   echo "  --install-vault                              use to install authorization vault instance with secrets for authorization tests"
+  echo "  --install-conjur                             use to install authorization conjur instance with secrets for authorization tests"
   echo "  --add-tag=<scenario tag>                     use to specify scenarios to run by one of their tags"
   echo
 
@@ -184,8 +195,6 @@ while getopts ":hv-:" optchar; do
       export AUTHORIZATIONPROXYSERVER=true ;;
     resiliency)
       export RESILIENCY=true ;;
-    app-mobility)
-      export APPLICATIONMOBILITY=true ;;
     pflex)
       export POWERFLEX=true ;;
     no-modules)
@@ -195,7 +204,6 @@ while getopts ":hv-:" optchar; do
       export REPLICATION=false
       export OBSERVABILITY=false
       export RESILIENCY=false
-      export APPLICATIONMOBILITY=false
       ;;
     pscale)
       export POWERSCALE=true ;;
@@ -230,6 +238,9 @@ while getopts ":hv-:" optchar; do
       ;;
     install-vault)
       export INSTALL_VAULT=true
+      ;;
+    install-conjur)
+      export INSTALL_CONJUR=true
       ;;
     add-tag=*)
       export ADD_SCENARIO_TAG=${OPTARG#*=}
@@ -270,20 +281,20 @@ else
 fi
 echo "IS_OPENSHIFT: $IS_OPENSHIFT"
 
+getMasterNodeIP
+
 getArrayInfo
 checkForScenariosFile
-if [[ $APPLICATIONMOBILITY == "true" ]]; then
-  echo "Checking for dellctl - APPLICATIONMOBILITY"
-  checkForDellctl
-fi
 if [[ $INSTALL_VAULT == "true" ]]; then
   vaultSetupAutomation
+fi
+if [[ $INSTALL_CONJUR == "true" ]]; then
+  conjurSetupAutomation
 fi
 if [[ $AUTHORIZATIONPROXYSERVER == "true" ]]; then
   echo "Checking for dellctl - AUTHORIZATIONPROXYSERVER"
   checkForDellctl
 
-  getMasterNodeIP
   echo "Authorization proxy host: $PROXY_HOST"
   export entryExists=$(cat /etc/hosts | grep $PROXY_HOST | wc -l)
   if [[ $entryExists != 1 ]]; then

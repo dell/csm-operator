@@ -107,8 +107,8 @@ spec:
 
         - name: storage-system-credentials
           secretProviderClasses:
-            # list of secret provider classes for retrieving secrets from external providers
-            - secret-provider-class-1
+            vault:
+              - secret-provider-class-1
 
 ---
 apiVersion: v1
@@ -118,7 +118,6 @@ metadata:
   namespace: authorization
 data:
   csm-config-params.yaml: |-
-    CONCURRENT_POWERFLEX_REQUESTS: 10
-    CONCURRENT_POWERSCALE_REQUESTS: 10
+    CONCURRENT_STORAGE_REQUESTS: 10
     LOG_LEVEL: debug
     STORAGE_CAPACITY_POLL_INTERVAL: 30m

@@ -89,6 +89,8 @@ data:
     POWERSTORE_SPACE_POLL_FREQUENCY: <POWERSTORE_SPACE_POLL_FREQUENCY>
     POWERSTORE_ARRAY_POLL_FREQUENCY: <POWERSTORE_ARRAY_POLL_FREQUENCY>
     POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY: <POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY>
+    POWERSTORE_TOPOLOGY_METRICS_ENABLED: <POWERSTORE_TOPOLOGY_METRICS_ENABLED>
+    POWERSTORE_TOPOLOGY_POLL_FREQUENCY: <POWERSTORE_TOPOLOGY_POLL_FREQUENCY>
     LOG_LEVEL: <POWERSTORE_LOG_LEVEL>
     LOG_FORMAT: <POWERSTORE_LOG_FORMAT>
     ZIPKIN_URI: <POWERSTORE_ZIPKIN_URI>
@@ -143,6 +145,8 @@ spec:
             - name: TLS_ENABLED
               value: "true"
           volumeMounts:
+            - name: karavi-metrics-powerstore-secret-volume
+              mountPath: "/certs"
             - name: powerstore-config
               mountPath: /powerstore-config
             - name: tls-secret
@@ -151,6 +155,14 @@ spec:
             - name: karavi-metrics-powerstore-configmap
               mountPath: /etc/config
       volumes:
+        - name: karavi-metrics-powerstore-secret-volume
+          secret:
+            secretName: karavi-metrics-powerstore-tls
+          items:
+            - key: tls.crt
+              path: localhost.crt
+            - key: tls.key
+              path: localhost.key
         - name: powerstore-config
           secret:
             secretName: powerstore-config

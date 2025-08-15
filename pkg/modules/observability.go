@@ -70,6 +70,12 @@ const (
 	// PowerscalePerformanceMetricsEnabled - enable/disable collection of performance metrics
 	PowerscalePerformanceMetricsEnabled string = "<POWERSCALE_PERFORMANCE_METRICS_ENABLED>"
 
+	// PowerscaleTopologyMetricsEnabled - enable/disable collection of topology metrics
+	PowerscaleTopologyMetricsEnabled string = "<POWERSCALE_TOPOLOGY_METRICS_ENABLED>"
+
+	// PowerscaleTopologyMetricsPollFrequency - polling frequency to get topology metrics data
+	PowerscaleTopologyMetricsPollFrequency string = "<POWERSCALE_TOPOLOGY_METRICS_POLL_FREQUENCY>"
+
 	// PowerscaleClusterCapacityPollFrequency - polling frequency to get cluster capacity data
 	PowerscaleClusterCapacityPollFrequency string = "<POWERSCALE_CLUSTER_CAPACITY_POLL_FREQUENCY>"
 
@@ -154,6 +160,12 @@ const (
 	// PmaxConcurrentQueries - number of concurrent queries
 	PmaxConcurrentQueries string = "<POWERMAX_MAX_CONCURRENT_QUERIES>"
 
+	// PmaxTopologyMetricsEnabled - enable/disable collection of topology metrics
+	PmaxTopologyMetricsEnabled string = "<POWERMAX_TOPOLOGY_METRICS_ENABLED>"
+
+	// PmaxTopologyMetricsPollFrequency - polling frequency to get topology metrics data
+	PmaxTopologyMetricsPollFrequency string = "<POWERMAX_TOPOLOGY_METRICS_POLL_FREQUENCY>"
+
 	// PmaxLogLevel - the level for the Powermax metrics
 	PmaxLogLevel string = "<POWERMAX_LOG_LEVEL>"
 
@@ -183,6 +195,12 @@ const (
 
 	// PstoreFileSystemPollFrequency - polling frequency to get file system capacity metrics data
 	PstoreFileSystemPollFrequency string = "<POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY>"
+
+	// PstoreTopologyEnabled - enable/disable topology metrics
+	PstoreTopologyEnabled string = "<POWERSTORE_TOPOLOGY_METRICS_ENABLED>"
+
+	// PstoreTopologyPollFrequency - polling frequency to get topology capacity metrics data
+	PstoreTopologyPollFrequency string = "<POWERSTORE_TOPOLOGY_POLL_FREQUENCY>"
 
 	// PstoreLogLevel - the log level for the Powerstore metrics
 	PstoreLogLevel string = "<POWERSTORE_LOG_LEVEL>"
@@ -219,7 +237,7 @@ const (
 )
 
 // ComponentNameToSecretPrefix - map from component name to secret prefix
-var ComponentNameToSecretPrefix = map[string]string{ObservabilityOtelCollectorName: "otel-collector", ObservabilityTopologyName: "karavi-topology"}
+var ComponentNameToSecretPrefix = map[string]string{ObservabilityOtelCollectorName: "otel-collector", ObservabilityTopologyName: "karavi-topology", ObservabilityMetricsPowerStoreName: "karavi-metrics-powerstore"}
 
 // ObservabilitySupportedDrivers is a map containing the CSI Drivers supported by CSM Replication. The key is driver name and the value is the driver plugin identifier
 var ObservabilitySupportedDrivers = map[string]SupportedDriverParam{
@@ -291,22 +309,27 @@ func ObservabilityPrecheck(ctx context.Context, op operatorutils.OperatorConfig,
 // ObservabilityTopology - delete or update topology objectstools
 func ObservabilityTopology(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
-	topoObjects, err := getTopology(op, cr)
-	if err != nil {
-		return err
-	}
+	configVersion := cr.Spec.Driver.ConfigVersion
+	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
+		topoObjects, err := getTopology(op, cr)
+		if err != nil {
+			return err
+		}
 
-	for _, ctrlObj := range topoObjects {
-		log.Infow("current topoObject is ", "ctrlObj", ctrlObj)
-		if isDeleting {
-			if err := operatorutils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		} else {
-			if err := operatorutils.ApplyCTRLObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
+		for _, ctrlObj := range topoObjects {
+			log.Infow("current topoObject is ", "ctrlObj", ctrlObj)
+			if isDeleting {
+				if err := operatorutils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+					return err
+				}
+			} else {
+				if err := operatorutils.ApplyCTRLObject(ctx, ctrlObj, ctrlClient); err != nil {
+					return err
+				}
 			}
 		}
+	} else {
+		return fmt.Errorf("CSM Operator does not suport topology deployment from CSM 1.15 onwards")
 	}
 
 	return nil
@@ -396,7 +419,7 @@ func getOtelCollector(op operatorutils.OperatorConfig, cr csmv1.ContainerStorage
 	YamlString = string(buf)
 
 	nginxProxyImage := "nginxinc/nginx-unprivileged:1.27"
-	otelCollectorImage := "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.124.0"
+	otelCollectorImage := "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.131.0"
 	configVersion := cr.Spec.Driver.ConfigVersion
 	// Currently supported config versions by this operator(release candidate for CSM v2.14.0) are v2.11.0, v2.12.0, v2.13.0.
 	// These config versions were already supported by the released operators. So use the same otel image for them.
@@ -572,12 +595,14 @@ func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 	maxConcurrentQueries := "10"
 	volumeEnabled := "true"
 	volumePollFrequency := "10"
-	spacePollFrequency := "10"
-	arrayPollFrequency := "10"
-	fsPollFrequency := "10"
+	spacePollFrequency := "300"
+	arrayPollFrequency := "300"
+	fsPollFrequency := "20"
+	topologyEnabled := "true"
+	topologyPollFrequency := "30"
 	zipkinURI := ""
 	zipkinServiceName := "metrics-powerstore"
-	zipkinProbability := "0"
+	zipkinProbability := "0.0"
 	logLevel := "INFO"
 	logFormat := "TEXT"
 	otelCollectorAddress := "otel-collector:55680"
@@ -600,6 +625,10 @@ func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 					arrayPollFrequency = env.Value
 				} else if strings.Contains(PstoreFileSystemPollFrequency, env.Name) {
 					fsPollFrequency = env.Value
+				} else if strings.Contains(PstoreTopologyEnabled, env.Name) {
+					topologyEnabled = env.Value
+				} else if strings.Contains(PstoreTopologyPollFrequency, env.Name) {
+					topologyPollFrequency = env.Value
 				} else if strings.Contains(ZipkinURI, env.Name) {
 					zipkinURI = env.Value
 				} else if strings.Contains(ZipkinServiceName, env.Name) {
@@ -625,6 +654,8 @@ func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 	YamlString = strings.ReplaceAll(YamlString, PstoreSpacePollFrequency, spacePollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, PstoreArrayPollFrequency, arrayPollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, PstoreFileSystemPollFrequency, fsPollFrequency)
+	YamlString = strings.ReplaceAll(YamlString, PstoreTopologyEnabled, topologyEnabled)
+	YamlString = strings.ReplaceAll(YamlString, PstoreTopologyPollFrequency, topologyPollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, ZipkinURI, zipkinURI)
 	YamlString = strings.ReplaceAll(YamlString, ZipkinServiceName, zipkinServiceName)
 	YamlString = strings.ReplaceAll(YamlString, ZipkinProbability, zipkinProbability)
@@ -661,6 +692,8 @@ func getPowerScaleMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 	maxConcurrentQueries := "10"
 	capacityEnabled := "true"
 	performanceEnabled := "true"
+	topologyEnabled := "true"
+	topologyPollFrequency := "30"
 	clusterCapacityPollFrequency := "30"
 	clusterPerformancePollFrequency := "20"
 	quotaCapacityPollFrequency := "30"
@@ -683,6 +716,10 @@ func getPowerScaleMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 					capacityEnabled = env.Value
 				} else if strings.Contains(PowerscalePerformanceMetricsEnabled, env.Name) {
 					performanceEnabled = env.Value
+				} else if strings.Contains(PowerscaleTopologyMetricsEnabled, env.Name) {
+					topologyEnabled = env.Value
+				} else if strings.Contains(PowerscaleTopologyMetricsPollFrequency, env.Name) {
+					topologyPollFrequency = env.Value
 				} else if strings.Contains(PowerscaleClusterCapacityPollFrequency, env.Name) {
 					clusterCapacityPollFrequency = env.Value
 				} else if strings.Contains(PowerscaleClusterPerformancePollFrequency, env.Name) {
@@ -710,6 +747,8 @@ func getPowerScaleMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 	YamlString = strings.ReplaceAll(YamlString, PowerScaleMaxConcurrentQueries, maxConcurrentQueries)
 	YamlString = strings.ReplaceAll(YamlString, PowerscaleCapacityMetricsEnabled, capacityEnabled)
 	YamlString = strings.ReplaceAll(YamlString, PowerscalePerformanceMetricsEnabled, performanceEnabled)
+	YamlString = strings.ReplaceAll(YamlString, PowerscaleTopologyMetricsEnabled, topologyEnabled)
+	YamlString = strings.ReplaceAll(YamlString, PowerscaleTopologyMetricsPollFrequency, topologyPollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, PowerscaleClusterCapacityPollFrequency, clusterCapacityPollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, PowerscaleClusterPerformancePollFrequency, clusterPerformancePollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, PowerscaleQuotaCapacityPollFrequency, quotaCapacityPollFrequency)
@@ -964,7 +1003,7 @@ func IssuerCertServiceObs(ctx context.Context, isDeleting bool, op operatorutils
 	}
 
 	for _, component := range obs.Components {
-		if (component.Name == ObservabilityOtelCollectorName && *(component.Enabled)) || (component.Name == ObservabilityTopologyName && *(component.Enabled)) {
+		if (component.Name == ObservabilityOtelCollectorName && *(component.Enabled)) || (component.Name == ObservabilityTopologyName && *(component.Enabled)) || (component.Name == ObservabilityMetricsPowerStoreName && *(component.Enabled)) {
 			yamlString, err := getIssuerCertServiceObs(op, obs, component.Name, cr)
 			if err != nil {
 				return err
@@ -1137,6 +1176,8 @@ func getPowerMaxMetricsObject(op operatorutils.OperatorConfig, cr csmv1.Containe
 	maxConcurrentQueries := "10"
 	capacityEnabled := "true"
 	perfEnabled := "true"
+	topologyEnabled := "true"
+	topologyPollFrequency := "30"
 	capacityPollFrequency := "10"
 	perfPollFrequency := "10"
 	logFormat := "TEXT"
@@ -1161,6 +1202,10 @@ func getPowerMaxMetricsObject(op operatorutils.OperatorConfig, cr csmv1.Containe
 					perfEnabled = env.Value
 				} else if strings.Contains(PmaxPerformancePollFreq, env.Name) {
 					perfPollFrequency = env.Value
+				} else if strings.Contains(PmaxTopologyMetricsEnabled, env.Name) {
+					topologyEnabled = env.Value
+				} else if strings.Contains(PmaxTopologyMetricsPollFrequency, env.Name) {
+					topologyPollFrequency = env.Value
 				} else if strings.Contains(ReverseProxyConfigMap, env.Name) {
 					revproxyConfigMap = env.Value
 				} else if strings.Contains(PmaxLogFormat, env.Name) {
@@ -1181,6 +1226,8 @@ func getPowerMaxMetricsObject(op operatorutils.OperatorConfig, cr csmv1.Containe
 	YamlString = strings.ReplaceAll(YamlString, PmaxCapacityPollFreq, capacityPollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, PmaxPerformanceMetricsEnabled, perfEnabled)
 	YamlString = strings.ReplaceAll(YamlString, PmaxPerformancePollFreq, perfPollFrequency)
+	YamlString = strings.ReplaceAll(YamlString, PmaxTopologyMetricsEnabled, topologyEnabled)
+	YamlString = strings.ReplaceAll(YamlString, PmaxTopologyMetricsPollFrequency, topologyPollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, OtelCollectorAddress, otelCollectorAddress)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyConfigMap, revproxyConfigMap)
 	YamlString = strings.ReplaceAll(YamlString, DriverDefaultReleaseName, cr.Name)

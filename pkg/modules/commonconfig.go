@@ -164,3 +164,24 @@ func CommonCertManager(ctx context.Context, isDeleting bool, op operatorutils.Op
 
 	return nil
 }
+
+func applyDeleteObjects(ctx context.Context, ctrlClient crclient.Client, yamlString string, isDeleting bool) error {
+	ctrlObjects, err := operatorutils.GetModuleComponentObj([]byte(yamlString))
+	if err != nil {
+		return err
+	}
+
+	for _, ctrlObj := range ctrlObjects {
+		if isDeleting {
+			if err := operatorutils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		} else {
+			if err := operatorutils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}

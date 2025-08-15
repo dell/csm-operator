@@ -27,7 +27,6 @@ import (
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/stretchr/testify/assert"
-	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	admissionregistration "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -85,7 +84,6 @@ func fullFakeClient() crclient.WithWatch {
 	_ = csmv1.AddToScheme(scheme)  // for CSM objects
 	_ = corev1.AddToScheme(scheme) // for namespaces
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(velerov1.AddToScheme(scheme))
 
 	// Create a fake ctrlClient
 	ctrlClient := fake.NewClientBuilder().
@@ -713,40 +711,6 @@ func TestSetContainerImage(t *testing.T) {
 
 			assert.Equal(t, tt.args.want, container)
 		})
-	}
-}
-
-func TestGetBackupStorageLocation(t *testing.T) {
-	ctx := context.Background()
-	fakeClient := fullFakeClient()
-
-	// Test case: BackupStorageLocation does not exist
-	name := "test-backup-storage"
-	namespace := "test-namespace"
-	_, err := GetBackupStorageLocation(ctx, name, namespace, fakeClient)
-	if err == nil {
-		t.Errorf("Expected error, got nil")
-	}
-
-	// Test case: BackupStorageLocation exists
-	backupStorage := &velerov1.BackupStorageLocation{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-	}
-	if err := fakeClient.Create(ctx, backupStorage); err != nil {
-		t.Errorf("Failed to create BackupStorageLocation: %v", err)
-	}
-	backupStorage, err = GetBackupStorageLocation(ctx, name, namespace, fakeClient)
-	if err != nil {
-		t.Errorf("Failed to get BackupStorageLocation: %v", err)
-	}
-	if backupStorage.Name != name {
-		t.Errorf("Expected name %s, got %s", name, backupStorage.Name)
-	}
-	if backupStorage.Namespace != namespace {
-		t.Errorf("Expected namespace %s, got %s", namespace, backupStorage.Namespace)
 	}
 }
 
@@ -1485,26 +1449,6 @@ spec:
             - containerPort: 8080
 ---
 apiVersion: v1
-kind: BackupStorageLocation
-metadata:
-  name: my-bsl
-spec:
-  provider: aws
-  objectStorage:
-    bucket: my-bucket
-    region: us-east-1
----
-apiVersion: v1
-kind: VolumeSnapshotLocation
-metadata:
-  name: my-vsl
-spec:
-  provider: aws
-  objectStorage:
-    bucket: my-bucket
-    region: us-east-1
----
-apiVersion: v1
 kind: Issuer
 metadata:
   name: my-issuer
@@ -1581,8 +1525,8 @@ spec:
 		t.Fatalf("Failed to get module component objects: %v", err)
 	}
 
-	if len(ctrlObjects) != 25 {
-		t.Errorf("Expected 25 objects, got %d", len(ctrlObjects))
+	if len(ctrlObjects) != 23 {
+		t.Errorf("Expected 23 objects, got %d", len(ctrlObjects))
 	}
 
 	for _, obj := range ctrlObjects {
@@ -1650,14 +1594,6 @@ spec:
 		case *appsv1.DaemonSet:
 			if v.Name != "my-daemonset" {
 				t.Errorf("Expected daemon set name 'my-daemonset', got %s", v.Name)
-			}
-		case *velerov1.BackupStorageLocation:
-			if v.Name != "my-bsl" {
-				t.Errorf("Expected backup storage location name 'my-bsl', got %s", v.Name)
-			}
-		case *velerov1.VolumeSnapshotLocation:
-			if v.Name != "my-vsl" {
-				t.Errorf("Expected volume snapshot location name 'my-vsl', got %s", v.Name)
 			}
 		case *certmanagerv1.Issuer:
 			if v.Name != "my-issuer" {
@@ -1901,14 +1837,6 @@ func TestGetModuleComponentObjWithErrors(t *testing.T) {
 			kind: "DaemonSet",
 		},
 		{
-			name: "BackupStorageLocation yaml returns error",
-			kind: "BackupStorageLocation",
-		},
-		{
-			name: "VolumeSnapshotLocation yaml returns error",
-			kind: "VolumeSnapshotLocation",
-		},
-		{
 			name: "Issuer yaml returns error",
 			kind: "Issuer",
 		},
@@ -2008,6 +1936,16 @@ func TestGetDriverYamlWithErrors(t *testing.T) {
 			name: "DaemonSetApplyConfiguration yaml returns error",
 			kind: "DaemonSetApplyConfiguration",
 			set:  "DaemonSet",
+		},
+		{
+			name: "Role yaml returns error",
+			kind: "Role",
+			set:  "Deployment",
+		},
+		{
+			name: "RoleBinding yaml returns error",
+			kind: "RoleBinding",
+			set:  "Deployment",
 		},
 		{
 			name: "Invalid kind returns error",
@@ -2916,46 +2854,6 @@ func TestContains(t *testing.T) {
 	}
 }
 
-func TestIsAppMobilityComponentEnabled(t *testing.T) {
-	// Test case: component is enabled
-	instance := csmv1.ContainerStorageModule{
-		Spec: csmv1.ContainerStorageModuleSpec{
-			Modules: []csmv1.Module{
-				{
-					Name:    csmv1.ApplicationMobility,
-					Enabled: true,
-					Components: []csmv1.ContainerTemplate{
-						{
-							Name:    "application-mobility-controller-manager",
-							Enabled: &[]bool{true}[0],
-						},
-					},
-				},
-			},
-		},
-	}
-	expected := true
-	result := IsAppMobilityComponentEnabled(context.Background(), instance, nil, csmv1.ApplicationMobility, "application-mobility-controller-manager")
-	if result != expected {
-		t.Errorf("Expected %v, but got %v", expected, result)
-	}
-
-	// Test case: component is disabled
-	instance.Spec.Modules[0].Components[0].Enabled = &[]bool{false}[0]
-	expected = false
-	result = IsAppMobilityComponentEnabled(context.Background(), instance, nil, csmv1.ApplicationMobility, "application-mobility-controller-manager")
-	if result != expected {
-		t.Errorf("Expected %v, but got %v", expected, result)
-	}
-
-	// Test case: module is disabled
-	instance.Spec.Modules[0].Enabled = false
-	result = IsAppMobilityComponentEnabled(context.Background(), instance, nil, csmv1.ApplicationMobility, "application-mobility-controller-manager")
-	if result != expected {
-		t.Errorf("Expected %v, but got %v", expected, result)
-	}
-}
-
 func TestIsResiliencyModuleEnabled(t *testing.T) {
 	// Test case: resiliency module is enabled
 	instance := csmv1.ContainerStorageModule{
@@ -2981,39 +2879,6 @@ func TestIsResiliencyModuleEnabled(t *testing.T) {
 	result = IsResiliencyModuleEnabled(context.Background(), instance, nil)
 	if result != expected {
 		t.Errorf("Expected %v, but got %v", expected, result)
-	}
-}
-
-func TestGetVolumeSnapshotLocation(t *testing.T) {
-	// Test case: snapshot location exists
-	ctx := context.Background()
-	fakeClient := fullFakeClient()
-
-	snapshotLocation := &velerov1.VolumeSnapshotLocation{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-snapshot-location",
-			Namespace: "test-namespace",
-		},
-	}
-	if err := fakeClient.Create(ctx, snapshotLocation); err != nil {
-		t.Errorf("Failed to create VolumeSnapshotLocation: %v", err)
-	}
-
-	snapshotLocation, err := GetVolumeSnapshotLocation(ctx, "test-snapshot-location", "test-namespace", fakeClient)
-	if err != nil {
-		t.Errorf("Failed to get VolumeSnapshotLocation: %v", err)
-	}
-	if snapshotLocation.Name != "test-snapshot-location" {
-		t.Errorf("Expected name %s, got %s", "test-snapshot-location", snapshotLocation.Name)
-	}
-	if snapshotLocation.Namespace != "test-namespace" {
-		t.Errorf("Expected namespace %s, got %s", "test-namespace", snapshotLocation.Namespace)
-	}
-
-	// Test case: snapshot location does not exist
-	_, err = GetVolumeSnapshotLocation(ctx, "non-existent-snapshot-location", "test-namespace", fakeClient)
-	if err == nil {
-		t.Errorf("Expected error, but got nil")
 	}
 }
 
@@ -3483,5 +3348,24 @@ func Test_getDefaultComponents(t *testing.T) {
 				t.Errorf("getDefaultComponents() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestGetEnvironmentVariable(t *testing.T) {
+	// Test case: Environment variable is set
+	os.Setenv("TEST_VAR", "test_value")
+	value, err := GetEnvironmentVariable("TEST_VAR")
+	if err != nil {
+		t.Errorf("Expected no error, but got %v", err)
+	}
+	if value != "test_value" {
+		t.Errorf("Expected value 'test_value', but got '%s'", value)
+	}
+	os.Unsetenv("TEST_VAR")
+
+	// Test case: Environment variable is not set
+	_, err = GetEnvironmentVariable("NON_EXISTENT_VAR")
+	if err == nil {
+		t.Errorf("Expected error, but got nil")
 	}
 }

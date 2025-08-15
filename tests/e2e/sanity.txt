@@ -12,6 +12,3 @@ Install PowerFlex Driver(With Authorization and Observability), Disable Observab
 Install PowerFlex Driver(With Resiliency)
 Install PowerScale Driver(Standalone), Enable/Disable Resiliency module
 Install PowerScale Driver and PowerFlex Driver, uninstall PowerFlex Driver
-Install App Mobility (Standalone)
-Install powerflex driver, enable and disable application-mobility
-
