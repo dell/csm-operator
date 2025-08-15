@@ -57,7 +57,7 @@ const (
 	// UnityCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	UnityCSMNameSpace string = "<CSM_NAMESPACE>"
 
-	// UnityDebug - will be used to control the GOISILON_DEBUG variable
+	// UnityDebug - will be used to control the GOUNITY_DEBUG variable
 	UnityDebug string = "<GOUNITY_DEBUG>"
 
 	// UnityHTTP - will be used to control the GOUNITY_SHOWHTTP variable
