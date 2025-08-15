@@ -7,6 +7,7 @@ data:
   driver-config-params.yaml: |
     CSI_LOG_LEVEL: "info"
     CSI_LOG_FORMAT: "TEXT"
+    AZ_RECONCILE_INTERVAL: "1h"
     PODMON_CONTROLLER_LOG_LEVEL: "debug"
     PODMON_CONTROLLER_LOG_FORMAT: "TEXT"
     PODMON_NODE_LOG_LEVEL: "debug"
