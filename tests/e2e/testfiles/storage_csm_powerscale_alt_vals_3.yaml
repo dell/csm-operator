@@ -91,6 +91,11 @@ spec:
         # Default value: "debug"
         - name: "CSI_LOG_LEVEL"
           value: "info"
+        # AZ_RECONCILE_INTERVAL: Interval to monitor and reconcile network interface labels on nodes.
+        # Allowed values: Number followed by unit of time (s,m,h)
+        # Default value: 1h
+        - name: "AZ_RECONCILE_INTERVAL"
+          value: "1h"
     controller:
       envs:
         # X_CSI_ISI_QUOTA_ENABLED: Indicates whether the provisioner should attempt to set (later unset) quota
@@ -306,7 +311,7 @@ spec:
           enabled: false
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
-          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.131.1
+          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.132.2
           envs:
             # image of nginx proxy image
             # Allowed values: string
