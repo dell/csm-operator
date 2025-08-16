@@ -91,6 +91,8 @@ apiVersion: apps/v1
 metadata:
   name: <DriverDefaultReleaseName>-node
   namespace: <DriverDefaultReleaseNamespace>
+  annotations:
+    com.dell.karavi-authorization-proxy: "true"
 spec:
   selector:
     matchLabels:

@@ -142,6 +142,8 @@ apiVersion: apps/v1
 metadata:
   name: <DriverDefaultReleaseName>-controller
   namespace: <DriverDefaultReleaseNamespace>
+  annotations:
+    com.dell.karavi-authorization-proxy: "true"
 spec:
   selector:
     matchLabels:
