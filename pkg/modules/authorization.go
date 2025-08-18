@@ -555,7 +555,7 @@ func AuthorizationServerPrecheck(ctx context.Context, op operatorutils.OperatorC
 			for _, config := range component.JWTSigningSecretProviderClass {
 				if config.JWTSigningSecretName == "" {
 					// Check for secrets
-					var proxyServerSecrets = []string{"karavi-config-secret"}
+					proxyServerSecrets := []string{"karavi-config-secret"}
 					for _, name := range proxyServerSecrets {
 						found := &corev1.Secret{}
 						err := r.GetClient().Get(ctx, types.NamespacedName{Name: name, Namespace: cr.GetNamespace()}, found)

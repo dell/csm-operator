@@ -23,7 +23,6 @@ import (
 
 // getProxyServerScaffold returns proxy-server deployment for authorization v2
 func getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage, opaKubeMgmtImage, jwtSigningSecretName, redisSecretName, redisPasswordKey string, replicas int32, sentinelReplicas int) appsv1.Deployment {
-
 	var volumeMounts = []corev1.VolumeMount{
 		{
 			Name:      "csm-config-params",
