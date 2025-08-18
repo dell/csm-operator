@@ -317,8 +317,13 @@ spec:
               value: "5"
             - name: X_CSI_MULTI_NAS_COOLDOWN_PERIOD
               value: "5m"
+<<<<<<< HEAD
             - name: X_CSI_VOL_PREFIX
               value: <X_CSI_VOL_PREFIX>
+=======
+            - name: X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT
+              value: "<X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT>"
+>>>>>>> a2036fa4 (configurable timeout changes)
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi

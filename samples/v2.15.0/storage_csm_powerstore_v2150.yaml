@@ -94,7 +94,7 @@ spec:
         # Examples: 10s, 1m, 1h
         # Default value: 10s
         - name: "X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT"
-          value: "10" 
+          value: "10s" 
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
