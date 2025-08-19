@@ -76,6 +76,12 @@ const (
 
 	// CsiVolPrefix - CSI Volume name Prefix
 	CsiVolPrefix string = "<CSI_VOL_PREFIX>"
+
+	// PowerStoreAPITimeout - Powerstore REST API Timeout
+	PowerStoreAPITimeout = "<X_CSI_POWERSTORE_API_TIMEOUT>"
+
+	// PodmonArrayConnectivityTimeout - Podmon Array Connectivity Timeout
+	PodmonArrayConnectivityTimeout = "<X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT>"
 )
 
 // PrecheckPowerStore do input validation
@@ -157,6 +163,8 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	nfsClientPort := "2050"
 	nfsServerPort := "2049"
 	nfsExportDirectory := "/var/lib/dell/nfs"
+	powerstoreAPITimeout := "120s"
+	podmonArrayConnectivityTimeout := "10s"
 	debug := "false"
 	csivolprefix := "csivol"
 	if cr.Spec.Driver.Common != nil {
@@ -175,6 +183,12 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 			}
 			if env.Name == "X_CSI_VOL_PREFIX" && env.Value != "" {
 				csivolprefix = env.Value
+				if env.Name == "X_CSI_POWERSTORE_API_TIMEOUT" && env.Value != "" {
+					powerstoreAPITimeout = env.Value
+				}
+				if env.Name == "X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT" && env.Value != "" {
+					podmonArrayConnectivityTimeout = env.Value
+				}
 			}
 		}
 	}
@@ -215,6 +229,8 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsServerPort, nfsServerPort)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsExportDirectory, nfsExportDirectory)
 		yamlString = strings.ReplaceAll(yamlString, CsiVolPrefix, csivolprefix)
+		yamlString = strings.ReplaceAll(yamlString, PowerStoreAPITimeout, powerstoreAPITimeout)
+		yamlString = strings.ReplaceAll(yamlString, PodmonArrayConnectivityTimeout, podmonArrayConnectivityTimeout)
 	case "Controller":
 		if cr.Spec.Driver.Controller != nil {
 			for _, env := range cr.Spec.Driver.Controller.Envs {
@@ -238,6 +254,8 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsServerPort, nfsServerPort)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsExportDirectory, nfsExportDirectory)
 		yamlString = strings.ReplaceAll(yamlString, CsiVolPrefix, csivolprefix)
+		yamlString = strings.ReplaceAll(yamlString, PowerStoreAPITimeout, powerstoreAPITimeout)
+		yamlString = strings.ReplaceAll(yamlString, PodmonArrayConnectivityTimeout, podmonArrayConnectivityTimeout)
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"
