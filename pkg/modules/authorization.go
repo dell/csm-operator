@@ -198,6 +198,10 @@ var AuthorizationSupportedDrivers = map[string]SupportedDriverParam{
 		PluginIdentifier:              drivers.PowerMaxPluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerMaxConfigParamsVolumeMount,
 	},
+	"powerstore": {
+		PluginIdentifier:              drivers.PowerStorePluginIdentifier,
+		DriverConfigParamsVolumeMount: drivers.PowerStoreConfigParamsVolumeMount,
+	},
 }
 
 func getAuthorizationModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error) {
