@@ -1137,7 +1137,7 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is not installed"
- 
+
 - scenario: "Install Powerstore Driver (With Authorization v2)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_k8s_secret.yaml"
