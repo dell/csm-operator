@@ -77,6 +77,7 @@ spec:
         # Default value: true
         - name: X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION
           value: "true"
+<<<<<<< HEAD
         # X_CSI_VOL_PREFIX: defines a string prepended to each volume created by the CSI driver.
         # Allowed values: string
         # Default value: csivol
@@ -87,6 +88,12 @@ spec:
           # Allowed values: Number followed by unit (s,m,h)
           # Examples: 10s, 1m, 1h
           # Default value: 120s
+=======
+        # X_CSI_POWERSTORE_API_TIMEOUT: Defines the timeout for PowerStore REST API calls.
+        # Allowed values: Number followed by unit (s,m,h)
+        # Examples: 10s, 1m, 1h
+        # Default value: 120s
+>>>>>>> 5ab45940 (Fix linting issues)
         - name: X_CSI_POWERSTORE_API_TIMEOUT
           value: "120"
         # podmonArrayConnectivityTimeout: Defines the timeout (in seconds) for podmon array connectivity timeout check

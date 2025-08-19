@@ -75,11 +75,16 @@ const (
 	PowerStoreNfsExportDirectory = "<X_CSI_NFS_EXPORT_DIRECTORY>"
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 	// CsiVolPrefix - CSI Volume name Prefix
 	CsiVolPrefix string = "<CSI_VOL_PREFIX>"
 =======
 	// PowerStoreApiTimeout - Powerstore REST API Timeout
 	PowerStoreApiTimeout = "<X_CSI_POWERSTORE_API_TIMEOUT>"
+=======
+	// PowerStoreAPITimeout - Powerstore REST API Timeout
+	PowerStoreAPITimeout = "<X_CSI_POWERSTORE_API_TIMEOUT>"
+>>>>>>> 5ab45940 (Fix linting issues)
 
 	// PodmonArrayConnectivityTimeout - Podmon Array Connectivity Timeout
 	PodmonArrayConnectivityTimeout = "<X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT>"
@@ -165,7 +170,7 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	nfsClientPort := "2050"
 	nfsServerPort := "2049"
 	nfsExportDirectory := "/var/lib/dell/nfs"
-	powerstoreApiTimeout := "120s"
+	powerstoreAPITimeout := "120s"
 	podmonArrayConnectivityTimeout := "10s"
 	debug := "false"
 	csivolprefix := "csivol"
@@ -186,7 +191,7 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 			if env.Name == "X_CSI_VOL_PREFIX" && env.Value != "" {
 				csivolprefix = env.Value
 			if env.Name == "X_CSI_POWERSTORE_API_TIMEOUT" && env.Value != "" {
-				powerstoreApiTimeout = env.Value
+				powerstoreAPITimeout = env.Value
 			}
 			if env.Name == "X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT" && env.Value != "" {
 				podmonArrayConnectivityTimeout = env.Value
@@ -230,9 +235,13 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsServerPort, nfsServerPort)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsExportDirectory, nfsExportDirectory)
 <<<<<<< HEAD
+<<<<<<< HEAD
 		yamlString = strings.ReplaceAll(yamlString, CsiVolPrefix, csivolprefix)
 =======
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreApiTimeout, powerstoreApiTimeout)
+=======
+		yamlString = strings.ReplaceAll(yamlString, PowerStoreAPITimeout, powerstoreAPITimeout)
+>>>>>>> 5ab45940 (Fix linting issues)
 		yamlString = strings.ReplaceAll(yamlString, PodmonArrayConnectivityTimeout, podmonArrayConnectivityTimeout)
 >>>>>>> d65a8f4d (Adding support for configurable timeouts)
 	case "Controller":
@@ -258,9 +267,13 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsServerPort, nfsServerPort)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsExportDirectory, nfsExportDirectory)
 <<<<<<< HEAD
+<<<<<<< HEAD
 		yamlString = strings.ReplaceAll(yamlString, CsiVolPrefix, csivolprefix)
 =======
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreApiTimeout, powerstoreApiTimeout)
+=======
+		yamlString = strings.ReplaceAll(yamlString, PowerStoreAPITimeout, powerstoreAPITimeout)
+>>>>>>> 5ab45940 (Fix linting issues)
 		yamlString = strings.ReplaceAll(yamlString, PodmonArrayConnectivityTimeout, podmonArrayConnectivityTimeout)
 >>>>>>> d65a8f4d (Adding support for configurable timeouts)
 	case "CSIDriverSpec":
