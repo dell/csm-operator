@@ -427,7 +427,7 @@ data:
       common.roles[a]
 
       v := claimed_roles[i]
-      
+
       quota := common.roles[v].system_types[input.systemtype].system_ids[input.storagesystemid].pool_quotas[input.storagesystemid]
       quota >= to_number(input.request.size)
 

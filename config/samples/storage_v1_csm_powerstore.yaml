@@ -225,7 +225,7 @@ spec:
             # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
             # Default value: "true"
             - name: "SKIP_CERTIFICATE_VALIDATION"
-              value: "true"  
+              value: "true"
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature
       # Allowed values:

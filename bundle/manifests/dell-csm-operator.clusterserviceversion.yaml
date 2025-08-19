@@ -942,7 +942,7 @@ metadata:
                 "configVersion": "v2.3.0",
                 "enabled": false,
                 "name": "authorization"
-              },            
+              },
               {
                 "components": [
                   {
