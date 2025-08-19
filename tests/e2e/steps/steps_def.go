@@ -82,11 +82,10 @@ var (
 	pmaxCrMap   = map[string]string{"REPLACE_STORAGE_NAME": "PMAX_STORAGE", "REPLACE_STORAGE_TYPE": "PMAX_STORAGE", "REPLACE_ENDPOINT": "PMAX_ENDPOINT", "REPLACE_SYSTEM_ID": "PMAX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PMAX_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PMAX_ROLE", "REPLACE_QUOTA": "PMAX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PMAX_POOL_V2", "REPLACE_TENANT_NAME": "PMAX_TENANT", "REPLACE_TENANT_ROLES": "PMAX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PMAX_TENANT_PREFIX", "REPLACE_USERNAME_OBJECT_NAME": "secrets/powermax-username", "REPLACE_PASSWORD_OBJECT_NAME": "secrets/powermax-password"}
 	pstoreCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PSTORE_STORAGE", "REPLACE_STORAGE_TYPE": "PSTORE_STORAGE", "REPLACE_ENDPOINT": "PSTORE_ENDPOINT", "REPLACE_SYSTEM_ID": "PSTORE_GLOBALID", "REPLACE_VAULT_STORAGE_PATH": "PSTORE_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PSTORE_ROLE", "REPLACE_QUOTA": "PSTORE_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PSTORE_POOL", "REPLACE_TENANT_NAME": "PSTORE_TENANT", "REPLACE_TENANT_ROLES": "PSTORE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PSTORE_TENANT_PREFIX", "REPLACE_USERNAME_OBJECT_NAME": "secrets/powerstore-username", "REPLACE_PASSWORD_OBJECT_NAME": "secrets/powerstore-password"}
 
-
 	pstoreSecretMap          = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_GLOBALID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_ENDPOINT", "REPLACE_PROTOCOL": "PSTORE_PROTOCOL"}
 	pstoreEphemeralVolumeMap = map[string]string{"REPLACE_GLOBALID": "PSTORE_GLOBALID"}
-	pstoreAuthSecretMap		 = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_GLOBALID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_AUTH_ENDPOINT", "REPLACE_PROTOCOL": "PSTORE_PROTOCOL"}
-	pstoreAuthSidecarMap	 = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_GLOBALID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_ENDPOINT",  "REPLACE_AUTH_ENDPOINT": "PSTORE_AUTH_ENDPOINT"}
+	pstoreAuthSecretMap      = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_GLOBALID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_AUTH_ENDPOINT", "REPLACE_PROTOCOL": "PSTORE_PROTOCOL"}
+	pstoreAuthSidecarMap     = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_GLOBALID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSTORE_AUTH_ENDPOINT"}
 	unitySecretMap           = map[string]string{"REPLACE_USER": "UNITY_USER", "REPLACE_PASS": "UNITY_PASS", "REPLACE_ARRAYID": "UNITY_ARRAYID", "REPLACE_ENDPOINT": "UNITY_ENDPOINT", "REPLACE_POOL": "UNITY_POOL", "REPLACE_NAS": "UNITY_NAS"}
 	unityEphemeralVolumeMap  = map[string]string{"REPLACE_ARRAYID": "UNITY_ARRAYID", "REPLACE_POOL": "UNITY_POOL", "REPLACE_NAS": "UNITY_NAS"}
 )
@@ -721,7 +720,6 @@ func (step *Step) validateAuthorizationPodsNotInstalled(res Resource, module str
 }
 
 func (step *Step) setUpStorageClass(_ Resource, templateFile, crType string) error {
-
 	fileString, err := renderTemplate(crType, templateFile)
 	if err != nil {
 		return err
@@ -763,7 +761,6 @@ func (step *Step) setUpStorageClass(_ Resource, templateFile, crType string) err
 }
 
 func (step *Step) createResource(_ Resource, templateFile, crType string) error {
-
 	fileString, err := renderTemplate(crType, templateFile)
 	if err != nil {
 		return err
@@ -1155,7 +1152,6 @@ func (step *Step) runCustomTestSelector(res Resource, testName string) error {
 }
 
 func (step *Step) setupEphemeralVolumeProperties(_ Resource, templateFile string, crType string) error {
-
 	if crType == "pflexEphemeral" {
 		_ = os.Setenv("PFLEX_VOLUME", fmt.Sprintf("k8s-%s", randomAlphaNumberic(10)))
 	}
@@ -1195,7 +1191,6 @@ func getRenderedFilePath(templatePath string) string {
 // "testfiles/powerscale-templates/ephemeral.properties" the rendered file
 // will be written to "temp/powerscale-templates/ephemeral.properties".
 func writeRenderedFile(templatePath, content string) (newPath string, err error) {
-
 	newPath = getRenderedFilePath(templatePath)
 
 	// make sure the base path exist
@@ -1926,7 +1921,6 @@ func (step *Step) setUpReverseProxy(_ Resource, namespace string) error {
 }
 
 func (step *Step) setUpTLSSecretWithSAN(res Resource, namespace string) error {
-
 	// Paths for the key, CSR, and certificate files
 	keyPath := "temp/tls.key"
 	csrPath := "temp/tls.csr"
