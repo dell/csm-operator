@@ -77,6 +77,12 @@ spec:
         # Default value: true
         - name: X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION
           value: "true"
+        # X_CSI_VOL_PREFIX: defines a string prepended to each volume created by the CSI driver.
+        # Allowed values: string
+        # Default value: csivol
+        # Examples: "k8s", "app1"
+        - name: X_CSI_VOL_PREFIX
+          value: "csivol"
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
