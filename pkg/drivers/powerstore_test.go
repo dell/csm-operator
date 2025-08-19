@@ -198,8 +198,12 @@ func csmForPowerStoreGoodSkipCert() csmv1.ContainerStorageModule {
 		Name:  "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION",
 		Value: "true", // Valid boolean string
 	}
+	envVolPrefix := corev1.EnvVar{
+		Name:  "X_CSI_VOL_PREFIX",
+		Value: "test",
+	}
 
-	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envCertCount, envSkipCertValidation}
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envCertCount, envSkipCertValidation, envVolPrefix}
 	res.Spec.Driver.AuthSecret = "csm-creds"
 	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
 	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
