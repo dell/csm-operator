@@ -80,9 +80,12 @@ var (
 	pflexCrMap  = map[string]string{"REPLACE_STORAGE_NAME": "PFLEX_STORAGE", "REPLACE_STORAGE_TYPE": "PFLEX_STORAGE", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_SYSTEM_ID": "PFLEX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PFLEX_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PFLEX_ROLE", "REPLACE_QUOTA": "PFLEX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PFLEX_POOL", "REPLACE_TENANT_NAME": "PFLEX_TENANT", "REPLACE_TENANT_ROLES": "PFLEX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PFLEX_TENANT_PREFIX", "REPLACE_USERNAME_OBJECT_NAME": "secrets/powerflex-username", "REPLACE_PASSWORD_OBJECT_NAME": "secrets/powerflex-password"}
 	pscaleCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PSCALE_STORAGE", "REPLACE_STORAGE_TYPE": "PSCALE_STORAGE", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_SYSTEM_ID": "PSCALE_CLUSTER", "REPLACE_VAULT_STORAGE_PATH": "PSCALE_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PSCALE_ROLE", "REPLACE_QUOTA": "PSCALE_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PSCALE_POOL_V2", "REPLACE_TENANT_NAME": "PSCALE_TENANT", "REPLACE_TENANT_ROLES": "PSCALE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PSCALE_TENANT_PREFIX", "REPLACE_USERNAME_OBJECT_NAME": "secrets/powerscale-username", "REPLACE_PASSWORD_OBJECT_NAME": "secrets/powerscale-password"}
 	pmaxCrMap   = map[string]string{"REPLACE_STORAGE_NAME": "PMAX_STORAGE", "REPLACE_STORAGE_TYPE": "PMAX_STORAGE", "REPLACE_ENDPOINT": "PMAX_ENDPOINT", "REPLACE_SYSTEM_ID": "PMAX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PMAX_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PMAX_ROLE", "REPLACE_QUOTA": "PMAX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PMAX_POOL_V2", "REPLACE_TENANT_NAME": "PMAX_TENANT", "REPLACE_TENANT_ROLES": "PMAX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PMAX_TENANT_PREFIX", "REPLACE_USERNAME_OBJECT_NAME": "secrets/powermax-username", "REPLACE_PASSWORD_OBJECT_NAME": "secrets/powermax-password"}
+	pstoreCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PSTORE_STORAGE", "REPLACE_STORAGE_TYPE": "PSTORE_STORAGE", "REPLACE_ENDPOINT": "PSTORE_ENDPOINT", "REPLACE_SYSTEM_ID": "PSTORE_GLOBALID", "REPLACE_VAULT_STORAGE_PATH": "PSTORE_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PSTORE_ROLE", "REPLACE_QUOTA": "PSTORE_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PSTORE_POOL", "REPLACE_TENANT_NAME": "PSTORE_TENANT", "REPLACE_TENANT_ROLES": "PSTORE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PSTORE_TENANT_PREFIX", "REPLACE_USERNAME_OBJECT_NAME": "secrets/powerstore-username", "REPLACE_PASSWORD_OBJECT_NAME": "secrets/powerstore-password"}
 
 	pstoreSecretMap          = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_GLOBALID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_ENDPOINT", "REPLACE_PROTOCOL": "PSTORE_PROTOCOL"}
 	pstoreEphemeralVolumeMap = map[string]string{"REPLACE_GLOBALID": "PSTORE_GLOBALID"}
+	pstoreAuthSecretMap      = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_GLOBALID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_AUTH_ENDPOINT", "REPLACE_PROTOCOL": "PSTORE_PROTOCOL"}
+	pstoreAuthSidecarMap     = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_GLOBALID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSTORE_AUTH_ENDPOINT"}
 	unitySecretMap           = map[string]string{"REPLACE_USER": "UNITY_USER", "REPLACE_PASS": "UNITY_PASS", "REPLACE_ARRAYID": "UNITY_ARRAYID", "REPLACE_ENDPOINT": "UNITY_ENDPOINT", "REPLACE_POOL": "UNITY_POOL", "REPLACE_NAS": "UNITY_NAS"}
 	unityEphemeralVolumeMap  = map[string]string{"REPLACE_ARRAYID": "UNITY_ARRAYID", "REPLACE_POOL": "UNITY_POOL", "REPLACE_NAS": "UNITY_NAS"}
 )
@@ -717,7 +720,6 @@ func (step *Step) validateAuthorizationPodsNotInstalled(res Resource, module str
 }
 
 func (step *Step) setUpStorageClass(_ Resource, templateFile, crType string) error {
-
 	fileString, err := renderTemplate(crType, templateFile)
 	if err != nil {
 		return err
@@ -759,7 +761,6 @@ func (step *Step) setUpStorageClass(_ Resource, templateFile, crType string) err
 }
 
 func (step *Step) createResource(_ Resource, templateFile, crType string) error {
-
 	fileString, err := renderTemplate(crType, templateFile)
 	if err != nil {
 		return err
@@ -1038,10 +1039,16 @@ func determineMap(crType string) (map[string]string, error) {
 		mapValues = pscaleCrMap
 	} else if crType == "pmaxAuthCRs" {
 		mapValues = pmaxCrMap
+	} else if crType == "pstoreAuthCRs" {
+		mapValues = pstoreCrMap
 	} else if crType == "pstore" {
 		mapValues = pstoreSecretMap
 	} else if crType == "pstoreEphemeral" {
 		mapValues = pstoreEphemeralVolumeMap
+	} else if crType == "pstoreAuthSidecar" {
+		mapValues = pstoreAuthSidecarMap
+	} else if crType == "pstoreAuth" {
+		mapValues = pstoreAuthSecretMap
 	} else if crType == "unity" {
 		mapValues = unitySecretMap
 	} else if crType == "unityEphemeral" {
@@ -1145,7 +1152,6 @@ func (step *Step) runCustomTestSelector(res Resource, testName string) error {
 }
 
 func (step *Step) setupEphemeralVolumeProperties(_ Resource, templateFile string, crType string) error {
-
 	if crType == "pflexEphemeral" {
 		_ = os.Setenv("PFLEX_VOLUME", fmt.Sprintf("k8s-%s", randomAlphaNumberic(10)))
 	}
@@ -1185,7 +1191,6 @@ func getRenderedFilePath(templatePath string) string {
 // "testfiles/powerscale-templates/ephemeral.properties" the rendered file
 // will be written to "temp/powerscale-templates/ephemeral.properties".
 func writeRenderedFile(templatePath, content string) (newPath string, err error) {
-
 	newPath = getRenderedFilePath(templatePath)
 
 	// make sure the base path exist
@@ -1565,6 +1570,13 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, authConfigurat
 		csmTenantName = os.Getenv("PMAX_TENANT")
 	}
 
+	if driver == "powerstore" {
+		_ = os.Setenv("PSTORE_STORAGE", "powerstore")
+		_ = os.Setenv("DRIVER_NAMESPACE", "test-powerstore")
+		storageType = os.Getenv("PSTORE_STORAGE")
+		csmTenantName = os.Getenv("PSTORE_TENANT")
+	}
+
 	proxyHost = os.Getenv("PROXY_HOST")
 	driverNamespace = os.Getenv("DRIVER_NAMESPACE")
 
@@ -1600,6 +1612,9 @@ func (step *Step) AuthorizationV2Resources(res Resource, storageType, driver, dr
 	} else if driver == "powermax" {
 		crMap = "pmaxAuthCRs"
 		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powermax.yaml"
+	} else if driver == "powerstore" {
+		crMap = "pstoreAuthCRs"
+		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powerstore.yaml"
 	}
 
 	pathNum, _ := strconv.Atoi(configurationTemplate)
@@ -1813,6 +1828,8 @@ func (step *Step) deleteAuthorizationCRs(_ Resource, driver string) error {
 		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powerscale.yaml"
 	} else if driver == "powermax" {
 		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powermax.yaml"
+	} else if driver == "powerstore" {
+		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powerstore.yaml"
 	}
 
 	cmd := exec.Command("kubectl", "delete", "-f", updatedTemplateFile)
@@ -1904,7 +1921,6 @@ func (step *Step) setUpReverseProxy(_ Resource, namespace string) error {
 }
 
 func (step *Step) setUpTLSSecretWithSAN(res Resource, namespace string) error {
-
 	// Paths for the key, CSR, and certificate files
 	keyPath := "temp/tls.key"
 	csrPath := "temp/tls.csr"
