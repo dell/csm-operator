@@ -121,7 +121,11 @@ spec:
             allowPrivilegeEscalation: true
           image: quay.io/dell/container-storage-modules/csi-powerstore:nightly
           imagePullPolicy: IfNotPresent
-          command: ["/csi-powerstore"]
+          command:
+            - sh
+            - -c
+            - |
+              sleep 20 && /csi-powerstore
           args:
             - "--array-config=/powerstore-config/config"
             - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
