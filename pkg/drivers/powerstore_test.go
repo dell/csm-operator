@@ -103,28 +103,28 @@ var (
 		expected   string
 	}{
 		{
-			name:       "update X_CSI_VOL_PREFIX value for Controller",
+			name: "update X_CSI_VOL_PREFIX value for Controller",
 			yamlString: `
 			- name: X_CSI_VOL_PREFIX
 		      value: "csi"`,
-			csm:        xcsivoPrefix("csm"),
-			ct:         powerStoreClient,
-			sec:        powerStoreSecret,
-			fileType:   "Controller",
-			expected:   `
+			csm:      xcsivoPrefix("csm"),
+			ct:       powerStoreClient,
+			sec:      powerStoreSecret,
+			fileType: "Controller",
+			expected: `
 			- name: X_CSI_VOL_PREFIX
 		      value: "csi"`,
 		},
 		{
-			name:       "update X_CSI_VOL_PREFIX value for Node",
+			name: "update X_CSI_VOL_PREFIX value for Node",
 			yamlString: `
 			- name: X_CSI_VOL_PREFIX
 		      value: "csi"`,
-			csm:        xcsivoPrefix("csm"),
-			ct:         powerStoreClient,
-			sec:        powerStoreSecret,
-			fileType:   "Node",
-			expected:   `
+			csm:      xcsivoPrefix("csm"),
+			ct:       powerStoreClient,
+			sec:      powerStoreSecret,
+			fileType: "Node",
+			expected: `
 			- name: X_CSI_VOL_PREFIX
 		      value: "csi"`,
 		},
