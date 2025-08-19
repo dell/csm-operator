@@ -91,6 +91,8 @@ apiVersion: apps/v1
 metadata:
   name: <DriverDefaultReleaseName>-node
   namespace: <DriverDefaultReleaseNamespace>
+  annotations:
+    com.dell.karavi-authorization-proxy: "true"
 spec:
   selector:
     matchLabels:
@@ -119,7 +121,11 @@ spec:
             allowPrivilegeEscalation: true
           image: quay.io/dell/container-storage-modules/csi-powerstore:nightly
           imagePullPolicy: IfNotPresent
-          command: ["/csi-powerstore"]
+          command:
+            - sh
+            - -c
+            - |
+              sleep 20 && /csi-powerstore
           args:
             - "--array-config=/powerstore-config/config"
             - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
@@ -171,6 +177,8 @@ spec:
               value: "<X_CSI_NFS_CLIENT_PORT>"
             - name: X_CSI_NFS_SERVER_PORT
               value: "<X_CSI_NFS_SERVER_PORT>"
+            - name: X_CSI_VOL_PREFIX
+              value: <X_CSI_VOL_PREFIX>
           ports:
             - containerPort: 2050
           volumeMounts:

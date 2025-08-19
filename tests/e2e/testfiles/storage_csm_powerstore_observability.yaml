@@ -47,6 +47,8 @@ spec:
           value: /var/lib/kubelet
         - name: CSI_LOG_LEVEL
           value: debug
+        - name: X_CSI_VOL_PREFIX
+          value: "csivol"
     sideCars:
       # health monitor is disabled by default, refer to driver documentation before enabling it
       # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
