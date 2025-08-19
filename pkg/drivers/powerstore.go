@@ -77,9 +77,6 @@ const (
 	// CsiVolPrefix - CSI Volume name Prefix
 	CsiVolPrefix string = "<CSI_VOL_PREFIX>"
 
-	// PowerStoreApiTimeout - Powerstore REST API Timeout
-	PowerStoreApiTimeout = "<X_CSI_POWERSTORE_API_TIMEOUT>"
-
 	// PowerStoreAPITimeout - Powerstore REST API Timeout
 	PowerStoreAPITimeout = "<X_CSI_POWERSTORE_API_TIMEOUT>"
 
