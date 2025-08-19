@@ -548,6 +548,8 @@ func AuthorizationServerPrecheck(ctx context.Context, op operatorutils.OperatorC
 		if err != nil {
 			return err
 		}
+	} else {
+		return fmt.Errorf("authorization version is empty")
 	}
 
 	for _, component := range auth.Components {
