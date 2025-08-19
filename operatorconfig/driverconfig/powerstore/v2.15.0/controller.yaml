@@ -291,6 +291,8 @@ spec:
               value: /powerstore-config/config
             - name: X_CSI_POWERSTORE_CONFIG_PARAMS_PATH
               value: /powerstore-config-params/driver-config-params.yaml
+            - name: X_CSI_POWERSTORE_API_TIMEOUT
+              value: "<X_CSI_POWERSTORE_API_TIMEOUT>"
             - name: X_CSI_NODE_NAME
               valueFrom:
                 fieldRef:
@@ -317,6 +319,8 @@ spec:
               value: "5m"
             - name: X_CSI_VOL_PREFIX
               value: <X_CSI_VOL_PREFIX>
+            - name: X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT
+              value: "<X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT>"
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi

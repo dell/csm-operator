@@ -83,6 +83,18 @@ spec:
         # Examples: "k8s", "app1"
         - name: X_CSI_VOL_PREFIX
           value: "csivol"
+        # X_CSI_POWERSTORE_API_TIMEOUT: Defines the timeout for PowerStore REST API calls.
+        # Allowed values: Number followed by unit (s,m,h)
+        # Examples: 10s, 1m, 1h
+        # Default value: 120s
+        - name: X_CSI_POWERSTORE_API_TIMEOUT
+          value: "120s"
+        # X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT: Defines the timeout (in seconds) for podmon array connectivity timeout check
+        # Allowed values: Number followed by unit (s,m,h)
+        # Examples: 10s, 1m, 1h
+        # Default value: 10s
+        - name: "X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT"
+          value: "10s"
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
