@@ -167,6 +167,8 @@ spec:
               value: /powerstore-config/config
             - name: X_CSI_POWERSTORE_CONFIG_PARAMS_PATH
               value: /powerstore-config-params/driver-config-params.yaml
+            - name: X_CSI_POWERSTORE_API_TIMEOUT
+              value: "<X_CSI_POWERSTORE_API_TIMEOUT>"
             - name: GOPOWERSTORE_DEBUG
               value: <GOPOWERSTORE_DEBUG>
             - name: X_CSI_HEALTH_MONITOR_ENABLED
@@ -179,6 +181,8 @@ spec:
               value: "<X_CSI_NFS_SERVER_PORT>"
             - name: X_CSI_VOL_PREFIX
               value: <X_CSI_VOL_PREFIX>
+            - name: X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT
+              value: "<X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT>"
           ports:
             - containerPort: 2050
           volumeMounts:
