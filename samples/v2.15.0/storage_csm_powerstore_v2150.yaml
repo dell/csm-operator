@@ -89,7 +89,7 @@ spec:
         # Default value: 120s
         - name: X_CSI_POWERSTORE_API_TIMEOUT
           value: "120s"
-        # podmonArrayConnectivityTimeout: Defines the timeout (in seconds) for podmon array connectivity timeout check
+        # X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT: Defines the timeout (in seconds) for podmon array connectivity timeout check
         # Allowed values: Number followed by unit (s,m,h)
         # Examples: 10s, 1m, 1h
         # Default value: 10s
