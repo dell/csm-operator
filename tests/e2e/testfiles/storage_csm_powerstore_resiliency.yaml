@@ -46,15 +46,12 @@ spec:
           value: /var/lib/kubelet
         - name: CSI_LOG_LEVEL
           value: debug
-<<<<<<< HEAD
         - name: X_CSI_VOL_PREFIX
           value: "csivol"
-=======
         - name: X_CSI_POWERSTORE_API_TIMEOUT
-          value: "120s"
+          value: "120s"      
         - name: "X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT"
           value: "20s"
->>>>>>> d89ff617 (Update e2e test files)
     sideCars:
       # health monitor is disabled by default, refer to driver documentation before enabling it
       # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
