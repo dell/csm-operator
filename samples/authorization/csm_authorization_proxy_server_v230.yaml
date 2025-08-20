@@ -69,8 +69,17 @@ spec:
           # openTelemetryCollectorAddress: the OTLP receiving endpoint using gRPC
           openTelemetryCollectorAddress: ""
         - name: redis
-          redis: docker.io/redis@sha256:c1e88455c85225310bbea54816e9c3f4b5295815e6dbf80c34d40afc6df28275
-          commander: docker.io/rediscommander/redis-commander@sha256:19cd0c49f418779fa2822a0496c5e6516d0c792effc39ed20089e6268477e40a
+          # Redis secret configuration:
+          # Use a SecretProviderClass for Redis credentials; otherwise, a default Kubernetes secret is used.
+          redisSecretProviderClass:
+            # The name of the Kubernetes secret created by the CSI driver
+            - redisSecretName: ""
+              # The key in the secret that holds the Redis username
+              redisUsernameKey: username
+              # The key in the secret that holds the Redis password
+              redisPasswordKey: password
+          redis: redis:7.4.3-alpine
+          commander: rediscommander/redis-commander:latest
           redisName: redis-csm
           redisCommander: rediscommander
           sentinel: sentinel
