@@ -103,6 +103,32 @@ var (
 		expected   string
 	}{
 		{
+			name: "update X_CSI_VOL_PREFIX value for Controller",
+			yamlString: `
+			- name: X_CSI_VOL_PREFIX
+		      value: "csi"`,
+			csm:      xcsivoPrefix("csm"),
+			ct:       powerStoreClient,
+			sec:      powerStoreSecret,
+			fileType: "Controller",
+			expected: `
+			- name: X_CSI_VOL_PREFIX
+		      value: "csi"`,
+		},
+		{
+			name: "update X_CSI_VOL_PREFIX value for Node",
+			yamlString: `
+			- name: X_CSI_VOL_PREFIX
+		      value: "csi"`,
+			csm:      xcsivoPrefix("csm"),
+			ct:       powerStoreClient,
+			sec:      powerStoreSecret,
+			fileType: "Node",
+			expected: `
+			- name: X_CSI_VOL_PREFIX
+		      value: "csi"`,
+		},
+		{
 			name:       "update GOPOWERSTORE_DEBUG value for Controller",
 			yamlString: "<GOPOWERSTORE_DEBUG>",
 			csm:        gopowerstoreDebug("true"),
@@ -183,6 +209,40 @@ var (
             - name: X_CSI_NFS_SERVER_PORT
               value: "2049"`,
 		},
+		{
+			name: "update Powerstore API and Podmon connectivity timeout for Node",
+			yamlString: `
+			- name: X_CSI_POWERSTORE_API_TIMEOUT
+		      value: "<X_CSI_POWERSTORE_API_TIMEOUT>"
+		    - name: X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT
+		      value: "<X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT>"`,
+			csm:      csmForPowerStore("csm"),
+			ct:       powerStoreClient,
+			sec:      powerStoreSecret,
+			fileType: "Node",
+			expected: `
+			- name: X_CSI_POWERSTORE_API_TIMEOUT
+		      value: "120s"
+		    - name: X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT
+		      value: "10s"`,
+		},
+		{
+			name: "update Powerstore API and Podmon connectivity timeout for Controller",
+			yamlString: `
+			- name: X_CSI_POWERSTORE_API_TIMEOUT
+		      value: "<X_CSI_POWERSTORE_API_TIMEOUT>"
+		    - name: X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT
+		      value: "<X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT>"`,
+			csm:      csmForPowerStore("csm"),
+			ct:       powerStoreClient,
+			sec:      powerStoreSecret,
+			fileType: "Controller",
+			expected: `
+			- name: X_CSI_POWERSTORE_API_TIMEOUT
+		      value: "120s"
+		    - name: X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT
+		      value: "10s"`,
+		},
 	}
 )
 
@@ -198,8 +258,12 @@ func csmForPowerStoreGoodSkipCert() csmv1.ContainerStorageModule {
 		Name:  "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION",
 		Value: "true", // Valid boolean string
 	}
+	envVolPrefix := corev1.EnvVar{
+		Name:  "X_CSI_VOL_PREFIX",
+		Value: "test",
+	}
 
-	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envCertCount, envSkipCertValidation}
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envCertCount, envSkipCertValidation, envVolPrefix}
 	res.Spec.Driver.AuthSecret = "csm-creds"
 	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
 	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
@@ -384,6 +448,8 @@ func csmForPowerStoreWithSharedNFS(customCSMName string) csmv1.ContainerStorageM
 		{Name: "X_CSI_NFS_CLIENT_PORT", Value: "2220"},
 		{Name: "X_CSI_NFS_SERVER_PORT", Value: "2221"},
 		{Name: "X_CSI_NFS_EXPORT_DIRECTORY", Value: "/var/lib/dell/myNfsExport"},
+		{Name: "X_CSI_POWERSTORE_API_TIMEOUT", Value: "120s"},
+		{Name: "X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT", Value: "10s"},
 	}
 
 	return cr
@@ -393,6 +459,15 @@ func gopowerstoreDebug(debug string) csmv1.ContainerStorageModule {
 	cr := csmForPowerStore("csm")
 	cr.Spec.Driver.Common.Envs = []corev1.EnvVar{
 		{Name: "GOPOWERSTORE_DEBUG", Value: debug},
+	}
+
+	return cr
+}
+
+func xcsivoPrefix(customCSMName string) csmv1.ContainerStorageModule {
+	cr := csmForPowerStore(customCSMName)
+	cr.Spec.Driver.Common.Envs = []corev1.EnvVar{
+		{Name: "X_CSI_VOL_PREFIX", Value: "csi"},
 	}
 
 	return cr

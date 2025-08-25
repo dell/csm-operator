@@ -84,7 +84,7 @@ If running the Authorization proxy server e2e tests, further setup must be done:
 
 Notes:
 
-- Authorization V2 scenarios only support PowerFlex, PowerScale and PowerMax
+- Authorization V2 scenarios only support PowerFlex, PowerStore, PowerScale and PowerMax
 - Upgrade from Authorization V1 to V2 is not supported
 - The required host entry `<master node IP> csm-authorization.com` is now automatically added to `/etc/hosts`, so no manual update is needed.
 

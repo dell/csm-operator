@@ -48,6 +48,7 @@ powerstore:
     resiliency: "v1.13.0"
   v2.15.0:
     resiliency: "v1.14.0"
+    authorization: "v2.3.0"
 powermax:
   # List of Driver versions and modules that supports the version
   v2.13.0:

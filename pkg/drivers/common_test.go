@@ -414,8 +414,11 @@ func csmWithPowerScale(driver csmv1.DriverType, version string) csmv1.ContainerS
 	// Add FC port filter
 	fcFilterPath := corev1.EnvVar{Name: "X_CSI_FC_PORTS_FILTER_FILE_PATH"}
 
+	// Add AZ Network interval
+	azNetworkInterval := corev1.EnvVar{Name: "AZ_RECONCILE_INTERVAL", Value: "5m"}
+
 	if res.Spec.Driver.Common != nil {
-		res.Spec.Driver.Common.Envs = []corev1.EnvVar{nodeNamePrefix, fcFilterPath}
+		res.Spec.Driver.Common.Envs = []corev1.EnvVar{nodeNamePrefix, fcFilterPath, azNetworkInterval}
 	}
 
 	// Add environment variable
