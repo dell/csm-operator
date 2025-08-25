@@ -57,6 +57,12 @@ spec:
         # Default value: None, required only when X_CSI_SDC_ENABLED is set to false
         - name: INTERFACE_NAMES
           value:
+        # X_CSI_PROBE_TIMEOUT: Specify the timeout limit for controller and node to communicate with the array.
+        # Allowed values: 1s, 10s, etc.
+        # In the format of a duration.
+        # Default value: 10s
+        - name: X_CSI_PROBE_TIMEOUT
+          value: "10s"
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
