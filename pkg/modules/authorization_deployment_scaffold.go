@@ -873,9 +873,9 @@ func createRedisK8sSecret(name, namespace string) corev1.Secret {
 	}
 }
 
-// redisVolume adds volume in a pod container for the redis SecretProviderClass
-func redisVolume(redisSecretName string) corev1.Volume {
-	volumeName := "secrets-store-inline-redis"
+// redisVolume adds a volume in a pod container for the SecretProviderClass that holds redis credentials
+func redisVolume(secretProviderClassName string) corev1.Volume {
+	volumeName := fmt.Sprintf("secrets-store-inline-%s", secretProviderClassName)
 	readOnly := true
 	return corev1.Volume{
 		Name: volumeName,
@@ -884,19 +884,19 @@ func redisVolume(redisSecretName string) corev1.Volume {
 				Driver:   "secrets-store.csi.k8s.io",
 				ReadOnly: &readOnly,
 				VolumeAttributes: map[string]string{
-					"secretProviderClass": redisSecretName,
+					"secretProviderClass": secretProviderClassName,
 				},
 			},
 		},
 	}
 }
 
-// redisVolumeMount adds a volume mount in a pod container for the redis SecretProviderClass
-func redisVolumeMount() corev1.VolumeMount {
-	volumeName := "secrets-store-inline-redis"
+// redisVolumeMount adds a volume mount in a pod container for the SecretProviderClass that holds redis credentials
+func redisVolumeMount(secretProviderClassName string) corev1.VolumeMount {
+	volumeName := fmt.Sprintf("secrets-store-inline-%s", secretProviderClassName)
 	return corev1.VolumeMount{
 		Name:      volumeName,
-		MountPath: "/etc/csm-authorization/redis",
+		MountPath: fmt.Sprintf("/etc/csm-authorization/%s", secretProviderClassName),
 		ReadOnly:  true,
 	}
 }
