@@ -14,9 +14,7 @@ import (
 	"fmt"
 	"testing"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestGetProxyServerScaffold(t *testing.T) {
@@ -180,7 +178,7 @@ func TestGetTenantServiceScaffold(t *testing.T) {
 
 	// Args
 	expectedArgs := []string{
-		"--redis-sentinel=sentinel-0.sentinel.test-namespace.svc.cluster.local:5000,sentinel-1.sentinel.test-namespace.svc.cluster.local:5000,sentinel-2.sentinel.test-namespace.svc.cluster.local:5000,sentinel-3.sentinel.test-namespace.svc.cluster.local:5000,sentinel-4.sentinel.test-namespace.svc.cluster.local:5000",
+		"--redis-sentinel=$(SENTINELS)",
 		"--redis-password=$(REDIS_PASSWORD)",
 	}
 	if len(container.Args) != len(expectedArgs) {
@@ -348,13 +346,7 @@ func TestGetAuthorizationSentinelStatefulsetScaffold(t *testing.T) {
 }
 
 func TestCreateRedisK8sSecret(t *testing.T) {
-	cr := csmv1.ContainerStorageModule{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "test-namespace",
-		},
-	}
-
-	secret := createRedisK8sSecret(cr, "username", "password")
+	secret := createRedisK8sSecret("name", "test-namespace")
 
 	if secret.Name != defaultRedisSecretName {
 		t.Errorf("expected secret name %s, got %s", defaultRedisSecretName, secret.Name)
