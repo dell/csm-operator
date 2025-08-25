@@ -781,11 +781,6 @@ func authorizationStorageServiceV1(ctx context.Context, isDeleting bool, cr csmv
 		switch component.Name {
 		case AuthProxyServerComponent:
 			image = component.StorageService
-		case AuthJWTSigningSecretComponent:
-			// create jwt signing kubernetes secret or use a secret provider class
-			for _, config := range component.JWTSigningSecretProviderClass {
-				jwtSigningSecretName = config.JWTSigningSecretName
-			}
 		}
 	}
 
