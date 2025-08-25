@@ -26,12 +26,13 @@ func TestGetProxyServerScaffold(t *testing.T) {
 	proxyImage := "proxy-image:latest"
 	opaImage := "opa-image:latest"
 	opaKubeMgmtImage := "kube-mgmt-image:latest"
+	jwtSigningSecretName := "jwt-secret"
 	redisSecretName := "redis-secret"
 	redisPasswordKey := "redis-password"
 	replicas := int32(3)
 	sentinel := int(5)
 
-	deploy := getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage, opaKubeMgmtImage, redisSecretName, redisPasswordKey, replicas, sentinel)
+	deploy := getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage, opaKubeMgmtImage, jwtSigningSecretName, redisSecretName, redisPasswordKey, replicas, sentinel)
 
 	if deploy.Name != "proxy-server" {
 		t.Errorf("expected name 'proxy-server', got %s", deploy.Name)
@@ -65,8 +66,9 @@ func TestGetStorageServiceScaffold(t *testing.T) {
 	namespace := "test-namespace"
 	image := "storage-service:latest"
 	replicas := int32(2)
+	jwtSigningSecretName := "jwt-secret"
 
-	deploy := getStorageServiceScaffold(name, namespace, image, replicas)
+	deploy := getStorageServiceScaffold(name, namespace, image, replicas, jwtSigningSecretName)
 
 	if deploy.Name != "storage-service" {
 		t.Errorf("expected name 'storage-service', got %s", deploy.Name)
@@ -129,12 +131,13 @@ func TestGetTenantServiceScaffold(t *testing.T) {
 	namespace := "test-namespace"
 	sentinelName := "sentinel"
 	image := "tenant-service:latest"
+	jwtSigningSecretName := "jwt-secret"
 	redisSecretName := "redis-secret"
 	redisPasswordKey := "redis-password"
 	replicas := int32(3)
 	sentinelReplicas := 5
 
-	deploy := getTenantServiceScaffold(name, namespace, sentinelName, image, redisSecretName, redisPasswordKey, replicas, sentinelReplicas)
+	deploy := getTenantServiceScaffold(name, namespace, sentinelName, image, jwtSigningSecretName, redisSecretName, redisPasswordKey, replicas, sentinelReplicas)
 
 	if deploy.Name != "tenant-service" {
 		t.Errorf("expected name 'tenant-service', got %s", deploy.Name)
@@ -399,6 +402,38 @@ func TestRedisVolumeMount(t *testing.T) {
 	}
 	if mount.MountPath != "/etc/csm-authorization/redis" {
 		t.Errorf("expected mount path '/etc/csm-authorization/redis', got %s", mount.MountPath)
+	}
+	if !mount.ReadOnly {
+		t.Error("expected mount to be read-only")
+	}
+}
+
+func TestJwtVolume(t *testing.T) {
+	secretName := "jwt-secret"
+	volume := jwtVolume(secretName)
+
+	if volume.Name != "secrets-store-inline-jwt" {
+		t.Errorf("expected volume name 'secrets-store-inline-jwt', got %s", volume.Name)
+	}
+	if volume.VolumeSource.CSI == nil {
+		t.Fatal("expected CSI volume source, got nil")
+	}
+	if volume.VolumeSource.CSI.Driver != "secrets-store.csi.k8s.io" {
+		t.Errorf("expected CSI driver 'secrets-store.csi.k8s.io', got %s", volume.VolumeSource.CSI.Driver)
+	}
+	if volume.VolumeSource.CSI.VolumeAttributes["secretProviderClass"] != secretName {
+		t.Errorf("expected secretProviderClass '%s', got %s", secretName, volume.VolumeSource.CSI.VolumeAttributes["secretProviderClass"])
+	}
+}
+
+func TestJwtVolumeMount(t *testing.T) {
+	mount := jwtVolumeMount()
+
+	if mount.Name != "secrets-store-inline-jwt" {
+		t.Errorf("expected mount name 'secrets-store-inline-jwt', got %s", mount.Name)
+	}
+	if mount.MountPath != "/etc/csm-authorization/config" {
+		t.Errorf("expected mount path '/etc/csm-authorization/config', got %s", mount.MountPath)
 	}
 	if !mount.ReadOnly {
 		t.Error("expected mount to be read-only")

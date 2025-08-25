@@ -254,6 +254,30 @@ spec:
                             ImagePullPolicy is the image pull policy for
                             the image
                           type: string
+                        jwtSigningSecretProviderClass:
+                          description: |-
+                            JWTSigningSecretProviderClass is the SecretProviderClass Object details for jwt signing secret
+                            Applicable from CSM v1.15 onwards
+                          items:
+                            description:
+                              JWTSigningSecretProviderClass is the jwt signing
+                              secret configuration for CSM Authorization
+                            properties:
+                              jwtSigningSecretKey:
+                                description:
+                                  JWTSigningSecretKey is the key in the secret
+                                  that holds the JWT Signing secret
+                                type: string
+                              jwtSigningSecretName:
+                                description:
+                                  JWTSigningSecretName is the name of the
+                                  Kubernetes secret created by the CSI driver
+                                type: string
+                            required:
+                              - jwtSigningSecretKey
+                            type: object
+                          maxItems: 1
+                          type: array
                         leaderElection:
                           description:
                             LeaderElection is boolean flag to enable leader
@@ -725,6 +749,30 @@ spec:
                             ImagePullPolicy is the image pull policy for
                             the image
                           type: string
+                        jwtSigningSecretProviderClass:
+                          description: |-
+                            JWTSigningSecretProviderClass is the SecretProviderClass Object details for jwt signing secret
+                            Applicable from CSM v1.15 onwards
+                          items:
+                            description:
+                              JWTSigningSecretProviderClass is the jwt signing
+                              secret configuration for CSM Authorization
+                            properties:
+                              jwtSigningSecretKey:
+                                description:
+                                  JWTSigningSecretKey is the key in the secret
+                                  that holds the JWT Signing secret
+                                type: string
+                              jwtSigningSecretName:
+                                description:
+                                  JWTSigningSecretName is the name of the
+                                  Kubernetes secret created by the CSI driver
+                                type: string
+                            required:
+                              - jwtSigningSecretKey
+                            type: object
+                          maxItems: 1
+                          type: array
                         leaderElection:
                           description:
                             LeaderElection is boolean flag to enable leader
@@ -1216,6 +1264,30 @@ spec:
                               ImagePullPolicy is the image pull policy for
                               the image
                             type: string
+                          jwtSigningSecretProviderClass:
+                            description: |-
+                              JWTSigningSecretProviderClass is the SecretProviderClass Object details for jwt signing secret
+                              Applicable from CSM v1.15 onwards
+                            items:
+                              description:
+                                JWTSigningSecretProviderClass is the jwt
+                                signing secret configuration for CSM Authorization
+                              properties:
+                                jwtSigningSecretKey:
+                                  description:
+                                    JWTSigningSecretKey is the key in the
+                                    secret that holds the JWT Signing secret
+                                  type: string
+                                jwtSigningSecretName:
+                                  description:
+                                    JWTSigningSecretName is the name of the
+                                    Kubernetes secret created by the CSI driver
+                                  type: string
+                              required:
+                                - jwtSigningSecretKey
+                              type: object
+                            maxItems: 1
+                            type: array
                           leaderElection:
                             description:
                               LeaderElection is boolean flag to enable leader
@@ -1683,6 +1755,30 @@ spec:
                             ImagePullPolicy is the image pull policy for
                             the image
                           type: string
+                        jwtSigningSecretProviderClass:
+                          description: |-
+                            JWTSigningSecretProviderClass is the SecretProviderClass Object details for jwt signing secret
+                            Applicable from CSM v1.15 onwards
+                          items:
+                            description:
+                              JWTSigningSecretProviderClass is the jwt signing
+                              secret configuration for CSM Authorization
+                            properties:
+                              jwtSigningSecretKey:
+                                description:
+                                  JWTSigningSecretKey is the key in the secret
+                                  that holds the JWT Signing secret
+                                type: string
+                              jwtSigningSecretName:
+                                description:
+                                  JWTSigningSecretName is the name of the
+                                  Kubernetes secret created by the CSI driver
+                                type: string
+                            required:
+                              - jwtSigningSecretKey
+                            type: object
+                          maxItems: 1
+                          type: array
                         leaderElection:
                           description:
                             LeaderElection is boolean flag to enable leader
@@ -2158,6 +2254,30 @@ spec:
                               ImagePullPolicy is the image pull policy for
                               the image
                             type: string
+                          jwtSigningSecretProviderClass:
+                            description: |-
+                              JWTSigningSecretProviderClass is the SecretProviderClass Object details for jwt signing secret
+                              Applicable from CSM v1.15 onwards
+                            items:
+                              description:
+                                JWTSigningSecretProviderClass is the jwt
+                                signing secret configuration for CSM Authorization
+                              properties:
+                                jwtSigningSecretKey:
+                                  description:
+                                    JWTSigningSecretKey is the key in the
+                                    secret that holds the JWT Signing secret
+                                  type: string
+                                jwtSigningSecretName:
+                                  description:
+                                    JWTSigningSecretName is the name of the
+                                    Kubernetes secret created by the CSI driver
+                                  type: string
+                              required:
+                                - jwtSigningSecretKey
+                              type: object
+                            maxItems: 1
+                            type: array
                           leaderElection:
                             description:
                               LeaderElection is boolean flag to enable leader
@@ -2660,6 +2780,30 @@ spec:
                                 ImagePullPolicy is the image pull policy
                                 for the image
                               type: string
+                            jwtSigningSecretProviderClass:
+                              description: |-
+                                JWTSigningSecretProviderClass is the SecretProviderClass Object details for jwt signing secret
+                                Applicable from CSM v1.15 onwards
+                              items:
+                                description:
+                                  JWTSigningSecretProviderClass is the jwt
+                                  signing secret configuration for CSM Authorization
+                                properties:
+                                  jwtSigningSecretKey:
+                                    description:
+                                      JWTSigningSecretKey is the key in the
+                                      secret that holds the JWT Signing secret
+                                    type: string
+                                  jwtSigningSecretName:
+                                    description:
+                                      JWTSigningSecretName is the name of
+                                      the Kubernetes secret created by the CSI driver
+                                    type: string
+                                required:
+                                  - jwtSigningSecretKey
+                                type: object
+                              maxItems: 1
+                              type: array
                             leaderElection:
                               description:
                                 LeaderElection is boolean flag to enable
@@ -3151,6 +3295,30 @@ spec:
                                 ImagePullPolicy is the image pull policy
                                 for the image
                               type: string
+                            jwtSigningSecretProviderClass:
+                              description: |-
+                                JWTSigningSecretProviderClass is the SecretProviderClass Object details for jwt signing secret
+                                Applicable from CSM v1.15 onwards
+                              items:
+                                description:
+                                  JWTSigningSecretProviderClass is the jwt
+                                  signing secret configuration for CSM Authorization
+                                properties:
+                                  jwtSigningSecretKey:
+                                    description:
+                                      JWTSigningSecretKey is the key in the
+                                      secret that holds the JWT Signing secret
+                                    type: string
+                                  jwtSigningSecretName:
+                                    description:
+                                      JWTSigningSecretName is the name of
+                                      the Kubernetes secret created by the CSI driver
+                                    type: string
+                                required:
+                                  - jwtSigningSecretKey
+                                type: object
+                              maxItems: 1
+                              type: array
                             leaderElection:
                               description:
                                 LeaderElection is boolean flag to enable
