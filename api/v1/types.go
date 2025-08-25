@@ -426,6 +426,10 @@ type ProxyServerIngress struct {
 
 // RedisSecretProviderClass is the redis secret configuration for CSM Authorization
 type RedisSecretProviderClass struct {
+	// SecretProviderClassName is the name of the SecretProviderClass that holds the Redis secretObject
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="SecretProviderClassName"
+	SecretProviderClassName string `json:"secretProviderClassName" yaml:"secretProviderClassName"`
+
 	// RedisSecretName is the name of the Kubernetes secret created by the CSI driver
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Secret Name"
 	RedisSecretName string `json:"redisSecretName,omitempty" yaml:"redisSecretName,omitempty"`
