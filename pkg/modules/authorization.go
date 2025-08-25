@@ -145,8 +145,6 @@ const (
 	AuthStorageSystemCredentialsComponent = "storage-system-credentials"
 	// defaultRedisSecretName - name of default redis K8s secret
 	defaultRedisSecretName = "redis-csm-secret" // #nosec G101 -- This is a false positive
-	// defaultJWTSigningSecretName - name of default redis K8s secret
-	defaultJWTSigningSecretName = "karavi-config-secret" // #nosec G101 -- This is a false positive
 
 	// AuthLocalStorageClass -
 	AuthLocalStorageClass = "csm-authorization-local-storage"
