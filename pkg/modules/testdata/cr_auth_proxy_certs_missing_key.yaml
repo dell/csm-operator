@@ -84,8 +84,8 @@ spec:
           jwtSigningSecretProviderClass:
             # Name of the SecretProviderClass that holds the JWT secretObject.
             - jwtSecretProviderClassName: secret-provider-class-1
-            # The name of the Kubernetes secret created by the CSI driver
-            - jwtSigningSecretName: jwt-signing-secret-provider-class
+              # The name of the Kubernetes secret created by the CSI driver
+              jwtSigningSecretName: jwt-signing-secret-provider-class
               # The key in the secret that holds the JWT signing secret
               jwtSigningSecretKey: secret
 

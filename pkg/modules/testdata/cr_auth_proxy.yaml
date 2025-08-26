@@ -78,7 +78,7 @@ spec:
         - name: jwt
           jwtSigningSecretProviderClass:
             - jwtSecretProviderClassName: ""
-            - jwtSigningSecretName: ""
+              jwtSigningSecretName: ""
         - name: vault
           vaultConfigurations:
             - identifier: vault0
