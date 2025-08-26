@@ -911,7 +911,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 
 		// redis secret provider class
 		if redisSecretProviderClassName != "" && redisSecretName != "" {
-			mountRedisVolumesInDeployment(authModule, &deployment, redisSecretProviderClassName)
+			mountRedisVolumes(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
 		}
 	} else {
 		log.Infof("Using Vault for storage system credentials")
@@ -1229,7 +1229,7 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 	deployment := getProxyServerScaffold(cr.Name, sentinelName, cr.Namespace, proxyImage, opaImage, opaKubeMgmtImage, redisSecretName, redisPasswordKey, int32(replicas), redisReplicas)
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
-		mountRedisVolumesInDeployment(authModule, &deployment, redisSecretProviderClassName)
+		mountRedisVolumes(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
 	}
 
 	deploymentBytes, err := yaml.Marshal(&deployment)
@@ -1284,7 +1284,7 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 	deployment := getTenantServiceScaffold(cr.Name, cr.Namespace, sentinelName, image, redisSecretName, redisPasswordKey, int32(replicas), redisReplicas)
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
-		mountRedisVolumesInDeployment(authModule, &deployment, redisSecretProviderClassName)
+		mountRedisVolumes(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
 	}
 
 	deploymentBytes, err := yaml.Marshal(&deployment)
@@ -1341,7 +1341,7 @@ func applyDeleteAuthorizationRedisStatefulsetV2(ctx context.Context, isDeleting 
 	statefulset := getAuthorizationRedisStatefulsetScaffold(cr.Name, redisName, cr.Namespace, image, redisSecretName, redisPasswordKey, checksum, int32(redisReplicas))
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
-		mountRedisVolumesInStatefulset(authModule, &statefulset, redisSecretProviderClassName)
+		mountRedisVolumes(&statefulset.Spec.Template.Spec, redisSecretProviderClassName)
 	}
 
 	statefulsetBytes, err := yaml.Marshal(&statefulset)
@@ -1400,7 +1400,7 @@ func applyDeleteAuthorizationRediscommanderDeploymentV2(ctx context.Context, isD
 	deployment := getAuthorizationRediscommanderDeploymentScaffold(cr.Name, rediscommanderName, cr.Namespace, image, redisSecretName, redisUsernameKey, redisPasswordKey, sentinelName, checksum, redisReplicas)
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
-		mountRedisVolumesInDeployment(authModule, &deployment, redisSecretProviderClassName)
+		mountRedisVolumes(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
 	}
 
 	deploymentBytes, err := yaml.Marshal(&deployment)
@@ -1459,7 +1459,7 @@ func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleti
 	statefulset := getAuthorizationSentinelStatefulsetScaffold(cr.Name, sentinelName, redisName, cr.Namespace, image, redisSecretName, redisPasswordKey, checksum, int32(redisReplicas))
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
-		mountRedisVolumesInStatefulset(authModule, &statefulset, redisSecretProviderClassName)
+		mountRedisVolumes(&statefulset.Spec.Template.Spec, redisSecretProviderClassName)
 	}
 
 	statefulsetBytes, err := yaml.Marshal(&statefulset)
@@ -1474,105 +1474,48 @@ func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleti
 	return nil
 }
 
-// mountRedisVolumesInDeployment mounts redis volumes for an authorization deployment
-func mountRedisVolumesInDeployment(authModule csmv1.Module, deployment *appsv1.Deployment, secretProviderClassName string) {
-	// redis secret provider class
-	for _, component := range authModule.Components {
-		for _, config := range component.RedisSecretProviderClass {
-			if config.SecretProviderClassName != "" && config.RedisSecretName != "" {
-				volumeName := fmt.Sprintf("secrets-store-inline-%s", secretProviderClassName)
-				mountPath := fmt.Sprintf("/etc/csm-authorization/%s", secretProviderClassName)
+// mountRedisVolumes mounts redis volumes for an authorization deployment or statefulset
+func mountRedisVolumes(spec *corev1.PodSpec, secretProviderClassName string) {
+    volumeName := fmt.Sprintf("secrets-store-inline-%s", secretProviderClassName)
+    mountPath := fmt.Sprintf("/etc/csm-authorization/%s", secretProviderClassName)
 
-				// check if volume already exists
-				volumeExists := false
-				for _, volume := range deployment.Spec.Template.Spec.Volumes {
-					if volume.Name == volumeName {
-						volumeExists = true
-						break
-					}
-				}
+    // check if volume already exists
+    volumeExists := false
+    for _, volume := range spec.Volumes {
+        if volume.Name == volumeName {
+            volumeExists = true
+            break
+        }
+    }
 
-				// check if volume mount already exists
-				mountExists := false
-				for _, container := range deployment.Spec.Template.Spec.Containers {
-					for _, mount := range container.VolumeMounts {
-						if mount.Name == volumeName && mount.MountPath == mountPath {
-							mountExists = true
-							break
-						}
-					}
+    // check if volume mount already exists
+    mountExists := false
+    for _, container := range spec.Containers {
+        for _, mount := range container.VolumeMounts {
+            if mount.Name == volumeName && mount.MountPath == mountPath {
+                mountExists = true
+                break
+            }
+        }
 
-					if mountExists {
-						break
-					}
-				}
+        if mountExists {
+            break
+        }
+    }
 
-				// add volume for redis secret provider class
-				if !volumeExists {
-					redisVolume := redisVolume(secretProviderClassName)
-					deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, redisVolume)
-				}
+    // add volume for redis secret provider class
+    if !volumeExists {
+        redisVolume := redisVolume(secretProviderClassName)
+        spec.Volumes = append(spec.Volumes, redisVolume)
+    }
 
-				// set volume mount for redis secret provider class
-				if !mountExists {
-					for i := range deployment.Spec.Template.Spec.Containers {
-						redisVolumeMount := redisVolumeMount(secretProviderClassName)
-						deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, redisVolumeMount)
-					}
-				}
-			}
-		}
-	}
-}
-
-// mountRedisVolumesInStatefulset mounts redis volumes for an authorization statefulset
-func mountRedisVolumesInStatefulset(authModule csmv1.Module, statefulset *appsv1.StatefulSet, secretProviderClassName string) {
-	for _, component := range authModule.Components {
-		for _, config := range component.RedisSecretProviderClass {
-			if config.SecretProviderClassName != "" && config.RedisSecretName != "" {
-				volumeName := fmt.Sprintf("secrets-store-inline-%s", secretProviderClassName)
-				mountPath := fmt.Sprintf("/etc/csm-authorization/%s", secretProviderClassName)
-
-				// check if volume already exists
-				volumeExists := false
-				for _, volume := range statefulset.Spec.Template.Spec.Volumes {
-					if volume.Name == volumeName {
-						volumeExists = true
-						break
-					}
-				}
-
-				// check if volume mount already exists
-				mountExists := false
-				for _, container := range statefulset.Spec.Template.Spec.Containers {
-					for _, mount := range container.VolumeMounts {
-						if mount.Name == volumeName && mount.MountPath == mountPath {
-							mountExists = true
-							break
-						}
-					}
-
-					if mountExists {
-						break
-					}
-				}
-
-				// add volume for redis secret provider class
-				if !volumeExists {
-					redisVolume := redisVolume(secretProviderClassName)
-					statefulset.Spec.Template.Spec.Volumes = append(statefulset.Spec.Template.Spec.Volumes, redisVolume)
-				}
-
-				// set volume mount for redis secret provider class
-				if !mountExists {
-					for i := range statefulset.Spec.Template.Spec.Containers {
-						redisVolumeMount := redisVolumeMount(secretProviderClassName)
-						statefulset.Spec.Template.Spec.Containers[i].VolumeMounts = append(statefulset.Spec.Template.Spec.Containers[i].VolumeMounts, redisVolumeMount)
-					}
-				}
-			}
-		}
-	}
+    // set volume mount for redis secret provider class
+    if !mountExists {
+        for i := range spec.Containers {
+            redisVolumeMount := redisVolumeMount(secretProviderClassName)
+            spec.Containers[i].VolumeMounts = append(spec.Containers[i].VolumeMounts, redisVolumeMount)
+        }
+    }
 }
 
 func applyDeleteVaultCertificates(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
