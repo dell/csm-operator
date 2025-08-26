@@ -21,10 +21,9 @@ logFormat: text
 config:
   storageArrays:
     - storageArrayId: "REPLACE_SYSTEMID"
-      primaryURL: "https://REPLACE_ENDPOINT"
-      proxyCredentialSecrets:
-        - powermax-creds
+      primaryEndpoint: "https://REPLACE_ENDPOINT"
   managementServers:
-    - url: "https://REPLACE_ENDPOINT"
-      arrayCredentialSecret: powermax-creds
+    - endpoint: "https://REPLACE_ENDPOINT"
+      username: "PMAX_USER"
+      password: "PMAX_USER"
       skipCertificateValidation: true
