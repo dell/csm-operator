@@ -144,9 +144,9 @@ const (
 	// defaultRedisSecretName - name of default redis K8s secret
 	defaultRedisSecretName = "redis-csm-secret" // #nosec G101 -- This is a false positive
 	// defaultRedisUsernameKey - name of the default username key
-	defaultRedisUsernameKey = "dev"
+	defaultRedisUsernameKey = "commander_user"
 	// defaultRedisPasswordKey - name of default password key
-	defaultRedisPasswordKey = "commander_user"
+	defaultRedisPasswordKey = "password"
 
 	// AuthLocalStorageClass -
 	AuthLocalStorageClass = "csm-authorization-local-storage"
@@ -910,7 +910,9 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		}
 
 		// redis secret provider class
-		mountRedisVolumesInDeployment(authModule, &deployment, redisSecretProviderClassName)
+		if redisSecretProviderClassName != "" && redisSecretName != "" {
+			mountRedisVolumesInDeployment(authModule, &deployment, redisSecretProviderClassName)
+		}
 	} else {
 		log.Infof("Using Vault for storage system credentials")
 		// Vault is supported only till config v2.2.0 (CSM 1.14)
