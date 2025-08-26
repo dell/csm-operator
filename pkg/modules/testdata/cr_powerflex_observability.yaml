@@ -194,6 +194,16 @@ spec:
             # Default value: 10
             - name: "POWERFLEX_STORAGE_POOL_POLL_FREQUENCY"
               value: "10"
+            # POWERFLEX_TOPOLOGY_METRICS_ENABLED: enable/disable collection of topology metrics
+            # Allowed values: ture, false
+            # Default value: true
+            - name: "POWERFLEX_TOPOLOGY_METRICS_ENABLED"
+              value: "true"
+            # POWERFLEX_TOPOLOGY_METRICS_POLL_FREQUENCY: set polling frequency to get topology metrics data
+            # Allowed values: int
+            # Default value: 30
+            - name: "POWERFLEX_TOPOLOGY_METRICS_POLL_FREQUENCY"
+              value: "30"
             # PowerFlex metrics log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
             # Default value: "INFO"
