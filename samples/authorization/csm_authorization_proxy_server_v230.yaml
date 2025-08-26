@@ -86,9 +86,10 @@ spec:
           redisReplicas: 5
 
         - name: jwt
+          # Optional:
           # JWT signing secret configuration:
-          # If using a CSI driver, specify the SecretProviderClass.
-          # Otherwise, a default Kubernetes secret will be used for JWT signing secret.
+          # Use a SecretProviderClass for the JWT secret; otherwise, the user must manually create the config secret before installing Authorization.
+          # If using a Secret Store CSI driver, specify the SecretProviderClass that contains the JWT secret object.
           jwtSigningSecretProviderClass:
             # Name of the SecretProviderClass that holds the JWT secretObject.
             - jwtSecretProviderClassName: ""
