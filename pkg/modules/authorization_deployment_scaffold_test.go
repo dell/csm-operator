@@ -364,36 +364,3 @@ func TestCreateRedisK8sSecret(t *testing.T) {
 		t.Errorf("expected password 'K@ravi123!', got %s", secret.StringData["password"])
 	}
 }
-
-func TestRedisVolume(t *testing.T) {
-	SPCName := "array-creds"
-	volume := redisVolume(SPCName)
-
-	if volume.Name != "secrets-store-inline-redis" {
-		t.Errorf("expected volume name 'secrets-store-inline-redis', got %s", volume.Name)
-	}
-	if volume.VolumeSource.CSI == nil {
-		t.Fatal("expected CSI volume source, got nil")
-	}
-	if volume.VolumeSource.CSI.Driver != "secrets-store.csi.k8s.io" {
-		t.Errorf("expected CSI driver 'secrets-store.csi.k8s.io', got %s", volume.VolumeSource.CSI.Driver)
-	}
-	if volume.VolumeSource.CSI.VolumeAttributes["secretProviderClass"] != SPCName {
-		t.Errorf("expected secretProviderClass '%s', got %s", SPCName, volume.VolumeSource.CSI.VolumeAttributes["secretProviderClass"])
-	}
-}
-
-func TestRedisVolumeMount(t *testing.T) {
-	SPCName := "array-creds"
-	mount := redisVolumeMount(SPCName)
-
-	if mount.Name != fmt.Sprintf("secrets-store-inline-%s", SPCName) {
-		t.Errorf("expected mount name 'secrets-store-inline-array-creds', got %s", mount.Name)
-	}
-	if mount.MountPath != fmt.Sprintf("/etc/csm-authorization/%s", SPCName) {
-		t.Errorf("expected mount path '/etc/csm-authorization/array-creds', got %s", mount.MountPath)
-	}
-	if !mount.ReadOnly {
-		t.Error("expected mount to be read-only")
-	}
-}

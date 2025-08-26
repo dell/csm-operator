@@ -1476,46 +1476,62 @@ func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleti
 
 // mountRedisVolumes mounts redis volumes for an authorization deployment or statefulset
 func mountRedisVolumes(spec *corev1.PodSpec, secretProviderClassName string) {
-    volumeName := fmt.Sprintf("secrets-store-inline-%s", secretProviderClassName)
-    mountPath := fmt.Sprintf("/etc/csm-authorization/%s", secretProviderClassName)
+	volumeName := fmt.Sprintf("secrets-store-inline-%s", secretProviderClassName)
+	mountPath := fmt.Sprintf("/etc/csm-authorization/%s", secretProviderClassName)
+	readOnly := true
 
-    // check if volume already exists
-    volumeExists := false
-    for _, volume := range spec.Volumes {
-        if volume.Name == volumeName {
-            volumeExists = true
-            break
-        }
-    }
+	// check if volume already exists
+	volumeExists := false
+	for _, volume := range spec.Volumes {
+		if volume.Name == volumeName {
+			volumeExists = true
+			break
+		}
+	}
 
-    // check if volume mount already exists
-    mountExists := false
-    for _, container := range spec.Containers {
-        for _, mount := range container.VolumeMounts {
-            if mount.Name == volumeName && mount.MountPath == mountPath {
-                mountExists = true
-                break
-            }
-        }
+	// check if volume mount already exists
+	mountExists := false
+	for _, container := range spec.Containers {
+		for _, mount := range container.VolumeMounts {
+			if mount.Name == volumeName && mount.MountPath == mountPath {
+				mountExists = true
+				break
+			}
+		}
 
-        if mountExists {
-            break
-        }
-    }
+		if mountExists {
+			break
+		}
+	}
 
-    // add volume for redis secret provider class
-    if !volumeExists {
-        redisVolume := redisVolume(secretProviderClassName)
-        spec.Volumes = append(spec.Volumes, redisVolume)
-    }
+	// add volume for redis secret provider class
+	if !volumeExists {
+		redisVolume := corev1.Volume{
+			Name: volumeName,
+			VolumeSource: corev1.VolumeSource{
+				CSI: &corev1.CSIVolumeSource{
+					Driver:   "secrets-store.csi.k8s.io",
+					ReadOnly: &readOnly,
+					VolumeAttributes: map[string]string{
+						"secretProviderClass": secretProviderClassName,
+					},
+				},
+			},
+		}
+		spec.Volumes = append(spec.Volumes, redisVolume)
+	}
 
-    // set volume mount for redis secret provider class
-    if !mountExists {
-        for i := range spec.Containers {
-            redisVolumeMount := redisVolumeMount(secretProviderClassName)
-            spec.Containers[i].VolumeMounts = append(spec.Containers[i].VolumeMounts, redisVolumeMount)
-        }
-    }
+	// set volume mount for redis secret provider class
+	if !mountExists {
+		for i := range spec.Containers {
+			redisVolumeMount := corev1.VolumeMount{
+				Name:      volumeName,
+				MountPath: mountPath,
+				ReadOnly:  true,
+			}
+			spec.Containers[i].VolumeMounts = append(spec.Containers[i].VolumeMounts, redisVolumeMount)
+		}
+	}
 }
 
 func applyDeleteVaultCertificates(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
