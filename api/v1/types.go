@@ -449,6 +449,10 @@ type RedisSecretProviderClass struct {
 
 // JWTSigningSecretProviderClass is the jwt signing secret configuration for CSM Authorization
 type JWTSigningSecretProviderClass struct {
+	// JWTSecretProviderClassName is the name of the Kubernetes secret created by the CSI driver
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="JWT Signing Secret Name"
+	JWTSecretProviderClassName string `json:"jwtSecretProviderClassName,omitempty" yaml:"jwtSecretProviderClassName,omitempty"`
+
 	// JWTSigningSecretName is the name of the Kubernetes secret created by the CSI driver
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="JWT Signing Secret Name"
 	JWTSigningSecretName string `json:"jwtSigningSecretName,omitempty" yaml:"jwtSigningSecretName,omitempty"`

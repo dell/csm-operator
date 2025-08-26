@@ -90,9 +90,11 @@ spec:
           # If using a CSI driver, specify the SecretProviderClass.
           # Otherwise, a default Kubernetes secret will be used for JWT signing secret.
           jwtSigningSecretProviderClass:
-             # The name of the Kubernetes secret created by the CSI driver
+            # Name of the SecretProviderClass that holds the JWT secretObject.
+            - jwtSecretProviderClassName: ""
+            # The name of the Kubernetes secret created by the CSI driver
             - jwtSigningSecretName: ""
-              # The key in the secret that holds the Redis username
+              # The key in the secret that holds the JWT signing secret
               jwtSigningSecretKey: secret
 
         # Comment and uncomment the appropriate sections below to use the desired method.
@@ -106,16 +108,16 @@ spec:
               - secret-provider-class-1
               - secret-provider-class-2
             # conjur:
-              # - name: secret-provider-class-3
-              #   paths:
-                  # - usernamePath: secrets/username1
-                  #   passwordPath: secrets/password1
-                  # - usernamePath: secrets/username2
-                  #   passwordPath: secrets/password2
-              # - name: secret-provider-class-4
-                # paths:
-                  # - usernamePath: secrets/username3
-                  #   passwordPath: secrets/password3
+            # - name: secret-provider-class-3
+            #   paths:
+            # - usernamePath: secrets/username1
+            #   passwordPath: secrets/password1
+            # - usernamePath: secrets/username2
+            #   passwordPath: secrets/password2
+            # - name: secret-provider-class-4
+            # paths:
+            # - usernamePath: secrets/username3
+            #   passwordPath: secrets/password3
           # secrets:
           #   - secret-1
           #   - secret-2

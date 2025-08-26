@@ -216,6 +216,9 @@ spec:
                           items:
                             description: JWTSigningSecretProviderClass is the jwt signing secret configuration for CSM Authorization
                             properties:
+                              jwtSecretProviderClassName:
+                                description: JWTSecretProviderClassName is the name of the Kubernetes secret created by the CSI driver
+                                type: string
                               jwtSigningSecretKey:
                                 description: JWTSigningSecretKey is the key in the secret that holds the JWT Signing secret
                                 type: string
@@ -607,6 +610,9 @@ spec:
                           items:
                             description: JWTSigningSecretProviderClass is the jwt signing secret configuration for CSM Authorization
                             properties:
+                              jwtSecretProviderClassName:
+                                description: JWTSecretProviderClassName is the name of the Kubernetes secret created by the CSI driver
+                                type: string
                               jwtSigningSecretKey:
                                 description: JWTSigningSecretKey is the key in the secret that holds the JWT Signing secret
                                 type: string
@@ -1014,6 +1020,9 @@ spec:
                             items:
                               description: JWTSigningSecretProviderClass is the jwt signing secret configuration for CSM Authorization
                               properties:
+                                jwtSecretProviderClassName:
+                                  description: JWTSecretProviderClassName is the name of the Kubernetes secret created by the CSI driver
+                                  type: string
                                 jwtSigningSecretKey:
                                   description: JWTSigningSecretKey is the key in the secret that holds the JWT Signing secret
                                   type: string
@@ -1403,6 +1412,9 @@ spec:
                           items:
                             description: JWTSigningSecretProviderClass is the jwt signing secret configuration for CSM Authorization
                             properties:
+                              jwtSecretProviderClassName:
+                                description: JWTSecretProviderClassName is the name of the Kubernetes secret created by the CSI driver
+                                type: string
                               jwtSigningSecretKey:
                                 description: JWTSigningSecretKey is the key in the secret that holds the JWT Signing secret
                                 type: string
@@ -1798,6 +1810,9 @@ spec:
                             items:
                               description: JWTSigningSecretProviderClass is the jwt signing secret configuration for CSM Authorization
                               properties:
+                                jwtSecretProviderClassName:
+                                  description: JWTSecretProviderClassName is the name of the Kubernetes secret created by the CSI driver
+                                  type: string
                                 jwtSigningSecretKey:
                                   description: JWTSigningSecretKey is the key in the secret that holds the JWT Signing secret
                                   type: string
@@ -2213,6 +2228,9 @@ spec:
                               items:
                                 description: JWTSigningSecretProviderClass is the jwt signing secret configuration for CSM Authorization
                                 properties:
+                                  jwtSecretProviderClassName:
+                                    description: JWTSecretProviderClassName is the name of the Kubernetes secret created by the CSI driver
+                                    type: string
                                   jwtSigningSecretKey:
                                     description: JWTSigningSecretKey is the key in the secret that holds the JWT Signing secret
                                     type: string
@@ -2613,6 +2631,9 @@ spec:
                               items:
                                 description: JWTSigningSecretProviderClass is the jwt signing secret configuration for CSM Authorization
                                 properties:
+                                  jwtSecretProviderClassName:
+                                    description: JWTSecretProviderClassName is the name of the Kubernetes secret created by the CSI driver
+                                    type: string
                                   jwtSigningSecretKey:
                                     description: JWTSigningSecretKey is the key in the secret that holds the JWT Signing secret
                                     type: string

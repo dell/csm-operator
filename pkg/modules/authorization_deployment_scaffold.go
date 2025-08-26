@@ -22,7 +22,7 @@ import (
 )
 
 // getProxyServerScaffold returns proxy-server deployment for authorization v2
-func getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage, opaKubeMgmtImage, jwtSigningSecretName, redisSecretName, redisPasswordKey string, replicas int32, sentinelReplicas int) appsv1.Deployment {
+func getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage, opaKubeMgmtImage, jwtSecretProviderClassName, redisSecretName, redisPasswordKey string, replicas int32, sentinelReplicas int) appsv1.Deployment {
 	volumeMounts := []corev1.VolumeMount{
 		{
 			Name:      "csm-config-params",
@@ -42,7 +42,7 @@ func getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage,
 		},
 	}
 
-	if jwtSigningSecretName == "" {
+	if jwtSecretProviderClassName == "" {
 		configVolumeMnt := corev1.VolumeMount{
 			Name:      "config-volume",
 			MountPath: "/etc/karavi-authorization/config",
@@ -161,7 +161,7 @@ func getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage,
 
 // getStorageServiceScaffold returns the storage-service deployment with the common elements between v1 and v2
 // callers must ensure that other elements specific for the version get set in the returned deployment
-func getStorageServiceScaffold(name string, namespace string, image string, replicas int32, jwtSigningSecretName string) appsv1.Deployment {
+func getStorageServiceScaffold(name string, namespace string, image string, replicas int32, jwtSecretProviderClassName string) appsv1.Deployment {
 	volumeMounts := []corev1.VolumeMount{
 		{
 			Name:      "csm-config-params",
@@ -181,7 +181,7 @@ func getStorageServiceScaffold(name string, namespace string, image string, repl
 		},
 	}
 
-	if jwtSigningSecretName == "" {
+	if jwtSecretProviderClassName == "" {
 		configVolumeMnt := corev1.VolumeMount{
 			Name:      "config-volume",
 			MountPath: "/etc/karavi-authorization/config",
@@ -254,7 +254,7 @@ func getStorageServiceScaffold(name string, namespace string, image string, repl
 }
 
 // getTenantServiceScaffold returns tenant-service deployment for authorization v2
-func getTenantServiceScaffold(name, namespace, seninelName, image, jwtSigningSecretName, redisSecretName, redisPasswordKey string, replicas int32, sentinelReplicas int) appsv1.Deployment {
+func getTenantServiceScaffold(name, namespace, seninelName, image, jwtSecretProviderClassName, redisSecretName, redisPasswordKey string, replicas int32, sentinelReplicas int) appsv1.Deployment {
 	volumeMounts := []corev1.VolumeMount{
 		{
 			Name:      "csm-config-params",
@@ -274,7 +274,7 @@ func getTenantServiceScaffold(name, namespace, seninelName, image, jwtSigningSec
 		},
 	}
 
-	if jwtSigningSecretName == "" {
+	if jwtSecretProviderClassName == "" {
 		configVolumeMnt := corev1.VolumeMount{
 			Name:      "config-volume",
 			MountPath: "/etc/karavi-authorization/config",
@@ -864,7 +864,7 @@ func redisVolumeMount() corev1.VolumeMount {
 }
 
 // jwtVolume adds volume in a pod container for the jwt signing secret SecretProviderClass
-func jwtVolume(jwtSigningSecretName string) corev1.Volume {
+func jwtVolume(jwtSecretProviderClassName string) corev1.Volume {
 	volumeName := "secrets-store-inline-jwt"
 	readOnly := true
 	return corev1.Volume{
@@ -874,7 +874,7 @@ func jwtVolume(jwtSigningSecretName string) corev1.Volume {
 				Driver:   "secrets-store.csi.k8s.io",
 				ReadOnly: &readOnly,
 				VolumeAttributes: map[string]string{
-					"secretProviderClass": jwtSigningSecretName,
+					"secretProviderClass": jwtSecretProviderClassName,
 				},
 			},
 		},

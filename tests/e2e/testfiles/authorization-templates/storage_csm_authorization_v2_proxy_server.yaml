@@ -84,9 +84,11 @@ spec:
 
         - name: jwt
           jwtSigningSecretProviderClass:
-             # The name of the Kubernetes secret created by the CSI driver
-            - jwtSigningSecretName: array-creds
-              # The key in the secret that holds the Redis username
+            # Name of the SecretProviderClass that holds the JWT secretObject.
+            - jwtSecretProviderClassName: array-creds
+            # The name of the Kubernetes secret created by the CSI driver
+            - jwtSigningSecretName: jwt-secret
+              # The key in the secret that holds the JWT signing secret
               jwtSigningSecretKey: secret
 
         - name: storage-system-credentials

@@ -77,6 +77,7 @@ spec:
           redisReplicas: 5
         - name: jwt
           jwtSigningSecretProviderClass:
+            - jwtSecretProviderClassName: ""
             - jwtSigningSecretName: ""
         - name: vault
           vaultConfigurations:
