@@ -127,22 +127,18 @@ storage "file" {
 `
 
 	// env variables that align with operator e2e
-	powerflexSecretPath  = "PFLEX_VAULT_STORAGE_PATH" // #nosec G101 -- env var, not hardcode
-	powerflexRedisPath   = "PFLEX_REDIS_PATH"
+	powerflexSecretPath  = "PFLEX_VAULT_STORAGE_PATH"  // #nosec G101 -- env var, not hardcode
 	powerflexUsername    = "PFLEX_USER"                // #nosec G101 -- env var, not hardcode
 	powerflexPassword    = "PFLEX_PASS"                // #nosec G101 -- env var, not hardcode
 	powerscaleSecretPath = "PSCALE_VAULT_STORAGE_PATH" // #nosec G101 -- env var, not hardcode
-	powerscaleRedisPath  = "PSCALE_REDIS_PATH"
-	powerscaleUsername   = "PSCALE_USER"             // #nosec G101 -- env var, not hardcode
-	powerscalePassword   = "PSCALE_PASS"             // #nosec G101 -- env var, not hardcode
-	powermaxSecretPath   = "PMAX_VAULT_STORAGE_PATH" // #nosec G101 -- env var, not hardcode
-	powermaxRedisPath    = "PMAX_REDIS_PATH"
+	powerscaleUsername   = "PSCALE_USER"               // #nosec G101 -- env var, not hardcode
+	powerscalePassword   = "PSCALE_PASS"               // #nosec G101 -- env var, not hardcode
+	powermaxSecretPath   = "PMAX_VAULT_STORAGE_PATH"   // #nosec G101 -- env var, not hardcode
 	powermaxUsername     = "PMAX_USER"                 // #nosec G101 -- env var, not hardcode
 	powermaxPassword     = "PMAX_PASS"                 // #nosec G101 -- env var, not hardcode
 	powerstoreSecretPath = "PSTORE_VAULT_STORAGE_PATH" // #nosec G101 -- env var, not hardcode
-	powerstoreRedisPath  = "PSTORE_REDIS_PATH"
-	powerstoreUsername   = "PSTORE_USER" // #nosec G101 -- env var, not hardcode
-	powerstorePassword   = "PSTORE_PASS" // #nosec G101 -- env var, not hardcode
+	powerstoreUsername   = "PSTORE_USER"               // #nosec G101 -- env var, not hardcode
+	powerstorePassword   = "PSTORE_PASS"               // #nosec G101 -- env var, not hardcode
 	// timestamps to create certificates
 	notBefore = time.Now()
 	notAfter  = notBefore.Add(8766 * time.Hour)
@@ -177,9 +173,6 @@ type sequence struct {
 	secretPath         string
 	username           string
 	password           string
-	redisSecretPath    string
-	redisUsername      string
-	redisPassword      string
 	fileConfig         string
 	envConfig          bool
 	openshift          bool
