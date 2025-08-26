@@ -157,16 +157,16 @@ const (
 )
 
 var (
-	redisStorageClass     string
-	redisSecretName       string
-	redisUsernameKey      string
-	redisPasswordKey      string
+	redisStorageClass           string
+	redisSecretName             string
+	redisUsernameKey            string
+	redisPasswordKey            string
 	jwtSecretProviderClassName  string
-	authHostname          string
-	proxyIngressClassName string
-	authCertificate       string
-	authPrivateKey        string
-	secretName            string
+	authHostname                string
+	proxyIngressClassName       string
+	authCertificate             string
+	authPrivateKey              string
+	secretName                  string
 
 	pathType    = networking.PathTypePrefix
 	duration    = 2160 * time.Hour // 90d
@@ -565,7 +565,7 @@ func AuthorizationServerPrecheck(ctx context.Context, op operatorutils.OperatorC
 			}
 		}
 	}
-	if (!jwtComponentFound || jwtSecretProviderClassFound) {
+	if !jwtComponentFound || jwtSecretProviderClassFound {
 		// Check for secrets
 		proxyServerSecrets := []string{"karavi-config-secret"}
 		for _, name := range proxyServerSecrets {
