@@ -266,7 +266,7 @@ spec:
                               jwtSecretProviderClassName:
                                 description:
                                   JWTSecretProviderClassName is the name
-                                  of the Kubernetes secret created by the CSI driver
+                                  of the SecretProviderClass that holds the JWT secretObject
                                 type: string
                               jwtSigningSecretKey:
                                 description:
@@ -766,7 +766,7 @@ spec:
                               jwtSecretProviderClassName:
                                 description:
                                   JWTSecretProviderClassName is the name
-                                  of the Kubernetes secret created by the CSI driver
+                                  of the SecretProviderClass that holds the JWT secretObject
                                 type: string
                               jwtSigningSecretKey:
                                 description:
@@ -1286,7 +1286,7 @@ spec:
                                 jwtSecretProviderClassName:
                                   description:
                                     JWTSecretProviderClassName is the name
-                                    of the Kubernetes secret created by the CSI driver
+                                    of the SecretProviderClass that holds the JWT secretObject
                                   type: string
                                 jwtSigningSecretKey:
                                   description:
@@ -1782,7 +1782,7 @@ spec:
                               jwtSecretProviderClassName:
                                 description:
                                   JWTSecretProviderClassName is the name
-                                  of the Kubernetes secret created by the CSI driver
+                                  of the SecretProviderClass that holds the JWT secretObject
                                 type: string
                               jwtSigningSecretKey:
                                 description:
@@ -2286,7 +2286,7 @@ spec:
                                 jwtSecretProviderClassName:
                                   description:
                                     JWTSecretProviderClassName is the name
-                                    of the Kubernetes secret created by the CSI driver
+                                    of the SecretProviderClass that holds the JWT secretObject
                                   type: string
                                 jwtSigningSecretKey:
                                   description:
@@ -2817,7 +2817,8 @@ spec:
                                   jwtSecretProviderClassName:
                                     description:
                                       JWTSecretProviderClassName is the name
-                                      of the Kubernetes secret created by the CSI driver
+                                      of the SecretProviderClass that holds the JWT
+                                      secretObject
                                     type: string
                                   jwtSigningSecretKey:
                                     description:
@@ -3337,7 +3338,8 @@ spec:
                                   jwtSecretProviderClassName:
                                     description:
                                       JWTSecretProviderClassName is the name
-                                      of the Kubernetes secret created by the CSI driver
+                                      of the SecretProviderClass that holds the JWT
+                                      secretObject
                                     type: string
                                   jwtSigningSecretKey:
                                     description:

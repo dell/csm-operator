@@ -157,16 +157,16 @@ const (
 )
 
 var (
-	redisStorageClass           string
-	redisSecretName             string
-	redisUsernameKey            string
-	redisPasswordKey            string
-	jwtSecretProviderClassName  string
-	authHostname                string
-	proxyIngressClassName       string
-	authCertificate             string
-	authPrivateKey              string
-	secretName                  string
+	redisStorageClass          string
+	redisSecretName            string
+	redisUsernameKey           string
+	redisPasswordKey           string
+	jwtSecretProviderClassName string
+	authHostname               string
+	proxyIngressClassName      string
+	authCertificate            string
+	authPrivateKey             string
+	secretName                 string
 
 	pathType    = networking.PathTypePrefix
 	duration    = 2160 * time.Hour // 90d
