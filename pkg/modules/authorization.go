@@ -1917,7 +1917,7 @@ func AuthCrdDeploy(ctx context.Context, op operatorutils.OperatorConfig, cr csmv
 	}
 
 	// v1 does not have custom resources, so treat it like a no-op
-	if ok, err := operatorutils.MinVersionCheck(auth.ConfigVersion, "v2.0.0-alpha"); !ok {
+	if ok, err := operatorutils.MinVersionCheck("v2.0.0-alpha", auth.ConfigVersion); !ok {
 		return nil
 	} else if err != nil {
 		return err

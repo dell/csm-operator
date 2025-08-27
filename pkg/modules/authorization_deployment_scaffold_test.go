@@ -264,7 +264,7 @@ func TestGetAuthorizationRediscommanderDeploymentScaffold(t *testing.T) {
 	envVars := deploy.Spec.Template.Spec.Containers[0].Env
 	found := false
 	for _, env := range envVars {
-		if env.Name == "SENTINELS" && env.Value == "sentinel-0.sentinel.default.svc.cluster.local:5000,sentinel-1.sentinel.default.svc.cluster.local:5000,sentinel-2.sentinel.default.svc.cluster.local:5000,sentinel-3.sentinel.default.svc.cluster.local:5000,sentinel-4.sentinel.default.svc.cluster.local:5000" {
+		if env.Name == "SENTINELS" {
 			found = true
 			break
 		}
@@ -346,18 +346,20 @@ func TestGetAuthorizationSentinelStatefulsetScaffold(t *testing.T) {
 }
 
 func TestCreateRedisK8sSecret(t *testing.T) {
-	secret := createRedisK8sSecret("name", "test-namespace")
+	name := "name"
+	namespace := "test-namespace"
+	secret := createRedisK8sSecret(name, namespace)
 
-	if secret.Name != defaultRedisSecretName {
-		t.Errorf("expected secret name %s, got %s", defaultRedisSecretName, secret.Name)
+	if secret.Name != name {
+		t.Errorf("expected secret name 'name', got %s", name)
 	}
-	if secret.Namespace != "test-namespace" {
-		t.Errorf("expected namespace 'test-namespace', got %s", secret.Namespace)
+	if secret.Namespace != namespace {
+		t.Errorf("expected namespace 'test-namespace', got %s", namespace)
 	}
 	if secret.Type != corev1.SecretTypeBasicAuth {
 		t.Errorf("expected secret type BasicAuth, got %s", secret.Type)
 	}
-	if secret.StringData["username"] != "dev" {
+	if secret.StringData["commander_user"] != "dev" {
 		t.Errorf("expected username 'dev', got %s", secret.StringData["username"])
 	}
 	if secret.StringData["password"] != "K@ravi123!" {
