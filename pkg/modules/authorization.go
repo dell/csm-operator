@@ -908,6 +908,19 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 
 	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
 	if storageCreds {
+		// remove vault from version v2.3.0 since vault is not supported in v2.3.0 and onwards
+		err := removeVaultFromStorageService(ctx, cr, ctrlClient, &deployment)
+		if err != nil {
+			return fmt.Errorf("removing vault from storage service: %v", err)
+		}
+		err = ctrlClient.Get(ctx, client.ObjectKey{
+			Namespace: cr.Namespace,
+			Name:      cr.Name,
+		}, &cr)
+		if err != nil {
+			return fmt.Errorf("failed to get CSM authorization proxy CR")
+		}
+
 		// Determine whether to read from secret provider classes or kubernetes secrets
 		if secretProviderClasses != nil && (len(secretProviderClasses.Vaults) > 0 || len(secretProviderClasses.Conjurs) > 0) {
 			log.Info("Using secret provider classes for storage system credentials")
@@ -1018,6 +1031,68 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	if err != nil {
 		return fmt.Errorf("applying storage-service deployment: %w", err)
 	}
+	return nil
+}
+
+// remove vault certificates, args, and volumes/volume mounts if upgrading from verions < v2.3.0
+func removeVaultFromStorageService(ctx context.Context, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, dp *appsv1.Deployment) error {
+	log := logger.GetLogger(ctx)
+
+	// check if there is an existing storage service deployment to be updated
+	err := ctrlClient.Get(ctx, client.ObjectKey{
+		Namespace: dp.Namespace,
+		Name:      dp.Name,
+	}, &cr)
+	if err != nil {
+		log.Infof("%s not found. No need to remvoe vault from storage service.", cr.Name)
+		return nil
+	}
+
+	// remove vault certificates
+	err = applyDeleteVaultCertificates(ctx, true, cr, ctrlClient)
+	if err != nil {
+		return fmt.Errorf("deleting vault certificates: %w", err)
+	}
+
+	// remove vault args and volume mounts from the deployment's container
+	for i, container := range dp.Spec.Template.Spec.Containers {
+		if container.Name == "storage-service" {
+			// Filter out vault args
+			var newArgs []string
+			for _, arg := range container.Args {
+				if !strings.HasPrefix(arg, "--vault=") {
+					newArgs = append(newArgs, arg)
+				}
+			}
+			dp.Spec.Template.Spec.Containers[i].Args = newArgs
+
+			// Filter out vault volume mounts
+			var newVolumeMounts []corev1.VolumeMount
+			for _, volumeMount := range container.VolumeMounts {
+				if !strings.Contains(volumeMount.MountPath, "/etc/vault/") {
+					newVolumeMounts = append(newVolumeMounts, volumeMount)
+				}
+			}
+			dp.Spec.Template.Spec.Containers[i].VolumeMounts = newVolumeMounts
+		}
+	}
+
+	// Filter out vault volumes
+	var newVolumes []corev1.Volume
+	for _, volume := range dp.Spec.Template.Spec.Volumes {
+		if !strings.Contains(volume.Name, "vault-client-certificate-") {
+			volume.VolumeSource.Projected = nil // Clear projected sources if they exists
+			newVolumes = append(newVolumes, volume)
+		}
+	}
+	dp.Spec.Template.Spec.Volumes = newVolumes
+
+	// Update the deployment
+	err = ctrlClient.Update(ctx, dp)
+	if err != nil {
+		return fmt.Errorf("updating storage service deployment for upgrading: %w", err)
+	}
+
 	return nil
 }
 
