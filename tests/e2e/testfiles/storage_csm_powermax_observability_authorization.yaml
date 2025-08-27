@@ -147,7 +147,7 @@ spec:
         #   "false" - Use configmap format for the reverse proxy
         # Default value: "false"
         - name: "X_CSI_REVPROXY_USE_SECRET"
-          value: "true"
+          value: "false"
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin- volume usage, volume condition
