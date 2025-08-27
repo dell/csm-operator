@@ -436,12 +436,10 @@ type RedisSecretProviderClass struct {
 
 	// RedisUsernameKey is the key in the secret that holds the Redis username
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Username Key"
-	// +kubebuilder:validation:Required
 	RedisUsernameKey string `json:"redisUsernameKey,omitempty" yaml:"redisUsernameKey,omitempty"`
 
 	// RedisPasswordKey is the key in the secret that holds the Redis password
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Password Key"
-	// +kubebuilder:validation:Required
 	RedisPasswordKey string `json:"redisPasswordKey,omitempty" yaml:"redisPasswordKey,omitempty"`
 }
 
