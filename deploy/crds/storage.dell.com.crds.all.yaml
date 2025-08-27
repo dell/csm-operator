@@ -291,9 +291,6 @@ spec:
                               secretProviderClassName:
                                 description: SecretProviderClassName is the name of the SecretProviderClass that holds the Redis secretObject
                                 type: string
-                            required:
-                              - redisPasswordKey
-                              - redisUsernameKey
                             type: object
                           maxItems: 1
                           type: array
@@ -667,9 +664,6 @@ spec:
                               secretProviderClassName:
                                 description: SecretProviderClassName is the name of the SecretProviderClass that holds the Redis secretObject
                                 type: string
-                            required:
-                              - redisPasswordKey
-                              - redisUsernameKey
                             type: object
                           maxItems: 1
                           type: array
@@ -1059,9 +1053,6 @@ spec:
                                 secretProviderClassName:
                                   description: SecretProviderClassName is the name of the SecretProviderClass that holds the Redis secretObject
                                   type: string
-                              required:
-                                - redisPasswordKey
-                                - redisUsernameKey
                               type: object
                             maxItems: 1
                             type: array
@@ -1433,9 +1424,6 @@ spec:
                               secretProviderClassName:
                                 description: SecretProviderClassName is the name of the SecretProviderClass that holds the Redis secretObject
                                 type: string
-                            required:
-                              - redisPasswordKey
-                              - redisUsernameKey
                             type: object
                           maxItems: 1
                           type: array
@@ -1813,9 +1801,6 @@ spec:
                                 secretProviderClassName:
                                   description: SecretProviderClassName is the name of the SecretProviderClass that holds the Redis secretObject
                                   type: string
-                              required:
-                                - redisPasswordKey
-                                - redisUsernameKey
                               type: object
                             maxItems: 1
                             type: array
@@ -2213,9 +2198,6 @@ spec:
                                   secretProviderClassName:
                                     description: SecretProviderClassName is the name of the SecretProviderClass that holds the Redis secretObject
                                     type: string
-                                required:
-                                  - redisPasswordKey
-                                  - redisUsernameKey
                                 type: object
                               maxItems: 1
                               type: array
@@ -2598,9 +2580,6 @@ spec:
                                   secretProviderClassName:
                                     description: SecretProviderClassName is the name of the SecretProviderClass that holds the Redis secretObject
                                     type: string
-                                required:
-                                  - redisPasswordKey
-                                  - redisUsernameKey
                                 type: object
                               maxItems: 1
                               type: array
