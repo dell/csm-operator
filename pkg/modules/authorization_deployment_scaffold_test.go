@@ -26,13 +26,13 @@ func TestGetProxyServerScaffold(t *testing.T) {
 	proxyImage := "proxy-image:latest"
 	opaImage := "opa-image:latest"
 	opaKubeMgmtImage := "kube-mgmt-image:latest"
-	jwtSecretProviderClassName := "array-creds"
+	configSecretProviderClassName := "array-creds"
 	redisSecretName := "redis-secret"
 	redisPasswordKey := "redis-password"
 	replicas := int32(3)
 	sentinel := int(5)
 
-	deploy := getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage, opaKubeMgmtImage, jwtSecretProviderClassName, redisSecretName, redisPasswordKey, replicas, sentinel)
+	deploy := getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage, opaKubeMgmtImage, configSecretProviderClassName, redisSecretName, redisPasswordKey, replicas, sentinel)
 
 	if deploy.Name != "proxy-server" {
 		t.Errorf("expected name 'proxy-server', got %s", deploy.Name)
@@ -66,9 +66,9 @@ func TestGetStorageServiceScaffold(t *testing.T) {
 	namespace := "test-namespace"
 	image := "storage-service:latest"
 	replicas := int32(2)
-	jwtSecretProviderClassName := "array-creds"
+	configSecretProviderClassName := "array-creds"
 
-	deploy := getStorageServiceScaffold(name, namespace, image, replicas, jwtSecretProviderClassName)
+	deploy := getStorageServiceScaffold(name, namespace, image, replicas, configSecretProviderClassName)
 
 	if deploy.Name != "storage-service" {
 		t.Errorf("expected name 'storage-service', got %s", deploy.Name)
@@ -131,13 +131,13 @@ func TestGetTenantServiceScaffold(t *testing.T) {
 	namespace := "test-namespace"
 	sentinelName := "sentinel"
 	image := "tenant-service:latest"
-	jwtSecretProviderClassName := "array-creds"
+	configSecretProviderClassName := "array-creds"
 	redisSecretName := "redis-secret"
 	redisPasswordKey := "redis-password"
 	replicas := int32(3)
 	sentinelReplicas := 5
 
-	deploy := getTenantServiceScaffold(name, namespace, sentinelName, image, jwtSecretProviderClassName, redisSecretName, redisPasswordKey, replicas, sentinelReplicas)
+	deploy := getTenantServiceScaffold(name, namespace, sentinelName, image, configSecretProviderClassName, redisSecretName, redisPasswordKey, replicas, sentinelReplicas)
 
 	if deploy.Name != "tenant-service" {
 		t.Errorf("expected name 'tenant-service', got %s", deploy.Name)
@@ -408,12 +408,12 @@ func TestRedisVolumeMount(t *testing.T) {
 	}
 }
 
-func TestJwtVolume(t *testing.T) {
-	secretName := "jwt-secret"
-	volume := jwtVolume(secretName)
+func TestConfigVolume(t *testing.T) {
+	secretName := "config-secret"
+	volume := configVolume(secretName)
 
-	if volume.Name != "secrets-store-inline-jwt" {
-		t.Errorf("expected volume name 'secrets-store-inline-jwt', got %s", volume.Name)
+	if volume.Name != "secrets-store-inline-config" {
+		t.Errorf("expected volume name 'secrets-store-inline-config', got %s", volume.Name)
 	}
 	if volume.VolumeSource.CSI == nil {
 		t.Fatal("expected CSI volume source, got nil")
@@ -426,11 +426,11 @@ func TestJwtVolume(t *testing.T) {
 	}
 }
 
-func TestJwtVolumeMount(t *testing.T) {
-	mount := jwtVolumeMount()
+func TestConfigVolumeMount(t *testing.T) {
+	mount := configVolumeMount()
 
-	if mount.Name != "secrets-store-inline-jwt" {
-		t.Errorf("expected mount name 'secrets-store-inline-jwt', got %s", mount.Name)
+	if mount.Name != "secrets-store-inline-config" {
+		t.Errorf("expected mount name 'secrets-store-inline-config', got %s", mount.Name)
 	}
 	if mount.MountPath != "/etc/csm-authorization/config" {
 		t.Errorf("expected mount path '/etc/csm-authorization/config', got %s", mount.MountPath)

@@ -75,18 +75,16 @@ spec:
           redisCommander: rediscommander
           sentinel: sentinel
           redisReplicas: 5
-        - name: jwt
+        - name: config
           # Optional:
-          # JWT secret configuration:
-          # Use a SecretProviderClass for the JWT secret; otherwise, the user must manually create the config secret before installing Authorization.
-          # If using a Secret Store CSI driver, specify the SecretProviderClass that contains the JWT secret object.
-          jwtSigningSecretProviderClass:
-            # Name of the SecretProviderClass that holds the JWT secretObject.
-            - jwtSecretProviderClassName: ""
+          # Config secret configuration:
+          # Use a SecretProviderClass for the config secret; otherwise, the user must manually create the config secret before installing Authorization.
+          # If using a Secret Store CSI driver, specify the SecretProviderClass that contains the config object.
+          configSigningSecretProviderClass:
+            # Name of the SecretProviderClass that holds the config secretObject.
+            - configSecretProviderClassName: ""
               # The name of the Kubernetes secret created by the CSI driver
-              jwtSigningSecretName: ""
-              # The key in the secret that holds the JWT signing secret
-              jwtSigningSecretKey: ""
+              configSigningSecretName: ""
 
         - name: storage-system-credentials
           secretProviderClasses:

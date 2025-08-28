@@ -385,11 +385,11 @@ type ContainerTemplate struct {
 	// +kubebuilder:validation:MaxItems=1
 	RedisSecretProviderClass []RedisSecretProviderClass `json:"redisSecretProviderClass,omitempty" yaml:"redisSecretProviderClass,omitempty"`
 
-	// JWTSigningSecretProviderClass is the SecretProviderClass Object details for jwt signing secret
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="JWT Signing Secret SecretProviderClass details"
+	// ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Secret SecretProviderClass details"
 	// Applicable from CSM v1.15 onwards
 	// +kubebuilder:validation:MaxItems=1
-	JWTSigningSecretProviderClass []JWTSigningSecretProviderClass `json:"jwtSigningSecretProviderClass,omitempty" yaml:"jwtSigningSecretProviderClass,omitempty"`
+	ConfigSecretProviderClass []ConfigSecretProviderClass `json:"configSecretProviderClass,omitempty" yaml:"configSecretProviderClass,omitempty"`
 
 	// Certificate is a certificate used for a certificate/private-key pair
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Certificate for certificate/private-key pair"
@@ -447,20 +447,15 @@ type RedisSecretProviderClass struct {
 	RedisPasswordKey string `json:"redisPasswordKey" yaml:"redisPasswordKey"`
 }
 
-// JWTSigningSecretProviderClass is the jwt signing secret configuration for CSM Authorization
-type JWTSigningSecretProviderClass struct {
-	// JWTSecretProviderClassName is the name of the SecretProviderClass that holds the JWT secretObject
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="JWT Secret Provider Class Name"
-	JWTSecretProviderClassName string `json:"jwtSecretProviderClassName,omitempty" yaml:"jwtSecretProviderClassName,omitempty"`
+// ConfigSecretProviderClass is the config secret configuration for CSM Authorization
+type ConfigSecretProviderClass struct {
+	// ConfigSecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Secret Provider Class Name"
+	ConfigSecretProviderClassName string `json:"configSecretProviderClassName,omitempty" yaml:"configSecretProviderClassName,omitempty"`
 
-	// JWTSigningSecretName is the name of the Kubernetes secret created by the CSI driver
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="JWT Signing Secret Name"
-	JWTSigningSecretName string `json:"jwtSigningSecretName,omitempty" yaml:"jwtSigningSecretName,omitempty"`
-
-	// JWTSigningSecretKey is the key in the secret that holds the JWT Signing secret
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="JWT Signing Secret Key"
-	// +kubebuilder:validation:Required
-	JWTSigningSecretKey string `json:"jwtSigningSecretKey" yaml:"jwtSigningSecretKey"`
+	// ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Secret Name"
+	ConfigSecretName string `json:"configSecretName,omitempty" yaml:"configSecretName,omitempty"`
 }
 
 // StorageSystemSecretProviderClass is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials

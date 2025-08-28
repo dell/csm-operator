@@ -100,6 +100,28 @@ spec:
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
+                        configSecretProviderClass:
+                          description: |-
+                            ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+                            Applicable from CSM v1.15 onwards
+                          items:
+                            description:
+                              ConfigSecretProviderClass is the config secret
+                              configuration for CSM Authorization
+                            properties:
+                              configSecretName:
+                                description:
+                                  ConfigSecretName is the name of the Kubernetes
+                                  secret created by the CSI driver
+                                type: string
+                              configSecretProviderClassName:
+                                description:
+                                  ConfigSecretProviderClassName is the name
+                                  of the SecretProviderClass that holds the config secretObject
+                                type: string
+                            type: object
+                          maxItems: 1
+                          type: array
                         controllerReconcileInterval:
                           description:
                             The interval which the reconcile of each controller
@@ -254,35 +276,6 @@ spec:
                             ImagePullPolicy is the image pull policy for
                             the image
                           type: string
-                        jwtSigningSecretProviderClass:
-                          description: |-
-                            JWTSigningSecretProviderClass is the SecretProviderClass Object details for jwt signing secret
-                            Applicable from CSM v1.15 onwards
-                          items:
-                            description:
-                              JWTSigningSecretProviderClass is the jwt signing
-                              secret configuration for CSM Authorization
-                            properties:
-                              jwtSecretProviderClassName:
-                                description:
-                                  JWTSecretProviderClassName is the name
-                                  of the SecretProviderClass that holds the JWT secretObject
-                                type: string
-                              jwtSigningSecretKey:
-                                description:
-                                  JWTSigningSecretKey is the key in the secret
-                                  that holds the JWT Signing secret
-                                type: string
-                              jwtSigningSecretName:
-                                description:
-                                  JWTSigningSecretName is the name of the
-                                  Kubernetes secret created by the CSI driver
-                                type: string
-                            required:
-                              - jwtSigningSecretKey
-                            type: object
-                          maxItems: 1
-                          type: array
                         leaderElection:
                           description:
                             LeaderElection is boolean flag to enable leader
@@ -600,6 +593,28 @@ spec:
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
+                        configSecretProviderClass:
+                          description: |-
+                            ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+                            Applicable from CSM v1.15 onwards
+                          items:
+                            description:
+                              ConfigSecretProviderClass is the config secret
+                              configuration for CSM Authorization
+                            properties:
+                              configSecretName:
+                                description:
+                                  ConfigSecretName is the name of the Kubernetes
+                                  secret created by the CSI driver
+                                type: string
+                              configSecretProviderClassName:
+                                description:
+                                  ConfigSecretProviderClassName is the name
+                                  of the SecretProviderClass that holds the config secretObject
+                                type: string
+                            type: object
+                          maxItems: 1
+                          type: array
                         controllerReconcileInterval:
                           description:
                             The interval which the reconcile of each controller
@@ -754,35 +769,6 @@ spec:
                             ImagePullPolicy is the image pull policy for
                             the image
                           type: string
-                        jwtSigningSecretProviderClass:
-                          description: |-
-                            JWTSigningSecretProviderClass is the SecretProviderClass Object details for jwt signing secret
-                            Applicable from CSM v1.15 onwards
-                          items:
-                            description:
-                              JWTSigningSecretProviderClass is the jwt signing
-                              secret configuration for CSM Authorization
-                            properties:
-                              jwtSecretProviderClassName:
-                                description:
-                                  JWTSecretProviderClassName is the name
-                                  of the SecretProviderClass that holds the JWT secretObject
-                                type: string
-                              jwtSigningSecretKey:
-                                description:
-                                  JWTSigningSecretKey is the key in the secret
-                                  that holds the JWT Signing secret
-                                type: string
-                              jwtSigningSecretName:
-                                description:
-                                  JWTSigningSecretName is the name of the
-                                  Kubernetes secret created by the CSI driver
-                                type: string
-                            required:
-                              - jwtSigningSecretKey
-                            type: object
-                          maxItems: 1
-                          type: array
                         leaderElection:
                           description:
                             LeaderElection is boolean flag to enable leader
@@ -1118,6 +1104,29 @@ spec:
                           commander:
                             description: Commander is the image tag for the Container
                             type: string
+                          configSecretProviderClass:
+                            description: |-
+                              ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+                              Applicable from CSM v1.15 onwards
+                            items:
+                              description:
+                                ConfigSecretProviderClass is the config secret
+                                configuration for CSM Authorization
+                              properties:
+                                configSecretName:
+                                  description:
+                                    ConfigSecretName is the name of the Kubernetes
+                                    secret created by the CSI driver
+                                  type: string
+                                configSecretProviderClassName:
+                                  description:
+                                    ConfigSecretProviderClassName is the
+                                    name of the SecretProviderClass that holds the config
+                                    secretObject
+                                  type: string
+                              type: object
+                            maxItems: 1
+                            type: array
                           controllerReconcileInterval:
                             description:
                               The interval which the reconcile of each controller
@@ -1274,35 +1283,6 @@ spec:
                               ImagePullPolicy is the image pull policy for
                               the image
                             type: string
-                          jwtSigningSecretProviderClass:
-                            description: |-
-                              JWTSigningSecretProviderClass is the SecretProviderClass Object details for jwt signing secret
-                              Applicable from CSM v1.15 onwards
-                            items:
-                              description:
-                                JWTSigningSecretProviderClass is the jwt
-                                signing secret configuration for CSM Authorization
-                              properties:
-                                jwtSecretProviderClassName:
-                                  description:
-                                    JWTSecretProviderClassName is the name
-                                    of the SecretProviderClass that holds the JWT secretObject
-                                  type: string
-                                jwtSigningSecretKey:
-                                  description:
-                                    JWTSigningSecretKey is the key in the
-                                    secret that holds the JWT Signing secret
-                                  type: string
-                                jwtSigningSecretName:
-                                  description:
-                                    JWTSigningSecretName is the name of the
-                                    Kubernetes secret created by the CSI driver
-                                  type: string
-                              required:
-                                - jwtSigningSecretKey
-                              type: object
-                            maxItems: 1
-                            type: array
                           leaderElection:
                             description:
                               LeaderElection is boolean flag to enable leader
@@ -1616,6 +1596,28 @@ spec:
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
+                        configSecretProviderClass:
+                          description: |-
+                            ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+                            Applicable from CSM v1.15 onwards
+                          items:
+                            description:
+                              ConfigSecretProviderClass is the config secret
+                              configuration for CSM Authorization
+                            properties:
+                              configSecretName:
+                                description:
+                                  ConfigSecretName is the name of the Kubernetes
+                                  secret created by the CSI driver
+                                type: string
+                              configSecretProviderClassName:
+                                description:
+                                  ConfigSecretProviderClassName is the name
+                                  of the SecretProviderClass that holds the config secretObject
+                                type: string
+                            type: object
+                          maxItems: 1
+                          type: array
                         controllerReconcileInterval:
                           description:
                             The interval which the reconcile of each controller
@@ -1770,35 +1772,6 @@ spec:
                             ImagePullPolicy is the image pull policy for
                             the image
                           type: string
-                        jwtSigningSecretProviderClass:
-                          description: |-
-                            JWTSigningSecretProviderClass is the SecretProviderClass Object details for jwt signing secret
-                            Applicable from CSM v1.15 onwards
-                          items:
-                            description:
-                              JWTSigningSecretProviderClass is the jwt signing
-                              secret configuration for CSM Authorization
-                            properties:
-                              jwtSecretProviderClassName:
-                                description:
-                                  JWTSecretProviderClassName is the name
-                                  of the SecretProviderClass that holds the JWT secretObject
-                                type: string
-                              jwtSigningSecretKey:
-                                description:
-                                  JWTSigningSecretKey is the key in the secret
-                                  that holds the JWT Signing secret
-                                type: string
-                              jwtSigningSecretName:
-                                description:
-                                  JWTSigningSecretName is the name of the
-                                  Kubernetes secret created by the CSI driver
-                                type: string
-                            required:
-                              - jwtSigningSecretKey
-                            type: object
-                          maxItems: 1
-                          type: array
                         leaderElection:
                           description:
                             LeaderElection is boolean flag to enable leader
@@ -2118,6 +2091,29 @@ spec:
                           commander:
                             description: Commander is the image tag for the Container
                             type: string
+                          configSecretProviderClass:
+                            description: |-
+                              ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+                              Applicable from CSM v1.15 onwards
+                            items:
+                              description:
+                                ConfigSecretProviderClass is the config secret
+                                configuration for CSM Authorization
+                              properties:
+                                configSecretName:
+                                  description:
+                                    ConfigSecretName is the name of the Kubernetes
+                                    secret created by the CSI driver
+                                  type: string
+                                configSecretProviderClassName:
+                                  description:
+                                    ConfigSecretProviderClassName is the
+                                    name of the SecretProviderClass that holds the config
+                                    secretObject
+                                  type: string
+                              type: object
+                            maxItems: 1
+                            type: array
                           controllerReconcileInterval:
                             description:
                               The interval which the reconcile of each controller
@@ -2274,35 +2270,6 @@ spec:
                               ImagePullPolicy is the image pull policy for
                               the image
                             type: string
-                          jwtSigningSecretProviderClass:
-                            description: |-
-                              JWTSigningSecretProviderClass is the SecretProviderClass Object details for jwt signing secret
-                              Applicable from CSM v1.15 onwards
-                            items:
-                              description:
-                                JWTSigningSecretProviderClass is the jwt
-                                signing secret configuration for CSM Authorization
-                              properties:
-                                jwtSecretProviderClassName:
-                                  description:
-                                    JWTSecretProviderClassName is the name
-                                    of the SecretProviderClass that holds the JWT secretObject
-                                  type: string
-                                jwtSigningSecretKey:
-                                  description:
-                                    JWTSigningSecretKey is the key in the
-                                    secret that holds the JWT Signing secret
-                                  type: string
-                                jwtSigningSecretName:
-                                  description:
-                                    JWTSigningSecretName is the name of the
-                                    Kubernetes secret created by the CSI driver
-                                  type: string
-                              required:
-                                - jwtSigningSecretKey
-                              type: object
-                            maxItems: 1
-                            type: array
                           leaderElection:
                             description:
                               LeaderElection is boolean flag to enable leader
@@ -2648,6 +2615,29 @@ spec:
                             commander:
                               description: Commander is the image tag for the Container
                               type: string
+                            configSecretProviderClass:
+                              description: |-
+                                ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+                                Applicable from CSM v1.15 onwards
+                              items:
+                                description:
+                                  ConfigSecretProviderClass is the config
+                                  secret configuration for CSM Authorization
+                                properties:
+                                  configSecretName:
+                                    description:
+                                      ConfigSecretName is the name of the
+                                      Kubernetes secret created by the CSI driver
+                                    type: string
+                                  configSecretProviderClassName:
+                                    description:
+                                      ConfigSecretProviderClassName is the
+                                      name of the SecretProviderClass that holds the
+                                      config secretObject
+                                    type: string
+                                type: object
+                              maxItems: 1
+                              type: array
                             controllerReconcileInterval:
                               description:
                                 The interval which the reconcile of each
@@ -2805,36 +2795,6 @@ spec:
                                 ImagePullPolicy is the image pull policy
                                 for the image
                               type: string
-                            jwtSigningSecretProviderClass:
-                              description: |-
-                                JWTSigningSecretProviderClass is the SecretProviderClass Object details for jwt signing secret
-                                Applicable from CSM v1.15 onwards
-                              items:
-                                description:
-                                  JWTSigningSecretProviderClass is the jwt
-                                  signing secret configuration for CSM Authorization
-                                properties:
-                                  jwtSecretProviderClassName:
-                                    description:
-                                      JWTSecretProviderClassName is the name
-                                      of the SecretProviderClass that holds the JWT
-                                      secretObject
-                                    type: string
-                                  jwtSigningSecretKey:
-                                    description:
-                                      JWTSigningSecretKey is the key in the
-                                      secret that holds the JWT Signing secret
-                                    type: string
-                                  jwtSigningSecretName:
-                                    description:
-                                      JWTSigningSecretName is the name of
-                                      the Kubernetes secret created by the CSI driver
-                                    type: string
-                                required:
-                                  - jwtSigningSecretKey
-                                type: object
-                              maxItems: 1
-                              type: array
                             leaderElection:
                               description:
                                 LeaderElection is boolean flag to enable
@@ -3169,6 +3129,29 @@ spec:
                             commander:
                               description: Commander is the image tag for the Container
                               type: string
+                            configSecretProviderClass:
+                              description: |-
+                                ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+                                Applicable from CSM v1.15 onwards
+                              items:
+                                description:
+                                  ConfigSecretProviderClass is the config
+                                  secret configuration for CSM Authorization
+                                properties:
+                                  configSecretName:
+                                    description:
+                                      ConfigSecretName is the name of the
+                                      Kubernetes secret created by the CSI driver
+                                    type: string
+                                  configSecretProviderClassName:
+                                    description:
+                                      ConfigSecretProviderClassName is the
+                                      name of the SecretProviderClass that holds the
+                                      config secretObject
+                                    type: string
+                                type: object
+                              maxItems: 1
+                              type: array
                             controllerReconcileInterval:
                               description:
                                 The interval which the reconcile of each
@@ -3326,36 +3309,6 @@ spec:
                                 ImagePullPolicy is the image pull policy
                                 for the image
                               type: string
-                            jwtSigningSecretProviderClass:
-                              description: |-
-                                JWTSigningSecretProviderClass is the SecretProviderClass Object details for jwt signing secret
-                                Applicable from CSM v1.15 onwards
-                              items:
-                                description:
-                                  JWTSigningSecretProviderClass is the jwt
-                                  signing secret configuration for CSM Authorization
-                                properties:
-                                  jwtSecretProviderClassName:
-                                    description:
-                                      JWTSecretProviderClassName is the name
-                                      of the SecretProviderClass that holds the JWT
-                                      secretObject
-                                    type: string
-                                  jwtSigningSecretKey:
-                                    description:
-                                      JWTSigningSecretKey is the key in the
-                                      secret that holds the JWT Signing secret
-                                    type: string
-                                  jwtSigningSecretName:
-                                    description:
-                                      JWTSigningSecretName is the name of
-                                      the Kubernetes secret created by the CSI driver
-                                    type: string
-                                required:
-                                  - jwtSigningSecretKey
-                                type: object
-                              maxItems: 1
-                              type: array
                             leaderElection:
                               description:
                                 LeaderElection is boolean flag to enable

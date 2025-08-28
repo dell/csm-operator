@@ -77,17 +77,15 @@ spec:
           # Default value: None
           storageclass: ""
 
-        - name: jwt
-          # JWT signing secret configuration:
-          # If using a CSI driver, specify the SecretProviderClass.
-          # Otherwise, a default Kubernetes secret will be used for JWT signing secret.
-          jwtSigningSecretProviderClass:
-            # Name of the SecretProviderClass that holds the JWT secretObject.
-            - jwtSecretProviderClassName: secret-provider-class-1
+        - name: config
+          # Config secret configuration:
+          # Use a SecretProviderClass for the config secret; otherwise, the user must manually create the config secret before installing Authorization.
+          # If using a Secret Store CSI driver, specify the SecretProviderClass that contains the config object.
+          configSigningSecretProviderClass:
+            # Name of the SecretProviderClass that holds the config secretObject.
+            - configSecretProviderClassName: secret-provider-class-1
               # The name of the Kubernetes secret created by the CSI driver
-              jwtSigningSecretName: jwt-signing-secret-name
-              # The key in the secret that holds the JWT signing secret
-              jwtSigningSecretKey: secret
+              configSigningSecretName: config-secret-name
 
         - name: storage-system-credentials
           secretProviderClasses:

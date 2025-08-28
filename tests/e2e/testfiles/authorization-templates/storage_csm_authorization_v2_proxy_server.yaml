@@ -82,14 +82,12 @@ spec:
           sentinel: sentinel
           redisReplicas: 5
 
-        - name: jwt
-          jwtSigningSecretProviderClass:
-            # Name of the SecretProviderClass that holds the JWT secretObject.
-            - jwtSecretProviderClassName: array-creds
+        - name: config
+          configSigningSecretProviderClass:
+            # Name of the SecretProviderClass that holds the config secretObject.
+            - configSecretProviderClassName: array-creds
               # The name of the Kubernetes secret created by the CSI driver
-              jwtSigningSecretName: jwt-secret
-              # The key in the secret that holds the JWT signing secret
-              jwtSigningSecretKey: secret
+              configSigningSecretName: config-secret
 
         - name: storage-system-credentials
           secretProviderClasses:

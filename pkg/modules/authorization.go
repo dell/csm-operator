@@ -137,8 +137,8 @@ const (
 	AuthCertManagerComponent = "cert-manager"
 	// AuthRedisComponent - redis component
 	AuthRedisComponent = "redis"
-	// AuthJWTSigningSecretComponent - jwt secret component
-	AuthJWTSigningSecretComponent = "jwt"
+	// AuthConfigSecretComponent - config secret component
+	AuthConfigSecretComponent = "config"
 	// AuthVaultComponent - vault component
 	AuthVaultComponent = "vault"
 	// AuthStorageSystemCredentialsComponent - storage-system-credentials component
@@ -157,16 +157,16 @@ const (
 )
 
 var (
-	redisStorageClass          string
-	redisSecretName            string
-	redisUsernameKey           string
-	redisPasswordKey           string
-	jwtSecretProviderClassName string
-	authHostname               string
-	proxyIngressClassName      string
-	authCertificate            string
-	authPrivateKey             string
-	secretName                 string
+	redisStorageClass             string
+	redisSecretName               string
+	redisUsernameKey              string
+	redisPasswordKey              string
+	configSecretProviderClassName string
+	authHostname                  string
+	proxyIngressClassName         string
+	authCertificate               string
+	authPrivateKey                string
+	secretName                    string
 
 	pathType    = networking.PathTypePrefix
 	duration    = 2160 * time.Hour // 90d
@@ -553,19 +553,19 @@ func AuthorizationServerPrecheck(ctx context.Context, op operatorutils.OperatorC
 		return fmt.Errorf("authorization version is empty")
 	}
 
-	jwtComponentFound := false
-	jwtSecretProviderClassFound := true
+	configComponentFound := false
+	configSecretProviderClassFound := false
 	for _, component := range auth.Components {
-		if component.Name == AuthJWTSigningSecretComponent {
-			jwtComponentFound = true
-			for _, config := range component.JWTSigningSecretProviderClass {
-				if config.JWTSecretProviderClassName != "" {
-					jwtSecretProviderClassFound = false
+		if component.Name == AuthConfigSecretComponent {
+			configComponentFound = true
+			for _, config := range component.ConfigSecretProviderClass {
+				if config.ConfigSecretProviderClassName != "" {
+					configSecretProviderClassFound = true
 				}
 			}
 		}
 	}
-	if !jwtComponentFound || jwtSecretProviderClassFound {
+	if !configComponentFound || !configSecretProviderClassFound {
 		// Check for secrets
 		proxyServerSecrets := []string{"karavi-config-secret"}
 		for _, name := range proxyServerSecrets {
@@ -789,7 +789,7 @@ func authorizationStorageServiceV1(ctx context.Context, isDeleting bool, cr csmv
 		}
 	}
 
-	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, 1, jwtSecretProviderClassName)
+	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, 1, configSecretProviderClassName)
 
 	// set karavi-storage-secret volume
 	deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, corev1.Volume{
@@ -863,10 +863,10 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		case AuthStorageSystemCredentialsComponent:
 			secretProviderClasses = component.SecretProviderClasses
 			secrets = component.Secrets
-		case AuthJWTSigningSecretComponent:
-			// create jwt signing kubernetes secret or use a secret provider class
-			for _, config := range component.JWTSigningSecretProviderClass {
-				jwtSecretProviderClassName = config.JWTSecretProviderClassName
+		case AuthConfigSecretComponent:
+			// create config kubernetes secret or use a secret provider class
+			for _, config := range component.ConfigSecretProviderClass {
+				configSecretProviderClassName = config.ConfigSecretProviderClassName
 			}
 		default:
 			continue
@@ -885,7 +885,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 
 	// conversion to int32 is safe for a value up to 2147483647
 	// #nosec G115
-	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, int32(replicas), jwtSecretProviderClassName)
+	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, int32(replicas), configSecretProviderClassName)
 
 	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
 	if semver.Compare(authModule.ConfigVersion, "v2.3.0") >= 0 {
@@ -1227,10 +1227,10 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 					redisSecretName = config.RedisSecretName
 				}
 			}
-		case AuthJWTSigningSecretComponent:
-			// create jwt signing kubernetes secret or use a secret provider class
-			for _, config := range component.JWTSigningSecretProviderClass {
-				jwtSecretProviderClassName = config.JWTSecretProviderClassName
+		case AuthConfigSecretComponent:
+			// create config signing kubernetes secret or use a secret provider class
+			for _, config := range component.ConfigSecretProviderClass {
+				configSecretProviderClassName = config.ConfigSecretProviderClassName
 			}
 		default:
 			continue
@@ -1239,7 +1239,7 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 
 	// conversion to int32 is safe for a value up to 2147483647
 	// #nosec G115
-	deployment := getProxyServerScaffold(cr.Name, sentinelName, cr.Namespace, proxyImage, opaImage, opaKubeMgmtImage, jwtSecretProviderClassName, redisSecretName, redisPasswordKey, int32(replicas), sentinels)
+	deployment := getProxyServerScaffold(cr.Name, sentinelName, cr.Namespace, proxyImage, opaImage, opaKubeMgmtImage, configSecretProviderClassName, redisSecretName, redisPasswordKey, int32(replicas), sentinels)
 
 	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
 	for _, component := range authModule.Components {
@@ -1258,21 +1258,7 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 		}
 	}
 
-	for _, component := range authModule.Components {
-		for _, config := range component.JWTSigningSecretProviderClass {
-			if config.JWTSecretProviderClassName != "" {
-				// add volume for jwt signing secret provider class
-				jwtVolume := jwtVolume(jwtSecretProviderClassName)
-				deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, jwtVolume)
-
-				// set volume mount for jwt signing secret provider class
-				for i := range deployment.Spec.Template.Spec.Containers {
-					jwtVolumeMount := jwtVolumeMount()
-					deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, jwtVolumeMount)
-				}
-			}
-		}
-	}
+	mountConfigVolume(authModule, &deployment)
 
 	deploymentBytes, err := yaml.Marshal(&deployment)
 	if err != nil {
@@ -1315,10 +1301,10 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 					redisSecretName = config.RedisSecretName
 				}
 			}
-		case AuthJWTSigningSecretComponent:
-			// create jwt signing kubernetes secret or use a secret provider class
-			for _, config := range component.JWTSigningSecretProviderClass {
-				jwtSecretProviderClassName = config.JWTSecretProviderClassName
+		case AuthConfigSecretComponent:
+			// create config signing kubernetes secret or use a secret provider class
+			for _, config := range component.ConfigSecretProviderClass {
+				configSecretProviderClassName = config.ConfigSecretProviderClassName
 			}
 		default:
 			continue
@@ -1327,7 +1313,7 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 
 	// conversion to int32 is safe for a value up to 2147483647
 	// #nosec G115
-	deployment := getTenantServiceScaffold(cr.Name, cr.Namespace, sentinelName, image, jwtSecretProviderClassName, redisSecretName, redisPasswordKey, int32(replicas), sentinelReplicas)
+	deployment := getTenantServiceScaffold(cr.Name, cr.Namespace, sentinelName, image, configSecretProviderClassName, redisSecretName, redisPasswordKey, int32(replicas), sentinelReplicas)
 
 	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
 	for _, component := range authModule.Components {
@@ -1346,21 +1332,7 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 		}
 	}
 
-	for _, component := range authModule.Components {
-		for _, config := range component.JWTSigningSecretProviderClass {
-			if config.JWTSecretProviderClassName != "" {
-				// add volume for jwt signing secret provider class
-				jwtVolume := jwtVolume(jwtSecretProviderClassName)
-				deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, jwtVolume)
-
-				// set volume mount for jwt signing secret provider class
-				for i := range deployment.Spec.Template.Spec.Containers {
-					jwtVolumeMount := jwtVolumeMount()
-					deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, jwtVolumeMount)
-				}
-			}
-		}
-	}
+	mountConfigVolume(authModule, &deployment)
 
 	deploymentBytes, err := yaml.Marshal(&deployment)
 	if err != nil {
@@ -2276,4 +2248,22 @@ func getRedisChecksumFromSecretData(ctx context.Context, ctrlClient crclient.Cli
 
 	hash := sha256.Sum256(yamlBytes)
 	return hex.EncodeToString(hash[:]), nil
+}
+
+func mountConfigVolume(authModule csmv1.Module, deployment *appsv1.Deployment) {
+	for _, component := range authModule.Components {
+		for _, config := range component.ConfigSecretProviderClass {
+			if config.ConfigSecretProviderClassName != "" {
+				// add volume for config secret provider class
+				configVolume := configVolume(configSecretProviderClassName)
+				deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, configVolume)
+
+				// set volume mount for config secret provider class
+				for i := range deployment.Spec.Template.Spec.Containers {
+					configVolumeMount := configVolumeMount()
+					deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, configVolumeMount)
+				}
+			}
+		}
+	}
 }

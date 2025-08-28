@@ -75,10 +75,10 @@ spec:
           redisCommander: rediscommander
           sentinel: sentinel
           redisReplicas: 5
-        - name: jwt
-          jwtSigningSecretProviderClass:
-            - jwtSecretProviderClassName: ""
-              jwtSigningSecretName: ""
+        - name: config
+          configSigningSecretProviderClass:
+            - configSecretProviderClassName: ""
+              configSigningSecretName: ""
         - name: vault
           vaultConfigurations:
             - identifier: vault0
