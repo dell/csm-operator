@@ -309,7 +309,7 @@ spec:
             # proxyHost: hostname of the csm-authorization server
             # Default value: none
             - name: "PROXY_HOST"
-              value: "csm-authorization.com"
+              value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
             # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
             # Default value: "true"
             - name: "SKIP_CERTIFICATE_VALIDATION"
