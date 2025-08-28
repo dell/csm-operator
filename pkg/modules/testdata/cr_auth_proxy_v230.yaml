@@ -83,13 +83,13 @@ spec:
           # Otherwise, a default Kubernetes secret will be used for Redis credentials.
           redisSecretProviderClass:
             # Name of the SecretProviderClass that holds the Redis secretObject.
-            - secretProviderClassName: secret-provider-class-1
+            - secretProviderClassName: ""
               # Name of the Kubernetes secret (created by the Secret Store CSI driver) that contains Redis credentials.
-              redisSecretName: redis-secret
+              redisSecretName: ""
               # Key in the secret that stores the Redis username.
-              redisUsernameKey: username
+              redisUsernameKey: ""
               # Key in the secret that stores the Redis password.
-              redisPasswordKey: password
+              redisPasswordKey: ""
           redis: redis:8.2.0-alpine
           commander: docker.io/rediscommander/redis-commander:latest
           redisName: redis-csm
