@@ -2156,3 +2156,88 @@ func TestGetRedisChecksumFromSecretData(t *testing.T) {
 		t.Fatal("expected checksum, got empty string")
 	}
 }
+
+func TestMountRedisVolumes(t *testing.T) {
+	t.Run("it mounts redis volumes", func(t *testing.T) {
+		spcName := "array-creds"
+		expectedVolumeName := fmt.Sprintf("secrets-store-inline-%s", spcName)
+		expectedMountPath := fmt.Sprintf("/etc/csm-authorization/%s", spcName)
+
+		spec := &corev1.PodSpec{
+			Volumes:    []corev1.Volume{},
+			Containers: []corev1.Container{{}},
+		}
+
+		mountRedisVolumes(spec, spcName)
+
+		foundVolume := false
+		for _, v := range spec.Volumes {
+			if v.Name == expectedVolumeName {
+				foundVolume = true
+				if v.VolumeSource.CSI == nil || v.VolumeSource.CSI.Driver != "secrets-store.csi.k8s.io" {
+					t.Errorf("unexpected CSI driver or nil CSI source")
+				}
+				if v.VolumeSource.CSI.VolumeAttributes["secretProviderClass"] != spcName {
+					t.Errorf("expected secretProviderClass %s, got %s", spcName, v.VolumeSource.CSI.VolumeAttributes["secretProviderClass"])
+				}
+			}
+		}
+		if !foundVolume {
+			t.Errorf("expected volume %s not found", expectedVolumeName)
+		}
+
+		foundMount := false
+		for _, m := range spec.Containers[0].VolumeMounts {
+			if m.Name == expectedVolumeName && m.MountPath == expectedMountPath && m.ReadOnly {
+				foundMount = true
+			}
+		}
+		if !foundMount {
+			t.Errorf("expected volume mount %s at path %s not found", expectedVolumeName, expectedMountPath)
+		}
+	})
+
+	t.Run("it doesn't duplicate volumes or mounts", func(t *testing.T) {
+		spcName := "array-creds"
+		volumeName := fmt.Sprintf("secrets-store-inline-%s", spcName)
+		mountPath := fmt.Sprintf("/etc/csm-authorization/%s", spcName)
+
+		readOnly := true
+		spec := &corev1.PodSpec{
+			Volumes: []corev1.Volume{
+				{
+					Name: volumeName,
+					VolumeSource: corev1.VolumeSource{
+						CSI: &corev1.CSIVolumeSource{
+							Driver:   "secrets-store.csi.k8s.io",
+							ReadOnly: &readOnly,
+							VolumeAttributes: map[string]string{
+								"secretProviderClass": spcName,
+							},
+						},
+					},
+				},
+			},
+			Containers: []corev1.Container{
+				{
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							Name:      volumeName,
+							MountPath: mountPath,
+							ReadOnly:  true,
+						},
+					},
+				},
+			},
+		}
+
+		mountRedisVolumes(spec, spcName)
+
+		if len(spec.Volumes) != 1 {
+			t.Errorf("expected 1 volume, got %d", len(spec.Volumes))
+		}
+		if len(spec.Containers[0].VolumeMounts) != 1 {
+			t.Errorf("expected 1 volume mount, got %d", len(spec.Containers[0].VolumeMounts))
+		}
+	})
+}

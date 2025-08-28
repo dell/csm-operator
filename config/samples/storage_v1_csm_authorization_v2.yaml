@@ -69,7 +69,19 @@ spec:
           # openTelemetryCollectorAddress: the OTLP receiving endpoint using gRPC
           openTelemetryCollectorAddress: ""
         - name: redis
-          redis: docker.io/redis:7.4.3-alpine
+          # Optional Redis secret configuration:
+          # If using Secret Store CSI driver, specify the SecretProviderClass for Redis credentials.
+          # Otherwise, a default Kubernetes secret will be used.
+          redisSecretProviderClass:
+            # Name of the SecretProviderClass that holds the Redis secretObject.
+            - secretProviderClassName: ""
+              # Name of the Kubernetes secret (created by the Secret Store CSI driver) that contains Redis credentials.
+              redisSecretName: ""
+              # Key in the secret that stores the Redis username.
+              redisUsernameKey: ""
+              # Key in the secret that stores the Redis password.
+              redisPasswordKey: ""
+          redis: redis:8.2.0-alpine
           commander: docker.io/rediscommander/redis-commander:latest
           redisName: redis-csm
           redisCommander: rediscommander
@@ -91,17 +103,17 @@ spec:
             vault:
               - secret-provider-class-1
               - secret-provider-class-2
-            conjur:
-              - name: secret-provider-class-3
-                paths:
-                  - usernamePath: secrets/username1
-                    passwordPath: secrets/password1
-                  - usernamePath: secrets/username2
-                    passwordPath: secrets/password2
-              - name: secret-provider-class-4
-                paths:
-                  - usernamePath: secrets/username3
-                    passwordPath: secrets/password3
+            # conjur:
+              # - name: secret-provider-class-3
+              #   paths:
+                  # - usernamePath: secrets/username1
+                  #   passwordPath: secrets/password1
+                  # - usernamePath: secrets/username2
+                  #   passwordPath: secrets/password2
+              # - name: secret-provider-class-4
+                # paths:
+                  # - usernamePath: secrets/username3
+                  #   passwordPath: secrets/password3
           # secrets:
           #   - secret-1
           #   - secret-2

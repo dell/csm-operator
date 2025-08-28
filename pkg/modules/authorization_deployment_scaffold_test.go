@@ -14,9 +14,7 @@ import (
 	"fmt"
 	"testing"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestGetProxyServerScaffold(t *testing.T) {
@@ -183,7 +181,7 @@ func TestGetTenantServiceScaffold(t *testing.T) {
 
 	// Args
 	expectedArgs := []string{
-		"--redis-sentinel=sentinel-0.sentinel.test-namespace.svc.cluster.local:5000,sentinel-1.sentinel.test-namespace.svc.cluster.local:5000,sentinel-2.sentinel.test-namespace.svc.cluster.local:5000,sentinel-3.sentinel.test-namespace.svc.cluster.local:5000,sentinel-4.sentinel.test-namespace.svc.cluster.local:5000",
+		"--redis-sentinel=$(SENTINELS)",
 		"--redis-password=$(REDIS_PASSWORD)",
 	}
 	if len(container.Args) != len(expectedArgs) {
@@ -269,7 +267,7 @@ func TestGetAuthorizationRediscommanderDeploymentScaffold(t *testing.T) {
 	envVars := deploy.Spec.Template.Spec.Containers[0].Env
 	found := false
 	for _, env := range envVars {
-		if env.Name == "SENTINELS" && env.Value == "sentinel-0.sentinel.default.svc.cluster.local:5000,sentinel-1.sentinel.default.svc.cluster.local:5000,sentinel-2.sentinel.default.svc.cluster.local:5000,sentinel-3.sentinel.default.svc.cluster.local:5000,sentinel-4.sentinel.default.svc.cluster.local:5000" {
+		if env.Name == "SENTINELS" {
 			found = true
 			break
 		}
@@ -351,60 +349,24 @@ func TestGetAuthorizationSentinelStatefulsetScaffold(t *testing.T) {
 }
 
 func TestCreateRedisK8sSecret(t *testing.T) {
-	cr := csmv1.ContainerStorageModule{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "test-namespace",
-		},
-	}
+	name := "name"
+	namespace := "test-namespace"
+	secret := createRedisK8sSecret(name, namespace)
 
-	secret := createRedisK8sSecret(cr, "username", "password")
-
-	if secret.Name != defaultRedisSecretName {
-		t.Errorf("expected secret name %s, got %s", defaultRedisSecretName, secret.Name)
+	if secret.Name != name {
+		t.Errorf("expected secret name 'name', got %s", name)
 	}
-	if secret.Namespace != "test-namespace" {
-		t.Errorf("expected namespace 'test-namespace', got %s", secret.Namespace)
+	if secret.Namespace != namespace {
+		t.Errorf("expected namespace 'test-namespace', got %s", namespace)
 	}
 	if secret.Type != corev1.SecretTypeBasicAuth {
 		t.Errorf("expected secret type BasicAuth, got %s", secret.Type)
 	}
-	if secret.StringData["username"] != "dev" {
+	if secret.StringData["commander_user"] != "dev" {
 		t.Errorf("expected username 'dev', got %s", secret.StringData["username"])
 	}
 	if secret.StringData["password"] != "K@ravi123!" {
 		t.Errorf("expected password 'K@ravi123!', got %s", secret.StringData["password"])
-	}
-}
-
-func TestRedisVolume(t *testing.T) {
-	secretName := "redis-secret"
-	volume := redisVolume(secretName)
-
-	if volume.Name != "secrets-store-inline-redis" {
-		t.Errorf("expected volume name 'secrets-store-inline-redis', got %s", volume.Name)
-	}
-	if volume.VolumeSource.CSI == nil {
-		t.Fatal("expected CSI volume source, got nil")
-	}
-	if volume.VolumeSource.CSI.Driver != "secrets-store.csi.k8s.io" {
-		t.Errorf("expected CSI driver 'secrets-store.csi.k8s.io', got %s", volume.VolumeSource.CSI.Driver)
-	}
-	if volume.VolumeSource.CSI.VolumeAttributes["secretProviderClass"] != secretName {
-		t.Errorf("expected secretProviderClass '%s', got %s", secretName, volume.VolumeSource.CSI.VolumeAttributes["secretProviderClass"])
-	}
-}
-
-func TestRedisVolumeMount(t *testing.T) {
-	mount := redisVolumeMount()
-
-	if mount.Name != "secrets-store-inline-redis" {
-		t.Errorf("expected mount name 'secrets-store-inline-redis', got %s", mount.Name)
-	}
-	if mount.MountPath != "/etc/csm-authorization/redis" {
-		t.Errorf("expected mount path '/etc/csm-authorization/redis', got %s", mount.MountPath)
-	}
-	if !mount.ReadOnly {
-		t.Error("expected mount to be read-only")
 	}
 }
 
