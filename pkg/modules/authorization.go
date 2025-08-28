@@ -855,6 +855,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		case AuthRedisComponent:
 			sentinelName = component.Sentinel
 			redisReplicas = component.RedisReplicas
+			redisSecretProviderClassName = ""
 			redisSecretName = defaultRedisSecretName
 			redisUsernameKey = defaultRedisUsernameKey
 			redisPasswordKey = defaultRedisPasswordKey
@@ -1207,6 +1208,7 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 		case AuthRedisComponent:
 			sentinelName = component.Sentinel
 			redisReplicas = component.RedisReplicas
+			redisSecretProviderClassName = ""
 			redisSecretName = defaultRedisSecretName
 			redisUsernameKey = defaultRedisUsernameKey
 			redisPasswordKey = defaultRedisPasswordKey
@@ -1262,6 +1264,7 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 		case AuthRedisComponent:
 			sentinelName = component.Sentinel
 			redisReplicas = component.RedisReplicas
+			redisSecretProviderClassName = ""
 			redisSecretName = defaultRedisSecretName
 			redisUsernameKey = defaultRedisUsernameKey
 			redisPasswordKey = defaultRedisPasswordKey
@@ -1314,6 +1317,7 @@ func applyDeleteAuthorizationRedisStatefulsetV2(ctx context.Context, isDeleting 
 			redisName = component.RedisName
 			image = component.Redis
 			redisReplicas = component.RedisReplicas
+			redisSecretProviderClassName = ""
 			redisSecretName = defaultRedisSecretName
 			redisUsernameKey = defaultRedisUsernameKey
 			redisPasswordKey = defaultRedisPasswordKey
@@ -1373,6 +1377,7 @@ func applyDeleteAuthorizationRediscommanderDeploymentV2(ctx context.Context, isD
 			sentinelName = component.Sentinel
 			image = component.Commander
 			redisReplicas = component.RedisReplicas
+			redisSecretProviderClassName = ""
 			redisSecretName = defaultRedisSecretName
 			redisUsernameKey = defaultRedisUsernameKey
 			redisPasswordKey = defaultRedisPasswordKey
@@ -1432,6 +1437,7 @@ func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleti
 			redisName = component.RedisName
 			image = component.Redis
 			redisReplicas = component.RedisReplicas
+			redisSecretProviderClassName = ""
 			redisSecretName = defaultRedisSecretName
 			redisUsernameKey = defaultRedisUsernameKey
 			redisPasswordKey = defaultRedisPasswordKey
