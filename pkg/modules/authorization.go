@@ -41,6 +41,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
@@ -1042,9 +1043,9 @@ func removeVaultFromStorageService(ctx context.Context, cr csmv1.ContainerStorag
 	err := ctrlClient.Get(ctx, client.ObjectKey{
 		Namespace: dp.Namespace,
 		Name:      dp.Name,
-	}, &cr)
+	}, dp)
 	if err != nil {
-		log.Infof("%s not found. No need to remvoe vault from storage service.", cr.Name)
+		log.Infof("%s not found. No need to remove vault from storage service.", dp.Name)
 		return nil
 	}
 
