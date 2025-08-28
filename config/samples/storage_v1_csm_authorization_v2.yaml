@@ -69,10 +69,9 @@ spec:
           # openTelemetryCollectorAddress: the OTLP receiving endpoint using gRPC
           openTelemetryCollectorAddress: ""
         - name: redis
-          # Optional:
-          # Redis secret configuration:
-          # If using a Secret Store CSI driver, specify the SecretProviderClass details that holds the Redis secretObject.
-          # Otherwise, a default Kubernetes secret will be used for Redis credentials.
+          # Optional Redis secret configuration:
+          # If using Secret Store CSI driver, specify the SecretProviderClass for Redis credentials.
+          # Otherwise, a default Kubernetes secret will be used.
           redisSecretProviderClass:
             # Name of the SecretProviderClass that holds the Redis secretObject.
             - secretProviderClassName: ""
