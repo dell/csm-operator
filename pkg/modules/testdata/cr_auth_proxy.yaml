@@ -76,9 +76,9 @@ spec:
           sentinel: sentinel
           redisReplicas: 5
         - name: config
-          configSigningSecretProviderClass:
+          configSecretProviderClass:
             - configSecretProviderClassName: ""
-              configSigningSecretName: ""
+              configSecretName: ""
         - name: vault
           vaultConfigurations:
             - identifier: vault0
