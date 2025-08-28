@@ -898,11 +898,11 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	if storageCreds {
 		// Determine whether to read from secret provider classes or kubernetes secrets
 		if secretProviderClasses != nil && (len(secretProviderClasses.Vaults) > 0 || len(secretProviderClasses.Conjurs) > 0) {
-			log.Infof("Using secret provider classes for storage system credentials")
+			log.Info("Using secret provider classes for storage system credentials")
 			// set volumes for secret provider classes
 			configureSecretProviderClass(secretProviderClasses, &deployment)
 		} else {
-			log.Infof("Using Kubernetes secret for storage system credentials")
+			log.Info("Using Kubernetes secret for storage system credentials")
 			// set volumes for kubernetes secrets
 			mountSecretVolumes(secrets, &deployment)
 		}
@@ -912,7 +912,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 			mountRedisVolumes(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
 		}
 	} else {
-		log.Infof("Using Vault for storage system credentials")
+		log.Info("Using Vault for storage system credentials")
 		// Vault is supported only till config v2.2.0 (CSM 1.14)
 		// set vault volumes
 		mountVaultVolumes(vaults, &deployment)
@@ -959,7 +959,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	}
 
 	// if the config version is greater than v2.0.0-alpha, add the collector-address arg
-	v2Version, err := operatorutils.MinVersionCheck("v2.0.0-alpha", authModule.ConfigVersion)
+	v2Version, err := operatorutils.MinVersionCheck("v2.0.0", authModule.ConfigVersion)
 	if err != nil {
 		return err
 	}
@@ -1811,7 +1811,7 @@ func getCerts(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.Con
 	if authCertificate != "" || authPrivateKey != "" {
 		// use custom tls secret
 		if authCertificate != "" && authPrivateKey != "" {
-			log.Infof("using user provided certificate and key for authorization")
+			log.Info("using user provided certificate and key for authorization")
 			buf, err := readConfigFile(authModule, cr, op, AuthCustomCert)
 			if err != nil {
 				return false, YamlString, err
