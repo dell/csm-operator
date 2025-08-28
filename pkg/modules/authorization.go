@@ -1006,13 +1006,22 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	if v2Version {
 		for i, c := range deployment.Spec.Template.Spec.Containers {
 			if c.Name == "storage-service" {
-				deployment.Spec.Template.Spec.Containers[i].Ports = append(deployment.Spec.Template.Spec.Containers[i].Ports,
-					corev1.ContainerPort{
-						Name:          "promhttp",
-						Protocol:      "TCP",
-						ContainerPort: 2112,
-					},
-				)
+				hasPromhttpPort := false
+				for _, port := range c.Ports {
+					if port.Name == "promhttp" {
+						hasPromhttpPort = true
+						break
+					}
+				}
+				if !hasPromhttpPort {
+					deployment.Spec.Template.Spec.Containers[i].Ports = append(deployment.Spec.Template.Spec.Containers[i].Ports,
+						corev1.ContainerPort{
+							Name:          "promhttp",
+							Protocol:      "TCP",
+							ContainerPort: 2112,
+						},
+					)
+				}
 				break
 			}
 		}
