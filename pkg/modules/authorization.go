@@ -150,6 +150,12 @@ const (
 	// defaultRedisPasswordKey - name of default password key
 	defaultRedisPasswordKey = "password"
 
+	// defaultRedisConjurUserPath - default path for Conjur Redis user secret
+	defaultRedisConjurUsernamePath = "secrets/redis-username" // #nosec G101 -- This is a false positive
+
+	// defaultRedisConjurPasswordPath - default path for Conjur Redis password secret
+	defaultRedisConjurPasswordPath = "secrets/redis-password" // #nosec G101 -- This is a false positive
+
 	// AuthLocalStorageClass -
 	AuthLocalStorageClass = "csm-authorization-local-storage"
 
@@ -168,6 +174,8 @@ var (
 	redisPasswordKey              string
 	configSecretProviderClassName string
 	configSecretName              string
+	redisConjurUsernamePath       string
+	redisConjurPasswordPath       string
 	authHostname                  string
 	proxyIngressClassName         string
 	authCertificate               string
@@ -179,7 +187,9 @@ var (
 	renewBefore = 360 * time.Hour  // 15d
 )
 
-// AuthorizationSupportedDrivers ... is a map containing the CSI Drivers supported by CSM Authorization. The key is driver name and the value is the driver plugin identifier
+// AuthorizationSupportedDrivers is a map containing the CSI Drivers supported by CSM Authorization.
+// The key is driver name and the value is the driver plugin identifier.
+// powerscale/isilon & powerflex/vxflexos are valid types
 var AuthorizationSupportedDrivers = map[string]SupportedDriverParam{
 	"powerscale": {
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
@@ -196,7 +206,7 @@ var AuthorizationSupportedDrivers = map[string]SupportedDriverParam{
 	"vxflexos": {
 		PluginIdentifier:              drivers.PowerFlexPluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerFlexConfigParamsVolumeMount,
-	}, // powerscale/isilon & powerflex/vxflexos are valid types
+	},
 	"powermax": {
 		PluginIdentifier:              drivers.PowerMaxPluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerMaxConfigParamsVolumeMount,
@@ -870,19 +880,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		case AuthRedisComponent:
 			sentinelName = component.Sentinel
 			redisReplicas = component.RedisReplicas
-			redisSecretProviderClassName = ""
-			redisSecretName = defaultRedisSecretName
-			redisUsernameKey = defaultRedisUsernameKey
-			redisPasswordKey = defaultRedisPasswordKey
-
-			for _, config := range component.RedisSecretProviderClass {
-				if config.SecretProviderClassName != "" && config.RedisSecretName != "" {
-					redisSecretProviderClassName = config.SecretProviderClassName
-					redisSecretName = config.RedisSecretName
-					redisUsernameKey = config.RedisUsernameKey
-					redisPasswordKey = config.RedisPasswordKey
-				}
-			}
+			updateRedisGlobalVars(component)
 		case AuthVaultComponent:
 			vaults = component.Vaults
 		case AuthStorageSystemCredentialsComponent:
@@ -929,6 +927,9 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 
 		// redis secret provider class
 		if redisSecretProviderClassName != "" && redisSecretName != "" {
+			if redisConjurUsernamePath != "" && redisConjurPasswordPath != "" {
+				updateRedisConjurAnnotations(deployment.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
+			}
 			mountSPCVolume(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
 		}
 	} else {
@@ -1225,19 +1226,7 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 		case AuthRedisComponent:
 			sentinelName = component.Sentinel
 			redisReplicas = component.RedisReplicas
-			redisSecretProviderClassName = ""
-			redisSecretName = defaultRedisSecretName
-			redisUsernameKey = defaultRedisUsernameKey
-			redisPasswordKey = defaultRedisPasswordKey
-
-			for _, config := range component.RedisSecretProviderClass {
-				if config.SecretProviderClassName != "" && config.RedisSecretName != "" {
-					redisSecretProviderClassName = config.SecretProviderClassName
-					redisSecretName = config.RedisSecretName
-					redisUsernameKey = config.RedisUsernameKey
-					redisPasswordKey = config.RedisPasswordKey
-				}
-			}
+			updateRedisGlobalVars(component)
 		case AuthConfigSecretComponent:
 			configSecretName = ""
 			configSecretProviderClassName = ""
@@ -1257,6 +1246,9 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 	deployment := getProxyServerScaffold(cr.Name, sentinelName, cr.Namespace, proxyImage, opaImage, opaKubeMgmtImage, configSecretName, redisSecretName, redisPasswordKey, int32(replicas), redisReplicas)
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
+		if redisConjurUsernamePath != "" && redisConjurPasswordPath != "" {
+			updateRedisConjurAnnotations(deployment.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
+		}
 		mountSPCVolume(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
 	}
 
@@ -1294,19 +1286,7 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 		case AuthRedisComponent:
 			sentinelName = component.Sentinel
 			redisReplicas = component.RedisReplicas
-			redisSecretProviderClassName = ""
-			redisSecretName = defaultRedisSecretName
-			redisUsernameKey = defaultRedisUsernameKey
-			redisPasswordKey = defaultRedisPasswordKey
-
-			for _, config := range component.RedisSecretProviderClass {
-				if config.SecretProviderClassName != "" && config.RedisSecretName != "" {
-					redisSecretProviderClassName = config.SecretProviderClassName
-					redisSecretName = config.RedisSecretName
-					redisUsernameKey = config.RedisUsernameKey
-					redisPasswordKey = config.RedisPasswordKey
-				}
-			}
+			updateRedisGlobalVars(component)
 		case AuthConfigSecretComponent:
 			configSecretProviderClassName = ""
 			configSecretName = ""
@@ -1326,6 +1306,9 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 	deployment := getTenantServiceScaffold(cr.Name, cr.Namespace, sentinelName, image, configSecretName, redisSecretName, redisPasswordKey, int32(replicas), redisReplicas)
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
+		if redisConjurUsernamePath != "" && redisConjurPasswordPath != "" {
+			updateRedisConjurAnnotations(deployment.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
+		}
 		mountSPCVolume(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
 	}
 
@@ -1360,19 +1343,7 @@ func applyDeleteAuthorizationRedisStatefulsetV2(ctx context.Context, isDeleting 
 			redisName = component.RedisName
 			image = component.Redis
 			redisReplicas = component.RedisReplicas
-			redisSecretProviderClassName = ""
-			redisSecretName = defaultRedisSecretName
-			redisUsernameKey = defaultRedisUsernameKey
-			redisPasswordKey = defaultRedisPasswordKey
-
-			for _, config := range component.RedisSecretProviderClass {
-				if config.SecretProviderClassName != "" && config.RedisSecretName != "" {
-					redisSecretProviderClassName = config.SecretProviderClassName
-					redisSecretName = config.RedisSecretName
-					redisUsernameKey = config.RedisUsernameKey
-					redisPasswordKey = config.RedisPasswordKey
-				}
-			}
+			updateRedisGlobalVars(component)
 		default:
 			continue
 		}
@@ -1388,6 +1359,9 @@ func applyDeleteAuthorizationRedisStatefulsetV2(ctx context.Context, isDeleting 
 	statefulset := getAuthorizationRedisStatefulsetScaffold(cr.Name, redisName, cr.Namespace, image, redisSecretName, redisPasswordKey, checksum, int32(redisReplicas))
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
+		if redisConjurUsernamePath != "" && redisConjurPasswordPath != "" {
+			updateRedisConjurAnnotations(statefulset.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
+		}
 		mountSPCVolume(&statefulset.Spec.Template.Spec, redisSecretProviderClassName)
 	}
 
@@ -1420,19 +1394,7 @@ func applyDeleteAuthorizationRediscommanderDeploymentV2(ctx context.Context, isD
 			sentinelName = component.Sentinel
 			image = component.Commander
 			redisReplicas = component.RedisReplicas
-			redisSecretProviderClassName = ""
-			redisSecretName = defaultRedisSecretName
-			redisUsernameKey = defaultRedisUsernameKey
-			redisPasswordKey = defaultRedisPasswordKey
-
-			for _, config := range component.RedisSecretProviderClass {
-				if config.SecretProviderClassName != "" && config.RedisSecretName != "" {
-					redisSecretProviderClassName = config.SecretProviderClassName
-					redisSecretName = config.RedisSecretName
-					redisUsernameKey = config.RedisUsernameKey
-					redisPasswordKey = config.RedisPasswordKey
-				}
-			}
+			updateRedisGlobalVars(component)
 		default:
 			continue
 		}
@@ -1448,6 +1410,9 @@ func applyDeleteAuthorizationRediscommanderDeploymentV2(ctx context.Context, isD
 	deployment := getAuthorizationRediscommanderDeploymentScaffold(cr.Name, rediscommanderName, cr.Namespace, image, redisSecretName, redisUsernameKey, redisPasswordKey, sentinelName, checksum, redisReplicas)
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
+		if redisConjurUsernamePath != "" && redisConjurPasswordPath != "" {
+			updateRedisConjurAnnotations(deployment.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
+		}
 		mountSPCVolume(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
 	}
 
@@ -1480,19 +1445,7 @@ func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleti
 			redisName = component.RedisName
 			image = component.Redis
 			redisReplicas = component.RedisReplicas
-			redisSecretProviderClassName = ""
-			redisSecretName = defaultRedisSecretName
-			redisUsernameKey = defaultRedisUsernameKey
-			redisPasswordKey = defaultRedisPasswordKey
-
-			for _, config := range component.RedisSecretProviderClass {
-				if config.SecretProviderClassName != "" && config.RedisSecretName != "" {
-					redisSecretProviderClassName = config.SecretProviderClassName
-					redisSecretName = config.RedisSecretName
-					redisUsernameKey = config.RedisUsernameKey
-					redisPasswordKey = config.RedisPasswordKey
-				}
-			}
+			updateRedisGlobalVars(component)
 		default:
 			continue
 		}
@@ -1508,6 +1461,9 @@ func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleti
 	statefulset := getAuthorizationSentinelStatefulsetScaffold(cr.Name, sentinelName, redisName, cr.Namespace, image, redisSecretName, redisPasswordKey, checksum, int32(redisReplicas))
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
+		if redisConjurUsernamePath != "" && redisConjurPasswordPath != "" {
+			updateRedisConjurAnnotations(statefulset.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
+		}
 		mountSPCVolume(&statefulset.Spec.Template.Spec, redisSecretProviderClassName)
 	}
 
@@ -2277,4 +2233,50 @@ func getRedisChecksumFromSecretData(ctx context.Context, ctrlClient crclient.Cli
 
 	hash := sha256.Sum256(yamlBytes)
 	return hex.EncodeToString(hash[:]), nil
+}
+
+// updateRedisGlobalVars - update the global redis vars from the config
+func updateRedisGlobalVars(component csmv1.ContainerTemplate) {
+	redisSecretProviderClassName = ""
+	redisSecretName = defaultRedisSecretName
+	redisUsernameKey = defaultRedisUsernameKey
+	redisPasswordKey = defaultRedisPasswordKey
+
+	for _, config := range component.RedisSecretProviderClass {
+		if config.SecretProviderClassName != "" && config.RedisSecretName != "" {
+			redisSecretProviderClassName = config.SecretProviderClassName
+			redisSecretName = config.RedisSecretName
+			redisUsernameKey = config.RedisUsernameKey
+			redisPasswordKey = config.RedisPasswordKey
+		}
+
+		if config.Conjur != nil {
+			redisConjurUsernamePath = defaultRedisConjurUsernamePath
+			redisConjurPasswordPath = defaultRedisConjurPasswordPath
+
+			if config.Conjur.UsernamePath != "" {
+				redisConjurUsernamePath = config.Conjur.UsernamePath
+			}
+
+			if config.Conjur.PasswordPath != "" {
+				redisConjurPasswordPath = config.Conjur.PasswordPath
+			}
+		}
+	}
+}
+
+func updateRedisConjurAnnotations(annotations map[string]string, conjurUserPath, conjurPasswordPath string) {
+	annotationFormat := "- %s: %s"
+	var sb strings.Builder
+
+	if v, ok := annotations["conjur.org/secrets"]; ok {
+		sb.WriteString(v)
+		sb.WriteString("\n")
+	}
+
+	sb.WriteString(fmt.Sprintf(annotationFormat, conjurUserPath, conjurUserPath))
+	sb.WriteString("\n")
+	sb.WriteString(fmt.Sprintf(annotationFormat, conjurPasswordPath, conjurPasswordPath))
+
+	annotations["conjur.org/secrets"] = sb.String()
 }
