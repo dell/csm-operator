@@ -112,6 +112,13 @@ var (
 			expected:   "true",
 		},
 		{
+			name:     "when auth module is enabled",
+			csm:      enableAuthModule(),
+			ct:       powerStoreClient,
+			sec:      powerStoreSecret,
+			fileType: "Node",
+		},
+		{
 			name:       "update GOPOWERSTORE_DEBUG value for Node",
 			yamlString: "<GOPOWERSTORE_DEBUG>",
 			csm:        gopowerstoreDebug("true"),
@@ -431,6 +438,17 @@ func gopowerstoreDebug(debug string) csmv1.ContainerStorageModule {
 		{Name: "GOPOWERSTORE_DEBUG", Value: debug},
 	}
 
+	return cr
+}
+
+func enableAuthModule() csmv1.ContainerStorageModule {
+	cr := csmForPowerStore("csm")
+	cr.Spec.Modules = []csmv1.Module{
+		{
+			Name:    csmv1.Authorization,
+			Enabled: true,
+		},
+	}
 	return cr
 }
 

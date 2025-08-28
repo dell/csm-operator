@@ -215,7 +215,7 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 					maxVolumesPerNode = env.Value
 				}
 			}
-			//	set the env. whether authorization is enabled or not in the node
+			//	Set the env. whether authorization is enabled or not in the node to trim the tenant prefix in the driver
 			for i, mod := range cr.Spec.Modules {
 				if mod.Name == csmv1.Authorization {
 					cr.Spec.Driver.Node.Envs = append(cr.Spec.Driver.Node.Envs, corev1.EnvVar{
