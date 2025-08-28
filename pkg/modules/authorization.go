@@ -824,12 +824,14 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		return err
 	}
 
-	// Vault is supported only till config v2.2.0 (CSM 1.14)
-	vaultSupported, err := operatorutils.MinVersionCheck(authModule.ConfigVersion, "v2.2.0")
+	// SecretProviderClasses and K8s secret for storage credentials is supported from config v2.3.0 (CSM 1.15) onwards
+	storageCreds, err := operatorutils.MinVersionCheck("v2.3.0", authModule.ConfigVersion)
 	if err != nil {
 		return err
 	}
-	if vaultSupported {
+
+	// Vault is supported only till config v2.2.0 (CSM 1.14)
+	if !storageCreds {
 		err = applyDeleteVaultCertificates(ctx, isDeleting, cr, ctrlClient)
 		if err != nil {
 			return fmt.Errorf("applying/deleting vault certificates: %w", err)
@@ -879,11 +881,6 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	}
 
 	// Either SecretProviderClasses OR Secrets must be specified (mutually exclusive) from config v2.3.0 (CSM 1.15) onwards
-	storageCreds, err := operatorutils.MinVersionCheck("v2.3.0", authModule.ConfigVersion)
-	if err != nil {
-		return err
-	}
-
 	if storageCreds {
 		hasSPC := secretProviderClasses != nil && (len(secretProviderClasses.Vaults) > 0 || len(secretProviderClasses.Conjurs) > 0)
 		hasSecrets := len(secrets) > 0
@@ -948,7 +945,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 
 	// Vault is supported only till config v2.2.0 (CSM 1.14)
 	var vaultArgs []string
-	if vaultSupported {
+	if !storageCreds {
 		for _, vault := range vaults {
 			vaultArgs = append(vaultArgs, fmt.Sprintf("--vault=%s,%s,%s,%t", vault.Identifier, vault.Address, vault.Role, vault.SkipCertificateValidation))
 		}
