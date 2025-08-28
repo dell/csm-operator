@@ -635,6 +635,11 @@ func (s *sequence) handleFileConfig(path string) error {
 }
 
 func (s *sequence) handleEnvConfig() error {
+	// redis test automation credentials
+	redisPath := "redis"
+	redisUsername := "test"
+	redisPassword := "test"
+
 	pflexPath := os.Getenv(powerflexSecretPath)
 	pflexUsername := os.Getenv(powerflexUsername)
 	pflexPassword := os.Getenv(powerflexPassword)
@@ -667,7 +672,6 @@ func (s *sequence) handleEnvConfig() error {
 			return fmt.Errorf("writing secret %s: %v", pmaxPath, err)
 		}
 	}
-	return nil
 
 	pstorePath := os.Getenv(powerstoreSecretPath)
 	pstoreUsername := os.Getenv(powerstoreUsername)
@@ -679,6 +683,13 @@ func (s *sequence) handleEnvConfig() error {
 			return fmt.Errorf("writing secret %s: %v", pstorePath, err)
 		}
 	}
+
+	// add redis credentials to vault
+	err := s.putVaultSecret(redisPath, redisUsername, redisPassword)
+	if err != nil {
+		return fmt.Errorf("writing secret %s: %v", pscalePath, err)
+	}
+
 	return nil
 }
 
