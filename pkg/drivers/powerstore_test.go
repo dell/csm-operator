@@ -103,32 +103,6 @@ var (
 		expected   string
 	}{
 		{
-			name: "update X_CSI_VOL_PREFIX value for Controller",
-			yamlString: `
-			- name: X_CSI_VOL_PREFIX
-		      value: "csi"`,
-			csm:      xcsivoPrefix("csm"),
-			ct:       powerStoreClient,
-			sec:      powerStoreSecret,
-			fileType: "Controller",
-			expected: `
-			- name: X_CSI_VOL_PREFIX
-		      value: "csi"`,
-		},
-		{
-			name: "update X_CSI_VOL_PREFIX value for Node",
-			yamlString: `
-			- name: X_CSI_VOL_PREFIX
-		      value: "csi"`,
-			csm:      xcsivoPrefix("csm"),
-			ct:       powerStoreClient,
-			sec:      powerStoreSecret,
-			fileType: "Node",
-			expected: `
-			- name: X_CSI_VOL_PREFIX
-		      value: "csi"`,
-		},
-		{
 			name:       "update GOPOWERSTORE_DEBUG value for Controller",
 			yamlString: "<GOPOWERSTORE_DEBUG>",
 			csm:        gopowerstoreDebug("true"),
@@ -258,12 +232,8 @@ func csmForPowerStoreGoodSkipCert() csmv1.ContainerStorageModule {
 		Name:  "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION",
 		Value: "true", // Valid boolean string
 	}
-	envVolPrefix := corev1.EnvVar{
-		Name:  "X_CSI_VOL_PREFIX",
-		Value: "test",
-	}
 
-	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envCertCount, envSkipCertValidation, envVolPrefix}
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envCertCount, envSkipCertValidation}
 	res.Spec.Driver.AuthSecret = "csm-creds"
 	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
 	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
@@ -459,15 +429,6 @@ func gopowerstoreDebug(debug string) csmv1.ContainerStorageModule {
 	cr := csmForPowerStore("csm")
 	cr.Spec.Driver.Common.Envs = []corev1.EnvVar{
 		{Name: "GOPOWERSTORE_DEBUG", Value: debug},
-	}
-
-	return cr
-}
-
-func xcsivoPrefix(customCSMName string) csmv1.ContainerStorageModule {
-	cr := csmForPowerStore(customCSMName)
-	cr.Spec.Driver.Common.Envs = []corev1.EnvVar{
-		{Name: "X_CSI_VOL_PREFIX", Value: "csi"},
 	}
 
 	return cr
