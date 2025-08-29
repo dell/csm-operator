@@ -75,6 +75,10 @@ spec:
           redisCommander: rediscommander
           sentinel: sentinel
           redisReplicas: 5
+        - name: config
+          configSecretProviderClass:
+            - secretProviderClassName: ""
+              configSecretName: ""
         - name: vault
           vaultConfigurations:
             - identifier: vault0

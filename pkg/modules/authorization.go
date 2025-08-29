@@ -137,6 +137,8 @@ const (
 	AuthCertManagerComponent = "cert-manager"
 	// AuthRedisComponent - redis component
 	AuthRedisComponent = "redis"
+	// AuthConfigSecretComponent - config secret component
+	AuthConfigSecretComponent = "config"
 	// AuthVaultComponent - vault component
 	AuthVaultComponent = "vault"
 	// AuthStorageSystemCredentialsComponent - storage-system-credentials component
@@ -159,16 +161,18 @@ const (
 )
 
 var (
-	redisStorageClass            string
-	redisSecretProviderClassName string
-	redisSecretName              string
-	redisUsernameKey             string
-	redisPasswordKey             string
-	authHostname                 string
-	proxyIngressClassName        string
-	authCertificate              string
-	authPrivateKey               string
-	secretName                   string
+	redisStorageClass             string
+	redisSecretProviderClassName  string
+	redisSecretName               string
+	redisUsernameKey              string
+	redisPasswordKey              string
+	configSecretProviderClassName string
+	configSecretName              string
+	authHostname                  string
+	proxyIngressClassName         string
+	authCertificate               string
+	authPrivateKey                string
+	secretName                    string
 
 	pathType    = networking.PathTypePrefix
 	duration    = 2160 * time.Hour // 90d
@@ -551,24 +555,32 @@ func AuthorizationServerPrecheck(ctx context.Context, op operatorutils.OperatorC
 		if err != nil {
 			return err
 		}
+	} else {
+		return fmt.Errorf("authorization version is empty")
 	}
 
-	// Check for secrets
-	var proxyServerSecrets []string
-	switch semver.Major(auth.ConfigVersion) {
-	case "v2":
-		proxyServerSecrets = []string{"karavi-config-secret"}
-	case "v1":
-		proxyServerSecrets = []string{"karavi-config-secret", "karavi-storage-secret"}
-	default:
-		return fmt.Errorf("authorization major version %s not supported", semver.Major(auth.ConfigVersion))
+	configComponentFound := false
+	configSecretProviderClassFound := false
+	for _, component := range auth.Components {
+		if component.Name == AuthConfigSecretComponent {
+			configComponentFound = true
+			for _, config := range component.ConfigSecretProviderClass {
+				if config.SecretProviderClassName != "" {
+					configSecretProviderClassFound = true
+				}
+			}
+		}
 	}
-	for _, name := range proxyServerSecrets {
-		found := &corev1.Secret{}
-		err := r.GetClient().Get(ctx, types.NamespacedName{Name: name, Namespace: cr.GetNamespace()}, found)
-		if err != nil {
-			if k8serrors.IsNotFound(err) {
-				return fmt.Errorf("failed to find secret %s", name)
+	if !configComponentFound || !configSecretProviderClassFound {
+		// Check for secrets
+		proxyServerSecrets := []string{"karavi-config-secret"}
+		for _, name := range proxyServerSecrets {
+			found := &corev1.Secret{}
+			err := r.GetClient().Get(ctx, types.NamespacedName{Name: name, Namespace: cr.GetNamespace()}, found)
+			if err != nil {
+				if k8serrors.IsNotFound(err) {
+					return fmt.Errorf("failed to find secret %s", name)
+				}
 			}
 		}
 	}
@@ -594,6 +606,7 @@ func getAuthorizationServerDeployment(op operatorutils.OperatorConfig, cr csmv1.
 	authNamespace := cr.Namespace
 
 	for _, component := range auth.Components {
+
 		// proxy-server component
 		if component.Name == AuthProxyServerComponent {
 			YamlString = strings.ReplaceAll(YamlString, AuthServerImage, component.ProxyService)
@@ -783,7 +796,7 @@ func authorizationStorageServiceV1(ctx context.Context, isDeleting bool, cr csmv
 		}
 	}
 
-	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, 1)
+	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, 1, configSecretName)
 
 	// set karavi-storage-secret volume
 	deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, corev1.Volume{
@@ -875,6 +888,13 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		case AuthStorageSystemCredentialsComponent:
 			secretProviderClasses = component.SecretProviderClasses
 			secrets = component.Secrets
+		case AuthConfigSecretComponent:
+			configSecretName = ""
+			for _, config := range component.ConfigSecretProviderClass {
+				if config.SecretProviderClassName != "" && config.ConfigSecretName != "" {
+					configSecretName = config.ConfigSecretName
+				}
+			}
 		default:
 			continue
 		}
@@ -892,7 +912,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 
 	// conversion to int32 is safe for a value up to 2147483647
 	// #nosec G115
-	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, int32(replicas))
+	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, int32(replicas), configSecretName)
 
 	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
 	if storageCreds {
@@ -909,7 +929,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 
 		// redis secret provider class
 		if redisSecretProviderClassName != "" && redisSecretName != "" {
-			mountRedisVolumes(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
+			mountSPCVolume(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
 		}
 	} else {
 		log.Info("Using Vault for storage system credentials")
@@ -1218,6 +1238,15 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 					redisPasswordKey = config.RedisPasswordKey
 				}
 			}
+		case AuthConfigSecretComponent:
+			configSecretName = ""
+			configSecretProviderClassName = ""
+			for _, config := range component.ConfigSecretProviderClass {
+				if config.SecretProviderClassName != "" && config.ConfigSecretName != "" {
+					configSecretProviderClassName = config.SecretProviderClassName
+					configSecretName = config.ConfigSecretName
+				}
+			}
 		default:
 			continue
 		}
@@ -1225,10 +1254,14 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 
 	// conversion to int32 is safe for a value up to 2147483647
 	// #nosec G115
-	deployment := getProxyServerScaffold(cr.Name, sentinelName, cr.Namespace, proxyImage, opaImage, opaKubeMgmtImage, redisSecretName, redisPasswordKey, int32(replicas), redisReplicas)
+	deployment := getProxyServerScaffold(cr.Name, sentinelName, cr.Namespace, proxyImage, opaImage, opaKubeMgmtImage, configSecretName, redisSecretName, redisPasswordKey, int32(replicas), redisReplicas)
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
-		mountRedisVolumes(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
+		mountSPCVolume(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
+	}
+
+	if configSecretProviderClassName != "" && configSecretName != "" {
+		mountSPCVolume(&deployment.Spec.Template.Spec, configSecretProviderClassName)
 	}
 
 	deploymentBytes, err := yaml.Marshal(&deployment)
@@ -1274,6 +1307,15 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 					redisPasswordKey = config.RedisPasswordKey
 				}
 			}
+		case AuthConfigSecretComponent:
+			configSecretProviderClassName = ""
+			configSecretName = ""
+			for _, config := range component.ConfigSecretProviderClass {
+				if config.SecretProviderClassName != "" && config.ConfigSecretName != "" {
+					configSecretProviderClassName = config.SecretProviderClassName
+					configSecretName = config.ConfigSecretName
+				}
+			}
 		default:
 			continue
 		}
@@ -1281,10 +1323,14 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 
 	// conversion to int32 is safe for a value up to 2147483647
 	// #nosec G115
-	deployment := getTenantServiceScaffold(cr.Name, cr.Namespace, sentinelName, image, redisSecretName, redisPasswordKey, int32(replicas), redisReplicas)
+	deployment := getTenantServiceScaffold(cr.Name, cr.Namespace, sentinelName, image, configSecretName, redisSecretName, redisPasswordKey, int32(replicas), redisReplicas)
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
-		mountRedisVolumes(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
+		mountSPCVolume(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
+	}
+
+	if configSecretProviderClassName != "" && configSecretName != "" {
+		mountSPCVolume(&deployment.Spec.Template.Spec, configSecretProviderClassName)
 	}
 
 	deploymentBytes, err := yaml.Marshal(&deployment)
@@ -1342,7 +1388,7 @@ func applyDeleteAuthorizationRedisStatefulsetV2(ctx context.Context, isDeleting 
 	statefulset := getAuthorizationRedisStatefulsetScaffold(cr.Name, redisName, cr.Namespace, image, redisSecretName, redisPasswordKey, checksum, int32(redisReplicas))
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
-		mountRedisVolumes(&statefulset.Spec.Template.Spec, redisSecretProviderClassName)
+		mountSPCVolume(&statefulset.Spec.Template.Spec, redisSecretProviderClassName)
 	}
 
 	statefulsetBytes, err := yaml.Marshal(&statefulset)
@@ -1402,7 +1448,7 @@ func applyDeleteAuthorizationRediscommanderDeploymentV2(ctx context.Context, isD
 	deployment := getAuthorizationRediscommanderDeploymentScaffold(cr.Name, rediscommanderName, cr.Namespace, image, redisSecretName, redisUsernameKey, redisPasswordKey, sentinelName, checksum, redisReplicas)
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
-		mountRedisVolumes(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
+		mountSPCVolume(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
 	}
 
 	deploymentBytes, err := yaml.Marshal(&deployment)
@@ -1462,7 +1508,7 @@ func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleti
 	statefulset := getAuthorizationSentinelStatefulsetScaffold(cr.Name, sentinelName, redisName, cr.Namespace, image, redisSecretName, redisPasswordKey, checksum, int32(redisReplicas))
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
-		mountRedisVolumes(&statefulset.Spec.Template.Spec, redisSecretProviderClassName)
+		mountSPCVolume(&statefulset.Spec.Template.Spec, redisSecretProviderClassName)
 	}
 
 	statefulsetBytes, err := yaml.Marshal(&statefulset)
@@ -1477,10 +1523,10 @@ func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleti
 	return nil
 }
 
-// mountRedisVolumes mounts redis volumes for an authorization deployment or statefulset
-func mountRedisVolumes(spec *corev1.PodSpec, secretProviderClassName string) {
-	volumeName := fmt.Sprintf("secrets-store-inline-%s", secretProviderClassName)
+// mountSPCVolume mounts redis volumes for an authorization deployment or statefulset
+func mountSPCVolume(spec *corev1.PodSpec, secretProviderClassName string) {
 	mountPath := fmt.Sprintf("/etc/csm-authorization/%s", secretProviderClassName)
+	volumeName := fmt.Sprintf("secrets-store-inline-%s", secretProviderClassName)
 	readOnly := true
 
 	// check if volume already exists
@@ -1509,7 +1555,7 @@ func mountRedisVolumes(spec *corev1.PodSpec, secretProviderClassName string) {
 
 	// add volume for redis secret provider class
 	if !volumeExists {
-		redisVolume := corev1.Volume{
+		volume := corev1.Volume{
 			Name: volumeName,
 			VolumeSource: corev1.VolumeSource{
 				CSI: &corev1.CSIVolumeSource{
@@ -1521,18 +1567,18 @@ func mountRedisVolumes(spec *corev1.PodSpec, secretProviderClassName string) {
 				},
 			},
 		}
-		spec.Volumes = append(spec.Volumes, redisVolume)
+		spec.Volumes = append(spec.Volumes, volume)
 	}
 
 	// set volume mount for redis secret provider class
 	if !mountExists {
 		for i := range spec.Containers {
-			redisVolumeMount := corev1.VolumeMount{
+			volumeMount := corev1.VolumeMount{
 				Name:      volumeName,
 				MountPath: mountPath,
 				ReadOnly:  true,
 			}
-			spec.Containers[i].VolumeMounts = append(spec.Containers[i].VolumeMounts, redisVolumeMount)
+			spec.Containers[i].VolumeMounts = append(spec.Containers[i].VolumeMounts, volumeMount)
 		}
 	}
 }
