@@ -564,7 +564,7 @@ func AuthorizationServerPrecheck(ctx context.Context, op operatorutils.OperatorC
 		if component.Name == AuthConfigSecretComponent {
 			configComponentFound = true
 			for _, config := range component.ConfigSecretProviderClass {
-				if config.ConfigSecretProviderClassName != "" {
+				if config.SecretProviderClassName != "" {
 					configSecretProviderClassFound = true
 				}
 			}
@@ -893,7 +893,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 			configSecretName = ""
 			// create config kubernetes secret or use a secret provider class
 			for _, config := range component.ConfigSecretProviderClass {
-				if config.ConfigSecretProviderClassName != "" && config.ConfigSecretName != "" {
+				if config.SecretProviderClassName != "" && config.ConfigSecretName != "" {
 					configSecretName = config.ConfigSecretName
 				}
 			}
@@ -1244,7 +1244,7 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 			configSecretName = ""
 			// create config signing kubernetes secret or use a secret provider class
 			for _, config := range component.ConfigSecretProviderClass {
-				if config.ConfigSecretProviderClassName != "" && config.ConfigSecretName != "" {
+				if config.SecretProviderClassName != "" && config.ConfigSecretName != "" {
 					configSecretName = config.ConfigSecretName
 				}
 			}
@@ -1310,7 +1310,7 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 			configSecretName = ""
 			// create config signing kubernetes secret or use a secret provider class
 			for _, config := range component.ConfigSecretProviderClass {
-				if config.ConfigSecretProviderClassName != "" && config.ConfigSecretName != "" {
+				if config.SecretProviderClassName != "" && config.ConfigSecretName != "" {
 					configSecretName = config.ConfigSecretName
 				}
 			}
@@ -2278,14 +2278,32 @@ func getRedisChecksumFromSecretData(ctx context.Context, ctrlClient crclient.Cli
 func mountConfigVolume(authModule csmv1.Module, deployment *appsv1.Deployment) {
 	for _, component := range authModule.Components {
 		for _, config := range component.ConfigSecretProviderClass {
-			if config.ConfigSecretProviderClassName != "" {
+			if config.SecretProviderClassName != "" {
+				mountPath := fmt.Sprintf("/etc/csm-authorization/%s", config.SecretProviderClassName)
+				volumeName := fmt.Sprintf("secrets-store-inline-%s", config.SecretProviderClassName)
+				readOnly := true
 				// add volume for config secret provider class
-				configVolume := configVolume(config.ConfigSecretProviderClassName)
+				configVolume := corev1.Volume{
+					Name: volumeName,
+					VolumeSource: corev1.VolumeSource{
+						CSI: &corev1.CSIVolumeSource{
+							Driver:   "secrets-store.csi.k8s.io",
+							ReadOnly: &readOnly,
+							VolumeAttributes: map[string]string{
+								"secretProviderClass": config.SecretProviderClassName,
+							},
+						},
+					},
+				}
 				deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, configVolume)
 
 				// set volume mount for config secret provider class
 				for i := range deployment.Spec.Template.Spec.Containers {
-					configVolumeMount := configVolumeMount()
+					configVolumeMount := corev1.VolumeMount{
+						Name:      volumeName,
+						MountPath: mountPath,
+						ReadOnly:  true,
+					}
 					deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, configVolumeMount)
 				}
 			}

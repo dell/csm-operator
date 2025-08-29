@@ -94,7 +94,7 @@ spec:
           # If using a Secret Store CSI driver, specify the SecretProviderClass that contains the config object.
           configSecretProviderClass:
             # Name of the SecretProviderClass that holds the config secretObject.
-            - configSecretProviderClassName: ""
+            - secretProviderClassName: ""
               # The name of the Kubernetes secret created by the CSI driver
               configSecretName: ""
 

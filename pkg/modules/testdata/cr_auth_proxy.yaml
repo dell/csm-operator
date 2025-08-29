@@ -77,7 +77,7 @@ spec:
           redisReplicas: 5
         - name: config
           configSecretProviderClass:
-            - configSecretProviderClassName: ""
+            - secretProviderClassName: ""
               configSecretName: ""
         - name: vault
           vaultConfigurations:

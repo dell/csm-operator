@@ -93,7 +93,7 @@ spec:
         - name: config
           configSecretProviderClass:
             # Name of the SecretProviderClass that holds the config secretObject.
-            - configSecretProviderClassName: array-creds
+            - secretProviderClassName: array-creds
               # The name of the Kubernetes secret created by the CSI driver
               configSecretName: config-secret
 

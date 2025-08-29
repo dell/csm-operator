@@ -369,35 +369,3 @@ func TestCreateRedisK8sSecret(t *testing.T) {
 		t.Errorf("expected password 'K@ravi123!', got %s", secret.StringData["password"])
 	}
 }
-
-func TestConfigVolume(t *testing.T) {
-	secretName := "config-secret"
-	volume := configVolume(secretName)
-
-	if volume.Name != "secrets-store-inline-config" {
-		t.Errorf("expected volume name 'secrets-store-inline-config', got %s", volume.Name)
-	}
-	if volume.VolumeSource.CSI == nil {
-		t.Fatal("expected CSI volume source, got nil")
-	}
-	if volume.VolumeSource.CSI.Driver != "secrets-store.csi.k8s.io" {
-		t.Errorf("expected CSI driver 'secrets-store.csi.k8s.io', got %s", volume.VolumeSource.CSI.Driver)
-	}
-	if volume.VolumeSource.CSI.VolumeAttributes["secretProviderClass"] != secretName {
-		t.Errorf("expected secretProviderClass '%s', got %s", secretName, volume.VolumeSource.CSI.VolumeAttributes["secretProviderClass"])
-	}
-}
-
-func TestConfigVolumeMount(t *testing.T) {
-	mount := configVolumeMount()
-
-	if mount.Name != "secrets-store-inline-config" {
-		t.Errorf("expected mount name 'secrets-store-inline-config', got %s", mount.Name)
-	}
-	if mount.MountPath != "/etc/csm-authorization/config" {
-		t.Errorf("expected mount path '/etc/csm-authorization/config', got %s", mount.MountPath)
-	}
-	if !mount.ReadOnly {
-		t.Error("expected mount to be read-only")
-	}
-}

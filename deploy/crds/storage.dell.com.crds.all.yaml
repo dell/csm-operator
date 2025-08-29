@@ -95,8 +95,8 @@ spec:
                               configSecretName:
                                 description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                 type: string
-                              configSecretProviderClassName:
-                                description: ConfigSecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
+                              secretProviderClassName:
+                                description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
                                 type: string
                             type: object
                           maxItems: 1
@@ -484,8 +484,8 @@ spec:
                               configSecretName:
                                 description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                 type: string
-                              configSecretProviderClassName:
-                                description: ConfigSecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
+                              secretProviderClassName:
+                                description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
                                 type: string
                             type: object
                           maxItems: 1
@@ -889,8 +889,8 @@ spec:
                                 configSecretName:
                                   description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                   type: string
-                                configSecretProviderClassName:
-                                  description: ConfigSecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
+                                secretProviderClassName:
+                                  description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
                                   type: string
                               type: object
                             maxItems: 1
@@ -1276,8 +1276,8 @@ spec:
                               configSecretName:
                                 description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                 type: string
-                              configSecretProviderClassName:
-                                description: ConfigSecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
+                              secretProviderClassName:
+                                description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
                                 type: string
                             type: object
                           maxItems: 1
@@ -1669,8 +1669,8 @@ spec:
                                 configSecretName:
                                   description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                   type: string
-                                configSecretProviderClassName:
-                                  description: ConfigSecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
+                                secretProviderClassName:
+                                  description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
                                   type: string
                               type: object
                             maxItems: 1
@@ -2082,8 +2082,8 @@ spec:
                                   configSecretName:
                                     description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                     type: string
-                                  configSecretProviderClassName:
-                                    description: ConfigSecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
+                                  secretProviderClassName:
+                                    description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
                                     type: string
                                 type: object
                               maxItems: 1
@@ -2480,8 +2480,8 @@ spec:
                                   configSecretName:
                                     description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                     type: string
-                                  configSecretProviderClassName:
-                                    description: ConfigSecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
+                                  secretProviderClassName:
+                                    description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
                                     type: string
                                 type: object
                               maxItems: 1

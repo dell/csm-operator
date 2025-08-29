@@ -386,7 +386,7 @@ type ContainerTemplate struct {
 	RedisSecretProviderClass []RedisSecretProviderClass `json:"redisSecretProviderClass,omitempty" yaml:"redisSecretProviderClass,omitempty"`
 
 	// ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Secret SecretProviderClass details"
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config SecretProviderClass details"
 	// Applicable from CSM v1.15 onwards
 	// +kubebuilder:validation:MaxItems=1
 	ConfigSecretProviderClass []ConfigSecretProviderClass `json:"configSecretProviderClass,omitempty" yaml:"configSecretProviderClass,omitempty"`
@@ -451,9 +451,9 @@ type RedisSecretProviderClass struct {
 
 // ConfigSecretProviderClass is the config secret configuration for CSM Authorization
 type ConfigSecretProviderClass struct {
-	// ConfigSecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
+	// SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Secret Provider Class Name"
-	ConfigSecretProviderClassName string `json:"configSecretProviderClassName,omitempty" yaml:"configSecretProviderClassName,omitempty"`
+	SecretProviderClassName string `json:"secretProviderClassName,omitempty" yaml:"secretProviderClassName,omitempty"`
 
 	// ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Secret Name"
