@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"strings"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -58,6 +57,10 @@ func getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage,
 							ImagePullPolicy: "Always",
 							Env: []corev1.EnvVar{
 								{
+									Name:  "SENTINELS",
+									Value: buildSentinelList(sentinelReplicas, sentinelName, namespace),
+								},
+								{
 									Name: "REDIS_PASSWORD",
 									ValueFrom: &corev1.EnvVarSource{
 										SecretKeyRef: &corev1.SecretKeySelector{
@@ -70,7 +73,7 @@ func getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage,
 								},
 							},
 							Args: []string{
-								fmt.Sprintf("--redis-sentinel=%s", buildSentinelList(sentinelReplicas, sentinelName, namespace)),
+								"--redis-sentinel=$(SENTINELS)",
 								"--redis-password=$(REDIS_PASSWORD)",
 								fmt.Sprintf("--tenant-service=tenant-service.%s.svc.cluster.local:50051", namespace),
 								fmt.Sprintf("--role-service=role-service.%s.svc.cluster.local:50051", namespace),
@@ -238,7 +241,7 @@ func getStorageServiceScaffold(name string, namespace string, image string, repl
 }
 
 // getTenantServiceScaffold returns tenant-service deployment for authorization v2
-func getTenantServiceScaffold(name, namespace, seninelName, image, redisSecretName, redisPasswordKey string, replicas int32, sentinelReplicas int) appsv1.Deployment {
+func getTenantServiceScaffold(name, namespace, sentinelName, image, redisSecretName, redisPasswordKey string, replicas int32, sentinelReplicas int) appsv1.Deployment {
 	return appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -274,6 +277,10 @@ func getTenantServiceScaffold(name, namespace, seninelName, image, redisSecretNa
 							ImagePullPolicy: "Always",
 							Env: []corev1.EnvVar{
 								{
+									Name:  "SENTINELS",
+									Value: buildSentinelList(sentinelReplicas, sentinelName, namespace),
+								},
+								{
 									Name: "REDIS_PASSWORD",
 									ValueFrom: &corev1.EnvVarSource{
 										SecretKeyRef: &corev1.SecretKeySelector{
@@ -286,7 +293,7 @@ func getTenantServiceScaffold(name, namespace, seninelName, image, redisSecretNa
 								},
 							},
 							Args: []string{
-								fmt.Sprintf("--redis-sentinel=%s", buildSentinelList(sentinelReplicas, seninelName, namespace)),
+								"--redis-sentinel=$(SENTINELS)",
 								"--redis-password=$(REDIS_PASSWORD)",
 							},
 							Ports: []corev1.ContainerPort{
@@ -383,27 +390,62 @@ func getAuthorizationRedisStatefulsetScaffold(crName, name, namespace, image, re
 										},
 									},
 								},
+								{
+									Name:  "AUTHORIZATION_REDIS_NAME",
+									Value: name,
+								},
+								{
+									Name:  "NAMESPACE",
+									Value: namespace,
+								},
 							},
 							Command: []string{"sh", "-c"},
 							Args: []string{
-								`cp /csm-auth-redis-cm/redis.conf /etc/redis/redis.conf
+								`echo "Initializing Redis configuration..."
+								cp /csm-auth-redis-cm/redis.conf /etc/redis/redis.conf
 								echo "masterauth $REDIS_PASSWORD" >> /etc/redis/redis.conf
 								echo "requirepass $REDIS_PASSWORD" >> /etc/redis/redis.conf
-								echo "Finding master..."
-								MASTER_FDQN=$(hostname  -f | sed -e 's/redis-csm-[0-9]\./redis-csm-0./')
-								echo "Master at " $MASTER_FDQN
-								if [ "$(redis-cli -h sentinel -p 5000 ping)" != "PONG" ]; then
-									echo "No sentinel found."
-									if [ "$(hostname)" = "redis-csm-0" ]; then
-									echo "This is redis master, not updating config..."
-									else
-									echo "This is redis slave, updating redis.conf..."
-									echo "replicaof $MASTER_FDQN 6379" >> /etc/redis/redis.conf
+
+								MASTER_FOUND="false"
+								MAX_RETRIES=5
+
+								echo "Attempting to discover Redis master via Sentinel..."
+								for retry in $(seq 0 $MAX_RETRIES)
+								do
+									PING_SENTINEL=$(redis-cli -h sentinel -p 5000 PING)
+									echo "Pinging sentinel"
+
+									if [ "$PING_SENTINEL" == "PONG" ]; then
+										echo "Sentinel found"
+
+										MASTER_INFO=$(redis-cli -h sentinel -p 5000 SENTINEL get-master-addr-by-name mymaster)
+										MASTER_HOST=$(echo "$MASTER_INFO" | sed -n '1p')
+										MASTER_PORT=$(echo "$MASTER_INFO" | sed -n '2p')
+										if [ -n "$MASTER_HOST" ] && [ -n "$MASTER_PORT" ]; then
+											echo "Sentinel reports master at $MASTER_HOST:$MASTER_PORT"
+
+											# configure replicaof directive for replica pods only
+											if [ "$(hostname -f)" != "$MASTER_HOST" ]; then
+												echo "replicaof $MASTER_HOST $MASTER_PORT" >> /etc/redis/redis.conf
+											fi
+
+											MASTER_FOUND="true"
+											break
+										else
+											echo "Sentinel not ready or master info missing, retrying... ($retry/$MAX_RETRIES)"
+											sleep 5
+										fi
 									fi
-								else
-									echo "Sentinel found, finding master"
-									MASTER="$(redis-cli -h sentinel -p 5000 sentinel get-master-addr-by-name mymaster | grep -E '(^redis-csm-\d{1,})|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})')"
-									echo "replicaof $MASTER_FDQN 6379" >> /etc/redis/redis.conf
+								done
+
+								# configure replicaof directive for replica pods only
+								if [ "$MASTER_FOUND" != "true" ]; then
+									echo "No master info from Sentinel, starting first node as master"
+
+									MASTER_FQDN="$AUTHORIZATION_REDIS_NAME-0.$AUTHORIZATION_REDIS_NAME.$NAMESPACE.svc.cluster.local"
+									if [ "$(hostname)" != "$AUTHORIZATION_REDIS_NAME-0" ]; then
+										echo "replicaof $MASTER_FQDN 6379" >> /etc/redis/redis.conf
+									fi
 								fi
 								`,
 							},
@@ -469,7 +511,7 @@ func getAuthorizationRedisStatefulsetScaffold(crName, name, namespace, image, re
 							VolumeSource: corev1.VolumeSource{
 								ConfigMap: &corev1.ConfigMapVolumeSource{
 									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "redis-cm",
+										Name: "redis-csm-cm",
 									},
 								},
 							},
@@ -524,7 +566,7 @@ func getAuthorizationRediscommanderDeploymentScaffold(crName, name, namespace, i
 							Env: []corev1.EnvVar{
 								{
 									Name:  "SENTINELS",
-									Value: fmt.Sprintf("%s", buildSentinelList(sentinelReplicas, sentinelName, namespace)),
+									Value: buildSentinelList(sentinelReplicas, sentinelName, namespace),
 								},
 								{
 									Name:  "K8S_SIGTERM",
@@ -673,61 +715,81 @@ func getAuthorizationSentinelStatefulsetScaffold(crName, sentinelName, redisName
 									Name:  "AUTHORIZATION_REDIS_NAME",
 									Value: redisName,
 								},
+								{
+									Name:  "AUTHORIZATION_SENTINEL_NAME",
+									Value: sentinelName,
+								},
+								{
+									Name:  "NAMESPACE",
+									Value: namespace,
+								},
 							},
 							Command: []string{"sh", "-c"},
 							Args: []string{
-								`replicas=$( expr "$REPLICAS" - 1)
-								nodes=""
-								for i in $(seq 0 "$replicas")
+								`MASTER_FOUND="false"
+								MAX_RETRIES=5
+
+								REPLICA=$( expr "$REPLICAS" - 1)
+								SENTINELS=""
+								for i in $(seq 0 $REPLICA)
 								do
-									node=$( echo "$AUTHORIZATION_REDIS_NAME"-$i."$AUTHORIZATION_REDIS_NAME" )
-									nodes=$( echo "$nodes*$node" )
+									SENTINEL="$AUTHORIZATION_SENTINEL_NAME-$i.$AUTHORIZATION_SENTINEL_NAME.$NAMESPACE.svc.cluster.local"
+									SENTINELS="$SENTINELS $SENTINEL"
 								done
-								loop=$(echo $nodes | sed -e "s/"*"/\n/g")
-								echo "$loop"
-								foundMaster=false
-								while [ "$foundMaster" = "false" ]
+
+								echo "Sentinel nodes: $SENTINELS"
+
+								for retry in $(seq 0 $MAX_RETRIES)
 								do
-									for i in $loop
+									for sentinel in $SENTINELS
 									do
-										echo "Finding master at $i"
-										ROLE=$(redis-cli --no-auth-warning --raw -h $i -a $REDIS_PASSWORD info replication | awk '{print $1}' | grep role | cut -d ":" -f2)
-										if [ "$ROLE" = "master" ]; then
-											MASTER=$i.authorization.svc.cluster.local
-											echo "Master found at $MASTER..."
-											foundMaster=true
-											break
+										echo "Querying Sentinel $SENTINEL for Redis master address..."
+										MASTER_INFO=$(redis-cli -h sentinel -p 5000 SENTINEL get-master-addr-by-name mymaster)
+										MASTER_HOST=$(echo "$MASTER_INFO" | sed -n '1p')
+										MASTER_PORT=$(echo "$MASTER_INFO" | sed -n '2p')
+
+										if [ -n "$MASTER_HOST" ] && [ -n "$MASTER_PORT" ]; then
+											echo "Sentinel reports master at $MASTER_HOST:$MASTER_PORT"
+											ROLE=$(redis-cli --no-auth-warning --raw -h "$MASTER_HOST" -p "$MASTER_PORT" -a "$REDIS_PASSWORD" ROLE | head -n 1)
+
+											if [ "$ROLE" = "master" ]; then
+												echo "Verified master role at $MASTER_HOST:$MASTER_PORT"
+												MASTER=$MASTER_HOST
+												MASTER_FOUND="true"
+												break
+											else
+												echo "Role mismatch: expected master, got $ROLE"
+											fi
 										else
-										MASTER=$(redis-cli --no-auth-warning --raw -h $i -a $REDIS_PASSWORD info replication | awk '{print $1}' | grep master_host: | cut -d ":" -f2)
-										if [ "$MASTER" = "" ]; then
-											echo "Master not found..."
-											echo "Waiting 5 seconds for redis pods to come up..."
-											sleep 5
-											MASTER=
-										else
-											echo "Master found at $MASTER..."
-											foundMaster=true
-											break
-										fi
+											echo "No master info from $SENTINEL"
 										fi
 									done
-									if [ "$foundMaster" = "true" ]; then
-									break
-									else
-									echo "Master not found, wait for 30s before attempting again"
-									sleep 30
+
+									if [ "$MASTER_FOUND" = "true" ]; then
+										break
 									fi
+
+									echo "Retrying in 5 seconds... ($retry/$MAX_RETRIES)"
+									sleep 5
 								done
-								echo "sentinel monitor mymaster $MASTER 6379 2" >> /tmp/master
+
+								if [ "$MASTER_FOUND" != "true" ]; then
+									echo "No master found after $MAX_RETRIES retries. Defaulting to first Redis pod."
+									MASTER="$AUTHORIZATION_REDIS_NAME-0.$AUTHORIZATION_REDIS_NAME.$NAMESPACE.svc.cluster.local"
+								fi
+
+								echo "Generating /etc/redis/sentinel.conf for master $MASTER"
 								echo "port 5000
 								sentinel resolve-hostnames yes
 								sentinel announce-hostnames yes
-								$(cat /tmp/master)
+								sentinel monitor mymaster $MASTER 6379 2
 								sentinel down-after-milliseconds mymaster 5000
 								sentinel failover-timeout mymaster 60000
 								sentinel parallel-syncs mymaster 2
 								sentinel auth-pass mymaster $REDIS_PASSWORD
 								" > /etc/redis/sentinel.conf
+
+								echo "Sentinel configuration:"
 								cat /etc/redis/sentinel.conf
 								`,
 							},
@@ -786,55 +848,27 @@ func getAuthorizationSentinelStatefulsetScaffold(crName, sentinelName, redisName
 // buildSentinelList builds a comma separated list of sentinel addresses
 func buildSentinelList(replicas int, sentinelName, namespace string) string {
 	var sentinels []string
-	for i := 0; i < replicas; i++ {
+	for i := range replicas {
 		sentinel := fmt.Sprintf("%s-%d.%s.%s.svc.cluster.local:5000", sentinelName, i, sentinelName, namespace)
 		sentinels = append(sentinels, sentinel)
 	}
-	return strings.Join(sentinels, ",")
+	return strings.Join(sentinels, ", ")
 }
 
 // createRedisK8sSecret creates a k8s secret for redis
-func createRedisK8sSecret(cr csmv1.ContainerStorageModule, usernameKey, passworkKey string) corev1.Secret {
+func createRedisK8sSecret(name, namespace string) corev1.Secret {
 	return corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Secret",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      defaultRedisSecretName,
-			Namespace: cr.Namespace,
+			Name:      name,
+			Namespace: namespace,
 		},
 		Type: corev1.SecretTypeBasicAuth,
 		StringData: map[string]string{
-			passworkKey: "K@ravi123!",
-			usernameKey: "dev",
+			"password":       "K@ravi123!",
+			"commander_user": "dev",
 		},
-	}
-}
-
-// redisVolume adds volume in a pod container for the redis SecretProviderClass
-func redisVolume(redisSecretName string) corev1.Volume {
-	volumeName := "secrets-store-inline-redis"
-	readOnly := true
-	return corev1.Volume{
-		Name: volumeName,
-		VolumeSource: corev1.VolumeSource{
-			CSI: &corev1.CSIVolumeSource{
-				Driver:   "secrets-store.csi.k8s.io",
-				ReadOnly: &readOnly,
-				VolumeAttributes: map[string]string{
-					"secretProviderClass": redisSecretName,
-				},
-			},
-		},
-	}
-}
-
-// redisVolumeMount adds a volume mount in a pod container for the redis SecretProviderClass
-func redisVolumeMount() corev1.VolumeMount {
-	volumeName := "secrets-store-inline-redis"
-	return corev1.VolumeMount{
-		Name:      volumeName,
-		MountPath: "/etc/csm-authorization/redis",
-		ReadOnly:  true,
 	}
 }
