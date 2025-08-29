@@ -1,5 +1,5 @@
-# Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
-# 
+# Copyright © 2022-2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -73,7 +73,7 @@ function verify_prerequisites() {
   bash "${SCRIPTDIR}/${VERIFYSCRIPT}"
   case $? in
   0) ;;
-  
+
   1)
     warning "Pre-requisites validation failed but installation can continue. " \
       "This may affect driver/module installation."
@@ -85,44 +85,40 @@ function verify_prerequisites() {
 }
 
 function check_existing_installation() {
-  log separator
-  echo "Checking for existing installation of Dell Container Storage Modules Operator"
+  log step "Checking for existing Dell Container Storage Modules Operator installation"
+  echo
   # get namespace from YAML file for deployment
   NS_STRING=$(cat ${DEPLOYDIR}/operator.yaml | grep "namespace:" | head -1)
   if [ -z "${NS_STRING}" ]; then
-    echo "Couldn't find any target namespace in ${DEPLOYDIR}/operator.yaml"
-    exit 1
+    log step_failure
+    log error "Couldn't find any target namespace in ${DEPLOYDIR}/operator.yaml"
   fi
   # find the namespace from the filtered string
   NAMESPACE=$(echo $NS_STRING | cut -d ' ' -f2)
-  
-  # check for existing installations in the namespace
-  log step "Checking for existing installation"
-  # check for operator in dell-csm-operator namespace
-  kubectl get pods -n ${NAMESPACE} | grep "dell-csm-operator" --quiet
+
+  # check for existing operator installations in dell-csm-operator namespace
+  operator_in_namespace=false
+  kubectl get pods -n "${NAMESPACE}" 2>/dev/null | grep -q "dell-csm-operator"
   if [ $? -eq 0 ]; then
     operator_in_namespace=true
   fi
 
   if [ "$MODE" == "upgrade" ]; then
   	if  [ "$operator_in_namespace" = true ]; then
-       log step_success
-       echo "Found existing installation of log error in '$NAMESPACE' namespace"
-       echo "Attempting to upgrade the Operator as --upgrade option was specified"
+      log step "An existing Operator installation was detected in the '$NAMESPACE' namespace. Proceeding with the upgrade as the --upgrade option was specified."
     else
-       log step_failure
-       log error "Operator is not found in '$NAMESPACE' namespace to upgrade.Install the operator without the upgrade option."
+      log error "No existing Operator installation was found in the '$NAMESPACE' namespace. Please run the installation without the --upgrade option."
     fi
   else
   	if [ "$operator_in_namespace" = true ]; then
-       log step_failure
-       log warning "Found existing installation of dell-csm-operator in '$NAMESPACE' namespace"
-       log error "Remove the existing installation using uninstall.sh script, or use the --upgrade option to upgrade the Operator"
+       log warning "An existing Operator installation was detected in the '$NAMESPACE' namespace."
+       log error "To proceed, either remove the existing installation using the uninstall.sh script or use the --upgrade option to upgrade the Operator."
        exit 1
     else
-       log step_success
+       log step "No existing Operator installation found. Proceeding with fresh install."
     fi
   fi
+
   echo
 }
 
@@ -134,7 +130,7 @@ function install_or_update_crd() {
     log step "Install/Update CRD"
   fi
   kubectl apply -f ${DEPLOYDIR}/crds/storage.dell.com.crds.all.yaml 2>&1 >/dev/null
-  
+
   if [ $? -ne 0 ]; then
     log error "Failed to install/update CRD"
   fi
