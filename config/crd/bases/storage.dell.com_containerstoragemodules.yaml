@@ -357,9 +357,11 @@ spec:
                                   RedisUsernameKey is the key in the secret
                                   that holds the Redis username
                                 type: string
-                            required:
-                              - redisPasswordKey
-                              - redisUsernameKey
+                              secretProviderClassName:
+                                description:
+                                  SecretProviderClassName is the name of
+                                  the SecretProviderClass that holds the Redis secretObject
+                                type: string
                             type: object
                           maxItems: 1
                           type: array
@@ -828,9 +830,11 @@ spec:
                                   RedisUsernameKey is the key in the secret
                                   that holds the Redis username
                                 type: string
-                            required:
-                              - redisPasswordKey
-                              - redisUsernameKey
+                              secretProviderClassName:
+                                description:
+                                  SecretProviderClassName is the name of
+                                  the SecretProviderClass that holds the Redis secretObject
+                                type: string
                             type: object
                           maxItems: 1
                           type: array
@@ -1319,9 +1323,11 @@ spec:
                                     RedisUsernameKey is the key in the secret
                                     that holds the Redis username
                                   type: string
-                              required:
-                                - redisPasswordKey
-                                - redisUsernameKey
+                                secretProviderClassName:
+                                  description:
+                                    SecretProviderClassName is the name of
+                                    the SecretProviderClass that holds the Redis secretObject
+                                  type: string
                               type: object
                             maxItems: 1
                             type: array
@@ -1786,9 +1792,11 @@ spec:
                                   RedisUsernameKey is the key in the secret
                                   that holds the Redis username
                                 type: string
-                            required:
-                              - redisPasswordKey
-                              - redisUsernameKey
+                              secretProviderClassName:
+                                description:
+                                  SecretProviderClassName is the name of
+                                  the SecretProviderClass that holds the Redis secretObject
+                                type: string
                             type: object
                           maxItems: 1
                           type: array
@@ -2261,9 +2269,11 @@ spec:
                                     RedisUsernameKey is the key in the secret
                                     that holds the Redis username
                                   type: string
-                              required:
-                                - redisPasswordKey
-                                - redisUsernameKey
+                                secretProviderClassName:
+                                  description:
+                                    SecretProviderClassName is the name of
+                                    the SecretProviderClass that holds the Redis secretObject
+                                  type: string
                               type: object
                             maxItems: 1
                             type: array
@@ -2764,9 +2774,12 @@ spec:
                                       RedisUsernameKey is the key in the
                                       secret that holds the Redis username
                                     type: string
-                                required:
-                                  - redisPasswordKey
-                                  - redisUsernameKey
+                                  secretProviderClassName:
+                                    description:
+                                      SecretProviderClassName is the name
+                                      of the SecretProviderClass that holds the Redis
+                                      secretObject
+                                    type: string
                                 type: object
                               maxItems: 1
                               type: array
@@ -3255,9 +3268,12 @@ spec:
                                       RedisUsernameKey is the key in the
                                       secret that holds the Redis username
                                     type: string
-                                required:
-                                  - redisPasswordKey
-                                  - redisUsernameKey
+                                  secretProviderClassName:
+                                    description:
+                                      SecretProviderClassName is the name
+                                      of the SecretProviderClass that holds the Redis
+                                      secretObject
+                                    type: string
                                 type: object
                               maxItems: 1
                               type: array

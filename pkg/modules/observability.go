@@ -124,6 +124,12 @@ const (
 	// PowerflexMaxConcurrentQueries - max concurrent queries
 	PowerflexMaxConcurrentQueries string = "<POWERFLEX_MAX_CONCURRENT_QUERIES>"
 
+	// PowerflexTopologyMetricsEnabled - enable/disable collection of topology metrics
+	PowerflexTopologyMetricsEnabled string = "<POWERFLEX_TOPOLOGY_METRICS_ENABLED>"
+
+	// PowerflexTopologyMetricsPollFrequency - polling frequency to get topology metrics data
+	PowerflexTopologyMetricsPollFrequency string = "<POWERFLEX_TOPOLOGY_METRICS_POLL_FREQUENCY>"
+
 	// PowerflexLogLevel - the level for the PowerFlex metrics
 	PowerflexLogLevel string = "<POWERFLEX_LOG_LEVEL>"
 
@@ -929,6 +935,8 @@ func getPowerFlexMetricsObject(op operatorutils.OperatorConfig, cr csmv1.Contain
 	sdcPollFrequency := "10"
 	volumePollFrequency := "10"
 	storagePoolPollFrequency := "10"
+	topologyEnabled := "true"
+	topologyPollFrequency := "30"
 	logFormat := "TEXT"
 	logLevel := "INFO"
 
@@ -946,6 +954,10 @@ func getPowerFlexMetricsObject(op operatorutils.OperatorConfig, cr csmv1.Contain
 					sdcEnabled = env.Value
 				} else if strings.Contains(PowerflexSdcIoPollFrequency, env.Name) {
 					sdcPollFrequency = env.Value
+				} else if strings.Contains(PowerflexTopologyMetricsEnabled, env.Name) {
+					topologyEnabled = env.Value
+				} else if strings.Contains(PowerflexTopologyMetricsPollFrequency, env.Name) {
+					topologyPollFrequency = env.Value
 				} else if strings.Contains(PowerflexVolumeMetricsEnabled, env.Name) {
 					volumeEnabled = env.Value
 				} else if strings.Contains(PowerflexVolumeIoPollFrequency, env.Name) {
@@ -973,6 +985,8 @@ func getPowerFlexMetricsObject(op operatorutils.OperatorConfig, cr csmv1.Contain
 	YamlString = strings.ReplaceAll(YamlString, PowerflexVolumeIoPollFrequency, volumePollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, PowerflexStoragePoolMetricsEnabled, storagePoolEnabled)
 	YamlString = strings.ReplaceAll(YamlString, PowerflexStoragePoolPollFrequency, storagePoolPollFrequency)
+	YamlString = strings.ReplaceAll(YamlString, PowerflexTopologyMetricsEnabled, topologyEnabled)
+	YamlString = strings.ReplaceAll(YamlString, PowerflexTopologyMetricsPollFrequency, topologyPollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, PowerflexLogFormat, logFormat)
 	YamlString = strings.ReplaceAll(YamlString, OtelCollectorAddress, otelCollectorAddress)
 	YamlString = strings.ReplaceAll(YamlString, DriverDefaultReleaseName, cr.Name)
