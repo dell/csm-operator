@@ -426,19 +426,21 @@ type ProxyServerIngress struct {
 
 // RedisSecretProviderClass is the redis secret configuration for CSM Authorization
 type RedisSecretProviderClass struct {
+	// SecretProviderClassName is the name of the SecretProviderClass that holds the Redis secretObject
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Secret Provider Class Name"
+	SecretProviderClassName string `json:"secretProviderClassName,omitempty" yaml:"secretProviderClassName,omitempty"`
+
 	// RedisSecretName is the name of the Kubernetes secret created by the CSI driver
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Secret Name"
 	RedisSecretName string `json:"redisSecretName,omitempty" yaml:"redisSecretName,omitempty"`
 
 	// RedisUsernameKey is the key in the secret that holds the Redis username
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Username Key"
-	// +kubebuilder:validation:Required
-	RedisUsernameKey string `json:"redisUsernameKey" yaml:"redisUsernameKey"`
+	RedisUsernameKey string `json:"redisUsernameKey,omitempty" yaml:"redisUsernameKey,omitempty"`
 
 	// RedisPasswordKey is the key in the secret that holds the Redis password
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Password Key"
-	// +kubebuilder:validation:Required
-	RedisPasswordKey string `json:"redisPasswordKey" yaml:"redisPasswordKey"`
+	RedisPasswordKey string `json:"redisPasswordKey,omitempty" yaml:"redisPasswordKey,omitempty"`
 }
 
 // StorageSystemSecretProviderClass is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
