@@ -24,13 +24,13 @@ func TestGetProxyServerScaffold(t *testing.T) {
 	proxyImage := "proxy-image:latest"
 	opaImage := "opa-image:latest"
 	opaKubeMgmtImage := "kube-mgmt-image:latest"
-	configSecretProviderClassName := "array-creds"
+	configSecretName := "config-secret"
 	redisSecretName := "redis-secret"
 	redisPasswordKey := "redis-password"
 	replicas := int32(3)
 	sentinel := int(5)
 
-	deploy := getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage, opaKubeMgmtImage, configSecretProviderClassName, redisSecretName, redisPasswordKey, replicas, sentinel)
+	deploy := getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage, opaKubeMgmtImage, configSecretName, redisSecretName, redisPasswordKey, replicas, sentinel)
 
 	if deploy.Name != "proxy-server" {
 		t.Errorf("expected name 'proxy-server', got %s", deploy.Name)
@@ -64,9 +64,9 @@ func TestGetStorageServiceScaffold(t *testing.T) {
 	namespace := "test-namespace"
 	image := "storage-service:latest"
 	replicas := int32(2)
-	configSecretProviderClassName := "array-creds"
+	configSecretName := "config-secret"
 
-	deploy := getStorageServiceScaffold(name, namespace, image, replicas, configSecretProviderClassName)
+	deploy := getStorageServiceScaffold(name, namespace, image, replicas, configSecretName)
 
 	if deploy.Name != "storage-service" {
 		t.Errorf("expected name 'storage-service', got %s", deploy.Name)
@@ -129,13 +129,13 @@ func TestGetTenantServiceScaffold(t *testing.T) {
 	namespace := "test-namespace"
 	sentinelName := "sentinel"
 	image := "tenant-service:latest"
-	configSecretProviderClassName := "array-creds"
+	configSecretName := "config-secret"
 	redisSecretName := "redis-secret"
 	redisPasswordKey := "redis-password"
 	replicas := int32(3)
 	sentinelReplicas := 5
 
-	deploy := getTenantServiceScaffold(name, namespace, sentinelName, image, configSecretProviderClassName, redisSecretName, redisPasswordKey, replicas, sentinelReplicas)
+	deploy := getTenantServiceScaffold(name, namespace, sentinelName, image, configSecretName, redisSecretName, redisPasswordKey, replicas, sentinelReplicas)
 
 	if deploy.Name != "tenant-service" {
 		t.Errorf("expected name 'tenant-service', got %s", deploy.Name)
