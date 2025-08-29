@@ -38,7 +38,7 @@ spec:
           roleServiceReplicas: 1
           storageService: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.3.0
           storageServiceReplicas: 1
-          opa: docker.io/openpolicyagent/opa:latest
+          opa: docker.io/openpolicyagent/opa:0.70.0
           opaKubeMgmt: docker.io/openpolicyagent/kube-mgmt:8.5.11
           authorizationController: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.3.0
           authorizationControllerReplicas: 1
@@ -87,6 +87,18 @@ spec:
           redisCommander: rediscommander
           sentinel: sentinel
           redisReplicas: 5
+
+        - name: config
+          # Optional:
+          # Config secret configuration for JWT signing secret:
+          # If using a Secret Store CSI driver, specify the SecretProviderClass details that holds the config secretObject.
+          # Otherwise leave the fields blank and create the "karavi-config-secret" Kubernetes secret.
+          configSecretProviderClass:
+            # Name of the SecretProviderClass that holds the config secretObject.
+            - secretProviderClassName: ""
+              # Name of the Kubernetes secret (created by the Secret Store CSI driver) that contains the config secret.
+              configSecretName: ""
+
         - name: storage-system-credentials
           secretProviderClasses:
             vault:
