@@ -1263,7 +1263,9 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 		mountRedisVolumes(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
 	}
 
-	mountConfigVolume(&deployment.Spec.Template.Spec, configSecretProviderClassName)
+	if redisSecretProviderClassName != "" && redisSecretName != "" {
+		mountConfigVolume(&deployment.Spec.Template.Spec, configSecretProviderClassName)
+	}
 
 	deploymentBytes, err := yaml.Marshal(&deployment)
 	if err != nil {
@@ -1330,7 +1332,9 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 		mountRedisVolumes(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
 	}
 
-	mountConfigVolume(&deployment.Spec.Template.Spec, configSecretProviderClassName)
+	if redisSecretProviderClassName != "" && redisSecretName != "" {
+		mountConfigVolume(&deployment.Spec.Template.Spec, configSecretProviderClassName)
+	}
 
 	deploymentBytes, err := yaml.Marshal(&deployment)
 	if err != nil {
