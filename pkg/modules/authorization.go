@@ -161,17 +161,17 @@ const (
 )
 
 var (
-	redisStorageClass             string
-	redisSecretProviderClassName  string
-	redisSecretName               string
-	redisUsernameKey              string
-	redisPasswordKey              string
-	configSecretProviderClassName string
-	authHostname                  string
-	proxyIngressClassName         string
-	authCertificate               string
-	authPrivateKey                string
-	secretName                    string
+	redisStorageClass            string
+	redisSecretProviderClassName string
+	redisSecretName              string
+	redisUsernameKey             string
+	redisPasswordKey             string
+	configSecretName             string
+	authHostname                 string
+	proxyIngressClassName        string
+	authCertificate              string
+	authPrivateKey               string
+	secretName                   string
 
 	pathType    = networking.PathTypePrefix
 	duration    = 2160 * time.Hour // 90d
@@ -797,7 +797,7 @@ func authorizationStorageServiceV1(ctx context.Context, isDeleting bool, cr csmv
 		}
 	}
 
-	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, 1, configSecretProviderClassName)
+	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, 1, configSecretName)
 
 	// set karavi-storage-secret volume
 	deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, corev1.Volume{
@@ -890,9 +890,12 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 			secretProviderClasses = component.SecretProviderClasses
 			secrets = component.Secrets
 		case AuthConfigSecretComponent:
+			configSecretName = ""
 			// create config kubernetes secret or use a secret provider class
 			for _, config := range component.ConfigSecretProviderClass {
-				configSecretProviderClassName = config.ConfigSecretProviderClassName
+				if config.ConfigSecretProviderClassName != "" && config.ConfigSecretName != "" {
+					configSecretName = config.ConfigSecretName
+				}
 			}
 		default:
 			continue
@@ -911,7 +914,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 
 	// conversion to int32 is safe for a value up to 2147483647
 	// #nosec G115
-	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, int32(replicas), configSecretProviderClassName)
+	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, int32(replicas), configSecretName)
 
 	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
 	if storageCreds {
@@ -1238,9 +1241,12 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 				}
 			}
 		case AuthConfigSecretComponent:
+			configSecretName = ""
 			// create config signing kubernetes secret or use a secret provider class
 			for _, config := range component.ConfigSecretProviderClass {
-				configSecretProviderClassName = config.ConfigSecretProviderClassName
+				if config.ConfigSecretProviderClassName != "" && config.ConfigSecretName != "" {
+					configSecretName = config.ConfigSecretName
+				}
 			}
 		default:
 			continue
@@ -1249,7 +1255,7 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 
 	// conversion to int32 is safe for a value up to 2147483647
 	// #nosec G115
-	deployment := getProxyServerScaffold(cr.Name, sentinelName, cr.Namespace, proxyImage, opaImage, opaKubeMgmtImage, configSecretProviderClassName, redisSecretName, redisPasswordKey, int32(replicas), redisReplicas)
+	deployment := getProxyServerScaffold(cr.Name, sentinelName, cr.Namespace, proxyImage, opaImage, opaKubeMgmtImage, configSecretName, redisSecretName, redisPasswordKey, int32(replicas), redisReplicas)
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
 		mountRedisVolumes(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
@@ -1301,9 +1307,12 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 				}
 			}
 		case AuthConfigSecretComponent:
+			configSecretName = ""
 			// create config signing kubernetes secret or use a secret provider class
 			for _, config := range component.ConfigSecretProviderClass {
-				configSecretProviderClassName = config.ConfigSecretProviderClassName
+				if config.ConfigSecretProviderClassName != "" && config.ConfigSecretName != "" {
+					configSecretName = config.ConfigSecretName
+				}
 			}
 		default:
 			continue
@@ -1312,7 +1321,7 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 
 	// conversion to int32 is safe for a value up to 2147483647
 	// #nosec G115
-	deployment := getTenantServiceScaffold(cr.Name, cr.Namespace, sentinelName, image, configSecretProviderClassName, redisSecretName, redisPasswordKey, int32(replicas), redisReplicas)
+	deployment := getTenantServiceScaffold(cr.Name, cr.Namespace, sentinelName, image, configSecretName, redisSecretName, redisPasswordKey, int32(replicas), redisReplicas)
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
 		mountRedisVolumes(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
@@ -2271,7 +2280,7 @@ func mountConfigVolume(authModule csmv1.Module, deployment *appsv1.Deployment) {
 		for _, config := range component.ConfigSecretProviderClass {
 			if config.ConfigSecretProviderClassName != "" {
 				// add volume for config secret provider class
-				configVolume := configVolume(configSecretProviderClassName)
+				configVolume := configVolume(config.ConfigSecretProviderClassName)
 				deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, configVolume)
 
 				// set volume mount for config secret provider class

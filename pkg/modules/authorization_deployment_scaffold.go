@@ -21,12 +21,20 @@ import (
 )
 
 // getProxyServerScaffold returns proxy-server deployment for authorization v2
-func getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage, opaKubeMgmtImage, configSecretProviderClassName, redisSecretName, redisPasswordKey string, replicas int32, sentinelReplicas int) appsv1.Deployment {
+func getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage, opaKubeMgmtImage, configSecretName, redisSecretName, redisPasswordKey string, replicas int32, sentinelReplicas int) appsv1.Deployment {
 	volumeMounts := []corev1.VolumeMount{
 		{
 			Name:      "csm-config-params",
 			MountPath: "/etc/karavi-authorization/csm-config-params",
 		},
+		{
+			Name:      "config-volume",
+			MountPath: "/etc/karavi-authorization/config",
+		},
+	}
+	secretName := "karavi-config-secret"
+	if configSecretName != "" {
+		secretName = configSecretName
 	}
 	volumes := []corev1.Volume{
 		{
@@ -39,23 +47,14 @@ func getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage,
 				},
 			},
 		},
-	}
-
-	if configSecretProviderClassName == "" {
-		configVolumeMnt := corev1.VolumeMount{
-			Name:      "config-volume",
-			MountPath: "/etc/karavi-authorization/config",
-		}
-		configVolume := corev1.Volume{
+		{
 			Name: "config-volume",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: "karavi-config-secret",
+					SecretName: secretName,
 				},
 			},
-		}
-		volumeMounts = append(volumeMounts, configVolumeMnt)
-		volumes = append(volumes, configVolume)
+		},
 	}
 
 	return appsv1.Deployment{
@@ -164,12 +163,20 @@ func getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage,
 
 // getStorageServiceScaffold returns the storage-service deployment with the common elements between v1 and v2
 // callers must ensure that other elements specific for the version get set in the returned deployment
-func getStorageServiceScaffold(name string, namespace string, image string, replicas int32, configSecretProviderClassName string) appsv1.Deployment {
+func getStorageServiceScaffold(name string, namespace string, image string, replicas int32, configSecretName string) appsv1.Deployment {
 	volumeMounts := []corev1.VolumeMount{
 		{
 			Name:      "csm-config-params",
 			MountPath: "/etc/karavi-authorization/csm-config-params",
 		},
+		{
+			Name:      "config-volume",
+			MountPath: "/etc/karavi-authorization/config",
+		},
+	}
+	secretName := "karavi-config-secret"
+	if configSecretName != "" {
+		secretName = configSecretName
 	}
 	volumes := []corev1.Volume{
 		{
@@ -182,23 +189,14 @@ func getStorageServiceScaffold(name string, namespace string, image string, repl
 				},
 			},
 		},
-	}
-
-	if configSecretProviderClassName == "" {
-		configVolumeMnt := corev1.VolumeMount{
-			Name:      "config-volume",
-			MountPath: "/etc/karavi-authorization/config",
-		}
-		configVolume := corev1.Volume{
+		{
 			Name: "config-volume",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: "karavi-config-secret",
+					SecretName: secretName,
 				},
 			},
-		}
-		volumeMounts = append(volumeMounts, configVolumeMnt)
-		volumes = append(volumes, configVolume)
+		},
 	}
 
 	return appsv1.Deployment{
@@ -257,12 +255,20 @@ func getStorageServiceScaffold(name string, namespace string, image string, repl
 }
 
 // getTenantServiceScaffold returns tenant-service deployment for authorization v2
-func getTenantServiceScaffold(name, namespace, sentinelName, image, configSecretProviderClassName, redisSecretName, redisPasswordKey string, replicas int32, sentinelReplicas int) appsv1.Deployment {
+func getTenantServiceScaffold(name, namespace, sentinelName, image, configSecretName, redisSecretName, redisPasswordKey string, replicas int32, sentinelReplicas int) appsv1.Deployment {
 	volumeMounts := []corev1.VolumeMount{
 		{
 			Name:      "csm-config-params",
 			MountPath: "/etc/karavi-authorization/csm-config-params",
 		},
+		{
+			Name:      "config-volume",
+			MountPath: "/etc/karavi-authorization/config",
+		},
+	}
+	secretName := "karavi-config-secret"
+	if configSecretName != "" {
+		secretName = configSecretName
 	}
 	volumes := []corev1.Volume{
 		{
@@ -275,23 +281,14 @@ func getTenantServiceScaffold(name, namespace, sentinelName, image, configSecret
 				},
 			},
 		},
-	}
-
-	if configSecretProviderClassName == "" {
-		configVolumeMnt := corev1.VolumeMount{
-			Name:      "config-volume",
-			MountPath: "/etc/karavi-authorization/config",
-		}
-		configVolume := corev1.Volume{
+		{
 			Name: "config-volume",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: "karavi-config-secret",
+					SecretName: secretName,
 				},
 			},
-		}
-		volumeMounts = append(volumeMounts, configVolumeMnt)
-		volumes = append(volumes, configVolume)
+		},
 	}
 
 	return appsv1.Deployment{
@@ -920,7 +917,7 @@ func configVolumeMount() corev1.VolumeMount {
 	volumeName := "secrets-store-inline-config"
 	return corev1.VolumeMount{
 		Name:      volumeName,
-		MountPath: "/etc/karavi-authorization/config",
+		MountPath: "/etc/csm-authorization/config",
 		ReadOnly:  true,
 	}
 }

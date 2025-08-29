@@ -394,8 +394,8 @@ func TestConfigVolumeMount(t *testing.T) {
 	if mount.Name != "secrets-store-inline-config" {
 		t.Errorf("expected mount name 'secrets-store-inline-config', got %s", mount.Name)
 	}
-	if mount.MountPath != "/etc/karavi-authorization/config" {
-		t.Errorf("expected mount path '/etc/karavi-authorization/config', got %s", mount.MountPath)
+	if mount.MountPath != "/etc/csm-authorization/config" {
+		t.Errorf("expected mount path '/etc/csm-authorization/config', got %s", mount.MountPath)
 	}
 	if !mount.ReadOnly {
 		t.Error("expected mount to be read-only")
