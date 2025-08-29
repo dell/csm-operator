@@ -85,6 +85,13 @@ spec:
           sentinel: sentinel
           redisReplicas: 5
 
+        - name: config
+          configSecretProviderClass:
+            # Name of the SecretProviderClass that holds the config secretObject.
+            - secretProviderClassName: array-creds
+              # The name of the Kubernetes secret created by the CSI driver
+              configSecretName: config-secret
+
         - name: storage-system-credentials
           secretProviderClasses:
             vault:

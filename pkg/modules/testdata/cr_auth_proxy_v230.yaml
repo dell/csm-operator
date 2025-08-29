@@ -97,6 +97,16 @@ spec:
           sentinel: sentinel
           redisReplicas: 5
 
+        - name: config
+          # Config secret configuration:
+          # Use a SecretProviderClass for the config secret; otherwise, the user must manually create the config secret before installing Authorization.
+          # If using a Secret Store CSI driver, specify the SecretProviderClass that contains the config object.
+          configSecretProviderClass:
+            # Name of the SecretProviderClass that holds the config secretObject.
+            - secretProviderClassName: ""
+              # The name of the Kubernetes secret created by the CSI driver
+              configSecretName: ""
+
         - name: storage-system-credentials
           secretProviderClasses:
             vault:

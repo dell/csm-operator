@@ -385,6 +385,12 @@ type ContainerTemplate struct {
 	// +kubebuilder:validation:MaxItems=1
 	RedisSecretProviderClass []RedisSecretProviderClass `json:"redisSecretProviderClass,omitempty" yaml:"redisSecretProviderClass,omitempty"`
 
+	// ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config SecretProviderClass details"
+	// Applicable from CSM v1.15 onwards
+	// +kubebuilder:validation:MaxItems=1
+	ConfigSecretProviderClass []ConfigSecretProviderClass `json:"configSecretProviderClass,omitempty" yaml:"configSecretProviderClass,omitempty"`
+
 	// Certificate is a certificate used for a certificate/private-key pair
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Certificate for certificate/private-key pair"
 	Certificate string `json:"certificate,omitempty" yaml:"certificate,omitempty"`
@@ -441,6 +447,17 @@ type RedisSecretProviderClass struct {
 	// RedisPasswordKey is the key in the secret that holds the Redis password
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Password Key"
 	RedisPasswordKey string `json:"redisPasswordKey,omitempty" yaml:"redisPasswordKey,omitempty"`
+}
+
+// ConfigSecretProviderClass is the config secret configuration for CSM Authorization
+type ConfigSecretProviderClass struct {
+	// SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Secret Provider Class Name"
+	SecretProviderClassName string `json:"secretProviderClassName,omitempty" yaml:"secretProviderClassName,omitempty"`
+
+	// ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Secret Name"
+	ConfigSecretName string `json:"configSecretName,omitempty" yaml:"configSecretName,omitempty"`
 }
 
 // StorageSystemSecretProviderClass is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials

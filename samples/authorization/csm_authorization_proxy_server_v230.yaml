@@ -88,6 +88,17 @@ spec:
           sentinel: sentinel
           redisReplicas: 5
 
+        - name: config
+          # Optional:
+          # Config secret configuration for JWT signing secret:
+          # If using a Secret Store CSI driver, specify the SecretProviderClass details that holds the config secretObject.
+          # Otherwise leave the fields blank and create the "karavi-config-secret" Kubernetes secret.
+          configSecretProviderClass:
+            # Name of the SecretProviderClass that holds the config secretObject.
+            - secretProviderClassName: ""
+              # Name of the Kubernetes secret (created by the Secret Store CSI driver) that contains the config secret.
+              configSecretName: ""
+
         # Comment and uncomment the appropriate sections below to use the desired method.
         # Storage system credentials can be provided in one of two ways:
         # 1. Using a SecretProviderClass (for dynamic secrets from external providers)
