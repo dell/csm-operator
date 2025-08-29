@@ -32,9 +32,9 @@ func getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage,
 			MountPath: "/etc/karavi-authorization/config",
 		},
 	}
-	secretName := "karavi-config-secret"
+	volSecName := "karavi-config-secret"
 	if configSecretName != "" {
-		secretName = configSecretName
+		volSecName = configSecretName
 	}
 	volumes := []corev1.Volume{
 		{
@@ -51,7 +51,7 @@ func getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage,
 			Name: "config-volume",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: secretName,
+					SecretName: volSecName,
 				},
 			},
 		},
@@ -174,9 +174,9 @@ func getStorageServiceScaffold(name string, namespace string, image string, repl
 			MountPath: "/etc/karavi-authorization/config",
 		},
 	}
-	secretName := "karavi-config-secret"
+	volSecName := "karavi-config-secret"
 	if configSecretName != "" {
-		secretName = configSecretName
+		volSecName = configSecretName
 	}
 	volumes := []corev1.Volume{
 		{
@@ -193,7 +193,7 @@ func getStorageServiceScaffold(name string, namespace string, image string, repl
 			Name: "config-volume",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: secretName,
+					SecretName: volSecName,
 				},
 			},
 		},
@@ -266,9 +266,9 @@ func getTenantServiceScaffold(name, namespace, sentinelName, image, configSecret
 			MountPath: "/etc/karavi-authorization/config",
 		},
 	}
-	secretName := "karavi-config-secret"
+	volSecName := "karavi-config-secret"
 	if configSecretName != "" {
-		secretName = configSecretName
+		volSecName = configSecretName
 	}
 	volumes := []corev1.Volume{
 		{
@@ -285,7 +285,7 @@ func getTenantServiceScaffold(name, namespace, sentinelName, image, configSecret
 			Name: "config-volume",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: secretName,
+					SecretName: volSecName,
 				},
 			},
 		},
