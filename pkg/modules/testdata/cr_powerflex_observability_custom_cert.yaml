@@ -223,6 +223,16 @@ spec:
             # Default value: true
             - name: "POWERFLEX_STORAGE_POOL_METRICS_ENABLED"
               value: "true"
+            # POWERFLEX_TOPOLOGY_METRICS_ENABLED: enable/disable collection of topology metrics
+            # Allowed values: ture, false
+            # Default value: true
+            - name: "POWERFLEX_TOPOLOGY_METRICS_ENABLED"
+              value: "true"
+            # POWERFLEX_TOPOLOGY_METRICS_POLL_FREQUENCY: set polling frequency to get topology metrics data
+            # Allowed values: int
+            # Default value: 30
+            - name: "POWERFLEX_TOPOLOGY_METRICS_POLL_FREQUENCY"
+              value: "30"
             # POWERFLEX_SDC_IO_POLL_FREQUENCY: set polling frequency to get sdc metrics data
             # Allowed values: int
             # Default value: 10
