@@ -113,7 +113,6 @@ function check_existing_installation() {
   	if [ "$operator_in_namespace" = true ]; then
        log warning "An existing Operator installation was detected in the '$NAMESPACE' namespace."
        log error "To proceed, either remove the existing installation using the uninstall.sh script or use the --upgrade option to upgrade the Operator."
-       exit 1
     else
        log step "No existing Operator installation found. Proceeding with fresh install."
     fi
