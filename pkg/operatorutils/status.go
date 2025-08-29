@@ -466,6 +466,13 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 	}
 
 	namespace := instance.GetNamespace()
+	configVersion := instance.Spec.Driver.ConfigVersion
+
+	// Override namespace to "karavi" if config version is below v2.15
+	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
+		namespace = ObservabilityNamespace
+	}
+
 	opts := []client.ListOption{
 		client.InNamespace(namespace),
 	}

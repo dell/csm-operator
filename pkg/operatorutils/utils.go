@@ -164,6 +164,8 @@ const (
 	BrownfieldManifest = "brownfield-onboard.yaml"
 	// DefaultKubeletConfigDir - default kubelet config directory
 	DefaultKubeletConfigDir = "/var/lib/kubelet"
+	// ObservabilityNamespace - karavi
+	ObservabilityNamespace = "karavi"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
