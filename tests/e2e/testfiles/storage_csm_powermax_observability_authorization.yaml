@@ -147,7 +147,7 @@ spec:
         #   "false" - Use configmap format for the reverse proxy
         # Default value: "false"
         - name: "X_CSI_REVPROXY_USE_SECRET"
-          value: "true"
+          value: "false"
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin- volume usage, volume condition
@@ -309,7 +309,7 @@ spec:
             # proxyHost: hostname of the csm-authorization server
             # Default value: none
             - name: "PROXY_HOST"
-              value: "csm-authorization.com"
+              value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
             # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
             # Default value: "true"
             - name: "SKIP_CERTIFICATE_VALIDATION"
