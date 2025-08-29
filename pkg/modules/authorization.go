@@ -591,7 +591,6 @@ func AuthorizationServerPrecheck(ctx context.Context, op operatorutils.OperatorC
 
 // getAuthorizationServerDeployment - apply dynamic values to the deployment manifest before installation
 func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
-	log := logger.GetLogger(ctx)
 	YamlString := ""
 	auth, err := getAuthorizationModule(cr)
 	if err != nil {
@@ -652,7 +651,6 @@ func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.Oper
 			}
 
 			// create redis kubernetes secret
-			log.Infof("Auth deployment - component: %v", component)
 			for _, config := range component.RedisSecretProviderClass {
 				if config.SecretProviderClassName == "" && config.RedisSecretName == "" {
 					redisSecret := createRedisK8sSecret(defaultRedisSecretName, cr.Namespace)
