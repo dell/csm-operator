@@ -46,8 +46,6 @@ spec:
           value: /var/lib/kubelet
         - name: CSI_LOG_LEVEL
           value: debug
-        - name: X_CSI_VOL_PREFIX
-          value: "csivol"
         - name: X_CSI_POWERSTORE_API_TIMEOUT
           value: "120s"
     sideCars:
