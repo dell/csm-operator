@@ -927,9 +927,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 
 		// redis secret provider class
 		if redisSecretProviderClassName != "" && redisSecretName != "" {
-			if redisConjurUsernamePath != "" && redisConjurPasswordPath != "" {
-				updateRedisConjurAnnotations(deployment.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
-			}
+			updateRedisConjurAnnotations(deployment.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
 			mountSPCVolume(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
 		}
 	} else {
@@ -1246,9 +1244,7 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 	deployment := getProxyServerScaffold(cr.Name, sentinelName, cr.Namespace, proxyImage, opaImage, opaKubeMgmtImage, configSecretName, redisSecretName, redisPasswordKey, int32(replicas), redisReplicas)
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
-		if redisConjurUsernamePath != "" && redisConjurPasswordPath != "" {
-			updateRedisConjurAnnotations(deployment.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
-		}
+		updateRedisConjurAnnotations(deployment.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
 		mountSPCVolume(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
 	}
 
@@ -1306,9 +1302,7 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 	deployment := getTenantServiceScaffold(cr.Name, cr.Namespace, sentinelName, image, configSecretName, redisSecretName, redisPasswordKey, int32(replicas), redisReplicas)
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
-		if redisConjurUsernamePath != "" && redisConjurPasswordPath != "" {
-			updateRedisConjurAnnotations(deployment.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
-		}
+		updateRedisConjurAnnotations(deployment.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
 		mountSPCVolume(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
 	}
 
@@ -1359,9 +1353,7 @@ func applyDeleteAuthorizationRedisStatefulsetV2(ctx context.Context, isDeleting 
 	statefulset := getAuthorizationRedisStatefulsetScaffold(cr.Name, redisName, cr.Namespace, image, redisSecretName, redisPasswordKey, checksum, int32(redisReplicas))
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
-		if redisConjurUsernamePath != "" && redisConjurPasswordPath != "" {
-			updateRedisConjurAnnotations(statefulset.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
-		}
+		updateRedisConjurAnnotations(statefulset.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
 		mountSPCVolume(&statefulset.Spec.Template.Spec, redisSecretProviderClassName)
 	}
 
@@ -1410,9 +1402,7 @@ func applyDeleteAuthorizationRediscommanderDeploymentV2(ctx context.Context, isD
 	deployment := getAuthorizationRediscommanderDeploymentScaffold(cr.Name, rediscommanderName, cr.Namespace, image, redisSecretName, redisUsernameKey, redisPasswordKey, sentinelName, checksum, redisReplicas)
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
-		if redisConjurUsernamePath != "" && redisConjurPasswordPath != "" {
-			updateRedisConjurAnnotations(deployment.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
-		}
+		updateRedisConjurAnnotations(deployment.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
 		mountSPCVolume(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
 	}
 
@@ -1461,9 +1451,7 @@ func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleti
 	statefulset := getAuthorizationSentinelStatefulsetScaffold(cr.Name, sentinelName, redisName, cr.Namespace, image, redisSecretName, redisPasswordKey, checksum, int32(redisReplicas))
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
-		if redisConjurUsernamePath != "" && redisConjurPasswordPath != "" {
-			updateRedisConjurAnnotations(statefulset.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
-		}
+		updateRedisConjurAnnotations(statefulset.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
 		mountSPCVolume(&statefulset.Spec.Template.Spec, redisSecretProviderClassName)
 	}
 
@@ -2266,6 +2254,10 @@ func updateRedisGlobalVars(component csmv1.ContainerTemplate) {
 }
 
 func updateRedisConjurAnnotations(annotations map[string]string, conjurUserPath, conjurPasswordPath string) {
+	if redisConjurUsernamePath == "" || redisConjurPasswordPath == "" {
+		return
+	}
+
 	annotationFormat := "- %s: %s"
 	var sb strings.Builder
 
