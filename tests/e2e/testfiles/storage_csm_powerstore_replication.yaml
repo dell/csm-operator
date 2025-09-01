@@ -47,8 +47,6 @@ spec:
         # Default value: false
         - name: "GOPOWERSTORE_DEBUG"
           value: "false"
-        - name: X_CSI_VOL_PREFIX
-          value: "csivol"
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
