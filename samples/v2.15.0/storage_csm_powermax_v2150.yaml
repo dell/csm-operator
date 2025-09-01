@@ -391,7 +391,7 @@ spec:
           enabled: false
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
-          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.132.4
+          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.133.0
           # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
           #  for self-signed certs, leave empty string
           # Allowed values: string
@@ -439,7 +439,7 @@ spec:
             # Allowed values: ture, false
             # Default value: true
             - name: "POWERMAX_TOPOLOGY_METRICS_ENABLED"
-              value: "false"
+              value: "true"
             # POWERMAX_TOPOLOGY_METRICS_POLL_FREQUENCY: set polling frequency to get topology metrics
             # Allowed values: int
             # Default value: 30

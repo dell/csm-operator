@@ -11,7 +11,6 @@ This directory contains the testing infrastructure and E2E test implementation f
   - [Prerequisites](#prerequisites)
     - [Array Information](#array-information)
     - [Authorization Proxy Server Prerequisites](#authorization-proxy-server-prerequisites)
-    - [Shared NFS Prerequisites](#shared-nfs-prerequisites)
   - [Run](#run)
     - [Scenarios File](#scenarios-file)
   - [Developing E2E Tests](#developing-e2e-tests)
@@ -48,8 +47,6 @@ Any time changes made to the operator are being checked into the main branch, sa
   - The following components must be installed on your cluster:
     - Secrets Store CSI Driver
     - Vault, along with its CSI Provider. You can use the `--install-vault` tag to set up the Vault.
-      - Configure array system credentials and redis db credentials in Vault.
-
       You'll need to configure the `storage_csm_authorization_secret_provider_class.yaml` file in the `testfiles/authorization-templates` directory to point to your Vault instance and paths of credentials. For example:
       ```
         parameters:
@@ -58,6 +55,15 @@ Any time changes made to the operator are being checked into the main branch, sa
           vaultCACertPath: '/config/vault-ca.pem'
       ```
       where "vault" is the name of the vault service running.
+
+      If you're using a SecretProviderClass to store the configuration with a JWT signing secret, you'll need to update the path to point to this configuration:
+      ```
+        objects: |
+          - objectName: "config-object"
+            secretPath: "secret/data/REPLACE_CONFIG_PATH"
+            secretKey: "configKey"
+      ```
+      where "REPLACE_CONFIG_PATH" is the path to the configuration secret inside the CSI Secret Store.
 - Dellctl needs to be installed
   - See [here](https://dell.github.io/csm-docs/docs/support/cli/#installation-instructions) for instructions
 - In addition, for drivers that do not use the secret and storageclass creation steps, any required secrets, storageclasses, etc. will need to be created beforehand as well as required namespaces.
@@ -87,15 +93,6 @@ Notes:
 - Authorization V2 scenarios only support PowerFlex, PowerStore, PowerScale and PowerMax
 - Upgrade from Authorization V1 to V2 is not supported
 - The required host entry `<master node IP> csm-authorization.com` is now automatically added to `/etc/hosts`, so no manual update is needed.
-
-### Shared NFS Prerequisites
-
-If running the Shared NFS e2e tests, further setup must be done:
-
-- On each of the worker nodes, setup the nfs-server service and ensure that mounting with nfs4 is enabled.
-- Install the `sshpass` command on the VM where the tests are being run.
-- Update the password within `scripts/node_credential` to the password of the worker nodes (this assumes that all nodes share the same password).
-- During e2e execution specify the `sharednfs` flag. Otherwise, the tests won't run on its own due to the above prerequisite.
 
 ## Run
 

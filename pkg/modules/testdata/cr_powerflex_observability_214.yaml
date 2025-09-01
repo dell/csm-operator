@@ -11,13 +11,8 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
-      # storageCapacity: Helps the scheduler to schedule the pod on a node satisfying the topology constraints, only if the requested capacity is available on the storage array
-      # Allowed values:
-      #   true: enable storage capacity tracking
-      #   false: disable storage capacity tracking
-      storageCapacity: true
     configVersion: v2.14.1
-    replicas: 2
+    replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
@@ -37,10 +32,6 @@ spec:
         # Default value: None
         - name: KUBELET_CONFIG_DIR
           value: "/var/lib/kubelet"
-        - name: "CERT_SECRET_COUNT"
-          value: "0"
-        - name: X_CSI_QUOTA_ENABLED
-          value: "false"
     sideCars:
       # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
@@ -56,12 +47,6 @@ spec:
       - name: csi-external-health-monitor-controller
         enabled: false
         args: ["--monitor-interval=60s"]
-    # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
-    # Configure when the storageCapacity is set as "true"
-    # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
-    # - name: provisioner
-    #  args: ["--capacity-poll-interval=5m"]
-
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin - volume condition.
@@ -105,33 +90,6 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
-        # X_CSI_APPROVE_SDC_ENABLED: Enables/Disable SDC approval
-        # Allowed values:
-        #    true: enable SDC approval
-        #    false: disable SDC approval
-        # Default value: false
-        - name: X_CSI_APPROVE_SDC_ENABLED
-          value: "false"
-        # X_CSI_RENAME_SDC_ENABLED: Enable/Disable rename of SDC
-        # Allowed values:
-        #   true: enable renaming
-        #   false: disable renaming
-        # Default value: false
-        - name: X_CSI_RENAME_SDC_ENABLED
-          value: "false"
-        # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum PowerFlex volumes that can be created per node
-        # Allowed values: Any value greater than or equal to 0
-        # Default value: "0"
-        - name: X_CSI_MAX_VOLUMES_PER_NODE
-          value: "0"
-        # X_CSI_RENAME_SDC_PREFIX: defines a string for prefix of the SDC name.
-        # "prefix" + "worker_node_hostname" should not exceed 31 chars.
-        # Default value: none
-        # Examples: "rhel-sdc", "sdc-test"
-        - name: X_CSI_RENAME_SDC_PREFIX
-          value: ""
-        - name: X_CSI_SDC_SFTP_REPO_ENABLED
-          value: "false"
       # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
@@ -162,47 +120,31 @@ spec:
         name: sdc
         envs:
           - name: MDM
-            value: "REPLACE_MDM"  # provide MDM value
-          - name: REPO_ADDRESS
-            value: "REPLACE_SFTP_REPO_ADDRESS"  # SFTP/private repository address. Format: "protocol://address"
-          - name: REPO_USER
-            value: "REPLACE_SFTP_REPO_USER"  # provide username to authenticate to the SFTP repo
-          - name: MODULE_SIGCHECK
-            value: "0"
+            value: "10.x.x.x,10.x.x.x"  # provide MDM value
   modules:
-    # Authorization: enable csm-authorization for RBAC
-    - name: authorization
-      # enable: Enable/Disable csm-authorization
-      enabled: false
-      configVersion: v2.3.0
-      components:
-        - name: karavi-authorization-proxy
-          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.2.0
-          envs:
-            # proxyHost: hostname of the csm-authorization server
-            - name: "PROXY_HOST"
-              value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
-            # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
-            - name: "SKIP_CERTIFICATE_VALIDATION"
-              value: "true"
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
-      enabled: false
+      enabled: true
       configVersion: v1.13.0
       components:
+        - name: topology
+          # enabled: Enable/Disable topology
+          # Default value: false
+          enabled: true
+          # image: Defines karavi-topology image. This shouldn't be changed
+          # Allowed values: string
+          image: quay.io/dell/container-storage-modules/csm-topology:v1.12.0
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
-          enabled: false
+          enabled: true
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
-          image: otel/opentelemetry-collector:0.133.0
-          # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
-          #  for self-signed certs, leave empty string
+          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.124.0
+          # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
           # Allowed values: string
           certificate: ""
-          # privateKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
-          #  for self-signed certs, leave empty string
+          # privateKey: private key for cert/private-key pair -- please add cert here to use custom certificates
           # Allowed values: string
           privateKey: ""
           envs:
@@ -216,13 +158,13 @@ spec:
           # Allowed values:
           #   true: enable deployment of cert-manager
           #   false: disable deployment of cert-manager only if it's already deployed
-          # Default value: true
+          # Default value: false
           enabled: true
         - name: metrics-powerflex
           # enabled: Enable/Disable PowerFlex metrics
-          enabled: false
+          enabled: true
           # image: Defines PowerFlex metrics image. This shouldn't be changed
-          image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:nightly
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.12.0
           envs:
             # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
             # Allowed values: int
@@ -274,94 +216,16 @@ spec:
             # Default value: "otel-collector:55680"
             - name: "COLLECTOR_ADDRESS"
               value: "otel-collector:55680"
-    # Replication: allows to configure replication
-    # Replication CRDs must be installed before installing driver
-    - name: replication
-      # enabled: Enable/Disable replication feature
-      # Allowed values:
-      #   true: enable replication feature(install dell-csi-replicator sidecar)
-      #   false: disable replication feature(do not install dell-csi-replicator sidecar)
-      # Default value: false
+    - name: authorization
+      # enable: Enable/Disable csm-authorization
       enabled: false
-      configVersion: v1.13.0
       components:
-        - name: dell-csi-replicator
-          # image: Image to use for dell-csi-replicator. This shouldn't be changed
-          # Allowed values: string
-          # Default value: None
-          image: quay.io/dell/container-storage-modules/dell-csi-replicator:nightly
+        - name: karavi-authorization-proxy
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.2.0
           envs:
-            # replicationPrefix: prefix to prepend to storage classes parameters
-            # Allowed values: string
-            # Default value: replication.storage.dell.com
-            - name: "X_CSI_REPLICATION_PREFIX"
-              value: "replication.storage.dell.com"
-            # replicationContextPrefix: prefix to use for naming of resources created by replication feature
-            # Allowed values: string
-            - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
-              value: "powerflex"
-        - name: dell-replication-controller-manager
-          # image: Defines controller image. This shouldn't be changed
-          # Allowed values: string
-          image: quay.io/dell/container-storage-modules/dell-replication-controller:nightly
-          envs:
-            # Replication log level
-            # Allowed values: "error", "warn"/"warning", "info", "debug"
-            # Default value: "debug"
-            - name: "REPLICATION_CTRL_LOG_LEVEL"
-              value: "debug"
-            # replicas: Defines number of controller replicas
-            # Allowed values: int
-            # Default value: 1
-            - name: "REPLICATION_CTRL_REPLICAS"
-              value: "1"
-            # retryIntervalMin: Initial retry interval of failed reconcile request.
-            # It doubles with each failure, upto retry-interval-max
-            # Allowed values: time
-            - name: "RETRY_INTERVAL_MIN"
-              value: "1s"
-            # RETRY_INTERVAL_MAX: Maximum retry interval of failed reconcile request
-            # Allowed values: time
-            - name: "RETRY_INTERVAL_MAX"
-              value: "5m"
-        - name: dell-replication-controller-init
-          # image: Defines replication init container image. This shouldn't be changed
-          # Allowed values: string
-          image: dellemc/dell-replication-init:v1.0.1
-    - name: resiliency
-      # enabled: Enable/Disable Resiliency feature
-      # Allowed values:
-      # true: enable Resiliency feature(deploy podmon sidecar)
-      # false: disable Resiliency feature(do not deploy podmon sidecar)
-      # Default value: false
-      enabled: false
-      configVersion: v1.14.0
-      components:
-        - name: podmon-controller
-          image: quay.io/dell/container-storage-modules/podmon:nightly
-          imagePullPolicy: Always
-          args:
-            - "--csisock=unix:/var/run/csi/csi.sock"
-            - "--labelvalue=csi-vxflexos"
-            - "--mode=controller"
-            - "--skipArrayConnectionValidation=false"
-            - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
-            - "--driverPodLabelValue=dell-storage"
-            - "--ignoreVolumelessPods=false"
-        - name: podmon-node
-          image: quay.io/dell/container-storage-modules/podmon:nightly
-          imagePullPolicy: Always
-          envs:
-            # podmonAPIPort: Defines the port to be used within the kubernetes cluster
-            # Allowed values: Any valid and free port (string)
-            # Default value: 8083
-            - name: "X_CSI_PODMON_API_PORT"
-              value: "8083"
-          args:
-            - "--csisock=unix:/var/lib/kubelet/plugins/vxflexos.emc.dell.com/csi_sock"
-            - "--labelvalue=csi-vxflexos"
-            - "--mode=node"
-            - "--leaderelection=false"
-            - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
-            - "--driverPodLabelValue=dell-storage"
-            - "--ignoreVolumelessPods=false"
+            # proxyHost: hostname of the csm-authorization server
+            - name: "PROXY_HOST"
+              value: "testing-proxy-host"
+            # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
+            - name: "SKIP_CERTIFICATE_VALIDATION"
+              value: "true"

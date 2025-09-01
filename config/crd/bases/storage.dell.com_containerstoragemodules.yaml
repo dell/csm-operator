@@ -100,6 +100,28 @@ spec:
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
+                        configSecretProviderClass:
+                          description: |-
+                            ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+                            Applicable from CSM v1.15 onwards
+                          items:
+                            description:
+                              ConfigSecretProviderClass is the config secret
+                              configuration for CSM Authorization
+                            properties:
+                              configSecretName:
+                                description:
+                                  ConfigSecretName is the name of the Kubernetes
+                                  secret created by the CSI driver
+                                type: string
+                              secretProviderClassName:
+                                description:
+                                  SecretProviderClassName is the name of
+                                  the SecretProviderClass that holds the config secretObject
+                                type: string
+                            type: object
+                          maxItems: 1
+                          type: array
                         controllerReconcileInterval:
                           description:
                             The interval which the reconcile of each controller
@@ -357,9 +379,11 @@ spec:
                                   RedisUsernameKey is the key in the secret
                                   that holds the Redis username
                                 type: string
-                            required:
-                              - redisPasswordKey
-                              - redisUsernameKey
+                              secretProviderClassName:
+                                description:
+                                  SecretProviderClassName is the name of
+                                  the SecretProviderClass that holds the Redis secretObject
+                                type: string
                             type: object
                           maxItems: 1
                           type: array
@@ -571,6 +595,28 @@ spec:
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
+                        configSecretProviderClass:
+                          description: |-
+                            ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+                            Applicable from CSM v1.15 onwards
+                          items:
+                            description:
+                              ConfigSecretProviderClass is the config secret
+                              configuration for CSM Authorization
+                            properties:
+                              configSecretName:
+                                description:
+                                  ConfigSecretName is the name of the Kubernetes
+                                  secret created by the CSI driver
+                                type: string
+                              secretProviderClassName:
+                                description:
+                                  SecretProviderClassName is the name of
+                                  the SecretProviderClass that holds the config secretObject
+                                type: string
+                            type: object
+                          maxItems: 1
+                          type: array
                         controllerReconcileInterval:
                           description:
                             The interval which the reconcile of each controller
@@ -828,9 +874,11 @@ spec:
                                   RedisUsernameKey is the key in the secret
                                   that holds the Redis username
                                 type: string
-                            required:
-                              - redisPasswordKey
-                              - redisUsernameKey
+                              secretProviderClassName:
+                                description:
+                                  SecretProviderClassName is the name of
+                                  the SecretProviderClass that holds the Redis secretObject
+                                type: string
                             type: object
                           maxItems: 1
                           type: array
@@ -1060,6 +1108,28 @@ spec:
                           commander:
                             description: Commander is the image tag for the Container
                             type: string
+                          configSecretProviderClass:
+                            description: |-
+                              ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+                              Applicable from CSM v1.15 onwards
+                            items:
+                              description:
+                                ConfigSecretProviderClass is the config secret
+                                configuration for CSM Authorization
+                              properties:
+                                configSecretName:
+                                  description:
+                                    ConfigSecretName is the name of the Kubernetes
+                                    secret created by the CSI driver
+                                  type: string
+                                secretProviderClassName:
+                                  description:
+                                    SecretProviderClassName is the name of
+                                    the SecretProviderClass that holds the config secretObject
+                                  type: string
+                              type: object
+                            maxItems: 1
+                            type: array
                           controllerReconcileInterval:
                             description:
                               The interval which the reconcile of each controller
@@ -1319,9 +1389,11 @@ spec:
                                     RedisUsernameKey is the key in the secret
                                     that holds the Redis username
                                   type: string
-                              required:
-                                - redisPasswordKey
-                                - redisUsernameKey
+                                secretProviderClassName:
+                                  description:
+                                    SecretProviderClassName is the name of
+                                    the SecretProviderClass that holds the Redis secretObject
+                                  type: string
                               type: object
                             maxItems: 1
                             type: array
@@ -1529,6 +1601,28 @@ spec:
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
+                        configSecretProviderClass:
+                          description: |-
+                            ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+                            Applicable from CSM v1.15 onwards
+                          items:
+                            description:
+                              ConfigSecretProviderClass is the config secret
+                              configuration for CSM Authorization
+                            properties:
+                              configSecretName:
+                                description:
+                                  ConfigSecretName is the name of the Kubernetes
+                                  secret created by the CSI driver
+                                type: string
+                              secretProviderClassName:
+                                description:
+                                  SecretProviderClassName is the name of
+                                  the SecretProviderClass that holds the config secretObject
+                                type: string
+                            type: object
+                          maxItems: 1
+                          type: array
                         controllerReconcileInterval:
                           description:
                             The interval which the reconcile of each controller
@@ -1786,9 +1880,11 @@ spec:
                                   RedisUsernameKey is the key in the secret
                                   that holds the Redis username
                                 type: string
-                            required:
-                              - redisPasswordKey
-                              - redisUsernameKey
+                              secretProviderClassName:
+                                description:
+                                  SecretProviderClassName is the name of
+                                  the SecretProviderClass that holds the Redis secretObject
+                                type: string
                             type: object
                           maxItems: 1
                           type: array
@@ -2002,6 +2098,28 @@ spec:
                           commander:
                             description: Commander is the image tag for the Container
                             type: string
+                          configSecretProviderClass:
+                            description: |-
+                              ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+                              Applicable from CSM v1.15 onwards
+                            items:
+                              description:
+                                ConfigSecretProviderClass is the config secret
+                                configuration for CSM Authorization
+                              properties:
+                                configSecretName:
+                                  description:
+                                    ConfigSecretName is the name of the Kubernetes
+                                    secret created by the CSI driver
+                                  type: string
+                                secretProviderClassName:
+                                  description:
+                                    SecretProviderClassName is the name of
+                                    the SecretProviderClass that holds the config secretObject
+                                  type: string
+                              type: object
+                            maxItems: 1
+                            type: array
                           controllerReconcileInterval:
                             description:
                               The interval which the reconcile of each controller
@@ -2261,9 +2379,11 @@ spec:
                                     RedisUsernameKey is the key in the secret
                                     that holds the Redis username
                                   type: string
-                              required:
-                                - redisPasswordKey
-                                - redisUsernameKey
+                                secretProviderClassName:
+                                  description:
+                                    SecretProviderClassName is the name of
+                                    the SecretProviderClass that holds the Redis secretObject
+                                  type: string
                               type: object
                             maxItems: 1
                             type: array
@@ -2503,6 +2623,29 @@ spec:
                             commander:
                               description: Commander is the image tag for the Container
                               type: string
+                            configSecretProviderClass:
+                              description: |-
+                                ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+                                Applicable from CSM v1.15 onwards
+                              items:
+                                description:
+                                  ConfigSecretProviderClass is the config
+                                  secret configuration for CSM Authorization
+                                properties:
+                                  configSecretName:
+                                    description:
+                                      ConfigSecretName is the name of the
+                                      Kubernetes secret created by the CSI driver
+                                    type: string
+                                  secretProviderClassName:
+                                    description:
+                                      SecretProviderClassName is the name
+                                      of the SecretProviderClass that holds the config
+                                      secretObject
+                                    type: string
+                                type: object
+                              maxItems: 1
+                              type: array
                             controllerReconcileInterval:
                               description:
                                 The interval which the reconcile of each
@@ -2764,9 +2907,12 @@ spec:
                                       RedisUsernameKey is the key in the
                                       secret that holds the Redis username
                                     type: string
-                                required:
-                                  - redisPasswordKey
-                                  - redisUsernameKey
+                                  secretProviderClassName:
+                                    description:
+                                      SecretProviderClassName is the name
+                                      of the SecretProviderClass that holds the Redis
+                                      secretObject
+                                    type: string
                                 type: object
                               maxItems: 1
                               type: array
@@ -2994,6 +3140,29 @@ spec:
                             commander:
                               description: Commander is the image tag for the Container
                               type: string
+                            configSecretProviderClass:
+                              description: |-
+                                ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+                                Applicable from CSM v1.15 onwards
+                              items:
+                                description:
+                                  ConfigSecretProviderClass is the config
+                                  secret configuration for CSM Authorization
+                                properties:
+                                  configSecretName:
+                                    description:
+                                      ConfigSecretName is the name of the
+                                      Kubernetes secret created by the CSI driver
+                                    type: string
+                                  secretProviderClassName:
+                                    description:
+                                      SecretProviderClassName is the name
+                                      of the SecretProviderClass that holds the config
+                                      secretObject
+                                    type: string
+                                type: object
+                              maxItems: 1
+                              type: array
                             controllerReconcileInterval:
                               description:
                                 The interval which the reconcile of each
@@ -3255,9 +3424,12 @@ spec:
                                       RedisUsernameKey is the key in the
                                       secret that holds the Redis username
                                     type: string
-                                required:
-                                  - redisPasswordKey
-                                  - redisUsernameKey
+                                  secretProviderClassName:
+                                    description:
+                                      SecretProviderClassName is the name
+                                      of the SecretProviderClass that holds the Redis
+                                      secretObject
+                                    type: string
                                 type: object
                               maxItems: 1
                               type: array

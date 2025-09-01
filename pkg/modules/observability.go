@@ -12,6 +12,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -22,6 +23,8 @@ import (
 	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	"github.com/dell/csm-operator/pkg/resources/deployment"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -120,6 +123,12 @@ const (
 
 	// PowerflexMaxConcurrentQueries - max concurrent queries
 	PowerflexMaxConcurrentQueries string = "<POWERFLEX_MAX_CONCURRENT_QUERIES>"
+
+	// PowerflexTopologyMetricsEnabled - enable/disable collection of topology metrics
+	PowerflexTopologyMetricsEnabled string = "<POWERFLEX_TOPOLOGY_METRICS_ENABLED>"
+
+	// PowerflexTopologyMetricsPollFrequency - polling frequency to get topology metrics data
+	PowerflexTopologyMetricsPollFrequency string = "<POWERFLEX_TOPOLOGY_METRICS_POLL_FREQUENCY>"
 
 	// PowerflexLogLevel - the level for the PowerFlex metrics
 	PowerflexLogLevel string = "<POWERFLEX_LOG_LEVEL>"
@@ -476,6 +485,15 @@ func PowerScaleMetrics(ctx context.Context, isDeleting bool, op operatorutils.Op
 		return fmt.Errorf("could not find deployment obj")
 	}
 
+	configVersion := cr.Spec.Driver.ConfigVersion
+	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
+		// append secret objects
+		powerscaleMetricsObjects, err = appendObservabilitySecrets(ctx, cr, powerscaleMetricsObjects, ctrlClient, k8sClient)
+		if err != nil {
+			return fmt.Errorf("copy secrets from %s: %v", cr.Namespace, err)
+		}
+	}
+
 	for _, ctrlObj := range powerscaleMetricsObjects {
 		if isDeleting {
 			if err := operatorutils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
@@ -795,6 +813,29 @@ func parseObservabilityMetricsDeployment(ctx context.Context, deployment *appsv1
 			return nil, fmt.Errorf("injecting auth into Observability metrics deployment: %v", err)
 		}
 	}
+
+	configVersion := cr.Spec.Driver.ConfigVersion
+	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
+
+		// add prefix to secretName of auth volumes
+		for i, v := range dpApply.Spec.Template.Spec.Volumes {
+			if operatorutils.Contains(defaultAuthSecretsName, *v.Name) {
+				name := getNewAuthSecretName(cr.GetDriverType(), *v.Secret.SecretName)
+				dpApply.Spec.Template.Spec.Volumes[i].Secret.SecretName = &name
+			}
+		}
+		// add prefix to secretName of proxy token
+		for i, c := range dpApply.Spec.Template.Spec.Containers {
+			if *c.Name == "karavi-authorization-proxy" {
+				for j, env := range c.Env {
+					if (*env.Name == "ACCESS_TOKEN" || *env.Name == "REFRESH_TOKEN") && operatorutils.Contains(defaultAuthSecretsName, *env.ValueFrom.SecretKeyRef.Name) {
+						name := getNewAuthSecretName(cr.GetDriverType(), *env.ValueFrom.SecretKeyRef.Name)
+						dpApply.Spec.Template.Spec.Containers[i].Env[j].ValueFrom.SecretKeyRef.Name = &name
+					}
+				}
+			}
+		}
+	}
 	return dpApply, nil
 }
 
@@ -824,6 +865,15 @@ func PowerFlexMetrics(ctx context.Context, isDeleting bool, op operatorutils.Ope
 	}
 	if !foundDp {
 		return fmt.Errorf("could not find deployment obj")
+	}
+
+	configVersion := cr.Spec.Driver.ConfigVersion
+	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
+		// append secret objects
+		powerflexMetricsObjects, err = appendObservabilitySecrets(ctx, cr, powerflexMetricsObjects, ctrlClient, k8sClient)
+		if err != nil {
+			return fmt.Errorf("copy secrets from %s: %v", cr.Namespace, err)
+		}
 	}
 
 	for _, ctrlObj := range powerflexMetricsObjects {
@@ -885,6 +935,8 @@ func getPowerFlexMetricsObject(op operatorutils.OperatorConfig, cr csmv1.Contain
 	sdcPollFrequency := "10"
 	volumePollFrequency := "10"
 	storagePoolPollFrequency := "10"
+	topologyEnabled := "true"
+	topologyPollFrequency := "30"
 	logFormat := "TEXT"
 	logLevel := "INFO"
 
@@ -902,6 +954,10 @@ func getPowerFlexMetricsObject(op operatorutils.OperatorConfig, cr csmv1.Contain
 					sdcEnabled = env.Value
 				} else if strings.Contains(PowerflexSdcIoPollFrequency, env.Name) {
 					sdcPollFrequency = env.Value
+				} else if strings.Contains(PowerflexTopologyMetricsEnabled, env.Name) {
+					topologyEnabled = env.Value
+				} else if strings.Contains(PowerflexTopologyMetricsPollFrequency, env.Name) {
+					topologyPollFrequency = env.Value
 				} else if strings.Contains(PowerflexVolumeMetricsEnabled, env.Name) {
 					volumeEnabled = env.Value
 				} else if strings.Contains(PowerflexVolumeIoPollFrequency, env.Name) {
@@ -929,6 +985,8 @@ func getPowerFlexMetricsObject(op operatorutils.OperatorConfig, cr csmv1.Contain
 	YamlString = strings.ReplaceAll(YamlString, PowerflexVolumeIoPollFrequency, volumePollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, PowerflexStoragePoolMetricsEnabled, storagePoolEnabled)
 	YamlString = strings.ReplaceAll(YamlString, PowerflexStoragePoolPollFrequency, storagePoolPollFrequency)
+	YamlString = strings.ReplaceAll(YamlString, PowerflexTopologyMetricsEnabled, topologyEnabled)
+	YamlString = strings.ReplaceAll(YamlString, PowerflexTopologyMetricsPollFrequency, topologyPollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, PowerflexLogFormat, logFormat)
 	YamlString = strings.ReplaceAll(YamlString, OtelCollectorAddress, otelCollectorAddress)
 	YamlString = strings.ReplaceAll(YamlString, DriverDefaultReleaseName, cr.Name)
@@ -950,6 +1008,70 @@ func getObservabilityModule(cr csmv1.ContainerStorageModule) (csmv1.Module, erro
 		}
 	}
 	return csmv1.Module{}, fmt.Errorf("could not find observability module")
+}
+
+// appendObservabilitySecrets - append secrets from driver namespace including auth secrets, change their namespace to Observability Namespace
+func appendObservabilitySecrets(ctx context.Context, cr csmv1.ContainerStorageModule, objects []client.Object, ctrlClient client.Client, _ kubernetes.Interface) ([]client.Object, error) {
+	driverSecretName := strings.ReplaceAll(defaultSecretsName[cr.GetDriverType()], DriverDefaultReleaseName, cr.Name)
+
+	if cr.Spec.Driver.AuthSecret != "" {
+		driverSecretName = cr.Spec.Driver.AuthSecret
+	}
+
+	driverSecret, err := operatorutils.GetSecret(ctx, driverSecretName, cr.GetNamespace(), ctrlClient)
+	if err != nil {
+		return objects, fmt.Errorf("reading secret [%s] error [%s]", driverSecret, err)
+	}
+
+	newSecret := createObsSecretObj(*driverSecret, operatorutils.ObservabilityNamespace, driverSecret.Name)
+	objects = append(objects, newSecret)
+
+	// authorization secrets
+	if authorizationEnabled, auth := operatorutils.IsModuleEnabled(ctx, cr, csmv1.Authorization); authorizationEnabled {
+		skipCertValid := true
+		for _, env := range auth.Components[0].Envs {
+			if env.Name == "SKIP_CERTIFICATE_VALIDATION" {
+				skipCertValid, err = strconv.ParseBool(env.Value)
+				if err != nil {
+					return objects, fmt.Errorf("%s is an invalid value for SKIP_CERTIFICATE_VALIDATION: %v", env.Value, err)
+				}
+				break
+			}
+		}
+		for _, s := range defaultAuthSecretsName {
+			if s == "proxy-server-root-certificate" && skipCertValid {
+				continue
+			}
+
+			found, err := operatorutils.GetSecret(ctx, s, cr.GetNamespace(), ctrlClient)
+			if err != nil {
+				return objects, fmt.Errorf("reading secret [%s] error [%s]", s, err)
+			}
+			newSecretName := getNewAuthSecretName(cr.GetDriverType(), found.Name)
+			newAuthSecret := createObsSecretObj(*found, operatorutils.ObservabilityNamespace, newSecretName)
+			objects = append(objects, newAuthSecret)
+		}
+	}
+
+	return objects, nil
+}
+
+// createObsSecretObj - Create new Observability Secret Object from driver Secret
+func createObsSecretObj(driverSecret corev1.Secret, newNameSpace, newSecretName string) *corev1.Secret {
+	return &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      newSecretName,
+			Namespace: newNameSpace,
+		},
+		TypeMeta: driverSecret.TypeMeta,
+		Data:     driverSecret.Data,
+		Type:     driverSecret.Type,
+	}
+}
+
+// getNewAuthSecretName - add prefix to secretName
+func getNewAuthSecretName(driverType csmv1.DriverType, secretName string) string {
+	return fmt.Sprintf("%s-%s", driverType, secretName)
 }
 
 // getIssuerCertServiceObs - gets cert manager issuer and certificate manifest for observability
@@ -1063,6 +1185,15 @@ func PowerMaxMetrics(ctx context.Context, isDeleting bool, op operatorutils.Oper
 		err := setPowerMaxMetricsConfigMap(dpApply, cr)
 		if err != nil {
 			return err
+		}
+	}
+
+	configVersion := cr.Spec.Driver.ConfigVersion
+	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
+		// append secret objects
+		powerMaxMetricsObjects, err = appendObservabilitySecrets(ctx, cr, powerMaxMetricsObjects, ctrlClient, k8sClient)
+		if err != nil {
+			return fmt.Errorf("copy secrets from %s: %v", cr.Namespace, err)
 		}
 	}
 

@@ -66,21 +66,31 @@ spec:
               # additional annotations for the proxy-server ingress
               annotations: {}
         - name: redis
-          # Redis secret configuration:
-          # Use a SecretProviderClass for Redis credentials; otherwise, a default Kubernetes secret is used.
+          # Optional Redis secret configuration:
+          # If using Secret Store CSI driver, specify the SecretProviderClass for Redis credentials.
+          # Otherwise, a default Kubernetes secret will be used.
           redisSecretProviderClass:
-            # The name of the Kubernetes secret created by the CSI driver
-            - redisSecretName: array-creds
-              # The key in the secret that holds the Redis username
+            # Name of the SecretProviderClass that holds the Redis secretObject.
+            - secretProviderClassName: array-creds
+              # Name of the Kubernetes secret (created by the Secret Store CSI driver) that contains Redis credentials.
+              redisSecretName: redis-secret
+              # Key in the secret that stores the Redis username.
               redisUsernameKey: username
-              # The key in the secret that holds the Redis password
+              # Key in the secret that stores the Redis password.
               redisPasswordKey: password
-          redis: redis:7.4.3-alpine
+          redis: redis:8.2.0-alpine
           commander: rediscommander/redis-commander:latest
           redisName: redis-csm
           redisCommander: rediscommander
           sentinel: sentinel
           redisReplicas: 5
+
+        - name: config
+          configSecretProviderClass:
+            # Name of the SecretProviderClass that holds the config secretObject.
+            - secretProviderClassName: array-creds
+              # The name of the Kubernetes secret created by the CSI driver
+              configSecretName: config-secret
 
         - name: storage-system-credentials
           secretProviderClasses:

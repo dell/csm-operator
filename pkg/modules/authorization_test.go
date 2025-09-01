@@ -573,44 +573,6 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 
 			return false, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
-		"fail v1 - karavi-config-secret not found": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1120.yaml")
-			if err != nil {
-				panic(err)
-			}
-			tmpCR := customResource
-			auth := tmpCR.Spec.Modules[0]
-
-			karaviStorage := getSecret(customResource.Namespace, "karavi-storage-secret")
-			karaviTLS := getSecret(customResource.Namespace, "karavi-selfsigned-tls")
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviStorage, karaviTLS).Build()
-
-			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
-				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviStorage, karaviTLS).Build()
-				return clusterClient, nil
-			}
-
-			return false, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
-		},
-		"fail v1 - karavi-storage-secret not found": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1120.yaml")
-			if err != nil {
-				panic(err)
-			}
-			tmpCR := customResource
-			auth := tmpCR.Spec.Modules[0]
-
-			karaviConfig := getSecret(customResource.Namespace, "karavi-config-secret")
-			karaviTLS := getSecret(customResource.Namespace, "karavi-selfsigned-tls")
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviTLS).Build()
-
-			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
-				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviTLS).Build()
-				return clusterClient, nil
-			}
-
-			return false, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
-		},
 		"fail v2 - karavi-config-secret not found": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
@@ -2193,4 +2155,89 @@ func TestGetRedisChecksumFromSecretData(t *testing.T) {
 	if checksum == "" {
 		t.Fatal("expected checksum, got empty string")
 	}
+}
+
+func TestMountSPCVolume(t *testing.T) {
+	t.Run("it mounts redis volumes", func(t *testing.T) {
+		spcName := "array-creds"
+		expectedVolumeName := fmt.Sprintf("secrets-store-inline-%s", spcName)
+		expectedMountPath := fmt.Sprintf("/etc/csm-authorization/%s", spcName)
+
+		spec := &corev1.PodSpec{
+			Volumes:    []corev1.Volume{},
+			Containers: []corev1.Container{{}},
+		}
+
+		mountSPCVolume(spec, spcName)
+
+		foundVolume := false
+		for _, v := range spec.Volumes {
+			if v.Name == expectedVolumeName {
+				foundVolume = true
+				if v.VolumeSource.CSI == nil || v.VolumeSource.CSI.Driver != "secrets-store.csi.k8s.io" {
+					t.Errorf("unexpected CSI driver or nil CSI source")
+				}
+				if v.VolumeSource.CSI.VolumeAttributes["secretProviderClass"] != spcName {
+					t.Errorf("expected secretProviderClass %s, got %s", spcName, v.VolumeSource.CSI.VolumeAttributes["secretProviderClass"])
+				}
+			}
+		}
+		if !foundVolume {
+			t.Errorf("expected volume %s not found", expectedVolumeName)
+		}
+
+		foundMount := false
+		for _, m := range spec.Containers[0].VolumeMounts {
+			if m.Name == expectedVolumeName && m.MountPath == expectedMountPath && m.ReadOnly {
+				foundMount = true
+			}
+		}
+		if !foundMount {
+			t.Errorf("expected volume mount %s at path %s not found", expectedVolumeName, expectedMountPath)
+		}
+	})
+
+	t.Run("it doesn't duplicate volumes or mounts", func(t *testing.T) {
+		spcName := "array-creds"
+		volumeName := fmt.Sprintf("secrets-store-inline-%s", spcName)
+		mountPath := fmt.Sprintf("/etc/csm-authorization/%s", spcName)
+
+		readOnly := true
+		spec := &corev1.PodSpec{
+			Volumes: []corev1.Volume{
+				{
+					Name: volumeName,
+					VolumeSource: corev1.VolumeSource{
+						CSI: &corev1.CSIVolumeSource{
+							Driver:   "secrets-store.csi.k8s.io",
+							ReadOnly: &readOnly,
+							VolumeAttributes: map[string]string{
+								"secretProviderClass": spcName,
+							},
+						},
+					},
+				},
+			},
+			Containers: []corev1.Container{
+				{
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							Name:      volumeName,
+							MountPath: mountPath,
+							ReadOnly:  true,
+						},
+					},
+				},
+			},
+		}
+
+		mountSPCVolume(spec, spcName)
+
+		if len(spec.Volumes) != 1 {
+			t.Errorf("expected 1 volume, got %d", len(spec.Volumes))
+		}
+		if len(spec.Containers[0].VolumeMounts) != 1 {
+			t.Errorf("expected 1 volume mount, got %d", len(spec.Containers[0].VolumeMounts))
+		}
+	})
 }
