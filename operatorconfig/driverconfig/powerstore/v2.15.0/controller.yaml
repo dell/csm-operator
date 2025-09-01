@@ -317,8 +317,6 @@ spec:
               value: "5"
             - name: X_CSI_MULTI_NAS_COOLDOWN_PERIOD
               value: "5m"
-            - name: X_CSI_VOL_PREFIX
-              value: <X_CSI_VOL_PREFIX>
             - name: X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT
               value: "<X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT>"
           volumeMounts:
