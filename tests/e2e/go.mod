@@ -1,8 +1,6 @@
 module github.com/dell/csm-operator/tests/e2e
 
-go 1.24.0
-
-toolchain go1.24.5
+go 1.25
 
 require (
 	github.com/dell/csm-operator v0.0.0
