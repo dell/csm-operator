@@ -1,15 +1,3 @@
-# Copyright © 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#      http://www.apache.org/licenses/LICENSE-2.0
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 #!/bin/bash
 set -e
 
@@ -50,12 +38,12 @@ if [[ -z "$CONTROL_NODE" ]]; then
   exit 1
 fi
 
-if command -v docker >/dev/null 2>&1; then
-  CONTAINER_RUNTIME="docker"
-elif command -v podman >/dev/null 2>&1; then
+if command -v podman >/dev/null 2>&1; then
   CONTAINER_RUNTIME="podman"
+elif command -v docker >/dev/null 2>&1; then
+  CONTAINER_RUNTIME="docker"
 else
-  echo "docker or podman is not installed" >&2
+  echo "podman or docker is not installed" >&2
   exit 1
 fi
 
@@ -107,6 +95,18 @@ cat <<EOF > conjur-csm-authorization/config.yaml
 - !host
   id: system:serviceaccount:authorization:storage-service
 
+- !host
+  id: system:serviceaccount:authorization:proxy-server
+
+- !host
+  id: system:serviceaccount:authorization:tenant-service
+
+- !host
+  id: system:serviceaccount:authorization:redis
+
+- !host
+  id: system:serviceaccount:authorization:sentinel
+
 - !policy
   id: csm-authorization
   body:
@@ -115,6 +115,26 @@ cat <<EOF > conjur-csm-authorization/config.yaml
       annotations:
         authn-jwt/kube/kubernetes.io/namespace: "authorization"
         authn-jwt/kube/kubernetes.io/serviceaccount/name: "storage-service"
+    - !host
+      id: system:serviceaccount:authorization:proxy-server
+      annotations:
+        authn-jwt/kube/kubernetes.io/namespace: "authorization"
+        authn-jwt/kube/kubernetes.io/serviceaccount/name: "proxy-server"
+    - !host
+      id: system:serviceaccount:authorization:tenant-service
+      annotations:
+        authn-jwt/kube/kubernetes.io/namespace: "authorization"
+        authn-jwt/kube/kubernetes.io/serviceaccount/name: "tenant-service"
+    - !host
+      id: system:serviceaccount:authorization:redis
+      annotations:
+        authn-jwt/kube/kubernetes.io/namespace: "authorization"
+        authn-jwt/kube/kubernetes.io/serviceaccount/name: "redis"
+    - !host
+      id: system:serviceaccount:authorization:sentinel
+      annotations:
+        authn-jwt/kube/kubernetes.io/namespace: "authorization"
+        authn-jwt/kube/kubernetes.io/serviceaccount/name: "sentinel"
 
 - !policy
   id: conjur/authn-jwt/kube
@@ -138,7 +158,12 @@ cat <<EOF > conjur-csm-authorization/config.yaml
       id: identity-path
 
 - !permit
-  role: !host csm-authorization/system:serviceaccount:authorization:storage-service
+  role:
+    - !host csm-authorization/system:serviceaccount:authorization:storage-service
+    - !host csm-authorization/system:serviceaccount:authorization:proxy-server
+    - !host csm-authorization/system:serviceaccount:authorization:tenant-service
+    - !host csm-authorization/system:serviceaccount:authorization:redis
+    - !host csm-authorization/system:serviceaccount:authorization:sentinel
   privilege: [ read, authenticate ]
   resource: !webservice conjur/authn-jwt/kube
 EOF
@@ -160,14 +185,20 @@ $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io
 
 printf "=== Loading and configuring Conjur secrets ===\n\n"
 
-if [[ -n "$FILE_CONFIG" ]]; then  
+# '/' prepended to csm-authorization to ensure the path secret/csm-authorization is valid
+if [[ -n "$FILE_CONFIG" ]]; then
 cat <<EOF > conjur-csm-authorization/secrets.yaml
 - !policy
   id: secrets
   body:
     - &variables []
     - !permit
-      role: !host /csm-authorization/system:serviceaccount:authorization:storage-service
+      role:
+        - !host /csm-authorization/system:serviceaccount:authorization:storage-service
+        - !host /csm-authorization/system:serviceaccount:authorization:proxy-server
+        - !host /csm-authorization/system:serviceaccount:authorization:tenant-service
+        - !host /csm-authorization/system:serviceaccount:authorization:redis
+        - !host /csm-authorization/system:serviceaccount:authorization:sentinel
       privilege: [ read, execute ]
       resource: *variables
 EOF
@@ -181,6 +212,7 @@ EOF
     $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/$variable -v $value
   done
 
+# '/' prepended to csm-authorization to ensure the path secret/csm-authorization is valid
 elif [[ -n "$ENV_CONFIG" ]]; then
 cat <<EOF > conjur-csm-authorization/secrets.yaml
 - !policy
@@ -193,15 +225,25 @@ cat <<EOF > conjur-csm-authorization/secrets.yaml
       - !variable powermax-password
       - !variable powerscale-username
       - !variable powerscale-password
-      - !variable powerstore-username
-      - !variable powerstore-password
+      - !variable redis-username
+      - !variable redis-password
     - !permit
-      role: !host /csm-authorization/system:serviceaccount:authorization:storage-service
+      role:
+        - !host /csm-authorization/system:serviceaccount:authorization:storage-service
+        - !host /csm-authorization/system:serviceaccount:authorization:proxy-server
+        - !host /csm-authorization/system:serviceaccount:authorization:tenant-service
+        - !host /csm-authorization/system:serviceaccount:authorization:redis
+        - !host /csm-authorization/system:serviceaccount:authorization:sentinel
       privilege: [ read, execute ]
       resource: *variables
 EOF
 
   $CONTAINER_RUNTIME run --rm -it -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 policy load -b root -f /home/cli/secrets.yaml
+
+  if [[ -n "$REDIS_USER" && -n "$REDIS_PASS" ]]; then
+    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/redis-username -v $REDIS_USER
+    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/redis-password -v $REDIS_PASS
+  fi
 
   if [[ -n "$PFLEX_USER" && -n "$PFLEX_PASS" ]]; then
     $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerflex-username -v $PFLEX_USER
@@ -216,11 +258,6 @@ EOF
   if [[ -n "$PSCALE_USER" && -n "$PSCALE_PASS" ]]; then
     $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerscale-username -v $PSCALE_USER
     $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerscale-password -v $PSCALE_PASS
-  fi
-
-  if [[ -n "$PSTORE_USER" && -n "$PSTORE_PASS" ]]; then
-    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerstore-username -v $PSTORE_USER
-    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerstore-password -v $PSTORE_PASS
   fi
 fi
 
