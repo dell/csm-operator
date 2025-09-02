@@ -193,6 +193,8 @@ cat <<EOF > conjur-csm-authorization/secrets.yaml
       - !variable powermax-password
       - !variable powerscale-username
       - !variable powerscale-password
+      - !variable powerstore-username
+      - !variable powerstore-password
     - !permit
       role: !host /csm-authorization/system:serviceaccount:authorization:storage-service
       privilege: [ read, execute ]
@@ -214,6 +216,11 @@ EOF
   if [[ -n "$PSCALE_USER" && -n "$PSCALE_PASS" ]]; then
     $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerscale-username -v $PSCALE_USER
     $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerscale-password -v $PSCALE_PASS
+  fi
+
+  if [[ -n "$PSTORE_USER" && -n "$PSTORE_PASS" ]]; then
+    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerstore-username -v $PSTORE_USER
+    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerstore-password -v $PSTORE_PASS
   fi
 fi
 

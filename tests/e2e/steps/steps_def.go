@@ -210,6 +210,8 @@ loop:
 					powermaxPassword := os.Getenv("PMAX_PASS")
 					powerscaleUsername := os.Getenv("PSCALE_USER")
 					powerscalePassword := os.Getenv("PSCALE_PASS")
+					powerstoreUsername := os.Getenv("PSTORE_USER")
+					powerstorePassword := os.Getenv("PSTORE_PASS")
 
 					var conjurPaths []csmv1.ConjurCredentialPath
 					if powerflexUsername != "" && powerflexPassword != "" {
@@ -230,6 +232,13 @@ loop:
 						conjurPaths = append(conjurPaths, csmv1.ConjurCredentialPath{
 							UsernamePath: "secrets/powerscale-username",
 							PasswordPath: "secrets/powerscale-password",
+						})
+					}
+
+					if powerstoreUsername != "" && powerstorePassword != "" {
+						conjurPaths = append(conjurPaths, csmv1.ConjurCredentialPath{
+							UsernamePath: "secrets/powerstore-username",
+							PasswordPath: "secrets/powerstore-password",
 						})
 					}
 
