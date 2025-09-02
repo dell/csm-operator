@@ -2465,8 +2465,6 @@ func TestUpdateRedisGlobalVars(t *testing.T) {
 				"redisSecretName":              defaultRedisSecretName,
 				"redisUsernameKey":             defaultRedisUsernameKey,
 				"redisPasswordKey":             defaultRedisPasswordKey,
-				"redisConjurUsernamePath":      defaultRedisConjurUsernamePath,
-				"redisConjurPasswordPath":      defaultRedisConjurPasswordPath,
 			},
 		},
 		{
