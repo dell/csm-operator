@@ -96,6 +96,10 @@ spec:
             - secretProviderClassName: array-creds
               # The name of the Kubernetes secret created by the CSI driver
               configSecretName: config-secret
+              # Uncomment this section if using Conjur to store the config secret, otherwise leave commented out.
+              # Path for Conjur secret that stores the config secret.
+              # conjur:
+              #   secretPath: secrets/config-object
 
         - name: storage-system-credentials
           secretProviderClasses:

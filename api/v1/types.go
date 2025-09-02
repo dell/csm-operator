@@ -458,6 +458,10 @@ type ConfigSecretProviderClass struct {
 	// ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Secret Name"
 	ConfigSecretName string `json:"configSecretName,omitempty" yaml:"configSecretName,omitempty"`
+
+	// Conjur is the secret configuration when retrieve the Config secret from Conjur
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Conjur Config Secret Configuration"
+	Conjur *ConjurCredentialPath `json:"conjur,omitempty" yaml:"conjur,omitempty"`
 }
 
 // StorageSystemSecretProviderClass is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials

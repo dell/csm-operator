@@ -98,6 +98,10 @@ spec:
             - secretProviderClassName: ""
               # Name of the Kubernetes secret (created by the Secret Store CSI driver) that contains the config secret.
               configSecretName: ""
+              # Uncomment this section if using Conjur to store the config secret, otherwise leave commented out.
+              # Path for Conjur secret that stores the config secret.
+              # conjur:
+              #   secretPath: secrets/config-object
 
         # Comment and uncomment the appropriate sections below to use the desired method.
         # Storage system credentials can be provided in one of two ways:
@@ -110,16 +114,16 @@ spec:
               - secret-provider-class-1
               - secret-provider-class-2
             # conjur:
-              # - name: secret-provider-class-3
-              #   paths:
-                  # - usernamePath: secrets/username1
-                  #   passwordPath: secrets/password1
-                  # - usernamePath: secrets/username2
-                  #   passwordPath: secrets/password2
-              # - name: secret-provider-class-4
-                # paths:
-                  # - usernamePath: secrets/username3
-                  #   passwordPath: secrets/password3
+            # - name: secret-provider-class-3
+            #   paths:
+            # - usernamePath: secrets/username1
+            #   passwordPath: secrets/password1
+            # - usernamePath: secrets/username2
+            #   passwordPath: secrets/password2
+            # - name: secret-provider-class-4
+            # paths:
+            # - usernamePath: secrets/username3
+            #   passwordPath: secrets/password3
           # secrets:
           #   - secret-1
           #   - secret-2

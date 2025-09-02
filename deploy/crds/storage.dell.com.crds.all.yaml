@@ -95,6 +95,16 @@ spec:
                               configSecretName:
                                 description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                 type: string
+                              conjur:
+                                description: Conjur is the secret configuration when retrieve the Config secret from Conjur
+                                properties:
+                                  passwordPath:
+                                    description: PasswordPath is the path to the password in the secret
+                                    type: string
+                                  usernamePath:
+                                    description: UsernamePath is the path to the username in the secret
+                                    type: string
+                                type: object
                               secretProviderClassName:
                                 description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
                                 type: string
@@ -484,6 +494,16 @@ spec:
                               configSecretName:
                                 description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                 type: string
+                              conjur:
+                                description: Conjur is the secret configuration when retrieve the Config secret from Conjur
+                                properties:
+                                  passwordPath:
+                                    description: PasswordPath is the path to the password in the secret
+                                    type: string
+                                  usernamePath:
+                                    description: UsernamePath is the path to the username in the secret
+                                    type: string
+                                type: object
                               secretProviderClassName:
                                 description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
                                 type: string
@@ -889,6 +909,16 @@ spec:
                                 configSecretName:
                                   description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                   type: string
+                                conjur:
+                                  description: Conjur is the secret configuration when retrieve the Config secret from Conjur
+                                  properties:
+                                    passwordPath:
+                                      description: PasswordPath is the path to the password in the secret
+                                      type: string
+                                    usernamePath:
+                                      description: UsernamePath is the path to the username in the secret
+                                      type: string
+                                  type: object
                                 secretProviderClassName:
                                   description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
                                   type: string
@@ -1276,6 +1306,16 @@ spec:
                               configSecretName:
                                 description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                 type: string
+                              conjur:
+                                description: Conjur is the secret configuration when retrieve the Config secret from Conjur
+                                properties:
+                                  passwordPath:
+                                    description: PasswordPath is the path to the password in the secret
+                                    type: string
+                                  usernamePath:
+                                    description: UsernamePath is the path to the username in the secret
+                                    type: string
+                                type: object
                               secretProviderClassName:
                                 description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
                                 type: string
@@ -1669,6 +1709,16 @@ spec:
                                 configSecretName:
                                   description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                   type: string
+                                conjur:
+                                  description: Conjur is the secret configuration when retrieve the Config secret from Conjur
+                                  properties:
+                                    passwordPath:
+                                      description: PasswordPath is the path to the password in the secret
+                                      type: string
+                                    usernamePath:
+                                      description: UsernamePath is the path to the username in the secret
+                                      type: string
+                                  type: object
                                 secretProviderClassName:
                                   description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
                                   type: string
@@ -2082,6 +2132,16 @@ spec:
                                   configSecretName:
                                     description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                     type: string
+                                  conjur:
+                                    description: Conjur is the secret configuration when retrieve the Config secret from Conjur
+                                    properties:
+                                      passwordPath:
+                                        description: PasswordPath is the path to the password in the secret
+                                        type: string
+                                      usernamePath:
+                                        description: UsernamePath is the path to the username in the secret
+                                        type: string
+                                    type: object
                                   secretProviderClassName:
                                     description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
                                     type: string
@@ -2480,6 +2540,16 @@ spec:
                                   configSecretName:
                                     description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                     type: string
+                                  conjur:
+                                    description: Conjur is the secret configuration when retrieve the Config secret from Conjur
+                                    properties:
+                                      passwordPath:
+                                        description: PasswordPath is the path to the password in the secret
+                                        type: string
+                                      usernamePath:
+                                        description: UsernamePath is the path to the username in the secret
+                                        type: string
+                                    type: object
                                   secretProviderClassName:
                                     description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
                                     type: string
