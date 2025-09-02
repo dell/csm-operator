@@ -2239,8 +2239,8 @@ func updateRedisGlobalVars(component csmv1.ContainerTemplate) {
 		}
 
 		if config.Conjur != nil {
-			redisConjurUsernamePath = defaultRedisConjurUsernamePath
-			redisConjurPasswordPath = defaultRedisConjurPasswordPath
+			redisConjurUsernamePath = ""
+			redisConjurPasswordPath = ""
 
 			if config.Conjur.UsernamePath != "" {
 				redisConjurUsernamePath = config.Conjur.UsernamePath
@@ -2253,8 +2253,8 @@ func updateRedisGlobalVars(component csmv1.ContainerTemplate) {
 	}
 }
 
-func updateRedisConjurAnnotations(annotations map[string]string, conjurUserPath, conjurPasswordPath string) {
-	if redisConjurUsernamePath == "" || redisConjurPasswordPath == "" {
+func updateRedisConjurAnnotations(annotations map[string]string, conjurUsernamePath, conjurPasswordPath string) {
+	if conjurUsernamePath == "" || redisConjurPasswordPath == "" {
 		return
 	}
 
@@ -2266,7 +2266,7 @@ func updateRedisConjurAnnotations(annotations map[string]string, conjurUserPath,
 		sb.WriteString("\n")
 	}
 
-	sb.WriteString(fmt.Sprintf(annotationFormat, conjurUserPath, conjurUserPath))
+	sb.WriteString(fmt.Sprintf(annotationFormat, conjurUsernamePath, conjurUsernamePath))
 	sb.WriteString("\n")
 	sb.WriteString(fmt.Sprintf(annotationFormat, conjurPasswordPath, conjurPasswordPath))
 
