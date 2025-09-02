@@ -150,12 +150,6 @@ const (
 	// defaultRedisPasswordKey - name of default password key
 	defaultRedisPasswordKey = "password"
 
-	// defaultRedisConjurUserPath - default path for Conjur Redis user secret
-	defaultRedisConjurUsernamePath = "secrets/redis-username" // #nosec G101 -- This is a false positive
-
-	// defaultRedisConjurPasswordPath - default path for Conjur Redis password secret
-	defaultRedisConjurPasswordPath = "secrets/redis-password" // #nosec G101 -- This is a false positive
-
 	// AuthLocalStorageClass -
 	AuthLocalStorageClass = "csm-authorization-local-storage"
 
@@ -2229,6 +2223,8 @@ func updateRedisGlobalVars(component csmv1.ContainerTemplate) {
 	redisSecretName = defaultRedisSecretName
 	redisUsernameKey = defaultRedisUsernameKey
 	redisPasswordKey = defaultRedisPasswordKey
+	redisConjurUsernamePath = ""
+	redisConjurPasswordPath = ""
 
 	for _, config := range component.RedisSecretProviderClass {
 		if config.SecretProviderClassName != "" && config.RedisSecretName != "" {
@@ -2239,22 +2235,14 @@ func updateRedisGlobalVars(component csmv1.ContainerTemplate) {
 		}
 
 		if config.Conjur != nil {
-			redisConjurUsernamePath = ""
-			redisConjurPasswordPath = ""
-
-			if config.Conjur.UsernamePath != "" {
-				redisConjurUsernamePath = config.Conjur.UsernamePath
-			}
-
-			if config.Conjur.PasswordPath != "" {
-				redisConjurPasswordPath = config.Conjur.PasswordPath
-			}
+			redisConjurUsernamePath = config.Conjur.UsernamePath
+			redisConjurPasswordPath = config.Conjur.PasswordPath
 		}
 	}
 }
 
 func updateRedisConjurAnnotations(annotations map[string]string, conjurUsernamePath, conjurPasswordPath string) {
-	if conjurUsernamePath == "" || redisConjurPasswordPath == "" {
+	if conjurUsernamePath == "" || conjurPasswordPath == "" {
 		return
 	}
 
