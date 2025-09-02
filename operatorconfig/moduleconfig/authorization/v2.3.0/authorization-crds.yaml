@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.15.0
+    controller-gen.kubebuilder.io/version: v0.18.0
   name: csmroles.csm-authorization.storage.dell.com
 spec:
   group: csm-authorization.storage.dell.com
@@ -39,7 +39,12 @@ spec:
               description: CSMRoleSpec defines the desired state of CSMRole
               properties:
                 pool:
-                  description: Pool is the storage pool name
+                  description: |-
+                    Pool is the storage pool name. Example:
+                    PowerFlex: pool1
+                    PowerMax: SRP_1
+                    PowerScale: the pool name is the same as isiPath, e.g. /ifs/data/csi
+                    PowerStore: No pool concept in PowerStore
                   type: string
                 quota:
                   description: Quota is the total provision capacity for a given role
@@ -50,7 +55,7 @@ spec:
                 systemType:
                   description: |-
                     SystemType is the type of the storage array
-                    Example powerflex, powermax, powerscale, powerstore
+                    Example: powerflex, powermax, powerscale, powerstore
                   type: string
               type: object
             status:
@@ -62,17 +67,8 @@ spec:
                     Important: Run "make" to regenerate code after modifying this file
                     Role.status.conditions.type are: "Available", "NotAvailable", and "UnKnown"
                   items:
-                    description:
-                      "Condition contains details for one aspect of the current
-                      state of this API Resource.\n---\nThis struct is intended for
-                      direct use as an array at the field path .status.conditions.  For
-                      example,\n\n\n\ttype FooStatus struct{\n\t    // Represents the
-                      observations of a foo's current state.\n\t    // Known .status.conditions.type
-                      are: \"Available\", \"Progressing\", and \"Degraded\"\n\t    //
-                      +patchMergeKey=type\n\t    // +patchStrategy=merge\n\t    // +listType=map\n\t
-                      \   // +listMapKey=type\n\t    Conditions []metav1.Condition `json:\"conditions,omitempty\"
-                      patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`\n\n\n\t
-                      \   // other fields\n\t}"
+                    description: Condition contains details for one aspect of the current
+                      state of this API Resource.
                     properties:
                       lastTransitionTime:
                         description: |-
@@ -113,12 +109,7 @@ spec:
                           - Unknown
                         type: string
                       type:
-                        description: |-
-                          type of condition in CamelCase or in foo.example.com/CamelCase.
-                          ---
-                          Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
-                          useful (see .node.status.conditions), the ability to deconflict is important.
-                          The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                        description: type of condition in CamelCase or in foo.example.com/CamelCase.
                         maxLength: 316
                         pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
                         type: string
@@ -141,7 +132,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.15.0
+    controller-gen.kubebuilder.io/version: v0.18.0
   name: csmtenants.csm-authorization.storage.dell.com
 spec:
   group: csm-authorization.storage.dell.com
@@ -179,11 +170,13 @@ spec:
               properties:
                 approveSdc:
                   description: |-
-                    ApproveSdc is a boolean to indicate whether approveSDC is enabled
+                    ApproveSdc is used to enable an SDC to access the MDM while the SDC is in restricted access mode.
                     Default value is false
                   type: boolean
                 revoke:
-                  description: Revoke is a boolean to indicate whether tenant is revoked
+                  description: |-
+                    Revoke is a boolean to indicate whether tenant is revoked.
+                    Set to `true` to revoke the tenant but keep it in CSM Auth
                   type: boolean
                 roles:
                   description: |-
@@ -191,8 +184,7 @@ spec:
                     Comma separated list
                   type: string
                 volumePrefix:
-                  description:
-                    VolumePrefix is the prefix added for each new volume
+                  description: VolumePrefix is the prefix added for each new volume
                     provisioned by the tenant
                   maxLength: 3
                   minLength: 1
@@ -209,17 +201,8 @@ spec:
                     INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
                     Important: Run "make" to regenerate code after modifying this file
                   items:
-                    description:
-                      "Condition contains details for one aspect of the current
-                      state of this API Resource.\n---\nThis struct is intended for
-                      direct use as an array at the field path .status.conditions.  For
-                      example,\n\n\n\ttype FooStatus struct{\n\t    // Represents the
-                      observations of a foo's current state.\n\t    // Known .status.conditions.type
-                      are: \"Available\", \"Progressing\", and \"Degraded\"\n\t    //
-                      +patchMergeKey=type\n\t    // +patchStrategy=merge\n\t    // +listType=map\n\t
-                      \   // +listMapKey=type\n\t    Conditions []metav1.Condition `json:\"conditions,omitempty\"
-                      patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`\n\n\n\t
-                      \   // other fields\n\t}"
+                    description: Condition contains details for one aspect of the current
+                      state of this API Resource.
                     properties:
                       lastTransitionTime:
                         description: |-
@@ -260,12 +243,7 @@ spec:
                           - Unknown
                         type: string
                       type:
-                        description: |-
-                          type of condition in CamelCase or in foo.example.com/CamelCase.
-                          ---
-                          Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
-                          useful (see .node.status.conditions), the ability to deconflict is important.
-                          The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                        description: type of condition in CamelCase or in foo.example.com/CamelCase.
                         maxLength: 316
                         pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
                         type: string
@@ -288,7 +266,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.15.0
+    controller-gen.kubebuilder.io/version: v0.18.0
   name: storages.csm-authorization.storage.dell.com
 spec:
   group: csm-authorization.storage.dell.com
@@ -339,18 +317,16 @@ spec:
                     Needed only for PowerScale
                   type: string
                 pollInterval:
-                  description:
-                    PollInterval is the polling frequency to test the storage
+                  description: PollInterval is the polling frequency to test the storage
                     connectivity
                   type: string
                 skipCertificateValidation:
-                  description:
-                    SkipCertificateValidation is the flag to skip certificate
+                  description: SkipCertificateValidation is the flag to skip certificate
                     validation
                   type: boolean
                 storageSystemCredentials:
                   description: |-
-                    StorageSystemCredentials is the storage arrays credenial secret
+                    StorageSystemCredentials is the storage arrays credential secret
                     Currently supports SecretProviderClasses and Kubernetes Secrets
                   properties:
                     secret:
@@ -374,9 +350,8 @@ spec:
                     Please contact the storage administrator for more details on how to obtain it.
                   type: string
                 type:
-                  description:
-                    "Type is the storage array type, Example: powerflex,
-                    powermax, powerscale, powerstore"
+                  description: 'Type is the storage array type, Example: powerflex,
+                    powermax, powerscale, powerstore'
                   type: string
               required:
                 - skipCertificateValidation
@@ -386,21 +361,11 @@ spec:
               description: StorageStatus defines the observed state of Storage
               properties:
                 conditions:
-                  description:
-                    'Storage.status.conditions.type are: "Available", "NotAvailable",
+                  description: 'Storage.status.conditions.type are: "Available", "NotAvailable",
                     and "UnKnown"'
                   items:
-                    description:
-                      "Condition contains details for one aspect of the current
-                      state of this API Resource.\n---\nThis struct is intended for
-                      direct use as an array at the field path .status.conditions.  For
-                      example,\n\n\n\ttype FooStatus struct{\n\t    // Represents the
-                      observations of a foo's current state.\n\t    // Known .status.conditions.type
-                      are: \"Available\", \"Progressing\", and \"Degraded\"\n\t    //
-                      +patchMergeKey=type\n\t    // +patchStrategy=merge\n\t    // +listType=map\n\t
-                      \   // +listMapKey=type\n\t    Conditions []metav1.Condition `json:\"conditions,omitempty\"
-                      patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`\n\n\n\t
-                      \   // other fields\n\t}"
+                    description: Condition contains details for one aspect of the current
+                      state of this API Resource.
                     properties:
                       lastTransitionTime:
                         description: |-
@@ -441,12 +406,7 @@ spec:
                           - Unknown
                         type: string
                       type:
-                        description: |-
-                          type of condition in CamelCase or in foo.example.com/CamelCase.
-                          ---
-                          Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
-                          useful (see .node.status.conditions), the ability to deconflict is important.
-                          The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                        description: type of condition in CamelCase or in foo.example.com/CamelCase.
                         maxLength: 316
                         pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
                         type: string
