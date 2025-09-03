@@ -103,32 +103,6 @@ var (
 		expected   string
 	}{
 		{
-			name: "update X_CSI_VOL_PREFIX value for Controller",
-			yamlString: `
-			- name: X_CSI_VOL_PREFIX
-		      value: "csi"`,
-			csm:      xcsivoPrefix("csm"),
-			ct:       powerStoreClient,
-			sec:      powerStoreSecret,
-			fileType: "Controller",
-			expected: `
-			- name: X_CSI_VOL_PREFIX
-		      value: "csi"`,
-		},
-		{
-			name: "update X_CSI_VOL_PREFIX value for Node",
-			yamlString: `
-			- name: X_CSI_VOL_PREFIX
-		      value: "csi"`,
-			csm:      xcsivoPrefix("csm"),
-			ct:       powerStoreClient,
-			sec:      powerStoreSecret,
-			fileType: "Node",
-			expected: `
-			- name: X_CSI_VOL_PREFIX
-		      value: "csi"`,
-		},
-		{
 			name:       "update GOPOWERSTORE_DEBUG value for Controller",
 			yamlString: "<GOPOWERSTORE_DEBUG>",
 			csm:        gopowerstoreDebug("true"),
@@ -136,6 +110,13 @@ var (
 			sec:        powerStoreSecret,
 			fileType:   "Controller",
 			expected:   "true",
+		},
+		{
+			name:     "when auth module is enabled",
+			csm:      enableAuthModule(),
+			ct:       powerStoreClient,
+			sec:      powerStoreSecret,
+			fileType: "Node",
 		},
 		{
 			name:       "update GOPOWERSTORE_DEBUG value for Node",
@@ -258,12 +239,8 @@ func csmForPowerStoreGoodSkipCert() csmv1.ContainerStorageModule {
 		Name:  "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION",
 		Value: "true", // Valid boolean string
 	}
-	envVolPrefix := corev1.EnvVar{
-		Name:  "X_CSI_VOL_PREFIX",
-		Value: "test",
-	}
 
-	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envCertCount, envSkipCertValidation, envVolPrefix}
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envCertCount, envSkipCertValidation}
 	res.Spec.Driver.AuthSecret = "csm-creds"
 	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
 	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
@@ -464,12 +441,14 @@ func gopowerstoreDebug(debug string) csmv1.ContainerStorageModule {
 	return cr
 }
 
-func xcsivoPrefix(customCSMName string) csmv1.ContainerStorageModule {
-	cr := csmForPowerStore(customCSMName)
-	cr.Spec.Driver.Common.Envs = []corev1.EnvVar{
-		{Name: "X_CSI_VOL_PREFIX", Value: "csi"},
+func enableAuthModule() csmv1.ContainerStorageModule {
+	cr := csmForPowerStore("csm")
+	cr.Spec.Modules = []csmv1.Module{
+		{
+			Name:    csmv1.Authorization,
+			Enabled: true,
+		},
 	}
-
 	return cr
 }
 

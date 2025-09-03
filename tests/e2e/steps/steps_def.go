@@ -85,7 +85,7 @@ var (
 	pstoreSecretMap          = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_GLOBALID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_ENDPOINT", "REPLACE_PROTOCOL": "PSTORE_PROTOCOL"}
 	pstoreEphemeralVolumeMap = map[string]string{"REPLACE_GLOBALID": "PSTORE_GLOBALID"}
 	pstoreAuthSecretMap      = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_GLOBALID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_AUTH_ENDPOINT", "REPLACE_PROTOCOL": "PSTORE_PROTOCOL"}
-	pstoreAuthSidecarMap     = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_GLOBALID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSTORE_AUTH_ENDPOINT"}
+	pstoreAuthSidecarMap     = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_SYSTEMID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSTORE_AUTH_ENDPOINT"}
 	unitySecretMap           = map[string]string{"REPLACE_USER": "UNITY_USER", "REPLACE_PASS": "UNITY_PASS", "REPLACE_ARRAYID": "UNITY_ARRAYID", "REPLACE_ENDPOINT": "UNITY_ENDPOINT", "REPLACE_POOL": "UNITY_POOL", "REPLACE_NAS": "UNITY_NAS"}
 	unityEphemeralVolumeMap  = map[string]string{"REPLACE_ARRAYID": "UNITY_ARRAYID", "REPLACE_POOL": "UNITY_POOL", "REPLACE_NAS": "UNITY_NAS"}
 )
@@ -210,6 +210,8 @@ loop:
 					powermaxPassword := os.Getenv("PMAX_PASS")
 					powerscaleUsername := os.Getenv("PSCALE_USER")
 					powerscalePassword := os.Getenv("PSCALE_PASS")
+					powerstoreUsername := os.Getenv("PSTORE_USER")
+					powerstorePassword := os.Getenv("PSTORE_PASS")
 
 					var conjurPaths []csmv1.ConjurCredentialPath
 					if powerflexUsername != "" && powerflexPassword != "" {
@@ -230,6 +232,13 @@ loop:
 						conjurPaths = append(conjurPaths, csmv1.ConjurCredentialPath{
 							UsernamePath: "secrets/powerscale-username",
 							PasswordPath: "secrets/powerscale-password",
+						})
+					}
+
+					if powerstoreUsername != "" && powerstorePassword != "" {
+						conjurPaths = append(conjurPaths, csmv1.ConjurCredentialPath{
+							UsernamePath: "secrets/powerstore-username",
+							PasswordPath: "secrets/powerstore-password",
 						})
 					}
 
