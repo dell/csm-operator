@@ -395,6 +395,23 @@ spec:
                                   SecretProviderClassName is the name of
                                   the SecretProviderClass that holds the Redis secretObject
                                 type: string
+                              conjur:
+                                description: |-
+                                  Conjur is the optional Conjur object containing the
+                                  secret paths to Redis credentials when using Conjur
+                                properties:
+                                  usernamePath:
+                                    description:
+                                      UsernamePath is the path to the username secret
+                                    type: string
+                                  passwordPath:
+                                    description:
+                                      PasswordPath is the path to the password secret
+                                    type: string
+                                type: object
+                                required:
+                                  - usernamePath
+                                  - passwordPath
                             type: object
                           maxItems: 1
                           type: array
@@ -901,6 +918,23 @@ spec:
                                   SecretProviderClassName is the name of
                                   the SecretProviderClass that holds the Redis secretObject
                                 type: string
+                              conjur:
+                                description: |-
+                                  Conjur is the optional Conjur object containing the
+                                  secret paths to Redis credentials when using Conjur
+                                properties:
+                                  usernamePath:
+                                    description:
+                                      UsernamePath is the path to the username secret
+                                    type: string
+                                  passwordPath:
+                                    description:
+                                      PasswordPath is the path to the password secret
+                                    type: string
+                                type: object
+                                required:
+                                  - usernamePath
+                                  - passwordPath
                             type: object
                           maxItems: 1
                           type: array
@@ -1427,6 +1461,23 @@ spec:
                                     SecretProviderClassName is the name of
                                     the SecretProviderClass that holds the Redis secretObject
                                   type: string
+                                conjur:
+                                  description: |-
+                                    Conjur is the optional Conjur object containing the
+                                    secret paths to Redis credentials when using Conjur
+                                  properties:
+                                    usernamePath:
+                                      description:
+                                        UsernamePath is the path to the username secret
+                                      type: string
+                                    passwordPath:
+                                      description:
+                                        PasswordPath is the path to the password secret
+                                      type: string
+                                  type: object
+                                  required:
+                                    - usernamePath
+                                    - passwordPath
                               type: object
                             maxItems: 1
                             type: array
@@ -1929,6 +1980,23 @@ spec:
                                   SecretProviderClassName is the name of
                                   the SecretProviderClass that holds the Redis secretObject
                                 type: string
+                              conjur:
+                                description: |-
+                                  Conjur is the optional Conjur object containing the
+                                  secret paths to Redis credentials when using Conjur
+                                properties:
+                                  usernamePath:
+                                    description:
+                                      UsernamePath is the path to the username secret
+                                    type: string
+                                  passwordPath:
+                                    description:
+                                      PasswordPath is the path to the password secret
+                                    type: string
+                                type: object
+                                required:
+                                  - usernamePath
+                                  - passwordPath
                             type: object
                           maxItems: 1
                           type: array
@@ -2439,6 +2507,23 @@ spec:
                                     SecretProviderClassName is the name of
                                     the SecretProviderClass that holds the Redis secretObject
                                   type: string
+                                conjur:
+                                  description: |-
+                                    Conjur is the optional Conjur object containing the
+                                    secret paths to Redis credentials when using Conjur
+                                  properties:
+                                    usernamePath:
+                                      description:
+                                        UsernamePath is the path to the username secret
+                                      type: string
+                                    passwordPath:
+                                      description:
+                                        PasswordPath is the path to the password secret
+                                      type: string
+                                  type: object
+                                  required:
+                                    - usernamePath
+                                    - passwordPath
                               type: object
                             maxItems: 1
                             type: array
@@ -2979,6 +3064,23 @@ spec:
                                       of the SecretProviderClass that holds the Redis
                                       secretObject
                                     type: string
+                                  conjur:
+                                    description: |-
+                                      Conjur is the optional Conjur object containing the
+                                      secret paths to Redis credentials when using Conjur
+                                    properties:
+                                      usernamePath:
+                                        description:
+                                          UsernamePath is the path to the username secret
+                                        type: string
+                                      passwordPath:
+                                        description:
+                                          PasswordPath is the path to the password secret
+                                        type: string
+                                    type: object
+                                    required:
+                                      - usernamePath
+                                      - passwordPath
                                 type: object
                               maxItems: 1
                               type: array
@@ -3507,6 +3609,23 @@ spec:
                                       of the SecretProviderClass that holds the Redis
                                       secretObject
                                     type: string
+                                  conjur:
+                                    description: |-
+                                      Conjur is the optional Conjur object containing the
+                                      secret paths to Redis credentials when using Conjur
+                                    properties:
+                                      usernamePath:
+                                        description:
+                                          UsernamePath is the path to the username secret
+                                        type: string
+                                      passwordPath:
+                                        description:
+                                          PasswordPath is the path to the password secret
+                                        type: string
+                                    type: object
+                                    required:
+                                      - usernamePath
+                                      - passwordPath
                                 type: object
                               maxItems: 1
                               type: array

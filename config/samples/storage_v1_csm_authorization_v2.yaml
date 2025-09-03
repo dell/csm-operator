@@ -81,6 +81,10 @@ spec:
               redisUsernameKey: ""
               # Key in the secret that stores the Redis password.
               redisPasswordKey: ""
+              # Optional paths to the Conjur secrets that store the Redis username and password
+              #conjur:
+              #  usernamePath: secrets/redis-username
+              #  passwordPath: secrets/redis-password
           redis: redis:8.2.0-alpine
           commander: docker.io/rediscommander/redis-commander:latest
           redisName: redis-csm
@@ -103,6 +107,11 @@ spec:
               # conjur:
               #   secretPath: secrets/config-object
 
+        # Comment and uncomment the appropriate sections below to use the desired method.
+        # Storage system credentials can be provided in one of two ways:
+        # 1. Using a SecretProviderClass (for dynamic secrets from external providers)
+        # 2. Using a Kubernetes Secret (for static credentials)
+        # Only one of the two can be specified at a time.
         - name: storage-system-credentials
           secretProviderClasses:
             vault:
