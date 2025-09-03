@@ -166,6 +166,7 @@ var (
 	redisSecretName               string
 	redisUsernameKey              string
 	redisPasswordKey              string
+	configSecretPath              string
 	configSecretProviderClassName string
 	configSecretName              string
 	authHostname                  string
@@ -606,7 +607,6 @@ func getAuthorizationServerDeployment(op operatorutils.OperatorConfig, cr csmv1.
 	authNamespace := cr.Namespace
 
 	for _, component := range auth.Components {
-
 		// proxy-server component
 		if component.Name == AuthProxyServerComponent {
 			YamlString = strings.ReplaceAll(YamlString, AuthServerImage, component.ProxyService)
@@ -1239,14 +1239,7 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 				}
 			}
 		case AuthConfigSecretComponent:
-			configSecretName = ""
-			configSecretProviderClassName = ""
-			for _, config := range component.ConfigSecretProviderClass {
-				if config.SecretProviderClassName != "" && config.ConfigSecretName != "" {
-					configSecretProviderClassName = config.SecretProviderClassName
-					configSecretName = config.ConfigSecretName
-				}
-			}
+			updateConfigGlobalVars(component)
 		default:
 			continue
 		}
@@ -1261,6 +1254,7 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 	}
 
 	if configSecretProviderClassName != "" && configSecretName != "" {
+		updateConfigConjurAnnotations(deployment.Spec.Template.Annotations, configSecretPath)
 		mountSPCVolume(&deployment.Spec.Template.Spec, configSecretProviderClassName)
 	}
 
@@ -1308,14 +1302,7 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 				}
 			}
 		case AuthConfigSecretComponent:
-			configSecretProviderClassName = ""
-			configSecretName = ""
-			for _, config := range component.ConfigSecretProviderClass {
-				if config.SecretProviderClassName != "" && config.ConfigSecretName != "" {
-					configSecretProviderClassName = config.SecretProviderClassName
-					configSecretName = config.ConfigSecretName
-				}
-			}
+			updateConfigGlobalVars(component)
 		default:
 			continue
 		}
@@ -1330,6 +1317,7 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 	}
 
 	if configSecretProviderClassName != "" && configSecretName != "" {
+		updateConfigConjurAnnotations(deployment.Spec.Template.Annotations, configSecretPath)
 		mountSPCVolume(&deployment.Spec.Template.Spec, configSecretProviderClassName)
 	}
 
@@ -1581,6 +1569,42 @@ func mountSPCVolume(spec *corev1.PodSpec, secretProviderClassName string) {
 			spec.Containers[i].VolumeMounts = append(spec.Containers[i].VolumeMounts, volumeMount)
 		}
 	}
+}
+
+// updateConfigGlobalVars - update the global config vars from the config secret provider class
+func updateConfigGlobalVars(component csmv1.ContainerTemplate) {
+	configSecretName = ""
+	configSecretProviderClassName = ""
+	configSecretPath = ""
+	for _, config := range component.ConfigSecretProviderClass {
+		if config.SecretProviderClassName != "" && config.ConfigSecretName != "" {
+			configSecretProviderClassName = config.SecretProviderClassName
+			configSecretName = config.ConfigSecretName
+		}
+
+		if config.Conjur != nil {
+			configSecretPath = config.Conjur.SecretPath
+		}
+	}
+}
+
+// updateConfigConjurAnnotations - update the annotations with conjur paths for config
+func updateConfigConjurAnnotations(annotations map[string]string, configSecretPath string) {
+	if configSecretPath == "" {
+		return
+	}
+
+	annotationFormat := "- %s: %s"
+	var sb strings.Builder
+
+	if v, ok := annotations["conjur.org/secrets"]; ok {
+		sb.WriteString(v)
+		sb.WriteString("\n")
+	}
+
+	sb.WriteString(fmt.Sprintf(annotationFormat, configSecretPath, configSecretPath))
+
+	annotations["conjur.org/secrets"] = sb.String()
 }
 
 func applyDeleteVaultCertificates(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
