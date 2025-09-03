@@ -1161,29 +1161,56 @@ func mountVaultVolumes(vaults []csmv1.Vault, deployment *appsv1.Deployment) {
 	}
 }
 
+// volumeExists returns true if a volume with the given name is already present.
+func volumeExists(deployment *appsv1.Deployment, name string) bool {
+    for _, v := range deployment.Spec.Template.Spec.Volumes {
+        if v.Name == name {
+            return true
+        }
+    }
+    return false
+}
+
+// mountExists returns true if the container already has a mount with the given name & path.
+func mountExists(container *corev1.Container, name, path string) bool {
+    for _, m := range container.VolumeMounts {
+        if m.Name == name && m.MountPath == path {
+            return true
+        }
+    }
+    return false
+}
+
 func mountSecretVolumes(secrets []string, deployment *appsv1.Deployment) {
 	for _, secret := range secrets {
-		volume := corev1.Volume{
-			Name: fmt.Sprintf("storage-system-secrets-%s", secret),
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					SecretName: secret,
+		volName := fmt.Sprintf("storage-system-secrets-%s", secret)
+		if !volumeExists(deployment, volName) {
+			volume := corev1.Volume{
+				Name: volName,
+				VolumeSource: corev1.VolumeSource{
+					Secret: &corev1.SecretVolumeSource{
+						SecretName: secret,
+					},
 				},
-			},
+			}
+			deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volume)
 		}
-
-		deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volume)
 	}
 
 	// set volume mounts for kubernetes secrets
 	for i, c := range deployment.Spec.Template.Spec.Containers {
 		if c.Name == "storage-service" {
 			for _, secret := range secrets {
-				deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
-					Name:      fmt.Sprintf("storage-system-secrets-%s", secret),
-					MountPath: fmt.Sprintf("/etc/csm-authorization/%s", secret),
-					ReadOnly:  true,
-				})
+				volName := fmt.Sprintf("storage-system-secrets-%s", secret)
+				mountPath := fmt.Sprintf("/etc/csm-authorization/%s", secret)
+
+				if !mountExists(&c, volName, mountPath) {
+					deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
+						Name:      volName,
+						MountPath: mountPath,
+						ReadOnly:  true,
+					})
+				}
 			}
 			break
 		}
