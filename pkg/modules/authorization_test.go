@@ -1666,6 +1666,92 @@ func TestAuthorizationStorageServiceSecretAndSecretProviderClass(t *testing.T) {
 	}
 }
 
+func TestAuthorizationTenantServiceSecretProviderClass(t *testing.T) {
+	type checkFn func(*testing.T, ctrlClient.Client, error)
+
+	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, checkFn){
+		"mount and annotations added for config secret provider class with v2.3.0 - conjur": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, checkFn) {
+			secretProviderClasses := []string{"secret-provider-class"}
+			annotations := "- secrets/config-object: secrets/config-object"
+
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_secret_provider_class_config_conjur.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			checkFn := func(t *testing.T, client ctrlClient.Client, err error) {
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				tenantService := &appsv1.Deployment{}
+				err = client.Get(context.Background(), types.NamespacedName{Name: "tenant-service", Namespace: "authorization"}, tenantService)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				foundSecretProviderClassVolume := false
+				foundSecretProviderClassVolumeMount := false
+				for _, spc := range secretProviderClasses {
+					for _, volume := range tenantService.Spec.Template.Spec.Volumes {
+						if volume.Name == fmt.Sprintf("secrets-store-inline-%s", spc) {
+							foundSecretProviderClassVolume = true
+							if volume.VolumeSource.CSI.VolumeAttributes["secretProviderClass"] != spc {
+								t.Fatalf("expected volume.VolumeSource.CSI.VolumeAttributes[\"secretProviderClass\"] to be %s", spc)
+							}
+						}
+					}
+
+					if !foundSecretProviderClassVolume {
+						t.Errorf("expected volume for secret provider class %s, wasn't found", fmt.Sprintf("secrets-store-inline-%s", spc))
+					}
+
+					for i, container := range tenantService.Spec.Template.Spec.Containers {
+						if container.Name == "tenant-service" {
+							for _, volumeMount := range tenantService.Spec.Template.Spec.Containers[i].VolumeMounts {
+								if volumeMount.Name == fmt.Sprintf("secrets-store-inline-%s", spc) {
+									foundSecretProviderClassVolumeMount = true
+									if volumeMount.MountPath != fmt.Sprintf("/etc/csm-authorization/%s", spc) {
+										t.Fatalf("expected volumeMount.MountPath to be %s", spc)
+									}
+									if volumeMount.ReadOnly != true {
+										t.Fatalf("expected volumeMount.ReadOnly to be true")
+									}
+								}
+							}
+							break
+						}
+					}
+
+					if !foundSecretProviderClassVolumeMount {
+						t.Errorf("expected volume mount for secret provider class %s, wasn't found", fmt.Sprintf("secrets-store-inline-%s", spc))
+					}
+				}
+
+				if tenantService.Spec.Template.Annotations["conjur.org/secrets"] != annotations {
+					t.Errorf("expected annotations %s, got %s", annotations, tenantService.Spec.Template.Annotations["conjur.org/secrets"])
+				}
+			}
+			return false, customResource, sourceClient, checkFn
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			isDeleting, cr, sourceClient, checkFn := tc(t)
+
+			err := applyDeleteAuthorizationTenantServiceV2(context.TODO(), isDeleting, cr, sourceClient)
+			checkFn(t, sourceClient, err)
+		})
+	}
+}
+
 func TestAuthorizationIngress(t *testing.T) {
 	isOpenShift := true
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client){
@@ -2313,30 +2399,47 @@ func TestMountSPCVolume(t *testing.T) {
 	})
 }
 
-func TestUpdateRedisConjurAnnotations(t *testing.T) {
+func TestUpdateConjurAnnotations(t *testing.T) {
 	tests := []struct {
-		name               string
-		annotations        map[string]string
-		conjurUserPath     string
-		conjurPasswordPath string
-		want               map[string]string
+		name        string
+		annotations map[string]string
+		conjurPaths []string
+		want        map[string]string
 	}{
 		{
-			name:               "empty annotations",
-			annotations:        map[string]string{},
-			conjurUserPath:     "secrets/redis-username",
-			conjurPasswordPath: "secrets/redis-password",
+			name:        "empty annotations, add multiple paths",
+			annotations: map[string]string{},
+			conjurPaths: []string{"secrets/redis-username", "secrets/redis-password"},
 			want: map[string]string{
 				"conjur.org/secrets": "- secrets/redis-username: secrets/redis-username\n- secrets/redis-password: secrets/redis-password",
 			},
+		},
+		{
+			name:        "empty annotations, add single path",
+			annotations: map[string]string{},
+			conjurPaths: []string{"secrets/config-object"},
+			want: map[string]string{
+				"conjur.org/secrets": "- secrets/config-object: secrets/config-object",
+			},
+		},
+		{
+			name:        "empty annotations, no path",
+			annotations: map[string]string{},
+			conjurPaths: []string{},
+			want:        map[string]string{},
+		},
+		{
+			name:        "empty annotations, multiple path with empty value",
+			annotations: map[string]string{},
+			conjurPaths: []string{"secrets/config-object", ""},
+			want:        map[string]string{},
 		},
 		{
 			name: "non-empty annotations",
 			annotations: map[string]string{
 				"otherAnnotation": "otherValue",
 			},
-			conjurUserPath:     "secrets/redis-username",
-			conjurPasswordPath: "secrets/redis-password",
+			conjurPaths: []string{"secrets/redis-username", "secrets/redis-password"},
 			want: map[string]string{
 				"conjur.org/secrets": "- secrets/redis-username: secrets/redis-username\n- secrets/redis-password: secrets/redis-password",
 				"otherAnnotation":    "otherValue",
@@ -2348,8 +2451,7 @@ func TestUpdateRedisConjurAnnotations(t *testing.T) {
 				"conjur.org/secrets": "- secrets/system-username: secrets/system-username\n- secrets/system-password: secrets/system-password",
 				"otherAnnotation":    "otherValue",
 			},
-			conjurUserPath:     "secrets/redis-username",
-			conjurPasswordPath: "secrets/redis-password",
+			conjurPaths: []string{"secrets/redis-username", "secrets/redis-password"},
 			want: map[string]string{
 				"conjur.org/secrets": "- secrets/system-username: secrets/system-username\n- secrets/system-password: secrets/system-password\n- secrets/redis-username: secrets/redis-username\n- secrets/redis-password: secrets/redis-password",
 				"otherAnnotation":    "otherValue",
@@ -2359,9 +2461,9 @@ func TestUpdateRedisConjurAnnotations(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			updateRedisConjurAnnotations(tt.annotations, tt.conjurUserPath, tt.conjurPasswordPath)
+			updateConjurAnnotations(tt.annotations, tt.conjurPaths...)
 			if !reflect.DeepEqual(tt.annotations, tt.want) {
-				t.Errorf("updateRedisConjurAnnotations() = %v, want %v", tt.annotations, tt.want)
+				t.Errorf("updateConjurAnnotations() = %v, want %v", tt.annotations, tt.want)
 			}
 		})
 	}
@@ -2534,6 +2636,103 @@ func TestUpdateRedisGlobalVars(t *testing.T) {
 			assert.Equal(t, tt.want["redisPasswordKey"], redisPasswordKey)
 			assert.Equal(t, tt.want["redisConjurUsernamePath"], redisConjurUsernamePath)
 			assert.Equal(t, tt.want["redisConjurPasswordPath"], redisConjurPasswordPath)
+		})
+	}
+}
+
+func TestUpdateConfigGlobalVars(t *testing.T) {
+	type args struct {
+		component csmv1.ContainerTemplate
+	}
+	tests := []struct {
+		name string
+		args args
+		want map[string]string
+	}{
+		{
+			name: "empty fields",
+			args: args{
+				component: csmv1.ContainerTemplate{
+					ConfigSecretProviderClass: []csmv1.ConfigSecretProviderClass{},
+				},
+			},
+			want: map[string]string{
+				"configSecretProviderClassName ": "",
+				"configSecretName":               "",
+				"configSecretPath ":              "",
+			},
+		},
+		{
+			name: "class name but no secret name",
+			args: args{
+				component: csmv1.ContainerTemplate{
+					ConfigSecretProviderClass: []csmv1.ConfigSecretProviderClass{
+						{
+							SecretProviderClassName: "ut-provider-class",
+							ConfigSecretName:        "",
+						},
+					},
+				},
+			},
+			want: map[string]string{
+				"configSecretProviderClassName ": "",
+				"configSecretName":               "",
+				"configSecretPath":               "",
+			},
+		},
+		{
+			name: "all fields present",
+			args: args{
+				component: csmv1.ContainerTemplate{
+					ConfigSecretProviderClass: []csmv1.ConfigSecretProviderClass{
+						{
+							SecretProviderClassName: "ut-provider-class",
+							ConfigSecretName:        "ut-secret-name",
+							Conjur: &csmv1.ConjurConfigPath{
+								SecretPath: "ut-secret-path",
+							},
+						},
+					},
+				},
+			},
+			want: map[string]string{
+				"configSecretProviderClassName ": "ut-provider-class",
+				"configSecretName":               "ut-secret-name",
+				"configSecretPath":               "ut-secret-path",
+			},
+		},
+		{
+			name: "conjur present but no values",
+			args: args{
+				component: csmv1.ContainerTemplate{
+					ConfigSecretProviderClass: []csmv1.ConfigSecretProviderClass{
+						{
+							SecretProviderClassName: "",
+							ConfigSecretName:        "",
+							Conjur: &csmv1.ConjurConfigPath{
+								SecretPath: "",
+							},
+						},
+					},
+				},
+			},
+			want: map[string]string{
+				"configSecretProviderClassName ": "",
+				"configSecretName":               "",
+				"configSecretPath":               "",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			configSecretProviderClassName = ""
+			configSecretName = ""
+			configSecretPath = ""
+
+			updateConfigGlobalVars(tt.args.component)
+			assert.Equal(t, tt.want["configSecretProviderClassName "], configSecretProviderClassName)
+			assert.Equal(t, tt.want["configSecretName"], configSecretName)
+			assert.Equal(t, tt.want["configSecretPath"], configSecretPath)
 		})
 	}
 }

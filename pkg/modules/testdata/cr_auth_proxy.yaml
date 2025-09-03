@@ -79,8 +79,6 @@ spec:
           configSecretProviderClass:
             - secretProviderClassName: ""
               configSecretName: ""
-              # conjur:
-              #   secretPath: secrets/config-object
         - name: vault
           vaultConfigurations:
             - identifier: vault0
