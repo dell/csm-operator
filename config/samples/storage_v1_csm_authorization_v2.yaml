@@ -98,6 +98,10 @@ spec:
             - secretProviderClassName: ""
               # Name of the Kubernetes secret (created by the Secret Store CSI driver) that contains the config secret.
               configSecretName: ""
+              # Uncomment this section if using Conjur to store the config secret, otherwise leave commented out.
+              # Path for Conjur secret that stores the config secret.
+              # conjur:
+              #   secretPath: secrets/config-object
 
         - name: storage-system-credentials
           secretProviderClasses:

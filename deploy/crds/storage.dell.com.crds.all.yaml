@@ -96,13 +96,10 @@ spec:
                                 description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                 type: string
                               conjur:
-                                description: Conjur is the secret configuration when retrieve the Config secret from Conjur
+                                description: Conjur is the secret configuration with path to retrieve the Config secret from Conjur
                                 properties:
-                                  passwordPath:
-                                    description: PasswordPath is the path to the password in the secret
-                                    type: string
-                                  usernamePath:
-                                    description: UsernamePath is the path to the username in the secret
+                                  secretPath:
+                                    description: SecretPath is the path to the config secret
                                     type: string
                                 type: object
                               secretProviderClassName:
@@ -495,13 +492,10 @@ spec:
                                 description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                 type: string
                               conjur:
-                                description: Conjur is the secret configuration when retrieve the Config secret from Conjur
+                                description: Conjur is the secret configuration with path to retrieve the Config secret from Conjur
                                 properties:
-                                  passwordPath:
-                                    description: PasswordPath is the path to the password in the secret
-                                    type: string
-                                  usernamePath:
-                                    description: UsernamePath is the path to the username in the secret
+                                  secretPath:
+                                    description: SecretPath is the path to the config secret
                                     type: string
                                 type: object
                               secretProviderClassName:
@@ -910,13 +904,10 @@ spec:
                                   description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                   type: string
                                 conjur:
-                                  description: Conjur is the secret configuration when retrieve the Config secret from Conjur
+                                  description: Conjur is the secret configuration with path to retrieve the Config secret from Conjur
                                   properties:
-                                    passwordPath:
-                                      description: PasswordPath is the path to the password in the secret
-                                      type: string
-                                    usernamePath:
-                                      description: UsernamePath is the path to the username in the secret
+                                    secretPath:
+                                      description: SecretPath is the path to the config secret
                                       type: string
                                   type: object
                                 secretProviderClassName:
@@ -1307,13 +1298,10 @@ spec:
                                 description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                 type: string
                               conjur:
-                                description: Conjur is the secret configuration when retrieve the Config secret from Conjur
+                                description: Conjur is the secret configuration with path to retrieve the Config secret from Conjur
                                 properties:
-                                  passwordPath:
-                                    description: PasswordPath is the path to the password in the secret
-                                    type: string
-                                  usernamePath:
-                                    description: UsernamePath is the path to the username in the secret
+                                  secretPath:
+                                    description: SecretPath is the path to the config secret
                                     type: string
                                 type: object
                               secretProviderClassName:
@@ -1710,13 +1698,10 @@ spec:
                                   description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                   type: string
                                 conjur:
-                                  description: Conjur is the secret configuration when retrieve the Config secret from Conjur
+                                  description: Conjur is the secret configuration with path to retrieve the Config secret from Conjur
                                   properties:
-                                    passwordPath:
-                                      description: PasswordPath is the path to the password in the secret
-                                      type: string
-                                    usernamePath:
-                                      description: UsernamePath is the path to the username in the secret
+                                    secretPath:
+                                      description: SecretPath is the path to the config secret
                                       type: string
                                   type: object
                                 secretProviderClassName:
@@ -2133,13 +2118,10 @@ spec:
                                     description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                     type: string
                                   conjur:
-                                    description: Conjur is the secret configuration when retrieve the Config secret from Conjur
+                                    description: Conjur is the secret configuration with path to retrieve the Config secret from Conjur
                                     properties:
-                                      passwordPath:
-                                        description: PasswordPath is the path to the password in the secret
-                                        type: string
-                                      usernamePath:
-                                        description: UsernamePath is the path to the username in the secret
+                                      secretPath:
+                                        description: SecretPath is the path to the config secret
                                         type: string
                                     type: object
                                   secretProviderClassName:
@@ -2541,13 +2523,10 @@ spec:
                                     description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                     type: string
                                   conjur:
-                                    description: Conjur is the secret configuration when retrieve the Config secret from Conjur
+                                    description: Conjur is the secret configuration with path to retrieve the Config secret from Conjur
                                     properties:
-                                      passwordPath:
-                                        description: PasswordPath is the path to the password in the secret
-                                        type: string
-                                      usernamePath:
-                                        description: UsernamePath is the path to the username in the secret
+                                      secretPath:
+                                        description: SecretPath is the path to the config secret
                                         type: string
                                     type: object
                                   secretProviderClassName:

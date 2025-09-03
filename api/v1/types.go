@@ -459,9 +459,9 @@ type ConfigSecretProviderClass struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Secret Name"
 	ConfigSecretName string `json:"configSecretName,omitempty" yaml:"configSecretName,omitempty"`
 
-	// Conjur is the secret configuration when retrieve the Config secret from Conjur
+	// Conjur is the secret configuration with path to retrieve the Config secret from Conjur
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Conjur Config Secret Configuration"
-	Conjur *ConjurCredentialPath `json:"conjur,omitempty" yaml:"conjur,omitempty"`
+	Conjur *ConjurConfigPath `json:"conjur,omitempty" yaml:"conjur,omitempty"`
 }
 
 // StorageSystemSecretProviderClass is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
@@ -493,6 +493,12 @@ type ConjurCredentialPath struct {
 	// PasswordPath is the path to the password in the secret
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Conjur Password Path"
 	PasswordPath string `json:"passwordPath,omitempty" yaml:"passwordPath,omitempty"`
+}
+
+type ConjurConfigPath struct {
+	// SecretPath is the path to the config secret
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Conjur Secret Path"
+	SecretPath string `json:"secretPath,omitempty" yaml:"secretPath,omitempty"`
 }
 
 // CSIDriverSpec struct

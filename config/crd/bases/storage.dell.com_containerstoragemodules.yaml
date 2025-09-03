@@ -116,18 +116,13 @@ spec:
                                 type: string
                               conjur:
                                 description:
-                                  Conjur is the secret configuration when
-                                  retrieve the Config secret from Conjur
+                                  Conjur is the secret configuration with
+                                  path to retrieve the Config secret from Conjur
                                 properties:
-                                  passwordPath:
+                                  secretPath:
                                     description:
-                                      PasswordPath is the path to the password
-                                      in the secret
-                                    type: string
-                                  usernamePath:
-                                    description:
-                                      UsernamePath is the path to the username
-                                      in the secret
+                                      SecretPath is the path to the config
+                                      secret
                                     type: string
                                 type: object
                               secretProviderClassName:
@@ -627,18 +622,13 @@ spec:
                                 type: string
                               conjur:
                                 description:
-                                  Conjur is the secret configuration when
-                                  retrieve the Config secret from Conjur
+                                  Conjur is the secret configuration with
+                                  path to retrieve the Config secret from Conjur
                                 properties:
-                                  passwordPath:
+                                  secretPath:
                                     description:
-                                      PasswordPath is the path to the password
-                                      in the secret
-                                    type: string
-                                  usernamePath:
-                                    description:
-                                      UsernamePath is the path to the username
-                                      in the secret
+                                      SecretPath is the path to the config
+                                      secret
                                     type: string
                                 type: object
                               secretProviderClassName:
@@ -1156,18 +1146,13 @@ spec:
                                   type: string
                                 conjur:
                                   description:
-                                    Conjur is the secret configuration when
-                                    retrieve the Config secret from Conjur
+                                    Conjur is the secret configuration with
+                                    path to retrieve the Config secret from Conjur
                                   properties:
-                                    passwordPath:
+                                    secretPath:
                                       description:
-                                        PasswordPath is the path to the password
-                                        in the secret
-                                      type: string
-                                    usernamePath:
-                                      description:
-                                        UsernamePath is the path to the username
-                                        in the secret
+                                        SecretPath is the path to the config
+                                        secret
                                       type: string
                                   type: object
                                 secretProviderClassName:
@@ -1665,18 +1650,13 @@ spec:
                                 type: string
                               conjur:
                                 description:
-                                  Conjur is the secret configuration when
-                                  retrieve the Config secret from Conjur
+                                  Conjur is the secret configuration with
+                                  path to retrieve the Config secret from Conjur
                                 properties:
-                                  passwordPath:
+                                  secretPath:
                                     description:
-                                      PasswordPath is the path to the password
-                                      in the secret
-                                    type: string
-                                  usernamePath:
-                                    description:
-                                      UsernamePath is the path to the username
-                                      in the secret
+                                      SecretPath is the path to the config
+                                      secret
                                     type: string
                                 type: object
                               secretProviderClassName:
@@ -2178,18 +2158,13 @@ spec:
                                   type: string
                                 conjur:
                                   description:
-                                    Conjur is the secret configuration when
-                                    retrieve the Config secret from Conjur
+                                    Conjur is the secret configuration with
+                                    path to retrieve the Config secret from Conjur
                                   properties:
-                                    passwordPath:
+                                    secretPath:
                                       description:
-                                        PasswordPath is the path to the password
-                                        in the secret
-                                      type: string
-                                    usernamePath:
-                                      description:
-                                        UsernamePath is the path to the username
-                                        in the secret
+                                        SecretPath is the path to the config
+                                        secret
                                       type: string
                                   type: object
                                 secretProviderClassName:
@@ -2720,17 +2695,12 @@ spec:
                                   conjur:
                                     description:
                                       Conjur is the secret configuration
-                                      when retrieve the Config secret from Conjur
+                                      with path to retrieve the Config secret from Conjur
                                     properties:
-                                      passwordPath:
+                                      secretPath:
                                         description:
-                                          PasswordPath is the path to the
-                                          password in the secret
-                                        type: string
-                                      usernamePath:
-                                        description:
-                                          UsernamePath is the path to the
-                                          username in the secret
+                                          SecretPath is the path to the config
+                                          secret
                                         type: string
                                     type: object
                                   secretProviderClassName:
@@ -3253,17 +3223,12 @@ spec:
                                   conjur:
                                     description:
                                       Conjur is the secret configuration
-                                      when retrieve the Config secret from Conjur
+                                      with path to retrieve the Config secret from Conjur
                                     properties:
-                                      passwordPath:
+                                      secretPath:
                                         description:
-                                          PasswordPath is the path to the
-                                          password in the secret
-                                        type: string
-                                      usernamePath:
-                                        description:
-                                          UsernamePath is the path to the
-                                          username in the secret
+                                          SecretPath is the path to the config
+                                          secret
                                         type: string
                                     type: object
                                   secretProviderClassName:
