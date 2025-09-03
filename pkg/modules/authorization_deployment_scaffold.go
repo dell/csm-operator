@@ -22,6 +22,8 @@ import (
 
 // getProxyServerScaffold returns proxy-server deployment for authorization v2
 func getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage, opaKubeMgmtImage, configSecretName, redisSecretName, redisPasswordKey string, replicas int32, sentinelReplicas int) appsv1.Deployment {
+	volumes, volumeMounts := createConfigSecretVolumeAndVolumeMnts(configSecretName)
+
 	return appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -85,16 +87,7 @@ func getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage,
 									ContainerPort: 8080,
 								},
 							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "config-volume",
-									MountPath: "/etc/karavi-authorization/config",
-								},
-								{
-									Name:      "csm-config-params",
-									MountPath: "/etc/karavi-authorization/csm-config-params",
-								},
-							},
+							VolumeMounts: volumeMounts,
 						},
 						{
 							Name:            "opa",
@@ -129,26 +122,7 @@ func getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage,
 							},
 						},
 					},
-					Volumes: []corev1.Volume{
-						{
-							Name: "config-volume",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: configSecretName,
-								},
-							},
-						},
-						{
-							Name: "csm-config-params",
-							VolumeSource: corev1.VolumeSource{
-								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "csm-config-params",
-									},
-								},
-							},
-						},
-					},
+					Volumes: volumes,
 				},
 			},
 		},
@@ -158,6 +132,8 @@ func getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage,
 // getStorageServiceScaffold returns the storage-service deployment with the common elements between v1 and v2
 // callers must ensure that other elements specific for the version get set in the returned deployment
 func getStorageServiceScaffold(name string, namespace string, image string, replicas int32, configSecretName string) appsv1.Deployment {
+	volumes, volumeMounts := createConfigSecretVolumeAndVolumeMnts(configSecretName)
+
 	return appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -204,38 +180,10 @@ func getStorageServiceScaffold(name string, namespace string, image string, repl
 									Value: namespace,
 								},
 							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "config-volume",
-									MountPath: "/etc/karavi-authorization/config",
-								},
-								{
-									Name:      "csm-config-params",
-									MountPath: "/etc/karavi-authorization/csm-config-params",
-								},
-							},
+							VolumeMounts: volumeMounts,
 						},
 					},
-					Volumes: []corev1.Volume{
-						{
-							Name: "config-volume",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: configSecretName,
-								},
-							},
-						},
-						{
-							Name: "csm-config-params",
-							VolumeSource: corev1.VolumeSource{
-								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "csm-config-params",
-									},
-								},
-							},
-						},
-					},
+					Volumes: volumes,
 				},
 			},
 		},
@@ -244,6 +192,8 @@ func getStorageServiceScaffold(name string, namespace string, image string, repl
 
 // getTenantServiceScaffold returns tenant-service deployment for authorization v2
 func getTenantServiceScaffold(name, namespace, sentinelName, image, configSecretName, redisSecretName, redisPasswordKey string, replicas int32, sentinelReplicas int) appsv1.Deployment {
+	volumes, volumeMounts := createConfigSecretVolumeAndVolumeMnts(configSecretName)
+
 	return appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -305,38 +255,10 @@ func getTenantServiceScaffold(name, namespace, sentinelName, image, configSecret
 									Name:          "grpc",
 								},
 							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "config-volume",
-									MountPath: "/etc/karavi-authorization/config",
-								},
-								{
-									Name:      "csm-config-params",
-									MountPath: "/etc/karavi-authorization/csm-config-params",
-								},
-							},
+							VolumeMounts: volumeMounts,
 						},
 					},
-					Volumes: []corev1.Volume{
-						{
-							Name: "config-volume",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: configSecretName,
-								},
-							},
-						},
-						{
-							Name: "csm-config-params",
-							VolumeSource: corev1.VolumeSource{
-								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "csm-config-params",
-									},
-								},
-							},
-						},
-					},
+					Volumes: volumes,
 				},
 			},
 		},
@@ -874,4 +796,43 @@ func createRedisK8sSecret(name, namespace string) corev1.Secret {
 			"commander_user": "dev",
 		},
 	}
+}
+
+func createConfigSecretVolumeAndVolumeMnts(configSecretName string) ([]corev1.Volume, []corev1.VolumeMount) {
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:      "config-volume",
+			MountPath: "/etc/karavi-authorization/config",
+		},
+		{
+			Name:      "csm-config-params",
+			MountPath: "/etc/karavi-authorization/csm-config-params",
+		},
+	}
+	volSecName := "karavi-config-secret"
+	if configSecretName != "" {
+		volSecName = configSecretName
+	}
+	volumes := []corev1.Volume{
+		{
+			Name: "config-volume",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: volSecName,
+				},
+			},
+		},
+		{
+			Name: "csm-config-params",
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: "csm-config-params",
+					},
+				},
+			},
+		},
+	}
+
+	return volumes, volumeMounts
 }

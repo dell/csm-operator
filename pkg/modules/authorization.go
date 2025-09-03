@@ -913,16 +913,9 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
 	if storageCreds {
 		// remove vault from version v2.3.0 since vault is not supported in v2.3.0 and onwards
-		err := removeVaultFromStorageService(ctx, cr, ctrlClient, &deployment)
+		err := removeVaultFromStorageService(ctx, cr, ctrlClient, deployment)
 		if err != nil {
 			return fmt.Errorf("removing vault from storage service: %v", err)
-		}
-		err = ctrlClient.Get(ctx, client.ObjectKey{
-			Namespace: cr.Namespace,
-			Name:      cr.Name,
-		}, &cr)
-		if err != nil {
-			return fmt.Errorf("failed to get CSM authorization proxy CR")
 		}
 
 		// Determine whether to read from secret provider classes or kubernetes secrets
@@ -1009,22 +1002,13 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	if v2Version {
 		for i, c := range deployment.Spec.Template.Spec.Containers {
 			if c.Name == "storage-service" {
-				hasPromhttpPort := false
-				for _, port := range c.Ports {
-					if port.Name == "promhttp" {
-						hasPromhttpPort = true
-						break
-					}
-				}
-				if !hasPromhttpPort {
-					deployment.Spec.Template.Spec.Containers[i].Ports = append(deployment.Spec.Template.Spec.Containers[i].Ports,
-						corev1.ContainerPort{
-							Name:          "promhttp",
-							Protocol:      "TCP",
-							ContainerPort: 2112,
-						},
-					)
-				}
+				deployment.Spec.Template.Spec.Containers[i].Ports = append(deployment.Spec.Template.Spec.Containers[i].Ports,
+					corev1.ContainerPort{
+						Name:          "promhttp",
+						Protocol:      "TCP",
+						ContainerPort: 2112,
+					},
+				)
 				break
 			}
 		}
@@ -1048,14 +1032,16 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 }
 
 // remove vault certificates, args, and volumes/volume mounts if upgrading from verions < v2.3.0
-func removeVaultFromStorageService(ctx context.Context, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, dp *appsv1.Deployment) error {
+func removeVaultFromStorageService(ctx context.Context, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, dp appsv1.Deployment) error {
 	log := logger.GetLogger(ctx)
+
+	currentDeployment := &appsv1.Deployment{}
 
 	// check if there is an existing storage service deployment to be updated
 	err := ctrlClient.Get(ctx, client.ObjectKey{
 		Namespace: dp.Namespace,
 		Name:      dp.Name,
-	}, dp)
+	}, currentDeployment)
 	if err != nil {
 		log.Infof("%s not found. No need to remove vault from storage service.", dp.Name)
 		return nil
@@ -1068,7 +1054,7 @@ func removeVaultFromStorageService(ctx context.Context, cr csmv1.ContainerStorag
 	}
 
 	// remove vault args and volume mounts from the deployment's container
-	for i, container := range dp.Spec.Template.Spec.Containers {
+	for i, container := range currentDeployment.Spec.Template.Spec.Containers {
 		if container.Name == "storage-service" {
 			// Filter out vault args
 			var newArgs []string
@@ -1077,7 +1063,7 @@ func removeVaultFromStorageService(ctx context.Context, cr csmv1.ContainerStorag
 					newArgs = append(newArgs, arg)
 				}
 			}
-			dp.Spec.Template.Spec.Containers[i].Args = newArgs
+			currentDeployment.Spec.Template.Spec.Containers[i].Args = newArgs
 
 			// Filter out vault volume mounts
 			var newVolumeMounts []corev1.VolumeMount
@@ -1086,25 +1072,27 @@ func removeVaultFromStorageService(ctx context.Context, cr csmv1.ContainerStorag
 					newVolumeMounts = append(newVolumeMounts, volumeMount)
 				}
 			}
-			dp.Spec.Template.Spec.Containers[i].VolumeMounts = newVolumeMounts
+			currentDeployment.Spec.Template.Spec.Containers[i].VolumeMounts = newVolumeMounts
 		}
 	}
 
 	// Filter out vault volumes
 	var newVolumes []corev1.Volume
-	for _, volume := range dp.Spec.Template.Spec.Volumes {
+	for _, volume := range currentDeployment.Spec.Template.Spec.Volumes {
 		if !strings.Contains(volume.Name, "vault-client-certificate-") {
 			volume.VolumeSource.Projected = nil // Clear projected sources if they exists
 			newVolumes = append(newVolumes, volume)
 		}
 	}
-	dp.Spec.Template.Spec.Volumes = newVolumes
+	currentDeployment.Spec.Template.Spec.Volumes = newVolumes
 
 	// Update the deployment
-	err = ctrlClient.Update(ctx, dp)
+	err = ctrlClient.Update(ctx, currentDeployment)
 	if err != nil {
 		return fmt.Errorf("updating storage service deployment for upgrading: %w", err)
 	}
+
+	log.Infof("current deployment: %+v", currentDeployment)
 
 	return nil
 }
@@ -1164,56 +1152,29 @@ func mountVaultVolumes(vaults []csmv1.Vault, deployment *appsv1.Deployment) {
 	}
 }
 
-// volumeExists returns true if a volume with the given name is already present.
-func volumeExists(deployment *appsv1.Deployment, name string) bool {
-    for _, v := range deployment.Spec.Template.Spec.Volumes {
-        if v.Name == name {
-            return true
-        }
-    }
-    return false
-}
-
-// mountExists returns true if the container already has a mount with the given name & path.
-func mountExists(container *corev1.Container, name, path string) bool {
-    for _, m := range container.VolumeMounts {
-        if m.Name == name && m.MountPath == path {
-            return true
-        }
-    }
-    return false
-}
-
 func mountSecretVolumes(secrets []string, deployment *appsv1.Deployment) {
 	for _, secret := range secrets {
-		volName := fmt.Sprintf("storage-system-secrets-%s", secret)
-		if !volumeExists(deployment, volName) {
-			volume := corev1.Volume{
-				Name: volName,
-				VolumeSource: corev1.VolumeSource{
-					Secret: &corev1.SecretVolumeSource{
-						SecretName: secret,
-					},
+		volume := corev1.Volume{
+			Name: fmt.Sprintf("storage-system-secrets-%s", secret),
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: secret,
 				},
-			}
-			deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volume)
+			},
 		}
+
+		deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volume)
 	}
 
 	// set volume mounts for kubernetes secrets
 	for i, c := range deployment.Spec.Template.Spec.Containers {
 		if c.Name == "storage-service" {
 			for _, secret := range secrets {
-				volName := fmt.Sprintf("storage-system-secrets-%s", secret)
-				mountPath := fmt.Sprintf("/etc/csm-authorization/%s", secret)
-
-				if !mountExists(&c, volName, mountPath) {
-					deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
-						Name:      volName,
-						MountPath: mountPath,
-						ReadOnly:  true,
-					})
-				}
+				deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
+					Name:      fmt.Sprintf("storage-system-secrets-%s", secret),
+					MountPath: fmt.Sprintf("/etc/csm-authorization/%s", secret),
+					ReadOnly:  true,
+				})
 			}
 			break
 		}
