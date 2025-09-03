@@ -150,6 +150,8 @@ const (
 	defaultRedisUsernameKey = "commander_user"
 	// defaultRedisPasswordKey - name of default password key
 	defaultRedisPasswordKey = "password"
+	// defaultConfigSecretName - the default secret name used for the "config-volume" volume
+	defaultConfigSecretName = "karavi-config-secret"
 
 	// AuthLocalStorageClass -
 	AuthLocalStorageClass = "csm-authorization-local-storage"
@@ -794,6 +796,7 @@ func authorizationStorageServiceV1(ctx context.Context, isDeleting bool, cr csmv
 
 	// get component variables
 	image := ""
+	configSecretName = defaultConfigSecretName
 	for _, component := range authModule.Components {
 		switch component.Name {
 		case AuthProxyServerComponent:
@@ -865,7 +868,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	var secrets []string
 	leaderElection := true
 	otelCollector := ""
-	configSecretName = ""
+	configSecretName = defaultConfigSecretName
 	for _, component := range authModule.Components {
 		switch component.Name {
 		case AuthProxyServerComponent:
@@ -1320,6 +1323,7 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 	proxyImage := ""
 	opaImage := ""
 	opaKubeMgmtImage := ""
+	configSecretName = defaultConfigSecretName
 	for _, component := range authModule.Components {
 		switch component.Name {
 		case AuthProxyServerComponent:
@@ -1374,6 +1378,7 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 	redisReplicas := 0
 	image := ""
 	sentinelName := ""
+	configSecretName = defaultConfigSecretName
 	for _, component := range authModule.Components {
 		switch component.Name {
 		case AuthProxyServerComponent:
