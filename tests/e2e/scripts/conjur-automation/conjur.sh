@@ -231,14 +231,16 @@ cat <<EOF > conjur-csm-authorization/secrets.yaml
   id: secrets
   body:
     - &variables
+      - !variable redis-username
+      - !variable redis-password
       - !variable powerflex-username
       - !variable powerflex-password
       - !variable powermax-username
       - !variable powermax-password
       - !variable powerscale-username
       - !variable powerscale-password
-      - !variable redis-username
-      - !variable redis-password
+      - !variable powerstore-username
+      - !variable powerstore-password
     - !permit
       role:
         - !host /csm-authorization/system:serviceaccount:authorization:storage-service
