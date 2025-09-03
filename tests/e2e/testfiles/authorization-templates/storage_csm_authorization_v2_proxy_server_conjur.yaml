@@ -71,13 +71,16 @@ spec:
           # Otherwise, a default Kubernetes secret will be used.
           redisSecretProviderClass:
             # Name of the SecretProviderClass that holds the Redis secretObject.
-            - secretProviderClassName: ""
+            - secretProviderClassName: conjur
               # Name of the Kubernetes secret (created by the Secret Store CSI driver) that contains Redis credentials.
-              redisSecretName: ""
+              redisSecretName: conjur
               # Key in the secret that stores the Redis username.
-              redisUsernameKey: ""
+              redisUsernameKey: username
               # Key in the secret that stores the Redis password.
-              redisPasswordKey: ""
+              redisPasswordKey: password
+              conjur:
+                usernamePath: secrets/redis-username
+                passwordPath: secrets/redis-password
           redis: redis:8.2.0-alpine
           commander: rediscommander/redis-commander:latest
           redisName: redis-csm
@@ -89,7 +92,9 @@ spec:
           secretProviderClasses:
             conjur:
               - name: conjur
-                paths: []
+                paths:
+                  - usernamePath: secrets/powerflex-username
+                    passwordPath: secrets/powerflex-password
 ---
 apiVersion: v1
 kind: ConfigMap
