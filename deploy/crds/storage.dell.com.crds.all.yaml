@@ -303,7 +303,7 @@ spec:
                             description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
                             properties:
                               conjur:
-                                description: Conjur is the secret configuration when  retrieve the Redis credentials from Conjur
+                                description: Conjur is the secret configuration with path to retrieve the Redis credentials from Conjur
                                 properties:
                                   passwordPath:
                                     description: PasswordPath is the path to the password in the secret
@@ -709,7 +709,7 @@ spec:
                             description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
                             properties:
                               conjur:
-                                description: Conjur is the secret configuration when  retrieve the Redis credentials from Conjur
+                                description: Conjur is the secret configuration with path to retrieve the Redis credentials from Conjur
                                 properties:
                                   passwordPath:
                                     description: PasswordPath is the path to the password in the secret
@@ -1131,7 +1131,7 @@ spec:
                               description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
                               properties:
                                 conjur:
-                                  description: Conjur is the secret configuration when  retrieve the Redis credentials from Conjur
+                                  description: Conjur is the secret configuration with path to retrieve the Redis credentials from Conjur
                                   properties:
                                     passwordPath:
                                       description: PasswordPath is the path to the password in the secret
@@ -1535,7 +1535,7 @@ spec:
                             description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
                             properties:
                               conjur:
-                                description: Conjur is the secret configuration when  retrieve the Redis credentials from Conjur
+                                description: Conjur is the secret configuration with path to retrieve the Redis credentials from Conjur
                                 properties:
                                   passwordPath:
                                     description: PasswordPath is the path to the password in the secret
@@ -1945,7 +1945,7 @@ spec:
                               description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
                               properties:
                                 conjur:
-                                  description: Conjur is the secret configuration when  retrieve the Redis credentials from Conjur
+                                  description: Conjur is the secret configuration with path to retrieve the Redis credentials from Conjur
                                   properties:
                                     passwordPath:
                                       description: PasswordPath is the path to the password in the secret
@@ -2375,7 +2375,7 @@ spec:
                                 description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
                                 properties:
                                   conjur:
-                                    description: Conjur is the secret configuration when  retrieve the Redis credentials from Conjur
+                                    description: Conjur is the secret configuration with path to retrieve the Redis credentials from Conjur
                                     properties:
                                       passwordPath:
                                         description: PasswordPath is the path to the password in the secret
@@ -2790,7 +2790,7 @@ spec:
                                 description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
                                 properties:
                                   conjur:
-                                    description: Conjur is the secret configuration when  retrieve the Redis credentials from Conjur
+                                    description: Conjur is the secret configuration with path to retrieve the Redis credentials from Conjur
                                     properties:
                                       passwordPath:
                                         description: PasswordPath is the path to the password in the secret

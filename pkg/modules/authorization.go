@@ -864,6 +864,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	var secrets []string
 	leaderElection := true
 	otelCollector := ""
+	configSecretName = ""
 	for _, component := range authModule.Components {
 		switch component.Name {
 		case AuthProxyServerComponent:
@@ -881,7 +882,6 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 			secretProviderClasses = component.SecretProviderClasses
 			secrets = component.Secrets
 		case AuthConfigSecretComponent:
-			configSecretName = ""
 			for _, config := range component.ConfigSecretProviderClass {
 				if config.SecretProviderClassName != "" && config.ConfigSecretName != "" {
 					configSecretName = config.ConfigSecretName

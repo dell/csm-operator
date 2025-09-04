@@ -87,7 +87,7 @@ storageSystemCredentials:
 ```
 
 ### Install and create secrets from environment variables
-This method aligns with CSM Operator e2e by reading specific environment variables in https://github.com/dell/csm-operator/blob/main/tests/e2e/array-info.sh:
+This method aligns with CSM Operator e2e by reading specific environment variables in array-info.env. Refer the sample at https://github.com/dell/csm-operator/blob/main/tests/e2e/array-info.env.sample:
 
 ```
 PFLEX_USER
@@ -98,6 +98,14 @@ PSCALE_PASS
 
 PMAX_USER
 PMAX_PASS
+
+PSTORE_USER
+PSTORE_PASS
+
+REDIS_USER
+REDIS_PASS
+
+CONFIG_OBJECT
 ```
 
 The variables in each set of two, two variables per platform, must be set prior to running this tool. If any of the two environment variables for a specific platform is not set, that secret will not be written in Conjur.

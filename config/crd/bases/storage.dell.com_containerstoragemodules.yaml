@@ -377,8 +377,8 @@ spec:
                             properties:
                               conjur:
                                 description:
-                                  Conjur is the secret configuration when  retrieve
-                                  the Redis credentials from Conjur
+                                  Conjur is the secret configuration with
+                                  path to retrieve the Redis credentials from Conjur
                                 properties:
                                   passwordPath:
                                     description:
@@ -899,8 +899,8 @@ spec:
                             properties:
                               conjur:
                                 description:
-                                  Conjur is the secret configuration when  retrieve
-                                  the Redis credentials from Conjur
+                                  Conjur is the secret configuration with
+                                  path to retrieve the Redis credentials from Conjur
                                 properties:
                                   passwordPath:
                                     description:
@@ -1441,8 +1441,8 @@ spec:
                               properties:
                                 conjur:
                                   description:
-                                    Conjur is the secret configuration when  retrieve
-                                    the Redis credentials from Conjur
+                                    Conjur is the secret configuration with
+                                    path to retrieve the Redis credentials from Conjur
                                   properties:
                                     passwordPath:
                                       description:
@@ -1959,8 +1959,8 @@ spec:
                             properties:
                               conjur:
                                 description:
-                                  Conjur is the secret configuration when  retrieve
-                                  the Redis credentials from Conjur
+                                  Conjur is the secret configuration with
+                                  path to retrieve the Redis credentials from Conjur
                                 properties:
                                   passwordPath:
                                     description:
@@ -2485,8 +2485,8 @@ spec:
                               properties:
                                 conjur:
                                   description:
-                                    Conjur is the secret configuration when  retrieve
-                                    the Redis credentials from Conjur
+                                    Conjur is the secret configuration with
+                                    path to retrieve the Redis credentials from Conjur
                                   properties:
                                     passwordPath:
                                       description:
@@ -3041,7 +3041,8 @@ spec:
                                   conjur:
                                     description:
                                       Conjur is the secret configuration
-                                      when  retrieve the Redis credentials from Conjur
+                                      with path to retrieve the Redis credentials from
+                                      Conjur
                                     properties:
                                       passwordPath:
                                         description:
@@ -3585,7 +3586,8 @@ spec:
                                   conjur:
                                     description:
                                       Conjur is the secret configuration
-                                      when  retrieve the Redis credentials from Conjur
+                                      with path to retrieve the Redis credentials from
+                                      Conjur
                                     properties:
                                       passwordPath:
                                         description:

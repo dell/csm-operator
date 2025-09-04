@@ -448,7 +448,7 @@ type RedisSecretProviderClass struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Password Key"
 	RedisPasswordKey string `json:"redisPasswordKey,omitempty" yaml:"redisPasswordKey,omitempty"`
 
-	// Conjur is the secret configuration when  retrieve the Redis credentials from Conjur
+	// Conjur is the secret configuration with path to retrieve the Redis credentials from Conjur
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Conjur Secret Configuration"
 	Conjur *ConjurCredentialPath `json:"conjur,omitempty" yaml:"conjur,omitempty"`
 }
