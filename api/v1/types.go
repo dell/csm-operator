@@ -447,6 +447,10 @@ type RedisSecretProviderClass struct {
 	// RedisPasswordKey is the key in the secret that holds the Redis password
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Password Key"
 	RedisPasswordKey string `json:"redisPasswordKey,omitempty" yaml:"redisPasswordKey,omitempty"`
+
+	// Conjur is the secret configuration with path to retrieve the Redis credentials from Conjur
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Conjur Secret Configuration"
+	Conjur *ConjurCredentialPath `json:"conjur,omitempty" yaml:"conjur,omitempty"`
 }
 
 // ConfigSecretProviderClass is the config secret configuration for CSM Authorization
@@ -458,6 +462,10 @@ type ConfigSecretProviderClass struct {
 	// ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Config Secret Name"
 	ConfigSecretName string `json:"configSecretName,omitempty" yaml:"configSecretName,omitempty"`
+
+	// Conjur is the secret configuration with path to retrieve the Config secret from Conjur
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Conjur Config Secret Configuration"
+	Conjur *ConjurConfigPath `json:"conjur,omitempty" yaml:"conjur,omitempty"`
 }
 
 // StorageSystemSecretProviderClass is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
@@ -489,6 +497,12 @@ type ConjurCredentialPath struct {
 	// PasswordPath is the path to the password in the secret
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Conjur Password Path"
 	PasswordPath string `json:"passwordPath,omitempty" yaml:"passwordPath,omitempty"`
+}
+
+type ConjurConfigPath struct {
+	// SecretPath is the path to the config secret
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Conjur Secret Path"
+	SecretPath string `json:"secretPath,omitempty" yaml:"secretPath,omitempty"`
 }
 
 // CSIDriverSpec struct

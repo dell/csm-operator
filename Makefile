@@ -95,6 +95,10 @@ vet: ## Run go vet against code.
 test: manifests gen-semver fmt vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
 
+unit-test: go-code-tester ## Run all unit tests as they are done in the GitHub action
+	GITHUB_OUTPUT=/dev/null \
+	./go-code-tester 90 "." "" "true" "" "" "./pkg/constants|./api/v1|./core|./tests"
+
 controller-unit-test:
 	go clean -cache && go test -v -coverprofile=c.out github.com/dell/csm-operator/controllers
 
@@ -114,6 +118,10 @@ actions: ## Run all GitHub Action checks that run on a pull request creation
 		echo "Running workflow: $${WF}"; \
 		act pull_request --no-cache-server --platform ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest --job "$${WF}"; \
 	done
+
+go-code-tester:
+	curl -o go-code-tester -L https://raw.githubusercontent.com/dell/common-github-actions/main/go-code-tester/entrypoint.sh \
+	&& chmod +x go-code-tester
 
 action-help: ## Echo instructions to run one specific workflow locally
 	@echo "GitHub Workflows can be run locally with the following command:"

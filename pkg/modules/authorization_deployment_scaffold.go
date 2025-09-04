@@ -49,6 +49,7 @@ func getProxyServerScaffold(name, sentinelName, namespace, proxyImage, opaImage,
 						"csm": name,
 						"app": "proxy-server",
 					},
+					Annotations: map[string]string{},
 				},
 				Spec: corev1.PodSpec{
 					ServiceAccountName: "proxy-server",
@@ -158,6 +159,7 @@ func getStorageServiceScaffold(name string, namespace string, image string, repl
 						"csm": name,
 						"app": "storage-service",
 					},
+					Annotations: map[string]string{},
 				},
 				Spec: corev1.PodSpec{
 					ServiceAccountName: "storage-service",
@@ -217,6 +219,7 @@ func getTenantServiceScaffold(name, namespace, sentinelName, image, configSecret
 						"csm": name,
 						"app": "tenant-service",
 					},
+					Annotations: map[string]string{},
 				},
 				Spec: corev1.PodSpec{
 					ServiceAccountName: "tenant-service",
