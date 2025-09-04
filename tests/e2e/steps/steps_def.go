@@ -1672,6 +1672,12 @@ func (step *Step) AuthorizationV2Resources(res Resource, storageType, driver, dr
 			val = val + ":" + port
 		}
 
+		if driver == "powerstore" && key == "REPLACE_ENDPOINT" {
+			fmt.Println("Replacing PowerStore Endpoint and adding /api/rest/")
+			// PowerStore API endpoint requires /api/rest at the end of the URL
+			val = val + "/api/rest"
+		}
+
 		if key == "REPLACE_USERNAME_OBJECT_NAME" {
 			val = fmt.Sprintf("secrets/%s-username", driver)
 		}
