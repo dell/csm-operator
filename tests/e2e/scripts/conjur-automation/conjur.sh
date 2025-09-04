@@ -293,13 +293,18 @@ metadata:
 spec:
   provider: conjur
   secretObjects:
-  - secretName: conjur
-    type: kubernetes.io/basic-auth
-    data:
-      - objectName: secrets/redis-username
-        key: username
-      - objectName: secrets/redis-password
-        key: password
+    - secretName: redis-secret
+      type: kubernetes.io/basic-auth
+      data:
+        - objectName: secrets/redis-username
+          key: username
+        - objectName: secrets/redis-password
+          key: password
+    - secretName: config-secret
+      type: Opaque
+      data:
+        - objectName: secrets/config-object
+          key: config.yaml
   parameters:
     conjur.org/configurationVersion: 0.2.0
     account: dev-cluster

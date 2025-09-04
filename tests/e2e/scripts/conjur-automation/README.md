@@ -52,9 +52,15 @@ Example credentials.yaml:
   value: "myUsername"
 - variable: "system2-password"
   value: "myPassword"
+- variable: "redis-username"
+  value: "username"
+- variable: "redis-password"
+  value: "password"
+- variable: "config-object"
+  value: "web:\n  jwtsigningsecret: secret"
 ```
 
-A SecretProviderClass named `conjur` will be created in `conjur-spc.yaml`. 
+A SecretProviderClass named `conjur` will be created in `conjur-spc.yaml`.
 
 The variables are created under `secrets`. When installing CSM Authorization (Operator example), specify the SecretProviderClass name and the full paths of the variables.
 
@@ -98,7 +104,7 @@ The variables in each set of two, two variables per platform, must be set prior 
 
 `conjur.sh --control-node 10.0.0.1 --env-config`
 
-A SecretProviderClass named `conjur` will be created in `conjur-spc.yaml`. 
+A SecretProviderClass named `conjur` will be created in `conjur-spc.yaml`.
 
 The variables are created under `secrets` at hardcoded paths (see below). When installing CSM Authorization (Operator example), specify the SecretProviderClass name and the full paths of the variables.
 

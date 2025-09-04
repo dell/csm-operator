@@ -73,7 +73,7 @@ spec:
             # Name of the SecretProviderClass that holds the Redis secretObject.
             - secretProviderClassName: conjur
               # Name of the Kubernetes secret (created by the Secret Store CSI driver) that contains Redis credentials.
-              redisSecretName: conjur
+              redisSecretName: redis-secret
               # Key in the secret that stores the Redis username.
               redisUsernameKey: username
               # Key in the secret that stores the Redis password.
@@ -91,7 +91,7 @@ spec:
         - name: config
           configSecretProviderClass:
             # Name of the SecretProviderClass that holds the config secretObject.
-            - secretProviderClassName: array-creds
+            - secretProviderClassName: conjur
               # The name of the Kubernetes secret created by the CSI driver
               configSecretName: config-secret
               # Path for Conjur secret that stores the config secret.
