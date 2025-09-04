@@ -32,6 +32,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -2734,5 +2736,120 @@ func TestUpdateConfigGlobalVars(t *testing.T) {
 			assert.Equal(t, tt.want["configSecretName"], configSecretName)
 			assert.Equal(t, tt.want["configSecretPath"], configSecretPath)
 		})
+	}
+}
+
+func TestRemoveVaultFromStorageService(t *testing.T) {
+	// Create a fake client
+	ctrlClient := ctrlClientFake.NewClientBuilder().Build()
+
+	// Create a test context
+	ctx := context.TODO()
+
+	// Create a test ContainerStorageModule
+	cr := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-csm",
+			Namespace: "test-namespace",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Driver: csmv1.DriverSpec{
+				ConfigVersion: "v2.2.0",
+			},
+		},
+	}
+
+	// Create a test Deployment
+	dp := appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-deployment",
+			Namespace: "test-namespace",
+		},
+		Spec: appsv1.DeploymentSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name: "storage-service",
+							Args: []string{"--vault=vault1,https://10.0.0.1:8400,csm-authorization,true"},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "vault-client-certificate-vault1",
+									MountPath: "/etc/vault/vault1",
+								},
+							},
+						},
+					},
+					Volumes: []corev1.Volume{
+						{
+							Name: "vault-client-certificate-vault1",
+							VolumeSource: corev1.VolumeSource{
+								Projected: &corev1.ProjectedVolumeSource{
+									Sources: []corev1.VolumeProjection{
+										{
+											Secret: &corev1.SecretProjection{
+												LocalObjectReference: corev1.LocalObjectReference{
+													Name: "vault-certificate-authority-vault1",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Add the test deployment to the fake client
+	ctrlClient.Create(ctx, &dp)
+
+	// Call the removeVaultFromStorageService function
+	err := removeVaultFromStorageService(ctx, cr, ctrlClient, dp)
+
+	// Check if the error is nil
+	if err != nil {
+		t.Errorf("Expected nil error, but got %v", err)
+	}
+
+	// Check if the vault certificates, args, and volume mounts are removed
+	updatedDp := appsv1.Deployment{}
+	err = ctrlClient.Get(ctx, client.ObjectKey{
+		Namespace: dp.Namespace,
+		Name:      dp.Name,
+	}, &updatedDp)
+	if err != nil {
+		t.Errorf("Expected to get the updated deployment, but got %v", err)
+	}
+
+	// Check if the vault args are removed
+	for _, container := range updatedDp.Spec.Template.Spec.Containers {
+		if container.Name == "storage-service" {
+			for _, arg := range container.Args {
+				if strings.HasPrefix(arg, "--vault=") {
+					t.Errorf("Expected vault args to be removed, but found %s", arg)
+				}
+			}
+		}
+	}
+
+	// Check if the vault volume mounts are removed
+	for _, container := range updatedDp.Spec.Template.Spec.Containers {
+		if container.Name == "storage-service" {
+			for _, volumeMount := range container.VolumeMounts {
+				if strings.Contains(volumeMount.MountPath, "/etc/vault/") {
+					t.Errorf("Expected vault volume mounts to be removed, but found %s", volumeMount.MountPath)
+				}
+			}
+		}
+	}
+
+	// Check if the vault volumes are removed
+	for _, volume := range updatedDp.Spec.Template.Spec.Volumes {
+		if strings.Contains(volume.Name, "vault-client-certificate-") {
+			t.Errorf("Expected vault volumes to be removed, but found %s", volume.Name)
+		}
 	}
 }
