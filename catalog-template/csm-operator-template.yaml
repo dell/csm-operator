@@ -39,6 +39,6 @@ entries:
     schema: olm.bundle
   - image: quay.io/community-operator-pipeline-prod/dell-csm-operator:1.9.1
     schema: olm.bundle
-  - image:  quay.io/community-operator-pipeline-prod/dell-csm-operator:1.10.0
+  - image: quay.io/community-operator-pipeline-prod/dell-csm-operator:1.10.0
     schema: olm.bundle
 schema: olm.template.basic
