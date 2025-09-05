@@ -2753,8 +2753,8 @@ func TestRemoveVaultFromStorageService(t *testing.T) {
 		Spec: csmv1.ContainerStorageModuleSpec{
 			Modules: []csmv1.Module{
 				{
-					Name:    csmv1.AuthorizationServer,
-					Enabled: true,
+					Name:          csmv1.AuthorizationServer,
+					Enabled:       true,
 					ConfigVersion: "v2.3.0",
 				},
 			},

@@ -151,7 +151,7 @@ const (
 	// defaultRedisPasswordKey - name of default password key
 	defaultRedisPasswordKey = "password"
 	// defaultConfigSecretName - the default secret name used for the "config-volume" volume
-	defaultConfigSecretName = "karavi-config-secret"
+	defaultConfigSecretName = "karavi-config-secret" // #nosec G101 -- This is a false positive
 
 	// AuthLocalStorageClass -
 	AuthLocalStorageClass = "csm-authorization-local-storage"
