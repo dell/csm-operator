@@ -1076,7 +1076,7 @@ func removeVaultFromStorageService(ctx context.Context, cr csmv1.ContainerStorag
 		}
 	}
 
-	// Filter out vault volumes
+	// filter out vault volumes
 	var newVolumes []corev1.Volume
 	for _, volume := range currentDeployment.Spec.Template.Spec.Volumes {
 		if !strings.Contains(volume.Name, "vault-client-certificate-") {
@@ -1086,13 +1086,11 @@ func removeVaultFromStorageService(ctx context.Context, cr csmv1.ContainerStorag
 	}
 	currentDeployment.Spec.Template.Spec.Volumes = newVolumes
 
-	// Update the deployment
+	// update the storage-service deployment
 	err = ctrlClient.Update(ctx, currentDeployment)
 	if err != nil {
 		return fmt.Errorf("updating storage service deployment for upgrading: %w", err)
 	}
-
-	log.Infof("current deployment: %+v", currentDeployment)
 
 	return nil
 }
@@ -2309,7 +2307,7 @@ func updateRedisGlobalVars(component csmv1.ContainerTemplate) {
 
 // updateConfigGlobalVars - update the global config vars from the config secret provider class
 func updateConfigGlobalVars(component csmv1.ContainerTemplate) {
-	configSecretName = ""
+	configSecretName = defaultConfigSecretName
 	configSecretProviderClassName = ""
 	configSecretPath = ""
 	for _, config := range component.ConfigSecretProviderClass {
