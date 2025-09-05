@@ -31,8 +31,7 @@ jobs:
 
       - name: Run Update Script
         run: |
-          chmod +x .github/scripts/sidecar-update.sh
-          .github/scripts/sidecar-update.sh
+          bash .github/scripts/sidecar-update.sh
 
       - name: Check for Changes
         id: git-check
