@@ -95,6 +95,13 @@ spec:
                               configSecretName:
                                 description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                 type: string
+                              conjur:
+                                description: Conjur is the secret configuration with path to retrieve the Config secret from Conjur
+                                properties:
+                                  secretPath:
+                                    description: SecretPath is the path to the config secret
+                                    type: string
+                                type: object
                               secretProviderClassName:
                                 description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
                                 type: string
@@ -295,6 +302,16 @@ spec:
                           items:
                             description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
                             properties:
+                              conjur:
+                                description: Conjur is the secret configuration with path to retrieve the Redis credentials from Conjur
+                                properties:
+                                  passwordPath:
+                                    description: PasswordPath is the path to the password in the secret
+                                    type: string
+                                  usernamePath:
+                                    description: UsernamePath is the path to the username in the secret
+                                    type: string
+                                type: object
                               redisPasswordKey:
                                 description: RedisPasswordKey is the key in the secret that holds the Redis password
                                 type: string
@@ -484,6 +501,13 @@ spec:
                               configSecretName:
                                 description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                 type: string
+                              conjur:
+                                description: Conjur is the secret configuration with path to retrieve the Config secret from Conjur
+                                properties:
+                                  secretPath:
+                                    description: SecretPath is the path to the config secret
+                                    type: string
+                                type: object
                               secretProviderClassName:
                                 description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
                                 type: string
@@ -684,6 +708,16 @@ spec:
                           items:
                             description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
                             properties:
+                              conjur:
+                                description: Conjur is the secret configuration with path to retrieve the Redis credentials from Conjur
+                                properties:
+                                  passwordPath:
+                                    description: PasswordPath is the path to the password in the secret
+                                    type: string
+                                  usernamePath:
+                                    description: UsernamePath is the path to the username in the secret
+                                    type: string
+                                type: object
                               redisPasswordKey:
                                 description: RedisPasswordKey is the key in the secret that holds the Redis password
                                 type: string
@@ -889,6 +923,13 @@ spec:
                                 configSecretName:
                                   description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                   type: string
+                                conjur:
+                                  description: Conjur is the secret configuration with path to retrieve the Config secret from Conjur
+                                  properties:
+                                    secretPath:
+                                      description: SecretPath is the path to the config secret
+                                      type: string
+                                  type: object
                                 secretProviderClassName:
                                   description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
                                   type: string
@@ -1089,6 +1130,16 @@ spec:
                             items:
                               description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
                               properties:
+                                conjur:
+                                  description: Conjur is the secret configuration with path to retrieve the Redis credentials from Conjur
+                                  properties:
+                                    passwordPath:
+                                      description: PasswordPath is the path to the password in the secret
+                                      type: string
+                                    usernamePath:
+                                      description: UsernamePath is the path to the username in the secret
+                                      type: string
+                                  type: object
                                 redisPasswordKey:
                                   description: RedisPasswordKey is the key in the secret that holds the Redis password
                                   type: string
@@ -1276,6 +1327,13 @@ spec:
                               configSecretName:
                                 description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                 type: string
+                              conjur:
+                                description: Conjur is the secret configuration with path to retrieve the Config secret from Conjur
+                                properties:
+                                  secretPath:
+                                    description: SecretPath is the path to the config secret
+                                    type: string
+                                type: object
                               secretProviderClassName:
                                 description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
                                 type: string
@@ -1476,6 +1534,16 @@ spec:
                           items:
                             description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
                             properties:
+                              conjur:
+                                description: Conjur is the secret configuration with path to retrieve the Redis credentials from Conjur
+                                properties:
+                                  passwordPath:
+                                    description: PasswordPath is the path to the password in the secret
+                                    type: string
+                                  usernamePath:
+                                    description: UsernamePath is the path to the username in the secret
+                                    type: string
+                                type: object
                               redisPasswordKey:
                                 description: RedisPasswordKey is the key in the secret that holds the Redis password
                                 type: string
@@ -1669,6 +1737,13 @@ spec:
                                 configSecretName:
                                   description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                   type: string
+                                conjur:
+                                  description: Conjur is the secret configuration with path to retrieve the Config secret from Conjur
+                                  properties:
+                                    secretPath:
+                                      description: SecretPath is the path to the config secret
+                                      type: string
+                                  type: object
                                 secretProviderClassName:
                                   description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
                                   type: string
@@ -1869,6 +1944,16 @@ spec:
                             items:
                               description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
                               properties:
+                                conjur:
+                                  description: Conjur is the secret configuration with path to retrieve the Redis credentials from Conjur
+                                  properties:
+                                    passwordPath:
+                                      description: PasswordPath is the path to the password in the secret
+                                      type: string
+                                    usernamePath:
+                                      description: UsernamePath is the path to the username in the secret
+                                      type: string
+                                  type: object
                                 redisPasswordKey:
                                   description: RedisPasswordKey is the key in the secret that holds the Redis password
                                   type: string
@@ -2082,6 +2167,13 @@ spec:
                                   configSecretName:
                                     description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                     type: string
+                                  conjur:
+                                    description: Conjur is the secret configuration with path to retrieve the Config secret from Conjur
+                                    properties:
+                                      secretPath:
+                                        description: SecretPath is the path to the config secret
+                                        type: string
+                                    type: object
                                   secretProviderClassName:
                                     description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
                                     type: string
@@ -2282,6 +2374,16 @@ spec:
                               items:
                                 description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
                                 properties:
+                                  conjur:
+                                    description: Conjur is the secret configuration with path to retrieve the Redis credentials from Conjur
+                                    properties:
+                                      passwordPath:
+                                        description: PasswordPath is the path to the password in the secret
+                                        type: string
+                                      usernamePath:
+                                        description: UsernamePath is the path to the username in the secret
+                                        type: string
+                                    type: object
                                   redisPasswordKey:
                                     description: RedisPasswordKey is the key in the secret that holds the Redis password
                                     type: string
@@ -2480,6 +2582,13 @@ spec:
                                   configSecretName:
                                     description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
                                     type: string
+                                  conjur:
+                                    description: Conjur is the secret configuration with path to retrieve the Config secret from Conjur
+                                    properties:
+                                      secretPath:
+                                        description: SecretPath is the path to the config secret
+                                        type: string
+                                    type: object
                                   secretProviderClassName:
                                     description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
                                     type: string
@@ -2680,6 +2789,16 @@ spec:
                               items:
                                 description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
                                 properties:
+                                  conjur:
+                                    description: Conjur is the secret configuration with path to retrieve the Redis credentials from Conjur
+                                    properties:
+                                      passwordPath:
+                                        description: PasswordPath is the path to the password in the secret
+                                        type: string
+                                      usernamePath:
+                                        description: UsernamePath is the path to the username in the secret
+                                        type: string
+                                    type: object
                                   redisPasswordKey:
                                     description: RedisPasswordKey is the key in the secret that holds the Redis password
                                     type: string
