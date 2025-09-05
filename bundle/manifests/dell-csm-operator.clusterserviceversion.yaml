@@ -316,7 +316,7 @@ metadata:
                     "envs": [
                       {
                         "name": "NGINX_PROXY_IMAGE",
-                        "value": "docker.io/nginxinc/nginx-unprivileged:1.27"
+                        "value": "quay.io/nginx/nginx-unprivileged:1.27"
                       }
                     ],
                     "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.131.0",
@@ -698,7 +698,7 @@ metadata:
                     "envs": [
                       {
                         "name": "NGINX_PROXY_IMAGE",
-                        "value": "docker.io/nginxinc/nginx-unprivileged:1.27"
+                        "value": "quay.io/nginx/nginx-unprivileged:1.27"
                       }
                     ],
                     "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.131.0",
@@ -1040,7 +1040,7 @@ metadata:
                     "envs": [
                       {
                         "name": "NGINX_PROXY_IMAGE",
-                        "value": "docker.io/nginxinc/nginx-unprivileged:1.27"
+                        "value": "quay.io/nginx/nginx-unprivileged:1.27"
                       }
                     ],
                     "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.131.0",
@@ -1438,7 +1438,7 @@ metadata:
                     "envs": [
                       {
                         "name": "NGINX_PROXY_IMAGE",
-                        "value": "docker.io/nginxinc/nginx-unprivileged:1.27"
+                        "value": "quay.io/nginx/nginx-unprivileged:1.27"
                       }
                     ],
                     "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.131.0",
@@ -4046,7 +4046,7 @@ spec:
       name: externalhealthmonitorcontroller
     - image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0
       name: metadataretriever
-    - image: docker.io/nginxinc/nginx-unprivileged:1.27
+    - image: quay.io/nginx/nginx-unprivileged:1.27
       name: nginx
     - image: docker.io/redis:7.4.3-alpine
       name: redis
