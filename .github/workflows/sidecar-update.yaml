@@ -1,0 +1,59 @@
+name: Update Sidecar Image Tags
+
+on:
+  workflow_dispatch:  # Manual trigger via GitHub UI
+  schedule:
+    - cron: '30 9 * * *'  # Runs daily at 3:00 PM IST
+
+
+jobs:
+  update-tags:
+    name: Fetch & Update Sidecar Image Tags
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.CSM_GPG_PRIVATE_KEY }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+          git_tag_gpgsign: true
+          git_config_global: true
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl jq
+
+      - name: Run Update Script
+        run: |
+          chmod +x .github/scripts/sidecar-update.sh
+          .github/scripts/sidecar-update.sh
+
+      - name: Check for Changes
+        id: git-check
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.git-check.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "update sidecar image tags to latest"
+          title: "Update Sidecar image tags"
+          body: |
+            This PR automatically updates all sidecar image tags in /csm-operator/operatorconfig/driverconfig/common to the latest available versions.
+
+            ? Updated via `.github/scripts/sidecar-update.sh`
+          branch: actions/update-sidecar-image-tags
+          sign-commits: true
+          delete-branch: true
