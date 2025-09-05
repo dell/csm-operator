@@ -41,6 +41,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
@@ -149,6 +150,8 @@ const (
 	defaultRedisUsernameKey = "commander_user"
 	// defaultRedisPasswordKey - name of default password key
 	defaultRedisPasswordKey = "password"
+	// defaultConfigSecretName - the default secret name used for the "config-volume" volume
+	defaultConfigSecretName = "karavi-config-secret" // #nosec G101 -- This is a false positive
 
 	// AuthLocalStorageClass -
 	AuthLocalStorageClass = "csm-authorization-local-storage"
@@ -793,6 +796,7 @@ func authorizationStorageServiceV1(ctx context.Context, isDeleting bool, cr csmv
 
 	// get component variables
 	image := ""
+	configSecretName = defaultConfigSecretName
 	for _, component := range authModule.Components {
 		switch component.Name {
 		case AuthProxyServerComponent:
@@ -864,7 +868,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	var secrets []string
 	leaderElection := true
 	otelCollector := ""
-	configSecretName = ""
+	configSecretName = defaultConfigSecretName
 	for _, component := range authModule.Components {
 		switch component.Name {
 		case AuthProxyServerComponent:
@@ -908,6 +912,12 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 
 	// SecretProviderClasses is supported from config v2.3.0 (CSM 1.15) onwards
 	if storageCreds {
+		// remove vault from version v2.3.0 since vault is not supported in v2.3.0 and onwards
+		err := removeVaultFromStorageService(ctx, cr, ctrlClient, deployment)
+		if err != nil {
+			return fmt.Errorf("removing vault from storage service: %v", err)
+		}
+
 		// Determine whether to read from secret provider classes or kubernetes secrets
 		if secretProviderClasses != nil && (len(secretProviderClasses.Vaults) > 0 || len(secretProviderClasses.Conjurs) > 0) {
 			log.Info("Using secret provider classes for storage system credentials")
@@ -1018,6 +1028,70 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	if err != nil {
 		return fmt.Errorf("applying storage-service deployment: %w", err)
 	}
+	return nil
+}
+
+// remove vault certificates, args, and volumes/volume mounts if upgrading from verions < v2.3.0
+func removeVaultFromStorageService(ctx context.Context, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, dp appsv1.Deployment) error {
+	log := logger.GetLogger(ctx)
+
+	currentDeployment := &appsv1.Deployment{}
+
+	// check if there is an existing storage service deployment to be updated
+	err := ctrlClient.Get(ctx, client.ObjectKey{
+		Namespace: dp.Namespace,
+		Name:      dp.Name,
+	}, currentDeployment)
+	if err != nil {
+		log.Infof("%s not found. No need to remove vault from storage service.", dp.Name)
+		return nil
+	}
+
+	// remove vault certificates
+	err = applyDeleteVaultCertificates(ctx, true, cr, ctrlClient)
+	if err != nil {
+		return fmt.Errorf("deleting vault certificates: %w", err)
+	}
+
+	// remove vault args and volume mounts from the deployment's container
+	for i, container := range currentDeployment.Spec.Template.Spec.Containers {
+		if container.Name == "storage-service" {
+			// Filter out vault args
+			var newArgs []string
+			for _, arg := range container.Args {
+				if !strings.HasPrefix(arg, "--vault=") {
+					newArgs = append(newArgs, arg)
+				}
+			}
+			currentDeployment.Spec.Template.Spec.Containers[i].Args = newArgs
+
+			// Filter out vault volume mounts
+			var newVolumeMounts []corev1.VolumeMount
+			for _, volumeMount := range container.VolumeMounts {
+				if !strings.Contains(volumeMount.MountPath, "/etc/vault/") {
+					newVolumeMounts = append(newVolumeMounts, volumeMount)
+				}
+			}
+			currentDeployment.Spec.Template.Spec.Containers[i].VolumeMounts = newVolumeMounts
+		}
+	}
+
+	// filter out vault volumes
+	var newVolumes []corev1.Volume
+	for _, volume := range currentDeployment.Spec.Template.Spec.Volumes {
+		if !strings.Contains(volume.Name, "vault-client-certificate-") {
+			volume.VolumeSource.Projected = nil // Clear projected sources if they exists
+			newVolumes = append(newVolumes, volume)
+		}
+	}
+	currentDeployment.Spec.Template.Spec.Volumes = newVolumes
+
+	// update the storage-service deployment
+	err = ctrlClient.Update(ctx, currentDeployment)
+	if err != nil {
+		return fmt.Errorf("updating storage service deployment for upgrading: %w", err)
+	}
+
 	return nil
 }
 
@@ -1208,6 +1282,7 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 	proxyImage := ""
 	opaImage := ""
 	opaKubeMgmtImage := ""
+	configSecretName = defaultConfigSecretName
 	for _, component := range authModule.Components {
 		switch component.Name {
 		case AuthProxyServerComponent:
@@ -1262,6 +1337,7 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 	redisReplicas := 0
 	image := ""
 	sentinelName := ""
+	configSecretName = defaultConfigSecretName
 	for _, component := range authModule.Components {
 		switch component.Name {
 		case AuthProxyServerComponent:
@@ -2231,7 +2307,7 @@ func updateRedisGlobalVars(component csmv1.ContainerTemplate) {
 
 // updateConfigGlobalVars - update the global config vars from the config secret provider class
 func updateConfigGlobalVars(component csmv1.ContainerTemplate) {
-	configSecretName = ""
+	configSecretName = defaultConfigSecretName
 	configSecretProviderClassName = ""
 	configSecretPath = ""
 	for _, config := range component.ConfigSecretProviderClass {
