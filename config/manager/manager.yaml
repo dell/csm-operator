@@ -29,21 +29,23 @@ spec:
           imagePullPolicy: Always
           name: manager
           env:
+            - name: REFRESH_INTERVAL_MINUTES
+              value: "60"
             - value: quay.io/dell/container-storage-modules/dell-csm-operator:v1.10.0
               name: RELATED_IMAGE_dell-csm-operator
-            - value: quay.io/dell/container-storage-modules/csi-isilon:nightly
+            - value: quay.io/dell/container-storage-modules/csi-isilon:v2.15.0
               name: RELATED_IMAGE_csi-isilon
-            - value: quay.io/dell/container-storage-modules/csi-powermax:nightly
+            - value: quay.io/dell/container-storage-modules/csi-powermax:v2.15.0
               name: RELATED_IMAGE_csi-powermax
             - value: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.14.0
               name: RELATED_IMAGE_csipowermax-reverseproxy
-            - value: quay.io/dell/container-storage-modules/csi-powerstore:nightly
+            - value: quay.io/dell/container-storage-modules/csi-powerstore:v2.15.0
               name: RELATED_IMAGE_csi-powerstore
-            - value: quay.io/dell/container-storage-modules/csi-unity:nightly
+            - value: quay.io/dell/container-storage-modules/csi-unity:v2.15.0
               name: RELATED_IMAGE_csi-unity
-            - value: quay.io/dell/container-storage-modules/csi-vxflexos:nightly
+            - value: quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.0
               name: RELATED_IMAGE_csi-vxflexos
-            - value: quay.io/dell/storage/powerflex/sdc:4.5.2.1
+            - value: quay.io/dell/storage/powerflex/sdc:4.5.4
               name: RELATED_IMAGE_sdc
             - name: RELATED_IMAGE_karavi-authorization-proxy
               value: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0
@@ -89,6 +91,14 @@ spec:
               name: RELATED_IMAGE_externalhealthmonitorcontroller
             - value: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0
               name: RELATED_IMAGE_metadataretriever
+            - value: docker.io/nginxinc/nginx-unprivileged:1.27
+              name: RELATED_IMAGE_nginx
+            - value: docker.io/rediscommander/redis-commander:latest
+              name: RELATED_IMAGE_redis-commander
+            - value: docker.io/openpolicyagent/opa:0.70.0
+              name: RELATED_IMAGE_opa
+            - value: docker.io/openpolicyagent/kube-mgmt:0.11
+              name: RELATED_IMAGE_kube-mgmt
           securityContext:
             allowPrivilegeEscalation: false
           livenessProbe:
