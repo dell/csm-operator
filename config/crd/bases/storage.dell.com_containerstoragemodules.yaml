@@ -3815,20 +3815,26 @@ spec:
                   description: ControllerStatus is the status of Controller pods
                   properties:
                     available:
+                      description: Available is the number of available pods
                       type: string
                     desired:
+                      description: Desired is the number of desired pods
                       type: string
                     failed:
+                      description: Failed is the number of failed pods
                       type: string
                   type: object
                 nodeStatus:
                   description: NodeStatus is the status of Controller pods
                   properties:
                     available:
+                      description: Available is the number of available pods
                       type: string
                     desired:
+                      description: Desired is the number of desired pods
                       type: string
                     failed:
+                      description: Failed is the number of failed pods
                       type: string
                   type: object
                 state:

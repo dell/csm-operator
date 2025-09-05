@@ -1,0 +1,26 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: endpointslices-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: endpointslices-role
+subjects:
+  - kind: ServiceAccount
+    name: dell-csm-operator-manager-service-account
+    namespace: dell-csm-operator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: namespace-deleter-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: namespace-deleter-role
+subjects:
+  - kind: ServiceAccount
+    name: dell-csm-operator-manager-service-account
+    namespace: dell-csm-operator
+---

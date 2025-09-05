@@ -32,7 +32,7 @@ metadata:
                     "hostname": "csm-authorization.com",
                     "leaderElection": true,
                     "name": "proxy-server",
-                    "opa": "docker.io/openpolicyagent/opa:latest",
+                    "opa": "docker.io/openpolicyagent/opa:0.70.0",
                     "opaKubeMgmt": "docker.io/openpolicyagent/kube-mgmt:8.5.11",
                     "openTelemetryCollectorAddress": "",
                     "privateKey": "",
@@ -45,7 +45,7 @@ metadata:
                     ],
                     "proxyService": "quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.3.0",
                     "proxyServiceReplicas": 1,
-                    "roleService": "quay.io/dell/container-storage-modules/csm-authorization-role:v2.2.0",
+                    "roleService": "quay.io/dell/container-storage-modules/csm-authorization-role:v2.3.0",
                     "roleServiceReplicas": 1,
                     "storageService": "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.3.0",
                     "storageServiceReplicas": 1,
@@ -55,28 +55,40 @@ metadata:
                   {
                     "commander": "docker.io/rediscommander/redis-commander:latest",
                     "name": "redis",
-                    "redis": "docker.io/redis:7.4.3-alpine",
+                    "redis": "redis:8.2.0-alpine",
                     "redisCommander": "rediscommander",
                     "redisName": "redis-csm",
                     "redisReplicas": 5,
+                    "redisSecretProviderClass": [
+                      {
+                        "redisPasswordKey": "",
+                        "redisSecretName": "",
+                        "redisUsernameKey": "",
+                        "secretProviderClassName": ""
+                      }
+                    ],
                     "sentinel": "sentinel"
                   },
                   {
-                    "name": "vault",
-                    "vaultConfigurations": [
+                    "configSecretProviderClass": [
                       {
-                        "address": "https://10.0.0.1:8400",
-                        "certificateAuthority": "",
-                        "clientCertificate": "",
-                        "clientKey": "",
-                        "identifier": "vault0",
-                        "role": "csm-authorization",
-                        "skipCertificateValidation": true
+                        "configSecretName": "",
+                        "secretProviderClassName": ""
                       }
-                    ]
+                    ],
+                    "name": "config"
+                  },
+                  {
+                    "name": "storage-system-credentials",
+                    "secretProviderClasses": {
+                      "vault": [
+                        "secret-provider-class-1",
+                        "secret-provider-class-2"
+                      ]
+                    }
                   }
                 ],
-                "configVersion": "v2.2.0",
+                "configVersion": "v2.3.0",
                 "enabled": true,
                 "forceRemoveModule": true,
                 "name": "authorization-proxy-server"
@@ -138,7 +150,15 @@ metadata:
                   },
                   {
                     "name": "CSI_LOG_LEVEL",
-                    "value": "debug"
+                    "value": "info"
+                  },
+                  {
+                    "name": "GOISILON_DEBUG",
+                    "value": "false"
+                  },
+                  {
+                    "name": "AZ_RECONCILE_INTERVAL",
+                    "value": "1h"
                   }
                 ],
                 "image": "quay.io/dell/container-storage-modules/csi-isilon:nightly",
@@ -208,29 +228,29 @@ metadata:
               "sideCars": [
                 {
                   "args": [
-                    "--volume-name-prefix=csipscale"
+                    "--volume-name-prefix=csivol"
                   ],
-                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v5.1.0",
+                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v5.3.0",
                   "name": "provisioner"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.8.0",
+                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.9.0",
                   "name": "attacher"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0",
+                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0",
                   "name": "registrar"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.13.1",
+                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.14.0",
                   "name": "resizer"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v8.2.0",
+                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v8.3.0",
                   "name": "snapshotter"
                 },
                 {
-                  "image": "quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0",
+                  "image": "quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.11.0",
                   "name": "csi-metadata-retriever"
                 },
                 {
@@ -238,7 +258,7 @@ metadata:
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
-                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.14.0",
+                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.15.0",
                   "name": "external-health-monitor"
                 }
               ]
@@ -298,6 +318,14 @@ metadata:
                       {
                         "name": "RETRY_INTERVAL_MAX",
                         "value": "5m"
+                      },
+                      {
+                        "name": "DISABLE_PVC_REMAP",
+                        "value": "false"
+                      },
+                      {
+                        "name": "REPLICATION_ALLOW_PVC_CREATION_ON_TARGET",
+                        "value": "false"
                       }
                     ],
                     "image": "quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0",
@@ -333,6 +361,14 @@ metadata:
                       {
                         "name": "POWERSCALE_MAX_CONCURRENT_QUERIES",
                         "value": "10"
+                      },
+                      {
+                        "name": "POWERSCALE_TOPOLOGY_METRICS_ENABLED",
+                        "value": "true"
+                      },
+                      {
+                        "name": "POWERSCALE_TOPOLOGY_METRICS_POLL_FREQUENCY",
+                        "value": "30"
                       },
                       {
                         "name": "POWERSCALE_CAPACITY_METRICS_ENABLED",
@@ -450,19 +486,7 @@ metadata:
                 "envs": [
                   {
                     "name": "X_CSI_MANAGED_ARRAYS",
-                    "value": "000000000000,000000000001"
-                  },
-                  {
-                    "name": "X_CSI_POWERMAX_ENDPOINT",
-                    "value": "https://0.0.0.0:8443/"
-                  },
-                  {
-                    "name": "X_CSI_K8S_CLUSTER_PREFIX",
-                    "value": "XYZ"
-                  },
-                  {
-                    "name": "KUBELET_CONFIG_DIR",
-                    "value": "/var/lib/kubelet"
+                    "value": "000000000001,000000000002"
                   },
                   {
                     "name": "X_CSI_POWERMAX_PORTGROUPS",
@@ -471,6 +495,14 @@ metadata:
                   {
                     "name": "X_CSI_TRANSPORT_PROTOCOL",
                     "value": ""
+                  },
+                  {
+                    "name": "X_CSI_K8S_CLUSTER_PREFIX",
+                    "value": "CSM"
+                  },
+                  {
+                    "name": "KUBELET_CONFIG_DIR",
+                    "value": "/var/lib/kubelet"
                   },
                   {
                     "name": "X_CSI_VSPHERE_ENABLED",
@@ -490,11 +522,23 @@ metadata:
                   },
                   {
                     "name": "CSI_LOG_LEVEL",
-                    "value": "debug"
+                    "value": "info"
+                  },
+                  {
+                    "name": "X_CSI_POWERMAX_SKIP_CERTIFICATE_VALIDATION",
+                    "value": "true"
                   },
                   {
                     "name": "CSI_LOG_FORMAT",
                     "value": "TEXT"
+                  },
+                  {
+                    "name": "X_CSI_POWERMAX_DEBUG",
+                    "value": "true"
+                  },
+                  {
+                    "name": "X_CSI_REVPROXY_USE_SECRET",
+                    "value": "false"
                   }
                 ],
                 "image": "quay.io/dell/container-storage-modules/csi-powermax:nightly",
@@ -560,29 +604,29 @@ metadata:
               "sideCars": [
                 {
                   "args": [
-                    "--volume-name-prefix=pmax"
+                    "--volume-name-prefix=csivol"
                   ],
-                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v5.1.0",
+                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v5.3.0",
                   "name": "provisioner"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.8.0",
+                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.9.0",
                   "name": "attacher"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0",
+                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0",
                   "name": "registrar"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.13.1",
+                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.14.0",
                   "name": "resizer"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v8.2.0",
+                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v8.3.0",
                   "name": "snapshotter"
                 },
                 {
-                  "image": "quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0",
+                  "image": "quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.11.0",
                   "name": "csi-metadata-retriever"
                 },
                 {
@@ -590,7 +634,7 @@ metadata:
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
-                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.14.0",
+                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.15.0",
                   "name": "external-health-monitor"
                 }
               ]
@@ -622,8 +666,6 @@ metadata:
                   }
                 ],
                 "configVersion": "v2.14.0",
-                "enabled": true,
-                "forceRemoveModule": true,
                 "name": "csireverseproxy"
               },
               {
@@ -680,6 +722,14 @@ metadata:
                       {
                         "name": "RETRY_INTERVAL_MAX",
                         "value": "5m"
+                      },
+                      {
+                        "name": "DISABLE_PVC_REMAP",
+                        "value": "false"
+                      },
+                      {
+                        "name": "REPLICATION_ALLOW_PVC_CREATION_ON_TARGET",
+                        "value": "false"
                       }
                     ],
                     "image": "quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0",
@@ -723,6 +773,14 @@ metadata:
                       {
                         "name": "POWERMAX_PERFORMANCE_METRICS_ENABLED",
                         "value": "true"
+                      },
+                      {
+                        "name": "POWERMAX_TOPOLOGY_METRICS_ENABLED",
+                        "value": "true"
+                      },
+                      {
+                        "name": "POWERMAX_TOPOLOGY_METRICS_POLL_FREQUENCY",
+                        "value": "30"
                       },
                       {
                         "name": "POWERMAX_CAPACITY_POLL_FREQUENCY",
@@ -832,7 +890,23 @@ metadata:
                   },
                   {
                     "name": "CSI_LOG_LEVEL",
-                    "value": "debug"
+                    "value": "info"
+                  },
+                  {
+                    "name": "GOPOWERSTORE_DEBUG",
+                    "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION",
+                    "value": "true"
+                  },
+                  {
+                    "name": "CERT_SECRET_COUNT",
+                    "value": "1"
+                  },
+                  {
+                    "name": "X_CSM_AUTH_ENABLED",
+                    "value": "false"
                   }
                 ],
                 "image": "quay.io/dell/container-storage-modules/csi-powerstore:nightly",
@@ -841,6 +915,14 @@ metadata:
               "configVersion": "v2.15.0",
               "controller": {
                 "envs": [
+                  {
+                    "name": "X_CSI_MULTI_NAS_FAILURE_THRESHOLD",
+                    "value": "5"
+                  },
+                  {
+                    "name": "X_CSI_MULTI_NAS_COOLDOWN_PERIOD",
+                    "value": "5m"
+                  },
                   {
                     "name": "X_CSI_NFS_ACLS",
                     "value": "0777"
@@ -1022,6 +1104,14 @@ metadata:
                       {
                         "name": "RETRY_INTERVAL_MAX",
                         "value": "5m"
+                      },
+                      {
+                        "name": "DISABLE_PVC_REMAP",
+                        "value": "false"
+                      },
+                      {
+                        "name": "REPLICATION_ALLOW_PVC_CREATION_ON_TARGET",
+                        "value": "false"
                       }
                     ],
                     "image": "quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0",
@@ -1109,9 +1199,9 @@ metadata:
                       {
                         "name": "COLLECTOR_ADDRESS",
                         "value": "otel-collector:55680"
-                      },
+                      }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.12.0",
+                    "image": "quay.io/dell/container-storage-modules/csm-metrics-powerstore:nightly",
                     "name": "metrics-powerstore"
                   }
                 ],
@@ -1155,7 +1245,15 @@ metadata:
                   },
                   {
                     "name": "CSI_LOG_LEVEL",
-                    "value": "debug"
+                    "value": "info"
+                  },
+                  {
+                    "name": "GOUNITY_DEBUG",
+                    "value": "false"
+                  },
+                  {
+                    "name": "GOUNITY_SHOWHTTP",
+                    "value": "false"
                   },
                   {
                     "name": "CSI_LOG_FORMAT",
@@ -1270,8 +1368,16 @@ metadata:
                     "value": "false"
                   },
                   {
-                    "name": "X_CSI_DEBUG",
-                    "value": "true"
+                    "name": "CSI_LOG_LEVEL",
+                    "value": "INFO"
+                  },
+                  {
+                    "name": "GOSCALEIO_DEBUG",
+                    "value": "false"
+                  },
+                  {
+                    "name": "GOSCALEIO_SHOWHTTP",
+                    "value": "false"
                   },
                   {
                     "name": "KUBELET_CONFIG_DIR",
@@ -1284,6 +1390,10 @@ metadata:
                   {
                     "name": "X_CSI_QUOTA_ENABLED",
                     "value": "false"
+                  },
+                  {
+                    "name": "INTERFACE_NAMES",
+                    "value": null
                   }
                 ],
                 "image": "quay.io/dell/container-storage-modules/csi-vxflexos:nightly",
@@ -1317,6 +1427,18 @@ metadata:
                     {
                       "name": "MDM",
                       "value": "10.xx.xx.xx,10.xx.xx.xx"
+                    },
+                    {
+                      "name": "REPO_ADDRESS",
+                      "value": "sftp://0.0.0.0"
+                    },
+                    {
+                      "name": "REPO_USER",
+                      "value": "sdcRepoUser"
+                    },
+                    {
+                      "name": "MODULE_SIGCHECK",
+                      "value": "0"
                     }
                   ],
                   "image": "quay.io/dell/storage/powerflex/sdc:4.5.4",
@@ -1349,6 +1471,10 @@ metadata:
                   {
                     "name": "X_CSI_MAX_VOLUMES_PER_NODE",
                     "value": "0"
+                  },
+                  {
+                    "name": "X_CSI_SDC_SFTP_REPO_ENABLED",
+                    "value": "false"
                   }
                 ],
                 "nodeSelector": null,
@@ -1358,29 +1484,29 @@ metadata:
               "sideCars": [
                 {
                   "args": [
-                    "--volume-name-prefix=k8s"
+                    "--volume-name-prefix=csivol"
                   ],
-                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v5.1.0",
+                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v5.3.0",
                   "name": "provisioner"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.8.0",
+                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.9.0",
                   "name": "attacher"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0",
+                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0",
                   "name": "registrar"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.13.1",
+                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.14.0",
                   "name": "resizer"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v8.2.0",
+                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v8.3.0",
                   "name": "snapshotter"
                 },
                 {
-                  "image": "quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0",
+                  "image": "quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.11.0",
                   "name": "csi-metadata-retriever"
                 },
                 {
@@ -1403,7 +1529,7 @@ metadata:
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
-                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.14.0",
+                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.15.0",
                   "name": "csi-external-health-monitor-controller"
                 }
               ]
@@ -1452,6 +1578,14 @@ metadata:
                   {
                     "enabled": false,
                     "envs": [
+                      {
+                        "name": "POWERFLEX_TOPOLOGY_METRICS_ENABLED",
+                        "value": "true"
+                      },
+                      {
+                        "name": "POWERFLEX_TOPOLOGY_METRICS_POLL_FREQUENCY",
+                        "value": "30"
+                      },
                       {
                         "name": "POWERFLEX_MAX_CONCURRENT_QUERIES",
                         "value": "10"
@@ -1534,6 +1668,14 @@ metadata:
                       {
                         "name": "RETRY_INTERVAL_MAX",
                         "value": "5m"
+                      },
+                      {
+                        "name": "DISABLE_PVC_REMAP",
+                        "value": "false"
+                      },
+                      {
+                        "name": "REPLICATION_ALLOW_PVC_CREATION_ON_TARGET",
+                        "value": "false"
                       }
                     ],
                     "image": "quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0",
@@ -1595,7 +1737,7 @@ metadata:
     capabilities: Seamless Upgrades
     categories: Storage
     containerImage: quay.io/dell/container-storage-modules/dell-csm-operator:v1.10.0
-    createdAt: "2024-11-13T20:54:04Z"
+    createdAt: "2025-09-05T13:18:42Z"
     description: Easily install and manage Dell’s CSI Drivers and CSM
     features.operators.openshift.io/disconnected: "true"
     features.operators.openshift.io/fips-compliant: "false"
@@ -1604,7 +1746,7 @@ metadata:
     features.operators.openshift.io/token-auth-aws: "false"
     features.operators.openshift.io/token-auth-azure: "false"
     features.operators.openshift.io/token-auth-gcp: "false"
-    operators.operatorframework.io/builder: operator-sdk-v1.37.0
+    operators.operatorframework.io/builder: operator-sdk-v1.34.1
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/dell/csm-operator
     support: Dell Technologies
@@ -1653,6 +1795,29 @@ spec:
           - description: Commander is the image tag for the Container
             displayName: Authorization Commander Container Image
             path: driver.common.commander
+          - description:
+              ConfigSecretProviderClass is the SecretProviderClass Object details
+              for config secret Applicable from CSM v1.15 onwards
+            displayName: Config SecretProviderClass details
+            path: driver.common.configSecretProviderClass
+          - description:
+              ConfigSecretName is the name of the Kubernetes secret created
+              by the CSI driver
+            displayName: Config Secret Name
+            path: driver.common.configSecretProviderClass[0].configSecretName
+          - description:
+              Conjur is the secret configuration with path to retrieve the
+              Config secret from Conjur
+            displayName: Conjur Config Secret Configuration
+            path: driver.common.configSecretProviderClass[0].conjur
+          - description: SecretPath is the path to the config secret
+            displayName: Conjur Secret Path
+            path: driver.common.configSecretProviderClass[0].conjur.secretPath
+          - description:
+              SecretProviderClassName is the name of the SecretProviderClass
+              that holds the config secretObject
+            displayName: Config Secret Provider Class Name
+            path: driver.common.configSecretProviderClass[0].secretProviderClassName
           - description: The interval which the reconcile of each controller is run
             displayName: Controller Reconcile Interval
             path: driver.common.controllerReconcileInterval
@@ -1679,9 +1844,10 @@ spec:
           - description: Name is the name of Container
             displayName: Container Name
             path: driver.common.name
-          - description: |-
-              NodeSelector is a selector which must be true for the pod to fit on a node.
-              Selector which must match a node's labels for the pod to be scheduled on that node.
+          - description:
+              NodeSelector is a selector which must be true for the pod to
+              fit on a node. Selector which must match a node's labels for the pod to
+              be scheduled on that node.
             displayName: NodeSelector
             path: driver.common.nodeSelector
           - description: Opa is the image tag for the Container
@@ -1736,6 +1902,42 @@ spec:
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: driver.common.redisReplicas
+          - description:
+              RedisSecretProviderClass is the SecretProviderClass Object details
+              for redis Applicable from CSM v1.15 onwards
+            displayName: Redis SecretProviderClass details
+            path: driver.common.redisSecretProviderClass
+          - description:
+              Conjur is the secret configuration with path to retrieve the
+              Redis credentials from Conjur
+            displayName: Conjur Secret Configuration
+            path: driver.common.redisSecretProviderClass[0].conjur
+          - description: PasswordPath is the path to the password in the secret
+            displayName: Conjur Password Path
+            path: driver.common.redisSecretProviderClass[0].conjur.passwordPath
+          - description: UsernamePath is the path to the username in the secret
+            displayName: Conjur Username Path
+            path: driver.common.redisSecretProviderClass[0].conjur.usernamePath
+          - description:
+              RedisPasswordKey is the key in the secret that holds the Redis
+              password
+            displayName: Redis Password Key
+            path: driver.common.redisSecretProviderClass[0].redisPasswordKey
+          - description:
+              RedisSecretName is the name of the Kubernetes secret created
+              by the CSI driver
+            displayName: Redis Secret Name
+            path: driver.common.redisSecretProviderClass[0].redisSecretName
+          - description:
+              RedisUsernameKey is the key in the secret that holds the Redis
+              username
+            displayName: Redis Username Key
+            path: driver.common.redisSecretProviderClass[0].redisUsernameKey
+          - description:
+              SecretProviderClassName is the name of the SecretProviderClass
+              that holds the Redis secretObject
+            displayName: Redis Secret Provider Class Name
+            path: driver.common.redisSecretProviderClass[0].secretProviderClassName
           - description: RoleService is the image tag for the Container
             displayName: Authorization Role Service Container Image
             path: driver.common.roleService
@@ -1744,6 +1946,37 @@ spec:
               deployment
             displayName: Role Service Replicas
             path: driver.common.roleServiceReplicas
+          - description:
+              SecretProviderClasses is a collection of secret provider classes
+              for retrieving secrets from external providers for storage system credentials
+              Applicable from CSM v1.15 onwards Only one of SecretProviderClasses or Secrets
+              must be specified (mutually exclusive)
+            displayName: Secret Provider Classes
+            path: driver.common.secretProviderClasses
+          - description: Conjur is the list SecretProviderClass names provided by Conjur
+            displayName: Conjur SecretProviderClasses
+            path: driver.common.secretProviderClasses.conjur
+          - description: Name is the name of the Conjur SecretProviderClass
+            displayName: Conjur SecretProviderClass Name
+            path: driver.common.secretProviderClasses.conjur[0].name
+          - description: Paths is the list of paths to the secrets in Conjur
+            displayName: Conjur Credential Paths
+            path: driver.common.secretProviderClasses.conjur[0].paths
+          - description: PasswordPath is the path to the password in the secret
+            displayName: Conjur Password Path
+            path: driver.common.secretProviderClasses.conjur[0].paths[0].passwordPath
+          - description: UsernamePath is the path to the username in the secret
+            displayName: Conjur Username Path
+            path: driver.common.secretProviderClasses.conjur[0].paths[0].usernamePath
+          - description: Vault is the list SecretProviderClass names provided by Vault
+            displayName: Vault SecretProviderClass Names
+            path: driver.common.secretProviderClasses.vault
+          - description:
+              Secrets is a collection of kubernetes secrets for storage system
+              credentials Applicable from CSM v1.15 onwards Only one of SecretProviderClasses
+              or Secrets must be specified (mutually exclusive)
+            displayName: Secrets
+            path: driver.common.secrets
           - description: Sentinel is the name of the sentinel statefulSet
             displayName: Sentinel StatefulSet Name
             path: driver.common.sentinel
@@ -1774,7 +2007,7 @@ spec:
           - description: Tolerations is the list of tolerations for the driver pods
             displayName: Tolerations
             path: driver.common.tolerations
-          - description: Vaults are the vault configurations
+          - description: Vaults are the vault configurations Applicable till CSM v1.14
             displayName: Vault Configurations
             path: driver.common.vaultConfigurations
           - description: Address is the address for this vault
@@ -1836,6 +2069,29 @@ spec:
           - description: Commander is the image tag for the Container
             displayName: Authorization Commander Container Image
             path: driver.controller.commander
+          - description:
+              ConfigSecretProviderClass is the SecretProviderClass Object details
+              for config secret Applicable from CSM v1.15 onwards
+            displayName: Config SecretProviderClass details
+            path: driver.controller.configSecretProviderClass
+          - description:
+              ConfigSecretName is the name of the Kubernetes secret created
+              by the CSI driver
+            displayName: Config Secret Name
+            path: driver.controller.configSecretProviderClass[0].configSecretName
+          - description:
+              Conjur is the secret configuration with path to retrieve the
+              Config secret from Conjur
+            displayName: Conjur Config Secret Configuration
+            path: driver.controller.configSecretProviderClass[0].conjur
+          - description: SecretPath is the path to the config secret
+            displayName: Conjur Secret Path
+            path: driver.controller.configSecretProviderClass[0].conjur.secretPath
+          - description:
+              SecretProviderClassName is the name of the SecretProviderClass
+              that holds the config secretObject
+            displayName: Config Secret Provider Class Name
+            path: driver.controller.configSecretProviderClass[0].secretProviderClassName
           - description: The interval which the reconcile of each controller is run
             displayName: Controller Reconcile Interval
             path: driver.controller.controllerReconcileInterval
@@ -1862,9 +2118,10 @@ spec:
           - description: Name is the name of Container
             displayName: Container Name
             path: driver.controller.name
-          - description: |-
-              NodeSelector is a selector which must be true for the pod to fit on a node.
-              Selector which must match a node's labels for the pod to be scheduled on that node.
+          - description:
+              NodeSelector is a selector which must be true for the pod to
+              fit on a node. Selector which must match a node's labels for the pod to
+              be scheduled on that node.
             displayName: NodeSelector
             path: driver.controller.nodeSelector
           - description: Opa is the image tag for the Container
@@ -1919,6 +2176,42 @@ spec:
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: driver.controller.redisReplicas
+          - description:
+              RedisSecretProviderClass is the SecretProviderClass Object details
+              for redis Applicable from CSM v1.15 onwards
+            displayName: Redis SecretProviderClass details
+            path: driver.controller.redisSecretProviderClass
+          - description:
+              Conjur is the secret configuration with path to retrieve the
+              Redis credentials from Conjur
+            displayName: Conjur Secret Configuration
+            path: driver.controller.redisSecretProviderClass[0].conjur
+          - description: PasswordPath is the path to the password in the secret
+            displayName: Conjur Password Path
+            path: driver.controller.redisSecretProviderClass[0].conjur.passwordPath
+          - description: UsernamePath is the path to the username in the secret
+            displayName: Conjur Username Path
+            path: driver.controller.redisSecretProviderClass[0].conjur.usernamePath
+          - description:
+              RedisPasswordKey is the key in the secret that holds the Redis
+              password
+            displayName: Redis Password Key
+            path: driver.controller.redisSecretProviderClass[0].redisPasswordKey
+          - description:
+              RedisSecretName is the name of the Kubernetes secret created
+              by the CSI driver
+            displayName: Redis Secret Name
+            path: driver.controller.redisSecretProviderClass[0].redisSecretName
+          - description:
+              RedisUsernameKey is the key in the secret that holds the Redis
+              username
+            displayName: Redis Username Key
+            path: driver.controller.redisSecretProviderClass[0].redisUsernameKey
+          - description:
+              SecretProviderClassName is the name of the SecretProviderClass
+              that holds the Redis secretObject
+            displayName: Redis Secret Provider Class Name
+            path: driver.controller.redisSecretProviderClass[0].secretProviderClassName
           - description: RoleService is the image tag for the Container
             displayName: Authorization Role Service Container Image
             path: driver.controller.roleService
@@ -1927,6 +2220,37 @@ spec:
               deployment
             displayName: Role Service Replicas
             path: driver.controller.roleServiceReplicas
+          - description:
+              SecretProviderClasses is a collection of secret provider classes
+              for retrieving secrets from external providers for storage system credentials
+              Applicable from CSM v1.15 onwards Only one of SecretProviderClasses or Secrets
+              must be specified (mutually exclusive)
+            displayName: Secret Provider Classes
+            path: driver.controller.secretProviderClasses
+          - description: Conjur is the list SecretProviderClass names provided by Conjur
+            displayName: Conjur SecretProviderClasses
+            path: driver.controller.secretProviderClasses.conjur
+          - description: Name is the name of the Conjur SecretProviderClass
+            displayName: Conjur SecretProviderClass Name
+            path: driver.controller.secretProviderClasses.conjur[0].name
+          - description: Paths is the list of paths to the secrets in Conjur
+            displayName: Conjur Credential Paths
+            path: driver.controller.secretProviderClasses.conjur[0].paths
+          - description: PasswordPath is the path to the password in the secret
+            displayName: Conjur Password Path
+            path: driver.controller.secretProviderClasses.conjur[0].paths[0].passwordPath
+          - description: UsernamePath is the path to the username in the secret
+            displayName: Conjur Username Path
+            path: driver.controller.secretProviderClasses.conjur[0].paths[0].usernamePath
+          - description: Vault is the list SecretProviderClass names provided by Vault
+            displayName: Vault SecretProviderClass Names
+            path: driver.controller.secretProviderClasses.vault
+          - description:
+              Secrets is a collection of kubernetes secrets for storage system
+              credentials Applicable from CSM v1.15 onwards Only one of SecretProviderClasses
+              or Secrets must be specified (mutually exclusive)
+            displayName: Secrets
+            path: driver.controller.secrets
           - description: Sentinel is the name of the sentinel statefulSet
             displayName: Sentinel StatefulSet Name
             path: driver.controller.sentinel
@@ -1957,7 +2281,7 @@ spec:
           - description: Tolerations is the list of tolerations for the driver pods
             displayName: Tolerations
             path: driver.controller.tolerations
-          - description: Vaults are the vault configurations
+          - description: Vaults are the vault configurations Applicable till CSM v1.14
             displayName: Vault Configurations
             path: driver.controller.vaultConfigurations
           - description: Address is the address for this vault
@@ -2029,6 +2353,29 @@ spec:
           - description: Commander is the image tag for the Container
             displayName: Authorization Commander Container Image
             path: driver.initContainers[0].commander
+          - description:
+              ConfigSecretProviderClass is the SecretProviderClass Object details
+              for config secret Applicable from CSM v1.15 onwards
+            displayName: Config SecretProviderClass details
+            path: driver.initContainers[0].configSecretProviderClass
+          - description:
+              ConfigSecretName is the name of the Kubernetes secret created
+              by the CSI driver
+            displayName: Config Secret Name
+            path: driver.initContainers[0].configSecretProviderClass[0].configSecretName
+          - description:
+              Conjur is the secret configuration with path to retrieve the
+              Config secret from Conjur
+            displayName: Conjur Config Secret Configuration
+            path: driver.initContainers[0].configSecretProviderClass[0].conjur
+          - description: SecretPath is the path to the config secret
+            displayName: Conjur Secret Path
+            path: driver.initContainers[0].configSecretProviderClass[0].conjur.secretPath
+          - description:
+              SecretProviderClassName is the name of the SecretProviderClass
+              that holds the config secretObject
+            displayName: Config Secret Provider Class Name
+            path: driver.initContainers[0].configSecretProviderClass[0].secretProviderClassName
           - description: The interval which the reconcile of each controller is run
             displayName: Controller Reconcile Interval
             path: driver.initContainers[0].controllerReconcileInterval
@@ -2055,9 +2402,10 @@ spec:
           - description: Name is the name of Container
             displayName: Container Name
             path: driver.initContainers[0].name
-          - description: |-
-              NodeSelector is a selector which must be true for the pod to fit on a node.
-              Selector which must match a node's labels for the pod to be scheduled on that node.
+          - description:
+              NodeSelector is a selector which must be true for the pod to
+              fit on a node. Selector which must match a node's labels for the pod to
+              be scheduled on that node.
             displayName: NodeSelector
             path: driver.initContainers[0].nodeSelector
           - description: Opa is the image tag for the Container
@@ -2112,6 +2460,42 @@ spec:
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: driver.initContainers[0].redisReplicas
+          - description:
+              RedisSecretProviderClass is the SecretProviderClass Object details
+              for redis Applicable from CSM v1.15 onwards
+            displayName: Redis SecretProviderClass details
+            path: driver.initContainers[0].redisSecretProviderClass
+          - description:
+              Conjur is the secret configuration with path to retrieve the
+              Redis credentials from Conjur
+            displayName: Conjur Secret Configuration
+            path: driver.initContainers[0].redisSecretProviderClass[0].conjur
+          - description: PasswordPath is the path to the password in the secret
+            displayName: Conjur Password Path
+            path: driver.initContainers[0].redisSecretProviderClass[0].conjur.passwordPath
+          - description: UsernamePath is the path to the username in the secret
+            displayName: Conjur Username Path
+            path: driver.initContainers[0].redisSecretProviderClass[0].conjur.usernamePath
+          - description:
+              RedisPasswordKey is the key in the secret that holds the Redis
+              password
+            displayName: Redis Password Key
+            path: driver.initContainers[0].redisSecretProviderClass[0].redisPasswordKey
+          - description:
+              RedisSecretName is the name of the Kubernetes secret created
+              by the CSI driver
+            displayName: Redis Secret Name
+            path: driver.initContainers[0].redisSecretProviderClass[0].redisSecretName
+          - description:
+              RedisUsernameKey is the key in the secret that holds the Redis
+              username
+            displayName: Redis Username Key
+            path: driver.initContainers[0].redisSecretProviderClass[0].redisUsernameKey
+          - description:
+              SecretProviderClassName is the name of the SecretProviderClass
+              that holds the Redis secretObject
+            displayName: Redis Secret Provider Class Name
+            path: driver.initContainers[0].redisSecretProviderClass[0].secretProviderClassName
           - description: RoleService is the image tag for the Container
             displayName: Authorization Role Service Container Image
             path: driver.initContainers[0].roleService
@@ -2120,6 +2504,37 @@ spec:
               deployment
             displayName: Role Service Replicas
             path: driver.initContainers[0].roleServiceReplicas
+          - description:
+              SecretProviderClasses is a collection of secret provider classes
+              for retrieving secrets from external providers for storage system credentials
+              Applicable from CSM v1.15 onwards Only one of SecretProviderClasses or Secrets
+              must be specified (mutually exclusive)
+            displayName: Secret Provider Classes
+            path: driver.initContainers[0].secretProviderClasses
+          - description: Conjur is the list SecretProviderClass names provided by Conjur
+            displayName: Conjur SecretProviderClasses
+            path: driver.initContainers[0].secretProviderClasses.conjur
+          - description: Name is the name of the Conjur SecretProviderClass
+            displayName: Conjur SecretProviderClass Name
+            path: driver.initContainers[0].secretProviderClasses.conjur[0].name
+          - description: Paths is the list of paths to the secrets in Conjur
+            displayName: Conjur Credential Paths
+            path: driver.initContainers[0].secretProviderClasses.conjur[0].paths
+          - description: PasswordPath is the path to the password in the secret
+            displayName: Conjur Password Path
+            path: driver.initContainers[0].secretProviderClasses.conjur[0].paths[0].passwordPath
+          - description: UsernamePath is the path to the username in the secret
+            displayName: Conjur Username Path
+            path: driver.initContainers[0].secretProviderClasses.conjur[0].paths[0].usernamePath
+          - description: Vault is the list SecretProviderClass names provided by Vault
+            displayName: Vault SecretProviderClass Names
+            path: driver.initContainers[0].secretProviderClasses.vault
+          - description:
+              Secrets is a collection of kubernetes secrets for storage system
+              credentials Applicable from CSM v1.15 onwards Only one of SecretProviderClasses
+              or Secrets must be specified (mutually exclusive)
+            displayName: Secrets
+            path: driver.initContainers[0].secrets
           - description: Sentinel is the name of the sentinel statefulSet
             displayName: Sentinel StatefulSet Name
             path: driver.initContainers[0].sentinel
@@ -2150,7 +2565,7 @@ spec:
           - description: Tolerations is the list of tolerations for the driver pods
             displayName: Tolerations
             path: driver.initContainers[0].tolerations
-          - description: Vaults are the vault configurations
+          - description: Vaults are the vault configurations Applicable till CSM v1.14
             displayName: Vault Configurations
             path: driver.initContainers[0].vaultConfigurations
           - description: Address is the address for this vault
@@ -2209,6 +2624,29 @@ spec:
           - description: Commander is the image tag for the Container
             displayName: Authorization Commander Container Image
             path: driver.node.commander
+          - description:
+              ConfigSecretProviderClass is the SecretProviderClass Object details
+              for config secret Applicable from CSM v1.15 onwards
+            displayName: Config SecretProviderClass details
+            path: driver.node.configSecretProviderClass
+          - description:
+              ConfigSecretName is the name of the Kubernetes secret created
+              by the CSI driver
+            displayName: Config Secret Name
+            path: driver.node.configSecretProviderClass[0].configSecretName
+          - description:
+              Conjur is the secret configuration with path to retrieve the
+              Config secret from Conjur
+            displayName: Conjur Config Secret Configuration
+            path: driver.node.configSecretProviderClass[0].conjur
+          - description: SecretPath is the path to the config secret
+            displayName: Conjur Secret Path
+            path: driver.node.configSecretProviderClass[0].conjur.secretPath
+          - description:
+              SecretProviderClassName is the name of the SecretProviderClass
+              that holds the config secretObject
+            displayName: Config Secret Provider Class Name
+            path: driver.node.configSecretProviderClass[0].secretProviderClassName
           - description: The interval which the reconcile of each controller is run
             displayName: Controller Reconcile Interval
             path: driver.node.controllerReconcileInterval
@@ -2235,9 +2673,10 @@ spec:
           - description: Name is the name of Container
             displayName: Container Name
             path: driver.node.name
-          - description: |-
-              NodeSelector is a selector which must be true for the pod to fit on a node.
-              Selector which must match a node's labels for the pod to be scheduled on that node.
+          - description:
+              NodeSelector is a selector which must be true for the pod to
+              fit on a node. Selector which must match a node's labels for the pod to
+              be scheduled on that node.
             displayName: NodeSelector
             path: driver.node.nodeSelector
           - description: Opa is the image tag for the Container
@@ -2292,6 +2731,42 @@ spec:
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: driver.node.redisReplicas
+          - description:
+              RedisSecretProviderClass is the SecretProviderClass Object details
+              for redis Applicable from CSM v1.15 onwards
+            displayName: Redis SecretProviderClass details
+            path: driver.node.redisSecretProviderClass
+          - description:
+              Conjur is the secret configuration with path to retrieve the
+              Redis credentials from Conjur
+            displayName: Conjur Secret Configuration
+            path: driver.node.redisSecretProviderClass[0].conjur
+          - description: PasswordPath is the path to the password in the secret
+            displayName: Conjur Password Path
+            path: driver.node.redisSecretProviderClass[0].conjur.passwordPath
+          - description: UsernamePath is the path to the username in the secret
+            displayName: Conjur Username Path
+            path: driver.node.redisSecretProviderClass[0].conjur.usernamePath
+          - description:
+              RedisPasswordKey is the key in the secret that holds the Redis
+              password
+            displayName: Redis Password Key
+            path: driver.node.redisSecretProviderClass[0].redisPasswordKey
+          - description:
+              RedisSecretName is the name of the Kubernetes secret created
+              by the CSI driver
+            displayName: Redis Secret Name
+            path: driver.node.redisSecretProviderClass[0].redisSecretName
+          - description:
+              RedisUsernameKey is the key in the secret that holds the Redis
+              username
+            displayName: Redis Username Key
+            path: driver.node.redisSecretProviderClass[0].redisUsernameKey
+          - description:
+              SecretProviderClassName is the name of the SecretProviderClass
+              that holds the Redis secretObject
+            displayName: Redis Secret Provider Class Name
+            path: driver.node.redisSecretProviderClass[0].secretProviderClassName
           - description: RoleService is the image tag for the Container
             displayName: Authorization Role Service Container Image
             path: driver.node.roleService
@@ -2300,6 +2775,37 @@ spec:
               deployment
             displayName: Role Service Replicas
             path: driver.node.roleServiceReplicas
+          - description:
+              SecretProviderClasses is a collection of secret provider classes
+              for retrieving secrets from external providers for storage system credentials
+              Applicable from CSM v1.15 onwards Only one of SecretProviderClasses or Secrets
+              must be specified (mutually exclusive)
+            displayName: Secret Provider Classes
+            path: driver.node.secretProviderClasses
+          - description: Conjur is the list SecretProviderClass names provided by Conjur
+            displayName: Conjur SecretProviderClasses
+            path: driver.node.secretProviderClasses.conjur
+          - description: Name is the name of the Conjur SecretProviderClass
+            displayName: Conjur SecretProviderClass Name
+            path: driver.node.secretProviderClasses.conjur[0].name
+          - description: Paths is the list of paths to the secrets in Conjur
+            displayName: Conjur Credential Paths
+            path: driver.node.secretProviderClasses.conjur[0].paths
+          - description: PasswordPath is the path to the password in the secret
+            displayName: Conjur Password Path
+            path: driver.node.secretProviderClasses.conjur[0].paths[0].passwordPath
+          - description: UsernamePath is the path to the username in the secret
+            displayName: Conjur Username Path
+            path: driver.node.secretProviderClasses.conjur[0].paths[0].usernamePath
+          - description: Vault is the list SecretProviderClass names provided by Vault
+            displayName: Vault SecretProviderClass Names
+            path: driver.node.secretProviderClasses.vault
+          - description:
+              Secrets is a collection of kubernetes secrets for storage system
+              credentials Applicable from CSM v1.15 onwards Only one of SecretProviderClasses
+              or Secrets must be specified (mutually exclusive)
+            displayName: Secrets
+            path: driver.node.secrets
           - description: Sentinel is the name of the sentinel statefulSet
             displayName: Sentinel StatefulSet Name
             path: driver.node.sentinel
@@ -2330,7 +2836,7 @@ spec:
           - description: Tolerations is the list of tolerations for the driver pods
             displayName: Tolerations
             path: driver.node.tolerations
-          - description: Vaults are the vault configurations
+          - description: Vaults are the vault configurations Applicable till CSM v1.14
             displayName: Vault Configurations
             path: driver.node.vaultConfigurations
           - description: Address is the address for this vault
@@ -2392,6 +2898,29 @@ spec:
           - description: Commander is the image tag for the Container
             displayName: Authorization Commander Container Image
             path: driver.sideCars[0].commander
+          - description:
+              ConfigSecretProviderClass is the SecretProviderClass Object details
+              for config secret Applicable from CSM v1.15 onwards
+            displayName: Config SecretProviderClass details
+            path: driver.sideCars[0].configSecretProviderClass
+          - description:
+              ConfigSecretName is the name of the Kubernetes secret created
+              by the CSI driver
+            displayName: Config Secret Name
+            path: driver.sideCars[0].configSecretProviderClass[0].configSecretName
+          - description:
+              Conjur is the secret configuration with path to retrieve the
+              Config secret from Conjur
+            displayName: Conjur Config Secret Configuration
+            path: driver.sideCars[0].configSecretProviderClass[0].conjur
+          - description: SecretPath is the path to the config secret
+            displayName: Conjur Secret Path
+            path: driver.sideCars[0].configSecretProviderClass[0].conjur.secretPath
+          - description:
+              SecretProviderClassName is the name of the SecretProviderClass
+              that holds the config secretObject
+            displayName: Config Secret Provider Class Name
+            path: driver.sideCars[0].configSecretProviderClass[0].secretProviderClassName
           - description: The interval which the reconcile of each controller is run
             displayName: Controller Reconcile Interval
             path: driver.sideCars[0].controllerReconcileInterval
@@ -2418,9 +2947,10 @@ spec:
           - description: Name is the name of Container
             displayName: Container Name
             path: driver.sideCars[0].name
-          - description: |-
-              NodeSelector is a selector which must be true for the pod to fit on a node.
-              Selector which must match a node's labels for the pod to be scheduled on that node.
+          - description:
+              NodeSelector is a selector which must be true for the pod to
+              fit on a node. Selector which must match a node's labels for the pod to
+              be scheduled on that node.
             displayName: NodeSelector
             path: driver.sideCars[0].nodeSelector
           - description: Opa is the image tag for the Container
@@ -2475,6 +3005,42 @@ spec:
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: driver.sideCars[0].redisReplicas
+          - description:
+              RedisSecretProviderClass is the SecretProviderClass Object details
+              for redis Applicable from CSM v1.15 onwards
+            displayName: Redis SecretProviderClass details
+            path: driver.sideCars[0].redisSecretProviderClass
+          - description:
+              Conjur is the secret configuration with path to retrieve the
+              Redis credentials from Conjur
+            displayName: Conjur Secret Configuration
+            path: driver.sideCars[0].redisSecretProviderClass[0].conjur
+          - description: PasswordPath is the path to the password in the secret
+            displayName: Conjur Password Path
+            path: driver.sideCars[0].redisSecretProviderClass[0].conjur.passwordPath
+          - description: UsernamePath is the path to the username in the secret
+            displayName: Conjur Username Path
+            path: driver.sideCars[0].redisSecretProviderClass[0].conjur.usernamePath
+          - description:
+              RedisPasswordKey is the key in the secret that holds the Redis
+              password
+            displayName: Redis Password Key
+            path: driver.sideCars[0].redisSecretProviderClass[0].redisPasswordKey
+          - description:
+              RedisSecretName is the name of the Kubernetes secret created
+              by the CSI driver
+            displayName: Redis Secret Name
+            path: driver.sideCars[0].redisSecretProviderClass[0].redisSecretName
+          - description:
+              RedisUsernameKey is the key in the secret that holds the Redis
+              username
+            displayName: Redis Username Key
+            path: driver.sideCars[0].redisSecretProviderClass[0].redisUsernameKey
+          - description:
+              SecretProviderClassName is the name of the SecretProviderClass
+              that holds the Redis secretObject
+            displayName: Redis Secret Provider Class Name
+            path: driver.sideCars[0].redisSecretProviderClass[0].secretProviderClassName
           - description: RoleService is the image tag for the Container
             displayName: Authorization Role Service Container Image
             path: driver.sideCars[0].roleService
@@ -2483,6 +3049,37 @@ spec:
               deployment
             displayName: Role Service Replicas
             path: driver.sideCars[0].roleServiceReplicas
+          - description:
+              SecretProviderClasses is a collection of secret provider classes
+              for retrieving secrets from external providers for storage system credentials
+              Applicable from CSM v1.15 onwards Only one of SecretProviderClasses or Secrets
+              must be specified (mutually exclusive)
+            displayName: Secret Provider Classes
+            path: driver.sideCars[0].secretProviderClasses
+          - description: Conjur is the list SecretProviderClass names provided by Conjur
+            displayName: Conjur SecretProviderClasses
+            path: driver.sideCars[0].secretProviderClasses.conjur
+          - description: Name is the name of the Conjur SecretProviderClass
+            displayName: Conjur SecretProviderClass Name
+            path: driver.sideCars[0].secretProviderClasses.conjur[0].name
+          - description: Paths is the list of paths to the secrets in Conjur
+            displayName: Conjur Credential Paths
+            path: driver.sideCars[0].secretProviderClasses.conjur[0].paths
+          - description: PasswordPath is the path to the password in the secret
+            displayName: Conjur Password Path
+            path: driver.sideCars[0].secretProviderClasses.conjur[0].paths[0].passwordPath
+          - description: UsernamePath is the path to the username in the secret
+            displayName: Conjur Username Path
+            path: driver.sideCars[0].secretProviderClasses.conjur[0].paths[0].usernamePath
+          - description: Vault is the list SecretProviderClass names provided by Vault
+            displayName: Vault SecretProviderClass Names
+            path: driver.sideCars[0].secretProviderClasses.vault
+          - description:
+              Secrets is a collection of kubernetes secrets for storage system
+              credentials Applicable from CSM v1.15 onwards Only one of SecretProviderClasses
+              or Secrets must be specified (mutually exclusive)
+            displayName: Secrets
+            path: driver.sideCars[0].secrets
           - description: Sentinel is the name of the sentinel statefulSet
             displayName: Sentinel StatefulSet Name
             path: driver.sideCars[0].sentinel
@@ -2513,7 +3110,7 @@ spec:
           - description: Tolerations is the list of tolerations for the driver pods
             displayName: Tolerations
             path: driver.sideCars[0].tolerations
-          - description: Vaults are the vault configurations
+          - description: Vaults are the vault configurations Applicable till CSM v1.14
             displayName: Vault Configurations
             path: driver.sideCars[0].vaultConfigurations
           - description: Address is the address for this vault
@@ -2586,6 +3183,29 @@ spec:
           - description: Commander is the image tag for the Container
             displayName: Authorization Commander Container Image
             path: modules[0].components[0].commander
+          - description:
+              ConfigSecretProviderClass is the SecretProviderClass Object details
+              for config secret Applicable from CSM v1.15 onwards
+            displayName: Config SecretProviderClass details
+            path: modules[0].components[0].configSecretProviderClass
+          - description:
+              ConfigSecretName is the name of the Kubernetes secret created
+              by the CSI driver
+            displayName: Config Secret Name
+            path: modules[0].components[0].configSecretProviderClass[0].configSecretName
+          - description:
+              Conjur is the secret configuration with path to retrieve the
+              Config secret from Conjur
+            displayName: Conjur Config Secret Configuration
+            path: modules[0].components[0].configSecretProviderClass[0].conjur
+          - description: SecretPath is the path to the config secret
+            displayName: Conjur Secret Path
+            path: modules[0].components[0].configSecretProviderClass[0].conjur.secretPath
+          - description:
+              SecretProviderClassName is the name of the SecretProviderClass
+              that holds the config secretObject
+            displayName: Config Secret Provider Class Name
+            path: modules[0].components[0].configSecretProviderClass[0].secretProviderClassName
           - description: The interval which the reconcile of each controller is run
             displayName: Controller Reconcile Interval
             path: modules[0].components[0].controllerReconcileInterval
@@ -2612,9 +3232,10 @@ spec:
           - description: Name is the name of Container
             displayName: Container Name
             path: modules[0].components[0].name
-          - description: |-
-              NodeSelector is a selector which must be true for the pod to fit on a node.
-              Selector which must match a node's labels for the pod to be scheduled on that node.
+          - description:
+              NodeSelector is a selector which must be true for the pod to
+              fit on a node. Selector which must match a node's labels for the pod to
+              be scheduled on that node.
             displayName: NodeSelector
             path: modules[0].components[0].nodeSelector
           - description: Opa is the image tag for the Container
@@ -2669,6 +3290,42 @@ spec:
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: modules[0].components[0].redisReplicas
+          - description:
+              RedisSecretProviderClass is the SecretProviderClass Object details
+              for redis Applicable from CSM v1.15 onwards
+            displayName: Redis SecretProviderClass details
+            path: modules[0].components[0].redisSecretProviderClass
+          - description:
+              Conjur is the secret configuration with path to retrieve the
+              Redis credentials from Conjur
+            displayName: Conjur Secret Configuration
+            path: modules[0].components[0].redisSecretProviderClass[0].conjur
+          - description: PasswordPath is the path to the password in the secret
+            displayName: Conjur Password Path
+            path: modules[0].components[0].redisSecretProviderClass[0].conjur.passwordPath
+          - description: UsernamePath is the path to the username in the secret
+            displayName: Conjur Username Path
+            path: modules[0].components[0].redisSecretProviderClass[0].conjur.usernamePath
+          - description:
+              RedisPasswordKey is the key in the secret that holds the Redis
+              password
+            displayName: Redis Password Key
+            path: modules[0].components[0].redisSecretProviderClass[0].redisPasswordKey
+          - description:
+              RedisSecretName is the name of the Kubernetes secret created
+              by the CSI driver
+            displayName: Redis Secret Name
+            path: modules[0].components[0].redisSecretProviderClass[0].redisSecretName
+          - description:
+              RedisUsernameKey is the key in the secret that holds the Redis
+              username
+            displayName: Redis Username Key
+            path: modules[0].components[0].redisSecretProviderClass[0].redisUsernameKey
+          - description:
+              SecretProviderClassName is the name of the SecretProviderClass
+              that holds the Redis secretObject
+            displayName: Redis Secret Provider Class Name
+            path: modules[0].components[0].redisSecretProviderClass[0].secretProviderClassName
           - description: RoleService is the image tag for the Container
             displayName: Authorization Role Service Container Image
             path: modules[0].components[0].roleService
@@ -2677,6 +3334,37 @@ spec:
               deployment
             displayName: Role Service Replicas
             path: modules[0].components[0].roleServiceReplicas
+          - description:
+              SecretProviderClasses is a collection of secret provider classes
+              for retrieving secrets from external providers for storage system credentials
+              Applicable from CSM v1.15 onwards Only one of SecretProviderClasses or Secrets
+              must be specified (mutually exclusive)
+            displayName: Secret Provider Classes
+            path: modules[0].components[0].secretProviderClasses
+          - description: Conjur is the list SecretProviderClass names provided by Conjur
+            displayName: Conjur SecretProviderClasses
+            path: modules[0].components[0].secretProviderClasses.conjur
+          - description: Name is the name of the Conjur SecretProviderClass
+            displayName: Conjur SecretProviderClass Name
+            path: modules[0].components[0].secretProviderClasses.conjur[0].name
+          - description: Paths is the list of paths to the secrets in Conjur
+            displayName: Conjur Credential Paths
+            path: modules[0].components[0].secretProviderClasses.conjur[0].paths
+          - description: PasswordPath is the path to the password in the secret
+            displayName: Conjur Password Path
+            path: modules[0].components[0].secretProviderClasses.conjur[0].paths[0].passwordPath
+          - description: UsernamePath is the path to the username in the secret
+            displayName: Conjur Username Path
+            path: modules[0].components[0].secretProviderClasses.conjur[0].paths[0].usernamePath
+          - description: Vault is the list SecretProviderClass names provided by Vault
+            displayName: Vault SecretProviderClass Names
+            path: modules[0].components[0].secretProviderClasses.vault
+          - description:
+              Secrets is a collection of kubernetes secrets for storage system
+              credentials Applicable from CSM v1.15 onwards Only one of SecretProviderClasses
+              or Secrets must be specified (mutually exclusive)
+            displayName: Secrets
+            path: modules[0].components[0].secrets
           - description: Sentinel is the name of the sentinel statefulSet
             displayName: Sentinel StatefulSet Name
             path: modules[0].components[0].sentinel
@@ -2707,7 +3395,7 @@ spec:
           - description: Tolerations is the list of tolerations for the driver pods
             displayName: Tolerations
             path: modules[0].components[0].tolerations
-          - description: Vaults are the vault configurations
+          - description: Vaults are the vault configurations Applicable till CSM v1.14
             displayName: Vault Configurations
             path: modules[0].components[0].vaultConfigurations
           - description: Address is the address for this vault
@@ -2774,6 +3462,29 @@ spec:
           - description: Commander is the image tag for the Container
             displayName: Authorization Commander Container Image
             path: modules[0].initContainer[0].commander
+          - description:
+              ConfigSecretProviderClass is the SecretProviderClass Object details
+              for config secret Applicable from CSM v1.15 onwards
+            displayName: Config SecretProviderClass details
+            path: modules[0].initContainer[0].configSecretProviderClass
+          - description:
+              ConfigSecretName is the name of the Kubernetes secret created
+              by the CSI driver
+            displayName: Config Secret Name
+            path: modules[0].initContainer[0].configSecretProviderClass[0].configSecretName
+          - description:
+              Conjur is the secret configuration with path to retrieve the
+              Config secret from Conjur
+            displayName: Conjur Config Secret Configuration
+            path: modules[0].initContainer[0].configSecretProviderClass[0].conjur
+          - description: SecretPath is the path to the config secret
+            displayName: Conjur Secret Path
+            path: modules[0].initContainer[0].configSecretProviderClass[0].conjur.secretPath
+          - description:
+              SecretProviderClassName is the name of the SecretProviderClass
+              that holds the config secretObject
+            displayName: Config Secret Provider Class Name
+            path: modules[0].initContainer[0].configSecretProviderClass[0].secretProviderClassName
           - description: The interval which the reconcile of each controller is run
             displayName: Controller Reconcile Interval
             path: modules[0].initContainer[0].controllerReconcileInterval
@@ -2800,9 +3511,10 @@ spec:
           - description: Name is the name of Container
             displayName: Container Name
             path: modules[0].initContainer[0].name
-          - description: |-
-              NodeSelector is a selector which must be true for the pod to fit on a node.
-              Selector which must match a node's labels for the pod to be scheduled on that node.
+          - description:
+              NodeSelector is a selector which must be true for the pod to
+              fit on a node. Selector which must match a node's labels for the pod to
+              be scheduled on that node.
             displayName: NodeSelector
             path: modules[0].initContainer[0].nodeSelector
           - description: Opa is the image tag for the Container
@@ -2857,6 +3569,42 @@ spec:
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: modules[0].initContainer[0].redisReplicas
+          - description:
+              RedisSecretProviderClass is the SecretProviderClass Object details
+              for redis Applicable from CSM v1.15 onwards
+            displayName: Redis SecretProviderClass details
+            path: modules[0].initContainer[0].redisSecretProviderClass
+          - description:
+              Conjur is the secret configuration with path to retrieve the
+              Redis credentials from Conjur
+            displayName: Conjur Secret Configuration
+            path: modules[0].initContainer[0].redisSecretProviderClass[0].conjur
+          - description: PasswordPath is the path to the password in the secret
+            displayName: Conjur Password Path
+            path: modules[0].initContainer[0].redisSecretProviderClass[0].conjur.passwordPath
+          - description: UsernamePath is the path to the username in the secret
+            displayName: Conjur Username Path
+            path: modules[0].initContainer[0].redisSecretProviderClass[0].conjur.usernamePath
+          - description:
+              RedisPasswordKey is the key in the secret that holds the Redis
+              password
+            displayName: Redis Password Key
+            path: modules[0].initContainer[0].redisSecretProviderClass[0].redisPasswordKey
+          - description:
+              RedisSecretName is the name of the Kubernetes secret created
+              by the CSI driver
+            displayName: Redis Secret Name
+            path: modules[0].initContainer[0].redisSecretProviderClass[0].redisSecretName
+          - description:
+              RedisUsernameKey is the key in the secret that holds the Redis
+              username
+            displayName: Redis Username Key
+            path: modules[0].initContainer[0].redisSecretProviderClass[0].redisUsernameKey
+          - description:
+              SecretProviderClassName is the name of the SecretProviderClass
+              that holds the Redis secretObject
+            displayName: Redis Secret Provider Class Name
+            path: modules[0].initContainer[0].redisSecretProviderClass[0].secretProviderClassName
           - description: RoleService is the image tag for the Container
             displayName: Authorization Role Service Container Image
             path: modules[0].initContainer[0].roleService
@@ -2865,6 +3613,37 @@ spec:
               deployment
             displayName: Role Service Replicas
             path: modules[0].initContainer[0].roleServiceReplicas
+          - description:
+              SecretProviderClasses is a collection of secret provider classes
+              for retrieving secrets from external providers for storage system credentials
+              Applicable from CSM v1.15 onwards Only one of SecretProviderClasses or Secrets
+              must be specified (mutually exclusive)
+            displayName: Secret Provider Classes
+            path: modules[0].initContainer[0].secretProviderClasses
+          - description: Conjur is the list SecretProviderClass names provided by Conjur
+            displayName: Conjur SecretProviderClasses
+            path: modules[0].initContainer[0].secretProviderClasses.conjur
+          - description: Name is the name of the Conjur SecretProviderClass
+            displayName: Conjur SecretProviderClass Name
+            path: modules[0].initContainer[0].secretProviderClasses.conjur[0].name
+          - description: Paths is the list of paths to the secrets in Conjur
+            displayName: Conjur Credential Paths
+            path: modules[0].initContainer[0].secretProviderClasses.conjur[0].paths
+          - description: PasswordPath is the path to the password in the secret
+            displayName: Conjur Password Path
+            path: modules[0].initContainer[0].secretProviderClasses.conjur[0].paths[0].passwordPath
+          - description: UsernamePath is the path to the username in the secret
+            displayName: Conjur Username Path
+            path: modules[0].initContainer[0].secretProviderClasses.conjur[0].paths[0].usernamePath
+          - description: Vault is the list SecretProviderClass names provided by Vault
+            displayName: Vault SecretProviderClass Names
+            path: modules[0].initContainer[0].secretProviderClasses.vault
+          - description:
+              Secrets is a collection of kubernetes secrets for storage system
+              credentials Applicable from CSM v1.15 onwards Only one of SecretProviderClasses
+              or Secrets must be specified (mutually exclusive)
+            displayName: Secrets
+            path: modules[0].initContainer[0].secrets
           - description: Sentinel is the name of the sentinel statefulSet
             displayName: Sentinel StatefulSet Name
             path: modules[0].initContainer[0].sentinel
@@ -2895,7 +3674,7 @@ spec:
           - description: Tolerations is the list of tolerations for the driver pods
             displayName: Tolerations
             path: modules[0].initContainer[0].tolerations
-          - description: Vaults are the vault configurations
+          - description: Vaults are the vault configurations Applicable till CSM v1.14
             displayName: Vault Configurations
             path: modules[0].initContainer[0].vaultConfigurations
           - description: Address is the address for this vault
@@ -2931,16 +3710,36 @@ spec:
             displayName: Name
             path: modules[0].name
         statusDescriptors:
-          - description: ControllerStatus is the status of Controller pods
-            displayName: ControllerStatus
-            path: controllerStatus
+          - description: Available is the number of available pods
+            displayName: Available
+            path: controllerStatus.available
             x-descriptors:
-              - urn:alm:descriptor:com.tectonic.ui:podStatuses
-          - description: NodeStatus is the status of Controller pods
-            displayName: NodeStatus
-            path: nodeStatus
+              - urn:alm:descriptor:text
+          - description: Desired is the number of desired pods
+            displayName: Desired
+            path: controllerStatus.desired
             x-descriptors:
-              - urn:alm:descriptor:com.tectonic.ui:podStatuses
+              - urn:alm:descriptor:text
+          - description: Failed is the number of failed pods
+            displayName: Failed
+            path: controllerStatus.failed
+            x-descriptors:
+              - urn:alm:descriptor:text
+          - description: Available is the number of available pods
+            displayName: Available
+            path: nodeStatus.available
+            x-descriptors:
+              - urn:alm:descriptor:text
+          - description: Desired is the number of desired pods
+            displayName: Desired
+            path: nodeStatus.desired
+            x-descriptors:
+              - urn:alm:descriptor:text
+          - description: Failed is the number of failed pods
+            displayName: Failed
+            path: nodeStatus.failed
+            x-descriptors:
+              - urn:alm:descriptor:text
           - description: State is the state of the driver installation
             displayName: State
             path: state
@@ -2982,11 +3781,14 @@ spec:
       clusterPermissions:
         - rules:
             - apiGroups:
-                - "*"
+                - discovery.k8s.io
               resources:
-                - "*"
+                - endpointslices
               verbs:
-                - "*"
+                - create
+                - delete
+                - update
+                - patch
             - nonResourceURLs:
                 - /metrics
               verbs:
@@ -3054,6 +3856,7 @@ spec:
                 - create
                 - get
                 - list
+                - update
                 - watch
             - apiGroups:
                 - ""
@@ -3100,30 +3903,6 @@ spec:
             - apiGroups:
                 - acme.cert-manager.io
               resources:
-                - "*/*"
-              verbs:
-                - "*"
-            - apiGroups:
-                - acme.cert-manager.io
-              resources:
-                - challenges
-              verbs:
-                - create
-                - delete
-            - apiGroups:
-                - acme.cert-manager.io
-              resources:
-                - challenges
-                - challenges/status
-              verbs:
-                - get
-                - list
-                - patch
-                - update
-                - watch
-            - apiGroups:
-                - acme.cert-manager.io
-              resources:
                 - challenges
                 - orders
               verbs:
@@ -3139,8 +3918,19 @@ spec:
                 - acme.cert-manager.io
               resources:
                 - challenges/finalizers
+                - orders/finalizers
               verbs:
                 - update
+            - apiGroups:
+                - acme.cert-manager.io
+              resources:
+                - challenges/status
+              verbs:
+                - get
+                - list
+                - patch
+                - update
+                - watch
             - apiGroups:
                 - acme.cert-manager.io
               resources:
@@ -3153,27 +3943,17 @@ spec:
             - apiGroups:
                 - acme.cert-manager.io
               resources:
-                - orders
-              verbs:
-                - create
-                - delete
-                - get
-                - list
-                - watch
-            - apiGroups:
-                - acme.cert-manager.io
-              resources:
-                - orders
                 - orders/status
               verbs:
                 - patch
                 - update
             - apiGroups:
                 - acme.cert-manager.io
+                - cert-manager.io
               resources:
-                - orders/finalizers
+                - "*/*"
               verbs:
-                - update
+                - "*"
             - apiGroups:
                 - admissionregistration.k8s.io
               resources:
@@ -3206,14 +3986,6 @@ spec:
                 - apiregistration.k8s.io
               resources:
                 - apiservices
-              verbs:
-                - get
-                - list
-                - update
-                - watch
-            - apiGroups:
-                - apiregistration.k8s.io
-              resources:
                 - customresourcedefinitions
               verbs:
                 - get
@@ -3227,18 +3999,6 @@ spec:
                 - deployments
                 - replicasets
                 - statefulsets
-              verbs:
-                - create
-                - delete
-                - get
-                - list
-                - patch
-                - update
-                - watch
-            - apiGroups:
-                - apps
-              resources:
-                - deployments
               verbs:
                 - create
                 - delete
@@ -3264,6 +4024,7 @@ spec:
                 - create
             - apiGroups:
                 - authorization.k8s.io
+                - rbac.authorization.k8s.io
               resources:
                 - subjectaccessreviews
               verbs:
@@ -3281,30 +4042,10 @@ spec:
             - apiGroups:
                 - cert-manager.io
               resources:
-                - "*/*"
-              verbs:
-                - "*"
-            - apiGroups:
-                - cert-manager.io
-              resources:
                 - certificaterequests
                 - certificates
-                - clusterissuers
-                - issuers
               verbs:
                 - "*"
-            - apiGroups:
-                - cert-manager.io
-              resources:
-                - certificaterequests
-                - certificates
-                - issuers
-              verbs:
-                - create
-                - delete
-                - deletecollection
-                - patch
-                - update
             - apiGroups:
                 - cert-manager.io
               resources:
@@ -3324,7 +4065,13 @@ spec:
                 - cert-manager.io
               resources:
                 - clusterissuers
+              verbs:
+                - "*"
+            - apiGroups:
+                - cert-manager.io
+              resources:
                 - clusterissuers/status
+                - issuers/status
               verbs:
                 - get
                 - list
@@ -3346,13 +4093,8 @@ spec:
                 - cert-manager.io
               resources:
                 - issuers
-                - issuers/status
               verbs:
-                - get
-                - list
-                - patch
-                - update
-                - watch
+                - "*"
             - apiGroups:
                 - cert-manager.io
               resourceNames:
@@ -3431,14 +4173,6 @@ spec:
                 - patch
                 - update
             - apiGroups:
-                - ""
-              resources:
-                - pods
-              verbs:
-                - get
-                - list
-                - watch
-            - apiGroups:
                 - csi.storage.k8s.io
               resources:
                 - csinodeinfos
@@ -3450,78 +4184,29 @@ spec:
                 - csm-authorization.storage.dell.com
               resources:
                 - csmroles
-              verbs:
-                - create
-                - delete
-                - patch
-                - update
-                - watch
-            - apiGroups:
-                - csm-authorization.storage.dell.com
-              resources:
-                - csmroles
                 - csmtenants
                 - storages
               verbs:
+                - create
+                - delete
                 - get
                 - list
+                - patch
+                - update
+                - watch
             - apiGroups:
                 - csm-authorization.storage.dell.com
               resources:
                 - csmroles/finalizers
-              verbs:
-                - update
-            - apiGroups:
-                - csm-authorization.storage.dell.com
-              resources:
-                - csmroles/status
-              verbs:
-                - get
-                - patch
-                - update
-            - apiGroups:
-                - csm-authorization.storage.dell.com
-              resources:
-                - csmtenants
-              verbs:
-                - create
-                - delete
-                - patch
-                - update
-                - watch
-            - apiGroups:
-                - csm-authorization.storage.dell.com
-              resources:
                 - csmtenants/finalizers
-              verbs:
-                - update
-            - apiGroups:
-                - csm-authorization.storage.dell.com
-              resources:
-                - csmtenants/status
-              verbs:
-                - get
-                - patch
-                - update
-            - apiGroups:
-                - csm-authorization.storage.dell.com
-              resources:
-                - storages
-              verbs:
-                - create
-                - delete
-                - patch
-                - update
-                - watch
-            - apiGroups:
-                - csm-authorization.storage.dell.com
-              resources:
                 - storages/finalizers
               verbs:
                 - update
             - apiGroups:
                 - csm-authorization.storage.dell.com
               resources:
+                - csmroles/status
+                - csmtenants/status
                 - storages/status
               verbs:
                 - get
@@ -3539,7 +4224,6 @@ spec:
                 - gateway.networking.k8s.io
               resources:
                 - gateways
-                - httproutes
               verbs:
                 - get
                 - list
@@ -3606,31 +4290,9 @@ spec:
               resources:
                 - clusterrolebindings
                 - clusterroles
+                - clusterroles/finalizers
                 - replicasets
                 - rolebindings
-              verbs:
-                - create
-                - delete
-                - get
-                - list
-                - patch
-                - update
-                - watch
-            - apiGroups:
-                - rbac.authorization.k8s.io
-              resources:
-                - clusterroles/finalizers
-              verbs:
-                - create
-                - delete
-                - get
-                - list
-                - patch
-                - update
-                - watch
-            - apiGroups:
-                - rbac.authorization.k8s.io
-              resources:
                 - roles
               verbs:
                 - create
@@ -3640,12 +4302,6 @@ spec:
                 - patch
                 - update
                 - watch
-            - apiGroups:
-                - rbac.authorization.k8s.io
-              resources:
-                - subjectaccessreviews
-              verbs:
-                - create
             - apiGroups:
                 - replication.storage.dell.com
               resources:
@@ -3685,27 +4341,6 @@ spec:
               resources:
                 - volumesnapshotclasses
                 - volumesnapshotcontents
-              verbs:
-                - create
-                - delete
-                - get
-                - list
-                - patch
-                - update
-                - watch
-            - apiGroups:
-                - snapshot.storage.k8s.io
-              resources:
-                - volumesnapshotcontents/status
-              verbs:
-                - get
-                - list
-                - patch
-                - update
-                - watch
-            - apiGroups:
-                - snapshot.storage.k8s.io
-              resources:
                 - volumesnapshots
               verbs:
                 - create
@@ -3718,6 +4353,7 @@ spec:
             - apiGroups:
                 - snapshot.storage.k8s.io
               resources:
+                - volumesnapshotcontents/status
                 - volumesnapshots/status
               verbs:
                 - get
@@ -3755,6 +4391,8 @@ spec:
                 - storage.k8s.io
               resources:
                 - csidrivers
+                - csistoragecapacities
+                - volumeattachments
               verbs:
                 - create
                 - delete
@@ -3776,36 +4414,12 @@ spec:
             - apiGroups:
                 - storage.k8s.io
               resources:
-                - csistoragecapacities
-              verbs:
-                - create
-                - delete
-                - get
-                - list
-                - patch
-                - update
-                - watch
-            - apiGroups:
-                - storage.k8s.io
-              resources:
                 - storageclasses
               verbs:
                 - create
                 - delete
                 - get
                 - list
-                - update
-                - watch
-            - apiGroups:
-                - storage.k8s.io
-              resources:
-                - volumeattachments
-              verbs:
-                - create
-                - delete
-                - get
-                - list
-                - patch
                 - update
                 - watch
             - apiGroups:
@@ -3827,6 +4441,12 @@ spec:
                 - patch
                 - update
                 - watch
+            - apiGroups:
+                - ""
+              resources:
+                - namespaces
+              verbs:
+                - delete
           serviceAccountName: dell-csm-operator-manager-service-account
       deployments:
         - label:
@@ -3865,20 +4485,22 @@ spec:
                     command:
                       - /manager
                     env:
+                      - name: REFRESH_INTERVAL_MINUTES
+                        value: "60"
                       - name: RELATED_IMAGE_dell-csm-operator
                         value: quay.io/dell/container-storage-modules/dell-csm-operator:v1.10.0
                       - name: RELATED_IMAGE_csi-isilon
-                        value: quay.io/dell/container-storage-modules/csi-isilon:nightly
+                        value: quay.io/dell/container-storage-modules/csi-isilon:v2.15.0
                       - name: RELATED_IMAGE_csi-powermax
-                        value: quay.io/dell/container-storage-modules/csi-powermax:nightly
+                        value: quay.io/dell/container-storage-modules/csi-powermax:v2.15.0
                       - name: RELATED_IMAGE_csipowermax-reverseproxy
                         value: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.14.0
                       - name: RELATED_IMAGE_csi-powerstore
-                        value: quay.io/dell/container-storage-modules/csi-powerstore:nightly
+                        value: quay.io/dell/container-storage-modules/csi-powerstore:v2.15.0
                       - name: RELATED_IMAGE_csi-unity
-                        value: quay.io/dell/container-storage-modules/csi-unity:nightly
+                        value: quay.io/dell/container-storage-modules/csi-unity:v2.15.0
                       - name: RELATED_IMAGE_csi-vxflexos
-                        value: quay.io/dell/container-storage-modules/csi-vxflexos:nightly
+                        value: quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.0
                       - name: RELATED_IMAGE_sdc
                         value: quay.io/dell/storage/powerflex/sdc:4.5.4
                       - name: RELATED_IMAGE_karavi-authorization-proxy
@@ -3906,7 +4528,7 @@ spec:
                       - name: RELATED_IMAGE_metrics-powerflex
                         value: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.13.0
                       - name: RELATED_IMAGE_metrics-powerstore
-                        value: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.12.0
+                        value: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.13.0
                       - name: RELATED_IMAGE_podmon-node
                         value: quay.io/dell/container-storage-modules/podmon:v1.14.0
                       - name: RELATED_IMAGE_kube-rbac-proxy
@@ -3925,6 +4547,14 @@ spec:
                         value: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.14.0
                       - name: RELATED_IMAGE_metadataretriever
                         value: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0
+                      - name: RELATED_IMAGE_nginx
+                        value: docker.io/nginxinc/nginx-unprivileged:1.27
+                      - name: RELATED_IMAGE_redis-commander
+                        value: docker.io/rediscommander/redis-commander:latest
+                      - name: RELATED_IMAGE_opa
+                        value: docker.io/openpolicyagent/opa:0.70.0
+                      - name: RELATED_IMAGE_kube-mgmt
+                        value: docker.io/openpolicyagent/kube-mgmt:0.11
                     image: quay.io/dell/container-storage-modules/dell-csm-operator:v1.10.0
                     imagePullPolicy: Always
                     livenessProbe:
@@ -3988,17 +4618,17 @@ spec:
   relatedImages:
     - image: quay.io/dell/container-storage-modules/dell-csm-operator:v1.10.0
       name: dell-csm-operator
-    - image: quay.io/dell/container-storage-modules/csi-isilon:nightly
+    - image: quay.io/dell/container-storage-modules/csi-isilon:v2.15.0
       name: csi-isilon
-    - image: quay.io/dell/container-storage-modules/csi-powermax:nightly
+    - image: quay.io/dell/container-storage-modules/csi-powermax:v2.15.0
       name: csi-powermax
     - image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.14.0
       name: csipowermax-reverseproxy
-    - image: quay.io/dell/container-storage-modules/csi-powerstore:nightly
+    - image: quay.io/dell/container-storage-modules/csi-powerstore:v2.15.0
       name: csi-powerstore
-    - image: quay.io/dell/container-storage-modules/csi-unity:nightly
+    - image: quay.io/dell/container-storage-modules/csi-unity:v2.15.0
       name: csi-unity
-    - image: quay.io/dell/container-storage-modules/csi-vxflexos:nightly
+    - image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.0
       name: csi-vxflexos
     - image: quay.io/dell/storage/powerflex/sdc:4.5.4
       name: sdc
@@ -4026,7 +4656,7 @@ spec:
       name: metrics-powermax
     - image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.13.0
       name: metrics-powerflex
-    - image: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.12.0
+    - image: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.13.0
       name: metrics-powerstore
     - image: quay.io/dell/container-storage-modules/podmon:v1.14.0
       name: podmon-node
@@ -4048,12 +4678,10 @@ spec:
       name: metadataretriever
     - image: docker.io/nginxinc/nginx-unprivileged:1.27
       name: nginx
-    - image: docker.io/redis:7.4.3-alpine
-      name: redis
     - image: docker.io/rediscommander/redis-commander:latest
       name: redis-commander
-    - image: docker.io/openpolicyagent/opa:latest
+    - image: docker.io/openpolicyagent/opa:0.70.0
       name: opa
-    - image: docker.io/openpolicyagent/kube-mgmt:8.5.11
+    - image: docker.io/openpolicyagent/kube-mgmt:0.11
       name: kube-mgmt
   version: 1.10.0

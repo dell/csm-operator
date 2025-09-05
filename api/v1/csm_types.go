@@ -36,12 +36,10 @@ type ContainerStorageModuleSpec struct {
 // ContainerStorageModuleStatus defines the observed state of ContainerStorageModule
 type ContainerStorageModuleStatus struct {
 	// ControllerStatus is the status of Controller pods
-	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="ControllerStatus",xDescriptors="urn:alm:descriptor:com.tectonic.ui:podStatuses"
 	ControllerStatus PodStatus `json:"controllerStatus,omitempty"`
 
 	// NodeStatus is the status of Controller pods
-	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="NodeStatus",xDescriptors="urn:alm:descriptor:com.tectonic.ui:podStatuses"
-	NodeStatus PodStatus `json:"nodeStatus,omitempty"`
+	NodeStatus       PodStatus `json:"nodeStatus,omitempty"`
 
 	// State is the state of the driver installation
 	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="State",xDescriptors="urn:alm:descriptor:text"
