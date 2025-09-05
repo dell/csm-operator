@@ -60,16 +60,16 @@ spec:
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
-        image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
+        image: registry.k8s.io/sig-storage/csi-provisioner:v5.3.0
         args: ["--volume-name-prefix=csivol"]
       - name: attacher
-        image: registry.k8s.io/sig-storage/csi-attacher:v4.8.0
+        image: registry.k8s.io/sig-storage/csi-attacher:v4.9.0
       - name: registrar
-        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0
       - name: resizer
-        image: registry.k8s.io/sig-storage/csi-resizer:v1.13.1
+        image: registry.k8s.io/sig-storage/csi-resizer:v1.14.0
       - name: snapshotter
-        image: registry.k8s.io/sig-storage/csi-snapshotter:v8.2.0
+        image: registry.k8s.io/sig-storage/csi-snapshotter:v8.3.0
       - name: csi-metadata-retriever
         image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.11.0
         # sdc-monitor is disabled by default, due to high CPU usage
@@ -87,7 +87,7 @@ spec:
       - name: csi-external-health-monitor-controller
         enabled: false
         args: ["--monitor-interval=60s"]
-        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.14.0
+        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.15.0
     # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
     # Configure when the storageCapacity is set as "true"
     # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
@@ -142,8 +142,8 @@ spec:
           value: "true"
         # X_CSI_APPROVE_SDC_ENABLED: Enables/Disable SDC approval
         # Allowed values:
-        #    true: enable SDC approval
-        #    false: disable SDC approval
+        #    true: enable SDC approval based on either GUID or IP address, depending on the restricted SDC mode configured in PowerFlex system
+        #    false: disable SDC approval based on either GUID or IP address, depending on the restricted SDC mode configured in PowerFlex system
         # Default value: false
         - name: X_CSI_APPROVE_SDC_ENABLED
           value: "false"
@@ -285,6 +285,16 @@ spec:
             # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
             # Allowed values: int
             # Default value: 10
+            # POWERFLEX_TOPOLOGY_METRICS_ENABLED: enable/disable collection of topology metrics
+            # Allowed values: ture, false
+            # Default value: true
+            - name: "POWERFLEX_TOPOLOGY_METRICS_ENABLED"
+              value: "true"
+            # POWERFLEX_TOPOLOGY_METRICS_POLL_FREQUENCY: set polling frequency to get topology metrics
+            # Allowed values: int
+            # Default value: 30
+            - name: "POWERFLEX_TOPOLOGY_METRICS_POLL_FREQUENCY"
+              value: "30"
             - name: "POWERFLEX_MAX_CONCURRENT_QUERIES"
               value: "10"
             # POWERFLEX_SDC_METRICS_ENABLED: enable/disable collection of sdc metrics

@@ -112,6 +112,13 @@ var (
 			expected:   "true",
 		},
 		{
+			name:     "when auth module is enabled",
+			csm:      enableAuthModule(),
+			ct:       powerStoreClient,
+			sec:      powerStoreSecret,
+			fileType: "Node",
+		},
+		{
 			name:       "update GOPOWERSTORE_DEBUG value for Node",
 			yamlString: "<GOPOWERSTORE_DEBUG>",
 			csm:        gopowerstoreDebug("true"),
@@ -182,6 +189,40 @@ var (
               value: "2050"
             - name: X_CSI_NFS_SERVER_PORT
               value: "2049"`,
+		},
+		{
+			name: "update Powerstore API and Podmon connectivity timeout for Node",
+			yamlString: `
+			- name: X_CSI_POWERSTORE_API_TIMEOUT
+		      value: "<X_CSI_POWERSTORE_API_TIMEOUT>"
+		    - name: X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT
+		      value: "<X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT>"`,
+			csm:      csmForPowerStore("csm"),
+			ct:       powerStoreClient,
+			sec:      powerStoreSecret,
+			fileType: "Node",
+			expected: `
+			- name: X_CSI_POWERSTORE_API_TIMEOUT
+		      value: "120s"
+		    - name: X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT
+		      value: "10s"`,
+		},
+		{
+			name: "update Powerstore API and Podmon connectivity timeout for Controller",
+			yamlString: `
+			- name: X_CSI_POWERSTORE_API_TIMEOUT
+		      value: "<X_CSI_POWERSTORE_API_TIMEOUT>"
+		    - name: X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT
+		      value: "<X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT>"`,
+			csm:      csmForPowerStore("csm"),
+			ct:       powerStoreClient,
+			sec:      powerStoreSecret,
+			fileType: "Controller",
+			expected: `
+			- name: X_CSI_POWERSTORE_API_TIMEOUT
+		      value: "120s"
+		    - name: X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT
+		      value: "10s"`,
 		},
 	}
 )
@@ -384,6 +425,8 @@ func csmForPowerStoreWithSharedNFS(customCSMName string) csmv1.ContainerStorageM
 		{Name: "X_CSI_NFS_CLIENT_PORT", Value: "2220"},
 		{Name: "X_CSI_NFS_SERVER_PORT", Value: "2221"},
 		{Name: "X_CSI_NFS_EXPORT_DIRECTORY", Value: "/var/lib/dell/myNfsExport"},
+		{Name: "X_CSI_POWERSTORE_API_TIMEOUT", Value: "120s"},
+		{Name: "X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT", Value: "10s"},
 	}
 
 	return cr
@@ -395,6 +438,17 @@ func gopowerstoreDebug(debug string) csmv1.ContainerStorageModule {
 		{Name: "GOPOWERSTORE_DEBUG", Value: debug},
 	}
 
+	return cr
+}
+
+func enableAuthModule() csmv1.ContainerStorageModule {
+	cr := csmForPowerStore("csm")
+	cr.Spec.Modules = []csmv1.Module{
+		{
+			Name:    csmv1.Authorization,
+			Enabled: true,
+		},
+	}
 	return cr
 }
 

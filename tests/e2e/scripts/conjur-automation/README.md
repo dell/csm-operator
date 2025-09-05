@@ -52,9 +52,15 @@ Example credentials.yaml:
   value: "myUsername"
 - variable: "system2-password"
   value: "myPassword"
+- variable: "redis-username"
+  value: "username"
+- variable: "redis-password"
+  value: "password"
+- variable: "config-object"
+  value: "web:\n  jwtsigningsecret: secret"
 ```
 
-A SecretProviderClass named `conjur` will be created in `conjur-spc.yaml`. 
+A SecretProviderClass named `conjur` will be created in `conjur-spc.yaml`.
 
 The variables are created under `secrets`. When installing CSM Authorization (Operator example), specify the SecretProviderClass name and the full paths of the variables.
 
@@ -81,7 +87,7 @@ storageSystemCredentials:
 ```
 
 ### Install and create secrets from environment variables
-This method aligns with CSM Operator e2e by reading specific environment variables in https://github.com/dell/csm-operator/blob/main/tests/e2e/array-info.sh:
+This method aligns with CSM Operator e2e by reading specific environment variables in array-info.env. Refer the sample at https://github.com/dell/csm-operator/blob/main/tests/e2e/array-info.env.sample:
 
 ```
 PFLEX_USER
@@ -92,13 +98,21 @@ PSCALE_PASS
 
 PMAX_USER
 PMAX_PASS
+
+PSTORE_USER
+PSTORE_PASS
+
+REDIS_USER
+REDIS_PASS
+
+CONFIG_OBJECT
 ```
 
 The variables in each set of two, two variables per platform, must be set prior to running this tool. If any of the two environment variables for a specific platform is not set, that secret will not be written in Conjur.
 
 `conjur.sh --control-node 10.0.0.1 --env-config`
 
-A SecretProviderClass named `conjur` will be created in `conjur-spc.yaml`. 
+A SecretProviderClass named `conjur` will be created in `conjur-spc.yaml`.
 
 The variables are created under `secrets` at hardcoded paths (see below). When installing CSM Authorization (Operator example), specify the SecretProviderClass name and the full paths of the variables.
 

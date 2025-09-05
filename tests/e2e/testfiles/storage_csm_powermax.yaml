@@ -1,5 +1,5 @@
 #
-# Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -67,12 +67,12 @@ spec:
         - name: X_CSI_POWERMAX_PORTGROUPS
           value: "REPLACE_PORTGROUPS"
         # "X_CSI_TRANSPORT_PROTOCOL" can be "FC" or "FIBRE" for fibrechannel,
-        # "REPLACE_PROTOCOL" for iSCSI,
+        # "ISCSI" for iSCSI,
         # "NVMETCP" for NVMeTCP or "" for autoselection.
         # Allowed values:
         #   "FC"    - Fiber Channel protocol
         #   "FIBER" - Fiber Channel protocol
-        #   "REPLACE_PROTOCOL" - iSCSI protocol
+        #   "ISCSI" - iSCSI protocol
         #   "NVMETCP" = NVMeTCP protocol
         #   ""      - Automatic selection of transport protocol
         # Default value: "" <empty> defaults to auto if nothing is specified
@@ -138,6 +138,16 @@ spec:
         # Default value: "TEXT"
         - name: "CSI_LOG_FORMAT"
           value: "TEXT"
+        # X_CSI_POWERMAX_DEBUG: Enable/disable debug logs from gopowermax library.
+        - name: "X_CSI_POWERMAX_DEBUG"
+          value: "true"
+        # X_CSI_REVPROXY_USE_SECRET: Define whether or not to use the new secret format for the reverse proxy.
+        # Allowed values:
+        #   "true" - Use secret format for the reverse proxy
+        #   "false" - Use configmap format for the reverse proxy
+        # Default value: "false"
+        - name: "X_CSI_REVPROXY_USE_SECRET"
+          value: "false"
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin- volume usage, volume condition
@@ -223,6 +233,17 @@ spec:
         - key: "node.kubernetes.io/network-unavailable"
           operator: "Exists"
           effect: "NoExecute"
+    # Uncomment and tab if nodes you wish to use have the node-role.kubernetes.io/master taint
+    # - key: "node-role.kubernetes.io/master"
+    #   operator: "Exists"
+    #   effect: "NoSchedule"
+    # Uncomment and tab if CSM for Resiliency and CSI Driver pods monitor is enabled
+    #  - key: "offline.powermax.storage.dell.com"
+    #    operator: "Exists"
+    #    effect: "NoSchedule"
+    #  - key: "powermax.podmon.storage.dell.com"
+    #    operator: "Exists"
+    #    effect: "NoSchedule"
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner

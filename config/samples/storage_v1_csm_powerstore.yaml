@@ -76,6 +76,8 @@ spec:
         # Default value: None
         - name: "CERT_SECRET_COUNT"
           value: "1"
+        - name: X_CSM_AUTH_ENABLED
+          value: "false"
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
@@ -208,6 +210,24 @@ spec:
       #   operator: "Exists"
       #   effect: "NoSchedule"
   modules:
+    # Authorization: enable csm-authorization for RBAC
+    - name: authorization
+      # enabled: Enable/Disable csm-authorization
+      # Default value: false
+      enabled: false
+      configVersion: v2.3.0
+      components:
+        - name: karavi-authorization-proxy
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0
+          envs:
+            # proxyHost: hostname of the csm-authorization server
+            # Default value: none
+            - name: "PROXY_HOST"
+              value: "csm-authorization.com"
+            # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
+            # Default value: "true"
+            - name: "SKIP_CERTIFICATE_VALIDATION"
+              value: "true"
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature
       # Allowed values:

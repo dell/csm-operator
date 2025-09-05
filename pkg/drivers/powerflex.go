@@ -89,6 +89,23 @@ const (
 func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, ct client.Client) error {
 	log := logger.GetLogger(ctx)
 
+	const (
+		Authorization csmv1.ModuleType = "authorization"
+		Replication   csmv1.ModuleType = "replication"
+	)
+
+	// Check if both Authorization and Replication modules are enabled
+	authEnabled := isModuleEnabled(cr.Spec.Modules, Authorization)
+	replEnabled := isModuleEnabled(cr.Spec.Modules, Replication)
+
+	if authEnabled && replEnabled {
+		prefix := getVolumeNamePrefix(cr.Spec.Driver.SideCars)
+		if len(prefix) > 5 {
+			log.Errorw("PreCheckPowerFlex failed: Volume name prefix too long", "prefix", prefix)
+			return fmt.Errorf("volume name prefix '%s' cannot exceed 5 characters when both Authorization and Replication modules are enabled", prefix)
+		}
+	}
+
 	// Check if driver version is supported by doing a stat on a config file
 	configFilePath := fmt.Sprintf("%s/driverconfig/%s/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, csmv1.PowerFlex, cr.Spec.Driver.ConfigVersion)
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
@@ -103,6 +120,30 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 	}
 
 	return nil
+}
+
+// isModuleEnabled checks if a module is enabled in the list
+func isModuleEnabled(modules []csmv1.Module, name csmv1.ModuleType) bool {
+	for _, m := range modules {
+		if m.Name == name && m.Enabled {
+			return true
+		}
+	}
+	return false
+}
+
+// getVolumeNamePrefix extracts the volume name prefix from the provisioner sidecar args
+func getVolumeNamePrefix(sideCars []csmv1.ContainerTemplate) string {
+	for _, sc := range sideCars {
+		if sc.Name == "provisioner" {
+			for _, arg := range sc.Args {
+				if strings.HasPrefix(arg, "--volume-name-prefix=") {
+					return strings.TrimPrefix(arg, "--volume-name-prefix=")
+				}
+			}
+		}
+	}
+	return ""
 }
 
 func SetSDCinitContainers(ctx context.Context, cr csmv1.ContainerStorageModule, ct client.Client) (csmv1.ContainerStorageModule, error) {

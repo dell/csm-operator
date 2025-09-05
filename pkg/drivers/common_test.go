@@ -13,6 +13,8 @@
 package drivers
 
 import (
+	"strings"
+
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	"github.com/dell/csm-operator/tests/shared"
@@ -143,6 +145,12 @@ func csmForPowerFlex(customCSMName string) csmv1.ContainerStorageModule {
 		Tolerations:     []corev1.Toleration{},
 	}}
 
+	// Add provisioner Sidecar
+	res.Spec.Driver.SideCars = []csmv1.ContainerTemplate{{
+		Name: "provisioner",
+		Args: []string{},
+	}}
+
 	// res.Spec.Driver.CSIDriverSpec.FSGroupPolicy == "ReadWriteOnceWithFSType"
 
 	// Add pflex driver version
@@ -150,6 +158,28 @@ func csmForPowerFlex(customCSMName string) csmv1.ContainerStorageModule {
 	res.Spec.Driver.CSIDriverType = csmv1.PowerFlex
 	res.Spec.Driver.Node = &csmv1.ContainerTemplate{}
 	res.Spec.Driver.Common = &csmv1.ContainerTemplate{}
+
+	// Add Authorization and Replication modules
+	if strings.Contains(customCSMName, "auth-repl") {
+		res.Spec.Modules = []csmv1.Module{
+			{
+				Name:    csmv1.Authorization,
+				Enabled: true,
+			},
+			{
+				Name:    csmv1.Replication,
+				Enabled: true,
+			},
+		}
+
+		// Add --volume-name-prefix
+		if strings.Contains(customCSMName, "auth-repl-valid") {
+			res.Spec.Driver.SideCars[0].Args = append(res.Spec.Driver.SideCars[0].Args, "--volume-name-prefix=abc")
+		} else if strings.Contains(customCSMName, "auth-repl-invalid") {
+			res.Spec.Driver.SideCars[0].Args = append(res.Spec.Driver.SideCars[0].Args, "--volume-name-prefix=abcdefghij")
+		}
+	}
+
 	if customCSMName == "no-sdc" && res.Spec.Driver.Node != nil && res.Spec.Driver.Common != nil {
 		res.Spec.Driver.Node.Envs = append(res.Spec.Driver.Node.Envs, corev1.EnvVar{Name: "X_CSI_SDC_ENABLED", Value: "false"})
 		res.Spec.Driver.Common.Envs = append(res.Spec.Driver.Common.Envs, corev1.EnvVar{Name: "INTERFACE_NAMES", Value: "worker1: \"interface1\",worker2: \"interface2\""})
@@ -384,8 +414,11 @@ func csmWithPowerScale(driver csmv1.DriverType, version string) csmv1.ContainerS
 	// Add FC port filter
 	fcFilterPath := corev1.EnvVar{Name: "X_CSI_FC_PORTS_FILTER_FILE_PATH"}
 
+	// Add AZ Network interval
+	azNetworkInterval := corev1.EnvVar{Name: "AZ_RECONCILE_INTERVAL", Value: "5m"}
+
 	if res.Spec.Driver.Common != nil {
-		res.Spec.Driver.Common.Envs = []corev1.EnvVar{nodeNamePrefix, fcFilterPath}
+		res.Spec.Driver.Common.Envs = []corev1.EnvVar{nodeNamePrefix, fcFilterPath, azNetworkInterval}
 	}
 
 	// Add environment variable

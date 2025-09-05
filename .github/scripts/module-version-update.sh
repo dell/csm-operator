@@ -1122,19 +1122,19 @@ if [ -n "$auth_v2" ]; then
           new_line_13="                       value: quay.io/dell/container-storage-modules/csm-authorization-controller:$auth_v2"
 
           search_string_14="\"authorizationController\": \"quay.io/dell/container-storage-modules/csm-authorization-controller"
-          new_line_14="                    \"authorizationController\": \"quay.io/dell/container-storage-modules/csm-authorization-controller:${auth_v2}\","
+          new_line_14="                   \"authorizationController\": \"quay.io/dell/container-storage-modules/csm-authorization-controller:${auth_v2}\","
 
           search_string_15="\"proxyService\": \"quay.io/dell/container-storage-modules/csm-authorization-proxy"
-          new_line_15="                    \"proxyService\": \"quay.io/dell/container-storage-modules/csm-authorization-proxy:${auth_v2}\","
+          new_line_15="                   \"proxyService\": \"quay.io/dell/container-storage-modules/csm-authorization-proxy:${auth_v2}\","
 
           search_string_16="\"roleService\": \"quay.io/dell/container-storage-modules/csm-authorization-role"
           new_line_16="                    \"roleService\": \"quay.io/dell/container-storage-modules/csm-authorization-role:${auth_v2}\","
 
           search_string_16="\"storageService\": \"quay.io/dell/container-storage-modules/csm-authorization-storage"
-          new_line_16="                    \"storageService\": \"quay.io/dell/container-storage-modules/csm-authorization-storage:${auth_v2}\","
+          new_line_16="                   \"storageService\": \"quay.io/dell/container-storage-modules/csm-authorization-storage:${auth_v2}\","
 
           search_string_17="\"tenantService\": \"quay.io/dell/container-storage-modules/csm-authorization-tenant"
-          new_line_17="                    \"tenantService\": \"quay.io/dell/container-storage-modules/csm-authorization-tenant:${auth_v2}\","
+          new_line_17="                   \"tenantService\": \"quay.io/dell/container-storage-modules/csm-authorization-tenant:${auth_v2}\","
 
 
           line_number=0
@@ -1538,6 +1538,7 @@ fi
 # <<<< Authorization module update complete >>>>
 
 ##################################################################################
+if [[ "$update_flag" == "nightly" ]]; then
 # Update all the latest module versions to version-values.yaml
 cd $GITHUB_WORKSPACE/operatorconfig/moduleconfig/common
 pscale_pflex_block=$(cat <<EOF
@@ -1552,6 +1553,8 @@ EOF
 pstore_block=$(cat <<EOF
   $csm_ver:
     resiliency: "$res_ver"
+    authorization: "$auth_v2"
+    observability: "$obs_ver"
 EOF
 )
 
@@ -1581,7 +1584,9 @@ done < "version-values.yaml"
 sed -i ':a;/^\n*$/{$d;N;ba;}' "$tmp_file"
 echo "$pmax_block" >> "$tmp_file"
 mv "$tmp_file" "version-values.yaml"
+fi
 
 echo "<<< ------- Module version update complete ------- >>>"
+
 
 
