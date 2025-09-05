@@ -5,9 +5,10 @@ on:
   schedule:
     - cron: '30 9 * * *'  # Runs daily at 3:00 PM IST
 
+
 jobs:
   update-tags:
-    name: Update Sidecar Image Tags
+    name: Fetch & Update Sidecar Image Tags
     runs-on: ubuntu-latest
 
     steps:
@@ -50,9 +51,9 @@ jobs:
           commit-message: "update sidecar image tags to latest"
           title: "Update Sidecar image tags"
           body: |
-            This PR automatically updates all sidecar image tags in `/csm-operator/operatorconfig/driverconfig/common` to the latest available versions.
+            This PR automatically updates all sidecar image tags in /csm-operator/operatorconfig/driverconfig/common to the latest available versions.
 
-            ✅ Updated via `.github/scripts/sidecar-update.sh`
+            ? Updated via `.github/scripts/sidecar-update.sh`
           branch: actions/update-sidecar-image-tags
           sign-commits: true
           delete-branch: true
