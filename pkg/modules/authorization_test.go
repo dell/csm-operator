@@ -2660,7 +2660,7 @@ func TestUpdateConfigGlobalVars(t *testing.T) {
 			},
 			want: map[string]string{
 				"configSecretProviderClassName ": "",
-				"configSecretName":               "",
+				"configSecretName":               "karavi-config-secret",
 				"configSecretPath ":              "",
 			},
 		},
@@ -2678,7 +2678,7 @@ func TestUpdateConfigGlobalVars(t *testing.T) {
 			},
 			want: map[string]string{
 				"configSecretProviderClassName ": "",
-				"configSecretName":               "",
+				"configSecretName":               "karavi-config-secret",
 				"configSecretPath":               "",
 			},
 		},
@@ -2720,7 +2720,7 @@ func TestUpdateConfigGlobalVars(t *testing.T) {
 			},
 			want: map[string]string{
 				"configSecretProviderClassName ": "",
-				"configSecretName":               "",
+				"configSecretName":               "karavi-config-secret",
 				"configSecretPath":               "",
 			},
 		},
