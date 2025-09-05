@@ -59,23 +59,35 @@ spec:
               # additional annotations for the proxy-server ingress
               annotations: {}
         - name: redis
-          # Redis secret configuration:
-          # If using a CSI driver, specify the SecretProviderClass.
-          # Otherwise, a default Kubernetes secret will be used for Redis credentials.
+          # Optional Redis secret configuration:
+          # If using Secret Store CSI driver, specify the SecretProviderClass for Redis credentials.
+          # Otherwise, a default Kubernetes secret will be used.
           redisSecretProviderClass:
-            # Optional: Name of the Kubernetes secret (created by the CSI driver) that contains Redis credentials.
-            - redisSecretName: redis-secret-provider-class
-              # Required: Key in the secret that stores the Redis username.
+            # Name of the SecretProviderClass that holds the Redis secretObject.
+            - secretProviderClassName: secret-provider-class-1
+              # Name of the Kubernetes secret (created by the Secret Store CSI driver) that contains Redis credentials.
+              redisSecretName: redis-secret
+              # Key in the secret that stores the Redis username.
               redisUsernameKey: username
-              # Required: Key in the secret that stores the Redis password.
+              # Key in the secret that stores the Redis password.
               redisPasswordKey: password
-          redis: redis:6.0.8-alpine
+          redis: redis:8.2.0-alpine
           commander: rediscommander/redis-commander:latest
           # by default, csm-authorization will deploy a local (https://kubernetes.io/docs/concepts/storage/storage-classes/#local) volume for redis
           # to use a different storage class for redis, specify the name of the storage class
           # NOTE: the storage class must NOT be a storage class provisioned by a CSI driver using this installation of CSM Authorization
           # Default value: None
           storageclass: ""
+
+        - name: config
+          # Config secret configuration:
+          # Use a SecretProviderClass for the config secret; otherwise, the user must manually create the config secret before installing Authorization.
+          # If using a Secret Store CSI driver, specify the SecretProviderClass that contains the config object.
+          configSecretProviderClass:
+            # Name of the SecretProviderClass that holds the config secretObject.
+            - secretProviderClassName: secret-provider-class-1
+              # The name of the Kubernetes secret created by the CSI driver
+              configSecretName: config-secret-name
 
         - name: storage-system-credentials
           secretProviderClasses:

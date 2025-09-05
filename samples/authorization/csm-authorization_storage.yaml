@@ -12,7 +12,7 @@ spec:
       name: secretProviderClassName
       usernameObjectName: ""
       passwordObjectName: ""
-  #   secret: "secret-1"
+  # secret: "secret-1"
   skipCertificateValidation: true
   pollInterval: 30s
   isiPath: /ifs/data/csi

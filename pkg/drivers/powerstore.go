@@ -73,6 +73,15 @@ const (
 
 	// PowerStoreNfsExportDirectory - NFS Export Directory
 	PowerStoreNfsExportDirectory = "<X_CSI_NFS_EXPORT_DIRECTORY>"
+
+	// CSMAuthEnabled - CSI Volume name Prefix
+	CSMAuthEnabled string = "<X_CSM_AUTH_ENABLED>"
+
+	// PowerStoreAPITimeout - Powerstore REST API Timeout
+	PowerStoreAPITimeout = "<X_CSI_POWERSTORE_API_TIMEOUT>"
+
+	// PodmonArrayConnectivityTimeout - Podmon Array Connectivity Timeout
+	PodmonArrayConnectivityTimeout = "<X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT>"
 )
 
 // PrecheckPowerStore do input validation
@@ -154,7 +163,11 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	nfsClientPort := "2050"
 	nfsServerPort := "2049"
 	nfsExportDirectory := "/var/lib/dell/nfs"
+	powerstoreAPITimeout := "120s"
+	podmonArrayConnectivityTimeout := "10s"
 	debug := "false"
+	authEnabled := "false"
+
 	if cr.Spec.Driver.Common != nil {
 		for _, env := range cr.Spec.Driver.Common.Envs {
 			if env.Name == "GOPOWERSTORE_DEBUG" {
@@ -168,6 +181,12 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 			}
 			if env.Name == "X_CSI_NFS_EXPORT_DIRECTORY" && env.Value != "" {
 				nfsExportDirectory = env.Value
+			}
+			if env.Name == "X_CSI_POWERSTORE_API_TIMEOUT" && env.Value != "" {
+				powerstoreAPITimeout = env.Value
+			}
+			if env.Name == "X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT" && env.Value != "" {
+				podmonArrayConnectivityTimeout = env.Value
 			}
 		}
 	}
@@ -196,7 +215,19 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 					maxVolumesPerNode = env.Value
 				}
 			}
+			//	Set the env. whether authorization is enabled or not in the node to trim the tenant prefix in the driver
+			for i, mod := range cr.Spec.Modules {
+				if mod.Name == csmv1.Authorization {
+					cr.Spec.Driver.Node.Envs = append(cr.Spec.Driver.Node.Envs, corev1.EnvVar{
+						Name:  "X_CSM_AUTH_ENABLED",
+						Value: strconv.FormatBool(cr.Spec.Modules[i].Enabled),
+					})
+					authEnabled = strconv.FormatBool(cr.Spec.Modules[i].Enabled)
+					break
+				}
+			}
 		}
+
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreNodeNamePrefix, nodePrefix)
 		yamlString = strings.ReplaceAll(yamlString, CsiFcPortFilterFilePath, fcPortFilter)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreEnableChap, chap)
@@ -207,6 +238,9 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsClientPort, nfsClientPort)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsServerPort, nfsServerPort)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsExportDirectory, nfsExportDirectory)
+		yamlString = strings.ReplaceAll(yamlString, CSMAuthEnabled, authEnabled)
+		yamlString = strings.ReplaceAll(yamlString, PowerStoreAPITimeout, powerstoreAPITimeout)
+		yamlString = strings.ReplaceAll(yamlString, PodmonArrayConnectivityTimeout, podmonArrayConnectivityTimeout)
 	case "Controller":
 		if cr.Spec.Driver.Controller != nil {
 			for _, env := range cr.Spec.Driver.Controller.Envs {
@@ -229,6 +263,8 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsClientPort, nfsClientPort)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsServerPort, nfsServerPort)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsExportDirectory, nfsExportDirectory)
+		yamlString = strings.ReplaceAll(yamlString, PowerStoreAPITimeout, powerstoreAPITimeout)
+		yamlString = strings.ReplaceAll(yamlString, PodmonArrayConnectivityTimeout, podmonArrayConnectivityTimeout)
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"

@@ -142,6 +142,8 @@ apiVersion: apps/v1
 metadata:
   name: <DriverDefaultReleaseName>-controller
   namespace: <DriverDefaultReleaseNamespace>
+  annotations:
+    com.dell.karavi-authorization-proxy: "true"
 spec:
   selector:
     matchLabels:
@@ -262,7 +264,11 @@ spec:
         - name: driver
           image: quay.io/dell/container-storage-modules/csi-powerstore:nightly
           imagePullPolicy: IfNotPresent
-          command: ["/csi-powerstore"]
+          command:
+            - sh
+            - -c
+            - |
+              sleep 20 && /csi-powerstore
           args:
             - "--array-config=/powerstore-config/config"
             - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
@@ -285,6 +291,8 @@ spec:
               value: /powerstore-config/config
             - name: X_CSI_POWERSTORE_CONFIG_PARAMS_PATH
               value: /powerstore-config-params/driver-config-params.yaml
+            - name: X_CSI_POWERSTORE_API_TIMEOUT
+              value: "<X_CSI_POWERSTORE_API_TIMEOUT>"
             - name: X_CSI_NODE_NAME
               valueFrom:
                 fieldRef:
@@ -309,6 +317,8 @@ spec:
               value: "5"
             - name: X_CSI_MULTI_NAS_COOLDOWN_PERIOD
               value: "5m"
+            - name: X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT
+              value: "<X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT>"
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi

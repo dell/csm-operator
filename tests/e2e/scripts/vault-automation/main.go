@@ -136,7 +136,9 @@ storage "file" {
 	powermaxSecretPath   = "PMAX_VAULT_STORAGE_PATH"   // #nosec G101 -- env var, not hardcode
 	powermaxUsername     = "PMAX_USER"                 // #nosec G101 -- env var, not hardcode
 	powermaxPassword     = "PMAX_PASS"                 // #nosec G101 -- env var, not hardcode
-
+	powerstoreSecretPath = "PSTORE_VAULT_STORAGE_PATH" // #nosec G101 -- env var, not hardcode
+	powerstoreUsername   = "PSTORE_USER"               // #nosec G101 -- env var, not hardcode
+	powerstorePassword   = "PSTORE_PASS"               // #nosec G101 -- env var, not hardcode
 	// timestamps to create certificates
 	notBefore = time.Now()
 	notAfter  = notBefore.Add(8766 * time.Hour)
@@ -633,6 +635,11 @@ func (s *sequence) handleFileConfig(path string) error {
 }
 
 func (s *sequence) handleEnvConfig() error {
+	// redis test automation credentials
+	redisPath := "redis"
+	redisUsername := "test"
+	redisPassword := "test"
+
 	pflexPath := os.Getenv(powerflexSecretPath)
 	pflexUsername := os.Getenv(powerflexUsername)
 	pflexPassword := os.Getenv(powerflexPassword)
@@ -665,6 +672,24 @@ func (s *sequence) handleEnvConfig() error {
 			return fmt.Errorf("writing secret %s: %v", pmaxPath, err)
 		}
 	}
+
+	pstorePath := os.Getenv(powerstoreSecretPath)
+	pstoreUsername := os.Getenv(powerstoreUsername)
+	pstorePassword := os.Getenv(powerstorePassword)
+
+	if pstorePath != "" && pstoreUsername != "" && pstorePassword != "" {
+		err := s.putVaultSecret(pstorePath, pstoreUsername, pstorePassword)
+		if err != nil {
+			return fmt.Errorf("writing secret %s: %v", pstorePath, err)
+		}
+	}
+
+	// add redis credentials to vault
+	err := s.putVaultSecret(redisPath, redisUsername, redisPassword)
+	if err != nil {
+		return fmt.Errorf("writing secret %s: %v", pscalePath, err)
+	}
+
 	return nil
 }
 

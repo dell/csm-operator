@@ -144,6 +144,7 @@ The variables in each set of three, three variables per platform, must be set pr
 2025/05/20 17:26:49 Writing secret storage/powerflex in vault0
 2025/05/20 17:26:50 Writing secret storage/powerscale in vault0
 2025/05/20 17:26:50 Writing secret storage/powermax in vault0
+2025/05/20 17:26:50 Writing secret storage/powerstore in vault0
 ```
 
 # Post Running
