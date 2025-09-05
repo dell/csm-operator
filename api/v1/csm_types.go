@@ -39,7 +39,7 @@ type ContainerStorageModuleStatus struct {
 	ControllerStatus PodStatus `json:"controllerStatus,omitempty"`
 
 	// NodeStatus is the status of Controller pods
-	NodeStatus       PodStatus `json:"nodeStatus,omitempty"`
+	NodeStatus PodStatus `json:"nodeStatus,omitempty"`
 
 	// State is the state of the driver installation
 	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="State",xDescriptors="urn:alm:descriptor:text"

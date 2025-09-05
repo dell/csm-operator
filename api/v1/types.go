@@ -160,7 +160,6 @@ type Module struct {
 
 // PodStatus - Represents PodStatus in a daemonset or deployment
 type PodStatus struct {
-
 	// Available is the number of available pods
 	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="Available",xDescriptors="urn:alm:descriptor:text"
 	Available string `json:"available,omitempty"`
