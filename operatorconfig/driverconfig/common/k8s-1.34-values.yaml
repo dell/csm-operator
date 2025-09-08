@@ -21,3 +21,4 @@ images:
   sdcmonitor: quay.io/dell/storage/powerflex/sdc:4.5.4
   # "images.metadataretriever" defines the container images used for csi metadata retriever
   metadataretriever: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.11.0
+  
