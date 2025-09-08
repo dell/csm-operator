@@ -1201,7 +1201,7 @@ metadata:
                         "value": "otel-collector:55680"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/csm-metrics-powerstore:v2.13.0",
+                    "image": "quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.13.0",
                     "name": "metrics-powerstore"
                   }
                 ],
