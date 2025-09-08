@@ -161,7 +161,7 @@ metadata:
                     "value": "1h"
                   }
                 ],
-                "image": "quay.io/dell/container-storage-modules/csi-isilon:nightly",
+                "image": "quay.io/dell/container-storage-modules/csi-isilon:v2.15.0",
                 "imagePullPolicy": "IfNotPresent"
               },
               "configVersion": "v2.15.0",
@@ -541,7 +541,7 @@ metadata:
                     "value": "false"
                   }
                 ],
-                "image": "quay.io/dell/container-storage-modules/csi-powermax:nightly",
+                "image": "quay.io/dell/container-storage-modules/csi-powermax:v2.15.0",
                 "imagePullPolicy": "IfNotPresent"
               },
               "configVersion": "v2.15.0",
@@ -909,7 +909,7 @@ metadata:
                     "value": "false"
                   }
                 ],
-                "image": "quay.io/dell/container-storage-modules/csi-powerstore:nightly",
+                "image": "quay.io/dell/container-storage-modules/csi-powerstore:v2.15.0",
                 "imagePullPolicy": "IfNotPresent"
               },
               "configVersion": "v2.15.0",
@@ -1201,7 +1201,7 @@ metadata:
                         "value": "otel-collector:55680"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/csm-metrics-powerstore:nightly",
+                    "image": "quay.io/dell/container-storage-modules/csm-metrics-powerstore:v2.15.0",
                     "name": "metrics-powerstore"
                   }
                 ],
@@ -1272,7 +1272,7 @@ metadata:
                     "value": "true"
                   }
                 ],
-                "image": "quay.io/dell/container-storage-modules/csi-unity:nightly",
+                "image": "quay.io/dell/container-storage-modules/csi-unity:v2.15.0",
                 "imagePullPolicy": "IfNotPresent"
               },
               "configVersion": "v2.15.0",
@@ -1396,7 +1396,7 @@ metadata:
                     "value": null
                   }
                 ],
-                "image": "quay.io/dell/container-storage-modules/csi-vxflexos:nightly",
+                "image": "quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.0",
                 "imagePullPolicy": "IfNotPresent"
               },
               "configVersion": "v2.15.0",
