@@ -476,7 +476,7 @@ func TestGetk8sPath(t *testing.T) {
 			currentVersion: 1.33,
 			minVersion:     1.32,
 			maxVersion:     1.34,
-			expectedPath:   "/driverconfig/common/k8s-1.34-values.yaml",
+			expectedPath:   "/driverconfig/common/k8s-1.33-values.yaml",
 		},
 	}
 
