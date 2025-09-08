@@ -41,7 +41,7 @@ spec:
           privateKey: ""
           envs:
             - name: "NGINX_PROXY_IMAGE"
-              value: "docker.io/nginxinc/nginx-unprivileged:1.27"
+              value: "quay.io/nginx/nginx-unprivileged:1.27"
         - name: cert-manager
           enabled: true
         - name: metrics-powerstore
