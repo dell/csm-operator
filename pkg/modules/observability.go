@@ -427,7 +427,7 @@ func getOtelCollector(op operatorutils.OperatorConfig, cr csmv1.ContainerStorage
 	}
 	YamlString = string(buf)
 
-	nginxProxyImage := "nginxinc/nginx-unprivileged:1.27"
+	nginxProxyImage := "quay.io/nginx/nginx-unprivileged:1.27"
 	otelCollectorImage := "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.131.0"
 	configVersion := cr.Spec.Driver.ConfigVersion
 	// Currently supported config versions by this operator(release candidate for CSM v2.14.0) are v2.11.0, v2.12.0, v2.13.0.
