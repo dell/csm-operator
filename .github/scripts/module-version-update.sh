@@ -24,7 +24,6 @@ csm_ver="$CSM_VERSION"
 pscale_matrics="$CSM_METRICS_POWERSCALE"
 pflex_matrics="$KARAVI_METRICS_POWERFLEX"
 pmax_matrics="$CSM_METRICS_POWERMAX"
-topology="$KARAVI_TOPOLOGY"
 otel_col="$OTEL_COLLECTOR"
 pscale_driver_ver="$CSI_POWERSCALE"
 pstore_driver_ver="$CSI_POWERSTORE"
@@ -43,7 +42,6 @@ csm_ver="$(echo -e "${csm_ver}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$
 pscale_matrics="$(echo -e "${pscale_matrics}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
 pflex_matrics="$(echo -e "${pflex_matrics}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
 pmax_matrics="$(echo -e "${pmax_matrics}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
-topology="$(echo -e "${topology}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
 otel_col="$(echo -e "${otel_col}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
 dell_csi_replicator="$(echo -e "${dell_csi_replicator}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
 dell_replication_controller="$(echo -e "${dell_replication_controller}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
@@ -77,7 +75,6 @@ if [ -n $obs_ver ]; then
              sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powerflex.*|quay.io/dell/container-storage-modules/csm-metrics-powerflex:${pflex_matrics}|g" karavi-metrics-powerflex.yaml
              sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powermax.*|quay.io/dell/container-storage-modules/csm-metrics-powermax:${pmax_matrics}|g" karavi-metrics-powermax.yaml
              sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powerscale.*|quay.io/dell/container-storage-modules/csm-metrics-powerscale:${pscale_matrics}|g" karavi-metrics-powerscale.yaml
-             sed -i "s|quay.io/dell/container-storage-modules/csm-topology.*|quay.io/dell/container-storage-modules/csm-topology:${topology}|g" karavi-topology.yaml
 
              cd $GITHUB_WORKSPACE/pkg/modules
              if [ -n "$otel_col" ]; then
@@ -88,7 +85,6 @@ if [ -n $obs_ver ]; then
              cd $GITHUB_WORKSPACE/samples
              for input_file in {storage_csm_powerflex_${pflex_driver_ver}.yaml,storage_csm_powermax_${pmax_driver_ver}.yaml,storage_csm_powerscale_${pscale_driver_ver}.yaml,storage_csm_powerstore_${pstore_driver_ver}.yaml};
                do
-               sed -i "s|quay.io/dell/container-storage-modules/csm-topology.*|quay.io/dell/container-storage-modules/csm-topology:${topology}|g" $input_file
                if [ -n "$otel_col" ]; then
                 sed -i "s|ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector.*|ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:${otel_col}|g" $input_file
                fi
@@ -116,21 +112,13 @@ if [ -n $obs_ver ]; then
           cp -r $dir_to_copy $obs_ver
           rm -rf $dir_to_del
 
-          # Update latest versions of different metrics and topology
           cd $obs_ver
           sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powerflex.*|quay.io/dell/container-storage-modules/csm-metrics-powerflex:nightly|g" karavi-metrics-powerflex.yaml
           sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powermax.*|quay.io/dell/container-storage-modules/csm-metrics-powermax:nightly|g" karavi-metrics-powermax.yaml
           sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powerscale.*|quay.io/dell/container-storage-modules/csm-metrics-powerscale:nightly|g" karavi-metrics-powerscale.yaml
-          sed -i "s|quay.io/dell/container-storage-modules/csm-topology.*|quay.io/dell/container-storage-modules/csm-topology:nightly|g" karavi-topology.yaml
 
           cd $GITHUB_WORKSPACE/bundle/manifests
           input_file="dell-csm-operator.clusterserviceversion.yaml"
-          search_string_1="  - image: quay.io/dell/container-storage-modules/csm-topology"
-          search_string_2="\"image\": \"quay.io/dell/container-storage-modules/csm-topology"
-          search_string_3="value: quay.io/dell/container-storage-modules/csm-topology"
-          new_line_1="   - image: quay.io/dell/container-storage-modules/csm-topology:$topology"
-          new_line_2="                   \"image\": \"quay.io/dell/container-storage-modules/csm-topology:${topology}\","
-          new_line_3="                       value: quay.io/dell/container-storage-modules/csm-topology:$topology"
 
           search_string_4="  - image: quay.io/dell/container-storage-modules/csm-metrics-powerscale"
           search_string_5="\"image\": \"quay.io/dell/container-storage-modules/csm-metrics-powerscale"
@@ -163,15 +151,6 @@ if [ -n $obs_ver ]; then
           line_number=0
           while IFS= read -r line; do
              line_number=$((line_number + 1))
-             if [[ "$line" == *"$search_string_1"* ]]; then
-                 sed -i "$line_number c\ $new_line_1" "$input_file"
-             fi
-             if [[ "$line" == *"$search_string_2"* ]]; then
-                 sed -i "$line_number c\ $new_line_2" "$input_file"
-             fi
-             if [[ "$line" == *"$search_string_3"* ]]; then
-                 sed -i "$line_number c\ $new_line_3" "$input_file"
-             fi
              if [[ "$line" == *"$search_string_4"* ]]; then
                  sed -i "$line_number c\ $new_line_4" "$input_file"
              fi
@@ -233,7 +212,6 @@ if [ -n $obs_ver ]; then
 
           cd $GITHUB_WORKSPACE/config/manager
           file_to_be_updated="manager.yaml"
-           sed -i "s|quay.io/dell/container-storage-modules/csm-topology.*|quay.io/dell/container-storage-modules/csm-topology:${topology}|g" $file_to_be_updated
            sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powerscale.*|quay.io/dell/container-storage-modules/csm-metrics-powerscale:${pscale_matrics}|g" $file_to_be_updated
            sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powermax.*|quay.io/dell/container-storage-modules/csm-metrics-powermax:${pmax_matrics}|g" $file_to_be_updated
            sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powerflex.*|quay.io/dell/container-storage-modules/csm-metrics-powerflex:${pflex_matrics}|g" $file_to_be_updated
@@ -243,7 +221,6 @@ if [ -n $obs_ver ]; then
 
           cd $GITHUB_WORKSPACE/config/manifests/bases
           file_to_be_updated="dell-csm-operator.clusterserviceversion.yaml"
-          sed -i "s|quay.io/dell/container-storage-modules/csm-topology.*|quay.io/dell/container-storage-modules/csm-topology:${topology}|g" $file_to_be_updated
           sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powerscale.*|quay.io/dell/container-storage-modules/csm-metrics-powerscale:${pscale_matrics}|g" $file_to_be_updated
           sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powermax.*|quay.io/dell/container-storage-modules/csm-metrics-powermax:${pmax_matrics}|g" $file_to_be_updated
           sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powerflex.*|quay.io/dell/container-storage-modules/csm-metrics-powerflex:${pflex_matrics}|g" $file_to_be_updated
@@ -275,7 +252,6 @@ if [ -n $obs_ver ]; then
                   fi
              done < "$input_file"
 
-             sed -i "s|quay.io/dell/container-storage-modules/csm-topology.*|quay.io/dell/container-storage-modules/csm-topology:${topology}|g" $input_file
              if [ -n "$otel_col" ]; then
                 sed -i "s|docker.io/otel/opentelemetry-collector.*|docker.io/otel/opentelemetry-collector:${otel_col}|g" $input_file
              fi
@@ -292,7 +268,6 @@ if [ -n $obs_ver ]; then
 
           cd $GITHUB_WORKSPACE/deploy
           file_to_be_updated="operator.yaml"
-          sed -i "s|quay.io/dell/container-storage-modules/csm-topology.*|quay.io/dell/container-storage-modules/csm-topology:${topology}|g" $file_to_be_updated
           sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powerscale.*|quay.io/dell/container-storage-modules/csm-metrics-powerscale:${pscale_matrics}|g" $file_to_be_updated
           sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powermax.*|quay.io/dell/container-storage-modules/csm-metrics-powermax:${pmax_matrics}|g" $file_to_be_updated
           sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powerflex.*|quay.io/dell/container-storage-modules/csm-metrics-powerflex:${pflex_matrics}|g" $file_to_be_updated
@@ -325,7 +300,6 @@ if [ -n $obs_ver ]; then
                   fi
              done < "$input_file"
 
-             sed -i "s|quay.io/dell/container-storage-modules/csm-topology.*|quay.io/dell/container-storage-modules/csm-topology:nightly|g" $input_file
              if [ -n "$otel_col" ]; then
                 sed -i "s|ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector.*|ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:${otel_col}|g" $input_file
              fi
@@ -364,7 +338,6 @@ if [ -n $obs_ver ]; then
                      fi
                   fi
              done < "$input_file"
-             sed -i "s|quay.io/dell/container-storage-modules/csm-topology.*|quay.io/dell/container-storage-modules/csm-topology:nightly|g" $input_file
              if [ -n "$otel_col" ]; then
                 sed -i "s|ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector.*|ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:${otel_col}|g" $input_file
              fi
@@ -403,7 +376,6 @@ if [ -n $obs_ver ]; then
                      fi
                   fi
              done < "$input_file"
-             sed -i "s|quay.io/dell/container-storage-modules/csm-topology.*|quay.io/dell/container-storage-modules/csm-topology:nightly|g" $input_file
              if [ -n "$otel_col" ]; then
                 sed -i "s|ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector.*|ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:${otel_col}|g" $input_file
              fi

@@ -121,7 +121,7 @@ var (
 // +kubebuilder:rbac:groups="",resources=pods;services;services/finalizers;endpoints;persistentvolumeclaims;events;configmaps;secrets;serviceaccounts;roles;ingresses,verbs=*
 // +kubebuilder:rbac:groups="",resources=nodes,verbs=get;list;watch;create;patch;update
 // +kubebuilder:rbac:groups="",resources=persistentvolumeclaims/status,verbs=update;patch;get
-// +kubebuilder:rbac:groups="",resources=namespaces,verbs=create;get;list;watch
+// +kubebuilder:rbac:groups="",resources=namespaces,verbs=create;update;get;list;watch
 // +kubebuilder:rbac:groups="",resources=persistentvolumes,verbs=get;list;watch;create;delete;patch;update
 // +kubebuilder:rbac:groups="apps",resources=deployments;daemonsets;replicasets;statefulsets,verbs=get;list;watch;update;create;delete;patch
 // +kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=clusterroles;clusterrolebindings;replicasets;rolebindings,verbs=get;list;watch;update;create;delete;patch
