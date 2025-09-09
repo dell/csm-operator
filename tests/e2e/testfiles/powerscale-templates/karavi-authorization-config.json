@@ -1,9 +1,0 @@
-[{
-    "username":"-",
-    "password":"-",
-    "intendedEndpoint":"https://REPLACE_ENDPOINT:REPLACE_PORT",
-    "endpoint":"https://REPLACE_AUTH_ENDPOINT:REPLACE_AUTH_PORT",
-    "systemID": "REPLACE_CLUSTERNAME",
-    "insecure":true,
-    "isDefault":true
-}]
