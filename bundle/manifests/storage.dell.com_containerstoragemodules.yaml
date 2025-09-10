@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.5
+    controller-gen.kubebuilder.io/version: v0.18.0
   creationTimestamp: null
   name: containerstoragemodules.storage.dell.com
 spec:
@@ -100,6 +100,39 @@ spec:
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
+                        configSecretProviderClass:
+                          description: |-
+                            ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+                            Applicable from CSM v1.15 onwards
+                          items:
+                            description:
+                              ConfigSecretProviderClass is the config secret
+                              configuration for CSM Authorization
+                            properties:
+                              configSecretName:
+                                description:
+                                  ConfigSecretName is the name of the Kubernetes
+                                  secret created by the CSI driver
+                                type: string
+                              conjur:
+                                description:
+                                  Conjur is the secret configuration with
+                                  path to retrieve the Config secret from Conjur
+                                properties:
+                                  secretPath:
+                                    description:
+                                      SecretPath is the path to the config
+                                      secret
+                                    type: string
+                                type: object
+                              secretProviderClassName:
+                                description:
+                                  SecretProviderClassName is the name of
+                                  the SecretProviderClass that holds the config secretObject
+                                type: string
+                            type: object
+                          maxItems: 1
+                          type: array
                         controllerReconcileInterval:
                           description:
                             The interval which the reconcile of each controller
@@ -154,9 +187,7 @@ spec:
                                           This field is effectively required, but due to backwards compatibility is
                                           allowed to be empty. Instances of this type with an empty value here are
                                           almost certainly wrong.
-                                          TODO: Add other useful fields. apiVersion, kind, uid?
                                           More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                          TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                         type: string
                                       optional:
                                         description:
@@ -229,9 +260,7 @@ spec:
                                           This field is effectively required, but due to backwards compatibility is
                                           allowed to be empty. Instances of this type with an empty value here are
                                           almost certainly wrong.
-                                          TODO: Add other useful fields. apiVersion, kind, uid?
                                           More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                          TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                         type: string
                                       optional:
                                         description:
@@ -337,6 +366,54 @@ spec:
                             RedisReplicas is the number of replicas for the
                             redis deployment
                           type: integer
+                        redisSecretProviderClass:
+                          description: |-
+                            RedisSecretProviderClass is the SecretProviderClass Object details for redis
+                            Applicable from CSM v1.15 onwards
+                          items:
+                            description:
+                              RedisSecretProviderClass is the redis secret
+                              configuration for CSM Authorization
+                            properties:
+                              conjur:
+                                description:
+                                  Conjur is the secret configuration with
+                                  path to retrieve the Redis credentials from Conjur
+                                properties:
+                                  passwordPath:
+                                    description:
+                                      PasswordPath is the path to the password
+                                      in the secret
+                                    type: string
+                                  usernamePath:
+                                    description:
+                                      UsernamePath is the path to the username
+                                      in the secret
+                                    type: string
+                                type: object
+                              redisPasswordKey:
+                                description:
+                                  RedisPasswordKey is the key in the secret
+                                  that holds the Redis password
+                                type: string
+                              redisSecretName:
+                                description:
+                                  RedisSecretName is the name of the Kubernetes
+                                  secret created by the CSI driver
+                                type: string
+                              redisUsernameKey:
+                                description:
+                                  RedisUsernameKey is the key in the secret
+                                  that holds the Redis username
+                                type: string
+                              secretProviderClassName:
+                                description:
+                                  SecretProviderClassName is the name of
+                                  the SecretProviderClass that holds the Redis secretObject
+                                type: string
+                            type: object
+                          maxItems: 1
+                          type: array
                         roleService:
                           description: RoleService is the image tag for the Container
                           type: string
@@ -345,6 +422,57 @@ spec:
                             RoleServiceReplicas is the number of replicas
                             for the role service deployment
                           type: integer
+                        secretProviderClasses:
+                          description: |-
+                            SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
+                            Applicable from CSM v1.15 onwards
+                            Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
+                          properties:
+                            conjur:
+                              description:
+                                Conjur is the list SecretProviderClass names
+                                provided by Conjur
+                              items:
+                                properties:
+                                  name:
+                                    description: Name is the name of the Conjur SecretProviderClass
+                                    type: string
+                                  paths:
+                                    description:
+                                      Paths is the list of paths to the secrets
+                                      in Conjur
+                                    items:
+                                      properties:
+                                        passwordPath:
+                                          description:
+                                            PasswordPath is the path to the
+                                            password in the secret
+                                          type: string
+                                        usernamePath:
+                                          description:
+                                            UsernamePath is the path to the
+                                            username in the secret
+                                          type: string
+                                      type: object
+                                    type: array
+                                type: object
+                              type: array
+                            vault:
+                              description:
+                                Vault is the list SecretProviderClass names
+                                provided by Vault
+                              items:
+                                type: string
+                              type: array
+                          type: object
+                        secrets:
+                          description: |-
+                            Secrets is a collection of kubernetes secrets for storage system credentials
+                            Applicable from CSM v1.15 onwards
+                            Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
+                          items:
+                            type: string
+                          type: array
                         sentinel:
                           description: Sentinel is the name of the sentinel statefulSet
                           type: string
@@ -416,7 +544,9 @@ spec:
                             type: object
                           type: array
                         vaultConfigurations:
-                          description: Vaults are the vault configurations
+                          description: |-
+                            Vaults are the vault configurations
+                            Applicable till CSM v1.14
                           items:
                             description:
                               Vault is the configuration for a vault instance
@@ -492,6 +622,39 @@ spec:
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
+                        configSecretProviderClass:
+                          description: |-
+                            ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+                            Applicable from CSM v1.15 onwards
+                          items:
+                            description:
+                              ConfigSecretProviderClass is the config secret
+                              configuration for CSM Authorization
+                            properties:
+                              configSecretName:
+                                description:
+                                  ConfigSecretName is the name of the Kubernetes
+                                  secret created by the CSI driver
+                                type: string
+                              conjur:
+                                description:
+                                  Conjur is the secret configuration with
+                                  path to retrieve the Config secret from Conjur
+                                properties:
+                                  secretPath:
+                                    description:
+                                      SecretPath is the path to the config
+                                      secret
+                                    type: string
+                                type: object
+                              secretProviderClassName:
+                                description:
+                                  SecretProviderClassName is the name of
+                                  the SecretProviderClass that holds the config secretObject
+                                type: string
+                            type: object
+                          maxItems: 1
+                          type: array
                         controllerReconcileInterval:
                           description:
                             The interval which the reconcile of each controller
@@ -546,9 +709,7 @@ spec:
                                           This field is effectively required, but due to backwards compatibility is
                                           allowed to be empty. Instances of this type with an empty value here are
                                           almost certainly wrong.
-                                          TODO: Add other useful fields. apiVersion, kind, uid?
                                           More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                          TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                         type: string
                                       optional:
                                         description:
@@ -621,9 +782,7 @@ spec:
                                           This field is effectively required, but due to backwards compatibility is
                                           allowed to be empty. Instances of this type with an empty value here are
                                           almost certainly wrong.
-                                          TODO: Add other useful fields. apiVersion, kind, uid?
                                           More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                          TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                         type: string
                                       optional:
                                         description:
@@ -729,6 +888,54 @@ spec:
                             RedisReplicas is the number of replicas for the
                             redis deployment
                           type: integer
+                        redisSecretProviderClass:
+                          description: |-
+                            RedisSecretProviderClass is the SecretProviderClass Object details for redis
+                            Applicable from CSM v1.15 onwards
+                          items:
+                            description:
+                              RedisSecretProviderClass is the redis secret
+                              configuration for CSM Authorization
+                            properties:
+                              conjur:
+                                description:
+                                  Conjur is the secret configuration with
+                                  path to retrieve the Redis credentials from Conjur
+                                properties:
+                                  passwordPath:
+                                    description:
+                                      PasswordPath is the path to the password
+                                      in the secret
+                                    type: string
+                                  usernamePath:
+                                    description:
+                                      UsernamePath is the path to the username
+                                      in the secret
+                                    type: string
+                                type: object
+                              redisPasswordKey:
+                                description:
+                                  RedisPasswordKey is the key in the secret
+                                  that holds the Redis password
+                                type: string
+                              redisSecretName:
+                                description:
+                                  RedisSecretName is the name of the Kubernetes
+                                  secret created by the CSI driver
+                                type: string
+                              redisUsernameKey:
+                                description:
+                                  RedisUsernameKey is the key in the secret
+                                  that holds the Redis username
+                                type: string
+                              secretProviderClassName:
+                                description:
+                                  SecretProviderClassName is the name of
+                                  the SecretProviderClass that holds the Redis secretObject
+                                type: string
+                            type: object
+                          maxItems: 1
+                          type: array
                         roleService:
                           description: RoleService is the image tag for the Container
                           type: string
@@ -737,6 +944,57 @@ spec:
                             RoleServiceReplicas is the number of replicas
                             for the role service deployment
                           type: integer
+                        secretProviderClasses:
+                          description: |-
+                            SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
+                            Applicable from CSM v1.15 onwards
+                            Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
+                          properties:
+                            conjur:
+                              description:
+                                Conjur is the list SecretProviderClass names
+                                provided by Conjur
+                              items:
+                                properties:
+                                  name:
+                                    description: Name is the name of the Conjur SecretProviderClass
+                                    type: string
+                                  paths:
+                                    description:
+                                      Paths is the list of paths to the secrets
+                                      in Conjur
+                                    items:
+                                      properties:
+                                        passwordPath:
+                                          description:
+                                            PasswordPath is the path to the
+                                            password in the secret
+                                          type: string
+                                        usernamePath:
+                                          description:
+                                            UsernamePath is the path to the
+                                            username in the secret
+                                          type: string
+                                      type: object
+                                    type: array
+                                type: object
+                              type: array
+                            vault:
+                              description:
+                                Vault is the list SecretProviderClass names
+                                provided by Vault
+                              items:
+                                type: string
+                              type: array
+                          type: object
+                        secrets:
+                          description: |-
+                            Secrets is a collection of kubernetes secrets for storage system credentials
+                            Applicable from CSM v1.15 onwards
+                            Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
+                          items:
+                            type: string
+                          type: array
                         sentinel:
                           description: Sentinel is the name of the sentinel statefulSet
                           type: string
@@ -808,7 +1066,9 @@ spec:
                             type: object
                           type: array
                         vaultConfigurations:
-                          description: Vaults are the vault configurations
+                          description: |-
+                            Vaults are the vault configurations
+                            Applicable till CSM v1.14
                           items:
                             description:
                               Vault is the configuration for a vault instance
@@ -902,6 +1162,39 @@ spec:
                           commander:
                             description: Commander is the image tag for the Container
                             type: string
+                          configSecretProviderClass:
+                            description: |-
+                              ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+                              Applicable from CSM v1.15 onwards
+                            items:
+                              description:
+                                ConfigSecretProviderClass is the config secret
+                                configuration for CSM Authorization
+                              properties:
+                                configSecretName:
+                                  description:
+                                    ConfigSecretName is the name of the Kubernetes
+                                    secret created by the CSI driver
+                                  type: string
+                                conjur:
+                                  description:
+                                    Conjur is the secret configuration with
+                                    path to retrieve the Config secret from Conjur
+                                  properties:
+                                    secretPath:
+                                      description:
+                                        SecretPath is the path to the config
+                                        secret
+                                      type: string
+                                  type: object
+                                secretProviderClassName:
+                                  description:
+                                    SecretProviderClassName is the name of
+                                    the SecretProviderClass that holds the config secretObject
+                                  type: string
+                              type: object
+                            maxItems: 1
+                            type: array
                           controllerReconcileInterval:
                             description:
                               The interval which the reconcile of each controller
@@ -956,9 +1249,7 @@ spec:
                                             This field is effectively required, but due to backwards compatibility is
                                             allowed to be empty. Instances of this type with an empty value here are
                                             almost certainly wrong.
-                                            TODO: Add other useful fields. apiVersion, kind, uid?
                                             More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                            TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                           type: string
                                         optional:
                                           description:
@@ -1031,9 +1322,7 @@ spec:
                                             This field is effectively required, but due to backwards compatibility is
                                             allowed to be empty. Instances of this type with an empty value here are
                                             almost certainly wrong.
-                                            TODO: Add other useful fields. apiVersion, kind, uid?
                                             More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                            TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                           type: string
                                         optional:
                                           description:
@@ -1141,6 +1430,54 @@ spec:
                               RedisReplicas is the number of replicas for
                               the redis deployment
                             type: integer
+                          redisSecretProviderClass:
+                            description: |-
+                              RedisSecretProviderClass is the SecretProviderClass Object details for redis
+                              Applicable from CSM v1.15 onwards
+                            items:
+                              description:
+                                RedisSecretProviderClass is the redis secret
+                                configuration for CSM Authorization
+                              properties:
+                                conjur:
+                                  description:
+                                    Conjur is the secret configuration with
+                                    path to retrieve the Redis credentials from Conjur
+                                  properties:
+                                    passwordPath:
+                                      description:
+                                        PasswordPath is the path to the password
+                                        in the secret
+                                      type: string
+                                    usernamePath:
+                                      description:
+                                        UsernamePath is the path to the username
+                                        in the secret
+                                      type: string
+                                  type: object
+                                redisPasswordKey:
+                                  description:
+                                    RedisPasswordKey is the key in the secret
+                                    that holds the Redis password
+                                  type: string
+                                redisSecretName:
+                                  description:
+                                    RedisSecretName is the name of the Kubernetes
+                                    secret created by the CSI driver
+                                  type: string
+                                redisUsernameKey:
+                                  description:
+                                    RedisUsernameKey is the key in the secret
+                                    that holds the Redis username
+                                  type: string
+                                secretProviderClassName:
+                                  description:
+                                    SecretProviderClassName is the name of
+                                    the SecretProviderClass that holds the Redis secretObject
+                                  type: string
+                              type: object
+                            maxItems: 1
+                            type: array
                           roleService:
                             description: RoleService is the image tag for the Container
                             type: string
@@ -1149,6 +1486,57 @@ spec:
                               RoleServiceReplicas is the number of replicas
                               for the role service deployment
                             type: integer
+                          secretProviderClasses:
+                            description: |-
+                              SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
+                              Applicable from CSM v1.15 onwards
+                              Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
+                            properties:
+                              conjur:
+                                description:
+                                  Conjur is the list SecretProviderClass
+                                  names provided by Conjur
+                                items:
+                                  properties:
+                                    name:
+                                      description: Name is the name of the Conjur SecretProviderClass
+                                      type: string
+                                    paths:
+                                      description:
+                                        Paths is the list of paths to the
+                                        secrets in Conjur
+                                      items:
+                                        properties:
+                                          passwordPath:
+                                            description:
+                                              PasswordPath is the path to
+                                              the password in the secret
+                                            type: string
+                                          usernamePath:
+                                            description:
+                                              UsernamePath is the path to
+                                              the username in the secret
+                                            type: string
+                                        type: object
+                                      type: array
+                                  type: object
+                                type: array
+                              vault:
+                                description:
+                                  Vault is the list SecretProviderClass names
+                                  provided by Vault
+                                items:
+                                  type: string
+                                type: array
+                            type: object
+                          secrets:
+                            description: |-
+                              Secrets is a collection of kubernetes secrets for storage system credentials
+                              Applicable from CSM v1.15 onwards
+                              Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
+                            items:
+                              type: string
+                            type: array
                           sentinel:
                             description: Sentinel is the name of the sentinel statefulSet
                             type: string
@@ -1220,7 +1608,9 @@ spec:
                               type: object
                             type: array
                           vaultConfigurations:
-                            description: Vaults are the vault configurations
+                            description: |-
+                              Vaults are the vault configurations
+                              Applicable till CSM v1.14
                             items:
                               description:
                                 Vault is the configuration for a vault instance
@@ -1292,6 +1682,39 @@ spec:
                         commander:
                           description: Commander is the image tag for the Container
                           type: string
+                        configSecretProviderClass:
+                          description: |-
+                            ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+                            Applicable from CSM v1.15 onwards
+                          items:
+                            description:
+                              ConfigSecretProviderClass is the config secret
+                              configuration for CSM Authorization
+                            properties:
+                              configSecretName:
+                                description:
+                                  ConfigSecretName is the name of the Kubernetes
+                                  secret created by the CSI driver
+                                type: string
+                              conjur:
+                                description:
+                                  Conjur is the secret configuration with
+                                  path to retrieve the Config secret from Conjur
+                                properties:
+                                  secretPath:
+                                    description:
+                                      SecretPath is the path to the config
+                                      secret
+                                    type: string
+                                type: object
+                              secretProviderClassName:
+                                description:
+                                  SecretProviderClassName is the name of
+                                  the SecretProviderClass that holds the config secretObject
+                                type: string
+                            type: object
+                          maxItems: 1
+                          type: array
                         controllerReconcileInterval:
                           description:
                             The interval which the reconcile of each controller
@@ -1346,9 +1769,7 @@ spec:
                                           This field is effectively required, but due to backwards compatibility is
                                           allowed to be empty. Instances of this type with an empty value here are
                                           almost certainly wrong.
-                                          TODO: Add other useful fields. apiVersion, kind, uid?
                                           More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                          TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                         type: string
                                       optional:
                                         description:
@@ -1421,9 +1842,7 @@ spec:
                                           This field is effectively required, but due to backwards compatibility is
                                           allowed to be empty. Instances of this type with an empty value here are
                                           almost certainly wrong.
-                                          TODO: Add other useful fields. apiVersion, kind, uid?
                                           More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                          TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                         type: string
                                       optional:
                                         description:
@@ -1529,6 +1948,54 @@ spec:
                             RedisReplicas is the number of replicas for the
                             redis deployment
                           type: integer
+                        redisSecretProviderClass:
+                          description: |-
+                            RedisSecretProviderClass is the SecretProviderClass Object details for redis
+                            Applicable from CSM v1.15 onwards
+                          items:
+                            description:
+                              RedisSecretProviderClass is the redis secret
+                              configuration for CSM Authorization
+                            properties:
+                              conjur:
+                                description:
+                                  Conjur is the secret configuration with
+                                  path to retrieve the Redis credentials from Conjur
+                                properties:
+                                  passwordPath:
+                                    description:
+                                      PasswordPath is the path to the password
+                                      in the secret
+                                    type: string
+                                  usernamePath:
+                                    description:
+                                      UsernamePath is the path to the username
+                                      in the secret
+                                    type: string
+                                type: object
+                              redisPasswordKey:
+                                description:
+                                  RedisPasswordKey is the key in the secret
+                                  that holds the Redis password
+                                type: string
+                              redisSecretName:
+                                description:
+                                  RedisSecretName is the name of the Kubernetes
+                                  secret created by the CSI driver
+                                type: string
+                              redisUsernameKey:
+                                description:
+                                  RedisUsernameKey is the key in the secret
+                                  that holds the Redis username
+                                type: string
+                              secretProviderClassName:
+                                description:
+                                  SecretProviderClassName is the name of
+                                  the SecretProviderClass that holds the Redis secretObject
+                                type: string
+                            type: object
+                          maxItems: 1
+                          type: array
                         roleService:
                           description: RoleService is the image tag for the Container
                           type: string
@@ -1537,6 +2004,57 @@ spec:
                             RoleServiceReplicas is the number of replicas
                             for the role service deployment
                           type: integer
+                        secretProviderClasses:
+                          description: |-
+                            SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
+                            Applicable from CSM v1.15 onwards
+                            Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
+                          properties:
+                            conjur:
+                              description:
+                                Conjur is the list SecretProviderClass names
+                                provided by Conjur
+                              items:
+                                properties:
+                                  name:
+                                    description: Name is the name of the Conjur SecretProviderClass
+                                    type: string
+                                  paths:
+                                    description:
+                                      Paths is the list of paths to the secrets
+                                      in Conjur
+                                    items:
+                                      properties:
+                                        passwordPath:
+                                          description:
+                                            PasswordPath is the path to the
+                                            password in the secret
+                                          type: string
+                                        usernamePath:
+                                          description:
+                                            UsernamePath is the path to the
+                                            username in the secret
+                                          type: string
+                                      type: object
+                                    type: array
+                                type: object
+                              type: array
+                            vault:
+                              description:
+                                Vault is the list SecretProviderClass names
+                                provided by Vault
+                              items:
+                                type: string
+                              type: array
+                          type: object
+                        secrets:
+                          description: |-
+                            Secrets is a collection of kubernetes secrets for storage system credentials
+                            Applicable from CSM v1.15 onwards
+                            Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
+                          items:
+                            type: string
+                          type: array
                         sentinel:
                           description: Sentinel is the name of the sentinel statefulSet
                           type: string
@@ -1608,7 +2126,9 @@ spec:
                             type: object
                           type: array
                         vaultConfigurations:
-                          description: Vaults are the vault configurations
+                          description: |-
+                            Vaults are the vault configurations
+                            Applicable till CSM v1.14
                           items:
                             description:
                               Vault is the configuration for a vault instance
@@ -1647,6 +2167,7 @@ spec:
                           type: array
                       type: object
                     replicas:
+                      default: 2
                       description:
                         Replicas is the count of controllers for Controller
                         plugin
@@ -1685,6 +2206,39 @@ spec:
                           commander:
                             description: Commander is the image tag for the Container
                             type: string
+                          configSecretProviderClass:
+                            description: |-
+                              ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+                              Applicable from CSM v1.15 onwards
+                            items:
+                              description:
+                                ConfigSecretProviderClass is the config secret
+                                configuration for CSM Authorization
+                              properties:
+                                configSecretName:
+                                  description:
+                                    ConfigSecretName is the name of the Kubernetes
+                                    secret created by the CSI driver
+                                  type: string
+                                conjur:
+                                  description:
+                                    Conjur is the secret configuration with
+                                    path to retrieve the Config secret from Conjur
+                                  properties:
+                                    secretPath:
+                                      description:
+                                        SecretPath is the path to the config
+                                        secret
+                                      type: string
+                                  type: object
+                                secretProviderClassName:
+                                  description:
+                                    SecretProviderClassName is the name of
+                                    the SecretProviderClass that holds the config secretObject
+                                  type: string
+                              type: object
+                            maxItems: 1
+                            type: array
                           controllerReconcileInterval:
                             description:
                               The interval which the reconcile of each controller
@@ -1739,9 +2293,7 @@ spec:
                                             This field is effectively required, but due to backwards compatibility is
                                             allowed to be empty. Instances of this type with an empty value here are
                                             almost certainly wrong.
-                                            TODO: Add other useful fields. apiVersion, kind, uid?
                                             More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                            TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                           type: string
                                         optional:
                                           description:
@@ -1814,9 +2366,7 @@ spec:
                                             This field is effectively required, but due to backwards compatibility is
                                             allowed to be empty. Instances of this type with an empty value here are
                                             almost certainly wrong.
-                                            TODO: Add other useful fields. apiVersion, kind, uid?
                                             More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                            TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                           type: string
                                         optional:
                                           description:
@@ -1924,6 +2474,54 @@ spec:
                               RedisReplicas is the number of replicas for
                               the redis deployment
                             type: integer
+                          redisSecretProviderClass:
+                            description: |-
+                              RedisSecretProviderClass is the SecretProviderClass Object details for redis
+                              Applicable from CSM v1.15 onwards
+                            items:
+                              description:
+                                RedisSecretProviderClass is the redis secret
+                                configuration for CSM Authorization
+                              properties:
+                                conjur:
+                                  description:
+                                    Conjur is the secret configuration with
+                                    path to retrieve the Redis credentials from Conjur
+                                  properties:
+                                    passwordPath:
+                                      description:
+                                        PasswordPath is the path to the password
+                                        in the secret
+                                      type: string
+                                    usernamePath:
+                                      description:
+                                        UsernamePath is the path to the username
+                                        in the secret
+                                      type: string
+                                  type: object
+                                redisPasswordKey:
+                                  description:
+                                    RedisPasswordKey is the key in the secret
+                                    that holds the Redis password
+                                  type: string
+                                redisSecretName:
+                                  description:
+                                    RedisSecretName is the name of the Kubernetes
+                                    secret created by the CSI driver
+                                  type: string
+                                redisUsernameKey:
+                                  description:
+                                    RedisUsernameKey is the key in the secret
+                                    that holds the Redis username
+                                  type: string
+                                secretProviderClassName:
+                                  description:
+                                    SecretProviderClassName is the name of
+                                    the SecretProviderClass that holds the Redis secretObject
+                                  type: string
+                              type: object
+                            maxItems: 1
+                            type: array
                           roleService:
                             description: RoleService is the image tag for the Container
                             type: string
@@ -1932,6 +2530,57 @@ spec:
                               RoleServiceReplicas is the number of replicas
                               for the role service deployment
                             type: integer
+                          secretProviderClasses:
+                            description: |-
+                              SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
+                              Applicable from CSM v1.15 onwards
+                              Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
+                            properties:
+                              conjur:
+                                description:
+                                  Conjur is the list SecretProviderClass
+                                  names provided by Conjur
+                                items:
+                                  properties:
+                                    name:
+                                      description: Name is the name of the Conjur SecretProviderClass
+                                      type: string
+                                    paths:
+                                      description:
+                                        Paths is the list of paths to the
+                                        secrets in Conjur
+                                      items:
+                                        properties:
+                                          passwordPath:
+                                            description:
+                                              PasswordPath is the path to
+                                              the password in the secret
+                                            type: string
+                                          usernamePath:
+                                            description:
+                                              UsernamePath is the path to
+                                              the username in the secret
+                                            type: string
+                                        type: object
+                                      type: array
+                                  type: object
+                                type: array
+                              vault:
+                                description:
+                                  Vault is the list SecretProviderClass names
+                                  provided by Vault
+                                items:
+                                  type: string
+                                type: array
+                            type: object
+                          secrets:
+                            description: |-
+                              Secrets is a collection of kubernetes secrets for storage system credentials
+                              Applicable from CSM v1.15 onwards
+                              Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
+                            items:
+                              type: string
+                            type: array
                           sentinel:
                             description: Sentinel is the name of the sentinel statefulSet
                             type: string
@@ -2003,7 +2652,9 @@ spec:
                               type: object
                             type: array
                           vaultConfigurations:
-                            description: Vaults are the vault configurations
+                            description: |-
+                              Vaults are the vault configurations
+                              Applicable till CSM v1.14
                             items:
                               description:
                                 Vault is the configuration for a vault instance
@@ -2107,6 +2758,40 @@ spec:
                             commander:
                               description: Commander is the image tag for the Container
                               type: string
+                            configSecretProviderClass:
+                              description: |-
+                                ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+                                Applicable from CSM v1.15 onwards
+                              items:
+                                description:
+                                  ConfigSecretProviderClass is the config
+                                  secret configuration for CSM Authorization
+                                properties:
+                                  configSecretName:
+                                    description:
+                                      ConfigSecretName is the name of the
+                                      Kubernetes secret created by the CSI driver
+                                    type: string
+                                  conjur:
+                                    description:
+                                      Conjur is the secret configuration
+                                      with path to retrieve the Config secret from Conjur
+                                    properties:
+                                      secretPath:
+                                        description:
+                                          SecretPath is the path to the config
+                                          secret
+                                        type: string
+                                    type: object
+                                  secretProviderClassName:
+                                    description:
+                                      SecretProviderClassName is the name
+                                      of the SecretProviderClass that holds the config
+                                      secretObject
+                                    type: string
+                                type: object
+                              maxItems: 1
+                              type: array
                             controllerReconcileInterval:
                               description:
                                 The interval which the reconcile of each
@@ -2161,9 +2846,7 @@ spec:
                                               This field is effectively required, but due to backwards compatibility is
                                               allowed to be empty. Instances of this type with an empty value here are
                                               almost certainly wrong.
-                                              TODO: Add other useful fields. apiVersion, kind, uid?
                                               More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                              TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                             type: string
                                           optional:
                                             description:
@@ -2237,9 +2920,7 @@ spec:
                                               This field is effectively required, but due to backwards compatibility is
                                               allowed to be empty. Instances of this type with an empty value here are
                                               almost certainly wrong.
-                                              TODO: Add other useful fields. apiVersion, kind, uid?
                                               More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                              TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                             type: string
                                           optional:
                                             description:
@@ -2348,6 +3029,56 @@ spec:
                                 RedisReplicas is the number of replicas for
                                 the redis deployment
                               type: integer
+                            redisSecretProviderClass:
+                              description: |-
+                                RedisSecretProviderClass is the SecretProviderClass Object details for redis
+                                Applicable from CSM v1.15 onwards
+                              items:
+                                description:
+                                  RedisSecretProviderClass is the redis secret
+                                  configuration for CSM Authorization
+                                properties:
+                                  conjur:
+                                    description:
+                                      Conjur is the secret configuration
+                                      with path to retrieve the Redis credentials from
+                                      Conjur
+                                    properties:
+                                      passwordPath:
+                                        description:
+                                          PasswordPath is the path to the
+                                          password in the secret
+                                        type: string
+                                      usernamePath:
+                                        description:
+                                          UsernamePath is the path to the
+                                          username in the secret
+                                        type: string
+                                    type: object
+                                  redisPasswordKey:
+                                    description:
+                                      RedisPasswordKey is the key in the
+                                      secret that holds the Redis password
+                                    type: string
+                                  redisSecretName:
+                                    description:
+                                      RedisSecretName is the name of the
+                                      Kubernetes secret created by the CSI driver
+                                    type: string
+                                  redisUsernameKey:
+                                    description:
+                                      RedisUsernameKey is the key in the
+                                      secret that holds the Redis username
+                                    type: string
+                                  secretProviderClassName:
+                                    description:
+                                      SecretProviderClassName is the name
+                                      of the SecretProviderClass that holds the Redis
+                                      secretObject
+                                    type: string
+                                type: object
+                              maxItems: 1
+                              type: array
                             roleService:
                               description: RoleService is the image tag for the Container
                               type: string
@@ -2356,6 +3087,59 @@ spec:
                                 RoleServiceReplicas is the number of replicas
                                 for the role service deployment
                               type: integer
+                            secretProviderClasses:
+                              description: |-
+                                SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
+                                Applicable from CSM v1.15 onwards
+                                Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
+                              properties:
+                                conjur:
+                                  description:
+                                    Conjur is the list SecretProviderClass
+                                    names provided by Conjur
+                                  items:
+                                    properties:
+                                      name:
+                                        description:
+                                          Name is the name of the Conjur
+                                          SecretProviderClass
+                                        type: string
+                                      paths:
+                                        description:
+                                          Paths is the list of paths to the
+                                          secrets in Conjur
+                                        items:
+                                          properties:
+                                            passwordPath:
+                                              description:
+                                                PasswordPath is the path
+                                                to the password in the secret
+                                              type: string
+                                            usernamePath:
+                                              description:
+                                                UsernamePath is the path
+                                                to the username in the secret
+                                              type: string
+                                          type: object
+                                        type: array
+                                    type: object
+                                  type: array
+                                vault:
+                                  description:
+                                    Vault is the list SecretProviderClass
+                                    names provided by Vault
+                                  items:
+                                    type: string
+                                  type: array
+                              type: object
+                            secrets:
+                              description: |-
+                                Secrets is a collection of kubernetes secrets for storage system credentials
+                                Applicable from CSM v1.15 onwards
+                                Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
+                              items:
+                                type: string
+                              type: array
                             sentinel:
                               description: Sentinel is the name of the sentinel statefulSet
                               type: string
@@ -2427,7 +3211,9 @@ spec:
                                 type: object
                               type: array
                             vaultConfigurations:
-                              description: Vaults are the vault configurations
+                              description: |-
+                                Vaults are the vault configurations
+                                Applicable till CSM v1.14
                               items:
                                 description:
                                   Vault is the configuration for a vault
@@ -2517,6 +3303,40 @@ spec:
                             commander:
                               description: Commander is the image tag for the Container
                               type: string
+                            configSecretProviderClass:
+                              description: |-
+                                ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+                                Applicable from CSM v1.15 onwards
+                              items:
+                                description:
+                                  ConfigSecretProviderClass is the config
+                                  secret configuration for CSM Authorization
+                                properties:
+                                  configSecretName:
+                                    description:
+                                      ConfigSecretName is the name of the
+                                      Kubernetes secret created by the CSI driver
+                                    type: string
+                                  conjur:
+                                    description:
+                                      Conjur is the secret configuration
+                                      with path to retrieve the Config secret from Conjur
+                                    properties:
+                                      secretPath:
+                                        description:
+                                          SecretPath is the path to the config
+                                          secret
+                                        type: string
+                                    type: object
+                                  secretProviderClassName:
+                                    description:
+                                      SecretProviderClassName is the name
+                                      of the SecretProviderClass that holds the config
+                                      secretObject
+                                    type: string
+                                type: object
+                              maxItems: 1
+                              type: array
                             controllerReconcileInterval:
                               description:
                                 The interval which the reconcile of each
@@ -2571,9 +3391,7 @@ spec:
                                               This field is effectively required, but due to backwards compatibility is
                                               allowed to be empty. Instances of this type with an empty value here are
                                               almost certainly wrong.
-                                              TODO: Add other useful fields. apiVersion, kind, uid?
                                               More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                              TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                             type: string
                                           optional:
                                             description:
@@ -2647,9 +3465,7 @@ spec:
                                               This field is effectively required, but due to backwards compatibility is
                                               allowed to be empty. Instances of this type with an empty value here are
                                               almost certainly wrong.
-                                              TODO: Add other useful fields. apiVersion, kind, uid?
                                               More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                              TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                             type: string
                                           optional:
                                             description:
@@ -2758,6 +3574,56 @@ spec:
                                 RedisReplicas is the number of replicas for
                                 the redis deployment
                               type: integer
+                            redisSecretProviderClass:
+                              description: |-
+                                RedisSecretProviderClass is the SecretProviderClass Object details for redis
+                                Applicable from CSM v1.15 onwards
+                              items:
+                                description:
+                                  RedisSecretProviderClass is the redis secret
+                                  configuration for CSM Authorization
+                                properties:
+                                  conjur:
+                                    description:
+                                      Conjur is the secret configuration
+                                      with path to retrieve the Redis credentials from
+                                      Conjur
+                                    properties:
+                                      passwordPath:
+                                        description:
+                                          PasswordPath is the path to the
+                                          password in the secret
+                                        type: string
+                                      usernamePath:
+                                        description:
+                                          UsernamePath is the path to the
+                                          username in the secret
+                                        type: string
+                                    type: object
+                                  redisPasswordKey:
+                                    description:
+                                      RedisPasswordKey is the key in the
+                                      secret that holds the Redis password
+                                    type: string
+                                  redisSecretName:
+                                    description:
+                                      RedisSecretName is the name of the
+                                      Kubernetes secret created by the CSI driver
+                                    type: string
+                                  redisUsernameKey:
+                                    description:
+                                      RedisUsernameKey is the key in the
+                                      secret that holds the Redis username
+                                    type: string
+                                  secretProviderClassName:
+                                    description:
+                                      SecretProviderClassName is the name
+                                      of the SecretProviderClass that holds the Redis
+                                      secretObject
+                                    type: string
+                                type: object
+                              maxItems: 1
+                              type: array
                             roleService:
                               description: RoleService is the image tag for the Container
                               type: string
@@ -2766,6 +3632,59 @@ spec:
                                 RoleServiceReplicas is the number of replicas
                                 for the role service deployment
                               type: integer
+                            secretProviderClasses:
+                              description: |-
+                                SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
+                                Applicable from CSM v1.15 onwards
+                                Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
+                              properties:
+                                conjur:
+                                  description:
+                                    Conjur is the list SecretProviderClass
+                                    names provided by Conjur
+                                  items:
+                                    properties:
+                                      name:
+                                        description:
+                                          Name is the name of the Conjur
+                                          SecretProviderClass
+                                        type: string
+                                      paths:
+                                        description:
+                                          Paths is the list of paths to the
+                                          secrets in Conjur
+                                        items:
+                                          properties:
+                                            passwordPath:
+                                              description:
+                                                PasswordPath is the path
+                                                to the password in the secret
+                                              type: string
+                                            usernamePath:
+                                              description:
+                                                UsernamePath is the path
+                                                to the username in the secret
+                                              type: string
+                                          type: object
+                                        type: array
+                                    type: object
+                                  type: array
+                                vault:
+                                  description:
+                                    Vault is the list SecretProviderClass
+                                    names provided by Vault
+                                  items:
+                                    type: string
+                                  type: array
+                              type: object
+                            secrets:
+                              description: |-
+                                Secrets is a collection of kubernetes secrets for storage system credentials
+                                Applicable from CSM v1.15 onwards
+                                Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
+                              items:
+                                type: string
+                              type: array
                             sentinel:
                               description: Sentinel is the name of the sentinel statefulSet
                               type: string
@@ -2837,7 +3756,9 @@ spec:
                                 type: object
                               type: array
                             vaultConfigurations:
-                              description: Vaults are the vault configurations
+                              description: |-
+                                Vaults are the vault configurations
+                                Applicable till CSM v1.14
                               items:
                                 description:
                                   Vault is the configuration for a vault
@@ -2894,20 +3815,26 @@ spec:
                   description: ControllerStatus is the status of Controller pods
                   properties:
                     available:
+                      description: Available is the number of available pods
                       type: string
                     desired:
+                      description: Desired is the number of desired pods
                       type: string
                     failed:
+                      description: Failed is the number of failed pods
                       type: string
                   type: object
                 nodeStatus:
                   description: NodeStatus is the status of Controller pods
                   properties:
                     available:
+                      description: Available is the number of available pods
                       type: string
                     desired:
+                      description: Desired is the number of desired pods
                       type: string
                     failed:
+                      description: Failed is the number of failed pods
                       type: string
                   type: object
                 state:

@@ -160,9 +160,17 @@ type Module struct {
 
 // PodStatus - Represents PodStatus in a daemonset or deployment
 type PodStatus struct {
+	// Available is the number of available pods
+	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="Available",xDescriptors="urn:alm:descriptor:text"
 	Available string `json:"available,omitempty"`
-	Desired   string `json:"desired,omitempty"`
-	Failed    string `json:"failed,omitempty"`
+
+	// Desired is the number of desired pods
+	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="Desired",xDescriptors="urn:alm:descriptor:text"
+	Desired string `json:"desired,omitempty"`
+
+	// Failed is the number of failed pods
+	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="Failed",xDescriptors="urn:alm:descriptor:text"
+	Failed string `json:"failed,omitempty"`
 }
 
 // Driver of CSIDriver
