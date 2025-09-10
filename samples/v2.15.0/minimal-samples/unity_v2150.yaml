@@ -8,3 +8,5 @@ spec:
     csiDriverType: "unity"
     configVersion: v2.15.0
     forceRemoveDriver: true
+    common:
+      image: quay.io/dell/container-storage-modules/csi-unity:v2.15.0

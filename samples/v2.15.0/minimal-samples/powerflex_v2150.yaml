@@ -8,17 +8,15 @@ spec:
     csiDriverType: "powerflex"
     configVersion: v2.15.0
     forceRemoveDriver: true
-    node:
-      envs:
-        - name: X_CSI_SDC_SFTP_REPO_ENABLED
-          value: "false"
+    common:
+      image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.0
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: false
       # For Auth 2.0, use v2.2.0 as configVersion
-      configVersion: v2.3.0
+      configVersion: v2.2.0
       components:
         - name: karavi-authorization-proxy
           envs:
@@ -39,6 +37,8 @@ spec:
       # enabled: Enable/Disable observability
       enabled: false
       components:
+        - name: topology
+          enabled: true
         - name: otel-collector
           enabled: true
         - name: cert-manager

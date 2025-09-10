@@ -44,7 +44,7 @@ spec:
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: "quay.io/dell/container-storage-modules/csi-powerstore:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-powerstore:v2.15.0"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_POWERSTORE_NODE_NAME_PREFIX
@@ -62,42 +62,53 @@ spec:
         # Default value: false
         - name: "GOPOWERSTORE_DEBUG"
           value: "false"
-        # X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION: It determines if driver is going to skip verification of TLS certificates.
-        # This value acts as a default value for skipCertificateValidation, if not specified for a cluster config in secret
+        # CERT_SECRET_COUNT: Represents number of certificate secrets, which user is going to create for
+        # ssl authentication. (powerstore-cert-0..powerstore-cert-n)
+        # This field is only verified if X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION is set to false
+        # Allowed values: n, where n > 0
+        # Default value: None
+        - name: CERT_SECRET_COUNT
+          value: "1"
+        # X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION: Specifies if the driver is going to validate certs.
+        # If it is set to false, then a secret powerstore-certs has to be created with an X.509 certificate of CA which signed the certificate.
         # Allowed values:
         #   true: skip certificate verification
         #   false: verify certificates
         # Default value: true
         - name: X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION
           value: "true"
-        # certSecretCount: Represents number of certificate secrets, which user is going to create for
-        # ssl authentication. (powerstore-cert-0..powerstore-cert-n)
-        # Allowed values: n, where n > 0
-        # Default value: None
-        - name: "CERT_SECRET_COUNT"
-          value: "1"
-        - name: X_CSM_AUTH_ENABLED
-          value: "false"
+        # X_CSI_POWERSTORE_API_TIMEOUT: Defines the timeout for PowerStore REST API calls.
+        # Allowed values: Number followed by unit (s,m,h)
+        # Examples: 10s, 1m, 1h
+        # Default value: 120s
+        - name: X_CSI_POWERSTORE_API_TIMEOUT
+          value: "120s"
+        # X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT: Defines the timeout (in seconds) for podmon array connectivity timeout check
+        # Allowed values: Number followed by unit (s,m,h)
+        # Examples: 10s, 1m, 1h
+        # Default value: 10s
+        - name: "X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT"
+          value: "10s"
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
-        image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
+        image: registry.k8s.io/sig-storage/csi-provisioner:v5.3.0
         args: ["--volume-name-prefix=csivol"]
       - name: attacher
-        image: registry.k8s.io/sig-storage/csi-attacher:v4.8.0
+        image: registry.k8s.io/sig-storage/csi-attacher:v4.9.0
       - name: registrar
-        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0
       - name: resizer
-        image: registry.k8s.io/sig-storage/csi-resizer:v1.13.1
+        image: registry.k8s.io/sig-storage/csi-resizer:v1.14.0
       - name: snapshotter
-        image: registry.k8s.io/sig-storage/csi-snapshotter:v8.2.0
+        image: registry.k8s.io/sig-storage/csi-snapshotter:v8.3.0
       - name: csi-metadata-retriever
-        image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0
+        image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.11.0
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
         args: ["--monitor-interval=60s"]
-        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.14.0
+        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.15.0
     # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
     # Configure only when the storageCapacity is set as "true"
     # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
@@ -212,13 +223,13 @@ spec:
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
-      # enabled: Enable/Disable csm-authorization
+      # enable: Enable/Disable csm-authorization
       # Default value: false
       enabled: false
       configVersion: v2.3.0
       components:
         - name: karavi-authorization-proxy
-          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
           envs:
             # proxyHost: hostname of the csm-authorization server
             # Default value: none
@@ -238,7 +249,7 @@ spec:
       configVersion: v1.14.0
       components:
         - name: podmon-controller
-          image: quay.io/dell/container-storage-modules/podmon:v1.14.0
+          image: quay.io/dell/container-storage-modules/podmon:nightly
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-powerstore"
@@ -253,7 +264,7 @@ spec:
             - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
             - "--driverPath=csi-powerstore.dellemc.com"
         - name: podmon-node
-          image: quay.io/dell/container-storage-modules/podmon:v1.14.0
+          image: quay.io/dell/container-storage-modules/podmon:nightly
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
@@ -287,7 +298,7 @@ spec:
           # image: Image to use for dell-csi-replicator. This shouldn't be changed
           # Allowed values: string
           # Default value: None
-          image: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.13.0
+          image: quay.io/dell/container-storage-modules/dell-csi-replicator:nightly
           envs:
             # replicationPrefix: prefix to prepend to storage classes parameters
             # Allowed values: string
@@ -301,7 +312,7 @@ spec:
         - name: dell-replication-controller-manager
           # image: Defines controller image. This shouldn't be changed
           # Allowed values: string
-          image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0
+          image: quay.io/dell/container-storage-modules/dell-replication-controller:nightly
           envs:
             # Replication log level
             # Allowed values: "error", "warn"/"warning", "info", "debug"

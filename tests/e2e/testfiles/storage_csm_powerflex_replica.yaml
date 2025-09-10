@@ -50,7 +50,7 @@ spec:
           - name: HOST_PID
             value: "1"
           - name: MDM
-            value: "10.x.x.x,10.x.x.x"  # provide MDM value
+            value: "10.x.x.x,10.x.x.x" # provide MDM value
       # health monitor is disabled by default, refer to driver documentation before enabling it
       # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
       - name: csi-external-health-monitor-controller
@@ -162,11 +162,11 @@ spec:
         name: sdc
         envs:
           - name: MDM
-            value: "REPLACE_MDM"  # provide MDM value
+            value: "REPLACE_MDM" # provide MDM value
           - name: REPO_ADDRESS
-            value: "REPLACE_SFTP_REPO_ADDRESS"  # SFTP/private repository address. Format: "protocol://address"
+            value: "REPLACE_SFTP_REPO_ADDRESS" # SFTP/private repository address. Format: "protocol://address"
           - name: REPO_USER
-            value: "REPLACE_SFTP_REPO_USER"  # provide username to authenticate to the SFTP repo
+            value: "REPLACE_SFTP_REPO_USER" # provide username to authenticate to the SFTP repo
           - name: MODULE_SIGCHECK
             value: "0"
   modules:

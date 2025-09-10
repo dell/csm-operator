@@ -25,7 +25,7 @@ spec:
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: "quay.io/dell/container-storage-modules/csi-unity:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-unity:v2.15.0"
       imagePullPolicy: IfNotPresent
       envs:
         # X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS - Flag to enable sharing of volumes across multiple pods within the same node in RWO access mode.
