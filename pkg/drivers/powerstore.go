@@ -167,6 +167,7 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	podmonArrayConnectivityTimeout := "10s"
 	debug := "false"
 	authEnabled := "false"
+	foundAuthEnv := false
 
 	if cr.Spec.Driver.Common != nil {
 		for _, env := range cr.Spec.Driver.Common.Envs {
@@ -216,14 +217,22 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 				}
 			}
 			//	Set the env. whether authorization is enabled or not in the node to trim the tenant prefix in the driver
-			for i, mod := range cr.Spec.Modules {
-				if mod.Name == csmv1.Authorization {
-					cr.Spec.Driver.Node.Envs = append(cr.Spec.Driver.Node.Envs, corev1.EnvVar{
-						Name:  "X_CSM_AUTH_ENABLED",
-						Value: strconv.FormatBool(cr.Spec.Modules[i].Enabled),
-					})
-					authEnabled = strconv.FormatBool(cr.Spec.Modules[i].Enabled)
+			for _, env := range cr.Spec.Driver.Node.Envs {
+				if env.Name == "X_CSM_AUTH_ENABLED" {
+					foundAuthEnv = true
 					break
+				}
+			}
+			if !foundAuthEnv {
+				for i, mod := range cr.Spec.Modules {
+					if mod.Name == csmv1.Authorization {
+						cr.Spec.Driver.Node.Envs = append(cr.Spec.Driver.Node.Envs, corev1.EnvVar{
+							Name:  "X_CSM_AUTH_ENABLED",
+							Value: strconv.FormatBool(cr.Spec.Modules[i].Enabled),
+						})
+						authEnabled = strconv.FormatBool(cr.Spec.Modules[i].Enabled)
+						break
+					}
 				}
 			}
 		}
