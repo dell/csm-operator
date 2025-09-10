@@ -173,7 +173,7 @@ spec:
         - name: sdc-monitor
           securityContext:
             privileged: true
-          image: quay.io/dell/storage/powerflex/sdc:4.5.2.1
+          image: quay.io/dell/storage/powerflex/sdc:4.5.4
           imagePullPolicy: IfNotPresent
           env:
             - name: HOST_PID
@@ -223,7 +223,7 @@ spec:
         - name: sdc
           securityContext:
             privileged: true
-          image: quay.io/dell/storage/powerflex/sdc:4.5.2.1
+          image: quay.io/dell/storage/powerflex/sdc:4.5.4
           imagePullPolicy: IfNotPresent
           command:
             - "/bin/sh"

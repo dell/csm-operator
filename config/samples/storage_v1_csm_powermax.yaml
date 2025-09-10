@@ -278,7 +278,7 @@ spec:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
           # Default value: None
-          image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly
+          image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.14.0
           envs:
             # "tlsSecret" defines the TLS secret that is created with certificate
             # and its associated key
@@ -303,7 +303,7 @@ spec:
       configVersion: v2.3.0
       components:
         - name: karavi-authorization-proxy
-          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0
           envs:
             # proxyHost: hostname of the csm-authorization server
             # Default value: none
@@ -328,7 +328,7 @@ spec:
           # image: Image to use for dell-csi-replicator. This shouldn't be changed
           # Allowed values: string
           # Default value: None
-          image: quay.io/dell/container-storage-modules/dell-csi-replicator:nightly
+          image: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.13.0
           envs:
             # replicationPrefix: prefix to prepend to storage classes parameters
             # Allowed values: string
@@ -343,7 +343,7 @@ spec:
         - name: dell-replication-controller-manager
           # image: Defines controller image. This shouldn't be changed
           # Allowed values: string
-          image: quay.io/dell/container-storage-modules/dell-replication-controller:nightly
+          image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0
           envs:
             # Replication log level
             # Allowed values: "error", "warn"/"warning", "info", "debug"
@@ -483,7 +483,7 @@ spec:
       configVersion: v1.14.0
       components:
         - name: podmon-controller
-          image: quay.io/dell/container-storage-modules/podmon:nightly
+          image: quay.io/dell/container-storage-modules/podmon:v1.14.0
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-powermax"
@@ -498,7 +498,7 @@ spec:
             - "--driver-config-params=/powermax-config-params/driver-config-params.yaml"
             - "--driverPath=csi-powermax.dellemc.com"
         - name: podmon-node
-          image: quay.io/dell/container-storage-modules/podmon:nightly
+          image: quay.io/dell/container-storage-modules/podmon:v1.14.0
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster

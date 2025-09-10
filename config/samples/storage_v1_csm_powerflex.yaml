@@ -86,7 +86,7 @@ spec:
           - name: HOST_PID
             value: "1"
           - name: MDM
-            value: "10.xx.xx.xx,10.xx.xx.xx" # do not add mdm value here if it is present in secret
+            value: "10.xx.xx.xx,10.xx.xx.xx"  # do not add mdm value here if it is present in secret
             # health monitor is disabled by default, refer to driver documentation before enabling it
             # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
             # Default monitor-interval: 60s
@@ -218,11 +218,11 @@ spec:
         name: sdc
         envs:
           - name: MDM
-            value: "10.xx.xx.xx,10.xx.xx.xx" # provide MDM value
+            value: "10.xx.xx.xx,10.xx.xx.xx"  # provide MDM value
           - name: REPO_ADDRESS
-            value: "sftp://0.0.0.0" # SFTP/private repository address. Format: "protocol://address"
+            value: "sftp://0.0.0.0"  # SFTP/private repository address. Format: "protocol://address"
           - name: REPO_USER
-            value: "sdcRepoUser" # provide username to authenticate to the SFTP repo
+            value: "sdcRepoUser"  # provide username to authenticate to the SFTP repo
           - name: MODULE_SIGCHECK
             value: "0"
   modules:
@@ -235,8 +235,8 @@ spec:
       configVersion: v2.3.0
       components:
         - name: karavi-authorization-proxy
-          # Use image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
-          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
+          # Use image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0
           envs:
             # proxyHost: hostname of the csm-authorization server
             # Default value: none
@@ -286,7 +286,7 @@ spec:
           # Default value: false
           enabled: false
           # image: Defines PowerFlex metrics image. This shouldn't be changed
-          image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.12.0
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.13.0
           envs:
             # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
             # Allowed values: int
@@ -363,7 +363,7 @@ spec:
           # image: Image to use for dell-csi-replicator. This shouldn't be changed
           # Allowed values: string
           # Default value: None
-          image: quay.io/dell/container-storage-modules/dell-csi-replicator:nightly
+          image: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.13.0
           envs:
             # replicationPrefix: prefix to prepend to storage classes parameters
             # Allowed values: string
@@ -377,7 +377,7 @@ spec:
         - name: dell-replication-controller-manager
           # image: Defines controller image. This shouldn't be changed
           # Allowed values: string
-          image: quay.io/dell/container-storage-modules/dell-replication-controller:nightly
+          image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0
           envs:
             # Replication log level
             # Allowed values: "error", "warn"/"warning", "info", "debug"
@@ -422,7 +422,7 @@ spec:
       configVersion: v1.14.0
       components:
         - name: podmon-controller
-          image: quay.io/dell/container-storage-modules/podmon:nightly
+          image: quay.io/dell/container-storage-modules/podmon:v1.14.0
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-vxflexos"
@@ -436,7 +436,7 @@ spec:
             - "--mode=controller"
             - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
         - name: podmon-node
-          image: quay.io/dell/container-storage-modules/podmon:nightly
+          image: quay.io/dell/container-storage-modules/podmon:v1.14.0
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster

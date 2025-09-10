@@ -8,13 +8,31 @@ spec:
     csiDriverType: "powerstore"
     configVersion: v2.15.0
     forceRemoveDriver: true
-    common:
-      image: quay.io/dell/container-storage-modules/csi-powerstore:v2.15.0
   modules:
+    # Authorization: enable csm-authorization for RBAC
+    - name: authorization
+      # enable: Enable/Disable csm-authorization
+      enabled: false
+      configVersion: v2.3.0
+      components:
+        - name: karavi-authorization-proxy
+          envs:
+            # proxyHost: hostname of the csm-authorization server
+            - name: "PROXY_HOST"
+              value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature
-      # Allowed values:
-      #   true: enable Resiliency feature(deploy podmon sidecar)
-      #   false: disable Resiliency feature(do not deploy podmon sidecar)
-      # Default value: false
       enabled: false
+    - name: replication
+      # enabled: Enable/Disable Replication feature
+      enabled: false
+    - name: observability
+      # enabled: Enable/Disable observability
+      enabled: false
+      components:
+        - name: otel-collector
+          enabled: false
+        - name: cert-manager
+          enabled: false
+        - name: metrics-powerstore
+          enabled: false

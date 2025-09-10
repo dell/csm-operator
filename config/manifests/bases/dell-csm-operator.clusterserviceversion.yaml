@@ -2093,7 +2093,7 @@ spec:
       name: csi-unity
     - image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.0
       name: csi-vxflexos
-    - image: quay.io/dell/storage/powerflex/sdc:4.5.2.1
+    - image: quay.io/dell/storage/powerflex/sdc:4.5.4
       name: sdc
     - image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0
       name: karavi-authorization-proxy
