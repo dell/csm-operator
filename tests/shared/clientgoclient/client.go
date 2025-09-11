@@ -364,6 +364,5 @@ func (c *K8sClient) Discovery() discovery.DiscoveryInterface {
 }
 
 func (c *K8sClient) ResourceV1() resourceV1.ResourceV1Interface {
-	// Return nil or a mock implementation if only for tests
-	return nil
+	panic("implement me")
 }

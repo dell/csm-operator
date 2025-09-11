@@ -348,7 +348,6 @@ func (sc *subResourceClient) Get(_ context.Context, _ client.Object, _ client.Ob
 	panic("not implemented")
 }
 
-func (c *Client) Apply(ctx context.Context, config runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
-	// Implement logic or return a not implemented error
-	return fmt.Errorf("Apply not implemented")
+func (f *Client) Apply(_ context.Context, _ runtime.ApplyConfiguration, _ ...client.ApplyOption) error {
+	panic("not implemented")
 }
