@@ -49,7 +49,6 @@ import (
 	flowcontrolv1beta2 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta2"
 	flowcontrolv1beta3 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta3"
 	networkingv1 "k8s.io/client-go/kubernetes/typed/networking/v1"
-	networkingv1alpha1 "k8s.io/client-go/kubernetes/typed/networking/v1alpha1"
 	networkingv1beta1 "k8s.io/client-go/kubernetes/typed/networking/v1beta1"
 	nodev1 "k8s.io/client-go/kubernetes/typed/node/v1"
 	nodev1alpha1 "k8s.io/client-go/kubernetes/typed/node/v1alpha1"
@@ -260,11 +259,6 @@ func (c *K8sClient) FlowcontrolV1beta1() flowcontrolv1beta1.FlowcontrolV1beta1In
 
 // NetworkingV1 retrieves the NetworkingV1Client
 func (c *K8sClient) NetworkingV1() networkingv1.NetworkingV1Interface {
-	panic("implement me")
-}
-
-// NetworkingV1alpha1 retrieves the NetworkingV1alpha1Client
-func (c *K8sClient) NetworkingV1alpha1() networkingv1alpha1.NetworkingV1alpha1Interface {
 	panic("implement me")
 }
 
