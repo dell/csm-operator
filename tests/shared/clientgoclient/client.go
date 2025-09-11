@@ -58,6 +58,7 @@ import (
 	rbacv1 "k8s.io/client-go/kubernetes/typed/rbac/v1"
 	rbacv1alpha1 "k8s.io/client-go/kubernetes/typed/rbac/v1alpha1"
 	rbacv1beta1 "k8s.io/client-go/kubernetes/typed/rbac/v1beta1"
+	resourceV1 "k8s.io/client-go/kubernetes/typed/resource/v1"
 	resourceV1alpha3 "k8s.io/client-go/kubernetes/typed/resource/v1alpha3"
 	resourceV1beta1 "k8s.io/client-go/kubernetes/typed/resource/v1beta1"
 	resourceV1beta2 "k8s.io/client-go/kubernetes/typed/resource/v1beta2"
@@ -360,4 +361,9 @@ func (c *K8sClient) StoragemigrationV1alpha1() storagemigrationv1alpha1.Storagem
 // Discovery retrieves DiscoveryInterface
 func (c *K8sClient) Discovery() discovery.DiscoveryInterface {
 	panic("implement me")
+}
+
+func (c *K8sClient) ResourceV1() resourceV1.ResourceV1Interface {
+	// Return nil or a mock implementation if only for tests
+	return nil
 }
