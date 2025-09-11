@@ -360,7 +360,7 @@ metadata:
                         "value": "quay.io/nginx/nginx-unprivileged:1.27"
                       }
                     ],
-                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.131.0",
+                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0",
                     "name": "otel-collector",
                     "privateKey": ""
                   },
@@ -764,7 +764,7 @@ metadata:
                         "value": "quay.io/nginx/nginx-unprivileged:1.27"
                       }
                     ],
-                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.131.0",
+                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0",
                     "name": "otel-collector",
                     "privateKey": ""
                   },
@@ -1146,7 +1146,7 @@ metadata:
                         "value": "quay.io/nginx/nginx-unprivileged:1.27"
                       }
                     ],
-                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.131.0",
+                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0",
                     "name": "otel-collector",
                     "privateKey": ""
                   },
@@ -1580,7 +1580,7 @@ metadata:
                         "value": "quay.io/nginx/nginx-unprivileged:1.27"
                       }
                     ],
-                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.131.0",
+                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0",
                     "name": "otel-collector",
                     "privateKey": ""
                   },
@@ -4533,7 +4533,7 @@ spec:
                       - name: RELATED_IMAGE_dell-replication-controller-manager
                         value: quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0
                       - name: RELATED_IMAGE_otel-collector
-                        value: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.131.0
+                        value: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0
                       - name: RELATED_IMAGE_metrics-powerscale
                         value: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.10.0
                       - name: RELATED_IMAGE_metrics-powermax
@@ -4561,7 +4561,7 @@ spec:
                       - name: RELATED_IMAGE_metadataretriever
                         value: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.10.0
                       - name: RELATED_IMAGE_nginx
-                        value: docker.io/nginxinc/nginx-unprivileged:1.27
+                        value: quay.io/nginx/nginx-unprivileged:1.27
                       - name: RELATED_IMAGE_redis-commander
                         value: docker.io/rediscommander/redis-commander:latest
                       - name: RELATED_IMAGE_opa
@@ -4661,7 +4661,7 @@ spec:
       name: dell-csi-replicator
     - image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0
       name: dell-replication-controller-manager
-    - image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.131.0
+    - image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0
       name: otel-collector
     - image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.10.0
       name: metrics-powerscale
