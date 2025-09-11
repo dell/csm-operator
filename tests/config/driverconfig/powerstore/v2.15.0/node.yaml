@@ -114,7 +114,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: quay.io/dell/container-storage-modules/csi-powerstore:nightly
+          image: quay.io/dell/container-storage-modules/csi-powerstore:v2.15.0
           imagePullPolicy: IfNotPresent
           command: ["/csi-powerstore"]
           args:
@@ -184,7 +184,7 @@ spec:
             - name: powerstore-config-params
               mountPath: /powerstore-config-params
         - name: registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
