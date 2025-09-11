@@ -22,7 +22,7 @@ spec:
     authSecret: test-powermax-creds
     replicas: 1
     common:
-      image: "quay.io/dell/container-storage-modules/csi-powermax:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-powermax:v2.15.0"
       imagePullPolicy: IfNotPresent
   modules:
     - name: replication

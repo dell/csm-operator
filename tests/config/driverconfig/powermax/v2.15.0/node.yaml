@@ -108,7 +108,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: quay.io/dell/container-storage-modules/csi-powermax:nightly
+          image: quay.io/dell/container-storage-modules/csi-powermax:v2.15.0
           imagePullPolicy: IfNotPresent
           env:
             - name: X_CSI_POWERMAX_DRIVER_NAME
@@ -221,7 +221,7 @@ spec:
             - name: tls-secret
               mountPath: /app/tls
         - name: registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"

@@ -161,7 +161,7 @@ spec:
               topologyKey: kubernetes.io/hostname
       containers:
         - name: attacher
-          image: registry.k8s.io/sig-storage/csi-attacher:v4.8.0
+          image: registry.k8s.io/sig-storage/csi-attacher:v4.9.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -177,7 +177,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: resizer
-          image: registry.k8s.io/sig-storage/csi-resizer:v1.13.1
+          image: registry.k8s.io/sig-storage/csi-resizer:v1.14.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -190,7 +190,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: provisioner
-          image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
+          image: registry.k8s.io/sig-storage/csi-provisioner:v5.3.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -219,7 +219,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: snapshotter
-          image: registry.k8s.io/sig-storage/csi-snapshotter:v8.2.0
+          image: registry.k8s.io/sig-storage/csi-snapshotter:v8.3.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -233,7 +233,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: external-health-monitor
-          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.14.0
+          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.15.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
@@ -253,7 +253,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: quay.io/dell/container-storage-modules/csi-powerstore:nightly
+          image: quay.io/dell/container-storage-modules/csi-powerstore:v2.15.0
           imagePullPolicy: IfNotPresent
           command: ["/csi-powerstore"]
           args:
