@@ -16,7 +16,7 @@ spec:
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: "quay.io/dell/container-storage-modules/csi-vxflexos:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.0"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -36,7 +36,7 @@ spec:
       # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
-        image: quay.io/dell/storage/powerflex/sdc:4.5.2.1
+        image: quay.io/dell/storage/powerflex/sdc:4.5.4
         envs:
           - name: HOST_PID
             value: "1"
@@ -115,7 +115,7 @@ spec:
       #   operator: "Exists"
       #   effect: "NoSchedule"
     initContainers:
-      - image: quay.io/dell/storage/powerflex/sdc:4.5.2.1
+      - image: quay.io/dell/storage/powerflex/sdc:4.5.4
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:

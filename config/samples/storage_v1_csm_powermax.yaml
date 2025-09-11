@@ -44,7 +44,7 @@ spec:
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: quay.io/dell/container-storage-modules/csi-powermax:nightly
+      image: quay.io/dell/container-storage-modules/csi-powermax:v2.15.0
       # imagePullPolicy: Policy to determine if the image should be pulled prior to starting the container.
       # Allowed values:
       #  Always: Always pull the image.
@@ -435,9 +435,6 @@ spec:
             # Default value: true
             - name: "POWERMAX_PERFORMANCE_METRICS_ENABLED"
               value: "true"
-            # POWERMAX_CAPACITY_POLL_FREQUENCY: set polling frequency to get capacity metrics data
-            # Allowed values: int
-            # Default value: 10
             # POWERMAX_TOPOLOGY_METRICS_ENABLED: enable/disable collection of topology metrics
             # Allowed values: ture, false
             # Default value: true
@@ -448,6 +445,9 @@ spec:
             # Default value: 30
             - name: "POWERMAX_TOPOLOGY_METRICS_POLL_FREQUENCY"
               value: "30"
+            # POWERMAX_CAPACITY_POLL_FREQUENCY: set polling frequency to get capacity metrics data
+            # Allowed values: int
+            # Default value: 10
             - name: "POWERMAX_CAPACITY_POLL_FREQUENCY"
               value: "10"
             # POWERMAX_PERFORMANCE_POLL_FREQUENCY: set polling frequency to get volume performance data
