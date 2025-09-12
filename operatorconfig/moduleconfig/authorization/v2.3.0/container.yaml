@@ -1,6 +1,6 @@
 name: karavi-authorization-proxy
 imagePullPolicy: IfNotPresent
-image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
+image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0
 env:
   - name: PROXY_HOST
     value: ""

@@ -132,7 +132,7 @@ spec:
       serviceAccountName: karavi-metrics-powermax-controller
       containers:
         - name: karavi-metrics-powermax
-          image: quay.io/dell/container-storage-modules/csm-metrics-powermax:nightly
+          image: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.8.0
           imagePullPolicy: Always
           resources: {}
           env:

@@ -388,7 +388,7 @@ spec:
           enabled: false
           # image: Defines PowerStore metrics image. This shouldn't be changed
           # Allowed values: string
-          image: quay.io/dell/container-storage-modules/csm-metrics-powerstore:nightly
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.13.0
           envs:
             # POWERSTORE_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerStore
             # Allowed values: int
