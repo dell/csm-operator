@@ -22,7 +22,7 @@ spec:
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: "quay.io/dell/container-storage-modules/csi-vxflexos:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.0"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -57,6 +57,12 @@ spec:
         # Default value: None, required only when X_CSI_SDC_ENABLED is set to false
         - name: INTERFACE_NAMES
           value:
+        # X_CSI_PROBE_TIMEOUT: Specify the timeout limit for controller and node to communicate with the array.
+        # Allowed values: 1s, 10s, etc.
+        # In the format of a duration.
+        # Default value: 10s
+        - name: X_CSI_PROBE_TIMEOUT
+          value: "10s"
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
@@ -285,16 +291,6 @@ spec:
             # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
             # Allowed values: int
             # Default value: 10
-            # POWERFLEX_TOPOLOGY_METRICS_ENABLED: enable/disable collection of topology metrics
-            # Allowed values: ture, false
-            # Default value: true
-            - name: "POWERFLEX_TOPOLOGY_METRICS_ENABLED"
-              value: "true"
-            # POWERFLEX_TOPOLOGY_METRICS_POLL_FREQUENCY: set polling frequency to get topology metrics
-            # Allowed values: int
-            # Default value: 30
-            - name: "POWERFLEX_TOPOLOGY_METRICS_POLL_FREQUENCY"
-              value: "30"
             - name: "POWERFLEX_MAX_CONCURRENT_QUERIES"
               value: "10"
             # POWERFLEX_SDC_METRICS_ENABLED: enable/disable collection of sdc metrics
@@ -327,6 +323,16 @@ spec:
             # Default value: 10
             - name: "POWERFLEX_STORAGE_POOL_POLL_FREQUENCY"
               value: "10"
+            # POWERFLEX_TOPOLOGY_METRICS_ENABLED: enable/disable collection of topology metrics
+            # Allowed values: ture, false
+            # Default value: true
+            - name: "POWERFLEX_TOPOLOGY_METRICS_ENABLED"
+              value: "true"
+            # POWERFLEX_TOPOLOGY_METRICS_POLL_FREQUENCY: set polling frequency to get topology metrics data
+            # Allowed values: int
+            # Default value: 30
+            - name: "POWERFLEX_TOPOLOGY_METRICS_POLL_FREQUENCY"
+              value: "30"
             # PowerFlex metrics log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
             # Default value: "INFO"
