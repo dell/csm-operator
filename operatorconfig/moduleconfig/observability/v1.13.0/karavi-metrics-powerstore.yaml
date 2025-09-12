@@ -133,7 +133,7 @@ spec:
       serviceAccount: karavi-metrics-powerstore-controller
       containers:
         - name: karavi-metrics-powerstore
-          image: quay.io/dell/container-storage-modules/csm-metrics-powerstore:nightly
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.13.0
           resources: {}
           env:
             - name: POWERSTORE_METRICS_ENDPOINT
