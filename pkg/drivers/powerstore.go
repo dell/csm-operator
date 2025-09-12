@@ -169,7 +169,6 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	authEnabled := ""
 	foundAuthEnv := false
 
-	// var authEnabledValue string
 	authorizationModuleFound := false
 
 	for _, mod := range cr.Spec.Modules {
