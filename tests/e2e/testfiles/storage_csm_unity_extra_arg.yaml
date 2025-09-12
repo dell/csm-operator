@@ -9,7 +9,7 @@ spec:
     csiDriverSpec:
       fSGroupPolicy: "ReadWriteOnceWithFSType"
       storageCapacity: true
-    configVersion: v2.14.0
+    configVersion: v2.15.0
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true

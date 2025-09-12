@@ -10,7 +10,7 @@ spec:
     authSecret: isilon-creds
     replicas: 1
     common:
-      image: "quay.io/dell/container-storage-modules/csi-isilon:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-isilon:v2.15.0"
       imagePullPolicy: IfNotPresent
   modules:
     - name: replication
