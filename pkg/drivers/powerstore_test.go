@@ -119,6 +119,41 @@ var (
 			fileType: "Node",
 		},
 		{
+			name:     "when auth module is disabled",
+			csm:      disableAuthModule(),
+			ct:       powerStoreClient,
+			sec:      powerStoreSecret,
+			fileType: "Node",
+		},
+		{
+			name:     "when node object is nil",
+			csm:      getNilNodeObject(),
+			ct:       powerStoreClient,
+			sec:      powerStoreSecret,
+			fileType: "Node",
+		},
+		{
+			name:     "when node object is not nil and Env. is nil",
+			csm:      getNilEnvObject(),
+			ct:       powerStoreClient,
+			sec:      powerStoreSecret,
+			fileType: "Node",
+		},
+		{
+			name:     "when auth module env. is set to true",
+			csm:      setAuthModuleEnv("true"),
+			ct:       powerStoreClient,
+			sec:      powerStoreSecret,
+			fileType: "Node",
+		},
+		{
+			name:     "update existing auth module env. to false",
+			csm:      setAuthModuleEnv("false"),
+			ct:       powerStoreClient,
+			sec:      powerStoreSecret,
+			fileType: "Node",
+		},
+		{
 			name:       "update GOPOWERSTORE_DEBUG value for Node",
 			yamlString: "<GOPOWERSTORE_DEBUG>",
 			csm:        gopowerstoreDebug("true"),
@@ -449,6 +484,36 @@ func enableAuthModule() csmv1.ContainerStorageModule {
 			Enabled: true,
 		},
 	}
+	cr.Spec.Driver.Node.Envs = append(cr.Spec.Driver.Node.Envs, corev1.EnvVar{Name: "X_CSM_AUTH_ENABLED", Value: "true"})
+	return cr
+}
+
+func disableAuthModule() csmv1.ContainerStorageModule {
+	cr := csmForPowerStore("csm")
+	cr.Spec.Modules = []csmv1.Module{
+		{
+			Name:    csmv1.Authorization,
+			Enabled: false,
+		},
+	}
+	return cr
+}
+
+func getNilNodeObject() csmv1.ContainerStorageModule {
+	cr := csmForPowerStore("csm")
+	cr.Spec.Driver.Node = nil
+	return cr
+}
+
+func getNilEnvObject() csmv1.ContainerStorageModule {
+	cr := csmForPowerStore("csm")
+	cr.Spec.Driver.Node.Envs = nil
+	return cr
+}
+
+func setAuthModuleEnv(value string) csmv1.ContainerStorageModule {
+	cr := csmForPowerStore("csm")
+	cr.Spec.Driver.Node.Envs = append(cr.Spec.Driver.Node.Envs, corev1.EnvVar{Name: "X_CSM_AUTH_ENABLED", Value: value})
 	return cr
 }
 
