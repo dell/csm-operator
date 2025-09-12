@@ -166,8 +166,18 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	powerstoreAPITimeout := "120s"
 	podmonArrayConnectivityTimeout := "10s"
 	debug := "false"
-	authEnabled := "false"
+	authEnabled := ""
 	foundAuthEnv := false
+
+	// var authEnabledValue string
+	authorizationModuleFound := false
+
+	for _, mod := range cr.Spec.Modules {
+		if mod.Name == csmv1.Authorization {
+			authorizationModuleFound = true
+			break
+		}
+	}
 
 	if cr.Spec.Driver.Common != nil {
 		for _, env := range cr.Spec.Driver.Common.Envs {
@@ -216,22 +226,48 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 					maxVolumesPerNode = env.Value
 				}
 			}
-			//	Set the env. whether authorization is enabled or not in the node to trim the tenant prefix in the driver
-			for _, env := range cr.Spec.Driver.Node.Envs {
-				if env.Name == "X_CSM_AUTH_ENABLED" {
-					foundAuthEnv = true
-					break
-				}
+
+		}
+
+		//Set the env. whether authorization is enabled or not in the node to trim the tenant prefix in the driver
+
+		if authorizationModuleFound {
+			if cr.Spec.Driver.Node == nil {
+				cr.Spec.Driver.Node = &csmv1.ContainerTemplate{}
 			}
-			if !foundAuthEnv {
-				for i, mod := range cr.Spec.Modules {
-					if mod.Name == csmv1.Authorization {
-						cr.Spec.Driver.Node.Envs = append(cr.Spec.Driver.Node.Envs, corev1.EnvVar{
-							Name:  "X_CSM_AUTH_ENABLED",
-							Value: strconv.FormatBool(cr.Spec.Modules[i].Enabled),
-						})
-						authEnabled = strconv.FormatBool(cr.Spec.Modules[i].Enabled)
+			if cr.Spec.Driver.Node.Envs == nil {
+				cr.Spec.Driver.Node.Envs = []corev1.EnvVar{}
+			}
+
+			if cr.Spec.Driver.Node != nil {
+				// Check if env already exists
+				for i, env := range cr.Spec.Driver.Node.Envs {
+					if env.Name == "X_CSM_AUTH_ENABLED" {
+						for _, mod := range cr.Spec.Modules {
+							if mod.Name == csmv1.Authorization {
+								expectedValue := strconv.FormatBool(mod.Enabled)
+								if env.Value != expectedValue {
+									// Update the existing env var
+									cr.Spec.Driver.Node.Envs[i].Value = expectedValue
+								}
+								authEnabled = expectedValue
+								foundAuthEnv = true
+								break
+							}
+						}
 						break
+					}
+				}
+				if !foundAuthEnv {
+					for _, mod := range cr.Spec.Modules {
+						if mod.Name == csmv1.Authorization {
+							authEnabled = strconv.FormatBool(mod.Enabled)
+							cr.Spec.Driver.Node.Envs = append(cr.Spec.Driver.Node.Envs, corev1.EnvVar{
+								Name:  "X_CSM_AUTH_ENABLED",
+								Value: authEnabled,
+							})
+							break
+						}
 					}
 				}
 			}
