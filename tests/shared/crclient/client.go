@@ -347,3 +347,7 @@ func (sc *subResourceClient) Patch(_ context.Context, _ client.Object, _ client.
 func (sc *subResourceClient) Get(_ context.Context, _ client.Object, _ client.Object, _ ...client.SubResourceGetOption) error {
 	panic("not implemented")
 }
+
+func (f *Client) Apply(_ context.Context, _ runtime.ApplyConfiguration, _ ...client.ApplyOption) error {
+	panic("not implemented")
+}

@@ -49,7 +49,6 @@ import (
 	flowcontrolv1beta2 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta2"
 	flowcontrolv1beta3 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta3"
 	networkingv1 "k8s.io/client-go/kubernetes/typed/networking/v1"
-	networkingv1alpha1 "k8s.io/client-go/kubernetes/typed/networking/v1alpha1"
 	networkingv1beta1 "k8s.io/client-go/kubernetes/typed/networking/v1beta1"
 	nodev1 "k8s.io/client-go/kubernetes/typed/node/v1"
 	nodev1alpha1 "k8s.io/client-go/kubernetes/typed/node/v1alpha1"
@@ -59,6 +58,7 @@ import (
 	rbacv1 "k8s.io/client-go/kubernetes/typed/rbac/v1"
 	rbacv1alpha1 "k8s.io/client-go/kubernetes/typed/rbac/v1alpha1"
 	rbacv1beta1 "k8s.io/client-go/kubernetes/typed/rbac/v1beta1"
+	resourceV1 "k8s.io/client-go/kubernetes/typed/resource/v1"
 	resourceV1alpha3 "k8s.io/client-go/kubernetes/typed/resource/v1alpha3"
 	resourceV1beta1 "k8s.io/client-go/kubernetes/typed/resource/v1beta1"
 	resourceV1beta2 "k8s.io/client-go/kubernetes/typed/resource/v1beta2"
@@ -263,11 +263,6 @@ func (c *K8sClient) NetworkingV1() networkingv1.NetworkingV1Interface {
 	panic("implement me")
 }
 
-// NetworkingV1alpha1 retrieves the NetworkingV1alpha1Client
-func (c *K8sClient) NetworkingV1alpha1() networkingv1alpha1.NetworkingV1alpha1Interface {
-	panic("implement me")
-}
-
 // NetworkingV1beta1 retrieves the NetworkingV1beta1Client
 func (c *K8sClient) NetworkingV1beta1() networkingv1beta1.NetworkingV1beta1Interface {
 	panic("implement me")
@@ -365,5 +360,9 @@ func (c *K8sClient) StoragemigrationV1alpha1() storagemigrationv1alpha1.Storagem
 
 // Discovery retrieves DiscoveryInterface
 func (c *K8sClient) Discovery() discovery.DiscoveryInterface {
+	panic("implement me")
+}
+
+func (c *K8sClient) ResourceV1() resourceV1.ResourceV1Interface {
 	panic("implement me")
 }
