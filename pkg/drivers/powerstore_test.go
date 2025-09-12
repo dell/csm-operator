@@ -120,7 +120,14 @@ var (
 		},
 		{
 			name:     "when auth module env. is set to true",
-			csm:      setAuthModuleEnv(),
+			csm:      setAuthModuleEnv("true"),
+			ct:       powerStoreClient,
+			sec:      powerStoreSecret,
+			fileType: "Node",
+		},
+		{
+			name:     "update existing auth module env. to false",
+			csm:      setAuthModuleEnv("false"),
 			ct:       powerStoreClient,
 			sec:      powerStoreSecret,
 			fileType: "Node",
@@ -459,9 +466,9 @@ func enableAuthModule() csmv1.ContainerStorageModule {
 	return cr
 }
 
-func setAuthModuleEnv() csmv1.ContainerStorageModule {
+func setAuthModuleEnv(value string) csmv1.ContainerStorageModule {
 	cr := csmForPowerStore("csm")
-	cr.Spec.Driver.Node.Envs = append(cr.Spec.Driver.Node.Envs, corev1.EnvVar{Name: "X_CSM_AUTH_ENABLED", Value: "true"})
+	cr.Spec.Driver.Node.Envs = append(cr.Spec.Driver.Node.Envs, corev1.EnvVar{Name: "X_CSM_AUTH_ENABLED", Value: value})
 	return cr
 }
 
