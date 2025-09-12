@@ -235,7 +235,7 @@ spec:
       configVersion: v2.3.0
       components:
         - name: karavi-authorization-proxy
-          # Use image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
+          # Use image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0
           image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0
           envs:
             # proxyHost: hostname of the csm-authorization server
