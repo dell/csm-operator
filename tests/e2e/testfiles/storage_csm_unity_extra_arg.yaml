@@ -34,7 +34,7 @@ spec:
     sideCars:
       # '--skip_headers' is an extra arg to test functionality for adding args in CSM object
       - name: provisioner
-        args: ["--volume-name-prefix=csivol", "--skip_headers"]
+        args: ["--volume-name-prefix=csivol", "--extra-create-metadata"]
       - name: external-health-monitor
         enabled: false
         args: ["--monitor-interval=60s"]
