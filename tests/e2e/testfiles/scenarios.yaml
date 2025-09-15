@@ -1340,7 +1340,7 @@
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [unity] driver from CR [1] is installed"
-    - "Validate deployment from CR [1] has argument [--skip_headers] in container [provisioner]"
+    - "Validate deployment from CR [1] has argument [--extra-create-metadata] in container [provisioner]"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
