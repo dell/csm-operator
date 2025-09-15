@@ -139,6 +139,7 @@ storage "file" {
 	powerstoreSecretPath = "PSTORE_VAULT_STORAGE_PATH" // #nosec G101 -- env var, not hardcode
 	powerstoreUsername   = "PSTORE_USER"               // #nosec G101 -- env var, not hardcode
 	powerstorePassword   = "PSTORE_PASS"               // #nosec G101 -- env var, not hardcode
+	configObject         = "CONFIG_OBJECT"             // #nosec G101 -- env var, not hardcode
 	// timestamps to create certificates
 	notBefore = time.Now()
 	notAfter  = notBefore.Add(8766 * time.Hour)
@@ -687,7 +688,17 @@ func (s *sequence) handleEnvConfig() error {
 	// add redis credentials to vault
 	err := s.putVaultSecret(redisPath, redisUsername, redisPassword)
 	if err != nil {
-		return fmt.Errorf("writing secret %s: %v", pscalePath, err)
+		return fmt.Errorf("writing secret %s: %v", redisPath, err)
+	}
+
+	// add config containing jwt secret to vault
+	configPath := "config"
+	config := os.Getenv(configObject)
+	if config != "" {
+		err := s.putVaultConfigSecret(configPath, config)
+		if err != nil {
+			return fmt.Errorf("writing config secret %s: %v", configPath, err)
+		}
 	}
 
 	return nil
@@ -697,6 +708,20 @@ func (s *sequence) putVaultSecret(path, username, password string) error {
 	log.Printf("Writing secret %s in %s", path, s.name)
 	var b bytes.Buffer
 	vaultCmd := fmt.Sprintf("vault kv put -mount=secret %s password=%s username=%s", path, password, username)
+	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", "sh", "-c", vaultCmd) // #nosec G204 -- this is a test automation tool
+	cmd.Stdout = &b
+	cmd.Stderr = &b
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("%v: %s", err, b.String())
+	}
+	return nil
+}
+
+func (s *sequence) putVaultConfigSecret(path, config string) error {
+	log.Printf("Writing config secret %s in %s", path, s.name)
+	var b bytes.Buffer
+	vaultCmd := fmt.Sprintf("vault kv put -mount=secret %s configKey=%s", path, config)
 	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", "sh", "-c", vaultCmd) // #nosec G204 -- this is a test automation tool
 	cmd.Stdout = &b
 	cmd.Stderr = &b
