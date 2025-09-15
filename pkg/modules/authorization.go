@@ -964,15 +964,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	} else {
 		log.Info("Using Vault for storage system credentials")
 		// Vault is supported only till config v2.2.0 (CSM 1.14)
-
-		// apply vault certificates
-		err = applyDeleteVaultCertificates(ctx, isDeleting, cr, ctrlClient)
-		if err != nil {
-			return fmt.Errorf("applying/deleting vault certificates: %w", err)
-		}
-
 		// set vault volumes
-		log.Infof("Using Vault for storage system credentials")
 		mountVaultVolumes(vaults, &deployment)
 	}
 
@@ -1024,6 +1016,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	if v2Version {
 		args = append(args, fmt.Sprintf("--collector-address=%s", otelCollector))
 	}
+	args = append(args, vaultArgs...)
 
 	for i, c := range deployment.Spec.Template.Spec.Containers {
 		if c.Name == "storage-service" {
@@ -2002,7 +1995,7 @@ func AuthCrdDeploy(ctx context.Context, op operatorutils.OperatorConfig, cr csmv
 	}
 
 	// v1 does not have custom resources, so treat it like a no-op
-	if ok, err := operatorutils.MinVersionCheck(auth.ConfigVersion, "v2.0.0-alpha"); !ok {
+	if ok, err := operatorutils.MinVersionCheck("v2.0.0-alpha", auth.ConfigVersion); !ok {
 		return nil
 	} else if err != nil {
 		return err
