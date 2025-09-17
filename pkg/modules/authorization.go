@@ -193,25 +193,21 @@ var AuthorizationSupportedDrivers = map[string]SupportedDriverParam{
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
 		DriverConfigVolumeMount:       drivers.PowerScaleConfigVolumeMount,
-		DriverConfigVolumeMountPath:   drivers.PowerScaleConfigVolumeMountPath,
 	},
 	"isilon": {
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
 		DriverConfigVolumeMount:       drivers.PowerScaleConfigVolumeMount,
-		DriverConfigVolumeMountPath:   drivers.PowerScaleConfigVolumeMountPath,
 	},
 	"powerflex": {
 		PluginIdentifier:              drivers.PowerFlexPluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerFlexConfigParamsVolumeMount,
 		DriverConfigVolumeMount:       drivers.PowerFlexConfigVolumeMount,
-		DriverConfigVolumeMountPath:   drivers.PowerFlexConfigVolumeMountPath,
 	},
 	"vxflexos": {
 		PluginIdentifier:              drivers.PowerFlexPluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerFlexConfigParamsVolumeMount,
 		DriverConfigVolumeMount:       drivers.PowerFlexConfigVolumeMount,
-		DriverConfigVolumeMountPath:   drivers.PowerFlexConfigVolumeMountPath,
 	},
 	"powermax": {
 		PluginIdentifier:              drivers.PowerMaxPluginIdentifier,
@@ -385,16 +381,16 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.OperatorCo
 		}
 	}
 
-	SupportedDriverParams := AuthorizationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)]
+	supportedDriverParams := AuthorizationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)]
 	for i, c := range container.VolumeMounts {
 		switch *c.Name {
 		case DefaultDriverConfigParamsVolumeMount:
-			newName := SupportedDriverParams.DriverConfigParamsVolumeMount
+			newName := supportedDriverParams.DriverConfigParamsVolumeMount
 			container.VolumeMounts[i].Name = &newName
 		case DefaultDriverConfigVolumeMount:
-			newConfigName := SupportedDriverParams.DriverConfigVolumeMount
+			newConfigName := supportedDriverParams.DriverConfigVolumeMount
 			container.VolumeMounts[i].Name = &newConfigName
-			newConfigPath := SupportedDriverParams.DriverConfigVolumeMountPath
+			newConfigPath := "/" + newConfigName
 			container.VolumeMounts[i].MountPath = &newConfigPath
 		}
 	}

@@ -40,9 +40,6 @@ const (
 	// PowerScaleConfigVolumeMount -
 	PowerScaleConfigVolumeMount = "isilon-configs"
 
-	// PowerScaleConfigVolumeMountPath -
-	PowerScaleConfigVolumeMountPath = "/isilon-configs"
-
 	// PowerScaleCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	PowerScaleCSMNameSpace string = "<CSM_NAMESPACE>"
 
