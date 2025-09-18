@@ -44,7 +44,10 @@ const (
 	// PowerMaxConfigParamsVolumeMount used to identify config param volume mount
 	PowerMaxConfigParamsVolumeMount = "powermax-config-params"
 
-	// CSIPmaxManagedArray and following  used for replacing user values in config files
+	// PowerMaxConfigVolumeMount -
+    PowerMaxConfigVolumeMount = CSIPowerMaxSecretVolumeName
+
+	// CSIPmaxManagedArray and following used for replacing user values in config files
 	CSIPmaxManagedArray    = "<X_CSI_MANAGED_ARRAY>"
 	CSIPmaxEndpoint        = "<X_CSI_POWERMAX_ENDPOINT>"
 	CSIPmaxDebug           = "<X_CSI_POWERMAX_DEBUG>"

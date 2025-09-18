@@ -212,6 +212,7 @@ var AuthorizationSupportedDrivers = map[string]SupportedDriverParam{
 	"powermax": {
 		PluginIdentifier:              drivers.PowerMaxPluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerMaxConfigParamsVolumeMount,
+		DriverConfigVolumeMount:       drivers.PowerMaxConfigVolumeMount,
 	},
 	"powerstore": {
 		PluginIdentifier:              drivers.PowerStorePluginIdentifier,
