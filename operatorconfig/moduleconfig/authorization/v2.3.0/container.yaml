@@ -19,9 +19,9 @@ env:
         name: proxy-authz-tokens
         key: refresh
 volumeMounts:
+  - name: karavi-authorization-config
+    mountPath: /etc/karavi-authorization/config
   - name: proxy-server-root-certificate
     mountPath: /etc/karavi-authorization/root-certificates
-  - name: <DriverConfigVolumeMount>
-    mountPath:
   - name: <DriverConfigParamsVolumeMount>
     mountPath: /etc/karavi-authorization
