@@ -1,0 +1,3 @@
+- name: proxy-server-root-certificate
+  secret:
+    secretName: proxy-server-root-certificate
