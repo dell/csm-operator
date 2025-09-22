@@ -303,7 +303,7 @@ func CheckApplyContainersAuth(containers []acorev1.ContainerApplyConfiguration, 
 	return errors.New("karavi-authorization-proxy container was not injected into driver")
 }
 
-func getAuthApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
+func getAuthApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, ctrlClient client.Client) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
 	var err error
 	authModule := csmv1.Module{}
 	for _, m := range cr.Spec.Modules {
@@ -382,6 +382,34 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.OperatorCo
 		}
 	}
 
+	// Karavi authorization config is not required in config v2.4.0 and later (CSM 1.16) due to condensed driver secret
+	condensedSecretVersion, err := operatorutils.MinVersionCheck("v2.4.0", authConfigVersion)
+	if err != nil {
+		return nil, nil, err
+	}
+	if condensedSecretVersion {
+		secretName := "karavi-authorization-config"
+		// Do not try to make the karavi-authorization-config volume available if the customer is using the condensed driver secret.
+		secretFound := &corev1.Secret{}
+		err := ctrlClient.Get(context.TODO(), types.NamespacedName{
+			Name:      secretName,
+			Namespace: cr.GetNamespace(),
+		}, secretFound)
+		if err != nil {
+			if k8serrors.IsNotFound(err) {
+				for i, c := range container.VolumeMounts {
+					if *c.Name == secretName {
+						driverSecretNamePlaceholder := "<DriverConfigVolumeMount>"
+						// Instead, replace the karavi-authorization-config volume mount with the condensed driver secret volume mount.
+						container.VolumeMounts[i] = acorev1.VolumeMountApplyConfiguration{
+							Name: &driverSecretNamePlaceholder,
+						}
+					}
+				}
+			}
+		}
+	}
+
 	supportedDriverParams := AuthorizationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)]
 	for i, c := range container.VolumeMounts {
 		switch *c.Name {
@@ -399,7 +427,7 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.OperatorCo
 	return &authModule, &container, nil
 }
 
-func getAuthApplyVolumes(cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, auth csmv1.ContainerTemplate) ([]acorev1.VolumeApplyConfiguration, error) {
+func getAuthApplyVolumes(cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, auth csmv1.ContainerTemplate, ctrlClient client.Client) ([]acorev1.VolumeApplyConfiguration, error) {
 	version, err := operatorutils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
 	if err != nil {
 		return nil, err
@@ -434,12 +462,38 @@ func getAuthApplyVolumes(cr csmv1.ContainerStorageModule, op operatorutils.Opera
 			}
 		}
 	}
+
+	// Karavi authorization config is not required in config v2.4.0 and later (CSM 1.16) due to condensed driver secret
+	condensedSecretVersion, err := operatorutils.MinVersionCheck("v2.4.0", version)
+	if err != nil {
+		return nil, err
+	}
+	if condensedSecretVersion {
+		secretName := "karavi-authorization-config"
+		// Do not try to make the karavi-authorization-config volume available if the customer is using the condensed driver secret.
+		secretFound := &corev1.Secret{}
+		err := ctrlClient.Get(context.TODO(), types.NamespacedName{
+			Name:      secretName,
+			Namespace: cr.GetNamespace(),
+		}, secretFound)
+		if err != nil {
+			if k8serrors.IsNotFound(err) {
+				for i, c := range vols {
+					if *c.Name == secretName {
+						vols[i] = vols[len(vols)-1]
+						return vols[:len(vols)-1], nil
+					}
+				}
+			}
+		}
+	}
+
 	return vols, nil
 }
 
 // AuthInjectDaemonset  - inject authorization into daemonset
-func AuthInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*applyv1.DaemonSetApplyConfiguration, error) {
-	authModule, containerPtr, err := getAuthApplyCR(cr, op)
+func AuthInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, ctrlClient client.Client) (*applyv1.DaemonSetApplyConfiguration, error) {
+	authModule, containerPtr, err := getAuthApplyCR(cr, op, ctrlClient)
 	if err != nil {
 		return nil, err
 	}
@@ -447,7 +501,7 @@ func AuthInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.Contai
 	container := *containerPtr
 	operatorutils.UpdateSideCarApply(authModule.Components, &container)
 
-	vols, err := getAuthApplyVolumes(cr, op, authModule.Components[0])
+	vols, err := getAuthApplyVolumes(cr, op, authModule.Components[0], ctrlClient)
 	if err != nil {
 		return nil, err
 	}
@@ -466,8 +520,8 @@ func AuthInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.Contai
 }
 
 // AuthInjectDeployment - inject authorization into deployment
-func AuthInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*applyv1.DeploymentApplyConfiguration, error) {
-	authModule, containerPtr, err := getAuthApplyCR(cr, op)
+func AuthInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, ctrlClient client.Client) (*applyv1.DeploymentApplyConfiguration, error) {
+	authModule, containerPtr, err := getAuthApplyCR(cr, op, ctrlClient)
 	if err != nil {
 		return nil, err
 	}
@@ -475,7 +529,7 @@ func AuthInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.Cont
 	container := *containerPtr
 	operatorutils.UpdateSideCarApply(authModule.Components, &container)
 
-	vols, err := getAuthApplyVolumes(cr, op, authModule.Components[0])
+	vols, err := getAuthApplyVolumes(cr, op, authModule.Components[0], ctrlClient)
 	if err != nil {
 		return nil, err
 	}
@@ -545,8 +599,8 @@ func AuthorizationPrecheck(ctx context.Context, op operatorutils.OperatorConfig,
 
 	var secrets []string
 
-	// Karavi authorization config is not used in config v2.3.0 and later (CSM 1.15)
-	condensedSecretVersion, err := operatorutils.MinVersionCheck("v2.3.0", auth.ConfigVersion)
+	// Karavi authorization config is not required in config v2.4.0 and later (CSM 1.16) due to conde
+	condensedSecretVersion, err := operatorutils.MinVersionCheck("v2.4.0", auth.ConfigVersion)
 	if err != nil {
 		return err
 	}

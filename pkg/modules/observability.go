@@ -471,7 +471,7 @@ func PowerScaleMetrics(ctx context.Context, isDeleting bool, op operatorutils.Op
 	foundDp := false
 	for i, obj := range powerscaleMetricsObjects {
 		if deployment, ok := obj.(*appsv1.Deployment); ok {
-			dpApply, err = parseObservabilityMetricsDeployment(ctx, deployment, op, cr)
+			dpApply, err = parseObservabilityMetricsDeployment(ctx, deployment, op, cr, ctrlClient)
 			if err != nil {
 				return err
 			}
@@ -545,7 +545,7 @@ func PowerStoreMetrics(ctx context.Context, isDeleting bool, op operatorutils.Op
 	foundDp := false
 	for i, obj := range powerstoreMetricsObjects {
 		if deployment, ok := obj.(*appsv1.Deployment); ok {
-			dpApply, err = parseObservabilityMetricsDeployment(ctx, deployment, op, cr)
+			dpApply, err = parseObservabilityMetricsDeployment(ctx, deployment, op, cr, ctrlClient)
 			if err != nil {
 				return err
 			}
@@ -787,7 +787,7 @@ func getPowerScaleMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 }
 
 // parseObservabilityMetricsDeployment - update secret volume and inject authorization to deployment
-func parseObservabilityMetricsDeployment(ctx context.Context, deployment *appsv1.Deployment, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (*confv1.DeploymentApplyConfiguration, error) {
+func parseObservabilityMetricsDeployment(ctx context.Context, deployment *appsv1.Deployment, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) (*confv1.DeploymentApplyConfiguration, error) {
 	// parse deployment to DeploymentApplyConfiguration
 	dpBuf, err := yaml.Marshal(deployment)
 	if err != nil {
@@ -808,7 +808,7 @@ func parseObservabilityMetricsDeployment(ctx context.Context, deployment *appsv1
 
 	// inject authorization to deployment
 	if authorizationEnabled, _ := operatorutils.IsModuleEnabled(ctx, cr, csmv1.Authorization); authorizationEnabled {
-		dpApply, err = AuthInjectDeployment(*dpApply, cr, op)
+		dpApply, err = AuthInjectDeployment(*dpApply, cr, op, ctrlClient)
 		if err != nil {
 			return nil, fmt.Errorf("injecting auth into Observability metrics deployment: %v", err)
 		}
@@ -853,7 +853,7 @@ func PowerFlexMetrics(ctx context.Context, isDeleting bool, op operatorutils.Ope
 	foundDp := false
 	for i, obj := range powerflexMetricsObjects {
 		if deployment, ok := obj.(*appsv1.Deployment); ok {
-			dpApply, err = parseObservabilityMetricsDeployment(ctx, deployment, op, cr)
+			dpApply, err = parseObservabilityMetricsDeployment(ctx, deployment, op, cr, ctrlClient)
 			if err != nil {
 				return err
 			}
@@ -1154,7 +1154,7 @@ func PowerMaxMetrics(ctx context.Context, isDeleting bool, op operatorutils.Oper
 	foundDp := false
 	for i, obj := range powerMaxMetricsObjects {
 		if deployment, ok := obj.(*appsv1.Deployment); ok {
-			dpApply, err = parseObservabilityMetricsDeployment(ctx, deployment, op, cr)
+			dpApply, err = parseObservabilityMetricsDeployment(ctx, deployment, op, cr, ctrlClient)
 			if err != nil {
 				return err
 			}
