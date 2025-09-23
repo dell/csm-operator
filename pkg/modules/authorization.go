@@ -32,7 +32,6 @@ import (
 	drivers "github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/logger"
 	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
-	"golang.org/x/mod/semver"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
@@ -763,79 +762,12 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op oper
 		}
 	}
 
-	err = applyDeleteAuthorizationStorageService(ctx, isDeleting, cr, ctrlClient)
+	err = authorizationStorageServiceV2(ctx, isDeleting, cr, ctrlClient)
 	if err != nil {
 		return err
 	}
 
 	return nil
-}
-
-// AuthorizationStorageService - apply/delete storage service deployment and volume objects
-func applyDeleteAuthorizationStorageService(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-	authModule, err := getAuthorizationModule(cr)
-	if err != nil {
-		return err
-	}
-
-	switch semver.Major(authModule.ConfigVersion) {
-	case "v2":
-		return authorizationStorageServiceV2(ctx, isDeleting, cr, ctrlClient)
-	case "v1":
-		return authorizationStorageServiceV1(ctx, isDeleting, cr, ctrlClient)
-	default:
-		return fmt.Errorf("authorization major version %s not supported", semver.Major(authModule.ConfigVersion))
-	}
-}
-
-func authorizationStorageServiceV1(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-	authModule, err := getAuthorizationModule(cr)
-	if err != nil {
-		return err
-	}
-
-	// get component variables
-	image := ""
-	configSecretName = defaultConfigSecretName
-	for _, component := range authModule.Components {
-		switch component.Name {
-		case AuthProxyServerComponent:
-			image = component.StorageService
-		}
-	}
-
-	deployment := getStorageServiceScaffold(cr.Name, cr.Namespace, image, 1, configSecretName)
-
-	// set karavi-storage-secret volume
-	deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, corev1.Volume{
-		Name: "storage-volume",
-		VolumeSource: corev1.VolumeSource{
-			Secret: &corev1.SecretVolumeSource{
-				SecretName: "karavi-storage-secret",
-			},
-		},
-	})
-	for i, c := range deployment.Spec.Template.Spec.Containers {
-		if c.Name == "storage-service" {
-			deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
-				Name:      "storage-volume",
-				MountPath: "/etc/karavi-authorization/storage",
-			})
-			break
-		}
-	}
-
-	deploymentBytes, err := json.Marshal(&deployment)
-	if err != nil {
-		return fmt.Errorf("marshalling storage-service deployment: %w", err)
-	}
-
-	deploymentYaml, err := yaml.JSONToYAML(deploymentBytes)
-	if err != nil {
-		return fmt.Errorf("converting storage-service json to yaml: %w", err)
-	}
-
-	return applyDeleteObjects(ctx, ctrlClient, string(deploymentYaml), isDeleting)
 }
 
 func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {

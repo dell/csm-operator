@@ -493,28 +493,6 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 	type fakeControllerRuntimeClientWrapper func(clusterConfigData []byte) (ctrlClient.Client, error)
 
 	tests := map[string]func(t *testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper){
-		"success v1": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1120.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			tmpCR := customResource
-			auth := tmpCR.Spec.Modules[0]
-
-			karaviConfig := getSecret(customResource.Namespace, "karavi-config-secret")
-			karaviStorage := getSecret(customResource.Namespace, "karavi-storage-secret")
-			karaviTLS := getSecret(customResource.Namespace, "karavi-selfsigned-tls")
-
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviStorage, karaviTLS).Build()
-
-			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
-				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviStorage, karaviTLS).Build()
-				return clusterClient, nil
-			}
-
-			return true, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
-		},
 		"success v2": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
@@ -668,21 +646,6 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 		},
 		"success - creating with vault client certificates": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_vault_cert.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			tmpCR := customResource
-			err = certmanagerv1.AddToScheme(scheme.Scheme)
-			if err != nil {
-				panic(err)
-			}
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-
-			return true, false, tmpCR, sourceClient, operatorConfig
-		},
-		"success - creating v1": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1120.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -1876,84 +1839,6 @@ func TestAuthorizationIngress(t *testing.T) {
 
 			return true, true, tmpCR, sourceClient
 		},
-		"success - creating v1.10.0": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1120.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			tmpCR := customResource
-			namespace := customResource.Namespace
-			name := namespace + "-ingress-nginx-controller"
-
-			dp := &appsv1.Deployment{
-				TypeMeta: metav1.TypeMeta{
-					Kind: "Deployment",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      name,
-					Namespace: namespace,
-				},
-				Spec: appsv1.DeploymentSpec{
-					Selector: &metav1.LabelSelector{
-						MatchLabels: map[string]string{"app.kubernetes.io/name": "ingress-nginx"},
-					},
-				},
-			}
-
-			pod := &corev1.Pod{
-				TypeMeta: metav1.TypeMeta{
-					Kind: "Pod",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      name,
-					Namespace: namespace,
-				},
-			}
-
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(dp, pod).Build()
-
-			return true, true, tmpCR, sourceClient
-		},
-		"success - creating v1.12.0": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1120.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			tmpCR := customResource
-			namespace := customResource.Namespace
-			name := namespace + "-ingress-nginx-controller"
-
-			dp := &appsv1.Deployment{
-				TypeMeta: metav1.TypeMeta{
-					Kind: "Deployment",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      name,
-					Namespace: namespace,
-				},
-				Spec: appsv1.DeploymentSpec{
-					Selector: &metav1.LabelSelector{
-						MatchLabels: map[string]string{"app.kubernetes.io/name": "ingress-nginx"},
-					},
-				},
-			}
-
-			pod := &corev1.Pod{
-				TypeMeta: metav1.TypeMeta{
-					Kind: "Pod",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      name,
-					Namespace: namespace,
-				},
-			}
-
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(dp, pod).Build()
-
-			return true, true, tmpCR, sourceClient
-		},
 		"fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
@@ -2209,21 +2094,6 @@ func TestAuthorizationCrdDeploy(t *testing.T) {
 		},
 		"success - creating": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			tmpCR := customResource
-
-			err = apiextv1.AddToScheme(scheme.Scheme)
-			if err != nil {
-				panic(err)
-			}
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-			return true, tmpCR, sourceClient, operatorConfig
-		},
-		"success - creating v1": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1120.yaml")
 			if err != nil {
 				panic(err)
 			}
