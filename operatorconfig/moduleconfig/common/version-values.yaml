@@ -16,6 +16,11 @@ powerscale:
     replication: "v1.13.0"
     observability: "v1.13.0"
     resiliency: "v1.14.0"
+  v2.16.0:
+    authorization: "v2.4.0"
+    replication: "v1.14.0"
+    observability: "v1.14.0"
+    resiliency: "v1.15.0"
 powerflex:
   # List of Driver versions and modules that supports the version
   v2.13.0:
@@ -38,6 +43,11 @@ powerflex:
     replication: "v1.13.0"
     observability: "v1.13.0"
     resiliency: "v1.14.0"
+  v2.16.0:
+    authorization: "v2.4.0"
+    replication: "v1.14.0"
+    observability: "v1.14.0"
+    resiliency: "v1.15.0"
 powerstore:
   # List of Driver versions and modules that supports the version
   v2.13.0:
