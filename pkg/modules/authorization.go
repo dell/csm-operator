@@ -457,8 +457,7 @@ func getAuthApplyVolumes(cr csmv1.ContainerStorageModule, op operatorutils.Opera
 		for i, c := range vols {
 			if *c.Name == certString {
 				vols[i] = vols[len(vols)-1]
-				return vols[:len(vols)-1], nil
-
+				vols = vols[:len(vols)-1]
 			}
 		}
 	}
@@ -481,7 +480,7 @@ func getAuthApplyVolumes(cr csmv1.ContainerStorageModule, op operatorutils.Opera
 				for i, c := range vols {
 					if *c.Name == secretName {
 						vols[i] = vols[len(vols)-1]
-						return vols[:len(vols)-1], nil
+						vols = vols[:len(vols)-1]
 					}
 				}
 			}
