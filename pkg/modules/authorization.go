@@ -217,6 +217,7 @@ var AuthorizationSupportedDrivers = map[string]SupportedDriverParam{
 	"powerstore": {
 		PluginIdentifier:              drivers.PowerStorePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerStoreConfigParamsVolumeMount,
+		DriverConfigVolumeMount:       drivers.PowerStoreConfigVolumeMount,
 	},
 }
 
@@ -428,12 +429,24 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.OperatorCo
 }
 
 func getAuthApplyVolumes(cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, auth csmv1.ContainerTemplate, ctrlClient client.Client) ([]acorev1.VolumeApplyConfiguration, error) {
-	version, err := operatorutils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
-	if err != nil {
-		return nil, err
+	var err error
+	authModule := csmv1.Module{}
+	for _, m := range cr.Spec.Modules {
+		if m.Name == csmv1.Authorization {
+			authModule = m
+			break
+		}
 	}
 
-	configMapPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/volumes.yaml", op.ConfigDirectory, version)
+	authConfigVersion := authModule.ConfigVersion
+	if authConfigVersion == "" {
+		authConfigVersion, err = operatorutils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	configMapPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/volumes.yaml", op.ConfigDirectory, authConfigVersion)
 	buf, err := os.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {
 		return nil, err
@@ -458,12 +471,13 @@ func getAuthApplyVolumes(cr csmv1.ContainerStorageModule, op operatorutils.Opera
 			if *c.Name == certString {
 				vols[i] = vols[len(vols)-1]
 				vols = vols[:len(vols)-1]
+				break
 			}
 		}
 	}
 
 	// Karavi authorization config is not required in config v2.4.0 and later (CSM 1.16) due to condensed driver secret
-	condensedSecretVersion, err := operatorutils.MinVersionCheck("v2.4.0", version)
+	condensedSecretVersion, err := operatorutils.MinVersionCheck("v2.4.0", authConfigVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -481,6 +495,7 @@ func getAuthApplyVolumes(cr csmv1.ContainerStorageModule, op operatorutils.Opera
 					if *c.Name == secretName {
 						vols[i] = vols[len(vols)-1]
 						vols = vols[:len(vols)-1]
+						break
 					}
 				}
 			}
@@ -596,17 +611,16 @@ func AuthorizationPrecheck(ctx context.Context, op operatorutils.OperatorConfig,
 		}
 	}
 
-	var secrets []string
+	secrets := []string{"proxy-authz-tokens"}
 
-	// Karavi authorization config is not required in config v2.4.0 and later (CSM 1.16) due to conde
+	// Karavi authorization config is not required in config v2.4.0 and later (CSM 1.16) due to condensed driver secret
 	condensedSecretVersion, err := operatorutils.MinVersionCheck("v2.4.0", auth.ConfigVersion)
 	if err != nil {
 		return err
 	}
-	if condensedSecretVersion {
-		secrets = []string{"proxy-authz-tokens"}
-	} else {
-		secrets = []string{"karavi-authorization-config", "proxy-authz-tokens"}
+
+	if !condensedSecretVersion {
+		secrets = append(secrets, "karavi-authorization-config")
 	}
 
 	if !skipCertValid {

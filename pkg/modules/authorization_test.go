@@ -190,7 +190,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDaemonSet, err := AuthInjectDaemonset(nodeYAML.DaemonSetApplyConfig, customResource, operatorConfig)
+			newDaemonSet, err := AuthInjectDaemonset(nodeYAML.DaemonSetApplyConfig, customResource, operatorConfig, ctrlClientFake.NewClientBuilder().Build())
 			if err != nil {
 				panic(err)
 			}
@@ -206,7 +206,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDaemonSet, err := AuthInjectDaemonset(nodeYAML.DaemonSetApplyConfig, customResource, operatorConfig)
+			newDaemonSet, err := AuthInjectDaemonset(nodeYAML.DaemonSetApplyConfig, customResource, operatorConfig, ctrlClientFake.NewClientBuilder().Build())
 			if err != nil {
 				panic(err)
 			}
@@ -235,7 +235,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDaemonSet, err := AuthInjectDaemonset(ds, customResource, opConfig)
+			newDaemonSet, err := AuthInjectDaemonset(ds, customResource, opConfig, ctrlClientFake.NewClientBuilder().Build())
 			if success {
 				assert.NoError(t, err)
 				if err := correctlyInjected(*newDaemonSet, string(customResource.Spec.Driver.CSIDriverType), skipCertificateValidation); err != nil {
@@ -299,7 +299,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDeployment, err := AuthInjectDeployment(controllerYAML.Deployment, tmpCR, operatorConfig)
+			newDeployment, err := AuthInjectDeployment(controllerYAML.Deployment, tmpCR, operatorConfig, ctrlClientFake.NewClientBuilder().Build())
 			if err != nil {
 				panic(err)
 			}
@@ -316,7 +316,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDeployment, err := AuthInjectDeployment(controllerYAML.Deployment, tmpCR, operatorConfig)
+			newDeployment, err := AuthInjectDeployment(controllerYAML.Deployment, tmpCR, operatorConfig, ctrlClientFake.NewClientBuilder().Build())
 			if err != nil {
 				panic(err)
 			}
@@ -341,7 +341,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			success, skipCertificateValidation, dp, opConfig, cr := tc(t)
-			newDeployment, err := AuthInjectDeployment(dp, cr, opConfig)
+			newDeployment, err := AuthInjectDeployment(dp, cr, opConfig, ctrlClientFake.NewClientBuilder().Build())
 			if success {
 				assert.NoError(t, err)
 				if err := correctlyInjected(*newDeployment, string(cr.Spec.Driver.CSIDriverType), skipCertificateValidation); err != nil {
@@ -356,7 +356,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 
 func TestAuthorizationPreCheck(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client){
-		"success": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
+		"success - v2.4.0": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -364,15 +364,15 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			namespace := customResource.Namespace
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
+			auth.ConfigVersion = "v2.4.0"
 
-			karaviAuthconfig := getSecret(namespace, "karavi-authorization-config")
 			proxyAuthzTokens := getSecret(namespace, "proxy-authz-tokens")
 
-			client := ctrlClientFake.NewClientBuilder().WithObjects(karaviAuthconfig, proxyAuthzTokens).Build()
+			client := ctrlClientFake.NewClientBuilder().WithObjects(proxyAuthzTokens).Build()
 
 			return true, auth, tmpCR, client
 		},
-		"success - version provided": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
+		"success - v2.3.0": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -388,6 +388,22 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			client := ctrlClientFake.NewClientBuilder().WithObjects(karaviAuthconfig, proxyAuthzTokens).Build()
 
 			return true, auth, tmpCR, client
+		},
+		"fail - v2.3.0 has no karavi-authorization-config secret": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
+			if err != nil {
+				panic(err)
+			}
+			namespace := customResource.Namespace
+			tmpCR := customResource
+			auth := tmpCR.Spec.Modules[0]
+			auth.ConfigVersion = "v2.3.0"
+
+			proxyAuthzTokens := getSecret(namespace, "proxy-authz-tokens")
+
+			client := ctrlClientFake.NewClientBuilder().WithObjects(proxyAuthzTokens).Build()
+
+			return false, auth, tmpCR, client
 		},
 		"fail - SKIP_CERTIFICATE_VALIDATION is false but no cert": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
