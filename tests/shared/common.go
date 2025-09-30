@@ -21,7 +21,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
+	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

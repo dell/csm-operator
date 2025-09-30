@@ -19,8 +19,8 @@ import (
 	"testing"
 	"time"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
-	step "github.com/dell/csm-operator/tests/e2e/steps"
+	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
+	step "eos2git.cec.lab.emc.com/CSM/csm-operator/tests/e2e/steps"
 
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
