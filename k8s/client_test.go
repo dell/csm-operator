@@ -22,7 +22,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 
-	"github.com/dell/csm-operator/pkg/logger"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
 	"k8s.io/apimachinery/pkg/version"
 	discoveryfake "k8s.io/client-go/discovery/fake"
 )

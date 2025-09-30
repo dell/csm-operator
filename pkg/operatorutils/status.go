@@ -20,9 +20,9 @@ import (
 	"sync"
 	"time"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
-	"github.com/dell/csm-operator/pkg/constants"
-	"github.com/dell/csm-operator/pkg/logger"
+	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/constants"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"

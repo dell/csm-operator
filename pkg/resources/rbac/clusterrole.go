@@ -15,7 +15,7 @@ package rbac
 import (
 	"context"
 
-	"github.com/dell/csm-operator/pkg/logger"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"

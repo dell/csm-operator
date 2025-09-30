@@ -19,8 +19,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
-	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
+	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
+	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 

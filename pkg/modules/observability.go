@@ -17,11 +17,11 @@ import (
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
-	drivers "github.com/dell/csm-operator/pkg/drivers"
-	"github.com/dell/csm-operator/pkg/logger"
-	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
-	"github.com/dell/csm-operator/pkg/resources/deployment"
+	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
+	drivers "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/drivers"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
+	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/resources/deployment"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

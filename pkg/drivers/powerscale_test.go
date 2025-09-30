@@ -17,9 +17,9 @@ import (
 	"fmt"
 	"testing"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
-	"github.com/dell/csm-operator/tests/shared"
-	"github.com/dell/csm-operator/tests/shared/crclient"
+	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/shared"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/shared/crclient"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"

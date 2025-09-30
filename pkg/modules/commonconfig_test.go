@@ -15,8 +15,8 @@ import (
 	"os"
 	"testing"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
-	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
+	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
+	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
