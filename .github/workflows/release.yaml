@@ -1,14 +1,13 @@
-# Copyright © 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2024 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Dell Technologies, Dell and other trademarks are trademarks of Dell Inc.
 # or its subsidiaries. Other trademarks may be trademarks of their respective
 # owners.
 
-name: Create Tag and Release
-
+name: Release CSM
 # Invocable as a reusable workflow
 # Can be manually triggered
-on:
+on:  # yamllint disable-line rule:truthy
   workflow_call:
   workflow_dispatch:
     inputs:
@@ -31,21 +30,11 @@ on:
 
 jobs:
   csm-release:
-    name: Create Tag and Release
-    uses: CSM/actions/.github/workflows/create-tag-release.yaml@main
+    name: Release CSM Drivers and Modules
+    uses: CSM/actions/.github/workflows/csm-release-driver-module.yaml@main
     with:
       option: ${{ github.event.inputs.option || 'minor' }}
       version: ${{ github.event.inputs.version || '' }}
-      images: "<insert comma-separated list of images, no spaces for multiple images>"
+      images: ''
+      artifactory: ''
     secrets: inherit
-
-  next-steps:
-    name: 📌 Next Steps for Release Process
-    runs-on: isg-ocp-x86-small
-    needs: csm-release
-    steps:
-      - name: Share next steps with user
-        run: |
-          echo "✅ Tag and release completed."
-          echo "➡️ Please manually trigger the Jenkins Image build job: CSM-Images-Build-Nightly."
-          echo "🚀 Once the Jenkins image build job is successful, trigger the Release Image workflow from GitHub Actions."

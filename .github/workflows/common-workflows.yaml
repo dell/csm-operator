@@ -1,17 +1,45 @@
-name: Common Workflows
-# yamllint sees the below line as a true or false value instead of an 'on' trigger
+# Copyright © 2024 Dell Inc. or its subsidiaries. All Rights Reserved.
+#
+# Dell Technologies, Dell and other trademarks are trademarks of Dell Inc.
+# or its subsidiaries. Other trademarks may be trademarks of their respective
+# owners.
+name: CSM Common Workflows
 on:  # yamllint disable-line rule:truthy
-  push:
-    branches: [main]
+  workflow_dispatch:
+    inputs:
+      images:
+        description: "Multi-line string of images"
+        type: string
+        required: false
+      build-images-cmd:
+        description: "Command to build the image(s)"
+        type: string
+        required: false
+      build-binary-cmd:
+        description: "Command to build the binary"
+        type: string
+        required: false
+      binary-path:
+        description: "Path to the binary"
+        type: string
+        required: false
   pull_request:
     branches: ["**"]
 
 jobs:
   # golang static analysis checks
   go-static-analysis:
-    uses: dell/common-github-actions/.github/workflows/go-static-analysis.yaml@main
     name: Golang Validation
+    uses: CSM/actions/.github/workflows/go-static-analysis.yaml@main
+    secrets: inherit
 
   common:
     name: Quality Checks
-    uses: dell/common-github-actions/.github/workflows/go-common.yml@main
+    uses: CSM/actions/.github/workflows/csm-common.yml@main
+    with:
+      images: |
+        <insert or delete input>
+      build-images-cmd: "<insert or delete input>"
+      binary-path: "<insert or delete input>"
+      build-binary-cmd: "<insert or delete input>"
+    secrets: inherit

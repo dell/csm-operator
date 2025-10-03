@@ -15,10 +15,10 @@ import (
 	"strings"
 	"testing"
 
-	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
 	drivers "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/drivers"
 	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
+	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"

@@ -1,0 +1,57 @@
+---
+#
+# ========================================================================================
+# Refer to https://isgdev.lab.dell.com/docs/default/component/nexus/Onboarding/guide/
+# for information on updating this file
+# ========================================================================================
+#
+# nonk8s
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: csm-operator
+  description: csm-operator
+  tags:
+    - go
+    - csm
+  annotations:
+    github.com/project-slug: CSM/csm-operator
+    jira/project-key: DDRP
+    jira.com/project-key: DDRP
+    sonarqube.org/project-key: CSM::csm-operator
+    backstage.io/techdocs-ref: dir:../.
+    jenkins.io/job-full-name: osj-csm-01-prd.cec.lab.emc.com:csm-operator
+    jfrog-artifactory/image-name: alpine/socat
+    # jira.com/filter-ids: <add your jira filter-ids> Eg: '67890,12345'
+    # argocd/app-name: <add your argocd application name> Eg: 'csm-operator'
+    # blackduck/project: <add your blackduck project name in format project-name/version-name>
+    #   Eg: 'techops_TechOps-dell-software-studio-staging/full_scan_staging_9e897d8_20240813'
+    # backstage.io/kubernetes-label-selector: <add your kubernetes label> Eg: 'name=dell-software-studio'
+  links:
+    - url: 'https://jira.cec.lab.emc.com/secure/CreateIssue.jspa?pid=12345&issuetype=10202'
+      title: 'Create Jira Issue'
+      icon: 'alert'
+    - url: 'https://devspaces.cec.delllabs.net/#https://eos2git.cec.lab.emc.com/CSM/csm-operator'
+      title: 'Web Based Developer environment'
+      icon: 'web'
+    - url: 'https://dell.service-now.com/esc?id=sc_cat_item&sys_id=c60d869adbfbc38095a7f1fcbf96199f'
+      title: 'Contact Technical Support'
+      icon: 'help'
+spec:
+  type: service
+  owner: group:default/csm-operator-team
+  lifecycle: experimental
+  visibility: all
+  # dependsOn:
+  #  - component:<add the name of the component on which your component is dependent on>
+  #    Eg: 'csm-operator-manifest'
+  #  - resource:<add the name of the resource on which your component is dependent on>
+  #    Eg: 'csm-operator-resource'
+  providesApis:
+    - api:default/csm-operator-grpcapi-1
+    - api:default/csm-operator-grpcapi-2
+    - api:default/csm-operator-grpcapi-3
+    - api:default/csm-operator-grpcapi-4
+    # subcomponentOf: <add the name of the component on which your component is a part> Eg: 'csm-operator-main'
+    # consumesApis:
+    #  - <add the name of the API consumed by your component> Eg: 'csm-operator-api2'

@@ -23,7 +23,6 @@ import (
 	"testing"
 	"time"
 
-	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
 	v1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/constants"
@@ -33,6 +32,7 @@ import (
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/shared"
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/shared/clientgoclient"
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/shared/crclient"
+	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	appsv1 "k8s.io/api/apps/v1"
