@@ -1,3 +1,15 @@
+# Copyright © 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#      http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
@@ -30,17 +42,17 @@ spec:
         - name: proxy-server
           # enable: Enable/Disable csm-authorization proxy server
           enabled: true
-          proxyService: registry.connect.redhat.com/dell-emc/dell-csm-authorization-proxy@sha256:1a3e53c1758850d26881923ee744b3cfff120daaaff33565c438fcc39d65f2ab
+          proxyService: registry.connect.redhat.com/dell-emc/dell-csm-authorization-proxy@sha256:a265ec058b102d1cf175deb2b80718d28f6728c094ee3b5367a07473a0dc2682
           proxyServiceReplicas: 1
-          tenantService: registry.connect.redhat.com/dell-emc/dell-csm-authorization-tenant@sha256:030f1b20442b5df62ee8cce281d40226781478d351ea8fa67477cbb318fcc401
+          tenantService: registry.connect.redhat.com/dell-emc/dell-csm-authorization-tenant@sha256:687faaa76ac70ab5f9f452c8a70d5ac45b1968ea2adc60198f2fd3e09b41e358
           tenantServiceReplicas: 1
-          roleService: registry.connect.redhat.com/dell-emc/dell-csm-authorization-role@sha256:c874c7c23b55e88e98615172678e63ceb0e534ab11cdaf8949eef16881af64b7
+          roleService: registry.connect.redhat.com/dell-emc/dell-csm-authorization-role@sha256:d09ffef1866f24bffab2a0d38af11fbbc528b1eae04db1246617b5f366ae545c
           roleServiceReplicas: 1
-          storageService: registry.connect.redhat.com/dell-emc/dell-csm-authorization-storage@sha256:bdc27c5bacbdaa601272055e8a8a6a482ae20192df50cce004d9b4a0fd131289
+          storageService: registry.connect.redhat.com/dell-emc/dell-csm-authorization-storage@sha256:ecaafb211be66f090b468bce366fe870877cb921a14f53fc63ffb1a3f26405d5
           storageServiceReplicas: 1
           opa: docker.io/openpolicyagent/opa@sha256:2b1c4b231f6dfa6a2baea4af4109203b10cd4b65e836d72f03bfe5d8dfce7095
-          opaKubeMgmt: docker.io/openpolicyagent/kube-mgmt@sha256:3a5923a3623ffbf3d8a7d725af4178207b14225fb546a1fd1af0de53b6e47f2c
-          authorizationController: registry.connect.redhat.com/dell-emc/dell-csm-authorization-controller@sha256:45af064da686118a8e5c2711dc00f1969c581bb169c26f5fb7f6f6a6186142fa
+          opaKubeMgmt: docker.io/openpolicyagent/kube-mgmt@sha256:f5bf223771237756a56168729defb608ec2941c9b701d1f1af96f9ae82966517
+          authorizationController: registry.connect.redhat.com/dell-emc/dell-csm-authorization-controller@sha256:6de38a3c833ce514dd8bf496a23157ff9f11aeca6359095c5ac41a38ba3ec231
           authorizationControllerReplicas: 1
           leaderElection: true
           # controllerReconcileInterval: interval for the authorization controllers to reconcile with Redis.
@@ -69,7 +81,7 @@ spec:
           # openTelemetryCollectorAddress: the OTLP receiving endpoint using gRPC
           openTelemetryCollectorAddress: ""
         - name: redis
-          redis: docker.io/redis@sha256:c1e88455c85225310bbea54816e9c3f4b5295815e6dbf80c34d40afc6df28275
+          redis: docker.io/library/redis@sha256:7521abdff715d396aa482183942f3fe643344287c29ccb66eee16ac08a92190f
           commander: docker.io/rediscommander/redis-commander@sha256:19cd0c49f418779fa2822a0496c5e6516d0c792effc39ed20089e6268477e40a
           redisName: redis-csm
           redisCommander: rediscommander
