@@ -2051,7 +2051,7 @@ roleRef:
   kind: Role
   name: cluster-role
   apiGroup: rbac.authorization.k8s.io
----  
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -2248,7 +2248,7 @@ roleRef:
   kind: Role
   name: my-role
   apiGroup: rbac.authorization.k8s.io
----  
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -3023,6 +3023,8 @@ func TestGetUpgradeInfo(t *testing.T) {
 	// Create a malformed upgrade path file
 	tempDir := t.TempDir()
 	configDir := fmt.Sprintf("%s/moduleconfig/authorization/%s", tempDir, oldVersion)
+	defer os.RemoveAll(configDir)
+
 	err := os.MkdirAll(configDir, 0o700)
 	assert.NoError(t, err)
 
