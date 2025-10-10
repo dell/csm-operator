@@ -3023,7 +3023,7 @@ func TestGetUpgradeInfo(t *testing.T) {
 	// Create a malformed upgrade path file
 	tempDir := t.TempDir()
 	configDir := fmt.Sprintf("%s/moduleconfig/authorization/%s", tempDir, oldVersion)
-	err := os.MkdirAll(configDir, 0o644)
+	err := os.MkdirAll(configDir, 0o700)
 	assert.NoError(t, err)
 
 	err = os.WriteFile(fmt.Sprintf("%s/upgrade-path.yaml", configDir),

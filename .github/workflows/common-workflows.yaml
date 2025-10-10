@@ -38,8 +38,6 @@ jobs:
     uses: CSM/actions/.github/workflows/csm-common.yml@main
     with:
       images: |
-        <insert or delete input>
-      build-images-cmd: "<insert or delete input>"
-      binary-path: "<insert or delete input>"
-      build-binary-cmd: "<insert or delete input>"
+        dell-csm-operator
+      build-images-cmd: "make docker"
     secrets: inherit
