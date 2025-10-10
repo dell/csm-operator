@@ -135,6 +135,10 @@ podman-build: vendor gen-semver download-csm-common ## Build podman image with t
 	$(eval include csm-common.mk)
 	podman build --pull . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
 
+docker: vendor gen-semver download-csm-common ## Build docker image with the manager.
+	$(eval include csm-common.mk)
+	docker build --pull . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
+
 podman-build-no-cache: vendor gen-semver download-csm-common ## Build podman image with the manager.
 	$(eval include csm-common.mk)
 	podman build --pull --no-cache . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)

@@ -29,6 +29,8 @@ const (
 	DefaultPluginIdentifier = "<DriverPluginIdentifier>"
 	// DefaultDriverConfigParamsVolumeMount - string placeholder for Driver ConfigParamsVolumeMount
 	DefaultDriverConfigParamsVolumeMount = "<DriverConfigParamsVolumeMount>"
+	// DefaultDriverConfigVolumeMount - string placeholder for Driver ConfigVolumeMount
+	DefaultDriverConfigVolumeMount = "<DriverConfigVolumeMount>"
 	// CertManagerManifest -
 	CertManagerManifest = "cert-manager.yaml"
 	// CertManagerCRDsManifest -
@@ -45,6 +47,7 @@ const (
 type SupportedDriverParam struct {
 	PluginIdentifier              string
 	DriverConfigParamsVolumeMount string
+	DriverConfigVolumeMount       string
 }
 
 func checkVersion(moduleType, givenVersion, configPath string) error {

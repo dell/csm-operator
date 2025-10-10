@@ -37,6 +37,9 @@ const (
 	// PowerScaleConfigParamsVolumeMount -
 	PowerScaleConfigParamsVolumeMount = "csi-isilon-config-params" // #nosec G101
 
+	// PowerScaleConfigVolumeMount -
+	PowerScaleConfigVolumeMount = "isilon-configs"
+
 	// PowerScaleCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	PowerScaleCSMNameSpace string = "<CSM_NAMESPACE>"
 

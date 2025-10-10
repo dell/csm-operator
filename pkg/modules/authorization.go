@@ -41,7 +41,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
@@ -161,6 +160,9 @@ const (
 
 	// AuthCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	AuthCSMNameSpace string = "<CSM_NAMESPACE>"
+
+	// Karavi authorization config secret name		// removed in 2.4.0, but still supporting backward compatibility
+	KaraviAuthorizationConfigSecret = "karavi-authorization-config"
 )
 
 var (
@@ -192,26 +194,32 @@ var AuthorizationSupportedDrivers = map[string]SupportedDriverParam{
 	"powerscale": {
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
+		DriverConfigVolumeMount:       drivers.PowerScaleConfigVolumeMount,
 	},
 	"isilon": {
 		PluginIdentifier:              drivers.PowerScalePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerScaleConfigParamsVolumeMount,
+		DriverConfigVolumeMount:       drivers.PowerScaleConfigVolumeMount,
 	},
 	"powerflex": {
 		PluginIdentifier:              drivers.PowerFlexPluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerFlexConfigParamsVolumeMount,
+		DriverConfigVolumeMount:       drivers.PowerFlexConfigVolumeMount,
 	},
 	"vxflexos": {
 		PluginIdentifier:              drivers.PowerFlexPluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerFlexConfigParamsVolumeMount,
+		DriverConfigVolumeMount:       drivers.PowerFlexConfigVolumeMount,
 	},
 	"powermax": {
 		PluginIdentifier:              drivers.PowerMaxPluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerMaxConfigParamsVolumeMount,
+		DriverConfigVolumeMount:       drivers.PowerMaxConfigVolumeMount,
 	},
 	"powerstore": {
 		PluginIdentifier:              drivers.PowerStorePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerStoreConfigParamsVolumeMount,
+		DriverConfigVolumeMount:       drivers.PowerStoreConfigVolumeMount,
 	},
 }
 
@@ -240,9 +248,25 @@ func CheckAnnotationAuth(annotation map[string]string) error {
 }
 
 // CheckApplyVolumesAuth --
-func CheckApplyVolumesAuth(volumes []acorev1.VolumeApplyConfiguration) error {
-	// Volume
-	volumeNames := []string{"karavi-authorization-config"}
+func CheckApplyVolumesAuth(volumes []acorev1.VolumeApplyConfiguration, authConfigVersion string, drivertype string, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	// Karavi authorization config is not required in config v2.4.0 and later (CSM 1.16) due to driver secret being used instead if the config is not present
+	volumeNames := []string{}
+	driverSecretVersion, err := operatorutils.MinVersionCheck("v2.4.0", authConfigVersion)
+	if err != nil {
+		return fmt.Errorf("error checking version: %s", authConfigVersion)
+	}
+	if driverSecretVersion {
+		// If the karavi-authorization-config secret exists, check for that mount, otherwise check for the driver secret.
+		_, err := operatorutils.GetSecret(context.TODO(), KaraviAuthorizationConfigSecret, cr.GetNamespace(), ctrlClient)
+		if err != nil {
+			volumeNames = append(volumeNames, AuthorizationSupportedDrivers[drivertype].DriverConfigVolumeMount)
+		} else {
+			volumeNames = append(volumeNames, KaraviAuthorizationConfigSecret)
+		}
+	} else {
+		volumeNames = append(volumeNames, KaraviAuthorizationConfigSecret)
+	}
+
 NAME_LOOP:
 	for _, volName := range volumeNames {
 		for _, vol := range volumes {
@@ -257,11 +281,28 @@ NAME_LOOP:
 }
 
 // CheckApplyContainersAuth --
-func CheckApplyContainersAuth(containers []acorev1.ContainerApplyConfiguration, drivertype string, skipCertificateValidation bool) error {
+func CheckApplyContainersAuth(containers []acorev1.ContainerApplyConfiguration, drivertype string, skipCertificateValidation bool, authConfigVersion string, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	// Karavi authorization config is not required in config v2.4.0 and later (CSM 1.16) due to driver secret being used instead if the config is not present
+	volumeMounts := []string{AuthorizationSupportedDrivers[drivertype].DriverConfigParamsVolumeMount}
+	driverSecretVersion, err := operatorutils.MinVersionCheck("v2.4.0", authConfigVersion)
+	if err != nil {
+		return fmt.Errorf("error checking version: %s", authConfigVersion)
+	}
+	if driverSecretVersion {
+		// If the karavi-authorization-config secret exists, check for that mount, otherwise check for the driver secret.
+		_, err := operatorutils.GetSecret(context.TODO(), KaraviAuthorizationConfigSecret, cr.GetNamespace(), ctrlClient)
+		if err != nil {
+			volumeMounts = append(volumeMounts, AuthorizationSupportedDrivers[drivertype].DriverConfigVolumeMount)
+		} else {
+			volumeMounts = append(volumeMounts, KaraviAuthorizationConfigSecret)
+		}
+	} else {
+		volumeMounts = append(volumeMounts, KaraviAuthorizationConfigSecret)
+	}
+
 	authString := "karavi-authorization-proxy"
 	for _, cnt := range containers {
 		if *cnt.Name == authString {
-			volumeMounts := []string{"karavi-authorization-config", AuthorizationSupportedDrivers[drivertype].DriverConfigParamsVolumeMount}
 		MOUNT_NAME_LOOP:
 			for _, volName := range volumeMounts {
 				for _, vol := range cnt.VolumeMounts {
@@ -298,7 +339,7 @@ func CheckApplyContainersAuth(containers []acorev1.ContainerApplyConfiguration, 
 	return errors.New("karavi-authorization-proxy container was not injected into driver")
 }
 
-func getAuthApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
+func getAuthApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, ctrlClient crclient.Client) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
 	var err error
 	authModule := csmv1.Module{}
 	for _, m := range cr.Spec.Modules {
@@ -376,24 +417,65 @@ func getAuthApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.OperatorCo
 			}
 		}
 	}
+
+	// Karavi authorization config is not required in config v2.4.0 and later (CSM 1.16) due to driver secret
+	driverSecretVersion, err := operatorutils.MinVersionCheck("v2.4.0", authConfigVersion)
+	if err != nil {
+		return nil, nil, err
+	}
+	if driverSecretVersion {
+		// Do not try to make the karavi-authorization-config volume available if the customer is using the driver secret.
+		_, err := operatorutils.GetSecret(ctx, KaraviAuthorizationConfigSecret, cr.GetNamespace(), ctrlClient)
+		if err != nil {
+			for i, c := range container.VolumeMounts {
+				if *c.Name == KaraviAuthorizationConfigSecret {
+					driverSecretNamePlaceholder := "<DriverConfigVolumeMount>" // #nosec G101 -- This is a false positive
+					// Instead, replace the karavi-authorization-config volume mount with the driver secret volume mount.
+					container.VolumeMounts[i] = acorev1.VolumeMountApplyConfiguration{
+						Name: &driverSecretNamePlaceholder,
+					}
+					break
+				}
+			}
+		}
+	}
+
+	supportedDriverParams := AuthorizationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)]
 	for i, c := range container.VolumeMounts {
-		if *c.Name == DefaultDriverConfigParamsVolumeMount {
-			newName := AuthorizationSupportedDrivers[string(cr.Spec.Driver.CSIDriverType)].DriverConfigParamsVolumeMount
+		switch *c.Name {
+		case DefaultDriverConfigParamsVolumeMount:
+			newName := supportedDriverParams.DriverConfigParamsVolumeMount
 			container.VolumeMounts[i].Name = &newName
-			break
+		case DefaultDriverConfigVolumeMount:
+			newConfigName := supportedDriverParams.DriverConfigVolumeMount
+			container.VolumeMounts[i].Name = &newConfigName
+			newConfigPath := "/" + newConfigName
+			container.VolumeMounts[i].MountPath = &newConfigPath
 		}
 	}
 
 	return &authModule, &container, nil
 }
 
-func getAuthApplyVolumes(cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, auth csmv1.ContainerTemplate) ([]acorev1.VolumeApplyConfiguration, error) {
-	version, err := operatorutils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
-	if err != nil {
-		return nil, err
+func getAuthApplyVolumes(ctx context.Context, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, auth csmv1.ContainerTemplate, ctrlClient crclient.Client) ([]acorev1.VolumeApplyConfiguration, error) {
+	var err error
+	authModule := csmv1.Module{}
+	for _, m := range cr.Spec.Modules {
+		if m.Name == csmv1.Authorization {
+			authModule = m
+			break
+		}
 	}
 
-	configMapPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/volumes.yaml", op.ConfigDirectory, version)
+	authConfigVersion := authModule.ConfigVersion
+	if authConfigVersion == "" {
+		authConfigVersion, err = operatorutils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	configMapPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/volumes.yaml", op.ConfigDirectory, authConfigVersion)
 	buf, err := os.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {
 		return nil, err
@@ -417,17 +499,37 @@ func getAuthApplyVolumes(cr csmv1.ContainerStorageModule, op operatorutils.Opera
 		for i, c := range vols {
 			if *c.Name == certString {
 				vols[i] = vols[len(vols)-1]
-				return vols[:len(vols)-1], nil
-
+				vols = vols[:len(vols)-1]
+				break
 			}
 		}
 	}
+
+	// Karavi authorization config is not required in config v2.4.0 and later (CSM 1.16) due to driver secret
+	driverSecretVersion, err := operatorutils.MinVersionCheck("v2.4.0", authConfigVersion)
+	if err != nil {
+		return nil, err
+	}
+	if driverSecretVersion {
+		// Do not try to make the karavi-authorization-config volume available if the customer is using the driver secret.
+		_, err := operatorutils.GetSecret(ctx, KaraviAuthorizationConfigSecret, cr.GetNamespace(), ctrlClient)
+		if err != nil {
+			for i, c := range vols {
+				if *c.Name == KaraviAuthorizationConfigSecret {
+					vols[i] = vols[len(vols)-1]
+					vols = vols[:len(vols)-1]
+					break
+				}
+			}
+		}
+	}
+
 	return vols, nil
 }
 
 // AuthInjectDaemonset  - inject authorization into daemonset
-func AuthInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*applyv1.DaemonSetApplyConfiguration, error) {
-	authModule, containerPtr, err := getAuthApplyCR(cr, op)
+func AuthInjectDaemonset(ctx context.Context, ds applyv1.DaemonSetApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, ctrlClient crclient.Client) (*applyv1.DaemonSetApplyConfiguration, error) {
+	authModule, containerPtr, err := getAuthApplyCR(ctx, cr, op, ctrlClient)
 	if err != nil {
 		return nil, err
 	}
@@ -435,7 +537,7 @@ func AuthInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.Contai
 	container := *containerPtr
 	operatorutils.UpdateSideCarApply(authModule.Components, &container)
 
-	vols, err := getAuthApplyVolumes(cr, op, authModule.Components[0])
+	vols, err := getAuthApplyVolumes(ctx, cr, op, authModule.Components[0], ctrlClient)
 	if err != nil {
 		return nil, err
 	}
@@ -454,8 +556,8 @@ func AuthInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.Contai
 }
 
 // AuthInjectDeployment - inject authorization into deployment
-func AuthInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*applyv1.DeploymentApplyConfiguration, error) {
-	authModule, containerPtr, err := getAuthApplyCR(cr, op)
+func AuthInjectDeployment(ctx context.Context, dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, ctrlClient crclient.Client) (*applyv1.DeploymentApplyConfiguration, error) {
+	authModule, containerPtr, err := getAuthApplyCR(ctx, cr, op, ctrlClient)
 	if err != nil {
 		return nil, err
 	}
@@ -463,7 +565,7 @@ func AuthInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.Cont
 	container := *containerPtr
 	operatorutils.UpdateSideCarApply(authModule.Components, &container)
 
-	vols, err := getAuthApplyVolumes(cr, op, authModule.Components[0])
+	vols, err := getAuthApplyVolumes(ctx, cr, op, authModule.Components[0], ctrlClient)
 	if err != nil {
 		return nil, err
 	}
@@ -531,22 +633,27 @@ func AuthorizationPrecheck(ctx context.Context, op operatorutils.OperatorConfig,
 		}
 	}
 
-	secrets := []string{"karavi-authorization-config", "proxy-authz-tokens"}
+	secrets := []string{"proxy-authz-tokens"}
+
+	// Karavi authorization config is not required in config v2.4.0 and later (CSM 1.16) due to driver secret
+	driverSecretVersion, err := operatorutils.MinVersionCheck("v2.4.0", auth.ConfigVersion)
+	if err != nil {
+		return err
+	}
+
+	if !driverSecretVersion {
+		secrets = append(secrets, KaraviAuthorizationConfigSecret)
+	}
+
 	if !skipCertValid {
 		secrets = append(secrets, "proxy-server-root-certificate")
 	}
 
 	for _, name := range secrets {
-		found := &corev1.Secret{}
-		err := ctrlClient.Get(ctx, types.NamespacedName{
-			Name:      name,
-			Namespace: cr.GetNamespace(),
-		}, found)
+		_, err := operatorutils.GetSecret(ctx, name, cr.GetNamespace(), ctrlClient)
 		if err != nil {
-			if k8serrors.IsNotFound(err) {
-				return fmt.Errorf("failed to find secret %s and certificate validation is requested", name)
-			}
 			log.Error(err, "Failed to query for secret. Warning - the controller pod may not start")
+			return fmt.Errorf("failed to find secret %s and certificate validation is requested", name)
 		}
 	}
 
@@ -1038,7 +1145,7 @@ func removeVaultFromStorageService(ctx context.Context, cr csmv1.ContainerStorag
 	currentDeployment := &appsv1.Deployment{}
 
 	// check if there is an existing storage service deployment to be updated
-	err := ctrlClient.Get(ctx, client.ObjectKey{
+	err := ctrlClient.Get(ctx, crclient.ObjectKey{
 		Namespace: dp.Namespace,
 		Name:      dp.Name,
 	}, currentDeployment)
