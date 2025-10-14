@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: karavi-metrics-powerscale-controller
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -17,10 +17,7 @@ rules:
     verbs: ["list"]
   - apiGroups: [""]
     resources: ["endpoints"]
-    verbs: ["*"]
-  - apiGroups: ["coordination.k8s.io"]
-    resources: ["leases"]
-    verbs: ["get", "watch", "list", "delete", "update", "create"]
+    verbs: ["get", "list", "watch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -29,9 +26,33 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: karavi-metrics-powerscale-controller
-    namespace: karavi
+    namespace: <CSM_NAMESPACE>
 roleRef:
   kind: ClusterRole
+  name: karavi-metrics-powerscale-controller
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: karavi-metrics-powerscale-controller
+  namespace: <CSM_NAMESPACE>
+rules:
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "watch", "list", "delete", "update", "create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: karavi-metrics-powerscale-controller
+  namespace: <CSM_NAMESPACE>
+subjects:
+  - kind: ServiceAccount
+    name: karavi-metrics-powerscale-controller
+    namespace: <CSM_NAMESPACE>
+roleRef:
+  kind: Role
   name: karavi-metrics-powerscale-controller
   apiGroup: rbac.authorization.k8s.io
 ---
@@ -42,7 +63,7 @@ metadata:
     app.kubernetes.io/name: karavi-metrics-powerscale
     app.kubernetes.io/instance: karavi
   name: karavi-metrics-powerscale
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
 spec:
   type: ClusterIP
   ports:
@@ -57,7 +78,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: karavi-metrics-powerscale-configmap
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
 data:
   karavi-metrics-powerscale.yaml: |
     COLLECTOR_ADDR: <COLLECTOR_ADDRESS>
@@ -65,6 +86,8 @@ data:
     POWERSCALE_MAX_CONCURRENT_QUERIES: <POWERSCALE_MAX_CONCURRENT_QUERIES>
     POWERSCALE_CAPACITY_METRICS_ENABLED: <POWERSCALE_CAPACITY_METRICS_ENABLED>
     POWERSCALE_PERFORMANCE_METRICS_ENABLED: <POWERSCALE_PERFORMANCE_METRICS_ENABLED>
+    POWERSCALE_TOPOLOGY_METRICS_ENABLED: <POWERSCALE_TOPOLOGY_METRICS_ENABLED>
+    POWERSCALE_TOPOLOGY_METRICS_POLL_FREQUENCY: <POWERSCALE_TOPOLOGY_METRICS_POLL_FREQUENCY>
     POWERSCALE_CLUSTER_CAPACITY_POLL_FREQUENCY: <POWERSCALE_CLUSTER_CAPACITY_POLL_FREQUENCY>
     POWERSCALE_CLUSTER_PERFORMANCE_POLL_FREQUENCY: <POWERSCALE_CLUSTER_PERFORMANCE_POLL_FREQUENCY>
     POWERSCALE_QUOTA_CAPACITY_POLL_FREQUENCY: <POWERSCALE_QUOTA_CAPACITY_POLL_FREQUENCY>
@@ -78,7 +101,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: <DriverDefaultReleaseName>-config-params
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
 data:
   driver-config-params.yaml: |
     CSI_LOG_LEVEL: debug
@@ -87,7 +110,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: karavi-metrics-powerscale
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
   labels:
     app.kubernetes.io/name: karavi-metrics-powerscale
     app.kubernetes.io/instance: karavi
@@ -109,7 +132,7 @@ spec:
       serviceAccount: karavi-metrics-powerscale-controller
       containers:
         - name: karavi-metrics-powerscale
-          image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.8.0
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.10.0
           resources: {}
           env:
             - name: POWERSCALE_METRICS_ENDPOINT
@@ -121,7 +144,7 @@ spec:
             - name: TLS_ENABLED
               value: "true"
           volumeMounts:
-            - name: isilon-creds
+            - name: isilon-configs
               mountPath: /isilon-creds
             - name: tls-secret
               mountPath: /etc/ssl/certs
@@ -129,7 +152,7 @@ spec:
             - name: karavi-metrics-powerscale-configmap
               mountPath: /etc/config
       volumes:
-        - name: isilon-creds
+        - name: isilon-configs
           secret:
             secretName: <DriverDefaultReleaseName>-creds
         - name: tls-secret

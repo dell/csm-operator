@@ -13,7 +13,7 @@ data:
     exporters:
       prometheus:
         endpoint: 0.0.0.0:8889
-      logging:
+      debug:
 
     extensions:
       health_check: {}
@@ -24,11 +24,11 @@ data:
         metrics:
           receivers: [otlp]
           processors: []
-          exporters: [logging,prometheus]
+          exporters: [debug,prometheus]
 kind: ConfigMap
 metadata:
   name: otel-collector-config
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
 ---
 apiVersion: v1
 data:
@@ -63,13 +63,13 @@ data:
 kind: ConfigMap
 metadata:
   name: nginx-config
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: otel-collector
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
   labels:
     app.kubernetes.io/name: otel-collector
     app.kubernetes.io/instance: karavi-observability
@@ -90,7 +90,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: otel-collector
-  namespace: karavi
+  namespace: <CSM_NAMESPACE>
   labels:
     app.kubernetes.io/name: otel-collector
     app.kubernetes.io/instance: karavi-observability
