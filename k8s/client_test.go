@@ -24,7 +24,7 @@ import (
 
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
 	"k8s.io/apimachinery/pkg/version"
-	discoveryfake "k8s.io/client-go/discovery/fake"
+	discoveryfake "k8s.io/client-go/discovery/fake" //nolint:unused
 )
 
 type testOverrides struct {
