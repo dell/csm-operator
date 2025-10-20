@@ -17,9 +17,9 @@ import (
 	"fmt"
 	"testing"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
-	"github.com/dell/csm-operator/tests/shared"
-	"github.com/dell/csm-operator/tests/shared/crclient"
+	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/shared"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/shared/crclient"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -161,69 +161,6 @@ var (
 			sec:        powerStoreSecret,
 			fileType:   "Node",
 			expected:   "true",
-		},
-		{
-			name: "update Shared NFS values for Node",
-			yamlString: `
-			- name: X_CSI_NFS_EXPORT_DIRECTORY
-		      value: "<X_CSI_NFS_EXPORT_DIRECTORY>"
-		    - name: X_CSI_NFS_CLIENT_PORT
-		      value: "<X_CSI_NFS_CLIENT_PORT>"
-		    - name: X_CSI_NFS_SERVER_PORT
-		      value: "<X_CSI_NFS_SERVER_PORT>"`,
-			csm:      csmForPowerStoreWithSharedNFS("csm"),
-			ct:       powerStoreClient,
-			sec:      powerStoreSecret,
-			fileType: "Node",
-			expected: `
-			- name: X_CSI_NFS_EXPORT_DIRECTORY
-		      value: "/var/lib/dell/myNfsExport"
-		    - name: X_CSI_NFS_CLIENT_PORT
-		      value: "2220"
-		    - name: X_CSI_NFS_SERVER_PORT
-		      value: "2221"`,
-		},
-		{
-			name: "update Shared NFS values for Controller",
-			yamlString: `
-			- name: X_CSI_NFS_EXPORT_DIRECTORY
-			  value: "<X_CSI_NFS_EXPORT_DIRECTORY>"
-			- name: X_CSI_NFS_CLIENT_PORT
-			  value: "<X_CSI_NFS_CLIENT_PORT>"
-			- name: X_CSI_NFS_SERVER_PORT
-			  value: "<X_CSI_NFS_SERVER_PORT>"`,
-			csm:      csmForPowerStoreWithSharedNFS("csm"),
-			ct:       powerStoreClient,
-			sec:      powerStoreSecret,
-			fileType: "Controller",
-			expected: `
-			- name: X_CSI_NFS_EXPORT_DIRECTORY
-			  value: "/var/lib/dell/myNfsExport"
-			- name: X_CSI_NFS_CLIENT_PORT
-			  value: "2220"
-			- name: X_CSI_NFS_SERVER_PORT
-			  value: "2221"`,
-		},
-		{
-			name: "minimal minifest - update Shared NFS values for Node",
-			yamlString: `
-			- name: X_CSI_NFS_EXPORT_DIRECTORY
-              value: "<X_CSI_NFS_EXPORT_DIRECTORY>"
-            - name: X_CSI_NFS_CLIENT_PORT
-              value: "<X_CSI_NFS_CLIENT_PORT>"
-            - name: X_CSI_NFS_SERVER_PORT
-              value: "<X_CSI_NFS_SERVER_PORT>"`,
-			csm:      csmForPowerStore("csm"),
-			ct:       powerStoreClient,
-			sec:      powerStoreSecret,
-			fileType: "Node",
-			expected: `
-			- name: X_CSI_NFS_EXPORT_DIRECTORY
-              value: "/var/lib/dell/nfs"
-            - name: X_CSI_NFS_CLIENT_PORT
-              value: "2050"
-            - name: X_CSI_NFS_SERVER_PORT
-              value: "2049"`,
 		},
 		{
 			name: "update Powerstore API and Podmon connectivity timeout for Node",
@@ -451,20 +388,6 @@ func csmForPowerStore(customCSMName string) csmv1.ContainerStorageModule {
 	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
 
 	return res
-}
-
-func csmForPowerStoreWithSharedNFS(customCSMName string) csmv1.ContainerStorageModule {
-	cr := csmForPowerStore(customCSMName)
-
-	cr.Spec.Driver.Common.Envs = []corev1.EnvVar{
-		{Name: "X_CSI_NFS_CLIENT_PORT", Value: "2220"},
-		{Name: "X_CSI_NFS_SERVER_PORT", Value: "2221"},
-		{Name: "X_CSI_NFS_EXPORT_DIRECTORY", Value: "/var/lib/dell/myNfsExport"},
-		{Name: "X_CSI_POWERSTORE_API_TIMEOUT", Value: "120s"},
-		{Name: "X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT", Value: "10s"},
-	}
-
-	return cr
 }
 
 func gopowerstoreDebug(debug string) csmv1.ContainerStorageModule {

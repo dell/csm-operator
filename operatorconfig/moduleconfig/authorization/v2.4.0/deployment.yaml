@@ -1,0 +1,614 @@
+# Proxy service
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: proxy-server
+  namespace: <NAMESPACE>
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csm-auth-proxy-server
+rules:
+  - apiGroups: ['']
+    resources: ['events']
+    verbs: ['watch']
+  - apiGroups: ['csm-authorization.storage.dell.com']
+    resources: ['storages', 'csmtenants']
+    verbs: ['get', 'list']
+  - apiGroups: ['']
+    resources: ['configmaps']
+    verbs: ['watch', 'list']
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: proxy-server
+subjects:
+  - kind: ServiceAccount
+    name: proxy-server
+    namespace: <NAMESPACE>
+roleRef:
+  kind: ClusterRole
+  name: csm-auth-proxy-server
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: proxy-server-tokenreview-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: proxy-server
+    namespace: <NAMESPACE>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: proxy-server
+  namespace: <NAMESPACE>
+spec:
+  selector:
+    app: proxy-server
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+---
+# Tenant Service
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tenant-service
+  namespace: <NAMESPACE>
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tenant-service-tokenreview-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: tenant-service
+    namespace: <NAMESPACE>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tenant-service
+  namespace: <NAMESPACE>
+spec:
+  selector:
+    app: tenant-service
+  ports:
+    - port: 50051
+      targetPort: 50051
+      name: grpc
+---
+# Role Service
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: role-service
+  namespace: <NAMESPACE>
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csm-auth-role-service
+rules:
+  - apiGroups: ['']
+    resources: ['configmaps']
+    verbs: ['get', 'patch']
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: role-service
+subjects:
+  - kind: ServiceAccount
+    name: role-service
+    namespace: <NAMESPACE>
+roleRef:
+  kind: ClusterRole
+  name: csm-auth-role-service
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: role-service
+  namespace: <NAMESPACE>
+  labels:
+    app: role-service
+spec:
+  replicas: <AUTHORIZATION_ROLE_SERVICE_REPLICAS>
+  selector:
+    matchLabels:
+      app: role-service
+  template:
+    metadata:
+      labels:
+        csm: <NAME>
+        app: role-service
+        csmNamespace: <CSM_NAMESPACE>
+    spec:
+      serviceAccountName: role-service
+      containers:
+        - name: role-service
+          image: <AUTHORIZATION_ROLE_SERVICE_IMAGE>
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 50051
+              name: grpc
+          env:
+            - name: NAMESPACE
+              value: <NAMESPACE>
+          volumeMounts:
+            - name: csm-config-params
+              mountPath: /etc/karavi-authorization/csm-config-params
+      volumes:
+        - name: csm-config-params
+          configMap:
+            name: csm-config-params
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: role-service
+  namespace: <NAMESPACE>
+spec:
+  selector:
+    app: role-service
+  ports:
+    - port: 50051
+      targetPort: 50051
+      name: grpc
+---
+# Storage service
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: storage-service
+  namespace: <NAMESPACE>
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csm-auth-storage-service
+rules:
+  - apiGroups: ["csm-authorization.storage.dell.com"]
+    resources: ["storages", "csmtenants", "csmroles"]
+    verbs: ["get", "list"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: storage-service
+subjects:
+  - kind: ServiceAccount
+    name: storage-service
+    namespace: <NAMESPACE>
+roleRef:
+  kind: ClusterRole
+  name: csm-auth-storage-service
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csm-auth-storage-service
+  namespace: <NAMESPACE>
+rules:
+  - apiGroups: ['']
+    resources: ['events']
+    verbs: ['create']
+  - apiGroups: ['coordination.k8s.io']
+    resources: ['leases']
+    verbs: ['create', 'update', 'get', 'list']
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: storage-service
+  namespace: <NAMESPACE>
+subjects:
+  - kind: ServiceAccount
+    name: storage-service
+    namespace: <NAMESPACE>
+roleRef:
+  kind: Role
+  name: csm-auth-storage-service
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: storage-service-tokenreview-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: storage-service
+    namespace: <NAMESPACE>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: storage-service
+  namespace: <NAMESPACE>
+spec:
+  selector:
+    app: storage-service
+  ports:
+    - port: 50051
+      targetPort: 50051
+      name: grpc
+    - port: 2112
+      targetPort: 2112
+      name: promhttp
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: storage-service-selfsigned
+  namespace: <NAMESPACE>
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: storage-service-selfsigned
+  namespace: <NAMESPACE>
+spec:
+  secretName: storage-service-selfsigned-tls
+  duration: 2160h  # 90d
+  renewBefore: 360h  # 15d
+  subject:
+    organizations:
+      - dellemc
+  isCA: false
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: 2048
+  usages:
+    - client auth
+  dnsNames:
+    - csm-authorization-storage-service
+  issuerRef:
+    name: storage-service-selfsigned
+    kind: Issuer
+    group: cert-manager.io
+---
+# Controller
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: authorization-controller
+  namespace: <NAMESPACE>
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csm-auth-authorization-controller
+rules:
+  - apiGroups: ['csm-authorization.storage.dell.com']
+    resources: ['csmroles']
+    verbs: ['get', 'list', 'watch', 'create', 'update', 'patch', 'delete']
+  - apiGroups: ['csm-authorization.storage.dell.com']
+    resources: ['csmroles/status']
+    verbs: ['get', 'update', 'patch']
+  - apiGroups: ['csm-authorization.storage.dell.com']
+    resources: ['csmroles/finalizers']
+    verbs: ['update']
+  - apiGroups: ['']
+    resources: ['configmaps']
+    verbs: ['get', 'list', 'watch']
+  - apiGroups: ['csm-authorization.storage.dell.com']
+    resources: ['csmtenants']
+    verbs: ['get', 'list', 'watch', 'create', 'update', 'patch', 'delete']
+  - apiGroups: ['csm-authorization.storage.dell.com']
+    resources: ['csmtenants/status']
+    verbs: ['get', 'update', 'patch']
+  - apiGroups: ['csm-authorization.storage.dell.com']
+    resources: ['csmtenants/finalizers']
+    verbs: ['update']
+  - apiGroups: ['']
+    resources: ['events']
+    verbs: ['create', 'patch']
+  - apiGroups: ['csm-authorization.storage.dell.com']
+    resources: ['storages']
+    verbs: ['get', 'list', 'watch', 'create', 'update', 'patch', 'delete']
+  - apiGroups: ['csm-authorization.storage.dell.com']
+    resources: ['storages/status']
+    verbs: ['get', 'update', 'patch']
+  - apiGroups: ['csm-authorization.storage.dell.com']
+    resources: ['storages/finalizers']
+    verbs: ['update']
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: authorization-controller
+subjects:
+  - kind: ServiceAccount
+    name: authorization-controller
+    namespace: <NAMESPACE>
+roleRef:
+  kind: ClusterRole
+  name: csm-auth-authorization-controller
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: authorization-controller
+  namespace: <NAMESPACE>
+rules:
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["create", "update", "get", "list"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: authorization-controller
+  namespace: <NAMESPACE>
+subjects:
+  - kind: ServiceAccount
+    name: authorization-controller
+    namespace: <NAMESPACE>
+roleRef:
+  kind: Role
+  name: authorization-controller
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authorization-controller
+  namespace: <NAMESPACE>
+  labels:
+    app: authorization-controller
+spec:
+  replicas: <AUTHORIZATION_CONTROLLER_REPLICAS>
+  selector:
+    matchLabels:
+      app: authorization-controller
+  template:
+    metadata:
+      labels:
+        csm: <NAME>
+        app: authorization-controller
+        csmNamespace: <CSM_NAMESPACE>
+    spec:
+      serviceAccountName: authorization-controller
+      containers:
+        - name: authorization-controller
+          image: <AUTHORIZATION_CONTROLLER_IMAGE>
+          imagePullPolicy: Always
+          args:
+            - '--authorization-namespace=<NAMESPACE>'
+            - '--health-probe-bind-address=:8081'
+            - '--leader-elect=<AUTHORIZATION_LEADER_ELECTION_ENABLED>'
+            - '--tenant-service-address=tenant-service.<NAMESPACE>.svc.cluster.local:50051'
+            - '--storage-service-address=storage-service.<NAMESPACE>.svc.cluster.local:50051'
+            - '--role-service-address=role-service.<NAMESPACE>.svc.cluster.local:50051'
+            - '--controller-reconcile-interval=<AUTHORIZATION_CONTROLLER_RECONCILE_INTERVAL>'
+          env:
+            - name: NAMESPACE
+              value: <NAMESPACE>
+          ports:
+            - containerPort: 50052
+              name: grpc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: authorization-controller
+  namespace: <NAMESPACE>
+spec:
+  selector:
+    app: authorization-controller
+  ports:
+    - port: 50052
+      targetPort: 50052
+      name: grpc
+---
+# Redis
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: redis
+  namespace: <NAMESPACE>
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: redis-tokenreview-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: redis
+    namespace: <NAMESPACE>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: <AUTHORIZATION_REDIS_NAME>
+  namespace: <NAMESPACE>
+spec:
+  type:
+  clusterIP: None
+  selector:
+    app: <AUTHORIZATION_REDIS_NAME>
+  ports:
+    - protocol: TCP
+      port: 6379
+      targetPort: 6379
+      name: <AUTHORIZATION_REDIS_NAME>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: <AUTHORIZATION_REDIS_COMMANDER>
+  namespace: <NAMESPACE>
+spec:
+  selector:
+    app: <AUTHORIZATION_REDIS_COMMANDER>
+  ports:
+    - protocol: TCP
+      port: 8081
+      targetPort: 8081
+---
+# Sentinel
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sentinel
+  namespace: <NAMESPACE>
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sentinel-tokenreview-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: sentinel
+    namespace: <NAMESPACE>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: <AUTHORIZATION_REDIS_SENTINEL>
+  namespace: <NAMESPACE>
+spec:
+  clusterIP: None
+  ports:
+    - port: 5000
+      targetPort: 5000
+      name: <AUTHORIZATION_REDIS_SENTINEL>
+  selector:
+    app: <AUTHORIZATION_REDIS_SENTINEL>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: <AUTHORIZATION_REDIS_SENTINEL>-svc
+  namespace: <NAMESPACE>
+spec:
+  type: NodePort
+  ports:
+    - port: 5000
+      targetPort: 5000
+      name: <AUTHORIZATION_REDIS_SENTINEL>-svc
+  selector:
+    app: <AUTHORIZATION_REDIS_SENTINEL>
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csm-auth-resource-reader
+rules:
+  - apiGroups: ['']
+    resources: ['secrets', 'configmaps', 'pods']
+    verbs: ['get', 'watch', 'list', 'patch', 'create', 'update', 'delete']
+  - apiGroups: ['coordination.k8s.io']
+    resources: ['leases']
+    resourceNames: ['ingress-controller-leader']
+    verbs: ['get', 'update']
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: system:serviceaccounts:<NAMESPACE>
+subjects:
+  - kind: Group
+    name: system:serviceaccounts:<NAMESPACE>
+    namespace: <NAMESPACE>
+roleRef:
+  kind: ClusterRole
+  name: csm-auth-resource-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: csm-auth-view
+rules:
+  - apiGroups: ['']
+    resources: ['configmaps']
+    verbs: ['get', 'list', 'watch']
+---
+# Grant OPA/kube-mgmt read-only access to resources. This lets kube-mgmt
+# list configmaps to be loaded into OPA as policies.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: opa-viewer
+roleRef:
+  kind: ClusterRole
+  name: csm-auth-view
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+  - kind: Group
+    name: system:serviceaccounts:<NAMESPACE>
+    apiGroup: rbac.authorization.k8s.io
+---
+# Define role for OPA/kube-mgmt to update configmaps with policy status.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: <NAMESPACE>
+  name: configmap-modifier
+rules:
+  - apiGroups: ['']
+    resources: ['configmaps']
+    verbs: ['update', 'patch']
+---
+# Grant OPA/kube-mgmt role defined above.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  namespace: <NAMESPACE>
+  name: opa-configmap-modifier
+roleRef:
+  kind: Role
+  name: configmap-modifier
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+  - kind: Group
+    name: system:serviceaccounts:<NAMESPACE>
+    apiGroup: rbac.authorization.k8s.io
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: proxy-server
+subjects:
+  - kind: ServiceAccount
+    name: proxy-server
+    namespace: <NAMESPACE>
+roleRef:
+  kind: ClusterRole
+  name: csm-auth-proxy-server
+  apiGroup: rbac.authorization.k8s.io

@@ -40,15 +40,15 @@ You can contribute to this project in several ways. Here are some examples:
 
 ## Submitting issues
 
-All issues related to CSM, regardless of the service/repository the issue belongs to (see table above), should be submitted [here](https://github.com/dell/csm/issues). Issues will be triaged and labels will be used to indicate the type of issue. This section outlines the types of issues that can be submitted.  
+All issues related to CSM, regardless of the service/repository the issue belongs to (see table above), should be submitted [here](https://eos2git.cec.lab.emc.com/CSM/csm/issues). Issues will be triaged and labels will be used to indicate the type of issue. This section outlines the types of issues that can be submitted.  
 
 ### Report bugs
 
 We aim to track and document everything related to CSM via the Issues page. The code and documentation are released with no warranties or SLAs and are intended to be supported through a community driven process.
 
-Before submitting a new issue, make sure someone hasn't already reported the problem. Look through the [existing issues](https://github.com/dell/csm/issues) for similar issues.
+Before submitting a new issue, make sure someone hasn't already reported the problem. Look through the [existing issues](https://eos2git.cec.lab.emc.com/CSM/csm/issues) for similar issues.
 
-Report a bug by submitting a [bug report](https://github.com/dell/csm/issues/new?labels=type%2Fbug%2C+needs-triage&template=bug_report.md&title=%5BBUG%5D%3A). Make sure that you provide as much information as possible on how to reproduce the bug.
+Report a bug by submitting a [bug report](https://eos2git.cec.lab.emc.com/CSM/csm/issues/new?labels=type%2Fbug%2C+needs-triage&template=bug_report.md&title=%5BBUG%5D%3A). Make sure that you provide as much information as possible on how to reproduce the bug.
 
 When opening a Bug please include the following information to help with debugging:
 
@@ -61,11 +61,11 @@ An Issue __must__ be created before submitting any pull request. Any pull reques
 
 ### Feature request
 
-If you have an idea of how to improve this project, submit a [feature request](https://github.com/dell/csm/issues/new?labels=type%2Ffeature-request%2C+needs-triage&template=feature_request.md&title=%5BFEATURE%5D%3A).
+If you have an idea of how to improve this project, submit a [feature request](https://eos2git.cec.lab.emc.com/CSM/csm/issues/new?labels=type%2Ffeature-request%2C+needs-triage&template=feature_request.md&title=%5BFEATURE%5D%3A).
 
 ### Answering questions
 
-If you have a question and you can't find the answer in the documentation or issues, the next step is to submit a [question.](https://github.com/dell/csm/issues/new?labels=type%2Fquestion&template=ask-a-question.md&title=%5BQUESTION%5D%3A)
+If you have a question and you can't find the answer in the documentation or issues, the next step is to submit a [question.](https://eos2git.cec.lab.emc.com/CSM/csm/issues/new?labels=type%2Fquestion&template=ask-a-question.md&title=%5BQUESTION%5D%3A)
 
 We'd love your help answering questions being asked by other CSM users.
 
@@ -86,8 +86,8 @@ Read more about the ways you can [Triage issues](ISSUE_TRIAGE.md).
 
 Unsure where to begin contributing? Start by browsing issues labeled `beginner friendly` or `help wanted`.
 
-* [Beginner-friendly](https://github.com/dell/csm/issues?q=is%3Aopen+is%3Aissue+label%3A%22beginner+friendly%22) issues are generally straightforward to complete.
-* [Help wanted](https://github.com/dell/csm/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22) issues are problems we would like the community to help us with regardless of complexity.
+* [Beginner-friendly](https://eos2git.cec.lab.emc.com/CSM/csm/issues?q=is%3Aopen+is%3Aissue+label%3A%22beginner+friendly%22) issues are generally straightforward to complete.
+* [Help wanted](https://eos2git.cec.lab.emc.com/CSM/csm/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22) issues are problems we would like the community to help us with regardless of complexity.
 
 When you're ready to contribute, it's time to create a pull request.
 
@@ -153,28 +153,28 @@ GitHub Actions are used to enforce quality gates when a pull request is created 
 #### Security scans
 
 * [Golang Security Checker](https://github.com/securego/gosec) inspects source code for security vulnerabilities by scanning the Go AST.
-* [Malware Scanner](https://github.com/dell/common-github-actions/tree/main/malware-scanner) inspects source code for malware.
+* [Malware Scanner](https://eos2git.cec.lab.emc.com/CSM/common-github-actions/tree/main/malware-scanner) inspects source code for malware.
 * [Container Scanner](https://github.com/Azure/container-scan) scans containers for security vulnerabilities.
 
 #### Code vetting
 
-[GitHub action](https://github.com/dell/common-github-actions/tree/main/go-code-formatter-linter-vetter) that analyzes source code to report suspicious constructs such as Printf calls whose arguments do not align with the format string, abnormal or not used code in pull requests. Please refer to [vet](https://golang.org/cmd/vet/) for more information.
+[GitHub action](https://eos2git.cec.lab.emc.com/CSM/common-github-actions/tree/main/go-code-formatter-linter-vetter) that analyzes source code to report suspicious constructs such as Printf calls whose arguments do not align with the format string, abnormal or not used code in pull requests. Please refer to [vet](https://golang.org/cmd/vet/) for more information.
 
 #### Code linting
 
-[GitHub action](https://github.com/dell/common-github-actions/tree/main/go-code-formatter-linter-vetter) that analyzes source code to flag programming errors, stylistics errors, and suspicious constructs. Please refer to [Go lint](https://github.com/golang/lint) for more information.
+[GitHub action](https://eos2git.cec.lab.emc.com/CSM/common-github-actions/tree/main/go-code-formatter-linter-vetter) that analyzes source code to flag programming errors, stylistics errors, and suspicious constructs. Please refer to [Go lint](https://github.com/golang/lint) for more information.
 
 #### Code formatting
 
-[GitHub action](https://github.com/dell/common-github-actions/tree/main/go-code-formatter-linter-vetter) that analyzes source code to flag formatting errors. Please refer to [gofmt](https://golang.org/cmd/gofmt/) for more information.
+[GitHub action](https://eos2git.cec.lab.emc.com/CSM/common-github-actions/tree/main/go-code-formatter-linter-vetter) that analyzes source code to flag formatting errors. Please refer to [gofmt](https://golang.org/cmd/gofmt/) for more information.
 
 #### Code sanitization
 
-[GitHub action](https://github.com/dell/common-github-actions/tree/main/code-sanitizer) that analyzes source code for non-inclusive words and language.
+[GitHub action](https://eos2git.cec.lab.emc.com/CSM/common-github-actions/tree/main/code-sanitizer) that analyzes source code for non-inclusive words and language.
 
 #### Code build/test/coverage
 
-[GitHub action](https://github.com/dell/common-github-actions/tree/main/go-code-tester) that runs Go unit tests and checks that the code coverage of each package meets a configured threshold (currently 90%). An error is flagged if a given pull request does not meet the test coverage threshold and blocks the pull request from being merged.
+[GitHub action](https://eos2git.cec.lab.emc.com/CSM/common-github-actions/tree/main/go-code-tester) that runs Go unit tests and checks that the code coverage of each package meets a configured threshold (currently 90%). An error is flagged if a given pull request does not meet the test coverage threshold and blocks the pull request from being merged.
 
 ## Code Reviews
 

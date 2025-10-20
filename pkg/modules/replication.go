@@ -22,11 +22,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	t1 "k8s.io/apimachinery/pkg/types"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
+	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
 
-	"github.com/dell/csm-operator/pkg/drivers"
-	"github.com/dell/csm-operator/pkg/logger"
-	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/drivers"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
+	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
 	rbacv1 "k8s.io/api/rbac/v1"
 
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"

@@ -14,7 +14,7 @@
 
 # Support
 
-We use GitHub for creating/tracking various [issues](https://github.com/dell/csm/issues/new/choose) such as bugs, feature requests, features, and questions. The following resources are also available.
+We use GitHub for creating/tracking various [issues](https://eos2git.cec.lab.emc.com/CSM/csm/issues/new/choose) such as bugs, feature requests, features, and questions. The following resources are also available.
 
 ## Documentation
 

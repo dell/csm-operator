@@ -21,7 +21,7 @@ import (
 	"strconv"
 	"strings"
 
-	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
+	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -32,9 +32,9 @@ import (
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
-	"github.com/dell/csm-operator/pkg/drivers"
-	"github.com/dell/csm-operator/pkg/logger"
+	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/drivers"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
 )
 
 // Constants to be used in reverse proxy config files
