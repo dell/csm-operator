@@ -45,6 +45,15 @@ const (
 	// CsiPowerstoreMaxVolumesPerNode - Maximum Volumes Per Node
 	CsiPowerstoreMaxVolumesPerNode = "<X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE>"
 
+	// VolumeDisconnectMaxRetries - Maximum number of retry attempts for volume disconnection
+	VolumeDisconnectMaxRetries = "<X_CSI_VOLUME_DISCONNECT_MAX_RETRIES>"
+
+	// VolumeDisconnectRetryInterval - Wait time between volume disconnection retries
+	VolumeDisconnectRetryInterval = "<X_CSI_VOLUME_DISCONNECT_RETRY_INTERVAL>"
+
+	// VolumeDisconnectTimeoutSeconds - Timeout duration for each volume disconnection attempt
+	VolumeDisconnectTimeoutSeconds = "<X_CSI_VOLUME_DISCONNECT_TIMEOUT_SECONDS>"
+
 	// CsiFcPortFilterFilePath - Fc Port Filter File Path
 	CsiFcPortFilterFilePath = "<X_CSI_FC_PORTS_FILTER_FILE_PATH>"
 
@@ -163,6 +172,9 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	powerstoreExternalAccess := ""
 	storageCapacity := "false"
 	maxVolumesPerNode := ""
+	volumeDisconnectMaxRetries := "5"
+	volumeDisconnectRetryInterval := "5s"
+	volumeDisconnectTimeoutSeconds := "120s"
 	powerstoreAPITimeout := "120s"
 	podmonArrayConnectivityTimeout := "10s"
 	debug := "false"
@@ -219,6 +231,15 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 				if env.Name == "X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE" {
 					maxVolumesPerNode = env.Value
 				}
+				if env.Name == "X_CSI_VOLUME_DISCONNECT_MAX_RETRIES" {
+					volumeDisconnectMaxRetries = env.Value
+				}
+				if env.Name == "X_CSI_VOLUME_DISCONNECT_RETRY_INTERVAL" {
+					volumeDisconnectRetryInterval = env.Value
+				}
+				if env.Name == "X_CSI_VOLUME_DISCONNECT_TIMEOUT_SECONDS" {
+					volumeDisconnectTimeoutSeconds = env.Value
+				}
 			}
 		}
 
@@ -271,6 +292,9 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreEnableChap, chap)
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreMaxVolumesPerNode, maxVolumesPerNode)
+		yamlString = strings.ReplaceAll(yamlString, VolumeDisconnectMaxRetries, volumeDisconnectMaxRetries)
+		yamlString = strings.ReplaceAll(yamlString, VolumeDisconnectRetryInterval, volumeDisconnectRetryInterval)
+		yamlString = strings.ReplaceAll(yamlString, VolumeDisconnectTimeoutSeconds, volumeDisconnectTimeoutSeconds)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreCSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, CSMAuthEnabled, authEnabled)
