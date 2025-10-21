@@ -153,7 +153,7 @@ spec:
       serviceAccountName: <DriverDefaultReleaseName>-controller
       containers:
         - name: attacher
-          image: registry.k8s.io/sig-storage/csi-attacher:v4.9.0
+          image: registry.k8s.io/sig-storage/csi-attacher:v4.10.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -196,7 +196,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: csi-external-health-monitor-controller
-          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.15.0
+          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.16.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"

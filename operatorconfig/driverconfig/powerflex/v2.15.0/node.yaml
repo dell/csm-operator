@@ -172,7 +172,7 @@ spec:
               mountPath: /certs
               readOnly: true
         - name: registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.15.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
@@ -194,7 +194,7 @@ spec:
         - name: sdc-monitor
           securityContext:
             privileged: true
-          image: quay.io/dell/storage/powerflex/sdc:4.5.4
+          image: quay.io/dell/storage/powerflex/sdc:5.0
           imagePullPolicy: IfNotPresent
           env:
             - name: HOST_PID
@@ -246,7 +246,7 @@ spec:
         - name: sdc
           securityContext:
             privileged: true
-          image: quay.io/dell/storage/powerflex/sdc:4.5.4
+          image: quay.io/dell/storage/powerflex/sdc:5.0
           imagePullPolicy: IfNotPresent
           command:
             - "/bin/sh"

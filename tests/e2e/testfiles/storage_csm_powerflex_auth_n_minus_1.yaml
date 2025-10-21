@@ -38,7 +38,7 @@ spec:
       # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
-        image: quay.io/dell/storage/powerflex/sdc:4.5.4
+        image: quay.io/dell/storage/powerflex/sdc:5.0
         envs:
           - name: HOST_PID
             value: "1"
@@ -119,7 +119,7 @@ spec:
       #   operator: "Exists"
       #   effect: "NoSchedule"
     initContainers:
-      - image: quay.io/dell/storage/powerflex/sdc:4.5.4
+      - image: quay.io/dell/storage/powerflex/sdc:5.0
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
@@ -139,7 +139,7 @@ spec:
       configVersion: v1.13.0
       components:
         - name: karavi-authorization-proxy
-          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.2.0
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
