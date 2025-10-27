@@ -11,7 +11,7 @@
 # limitations under the License.
 #
 name: reverseproxy
-image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.14.0
+image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csipowermax-reverseproxy:nightly
 imagePullPolicy: Always
 env:
   - name: X_CSI_REVPROXY_CONFIG_DIR

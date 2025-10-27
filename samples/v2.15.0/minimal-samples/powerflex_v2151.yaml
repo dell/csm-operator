@@ -13,7 +13,7 @@ spec:
         - name: X_CSI_SDC_SFTP_REPO_ENABLED
           value: "false"
     common:
-      image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.1
+      image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-vxflexos:nightly
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization

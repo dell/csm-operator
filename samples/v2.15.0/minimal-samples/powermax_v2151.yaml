@@ -18,7 +18,7 @@ spec:
           value: ""
         - name: X_CSI_TRANSPORT_PROTOCOL
           value: ""
-      image: quay.io/dell/container-storage-modules/csi-powermax:v2.15.1
+      image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csipowermax:nightly
   # These are the modules which are optional and can be enabled by specifying to enable/disable.
   modules:
     - name: authorization
