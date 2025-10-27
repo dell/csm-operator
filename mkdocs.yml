@@ -1,0 +1,7 @@
+site_name: 'csm-operator'
+site_description: 'csm-operator Documentation.'
+docs_dir: docs
+plugins:
+  - techdocs-core
+theme:
+  name: material

@@ -18,13 +18,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dell/csm-operator/pkg/drivers"
-	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/drivers"
+	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
+	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"

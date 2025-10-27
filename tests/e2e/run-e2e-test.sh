@@ -30,7 +30,6 @@ export REPLICATION=false
 export OBSERVABILITY=false
 export RESILIENCY=false
 export ZONING=false
-export SHAREDNFS=false
 
 export INSTALL_VAULT=false
 export INSTALL_CONJUR=false
@@ -167,7 +166,6 @@ function usage() {
   echo "  --pmax                                       use to run e2e powermax suite"
   echo "  --zoning                                     use to run powerflex zoning tests (requires multiple storage systems)"
   echo "  --minimal                                    use minimal testfiles scenarios"
-  echo "  --sharednfs                                  use to run e2e sharednfs suite (pre-requisite, the nodes need to have nfs-server setup)"
   echo "  --install-vault                              use to install authorization vault instance with secrets for authorization tests"
   echo "  --install-conjur                             use to install authorization conjur instance with secrets for authorization tests"
   echo "  --add-tag=<scenario tag>                     use to specify scenarios to run by one of their tags"
@@ -248,8 +246,6 @@ while getopts ":hv-:" optchar; do
     minimal)
       export E2E_SCENARIOS_FILE=testfiles/minimal-testfiles/scenarios.yaml
       ;;
-    sharednfs)
-      export SHAREDNFS=true ;;
     *)
       echo "Unknown option -${OPTARG}"
       echo "For help, run $PROG -h"

@@ -19,9 +19,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
-	"github.com/dell/csm-operator/pkg/logger"
-	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
+	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
+	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
 
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"

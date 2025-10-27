@@ -1,10 +1,10 @@
-module github.com/dell/csm-operator/tests/e2e
+module eos2git.cec.lab.emc.com/CSM/csm-operator/tests/e2e
 
 go 1.25
 
 require (
-	github.com/dell/csm-operator v0.0.0
-	github.com/onsi/ginkgo/v2 v2.25.2
+	eos2git.cec.lab.emc.com/CSM/csm-operator v0.0.0
+	github.com/onsi/ginkgo/v2 v2.26.0
 	github.com/onsi/gomega v1.38.2
 	golang.org/x/mod v0.27.0
 	k8s.io/api v0.33.0
@@ -148,7 +148,7 @@ require (
 )
 
 replace (
-	github.com/dell/csm-operator => ../../
+	eos2git.cec.lab.emc.com/CSM/csm-operator => ../../
 	k8s.io/cli-runtime => k8s.io/cli-runtime v0.33.0
 	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.33.0
 	k8s.io/code-generator => k8s.io/code-generator v0.33.0

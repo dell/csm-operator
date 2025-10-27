@@ -25,10 +25,10 @@ import (
 	"strings"
 	"time"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
-	"github.com/dell/csm-operator/pkg/constants"
-	"github.com/dell/csm-operator/pkg/modules"
-	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
+	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/constants"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/modules"
+	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
 	"golang.org/x/mod/semver"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -90,17 +90,27 @@ var (
 	unityEphemeralVolumeMap  = map[string]string{"REPLACE_ARRAYID": "UNITY_ARRAYID", "REPLACE_POOL": "UNITY_POOL", "REPLACE_NAS": "UNITY_NAS"}
 )
 
-var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
+var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration, ctrlClient client.Client) error {
+	authModule := csmv1.Module{}
+	for _, m := range cr.Spec.Modules {
+		if m.Name == csmv1.Authorization {
+			authModule = m
+			break
+		}
+	}
+	authConfigVersion := authModule.ConfigVersion
+
 	err := modules.CheckAnnotationAuth(annotations)
 	if err != nil {
 		return err
 	}
 
-	err = modules.CheckApplyVolumesAuth(vols)
+	err = modules.CheckApplyVolumesAuth(vols, authConfigVersion, string(cr.Spec.Driver.CSIDriverType), cr, ctrlClient)
 	if err != nil {
 		return err
 	}
-	err = modules.CheckApplyContainersAuth(cnt, string(cr.Spec.Driver.CSIDriverType), true)
+
+	err = modules.CheckApplyContainersAuth(cnt, string(cr.Spec.Driver.CSIDriverType), true, authConfigVersion, cr, ctrlClient)
 	if err != nil {
 		return err
 	}
@@ -586,7 +596,7 @@ func (step *Step) validateObservabilityInstalled(cr csmv1.ContainerStorageModule
 		return err
 	}
 	if authorizationEnabled, _ := operatorutils.IsModuleEnabled(context.TODO(), *instance, csmv1.Authorization); authorizationEnabled {
-		if err := correctlyAuthInjected(cr, dpApply.Annotations, dpApply.Spec.Template.Spec.Volumes, dpApply.Spec.Template.Spec.Containers); err != nil {
+		if err := correctlyAuthInjected(cr, dpApply.Annotations, dpApply.Spec.Template.Spec.Volumes, dpApply.Spec.Template.Spec.Containers, step.ctrlClient); err != nil {
 			return fmt.Errorf("failed to check for observability authorization installation in %s: %v", clusterClient.ClusterID, err)
 		}
 	} else {
@@ -694,11 +704,11 @@ func (step *Step) validateAuthorizationInstalled(cr csmv1.ContainerStorageModule
 		return err
 	}
 
-	if err := correctlyAuthInjected(cr, dpApply.Annotations, dpApply.Spec.Template.Spec.Volumes, dpApply.Spec.Template.Spec.Containers); err != nil {
+	if err := correctlyAuthInjected(cr, dpApply.Annotations, dpApply.Spec.Template.Spec.Volumes, dpApply.Spec.Template.Spec.Containers, step.ctrlClient); err != nil {
 		return err
 	}
 
-	return correctlyAuthInjected(cr, dsApply.Annotations, dsApply.Spec.Template.Spec.Volumes, dsApply.Spec.Template.Spec.Containers)
+	return correctlyAuthInjected(cr, dsApply.Annotations, dsApply.Spec.Template.Spec.Volumes, dsApply.Spec.Template.Spec.Containers, step.ctrlClient)
 }
 
 func (step *Step) validateAuthorizationNotInstalled(cr csmv1.ContainerStorageModule) error {

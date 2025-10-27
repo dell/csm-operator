@@ -15,7 +15,7 @@ package constants
 import (
 	"time"
 
-	csmv1 "github.com/dell/csm-operator/api/v1"
+	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 

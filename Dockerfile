@@ -1,4 +1,4 @@
-# Copyright © 2021 - 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2021 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,28 +13,20 @@
 ARG BASEIMAGE
 ARG GOIMAGE
 
-# Build the manager binary
 FROM $GOIMAGE as builder
-
 WORKDIR /workspace
 
-# Copy the Go Modules manifests
 COPY go.mod go.mod
 COPY go.sum go.sum
-# cache deps before building and copying source so that we don't need to re-download as much
-# and so that source changes don't invalidate our downloaded layer
-RUN go mod download
-
-# Copy the go source
 COPY main.go main.go
 COPY api/ api/
 COPY controllers/ controllers/
 COPY core/ core/
 COPY pkg/ pkg/
 COPY k8s/ k8s/
+COPY vendor/ vendor/
 
-# Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -mod=vendor -a -o manager main.go
 
 FROM $BASEIMAGE as final
 ENV USER_UID=1001 \
@@ -51,7 +43,6 @@ LABEL vendor="Dell Technologies" \
     version="1.10.0" \
     license="Dell CSM Operator Apache License"
 
-# copy the licenses folder
 COPY licenses /licenses
 
 ENTRYPOINT ["/manager"]

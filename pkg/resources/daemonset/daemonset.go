@@ -15,7 +15,7 @@ package daemonset
 import (
 	"context"
 
-	"github.com/dell/csm-operator/pkg/logger"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	appsv1 "k8s.io/client-go/applyconfigurations/apps/v1"
