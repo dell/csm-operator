@@ -15,10 +15,10 @@ import (
 	"strings"
 	"testing"
 
-	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
-	drivers "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/drivers"
-	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	csmv1 "github.com/dell/csm-operator/api/v1"
+	drivers "github.com/dell/csm-operator/pkg/drivers"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -70,55 +70,29 @@ func TestCheckAnnotationAuth(t *testing.T) {
 }
 
 func TestCheckApplyVolumesAuth(t *testing.T) {
-	t.Run("it handles an empty volume", func(t *testing.T) {
-		got := []acorev1.VolumeApplyConfiguration{}
-		customResource := csmv1.ContainerStorageModule{}
-		authVersion := "v2.3.0"
-		driverType := "powerscale"
-		err := CheckApplyVolumesAuth(got, authVersion, driverType, customResource, ctrlClientFake.NewFakeClient())
-		if err == nil {
-			t.Errorf("got %v, expected to be missing karavi-authorization-config volume", got)
-		}
-	})
-
-	t.Run("it handles karavi-authorization-config volume in v2.4.0", func(t *testing.T) {
-		got := []acorev1.VolumeApplyConfiguration{}
-		customResource := csmv1.ContainerStorageModule{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "isilon",
-			},
-		}
-		authVersion := "v2.4.0"
-		driverType := "powerscale"
-		karaviSecret := getSecret(customResource.Namespace, "karavi-authorization-config")
-		client := ctrlClientFake.NewClientBuilder().WithObjects(karaviSecret).Build()
-		err := CheckApplyVolumesAuth(got, authVersion, driverType, customResource, client)
-		if err == nil {
-			t.Errorf("got %v, expected to be missing karavi-authorization-config volume", got)
-		}
-	})
+	got := []acorev1.VolumeApplyConfiguration{}
+	err := CheckApplyVolumesAuth(got)
+	if err == nil {
+		t.Errorf("got %v, expected karavi-authorization-config volume", got)
+	}
 }
 
 func TestCheckApplyContainersAuth(t *testing.T) {
-	t.Run("it handles no config params volume mount", func(t *testing.T) {
+	t.Run("it handles no volume mount", func(t *testing.T) {
 		got := []acorev1.ContainerApplyConfiguration{
 			*acorev1.Container().WithName("karavi-authorization-proxy"),
 		}
-		customResource := csmv1.ContainerStorageModule{}
 		driver := "powerscale"
-		authVersion := "v2.3.0"
-		err := CheckApplyContainersAuth(got, driver, true, authVersion, customResource, ctrlClientFake.NewFakeClient())
+		err := CheckApplyContainersAuth(got, driver, true)
 		if err == nil {
-			t.Errorf("got %v, expected csi-isilon-config-params to be injected", got)
+			t.Errorf("got %v, expected karavi-authorization-config to be injected", got)
 		}
 	})
 
 	t.Run("it handles an empty container", func(t *testing.T) {
 		got := []acorev1.ContainerApplyConfiguration{}
-		customResource := csmv1.ContainerStorageModule{}
 		driver := "powerscale"
-		authVersion := "v2.3.0"
-		err := CheckApplyContainersAuth(got, driver, true, authVersion, customResource, ctrlClientFake.NewFakeClient())
+		err := CheckApplyContainersAuth(got, driver, true)
 		if err == nil {
 			t.Errorf("got %v, expected karavi-authorization-config to be injected", got)
 		}
@@ -136,9 +110,7 @@ func TestCheckApplyContainersAuth(t *testing.T) {
 					&acorev1.VolumeMountApplyConfiguration{Name: &vol2Name}).
 				WithEnv(&acorev1.EnvVarApplyConfiguration{Name: &envName, Value: &envVal}),
 		}
-		customResource := csmv1.ContainerStorageModule{}
-		authVersion := "v2.3.0"
-		err := CheckApplyContainersAuth(got, driver, true, authVersion, customResource, ctrlClientFake.NewFakeClient())
+		err := CheckApplyContainersAuth(got, driver, true)
 		assert.Error(t, err)
 	})
 
@@ -155,9 +127,7 @@ func TestCheckApplyContainersAuth(t *testing.T) {
 					&acorev1.VolumeMountApplyConfiguration{Name: &vol2Name}).
 				WithEnv(&acorev1.EnvVarApplyConfiguration{Name: &envName, Value: &envVal}),
 		}
-		customResource := csmv1.ContainerStorageModule{}
-		authVersion := "v2.3.0"
-		err := CheckApplyContainersAuth(got, driver, true, authVersion, customResource, ctrlClientFake.NewFakeClient())
+		err := CheckApplyContainersAuth(got, driver, true)
 		assert.Error(t, err)
 	})
 
@@ -174,142 +144,101 @@ func TestCheckApplyContainersAuth(t *testing.T) {
 					&acorev1.VolumeMountApplyConfiguration{Name: &vol2Name}).
 				WithEnv(&acorev1.EnvVarApplyConfiguration{Name: &envName, Value: &envVal}),
 		}
-		customResource := csmv1.ContainerStorageModule{}
-		authVersion := "v2.3.0"
-		err := CheckApplyContainersAuth(got, driver, true, authVersion, customResource, ctrlClientFake.NewFakeClient())
+		err := CheckApplyContainersAuth(got, driver, true)
 		assert.Error(t, err)
-	})
-
-	t.Run("it handles no karavi authorization config volume mount when karavi secret exists", func(t *testing.T) {
-		driver := "powerscale"
-		vol1Name := AuthorizationSupportedDrivers[driver].DriverConfigParamsVolumeMount
-
-		got := []acorev1.ContainerApplyConfiguration{
-			*acorev1.Container().WithName("karavi-authorization-proxy").
-				WithVolumeMounts(&acorev1.VolumeMountApplyConfiguration{Name: &vol1Name}),
-		}
-		customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
-		if err != nil {
-			panic(err)
-		}
-		authVersion := "v2.4.0"
-		clientWithSecret := ctrlClientFake.NewClientBuilder().WithObjects(getSecret(customResource.Namespace, "karavi-authorization-config")).Build()
-		err = CheckApplyContainersAuth(got, driver, true, authVersion, customResource, clientWithSecret)
-		assert.ErrorContains(t, err, "missing the following volume mount karavi-authorization-config")
-	})
-
-	t.Run("it handles no driver secret volume mount when karavi secret doesn't exist", func(t *testing.T) {
-		driver := "powerscale"
-		vol1Name := AuthorizationSupportedDrivers[driver].DriverConfigParamsVolumeMount
-
-		got := []acorev1.ContainerApplyConfiguration{
-			*acorev1.Container().WithName("karavi-authorization-proxy").
-				WithVolumeMounts(&acorev1.VolumeMountApplyConfiguration{Name: &vol1Name}),
-		}
-		customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
-		if err != nil {
-			panic(err)
-		}
-		authVersion := "v2.4.0"
-		err = CheckApplyContainersAuth(got, driver, true, authVersion, customResource, ctrlClientFake.NewFakeClient())
-		assert.ErrorContains(t, err, "missing the following volume mount isilon-configs")
 	})
 }
 
 func TestAuthInjectDaemonset(t *testing.T) {
 	ctx := context.Background()
-	correctlyInjected := func(ds applyv1.DaemonSetApplyConfiguration, drivertype string, skipCertificateValidation bool, authVersion string, cr csmv1.ContainerStorageModule) error {
+	correctlyInjected := func(ds applyv1.DaemonSetApplyConfiguration, drivertype string, skipCertificateValidation bool) error {
 		err := CheckAnnotationAuth(ds.Annotations)
 		if err != nil {
 			return err
 		}
-		err = CheckApplyVolumesAuth(ds.Spec.Template.Spec.Volumes, authVersion, drivertype, cr, ctrlClientFake.NewFakeClient())
+		err = CheckApplyVolumesAuth(ds.Spec.Template.Spec.Volumes)
 		if err != nil {
 			return err
 		}
 
-		err = CheckApplyContainersAuth(ds.Spec.Template.Spec.Containers, drivertype, skipCertificateValidation, authVersion, cr, ctrlClientFake.NewFakeClient())
+		err = CheckApplyContainersAuth(ds.Spec.Template.Spec.Containers, drivertype, skipCertificateValidation)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 	//*appsv1.DaemonSet
-	tests := map[string]func(t *testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, operatorutils.OperatorConfig, string){
-		"success - greenfield injection": func(*testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, operatorutils.OperatorConfig, string) {
+	tests := map[string]func(t *testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, operatorutils.OperatorConfig){
+		"success - greenfield injection": func(*testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
-			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerScaleName, "node.yaml", ctrlClientFake.NewFakeClient())
+			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerScaleName, "node.yaml", ctrlClientFake.NewClientBuilder().Build())
 			if err != nil {
 				panic(err)
 			}
-			authVersion := "v2.3.0"
 
-			return true, true, nodeYAML.DaemonSetApplyConfig, operatorConfig, authVersion
+			return true, true, nodeYAML.DaemonSetApplyConfig, operatorConfig
 		},
-		"success - brownfield injection": func(*testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, operatorutils.OperatorConfig, string) {
+		"success - brownfield injection": func(*testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
-			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerScaleName, "node.yaml", ctrlClientFake.NewFakeClient())
+			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerScaleName, "node.yaml", ctrlClientFake.NewClientBuilder().Build())
 			if err != nil {
 				panic(err)
 			}
-			newDaemonSet, err := AuthInjectDaemonset(context.TODO(), nodeYAML.DaemonSetApplyConfig, customResource, operatorConfig, ctrlClientFake.NewFakeClient())
+			newDaemonSet, err := AuthInjectDaemonset(nodeYAML.DaemonSetApplyConfig, customResource, operatorConfig)
 			if err != nil {
 				panic(err)
 			}
-			authVersion := "v2.3.0"
 
-			return true, true, *newDaemonSet, operatorConfig, authVersion
+			return true, true, *newDaemonSet, operatorConfig
 		},
-		"success - validate certificate": func(*testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, operatorutils.OperatorConfig, string) {
+		"success - validate certificate": func(*testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth_validate_cert.yaml")
 			if err != nil {
 				panic(err)
 			}
-			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerScaleName, "node.yaml", ctrlClientFake.NewFakeClient())
+			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerScaleName, "node.yaml", ctrlClientFake.NewClientBuilder().Build())
 			if err != nil {
 				panic(err)
 			}
-			newDaemonSet, err := AuthInjectDaemonset(context.TODO(), nodeYAML.DaemonSetApplyConfig, customResource, operatorConfig, ctrlClientFake.NewFakeClient())
+			newDaemonSet, err := AuthInjectDaemonset(nodeYAML.DaemonSetApplyConfig, customResource, operatorConfig)
 			if err != nil {
 				panic(err)
 			}
-			authVersion := "v2.3.0"
 
-			return true, false, *newDaemonSet, operatorConfig, authVersion
+			return true, false, *newDaemonSet, operatorConfig
 		},
-		"fail - bad config path": func(*testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, operatorutils.OperatorConfig, string) {
+		"fail - bad config path": func(*testing.T) (bool, bool, applyv1.DaemonSetApplyConfiguration, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
-			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerScaleName, "node.yaml", ctrlClientFake.NewFakeClient())
+			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerScaleName, "node.yaml", ctrlClientFake.NewClientBuilder().Build())
 			if err != nil {
 				panic(err)
 			}
 			tmpOperatorConfig := operatorConfig
 			tmpOperatorConfig.ConfigDirectory = "bad/path"
-			authVersion := customResource.Spec.Modules[0].ConfigVersion
 
-			return false, false, nodeYAML.DaemonSetApplyConfig, tmpOperatorConfig, authVersion
+			return false, false, nodeYAML.DaemonSetApplyConfig, tmpOperatorConfig
 		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			success, skipCertificateValidation, ds, opConfig, authVersion := tc(t)
+			success, skipCertificateValidation, ds, opConfig := tc(t)
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
 			}
-			newDaemonSet, err := AuthInjectDaemonset(context.TODO(), ds, customResource, opConfig, ctrlClientFake.NewFakeClient())
+			newDaemonSet, err := AuthInjectDaemonset(ds, customResource, opConfig)
 			if success {
 				assert.NoError(t, err)
-				if err := correctlyInjected(*newDaemonSet, string(customResource.Spec.Driver.CSIDriverType), skipCertificateValidation, authVersion, customResource); err != nil {
+				if err := correctlyInjected(*newDaemonSet, string(customResource.Spec.Driver.CSIDriverType), skipCertificateValidation); err != nil {
 					assert.NoError(t, err)
 				}
 			} else {
@@ -321,24 +250,24 @@ func TestAuthInjectDaemonset(t *testing.T) {
 
 func TestAuthInjectDeployment(t *testing.T) {
 	ctx := context.Background()
-	correctlyInjected := func(dp applyv1.DeploymentApplyConfiguration, drivertype string, skipCertificateValidation bool, authVersion string, cr csmv1.ContainerStorageModule, ctrlClient ctrlClient.Client) error {
+	correctlyInjected := func(dp applyv1.DeploymentApplyConfiguration, drivertype string, skipCertificateValidation bool) error {
 		err := CheckAnnotationAuth(dp.Annotations)
 		if err != nil {
 			return err
 		}
-		err = CheckApplyVolumesAuth(dp.Spec.Template.Spec.Volumes, authVersion, drivertype, cr, ctrlClient)
+		err = CheckApplyVolumesAuth(dp.Spec.Template.Spec.Volumes)
 		if err != nil {
 			return err
 		}
-		err = CheckApplyContainersAuth(dp.Spec.Template.Spec.Containers, drivertype, skipCertificateValidation, authVersion, cr, ctrlClient)
+		err = CheckApplyContainersAuth(dp.Spec.Template.Spec.Containers, drivertype, skipCertificateValidation)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 
-	tests := map[string]func(t *testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client){
-		"success - greenfield injection": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client) {
+	tests := map[string]func(t *testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule){
+		"success - greenfield injection": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -347,10 +276,9 @@ func TestAuthInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			authVersion := "v2.3.0"
-			return true, true, controllerYAML.Deployment, operatorConfig, customResource, authVersion, ctrlClientFake.NewFakeClient()
+			return true, true, controllerYAML.Deployment, operatorConfig, customResource
 		},
-		"success - greenfield injection missing skip certificate validation env": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client) {
+		"success - greenfield injection missing skip certificate validation env": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth_missing_skip_cert_env.yaml")
 			if err != nil {
 				panic(err)
@@ -359,10 +287,9 @@ func TestAuthInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			authVersion := "v2.3.0"
-			return true, true, controllerYAML.Deployment, operatorConfig, customResource, authVersion, ctrlClientFake.NewFakeClient()
+			return true, true, controllerYAML.Deployment, operatorConfig, customResource
 		},
-		"success - brownfield injection": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client) {
+		"success - brownfield injection": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -372,28 +299,14 @@ func TestAuthInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			ctrlClient := ctrlClientFake.NewFakeClient()
-			newDeployment, err := AuthInjectDeployment(context.TODO(), controllerYAML.Deployment, tmpCR, operatorConfig, ctrlClient)
+			newDeployment, err := AuthInjectDeployment(controllerYAML.Deployment, tmpCR, operatorConfig)
 			if err != nil {
 				panic(err)
 			}
-			authVersion := "v2.3.0"
-			return true, true, *newDeployment, operatorConfig, customResource, authVersion, ctrlClient
+
+			return true, true, *newDeployment, operatorConfig, customResource
 		},
-		"success - greenfield injection with driver secret": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client) {
-			customResource, err := getCustomResource("./testdata/cr_powerscale_auth_driver_secret.yaml")
-			if err != nil {
-				panic(err)
-			}
-			tmpCR := customResource
-			controllerYAML, err := drivers.GetController(ctx, tmpCR, operatorConfig, csmv1.PowerScaleName)
-			if err != nil {
-				panic(err)
-			}
-			authVersion := "v2.4.0"
-			return true, true, controllerYAML.Deployment, operatorConfig, customResource, authVersion, ctrlClientFake.NewFakeClient()
-		},
-		"success - validate certificate": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client) {
+		"success - validate certificate": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth_validate_cert.yaml")
 			if err != nil {
 				panic(err)
@@ -403,15 +316,14 @@ func TestAuthInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			ctrlClient := ctrlClientFake.NewFakeClient()
-			newDeployment, err := AuthInjectDeployment(context.TODO(), controllerYAML.Deployment, tmpCR, operatorConfig, ctrlClient)
+			newDeployment, err := AuthInjectDeployment(controllerYAML.Deployment, tmpCR, operatorConfig)
 			if err != nil {
 				panic(err)
 			}
-			authVersion := "v2.3.0"
-			return true, false, *newDeployment, operatorConfig, customResource, authVersion, ctrlClient
+
+			return true, false, *newDeployment, operatorConfig, customResource
 		},
-		"fail - bad config path": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client) {
+		"fail - bad config path": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -422,17 +334,17 @@ func TestAuthInjectDeployment(t *testing.T) {
 			}
 			tmpOperatorConfig := operatorConfig
 			tmpOperatorConfig.ConfigDirectory = "bad/path"
-			authVersion := "v2.3.0"
-			return false, true, controllerYAML.Deployment, tmpOperatorConfig, customResource, authVersion, ctrlClientFake.NewFakeClient()
+
+			return false, true, controllerYAML.Deployment, tmpOperatorConfig, customResource
 		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			success, skipCertificateValidation, dp, opConfig, cr, authVersion, client := tc(t)
-			newDeployment, err := AuthInjectDeployment(context.TODO(), dp, cr, opConfig, client)
+			success, skipCertificateValidation, dp, opConfig, cr := tc(t)
+			newDeployment, err := AuthInjectDeployment(dp, cr, opConfig)
 			if success {
 				assert.NoError(t, err)
-				if err := correctlyInjected(*newDeployment, string(cr.Spec.Driver.CSIDriverType), skipCertificateValidation, authVersion, cr, client); err != nil {
+				if err := correctlyInjected(*newDeployment, string(cr.Spec.Driver.CSIDriverType), skipCertificateValidation); err != nil {
 					assert.NoError(t, err)
 				}
 			} else {
@@ -444,7 +356,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 
 func TestAuthorizationPreCheck(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client){
-		"success - v2.4.0": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
+		"success": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -452,15 +364,15 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			namespace := customResource.Namespace
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
-			auth.ConfigVersion = "v2.4.0"
 
+			karaviAuthconfig := getSecret(namespace, "karavi-authorization-config")
 			proxyAuthzTokens := getSecret(namespace, "proxy-authz-tokens")
 
-			client := ctrlClientFake.NewClientBuilder().WithObjects(proxyAuthzTokens).Build()
+			client := ctrlClientFake.NewClientBuilder().WithObjects(karaviAuthconfig, proxyAuthzTokens).Build()
 
 			return true, auth, tmpCR, client
 		},
-		"success - v2.3.0": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
+		"success - version provided": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
 			if err != nil {
 				panic(err)
@@ -476,22 +388,6 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			client := ctrlClientFake.NewClientBuilder().WithObjects(karaviAuthconfig, proxyAuthzTokens).Build()
 
 			return true, auth, tmpCR, client
-		},
-		"fail - v2.3.0 has no karavi-authorization-config secret": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
-			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
-			if err != nil {
-				panic(err)
-			}
-			namespace := customResource.Namespace
-			tmpCR := customResource
-			auth := tmpCR.Spec.Modules[0]
-			auth.ConfigVersion = "v2.3.0"
-
-			proxyAuthzTokens := getSecret(namespace, "proxy-authz-tokens")
-
-			client := ctrlClientFake.NewClientBuilder().WithObjects(proxyAuthzTokens).Build()
-
-			return false, auth, tmpCR, client
 		},
 		"fail - SKIP_CERTIFICATE_VALIDATION is false but no cert": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
@@ -597,6 +493,28 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 	type fakeControllerRuntimeClientWrapper func(clusterConfigData []byte) (ctrlClient.Client, error)
 
 	tests := map[string]func(t *testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper){
+		"success v1": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1120.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			auth := tmpCR.Spec.Modules[0]
+
+			karaviConfig := getSecret(customResource.Namespace, "karavi-config-secret")
+			karaviStorage := getSecret(customResource.Namespace, "karavi-storage-secret")
+			karaviTLS := getSecret(customResource.Namespace, "karavi-selfsigned-tls")
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviStorage, karaviTLS).Build()
+
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
+				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviStorage, karaviTLS).Build()
+				return clusterClient, nil
+			}
+
+			return true, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
 		"success v2": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
@@ -750,6 +668,21 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 		},
 		"success - creating with vault client certificates": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_vault_cert.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+		"success - creating v1": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1120.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -1943,6 +1876,84 @@ func TestAuthorizationIngress(t *testing.T) {
 
 			return true, true, tmpCR, sourceClient
 		},
+		"success - creating v1.10.0": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1120.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			namespace := customResource.Namespace
+			name := namespace + "-ingress-nginx-controller"
+
+			dp := &appsv1.Deployment{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Deployment",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: namespace,
+				},
+				Spec: appsv1.DeploymentSpec{
+					Selector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{"app.kubernetes.io/name": "ingress-nginx"},
+					},
+				},
+			}
+
+			pod := &corev1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Pod",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: namespace,
+				},
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(dp, pod).Build()
+
+			return true, true, tmpCR, sourceClient
+		},
+		"success - creating v1.12.0": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1120.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			namespace := customResource.Namespace
+			name := namespace + "-ingress-nginx-controller"
+
+			dp := &appsv1.Deployment{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Deployment",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: namespace,
+				},
+				Spec: appsv1.DeploymentSpec{
+					Selector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{"app.kubernetes.io/name": "ingress-nginx"},
+					},
+				},
+			}
+
+			pod := &corev1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Pod",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: namespace,
+				},
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(dp, pod).Build()
+
+			return true, true, tmpCR, sourceClient
+		},
 		"fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
@@ -2198,6 +2209,21 @@ func TestAuthorizationCrdDeploy(t *testing.T) {
 		},
 		"success - creating": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			err = apiextv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, tmpCR, sourceClient, operatorConfig
+		},
+		"success - creating v1": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v1120.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -2715,7 +2741,7 @@ func TestUpdateConfigGlobalVars(t *testing.T) {
 
 func TestRemoveVaultFromStorageService(t *testing.T) {
 	// Create a fake client
-	ctrlClient := ctrlClientFake.NewFakeClient()
+	ctrlClient := ctrlClientFake.NewClientBuilder().Build()
 	ctx := context.TODO()
 
 	// Create a test ContainerStorageModule

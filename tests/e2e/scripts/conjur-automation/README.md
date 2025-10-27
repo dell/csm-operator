@@ -87,7 +87,7 @@ storageSystemCredentials:
 ```
 
 ### Install and create secrets from environment variables
-This method aligns with CSM Operator e2e by reading specific environment variables in array-info.env. Refer the sample at https://eos2git.cec.lab.emc.com/CSM/csm-operator/blob/main/tests/e2e/array-info.env.sample:
+This method aligns with CSM Operator e2e by reading specific environment variables in array-info.env. Refer the sample at https://github.com/dell/csm-operator/blob/main/tests/e2e/array-info.env.sample:
 
 ```
 PFLEX_USER

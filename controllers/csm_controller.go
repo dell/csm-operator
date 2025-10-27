@@ -23,22 +23,22 @@ import (
 	"sync/atomic"
 	"time"
 
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/drivers"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/modules"
+	"github.com/dell/csm-operator/pkg/drivers"
+	"github.com/dell/csm-operator/pkg/modules"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/constants"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
-	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/resources/configmap"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/resources/csidriver"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/resources/daemonset"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/resources/deployment"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/resources/rbac"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/resources/serviceaccount"
+	csmv1 "github.com/dell/csm-operator/api/v1"
+	"github.com/dell/csm-operator/pkg/constants"
+	"github.com/dell/csm-operator/pkg/logger"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
+	"github.com/dell/csm-operator/pkg/resources/configmap"
+	"github.com/dell/csm-operator/pkg/resources/csidriver"
+	"github.com/dell/csm-operator/pkg/resources/daemonset"
+	"github.com/dell/csm-operator/pkg/resources/deployment"
+	"github.com/dell/csm-operator/pkg/resources/rbac"
+	"github.com/dell/csm-operator/pkg/resources/serviceaccount"
 	"go.uber.org/zap"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -842,13 +842,13 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			switch m.Name {
 			case csmv1.Authorization:
 				log.Info("Injecting CSM Authorization")
-				dp, err := modules.AuthInjectDeployment(ctx, controller.Deployment, cr, operatorConfig, ctrlClient)
+				dp, err := modules.AuthInjectDeployment(controller.Deployment, cr, operatorConfig)
 				if err != nil {
 					return fmt.Errorf("injecting auth into deployment: %v", err)
 				}
 				controller.Deployment = *dp
 
-				ds, err := modules.AuthInjectDaemonset(ctx, node.DaemonSetApplyConfig, cr, operatorConfig, ctrlClient)
+				ds, err := modules.AuthInjectDaemonset(node.DaemonSetApplyConfig, cr, operatorConfig)
 				if err != nil {
 					return fmt.Errorf("injecting auth into deamonset: %v", err)
 				}

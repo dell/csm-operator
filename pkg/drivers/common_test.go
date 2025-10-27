@@ -15,9 +15,9 @@ package drivers
 import (
 	"strings"
 
-	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
-	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/shared"
+	csmv1 "github.com/dell/csm-operator/api/v1"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
+	"github.com/dell/csm-operator/tests/shared"
 	corev1 "k8s.io/api/core/v1"
 )
 

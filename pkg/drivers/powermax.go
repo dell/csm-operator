@@ -21,12 +21,12 @@ import (
 	"strconv"
 	"strings"
 
-	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	v1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 
-	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
+	csmv1 "github.com/dell/csm-operator/api/v1"
+	"github.com/dell/csm-operator/pkg/logger"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -44,10 +44,7 @@ const (
 	// PowerMaxConfigParamsVolumeMount used to identify config param volume mount
 	PowerMaxConfigParamsVolumeMount = "powermax-config-params"
 
-	// PowerMaxConfigVolumeMount -
-	PowerMaxConfigVolumeMount = CSIPowerMaxSecretVolumeName
-
-	// CSIPmaxManagedArray and following used for replacing user values in config files
+	// CSIPmaxManagedArray and following  used for replacing user values in config files
 	CSIPmaxManagedArray    = "<X_CSI_MANAGED_ARRAY>"
 	CSIPmaxEndpoint        = "<X_CSI_POWERMAX_ENDPOINT>"
 	CSIPmaxDebug           = "<X_CSI_POWERMAX_DEBUG>"

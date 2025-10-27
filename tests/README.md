@@ -42,7 +42,7 @@ Any time changes made to the operator are being checked into the main branch, sa
   - (if running sanity, powerscale, or modules suites) `isilon`
   - (if running unity suite) `unity`
   - (if running powermax suite) `powermax`
-  - (if running powerstore suite) `powerstore`, `test-powerstore`
+  - (if running powerstore suite) `powerstore`
 - For Authorization V2:
   - The following components must be installed on your cluster:
     - Secrets Store CSI Driver
@@ -98,7 +98,7 @@ Notes:
 
 The tests are run by the `run-e2e-test.sh` script in the `tests/e2e` directory.
 
-- Ensure you meet all [prerequisites](https://eos2git.cec.lab.emc.com/CSM/csm-operator/blob/main/tests/README.md#prerequisites).
+- Ensure you meet all [prerequisites](https://github.com/dell/csm-operator/blob/main/tests/README.md#prerequisites).
 - Change to the `tests/e2e` directory.
 - Create a file named `array-info.env` and populate it with your array information. Use `array-info.env.sample` as a template.
 - If you do not have `dellctl` (for authorization proxy server) accessible through your `PATH` variable, pass the path to the executable to the script, like so, `run-e2e-test.sh --dellctl=/path/to/dellctl`, and they will be added to `/usr/local/bin`
@@ -219,10 +219,10 @@ Note: Please be mindful when updating upgrade scenarios for Authorization Proxy 
 - Add backend Support: we will cover three case:
 
   1.  `Fully recycled old step`: If the desired steps has already been covered in another test scenario, just copy line for line. You don't need any code change
-  2.  `partially recycled old step`: In this case, a very similar test has already been cover. This means there's already an entrypoint in `steps`. You should review the `StepRunnerInit` function at [step_runner.go](https://eos2git.cec.lab.emc.com/CSM/csm-operator/blob/main/tests/e2e/steps/steps_runner.go) and trace the implementation function that matches your step. For example the step `"Validate [world] module is installed"`. The line that matches this in `StepRunnerInit` is `runner.addStep(`^Validate \[([^"]\*)\] module is installed$`, step.validateModuleInstalled)`. The implementation to trace is `step.validateModuleInstalled`. We will review the implementation function in [steps_def.go](https://eos2git.cec.lab.emc.com/CSM/csm-operator/blob/main/tests/e2e/steps/steps_def.go) to decide whether or not we need to do anything. Make the code changes if needed.
+  2.  `partially recycled old step`: In this case, a very similar test has already been cover. This means there's already an entrypoint in `steps`. You should review the `StepRunnerInit` function at [step_runner.go](https://github.com/dell/csm-operator/blob/main/tests/e2e/steps/steps_runner.go) and trace the implementation function that matches your step. For example the step `"Validate [world] module is installed"`. The line that matches this in `StepRunnerInit` is `runner.addStep(`^Validate \[([^"]\*)\] module is installed$`, step.validateModuleInstalled)`. The implementation to trace is `step.validateModuleInstalled`. We will review the implementation function in [steps_def.go](https://github.com/dell/csm-operator/blob/main/tests/e2e/steps/steps_def.go) to decide whether or not we need to do anything. Make the code changes if needed.
   3.  `new step`: New step can be simple such as `"Validate Today is Tuesday"` or a templated such as `["Validate it is [raining]"](https://example.com)`. The workflow to support these two cases is the same and only varies in the signature of the implementation function. The workflow include:
 
-      1. Implement steps in [steps_def.go](https://eos2git.cec.lab.emc.com/CSM/csm-operator/blob/main/tests/e2e/steps/steps_def.go). Define a function to implement your step. Note that the steps are stateless! If you want to define a function to test a happy path, your function should return nil if no error occurs and error otherwise. However, if you want to test an error path, your function should return nil if you get error and error otherwise. The constraints of all functions in step_def.go is as follows:
+      1. Implement steps in [steps_def.go](https://github.com/dell/csm-operator/blob/main/tests/e2e/steps/steps_def.go). Define a function to implement your step. Note that the steps are stateless! If you want to define a function to test a happy path, your function should return nil if no error occurs and error otherwise. However, if you want to test an error path, your function should return nil if you get error and error otherwise. The constraints of all functions in step_def.go is as follows:
 
          - must return `error` or `nil`
          - must take at least one argument. The first one MUST be type `Resource`(even though it may not be used). If your step has any group(a groups is anything in your step enclosed by `[]`), the remaining arguments should be the groups in the order they appear on the steps(from left to right). For example, the two new functions above will can be implemented as shown below:
@@ -257,7 +257,7 @@ Note: Please be mindful when updating upgrade scenarios for Authorization Proxy 
             }
            ```
 
-      2. Register your new steps in `StepRunnerInit` function at [step_runner.go](https://eos2git.cec.lab.emc.com/CSM/csm-operator/blob/main/tests/e2e/steps/steps_runner.go). Please pay special attention to the regex and ensure they actually match your new steps. For instance, the new steps we implemented above can be mapped to their steps in the valus file as follows:
+      2. Register your new steps in `StepRunnerInit` function at [step_runner.go](https://github.com/dell/csm-operator/blob/main/tests/e2e/steps/steps_runner.go). Please pay special attention to the regex and ensure they actually match your new steps. For instance, the new steps we implemented above can be mapped to their steps in the valus file as follows:
 
          ```go
          func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kubernetes.Clientset) {

@@ -24,8 +24,8 @@ import (
 	"sync"
 	"testing"
 
-	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/stretchr/testify/assert"
 	admissionregistration "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -2051,7 +2051,7 @@ roleRef:
   kind: Role
   name: cluster-role
   apiGroup: rbac.authorization.k8s.io
----
+---  
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -2248,7 +2248,7 @@ roleRef:
   kind: Role
   name: my-role
   apiGroup: rbac.authorization.k8s.io
----
+---  
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -3023,9 +3023,7 @@ func TestGetUpgradeInfo(t *testing.T) {
 	// Create a malformed upgrade path file
 	tempDir := t.TempDir()
 	configDir := fmt.Sprintf("%s/moduleconfig/authorization/%s", tempDir, oldVersion)
-	defer os.RemoveAll(configDir)
-
-	err := os.MkdirAll(configDir, 0o700)
+	err := os.MkdirAll(configDir, 0o644)
 	assert.NoError(t, err)
 
 	err = os.WriteFile(fmt.Sprintf("%s/upgrade-path.yaml", configDir),

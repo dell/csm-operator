@@ -24,8 +24,8 @@ import (
 	"strconv"
 	"strings"
 
-	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
+	csmv1 "github.com/dell/csm-operator/api/v1"
+	"github.com/dell/csm-operator/pkg/logger"
 	goYAML "gopkg.in/yaml.v3"
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
@@ -48,7 +48,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 
-	k8sClient "eos2git.cec.lab.emc.com/CSM/csm-operator/k8s"
+	k8sClient "github.com/dell/csm-operator/k8s"
 )
 
 // wrapper for UT to allow more coverage when testing
