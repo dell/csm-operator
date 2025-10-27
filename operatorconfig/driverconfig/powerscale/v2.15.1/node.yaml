@@ -77,6 +77,9 @@ spec:
     metadata:
       labels:
         app: <DriverDefaultReleaseName>-node
+        csmNamespace: <CSM_NAMESPACE>
+      annotations:
+        kubectl.kubernetes.io/default-container: driver
     spec:
       serviceAccount: <DriverDefaultReleaseName>-node
       # nodeSelector:
@@ -93,7 +96,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: quay.io/dell/container-storage-modules/csi-isilon:v2.15.0
+          image: quay.io/dell/container-storage-modules/csi-isilon:v2.15.1
           imagePullPolicy: IfNotPresent
           env:
             - name: CSI_ENDPOINT
@@ -102,6 +105,8 @@ spec:
               value: node
             - name: X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION
               value: "true"
+            - name: X_CSI_ISI_AUTH_TYPE
+              value: "0"
             - name: X_CSI_ALLOWED_NETWORKS
               value: ""
             - name: X_CSI_VERBOSE
@@ -116,6 +121,8 @@ spec:
               value: "false"
             - name: X_CSI_ISI_AUTOPROBE
               value: "true"
+            - name: GOISILON_DEBUG
+              value: <GOISILON_DEBUG>
             - name: X_CSI_NODE_NAME
               valueFrom:
                 fieldRef:
@@ -137,12 +144,14 @@ spec:
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: "false"
             - name: X_CSI_MAX_PATH_LIMIT
-              value: "false"
+              value: "192"
           volumeMounts:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/csi-isilon
             - name: volumedevices-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi/volumeDevices
+            - name: csi-path
+              mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
             - name: pods-path
               mountPath: <KUBELET_CONFIG_DIR>/pods
               mountPropagation: "Bidirectional"
@@ -176,10 +185,25 @@ spec:
             - name: driver-path
               mountPath: /csi
       volumes:
+        - name: usr-bin
+          hostPath:
+            path: /usr/bin
+            type: Directory
+        - name: kubelet-pods
+          hostPath:
+            path: /var/lib/kubelet/pods
+            type: Directory
+        - name: var-run
+          hostPath:
+            path: /var/run
+            type: Directory
         - name: registration-dir
           hostPath:
             path: <KUBELET_CONFIG_DIR>/plugins_registry/
             type: DirectoryOrCreate
+        - name: csi-path
+          hostPath:
+            path: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
         - name: driver-path
           hostPath:
             path: <KUBELET_CONFIG_DIR>/plugins/csi-isilon

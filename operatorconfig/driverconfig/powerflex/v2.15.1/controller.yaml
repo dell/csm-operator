@@ -22,8 +22,8 @@ rules:
     resources: ["persistentvolumeclaims"]
     verbs: ["get", "list", "watch", "update"]
   - apiGroups: [""]
-    resources: ["pods"]
-    verbs: ["get", "list", "watch"]
+    resources: ["persistentvolumeclaims/status"]
+    verbs: ["patch"]
   - apiGroups: ["storage.k8s.io"]
     resources: ["storageclasses"]
     verbs: ["get", "list", "watch"]
@@ -31,10 +31,13 @@ rules:
     resources: ["volumeattachments"]
     verbs: ["get", "list", "watch", "patch"]
   - apiGroups: ["storage.k8s.io"]
+    resources: ["csinodes"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["storage.k8s.io"]
     resources: ["volumeattachments/status"]
     verbs: ["patch"]
-  - apiGroups: ["storage.k8s.io"]
-    resources: ["csinodes"]
+  - apiGroups: [""]
+    resources: ["pods"]
     verbs: ["get", "list", "watch"]
     # below for snapshotter
   - apiGroups: ["snapshot.storage.k8s.io"]
@@ -45,20 +48,13 @@ rules:
     verbs: ["get", "list", "watch", "patch"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshots"]
-    verbs: ["get", "list"]
+    verbs: ["get", "list", "watch", "update", "create", "delete"]
   - apiGroups: ["snapshot.storage.k8s.io"]
-    resources: ["volumesnapshots/status"]
-    verbs: ["update", "patch"]
-  - apiGroups: ["snapshot.storage.k8s.io"]
-    resources: ["volumesnapshotcontents/status"]
-    verbs: ["update", "patch"]
+    resources: ["volumesnapshots/status", "volumesnapshotcontents/status"]
+    verbs: ["get", "list", "watch", "update", "patch"]
   - apiGroups: ["apiextensions.k8s.io"]
     resources: ["customresourcedefinitions"]
     verbs: ["create", "list", "watch", "delete"]
-    # below for resizer
-  - apiGroups: [""]
-    resources: ["persistentvolumeclaims/status"]
-    verbs: ["patch"]
   # Permissions for CSIStorageCapacity
   - apiGroups: ["storage.k8s.io"]
     resources: ["csistoragecapacities"]
@@ -67,6 +63,10 @@ rules:
   - apiGroups: [""]
     resources: ["namespaces"]
     verbs: ["create", "get", "list", "watch"]
+  # Permissions for configmaps needed by NFS without SDC
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["create", "delete", "get", "list", "watch", "update", "patch"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -121,83 +121,44 @@ apiVersion: apps/v1
 metadata:
   name: <DriverDefaultReleaseName>-controller
   namespace: <DriverDefaultReleaseNamespace>
+  annotations:
+    com.dell.karavi-authorization-proxy: "true"
 spec:
-  selector:
-    matchLabels:
-      app: <DriverDefaultReleaseName>-controller
-  replicas: 2
   strategy:
-    type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 1
+  selector:
+    matchLabels:
+      name: <DriverDefaultReleaseName>-controller
+  replicas: 2
   template:
     metadata:
       labels:
-        app: <DriverDefaultReleaseName>-controller
+        name: <DriverDefaultReleaseName>-controller
         csmNamespace: <CSM_NAMESPACE>
       annotations:
         kubectl.kubernetes.io/default-container: driver
     spec:
-      serviceAccount: <DriverDefaultReleaseName>-controller
       affinity:
+        nodeSelector:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             - labelSelector:
                 matchExpressions:
-                  - key: app
+                  - key: name
                     operator: In
                     values:
                       - <DriverDefaultReleaseName>-controller
               topologyKey: kubernetes.io/hostname
+      serviceAccountName: <DriverDefaultReleaseName>-controller
       containers:
-        - name: resizer
-          image: registry.k8s.io/sig-storage/csi-resizer:v1.14.0
-          imagePullPolicy: IfNotPresent
-          args:
-            - "--csi-address=$(ADDRESS)"
-            - "--leader-election"
-            - "--timeout=120s"
-            - "--v=5"
-            - "--leader-election-renew-deadline=10s"
-            - "--leader-election-lease-duration=15s"
-            - "--leader-election-retry-period=5s"
-          env:
-            - name: ADDRESS
-              value: /var/run/csi/csi.sock
-          volumeMounts:
-            - name: socket-dir
-              mountPath: /var/run/csi
         - name: attacher
           image: registry.k8s.io/sig-storage/csi-attacher:v4.9.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
             - "--v=5"
-            - "--leader-election"
-            - "--timeout=180s"
-            - "--leader-election-renew-deadline=10s"
-            - "--leader-election-lease-duration=15s"
-            - "--leader-election-retry-period=5s"
-          env:
-            - name: ADDRESS
-              value: /var/run/csi/csi.sock
-          volumeMounts:
-            - name: socket-dir
-              mountPath: /var/run/csi
-        - name: external-health-monitor
-          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.15.0
-          imagePullPolicy: IfNotPresent
-          args:
-            - "--csi-address=$(ADDRESS)"
-            - "--v=5"
-            - "--leader-election"
-            - "--enable-node-watcher=false"
-            - "--monitor-interval=60s"
-            - "--timeout=180s"
-            - "--http-endpoint=:8080"
-            - "--leader-election-renew-deadline=10s"
-            - "--leader-election-lease-duration=15s"
-            - "--leader-election-retry-period=5s"
+            - "--leader-election=true"
           env:
             - name: ADDRESS
               value: /var/run/csi/csi.sock
@@ -209,17 +170,14 @@ spec:
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
+            - "--feature-gates=Topology=true"
             - "--volume-name-prefix=csivol"
             - "--volume-name-uuid-length=10"
-            - "--worker-threads=5"
+            - "--leader-election=true"
             - "--timeout=120s"
             - "--v=5"
-            - "--feature-gates=Topology=true"
-            - "--leader-election"
+            - "--default-fstype=ext4"
             - "--extra-create-metadata"
-            - "--leader-election-renew-deadline=10s"
-            - "--leader-election-lease-duration=15s"
-            - "--leader-election-retry-period=5s"
             - "--enable-capacity=true"
             - "--capacity-ownerref-level=2"
             - "--capacity-poll-interval=5m"
@@ -237,6 +195,23 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
+        - name: csi-external-health-monitor-controller
+          image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.15.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--v=5"
+            - "--leader-election=true"
+            - "--enable-node-watcher=true"
+            - "--http-endpoint=:8080"
+            - "--monitor-interval=60s"
+            - "--timeout=180s"
+          env:
+            - name: ADDRESS
+              value: /var/run/csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/run/csi
         - name: snapshotter
           image: registry.k8s.io/sig-storage/csi-snapshotter:v8.3.0
           imagePullPolicy: IfNotPresent
@@ -244,101 +219,75 @@ spec:
             - "--csi-address=$(ADDRESS)"
             - "--timeout=120s"
             - "--v=5"
-            - "--snapshot-name-prefix=snapshot"
-            - "--leader-election"
-            - "--leader-election-renew-deadline=10s"
-            - "--leader-election-lease-duration=15s"
-            - "--leader-election-retry-period=5s"
+            - "--leader-election=true"
           env:
             - name: ADDRESS
               value: /var/run/csi/csi.sock
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
-        - name: csi-metadata-retriever
-          image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.12.0
+        - name: resizer
+          image: registry.k8s.io/sig-storage/csi-resizer:v1.14.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
-            - "--timeout=120s"
             - "--v=5"
-            - "--leader-election"
-            - "--leader-election-renew-deadline=10s"
-            - "--leader-election-lease-duration=15s"
-            - "--leader-election-retry-period=5s"
-          command: ["/csi-metadata-retriever"]
+            - "--leader-election=true"
           env:
             - name: ADDRESS
               value: /var/run/csi/csi.sock
-            - name: CSI_RETRIEVER_ENDPOINT
-              value: /var/run/csi/csi_retriever.sock
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: quay.io/dell/container-storage-modules/csi-isilon:v2.15.0
+          image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.1
           imagePullPolicy: IfNotPresent
-          command: ["/csi-isilon"]
+          command: ["/csi-vxflexos.sh"]
           args:
-            - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
+            - "--array-config=/vxflexos-config/config"
+            - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
           env:
             - name: CSI_ENDPOINT
               value: /var/run/csi/csi.sock
-            - name: CSI_RETRIEVER_ENDPOINT
-              value: /var/run/csi/csi_retriever.sock
             - name: X_CSI_MODE
               value: controller
-            - name: X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION
-              value: "true"
-            - name: X_CSI_ISI_AUTH_TYPE
-              value: "0"
-            - name: X_CSI_VERBOSE
-              value: "1"
-            - name: X_CSI_ISI_PORT
-              value: "8080"
-            - name: X_CSI_ISI_AUTOPROBE
-              value: "true"
-            - name: X_CSI_ISI_QUOTA_ENABLED
-              value: "true"
-            - name: X_CSI_ISI_ACCESS_ZONE
-              value: system
-            - name: X_CSI_CUSTOM_TOPOLOGY_ENABLED
-              value: "false"
-            - name: X_CSI_ISI_PATH
-              value: "/ifs/data/csi"
-            - name: X_CSI_ISI_VOLUME_PATH_PERMISSIONS
-              value: "0777"
-            - name: X_CSI_ISI_IGNORE_UNRESOLVABLE_HOSTS
-              value: "false"
-            - name: X_CSI_ISI_NO_PROBE_ON_START
-              value: "false"
-            - name: X_CSI_HEALTH_MONITOR_ENABLED
-              value: "false"
-            - name: GOISILON_DEBUG
-              value: <GOISILON_DEBUG>
-            - name: X_CSI_NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
+            - name: X_CSI_VXFLEXOS_ENABLESNAPSHOTCGDELETE
+              value: false
+            - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
+              value: false
             - name: SSL_CERT_DIR
               value: /certs
-            - name: X_CSI_ISI_CONFIG_PATH
-              value: /isilon-configs/config
-            - name: X_CSI_MAX_PATH_LIMIT
-              value: "192"
+            - name: X_CSI_HEALTH_MONITOR_ENABLED
+              value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
+            - name: X_CSI_QUOTA_ENABLED
+              value: <X_CSI_QUOTA_ENABLED>
+            - name: X_CSI_POWERFLEX_EXTERNAL_ACCESS
+              value: <X_CSI_POWERFLEX_EXTERNAL_ACCESS>
+            - name: GOSCALEIO_DEBUG
+              value: <GOSCALEIO_DEBUG>
+            - name: GOSCALEIO_SHOWHTTP
+              value: <GOSCALEIO_SHOWHTTP>
+            - name: X_CSI_PROBE_TIMEOUT
+              value: <X_CSI_PROBE_TIMEOUT>
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
+            - name: vxflexos-config
+              mountPath: /vxflexos-config
+            - name: vxflexos-config-params
+              mountPath: /vxflexos-config-params
             - name: certs
               mountPath: /certs
               readOnly: true
-            - name: isilon-configs
-              mountPath: /isilon-configs
-            - name: csi-isilon-config-params
-              mountPath: /csi-isilon-config-params
       volumes:
         - name: socket-dir
           emptyDir:
+        - name: vxflexos-config
+          secret:
+            secretName: <DriverDefaultReleaseName>-config
+        - name: vxflexos-config-params
+          configMap:
+            name: <DriverDefaultReleaseName>-config-params
         - name: certs
           projected:
             sources:
@@ -347,9 +296,3 @@ spec:
                   items:
                     - key: cert-0
                       path: cert-0
-        - name: isilon-configs
-          secret:
-            secretName: <DriverDefaultReleaseName>-creds
-        - name: csi-isilon-config-params
-          configMap:
-            name: <DriverDefaultReleaseName>-config-params

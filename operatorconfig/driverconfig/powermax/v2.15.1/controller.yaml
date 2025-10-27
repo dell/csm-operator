@@ -108,7 +108,7 @@ rules:
     verbs: ["update", "patch"]
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["get", "list"]
+    verbs: ["get", "list", "watch"]
   - apiGroups: ["coordination.k8s.io"]
     resources: ["leases"]
     verbs: ["get", "watch", "list", "delete", "update", "create"]
@@ -149,6 +149,7 @@ spec:
     metadata:
       labels:
         app: <DriverDefaultReleaseName>-controller
+        csmNamespace: <CSM_NAMESPACE>
       annotations:
         kubectl.kubernetes.io/default-container: driver
     spec:
@@ -258,8 +259,8 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: quay.io/dell/container-storage-modules/csi-powermax:v2.15.0
-          imagePullPolicy: IfNotPresent
+          image: quay.io/dell/container-storage-modules/csi-powermax:v2.15.1
+          imagePullPolicy: Always
           command: ["/csi-powermax.sh"]
           env:
             - name: X_CSI_POWERMAX_DRIVER_NAME
@@ -268,32 +269,24 @@ spec:
               value: /var/run/csi/csi.sock
             - name: X_CSI_MANAGED_ARRAYS
               value: "<X_CSI_MANAGED_ARRAY>"
-            - name: X_CSI_POWERMAX_PORTGROUPS
-              value: "<X_CSI_POWERMAX_PORTGROUPS>"
-            - name: X_CSI_TRANSPORT_PROTOCOL
-              value: "<X_CSI_TRANSPORT_PROTOCOL>"
+            - name: X_CSI_POWERMAX_ENDPOINT
+              value: "<X_CSI_POWERMAX_ENDPOINT>"
             - name: X_CSI_K8S_CLUSTER_PREFIX
               value: "CSM"
             - name: X_CSI_MODE
               value: controller
             - name: X_CSI_POWERMAX_SKIP_CERTIFICATE_VALIDATION
               value: "true"
-            - name: X_CSI_POWERMAX_USER
-              valueFrom:
-                secretKeyRef:
-                  key: username
-                  name: powermax-creds
-            - name: X_CSI_POWERMAX_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: password
-                  name: powermax-creds
             - name: X_CSI_POWERMAX_DEBUG
               value: "<X_CSI_POWERMAX_DEBUG>"
             - name: X_CSI_GRPC_MAX_THREADS
               value: "50"
+            - name: X_CSI_POWERMAX_PORTGROUPS
+              value: "<X_CSI_POWERMAX_PORTGROUPS>"
             - name: X_CSI_ENABLE_BLOCK
               value: "true"
+            - name: X_CSI_TRANSPORT_PROTOCOL
+              value: "<X_CSI_TRANSPORT_PROTOCOL>"
             - name: SSL_CERT_DIR
               value: /certs
             - name: X_CSI_IG_NODENAME_TEMPLATE
