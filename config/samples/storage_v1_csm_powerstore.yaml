@@ -32,7 +32,7 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.15.0
+    configVersion: v2.15.1
     # authSecret: This is the secret used to validate the default PowerStore secret used for installation
     # Allowed values: <metadataName specified in the Manifest>-config
     # For example: If the metadataName is set to powerstore, authSecret value should be set to powerstore-config
