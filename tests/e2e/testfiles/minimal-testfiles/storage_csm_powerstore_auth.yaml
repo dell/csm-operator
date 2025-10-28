@@ -7,7 +7,7 @@ spec:
   driver:
     replicas: 1
     csiDriverType: "powerstore"
-    configVersion: v2.15.0
+    configVersion: v2.15.1
     common:
       image: "quay.io/dell/container-storage-modules/csi-powerstore:nightly"
       imagePullPolicy: Always

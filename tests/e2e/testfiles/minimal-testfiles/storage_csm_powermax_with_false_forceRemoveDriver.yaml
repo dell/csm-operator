@@ -6,7 +6,7 @@ metadata:
 spec:
   driver:
     csiDriverType: "powermax"
-    configVersion: v2.15.0
+    configVersion: v2.15.1
     forceRemoveDriver: false
     common:
       envs:
