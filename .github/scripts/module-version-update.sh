@@ -113,7 +113,7 @@ if [ -n $obs_ver ]; then
           rm -rf $dir_to_del
 
           cd $obs_ver
-          sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powerflex.*|quay.io/dell/container-storage-modules/csm-metrics-powerflex:nightly|g" karavi-metrics-powerflex.yaml
+          sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powerflex.*|quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.13.1|g" karavi-metrics-powerflex.yaml
           sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powermax.*|quay.io/dell/container-storage-modules/csm-metrics-powermax:nightly|g" karavi-metrics-powermax.yaml
           sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powerscale.*|quay.io/dell/container-storage-modules/csm-metrics-powerscale:nightly|g" karavi-metrics-powerscale.yaml
 
@@ -310,7 +310,7 @@ if [ -n $obs_ver ]; then
                 sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powermax.*|quay.io/dell/container-storage-modules/csm-metrics-powermax:nightly|g" $input_file
              fi
              if [[ "$input_file" == "storage_v1_csm_powerflex.yaml" ]]; then
-                sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powerflex.*|quay.io/dell/container-storage-modules/csm-metrics-powerflex:nightly|g" $input_file
+                sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powerflex.*|quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.13.1|g" $input_file
              fi
           done
 
@@ -348,7 +348,7 @@ if [ -n $obs_ver ]; then
                 sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powermax.*|quay.io/dell/container-storage-modules/csm-metrics-powermax:nightly|g" $input_file
              fi
              if [[ "$input_file" == "storage_v1_csm_powerflex.yaml" ]]; then
-                sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powerflex.*|quay.io/dell/container-storage-modules/csm-metrics-powerflex:nightly|g" $input_file
+                sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powerflex.*|quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.13.1|g" $input_file
              fi
           done
 
@@ -386,7 +386,7 @@ if [ -n $obs_ver ]; then
                 sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powermax.*|quay.io/dell/container-storage-modules/csm-metrics-powermax:nightly|g" $input_file
              fi
              if [[ "$input_file" == "storage_v1_csm_powerflex.yaml" ]]; then
-                sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powerflex.*|quay.io/dell/container-storage-modules/csm-metrics-powerflex:nightly|g" $input_file
+                sed -i "s|quay.io/dell/container-storage-modules/csm-metrics-powerflex.*|quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.13.1|g" $input_file
              fi
           done
           echo "Observability Module config --> $obs_ver updated successfully"
@@ -845,7 +845,7 @@ if [ -n "$revproxy_ver" ]; then
 
           # update csireverseproxy version to latest
           cd $revproxy_ver
-          sed -i "s|quay.io/dell/container-storage-modules/csipowermax-reverseproxy.*|quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly" container.yaml
+          sed -i "s|quay.io/dell/container-storage-modules/csipowermax-reverseproxy.*|quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.14.1" container.yaml
 
           # update bundle/manifests
           cd $GITHUB_WORKSPACE/bundle/manifests
@@ -981,7 +981,7 @@ if [ -n "$revproxy_ver" ]; then
                      fi
                   fi
                 done < "$input_file"
-          sed -i "s|quay.io/dell/container-storage-modules/csipowermax-reverseproxy.*|quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly|g" $input_file
+          sed -i "s|quay.io/dell/container-storage-modules/csipowermax-reverseproxy.*|quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.14.1|g" $input_file
 
           # update tests/e2e/testfiles
           cd $GITHUB_WORKSPACE/tests/e2e/testfiles
@@ -1007,7 +1007,7 @@ if [ -n "$revproxy_ver" ]; then
                      fi
                   fi
                 done < "$input_file"
-          sed -i "s|quay.io/dell/container-storage-modules/csipowermax-reverseproxy.*|quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly|g" $input_file
+          sed -i "s|quay.io/dell/container-storage-modules/csipowermax-reverseproxy.*|quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.14.1|g" $input_file
           done
 
           echo "Reverseproxy Module config --> $revproxy_ver updated successfully"

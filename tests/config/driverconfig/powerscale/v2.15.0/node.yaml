@@ -93,7 +93,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-isilon:nightly
+          image: quay.io/dell/container-storage-modules/csi-isilon:v2.15.0
           imagePullPolicy: IfNotPresent
           env:
             - name: CSI_ENDPOINT

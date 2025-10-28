@@ -25,7 +25,7 @@ spec:
     authSecret: powerstore-creds
     replicas: 1
     common:
-      image: "csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-powerstore:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-powerstore:nightly"
       imagePullPolicy: IfNotPresent
   modules:
     - name: observability
