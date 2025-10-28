@@ -35,15 +35,15 @@ spec:
               name: RELATED_IMAGE_dell-csm-operator
             - value: quay.io/dell/container-storage-modules/csi-powermax:v2.15.1
               name: RELATED_IMAGE_csi-isilon
-            - value: quay.io/dell/container-storage-modules/csi-powermax:v2.15.0
+            - value: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csipowermax:nightly
               name: RELATED_IMAGE_csi-powermax
             - value: quay.io/dell/container-storage-modules/csi-powerstore:v2.15.1
               name: RELATED_IMAGE_csipowermax-reverseproxy
-            - value: quay.io/dell/container-storage-modules/csi-powerstore:v2.15.0
+            - value: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-powerstore:nightly
               name: RELATED_IMAGE_csi-powerstore
             - value: quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.1
               name: RELATED_IMAGE_csi-unity
-            - value: quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.0
+            - value: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-vxflexos:nightly
               name: RELATED_IMAGE_csi-vxflexos
             - value: quay.io/dell/storage/powerflex/sdc:4.5.4
               name: RELATED_IMAGE_sdc
@@ -69,7 +69,7 @@ spec:
               name: RELATED_IMAGE_metrics-powerscale
             - value: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.8.0
               name: RELATED_IMAGE_metrics-powermax
-            - value: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.13.0
+            - value: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-metrics-powerflex:nightly
               name: RELATED_IMAGE_metrics-powerflex
             - value: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.13.0
               name: RELATED_IMAGE_metrics-powerstore
