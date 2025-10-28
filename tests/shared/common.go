@@ -37,7 +37,7 @@ const (
 	OldConfigVersion           string = "v2.2.0"
 	BadConfigVersion           string = "v0"
 	PStoreConfigVersion        string = "v2.15.1"
-	UnityConfigVersion         string = "v2.15.1"
+	UnityConfigVersion         string = "v2.15.0"
 	PScaleConfigVersion        string = "v2.15.1"
 	PmaxConfigVersion          string = "v2.15.1"
 	AuthServerConfigVersion    string = "v2.1.0"
