@@ -50,7 +50,7 @@ func (c *FakeDeployments) Apply(ctx context.Context, deployment *applyconfigurat
 		// if not found, we create it
 		return c.Create(ctx, result, v1.CreateOptions{})
 	} else if err != nil {
-		return
+		return nil, err
 	}
 
 	// otherwise we update it
