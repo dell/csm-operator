@@ -276,7 +276,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-isilon:nightly
+          image: quay.io/dell/container-storage-modules/csi-isilon:v2.15.1
           imagePullPolicy: IfNotPresent
           command: ["/csi-isilon"]
           args:

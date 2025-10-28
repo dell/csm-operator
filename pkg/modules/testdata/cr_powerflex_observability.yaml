@@ -157,7 +157,7 @@ spec:
           # enabled: Enable/Disable PowerFlex metrics
           enabled: true
           # image: Defines PowerFlex metrics image. This shouldn't be changed
-          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-metrics-powerflex:nightly
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.13.1
           envs:
             # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
             # Allowed values: int

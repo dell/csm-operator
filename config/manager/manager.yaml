@@ -33,17 +33,17 @@ spec:
               value: "60"
             - value: quay.io/dell/container-storage-modules/dell-csm-operator:v1.10.1
               name: RELATED_IMAGE_dell-csm-operator
-            - value: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-isilon:nightly
+            - value: quay.io/dell/container-storage-modules/csi-isilon:v2.15.1
               name: RELATED_IMAGE_csi-isilon
-            - value: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csipowermax:nightly
+            - value: quay.io/dell/container-storage-modules/csi-powermax:v2.15.1
               name: RELATED_IMAGE_csi-powermax
-            - value: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csipowermax-reverseproxy:nightly
+            - value: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.14.1
               name: RELATED_IMAGE_csipowermax-reverseproxy
-            - value: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-powerstore:nightly
+            - value: quay.io/dell/container-storage-modules/csi-powerstore:v2.15.1
               name: RELATED_IMAGE_csi-powerstore
             - value: quay.io/dell/container-storage-modules/csi-unity:v2.15.0
               name: RELATED_IMAGE_csi-unity
-            - value: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-vxflexos:nightly
+            - value: quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.1
               name: RELATED_IMAGE_csi-vxflexos
             - value: quay.io/dell/storage/powerflex/sdc:4.5.4
               name: RELATED_IMAGE_sdc
@@ -69,7 +69,7 @@ spec:
               name: RELATED_IMAGE_metrics-powerscale
             - value: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.8.0
               name: RELATED_IMAGE_metrics-powermax
-            - value: quay.io/dell/container-storage-modules/csm-metrics-powerflex:nightly
+            - value: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.13.1
               name: RELATED_IMAGE_metrics-powerflex
             - value: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.13.0
               name: RELATED_IMAGE_metrics-powerstore
