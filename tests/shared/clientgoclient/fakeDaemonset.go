@@ -66,7 +66,7 @@ func (c *FakeDaemonSets) Get(ctx context.Context, name string, _ v1.GetOptions) 
 	}
 
 	err = c.FakeClient.Get(ctx, k, result)
-	return
+	return result, err
 }
 
 // Create takes the representation of a daemonSet and creates it.  Returns the server's representation of the daemonSet, and an error, if there is any.
