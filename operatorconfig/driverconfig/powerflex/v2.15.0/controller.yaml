@@ -240,7 +240,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.0
+          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-vxflexos:nightly
           imagePullPolicy: IfNotPresent
           command: ["/csi-vxflexos.sh"]
           args:

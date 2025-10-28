@@ -262,7 +262,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: quay.io/dell/container-storage-modules/csi-powerstore:v2.15.0
+          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-powerstore:nightly
           imagePullPolicy: IfNotPresent
           command:
             - sh
