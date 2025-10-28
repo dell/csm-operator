@@ -197,7 +197,7 @@ spec:
               mountPath: /rules.d
       initContainers:
         - name: mdm-container
-          image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.1
+          image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.0
           imagePullPolicy: Always
           command: ["/csi-vxflexos.sh"]
           args:
