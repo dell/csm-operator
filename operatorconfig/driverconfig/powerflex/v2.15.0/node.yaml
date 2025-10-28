@@ -101,7 +101,7 @@ spec:
             allowPrivilegeEscalation: true
             capabilities:
               add: ["SYS_ADMIN"]
-          image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.1
+          image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.0
           imagePullPolicy: IfNotPresent
           command: ["/csi-vxflexos.sh"]
           args:
@@ -220,7 +220,7 @@ spec:
               mountPath: /host_opt_emc_path
       initContainers:
         - name: mdm-container
-          image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.1
+          image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.0
           imagePullPolicy: IfNotPresent
           command: ["/csi-vxflexos.sh"]
           args:

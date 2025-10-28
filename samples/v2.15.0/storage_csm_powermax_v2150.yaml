@@ -278,7 +278,7 @@ spec:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
           # Default value: None
-          image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.14.1
+          image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.14.0
           envs:
             # "tlsSecret" defines the TLS secret that is created with certificate
             # and its associated key
