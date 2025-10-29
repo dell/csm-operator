@@ -662,7 +662,7 @@ metadata:
                       }
                     ],
                     "image": "quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.14.1",
-                    "name": "csi-powermax-reverseproxy"
+                    "name": "csipowermax-reverseproxy"
                   }
                 ],
                 "configVersion": "v2.14.1",
