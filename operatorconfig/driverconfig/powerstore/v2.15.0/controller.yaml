@@ -114,6 +114,13 @@ rules:
   - apiGroups: ["apps"]
     resources: ["replicasets"]
     verbs: ["get"]
+  # Required for Shared NFS
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["create", "delete", "get", "list", "watch", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["create", "delete", "get", "list", "watch", "update", "patch"]
 ---
 # RoleBinding for Driver-specific Role
 kind: RoleBinding
@@ -255,7 +262,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: quay.io/dell/container-storage-modules/csi-powerstore:v2.15.1
+          image: quay.io/dell/container-storage-modules/csi-powerstore:v2.15.0
           imagePullPolicy: IfNotPresent
           command:
             - sh
@@ -300,6 +307,12 @@ spec:
               value: "true"
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
+            - name: X_CSI_NFS_EXPORT_DIRECTORY
+              value: "<X_CSI_NFS_EXPORT_DIRECTORY>"
+            - name: X_CSI_NFS_CLIENT_PORT
+              value: <X_CSI_NFS_CLIENT_PORT>
+            - name: X_CSI_NFS_SERVER_PORT
+              value: <X_CSI_NFS_SERVER_PORT>
             - name: X_CSI_MULTI_NAS_FAILURE_THRESHOLD
               value: "5"
             - name: X_CSI_MULTI_NAS_COOLDOWN_PERIOD
