@@ -1007,7 +1007,7 @@ if [ -n "$revproxy_ver" ]; then
                      fi
                   fi
                 done < "$input_file"
-          sed -i "s|quay.io/dell/container-storage-modules/csipowermax-reverseproxy.*|quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.14.1|g" $input_file
+          sed -i "s|quay.io/dell/container-storage-modules/csipowermax-reverseproxy.*|quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly|g" $input_file
           done
 
           echo "Reverseproxy Module config --> $revproxy_ver updated successfully"
