@@ -161,7 +161,7 @@ metadata:
                     "value": "1h"
                   }
                 ],
-                "image": "quay.io/dell/container-storage-modules/csi-isilon:nightly",
+                "image": "quay.io/dell/container-storage-modules/csi-isilon:v2.15.1",
                 "imagePullPolicy": "IfNotPresent"
               },
               "configVersion": "v2.15.1",
@@ -541,7 +541,7 @@ metadata:
                     "value": "false"
                   }
                 ],
-                "image": "quay.io/dell/container-storage-modules/csipowermax:nightly",
+                "image": "quay.io/dell/container-storage-modules/csi-powermax:nightly",
                 "imagePullPolicy": "IfNotPresent"
               },
               "configVersion": "v2.15.1",
@@ -662,7 +662,7 @@ metadata:
                       }
                     ],
                     "image": "quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly",
-                    "name": "csipowermax-reverseproxy"
+                    "name": "csi-powermax-reverseproxy"
                   }
                 ],
                 "configVersion": "v2.14.0",
@@ -4492,7 +4492,7 @@ spec:
                       - name: RELATED_IMAGE_csi-isilon
                         value: quay.io/dell/container-storage-modules/csi-isilon:nightly
                       - name: RELATED_IMAGE_csi-powermax
-                        value: quay.io/dell/container-storage-modules/csipowermax:nightly
+                        value: quay.io/dell/container-storage-modules/csi-powermax:nightly
                       - name: RELATED_IMAGE_csipowermax-reverseproxy
                         value: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly
                       - name: RELATED_IMAGE_csi-powerstore
@@ -4620,7 +4620,7 @@ spec:
       name: dell-csm-operator
     - image: quay.io/dell/container-storage-modules/csi-isilon:nightly
       name: csi-isilon
-    - image: quay.io/dell/container-storage-modules/csipowermax:nightly
+    - image: quay.io/dell/container-storage-modules/csi-powermax:nightly
       name: csi-powermax
     - image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly
       name: csipowermax-reverseproxy

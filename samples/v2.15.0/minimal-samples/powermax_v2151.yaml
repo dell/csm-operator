@@ -18,7 +18,7 @@ spec:
           value: ""
         - name: X_CSI_TRANSPORT_PROTOCOL
           value: ""
-      image: quay.io/dell/container-storage-modules/csipowermax:nightly
+      image: quay.io/dell/container-storage-modules/csi-powermax:nightly
   # These are the modules which are optional and can be enabled by specifying to enable/disable.
   modules:
     - name: authorization

@@ -10,7 +10,7 @@ spec:
     authSecret: powermax-creds
     replicas: 1
     common:
-      image: "quay.io/dell/container-storage-modules/csipowermax:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-powermax:nightly"
       imagePullPolicy: IfNotPresent
   modules:
     - name: resiliency
