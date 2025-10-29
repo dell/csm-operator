@@ -17,7 +17,7 @@ spec:
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: false
     common:
-      image: "quay.io/dell/container-storage-modules/csi-vxflexos:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.1"
       imagePullPolicy: Always
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -197,7 +197,7 @@ spec:
           # enabled: Enable/Disable PowerFlex metrics
           enabled: false
           # image: Defines PowerFlex metrics image. This shouldn't be changed
-          image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:nightly
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.13.1
           envs:
             # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
             # Allowed values: int
