@@ -251,7 +251,7 @@ spec:
       # enabled: Enable/Disable observability
       # Default value: false
       enabled: false
-      configVersion: v1.13.0
+      configVersion: v1.13.1
       components:
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
@@ -286,7 +286,7 @@ spec:
           # Default value: false
           enabled: false
           # image: Defines PowerFlex metrics image. This shouldn't be changed
-          image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.13.0
+          image:  quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.13.1
           envs:
             # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
             # Allowed values: int
