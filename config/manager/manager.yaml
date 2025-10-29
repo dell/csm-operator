@@ -41,7 +41,7 @@ spec:
               name: RELATED_IMAGE_csipowermax-reverseproxy
             - value: quay.io/dell/container-storage-modules/csi-powerstore:v2.15.1
               name: RELATED_IMAGE_csi-powerstore
-            - value: quay.io/dell/container-storage-modules/csi-unity:v2.15.1
+            - value: quay.io/dell/container-storage-modules/csi-unity:v2.15.0
               name: RELATED_IMAGE_csi-unity
             - value: quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.1
               name: RELATED_IMAGE_csi-vxflexos
