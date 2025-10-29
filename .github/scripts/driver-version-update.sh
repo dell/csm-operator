@@ -332,7 +332,7 @@ UpdateMajorPowerflexDriver() {
 
     update_config_version="v$driver_version_update"
     if [ "$release_type" == "nightly" ]; then
-        new_image_version="quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.1"
+        new_image_version="quay.io/dell/container-storage-modules/csi-vxflexos:nightly"
     else
         new_image_version="quay.io/dell/container-storage-modules/csi-vxflexos:v$driver_version_update"
     fi
@@ -455,7 +455,7 @@ UpdatePatchPowerflexDriver() {
 
     update_config_version="v$driver_version_update"
     if [ "$release_type" == "nightly" ]; then
-        new_image_version="quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.1"
+        new_image_version="quay.io/dell/container-storage-modules/csi-vxflexos:nightly"
     elif [ "$release_type" == "tag" ]; then
         new_image_version="quay.io/dell/container-storage-modules/csi-vxflexos:v$driver_version_update"
     fi
@@ -770,7 +770,7 @@ UpdateMajorPowerscaleDriver() {
 
     update_config_version="v$driver_version_update"
     if [ "$release_type" == "nightly" ]; then
-        new_image_version="quay.io/dell/container-storage-modules/csi-isilon:v2.15.1"
+        new_image_version="quay.io/dell/container-storage-modules/csi-isilon:nightly"
     else
         new_image_version="quay.io/dell/container-storage-modules/csi-isilon:v$driver_version_update"
     fi
@@ -875,7 +875,7 @@ UpdatePatchPowerscaleDriver() {
 
     update_config_version="v$driver_version_update"
     if [ "$release_type" == "nightly" ]; then
-        new_image_version="quay.io/dell/container-storage-modules/csi-isilon:v2.15.1"
+        new_image_version="quay.io/dell/container-storage-modules/csi-isilon:nightly"
     else
         new_image_version="quay.io/dell/container-storage-modules/csi-isilon:v$driver_version_update"
     fi
@@ -976,7 +976,7 @@ UpdateMajorPowerstoreDriver() {
 
     update_config_version="v$driver_version_update"
     if [ "$release_type" == "nightly" ]; then
-        new_image_version="quay.io/dell/container-storage-modules/csi-powerstore:v2.15.1"
+        new_image_version="quay.io/dell/container-storage-modules/csi-powerstore:nightly"
     else
         new_image_version="quay.io/dell/container-storage-modules/csi-powerstore:v$driver_version_update"
     fi
@@ -1070,7 +1070,7 @@ UpdatePatchPowerstoreDriver() {
 
     update_config_version="v$driver_version_update"
     if [ "$release_type" == "nightly" ]; then
-        new_image_version="quay.io/dell/container-storage-modules/csi-powerstore:v2.15.1"
+        new_image_version="quay.io/dell/container-storage-modules/csi-powerstore:nightly"
     else
         new_image_version="quay.io/dell/container-storage-modules/csi-powerstore:v$driver_version_update"
     fi
