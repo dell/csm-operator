@@ -10,7 +10,7 @@ spec:
     authSecret: isilon-creds-custom
     replicas: 1
     common:
-      image: "csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-isilon:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-isilon:nightly"
       imagePullPolicy: IfNotPresent
   modules:
     - name: authorization
