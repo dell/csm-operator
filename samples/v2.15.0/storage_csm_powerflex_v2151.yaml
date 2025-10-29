@@ -251,7 +251,7 @@ spec:
       # enabled: Enable/Disable observability
       # Default value: false
       enabled: false
-      configVersion: v1.13.0
+      configVersion: v1.13.1
       components:
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
