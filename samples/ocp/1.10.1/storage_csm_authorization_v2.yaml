@@ -1,0 +1,125 @@
+# Copyright © 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#      http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: authorization
+  namespace: authorization
+spec:
+  modules:
+    # Authorization: enable csm-authorization proxy server for RBAC
+    - name: authorization-proxy-server
+      # enable: Enable/Disable csm-authorization
+      enabled: true
+      configVersion: v2.3.0
+      forceRemoveModule: true
+      components:
+        # For Kubernetes Container Platform only
+        # enabled: Enable/Disable NGINX Ingress Controller
+        # Allowed values:
+        #   true: enable deployment of NGINX Ingress Controller
+        #   false: disable deployment of NGINX Ingress Controller only if you have your own ingress controller. Set the appropriate annotations for the ingresses in the proxy-server section
+        # Default value: true
+        - name: nginx
+          enabled: true
+        # enabled: Enable/Disable cert-manager
+        # Allowed values:
+        #   true: enable deployment of cert-manager
+        #   false: disable deployment of cert-manager only if it's already deployed
+        # Default value: true
+        - name: cert-manager
+          enabled: true
+        - name: proxy-server
+          # enable: Enable/Disable csm-authorization proxy server
+          enabled: true
+          proxyService: registry.connect.redhat.com/dell-emc/dell-csm-authorization-proxy@sha256:a265ec058b102d1cf175deb2b80718d28f6728c094ee3b5367a07473a0dc2682
+          proxyServiceReplicas: 1
+          tenantService: registry.connect.redhat.com/dell-emc/dell-csm-authorization-tenant@sha256:687faaa76ac70ab5f9f452c8a70d5ac45b1968ea2adc60198f2fd3e09b41e358
+          tenantServiceReplicas: 1
+          roleService: registry.connect.redhat.com/dell-emc/dell-csm-authorization-role@sha256:d09ffef1866f24bffab2a0d38af11fbbc528b1eae04db1246617b5f366ae545c
+          roleServiceReplicas: 1
+          storageService: registry.connect.redhat.com/dell-emc/dell-csm-authorization-storage@sha256:ecaafb211be66f090b468bce366fe870877cb921a14f53fc63ffb1a3f26405d5
+          storageServiceReplicas: 1
+          opa: docker.io/openpolicyagent/opa@sha256:2b1c4b231f6dfa6a2baea4af4109203b10cd4b65e836d72f03bfe5d8dfce7095
+          opaKubeMgmt: docker.io/openpolicyagent/kube-mgmt@sha256:f5bf223771237756a56168729defb608ec2941c9b701d1f1af96f9ae82966517
+          authorizationController: registry.connect.redhat.com/dell-emc/dell-csm-authorization-controller@sha256:6de38a3c833ce514dd8bf496a23157ff9f11aeca6359095c5ac41a38ba3ec231
+          authorizationControllerReplicas: 1
+          leaderElection: true
+          # controllerReconcileInterval: interval for the authorization controllers to reconcile with Redis.
+          controllerReconcileInterval: 5m
+          # certificate: base64-encoded certificate for cert/private-key pair -- add certificate here to use custom certificates
+          # for self-signed certs, leave empty string
+          # Allowed values: string
+          certificate: ""
+          # privateKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
+          # for self-signed certs, leave empty string
+          # Allowed values: string
+          privateKey: ""
+          # proxy-server ingress will use this hostname
+          # NOTE: an additional hostname can be configured in proxyServerIngress.hosts
+          # NOTE: proxy-server ingress is configured to accept IP address connections so hostnames are not required
+          hostname: "csm-authorization.com"
+          # proxy-server ingress configuration
+          proxyServerIngress:
+            - ingressClassName: nginx
+              # additional host rules for the proxy-server ingress
+              hosts: []
+              # - [application name]-ingress-nginx-controller.[namespace].svc.cluster.local
+
+              # additional annotations for the proxy-server ingress
+              annotations: {}
+          # openTelemetryCollectorAddress: the OTLP receiving endpoint using gRPC
+          openTelemetryCollectorAddress: ""
+        - name: redis
+          redis: docker.io/library/redis@sha256:7521abdff715d396aa482183942f3fe643344287c29ccb66eee16ac08a92190f
+          commander: docker.io/rediscommander/redis-commander@sha256:19cd0c49f418779fa2822a0496c5e6516d0c792effc39ed20089e6268477e40a
+          redisName: redis-csm
+          redisCommander: rediscommander
+          sentinel: sentinel
+          redisReplicas: 5
+        - name: vault
+          vaultConfigurations:
+            - identifier: vault0
+              address: https://10.0.0.1:8400
+              role: csm-authorization
+              skipCertificateValidation: true
+              # clientCertificate: base64-encoded certificate for cert/private-key pair -- add certificate here to use custom certificates
+              # for self-signed certs, leave empty string
+              # Allowed values: string
+              clientCertificate: ""
+              # clientKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
+              # for self-signed certs, leave empty string
+              # Allowed values: string
+              clientKey: ""
+              # certificateAuthority: base64-encoded certificate authority for validating vault server certificate -- add certificate authority here to use custom certificates
+              #  for self-signed certs, leave empty string
+              # Allowed values: string
+              certificateAuthority: ""
+#            - identifier: vault0
+#              address: https://10.0.0.1:8400
+#              role: csm-authorization
+#              skipCertificateValidation: true
+#              clientCertificate:
+#              clientKey:
+#              certificateAuthority:
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: csm-config-params
+  namespace: authorization
+data:
+  csm-config-params.yaml: |-
+    CONCURRENT_STORAGE_REQUESTS: 10
+    LOG_LEVEL: debug
+    STORAGE_CAPACITY_POLL_INTERVAL: 30m
