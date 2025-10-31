@@ -9,9 +9,16 @@ on:  # yamllint disable-line rule:truthy
 jobs:
   # golang static analysis checks
   go-static-analysis:
-    uses: dell/common-github-actions/.github/workflows/go-static-analysis.yaml@main
+    uses: CSM/actions/.github/workflows/go-static-analysis.yaml@main
     name: Golang Validation
 
   common:
     name: Quality Checks
-    uses: dell/common-github-actions/.github/workflows/go-common.yml@main
+    uses: CSM/actions/.github/workflows/csm-common.yml@main
+    with:
+      images: |
+        <insert or delete input>
+      build-images-cmd: "<insert or delete input>"
+      binary-path: "<insert or delete input>"
+      build-binary-cmd: "<insert or delete input>"
+    secrets: inherit
