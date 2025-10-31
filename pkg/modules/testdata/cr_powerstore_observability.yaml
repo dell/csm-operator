@@ -21,7 +21,7 @@ metadata:
 spec:
   driver:
     csiDriverType: "powerstore"
-    configVersion: v2.15.0
+    configVersion: v2.15.1
     authSecret: powerstore-creds
     replicas: 1
     common:
