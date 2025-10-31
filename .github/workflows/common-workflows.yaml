@@ -39,5 +39,5 @@ jobs:
     with:
       images: |
         dell-csm-operator
-      build-images-cmd: "make docker"
+      build-images-cmd: "make docker-build"
     secrets: inherit
