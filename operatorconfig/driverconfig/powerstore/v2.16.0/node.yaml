@@ -43,6 +43,10 @@ rules:
     resourceNames: ["privileged"]
     resources: ["securitycontextconstraints"]
     verbs: ["use"]
+  # Permissions for CSMDr
+  - apiGroups: ["dr.storage.dell.com"]
+    resources: ["volumejournals"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1

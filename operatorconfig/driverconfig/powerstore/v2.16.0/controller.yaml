@@ -81,6 +81,10 @@ rules:
   - apiGroups: ["storage.k8s.io"]
     resources: ["csistoragecapacities"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  # Permissions for CSMDr
+  - apiGroups: ["dr.storage.dell.com"]
+    resources: ["volumejournals"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
