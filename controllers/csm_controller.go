@@ -985,6 +985,16 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		return err
 	}
 
+	if cr.GetDriverType() == csmv1.PowerStore {
+		log.Infoln("[FERNANDO] We are about to apply the CSM DR CRDs")
+
+		if err := modules.CommonCSMDrController(ctx, false, operatorConfig, cr, clusterClient.ClusterCTRLClient); err != nil {
+			return fmt.Errorf("unable to remove the common CSM DR Controller: %v", err)
+		}
+
+		log.Infoln("[FERNANDO] We created the CSM DR CRDs")
+	}
+
 	// Create/Update DeamonSet, except for auth proxy
 	if !authorizationEnabled {
 		if err = daemonset.SyncDaemonset(ctx, node.DaemonSetApplyConfig, clusterClient.ClusterK8sClient, cr.Name); err != nil {
@@ -1371,6 +1381,16 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		if err := modules.ReverseProxyStartService(ctx, true, operatorConfig, instance, clusterClient.ClusterCTRLClient); err != nil {
 			return fmt.Errorf("unable to reconcile reverse-proxy service: %v", err)
 		}
+	}
+
+	if instance.GetDriverType() == csmv1.PowerStore {
+		log.Infoln("[FERNANDO] We are removing the common CSM DR Controller")
+
+		if err := modules.CommonCSMDrController(ctx, true, operatorConfig, instance, clusterClient.ClusterCTRLClient); err != nil {
+			return fmt.Errorf("unable to remove the common CSM DR Controller: %v", err)
+		}
+
+		log.Infoln("[FERNANDO] We removed the common CSM DR Controller")
 	}
 
 	return nil
