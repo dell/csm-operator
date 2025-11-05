@@ -111,7 +111,7 @@ spec:
         #    false: disable SDC approval based on either GUID or IP address, depending on the restricted SDC mode configured in PowerFlex system
         # Default value: false
         - name: X_CSI_APPROVE_SDC_ENABLED
-          value: "false"
+          value: "true"
         # X_CSI_RENAME_SDC_ENABLED: Enable/Disable rename of SDC
         # Allowed values:
         #   true: enable renaming
@@ -131,7 +131,7 @@ spec:
         - name: X_CSI_RENAME_SDC_PREFIX
           value: ""
         - name: X_CSI_SDC_SFTP_REPO_ENABLED
-          value: "false"
+          value: "true"
       # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
