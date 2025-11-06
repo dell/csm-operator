@@ -11,7 +11,7 @@ spec:
     listKind: VolumeJournalList
     plural: volumejournals
     singular: volumejournal
-  scope: Namespaced
+  scope: Cluster
   versions:
     - name: v1
       schema:
