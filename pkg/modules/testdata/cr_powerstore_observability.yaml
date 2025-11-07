@@ -46,7 +46,7 @@ spec:
           enabled: true
         - name: metrics-powerstore
           enabled: true
-          image: quay.io/dell/container-storage-modules/csm-metrics-powerstore:nightly
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.13.0
           envs:
             - name: "POWERSTORE_MAX_CONCURRENT_QUERIES"
               value: "10"
