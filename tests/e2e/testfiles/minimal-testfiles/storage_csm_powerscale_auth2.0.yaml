@@ -6,7 +6,7 @@ metadata:
 spec:
   driver:
     csiDriverType: "isilon"
-    configVersion: v2.15.0
+    configVersion: v2.15.1
     replicas: 1
     forceRemoveDriver: true
     common:

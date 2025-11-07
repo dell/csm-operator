@@ -28,7 +28,7 @@ spec:
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
       storageCapacity: false
-    configVersion: v2.15.0
+    configVersion: v2.15.1
     authSecret: powerstore-config
     # Controller count
     # resiliency test will fail with 2 replicas.

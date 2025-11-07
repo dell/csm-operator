@@ -28,18 +28,18 @@ import (
 
 // ConfigVersions used for all unit tests
 const (
-	PFlexConfigVersion         string = "v2.15.0"
+	PFlexConfigVersion         string = "v2.15.1"
 	DowngradeConfigVersion     string = "v2.14.1"
-	ConfigVersion              string = "v2.15.0"
+	ConfigVersion              string = "v2.15.1"
 	UpgradeConfigVersion       string = "v2.13.0"
 	JumpUpgradeConfigVersion   string = "v2.14.0"
 	JumpDowngradeConfigVersion string = "v2.13.0"
 	OldConfigVersion           string = "v2.2.0"
 	BadConfigVersion           string = "v0"
-	PStoreConfigVersion        string = "v2.15.0"
+	PStoreConfigVersion        string = "v2.15.1"
 	UnityConfigVersion         string = "v2.15.0"
-	PScaleConfigVersion        string = "v2.15.0"
-	PmaxConfigVersion          string = "v2.15.0"
+	PScaleConfigVersion        string = "v2.15.1"
+	PmaxConfigVersion          string = "v2.15.1"
 	AuthServerConfigVersion    string = "v2.1.0"
 )
 

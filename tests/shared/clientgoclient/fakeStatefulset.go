@@ -50,7 +50,7 @@ func (c *FakeStatefulsets) Apply(ctx context.Context, statefulset *applyconfigur
 		// if not found, we create it
 		return c.Create(ctx, result, v1.CreateOptions{})
 	} else if err != nil {
-		return
+		return nil, err
 	}
 
 	// otherwise we update it
@@ -69,7 +69,7 @@ func (c *FakeStatefulsets) Get(ctx context.Context, name string, _ v1.GetOptions
 	}
 
 	err = c.FakeClient.Get(ctx, k, result)
-	return
+	return result, err
 }
 
 // Create takes the representation of a statefulset and creates it. Returns the server's representation of the statefulset, and an error, if there is any.
