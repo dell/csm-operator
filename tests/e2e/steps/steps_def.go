@@ -886,6 +886,7 @@ func (step *Step) setUpSecretFromFile(_ Resource, templateFile, name, namespace,
 func (step *Step) generateAndCreateSftpSecrets(_ Resource, privateKeyPath, privateSecretName, publicSecretName, namespace, crType string) error {
 	tmpDir := filepath.Join("temp", "sftp", fmt.Sprintf("%d", time.Now().UnixNano()))
 	defer os.RemoveAll(tmpDir)
+	fmt.Println(os.Getenv("X_CSI_APPROVE_SDC_ENABLED"))
 
 	// Load env vars
 	repoAddress, repoUser := os.Getenv("PFLEX_SFTP_REPO_ADDRESS"), os.Getenv("PFLEX_SFTP_REPO_USER")
@@ -1370,6 +1371,7 @@ func (step *Step) validateTestEnvironment(_ Resource) error {
 	if os.Getenv("OPERATOR_NAMESPACE") != "" {
 		operatorNamespace = os.Getenv("OPERATOR_NAMESPACE")
 	}
+	fmt.Println(os.Getenv("X_CSI_APPROVE_SDC_ENABLED"))
 
 	pods, err := fpod.GetPodsInNamespace(context.TODO(), step.clientSet, operatorNamespace, map[string]string{})
 	if err != nil {
