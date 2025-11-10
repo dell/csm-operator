@@ -986,13 +986,11 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	}
 
 	if cr.GetDriverType() == csmv1.PowerStore {
-		log.Infoln("[FERNANDO] We are about to apply the CSM DR CRDs")
+		log.Infoln("Applying the CSM DR CRDs")
 
-		if err := modules.CommonCSMDrController(ctx, false, operatorConfig, cr, clusterClient.ClusterCTRLClient); err != nil {
-			return fmt.Errorf("unable to remove the common CSM DR Controller: %v", err)
+		if err := modules.CommonCSMDrController(ctx, false, operatorConfig, clusterClient.ClusterCTRLClient); err != nil {
+			return fmt.Errorf("unable to apply the common CSM DR Controller: %v", err)
 		}
-
-		log.Infoln("[FERNANDO] We created the CSM DR CRDs")
 	}
 
 	// Create/Update DeamonSet, except for auth proxy
@@ -1384,13 +1382,11 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	}
 
 	if instance.GetDriverType() == csmv1.PowerStore {
-		log.Infoln("[FERNANDO] We are removing the common CSM DR Controller")
+		log.Infoln("Removing the common CSM DR Controller")
 
-		if err := modules.CommonCSMDrController(ctx, true, operatorConfig, instance, clusterClient.ClusterCTRLClient); err != nil {
+		if err := modules.CommonCSMDrController(ctx, true, operatorConfig, clusterClient.ClusterCTRLClient); err != nil {
 			return fmt.Errorf("unable to remove the common CSM DR Controller: %v", err)
 		}
-
-		log.Infoln("[FERNANDO] We removed the common CSM DR Controller")
 	}
 
 	return nil

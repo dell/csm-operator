@@ -184,7 +184,7 @@ func getCSMDRCRDs(op operatorutils.OperatorConfig) (string, error) {
 	return YamlString, nil
 }
 
-func CommonCSMDrController(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func CommonCSMDrController(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, ctrlClient crclient.Client) error {
 	crdYamlString, err := getCSMDRCRDs(op)
 	if err != nil {
 		return err
