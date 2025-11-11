@@ -1,8 +1,8 @@
 #!/bin/bash
-
-# Usage for major nightly update: bash ./.github/scripts/driver-version-update.sh --driver_update_type "major" --release_type "nightly" --powerscale_version "2.15.0" --powermax_version "2.15.0" --powerflex_version "2.15.0" --powerstore_version "2.15.0" --unity_version "2.15.0"
-# Usage for major tag update: bash ./.github/scripts/driver-version-update.sh --driver_update_type "major" --release_type "tag" --powerscale_version "2.15.0" --powermax_version "2.15.0" --powerflex_version "2.15.0" --powerstore_version "2.15.0" --unity_version "2.15.0"
-# Usage for patch update: bash ./.github/scripts/driver-version-update.sh --driver_update_type "patch" --release_type "nightly" --powerscale_version "2.14.1" --powermax_version "2.14.1" --powerflex_version "2.14.1" --powerstore_version "2.14.1" --unity_version "2.14.1"
+# yq is prerequisite for this script
+# Step1: Folder creation and deletion and modification ------> Usage for major/minor nightly update: bash ./.github/scripts/driver-version-update.sh --driver_update_type "major" --release_type "nightly" --powerscale_version "2.16.0" --powermax_version "2.16.0" --powerflex_version "2.16.0" --powerstore_version "2.16.0" --unity_version "2.16.0"
+# Step2: Changes nightly to given version ---------> Usage for major/minor tag update: bash ./.github/scripts/driver-version-update.sh --driver_update_type "major" --release_type "tag" --powerscale_version "2.16.0" --powermax_version "2.16.0" --powerflex_version "2.16.0" --powerstore_version "2.16.0" --unity_version "2.16.0"
+# Only for patch update: Usage for patch update: bash ./.github/scripts/driver-version-update.sh --driver_update_type "patch" --release_type "nightly" --powerscale_version "2.15.1" --powermax_version "2.15.1" --powerflex_version "2.15.1" --powerstore_version "2.15.1" --unity_version "2.15.1"
 
 cd "$GITHUB_WORKSPACE"
 
@@ -104,6 +104,7 @@ UpdateRelatedImages() {
     new_line_2="                       value: quay.io/dell/container-storage-modules/$driverImageName:$update_version"
     new_line_3="               \"image\": \"quay.io/dell/container-storage-modules/$driverImageName:$update_version\","
     line_number=0
+
     while IFS= read -r line; do
         line_number=$((line_number + 1))
         if [[ "$line" == *"$nightly_search_string_1"* ]]; then
@@ -183,8 +184,9 @@ CreateLatestSampleFile() {
 
     # Search for files inside versioned folders: samples/v*/[prefix]_v*.yaml
     for file in $(find samples/v*/ -type f -name "${prefix}_v*.yaml"); do
-        version_part=$(basename "$file" | grep -oE '[0-9]+')
-        if [[ $version_part -gt ${latest_version:-0} ]]; then
+            version_part=$(basename "$file" | grep -oE '[0-9]+')
+            echo "Version_part: $version_part"
+            if [[ $version_part -gt ${latest_version:-0} ]]; then
             latest_version=$version_part
             latest_file=$file
         fi
@@ -240,7 +242,7 @@ GetLatestDriverVersion() {
     latest_file=$(echo "$files" | sort -V | tail -1)
     version_suffix=$(basename "$latest_file" | sed -E "s/^${prefix}_v([0-9]+)\.yaml$/\1/")
 
-    # Extract digits from version suffix safely (e.g., 2150 -> 2.15.0)
+    # Extract digits from version suffix safely (e.g., 2160 -> 2.16.0)
     major=$(echo "$version_suffix" | cut -c1)
     minor=$(echo "$version_suffix" | cut -c2-3)
     patch=$(echo "$version_suffix" | cut -c4)
@@ -421,8 +423,8 @@ UpdateMajorPowerflexDriver() {
     done
 
     # Update manager + operator
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[6].value = "'"$new_image_version"'")' config/manager/manager.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[6].value = "'"$new_image_version"'")' deploy/operator.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[7].value = "'"$new_image_version"'")' config/manager/manager.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[7].value = "'"$new_image_version"'")' deploy/operator.yaml
 }
 
 # For Updating Powerflex Driver Patch Version
@@ -545,8 +547,8 @@ UpdatePatchPowerflexDriver() {
             yq -i '.spec.driver.common.image = "'"$second_previous_driver_image_version"'"' tests/e2e/testfiles/$f.yaml
     done
 
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[6].value = "'"$new_image_version"'")' config/manager/manager.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[6].value = "'"$new_image_version"'")' deploy/operator.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[7].value = "'"$new_image_version"'")' config/manager/manager.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[7].value = "'"$new_image_version"'")' deploy/operator.yaml
 
     # Fix formatting (optional)
     find . -type f \( -name "*.yaml" -o -name "*.yml" \) -exec sed -i 's/" # /"  # /g' {} +
@@ -638,8 +640,8 @@ UpdateMajorPowermaxDriver() {
     done
 
     # Manager & operator yaml updates
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[2].value = "'"$new_image_version"'")' config/manager/manager.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[2].value = "'"$new_image_version"'")' deploy/operator.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[3].value = "'"$new_image_version"'")' config/manager/manager.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[3].value = "'"$new_image_version"'")' deploy/operator.yaml
 }
 
 # For Updating Powermax Driver Patch Version
@@ -743,8 +745,8 @@ UpdatePatchPowermaxDriver() {
         yq eval -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$i"
     done
 
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[2].value = "'"$new_image_version"'")' config/manager/manager.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[2].value = "'"$new_image_version"'")' deploy/operator.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[3].value = "'"$new_image_version"'")' config/manager/manager.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[3].value = "'"$new_image_version"'")' deploy/operator.yaml
 }
 
 # For Updating Powerscale Driver Major Version
@@ -811,7 +813,7 @@ UpdateMajorPowerscaleDriver() {
     fi
 
     # Testdata
-    for i in cr_powerscale_auth_missing_skip_cert_env cr_powerscale_auth_validate_cert cr_powerscale_auth cr_powerscale_observability cr_powerscale_replica cr_powerscale_resiliency; do
+    for i in cr_powerscale_auth_missing_skip_cert_env cr_powerscale_auth_validate_cert cr_powerscale_auth cr_powerscale_observability cr_powerscale_replica cr_powerscale_resiliency cr_powerscale_auth_driver_secret; do
         yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' pkg/modules/testdata/$i.yaml
         yq -i '.spec.driver.common.image = "'"$new_image_version"'"' pkg/modules/testdata/$i.yaml
     done
@@ -830,21 +832,27 @@ UpdateMajorPowerscaleDriver() {
         yq eval -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
     done
 
-    previous_driver_config_version="v$previous_major_driver_version"
-    previous_driver_image_version="quay.io/dell/container-storage-modules/csi-isilon:v$previous_major_driver_version"
+    second_previous_driver_version=$(GetSecondLatestDriverVersion "storage_csm_powerscale")
+    second_previous_driver_config_version="v$second_previous_driver_version" 
+    second_previous_driver_image_version="quay.io/dell/container-storage-modules/csi-isilon:v$second_previous_driver_version"
 
     # n-1 testfiles
     for f in storage_csm_powerscale_observability_val1; do
-        yq eval -i '.spec.driver.configVersion = "'"$previous_driver_config_version"'"' tests/e2e/testfiles/$f.yaml
-        yq -i '.spec.driver.common.image = "'"$previous_driver_image_version"'"' tests/e2e/testfiles/$f.yaml
+        if [ "$previous_driver_config_version" == "$update_config_version" ]; then
+            yq -i '.spec.driver.configVersion = "'"$second_previous_driver_config_version"'"' tests/e2e/testfiles/$f.yaml
+            yq -i '.spec.driver.common.image = "'"$second_previous_driver_image_version"'"' tests/e2e/testfiles/$f.yaml
+        else
+            yq eval -i '.spec.driver.configVersion = "'"$previous_driver_config_version"'"' tests/e2e/testfiles/$f.yaml
+            yq -i '.spec.driver.common.image = "'"$previous_driver_image_version"'"' tests/e2e/testfiles/$f.yaml
+        fi
     done
 
     for f in $(find tests/e2e/testfiles/minimal-testfiles -type f -name "storage_csm_powerscale*"); do
         yq eval -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
     done
 
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[1].value = "'"$new_image_version"'")' config/manager/manager.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[1].value = "'"$new_image_version"'")' deploy/operator.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[2].value = "'"$new_image_version"'")' config/manager/manager.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[2].value = "'"$new_image_version"'")' deploy/operator.yaml
 }
 
 # For Updating Powerscale Driver Patch Version
@@ -860,7 +868,6 @@ UpdatePatchPowerscaleDriver() {
 
     previous_patch_version=$((patch_version - 1))
     previous_patch_driver_version="$major_version.$minor_version.$previous_patch_version"
-
     driver_sample_file_suffix=$(echo "$driver_version_update" | tr -d '.' | tr -d '\n')
     previous_driver_sample_file_suffix=$(echo "$previous_patch_driver_version" | tr -d '.' | tr -d '\n')
 
@@ -950,8 +957,8 @@ UpdatePatchPowerscaleDriver() {
     done
 
     # Manager image updates
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[1].value = "'"$new_image_version"'")' config/manager/manager.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[1].value = "'"$new_image_version"'")' deploy/operator.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[2].value = "'"$new_image_version"'")' config/manager/manager.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[2].value = "'"$new_image_version"'")' deploy/operator.yaml
 }
 
 # For Updating Powerstore Driver Major Version
@@ -1017,6 +1024,11 @@ UpdateMajorPowerstoreDriver() {
     fi
 
     # Testdata
+    for i in cr_powerstore_resiliency cr_powerstore_auth cr_powerstore_observability cr_powerstore_replica; do
+        yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' pkg/modules/testdata/$i.yaml
+        yq -i '.spec.driver.common.image = "'"$new_image_version"'"' pkg/modules/testdata/$i.yaml
+    done
+
     yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' pkg/modules/testdata/cr_powerstore_resiliency.yaml
     yq -i '.spec.driver.common.image = "'"$new_image_version"'"' pkg/modules/testdata/cr_powerstore_resiliency.yaml
 
@@ -1038,8 +1050,8 @@ UpdateMajorPowerstoreDriver() {
         yq eval -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
     done
 
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[4].value = "'"$new_image_version"'")' config/manager/manager.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[4].value = "'"$new_image_version"'")' deploy/operator.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[5].value = "'"$new_image_version"'")' config/manager/manager.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[5].value = "'"$new_image_version"'")' deploy/operator.yaml
 }
 
 # For Updating Powerstore Driver Patch Version
@@ -1136,8 +1148,8 @@ UpdatePatchPowerstoreDriver() {
     done
 
     # Manager env image patch
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[4].value = "'"$new_image_version"'")' config/manager/manager.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[4].value = "'"$new_image_version"'")' deploy/operator.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[5].value = "'"$new_image_version"'")' config/manager/manager.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[5].value = "'"$new_image_version"'")' deploy/operator.yaml
 }
 
 # For Updating Unity Driver Major Version
@@ -1221,8 +1233,8 @@ UpdateMajorUnityDriver() {
     done
 
     # Manager deployment
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[5].value = "'"$new_image_version"'")' config/manager/manager.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[5].value = "'"$new_image_version"'")' deploy/operator.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[6].value = "'"$new_image_version"'")' config/manager/manager.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[6].value = "'"$new_image_version"'")' deploy/operator.yaml
 }
 
 # For Updating Unity Driver Patch Version
@@ -1315,8 +1327,8 @@ UpdatePatchUnityDriver() {
     done
 
     # Patch manager.yaml and operator.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[5].value = "'"$new_image_version"'")' config/manager/manager.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[5].value = "'"$new_image_version"'")' deploy/operator.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[6].value = "'"$new_image_version"'")' config/manager/manager.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[6].value = "'"$new_image_version"'")' deploy/operator.yaml
 } 
 
 UpdateBadDriver() {
