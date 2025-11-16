@@ -437,6 +437,12 @@ spec:
             # Default value: "TEXT"
             - name: "POWERSTORE_LOG_FORMAT"
               value: "TEXT"
+            # X_CSI_POWERSTORE_API_TIMEOUT: Defines the timeout for PowerStore REST API calls.
+            # Allowed values: Number followed by unit (s,m,h)
+            # Examples: 10s, 1m, 1h
+            # Default value: 120s
+            - name: X_CSI_POWERSTORE_API_TIMEOUT
+              value: "120s"
             # ZIPKIN_URI : URI of a Zipkin instance where tracing data can be forwarded
             # Allowed values : String
             # Default value: Empty

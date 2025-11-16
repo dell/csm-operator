@@ -11,12 +11,12 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
-    configVersion: v2.15.0
+    configVersion: v2.15.1
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: "quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.0"
+      image: "quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.1"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -126,7 +126,7 @@ spec:
     - name: observability
       # enabled: Enable/Disable observability
       enabled: true
-      configVersion: v1.13.0
+      configVersion: v1.13.1
       components:
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
