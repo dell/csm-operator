@@ -440,11 +440,6 @@ spec:
             # Default value: "TEXT"
             - name: "POWERSTORE_LOG_FORMAT"
               value: "TEXT"
-            # POWERSTORE_API_CALL_TIMEOUT : set the array API call timeout  
-            # Allowed values: int 
-            # Default value: 120
-            - name: "X_CSI_POWERSTORE_API_TIMEOUT"
-              value: "120s"
             # ZIPKIN_URI : URI of a Zipkin instance where tracing data can be forwarded
             # Allowed values : String
             # Default value: Empty
