@@ -144,6 +144,8 @@ spec:
                   fieldPath: metadata.namespace
             - name: TLS_ENABLED
               value: "true"
+            - name: X_CSI_POWERSTORE_API_TIMEOUT
+              value: "<X_CSI_POWERSTORE_API_TIMEOUT>"
           volumeMounts:
             - name: karavi-metrics-powerstore-secret-volume
               mountPath: "/certs"
