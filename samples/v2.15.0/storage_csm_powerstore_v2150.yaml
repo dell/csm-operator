@@ -430,7 +430,7 @@ spec:
             # Default value: 30
             - name: "POWERSTORE_TOPOLOGY_POLL_FREQUENCY"
               value: "30"
-            - name: X_CSI_POWERSTORE_API_TIMEOUT
+            - name: "X_CSI_POWERSTORE_API_TIMEOUT"
               value: "120s"
             # PowerStore metrics log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
