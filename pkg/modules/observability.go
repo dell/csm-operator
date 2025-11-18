@@ -538,7 +538,7 @@ func PowerScaleMetrics(ctx context.Context, isDeleting bool, op operatorutils.Op
 func PowerStoreMetrics(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
 	log := logger.GetLogger(ctx)
 
-	powerstoreMetricsObjects, err := getPowerStoreMetricsObjects(op, cr)
+	powerstoreMetricsObjects, err := getPowerStoreMetricsObjects(op, cr, ctx)
 	if err != nil {
 		return err
 	}
@@ -600,7 +600,9 @@ func PowerStoreMetrics(ctx context.Context, isDeleting bool, op operatorutils.Op
 }
 
 // getPowerStoreMetricsObjects - get powerstore metrics yaml string
-func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]crclient.Object, error) {
+func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctx context.Context) ([]crclient.Object, error) {
+	log := logger.GetLogger(ctx)
+
 	obs, err := getObservabilityModule(cr)
 	if err != nil {
 		return nil, err
@@ -670,6 +672,8 @@ func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 		}
 	}
 
+	log.Infof("Yaml before change %s", YamlString)
+
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 	YamlString = strings.ReplaceAll(YamlString, CSMNameSpace, cr.Namespace)
 	YamlString = strings.ReplaceAll(YamlString, PstoreMaxConcurrentQueries, maxConcurrentQueries)
@@ -688,6 +692,8 @@ func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 	YamlString = strings.ReplaceAll(YamlString, PstoreLogFormat, logFormat)
 	YamlString = strings.ReplaceAll(YamlString, OtelCollectorAddress, otelCollectorAddress)
 	YamlString = strings.ReplaceAll(YamlString, DriverDefaultReleaseName, cr.Name)
+
+	log.Infof("Yaml after change %s", YamlString)
 
 	metricsObjects, err := operatorutils.GetModuleComponentObj([]byte(YamlString))
 	if err != nil {
