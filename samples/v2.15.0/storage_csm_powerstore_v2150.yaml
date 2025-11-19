@@ -433,7 +433,7 @@ spec:
             # X_CSI_POWERSTORE_API_TIMEOUT: Defines the timeout for PowerStore REST API calls.
             # Allowed values: Number followed by unit (s,m,h)
             # Examples: 10s, 1m, 1h
-            # Default value: 120s 
+            # Default value: 120s
             - name: "X_CSI_POWERSTORE_API_TIMEOUT"
               value: "120s"
             # PowerStore metrics log level
