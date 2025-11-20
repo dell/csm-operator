@@ -953,7 +953,7 @@ spec:
               value: docker.io/openpolicyagent/opa:0.70.0
             - name: RELATED_IMAGE_kube-mgmt
               value: docker.io/openpolicyagent/kube-mgmt:8.5.11
-          image: quay.io/dell/container-storage-modules/dell-csm-operator:v1.10.1
+          image: csm.artifactory.cec.lab.emc.com/csm-users/gillt1/csm-operator:k8svirt
           imagePullPolicy: Always
           livenessProbe:
             httpGet:
