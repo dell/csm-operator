@@ -11,7 +11,7 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "None"
-    configVersion: v2.15.0
+    configVersion: v2.15.1
     authSecret: csm-creds
     # setting replicas to 1 since this file is using control node to install deployment on control plane node
     replicas: 1
