@@ -28,7 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/constants"
@@ -1628,7 +1627,7 @@ func (r *ContainerStorageModuleReconciler) ZoneValidation(ctx context.Context, c
 	return err
 }
 
-func applyCsmDrCrd(ctx context.Context, cr csmv1.ContainerStorageModule, isDeleting bool, op operatorutils.OperatorConfig, ctrlClient crclient.Client) error {
+func applyCsmDrCrd(ctx context.Context, cr csmv1.ContainerStorageModule, isDeleting bool, op operatorutils.OperatorConfig, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
 
 	// CSM DR is only compatible starting with v2.16.0.
