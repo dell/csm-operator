@@ -42,7 +42,7 @@ const (
 	// ComConfigCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	ComConfigCSMNameSpace string = "<CSM_NAMESPACE>"
 
-	// CertManagerCRDsManifest -
+	// CSMDRCRDsManifest - file name for dr crds
 	CSMDRCRDsManifest = "dr-crds.yaml"
 )
 

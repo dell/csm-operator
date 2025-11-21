@@ -161,6 +161,72 @@ func TestCommonCertManager(t *testing.T) {
 	}
 }
 
+func TestCommonCSMDrController(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, bool, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, ctrlClient.Client, operatorutils.OperatorConfig) {
+			crd := &apiextv1.CustomResourceDefinition{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "CustomResourceDefinition",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "volumejournals.dr.storage.dell.com",
+				},
+			}
+
+			err := apiextv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(crd).Build()
+			return true, true, sourceClient, operatorConfig
+		},
+		"success - creating": func(*testing.T) (bool, bool, ctrlClient.Client, operatorutils.OperatorConfig) {
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, false, sourceClient, operatorConfig
+		},
+		"fail - invalid directory": func(*testing.T) (bool, bool, ctrlClient.Client, operatorutils.OperatorConfig) {
+			badOperatorConfig.ConfigDirectory = "invalid-dir"
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, sourceClient, badOperatorConfig
+		},
+		"fail - unable to apply crd": func(*testing.T) (bool, bool, ctrlClient.Client, operatorutils.OperatorConfig) {
+			cluster := operatorutils.ClusterConfig{
+				ClusterCTRLClient: customClient{
+					Client: fake.NewClientBuilder().Build(),
+				},
+			}
+
+			return false, false, cluster.ClusterCTRLClient, operatorConfig
+		},
+		"fail - unable to delete crd": func(*testing.T) (bool, bool, ctrlClient.Client, operatorutils.OperatorConfig) {
+			cluster := operatorutils.ClusterConfig{
+				ClusterCTRLClient: customClient{
+					Client: fake.NewClientBuilder().Build(),
+				},
+			}
+
+			return false, true, cluster.ClusterCTRLClient, operatorConfig
+		},
+	}
+
+	ctx := context.TODO()
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			success, isDeleting, sourceClient, op := tc(t)
+
+			err := CommonCSMDrController(ctx, isDeleting, op, sourceClient)
+			if success {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
 // customClient is our custom client that we will pass to removeDriverFromCluster
 // this lets us control what Delete/Get/ etc returns from within removeDriverFromCluster
 type customClient struct {
