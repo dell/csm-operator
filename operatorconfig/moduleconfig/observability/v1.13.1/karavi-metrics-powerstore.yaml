@@ -91,6 +91,7 @@ data:
     POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY: <POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY>
     POWERSTORE_TOPOLOGY_METRICS_ENABLED: <POWERSTORE_TOPOLOGY_METRICS_ENABLED>
     POWERSTORE_TOPOLOGY_POLL_FREQUENCY: <POWERSTORE_TOPOLOGY_POLL_FREQUENCY>
+    X_CSI_POWERSTORE_API_TIMEOUT: <X_CSI_POWERSTORE_API_TIMEOUT>
     LOG_LEVEL: <POWERSTORE_LOG_LEVEL>
     LOG_FORMAT: <POWERSTORE_LOG_FORMAT>
     ZIPKIN_URI: <POWERSTORE_ZIPKIN_URI>
@@ -144,6 +145,8 @@ spec:
                   fieldPath: metadata.namespace
             - name: TLS_ENABLED
               value: "true"
+            - name: X_CSI_POWERSTORE_API_TIMEOUT
+              value: "<X_CSI_POWERSTORE_API_TIMEOUT>"
           volumeMounts:
             - name: karavi-metrics-powerstore-secret-volume
               mountPath: "/certs"
