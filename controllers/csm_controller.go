@@ -28,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/constants"
@@ -985,11 +986,11 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		return err
 	}
 
+	// Create/Update CSM DR CRD for PowerStore
 	if cr.GetDriverType() == csmv1.PowerStore {
-		log.Infoln("Applying the CSM DR CRDs")
-
-		if err := modules.CommonCSMDrController(ctx, false, operatorConfig, clusterClient.ClusterCTRLClient); err != nil {
-			return fmt.Errorf("unable to apply the common CSM DR Controller: %v", err)
+		err = applyCsmDrCrd(ctx, cr, false, operatorConfig, clusterClient.ClusterCTRLClient)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -1382,7 +1383,8 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	}
 
 	if instance.GetDriverType() == csmv1.PowerStore {
-		log.Infoln("Removing the common CSM DR Controller")
+		// Version should not matter but CRD should be deleted no matter what.
+		log.Infoln("Checking/removing the common CSM DR Controller")
 
 		if err := modules.CommonCSMDrController(ctx, true, operatorConfig, clusterClient.ClusterCTRLClient); err != nil {
 			return fmt.Errorf("unable to remove the common CSM DR Controller: %v", err)
@@ -1624,4 +1626,26 @@ func (r *ContainerStorageModuleReconciler) ZoneValidation(ctx context.Context, c
 	}
 
 	return err
+}
+
+func applyCsmDrCrd(ctx context.Context, cr csmv1.ContainerStorageModule, isDeleting bool, op operatorutils.OperatorConfig, ctrlClient crclient.Client) error {
+	log := logger.GetLogger(ctx)
+
+	// CSM DR is only compatible starting with v2.16.0.
+	isCompatible, err := operatorutils.MinVersionCheck("v2.16.0", cr.Spec.Driver.ConfigVersion)
+	if err != nil {
+		return fmt.Errorf("error checking version: %s", cr.Spec.Driver.ConfigVersion)
+	}
+
+	if !isCompatible {
+		log.Infof("CSM DR is not compatible with version %s for %s", cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType)
+		return nil
+	}
+
+	log.Infoln("Applying the CSM DR CRDs")
+	if err := modules.CommonCSMDrController(ctx, isDeleting, op, ctrlClient); err != nil {
+		return fmt.Errorf("unable to remove the common CSM DR Controller: %v", err)
+	}
+
+	return nil
 }
