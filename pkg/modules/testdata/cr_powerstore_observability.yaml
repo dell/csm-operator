@@ -68,6 +68,8 @@ spec:
               value: "INFO"
             - name: "POWERSTORE_LOG_FORMAT"
               value: "TEXT"
+            - name: "X_CSI_POWERSTORE_API_TIMEOUT"
+              value: "120s"
             - name: "ZIPKIN_URI"
               value: ""
             - name: "ZIPKIN_SERVICE_NAME"

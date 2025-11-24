@@ -217,6 +217,9 @@ const (
 	// PstoreLogFormat - the log format for the Powerstore metrics
 	PstoreLogFormat string = "<POWERSTORE_LOG_FORMAT>"
 
+	// PstoreApiCallTimeout - the array API call timeout
+	PstoreAPITimeout string = "<X_CSI_POWERSTORE_API_TIMEOUT>"
+
 	// ZipkinURI - Zipkin URI for Powerstore metrics
 	ZipkinURI string = "<ZIPKIN_URI>"
 
@@ -618,6 +621,7 @@ func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 	fsPollFrequency := "20"
 	topologyEnabled := "true"
 	topologyPollFrequency := "30"
+	apiTimeout := "120s"
 	zipkinURI := ""
 	zipkinServiceName := "metrics-powerstore"
 	zipkinProbability := "0.0"
@@ -647,6 +651,8 @@ func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 					topologyEnabled = env.Value
 				} else if strings.Contains(PstoreTopologyPollFrequency, env.Name) {
 					topologyPollFrequency = env.Value
+				} else if strings.Contains(PstoreAPITimeout, env.Name) {
+					apiTimeout = env.Value
 				} else if strings.Contains(ZipkinURI, env.Name) {
 					zipkinURI = env.Value
 				} else if strings.Contains(ZipkinServiceName, env.Name) {
@@ -674,6 +680,7 @@ func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 	YamlString = strings.ReplaceAll(YamlString, PstoreFileSystemPollFrequency, fsPollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, PstoreTopologyEnabled, topologyEnabled)
 	YamlString = strings.ReplaceAll(YamlString, PstoreTopologyPollFrequency, topologyPollFrequency)
+	YamlString = strings.ReplaceAll(YamlString, PstoreAPITimeout, apiTimeout)
 	YamlString = strings.ReplaceAll(YamlString, ZipkinURI, zipkinURI)
 	YamlString = strings.ReplaceAll(YamlString, ZipkinServiceName, zipkinServiceName)
 	YamlString = strings.ReplaceAll(YamlString, ZipkinProbability, zipkinProbability)
