@@ -1638,6 +1638,11 @@ func applyCsmDrCrd(ctx context.Context, cr csmv1.ContainerStorageModule, isDelet
 
 	if !isCompatible {
 		log.Infof("CSM DR is not compatible with version %s for %s", cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType)
+
+		// Delete CSM DR CRDs if we are downgrading.
+		if err := modules.CommonCSMDrController(ctx, true, op, ctrlClient); err != nil {
+			return fmt.Errorf("unable to remove the common CSM DR Controller: %v", err)
+		}
 		return nil
 	}
 
