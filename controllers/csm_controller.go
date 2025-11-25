@@ -204,6 +204,7 @@ var (
 // +kubebuilder:rbac:groups="csm-authorization.storage.dell.com",resources=storages,verbs=watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="csm-authorization.storage.dell.com",resources=storages/finalizers,verbs=update
 // +kubebuilder:rbac:groups="csm-authorization.storage.dell.com",resources=storages/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups="dr.storage.dell.com",resources=volumejournals,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -984,6 +985,14 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		return err
 	}
 
+	// Create/Update CSM DR CRD for PowerStore
+	if cr.GetDriverType() == csmv1.PowerStore {
+		err = applyCSMDRCRD(ctx, cr, false, operatorConfig, clusterClient.ClusterCTRLClient)
+		if err != nil {
+			return err
+		}
+	}
+
 	// Create/Update DeamonSet, except for auth proxy
 	if !authorizationEnabled {
 		if err = daemonset.SyncDaemonset(ctx, node.DaemonSetApplyConfig, clusterClient.ClusterK8sClient, cr.Name); err != nil {
@@ -1372,6 +1381,15 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		}
 	}
 
+	if instance.GetDriverType() == csmv1.PowerStore {
+		// Version should not matter but CRD should be deleted no matter what.
+		log.Infoln("Checking/removing the common CSM Disaster Recovery CRDs")
+
+		if err := modules.CommonCSMDRCRDs(ctx, true, operatorConfig, clusterClient.ClusterCTRLClient); err != nil {
+			return fmt.Errorf("unable to remove the common CSM Disaster Recovery CRDs: %v", err)
+		}
+	}
+
 	return nil
 }
 
@@ -1607,4 +1625,26 @@ func (r *ContainerStorageModuleReconciler) ZoneValidation(ctx context.Context, c
 	}
 
 	return err
+}
+
+func applyCSMDRCRD(ctx context.Context, cr csmv1.ContainerStorageModule, isDeleting bool, op operatorutils.OperatorConfig, ctrlClient client.Client) error {
+	log := logger.GetLogger(ctx)
+
+	// CSM DR is only compatible starting with v2.16.0.
+	isCompatible, err := operatorutils.MinVersionCheck(constants.DisasterRecoveryMinVersion, cr.Spec.Driver.ConfigVersion)
+	if err != nil {
+		return fmt.Errorf("error checking version: %s", cr.Spec.Driver.ConfigVersion)
+	}
+
+	if !isCompatible {
+		log.Warnf("CSM Disaster Recovery (DR) is not compatible with version %s for %s", cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType)
+		return nil
+	}
+
+	log.Infoln("Applying the CSM Disaster Recovery (DR) CRDs")
+	if err := modules.CommonCSMDRCRDs(ctx, isDeleting, op, ctrlClient); err != nil {
+		return fmt.Errorf("unable to remove the common CSM Disaster Recovery (DR) Controller: %v", err)
+	}
+
+	return nil
 }

@@ -41,6 +41,9 @@ const (
 	CSMName = "<NAME>"
 	// ComConfigCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	ComConfigCSMNameSpace string = "<CSM_NAMESPACE>"
+
+	// CSMDRCRDsManifest - file name for dr crds
+	CSMDRCRDsManifest = "dr-crds.yaml"
 )
 
 // SupportedDriverParam -
@@ -160,6 +163,45 @@ func CommonCertManager(ctx context.Context, isDeleting bool, op operatorutils.Op
 			}
 		} else {
 			if err := operatorutils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func getCSMDRCRDs(op operatorutils.OperatorConfig) (string, error) {
+	YamlString := ""
+
+	certManagerPath := fmt.Sprintf("%s/moduleconfig/common/disaster-recovery/%s", op.ConfigDirectory, CSMDRCRDsManifest)
+	buf, err := os.ReadFile(filepath.Clean(certManagerPath))
+	if err != nil {
+		return YamlString, err
+	}
+
+	YamlString = string(buf)
+	return YamlString, nil
+}
+
+func CommonCSMDRCRDs(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, ctrlClient crclient.Client) error {
+	crdYamlString, err := getCSMDRCRDs(op)
+	if err != nil {
+		return err
+	}
+
+	crdObjects, err := operatorutils.GetModuleComponentObj([]byte(crdYamlString))
+	if err != nil {
+		return err
+	}
+
+	for _, crdObj := range crdObjects {
+		if isDeleting {
+			if err := operatorutils.DeleteObject(ctx, crdObj, ctrlClient); err != nil {
+				return err
+			}
+		} else {
+			if err := operatorutils.ApplyObject(ctx, crdObj, ctrlClient); err != nil {
 				return err
 			}
 		}

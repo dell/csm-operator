@@ -34,6 +34,11 @@ const (
 	MaxRetryDuration     = 30 * time.Minute
 )
 
+// Minimum Version Requirement for Features
+const (
+	DisasterRecoveryMinVersion = "v2.16.0"
+)
+
 // DriverReplicas - Replica count for controller
 var DriverReplicas = int32(1)
 

@@ -716,6 +716,18 @@ rules:
       - patch
       - update
       - watch
+  - apiGroups:
+      - dr.storage.dell.com
+    resources:
+      - volumejournals
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
