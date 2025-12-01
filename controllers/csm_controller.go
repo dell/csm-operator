@@ -1385,7 +1385,7 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 		// Version should not matter but CRD should be deleted no matter what.
 		log.Infoln("Checking/removing the common CSM Disaster Recovery CRDs")
 
-		if err := modules.CommonCSMDRCRDs(ctx, true, operatorConfig, clusterClient.ClusterCTRLClient); err != nil {
+		if err := modules.PatchCSMDRCRDs(ctx, true, operatorConfig, clusterClient.ClusterCTRLClient); err != nil {
 			return fmt.Errorf("unable to remove the common CSM Disaster Recovery CRDs: %v", err)
 		}
 	}
@@ -1638,12 +1638,17 @@ func applyCSMDRCRD(ctx context.Context, cr csmv1.ContainerStorageModule, isDelet
 
 	if !isCompatible {
 		log.Warnf("CSM Disaster Recovery (DR) is not compatible with version %s for %s", cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType)
+
+		// Delete CSM DR CRDs if we are downgrading.
+		if err := modules.PatchCSMDRCRDs(ctx, true, op, ctrlClient); err != nil {
+			return fmt.Errorf("unable to remove the common CSM DR Controller: %v", err)
+		}
 		return nil
 	}
 
 	log.Infoln("Applying the CSM Disaster Recovery (DR) CRDs")
-	if err := modules.CommonCSMDRCRDs(ctx, isDeleting, op, ctrlClient); err != nil {
-		return fmt.Errorf("unable to remove the common CSM Disaster Recovery (DR) Controller: %v", err)
+	if err := modules.PatchCSMDRCRDs(ctx, isDeleting, op, ctrlClient); err != nil {
+		return fmt.Errorf("unable to patch the common CSM Disaster Recovery (DR) Controller: %v", err)
 	}
 
 	return nil

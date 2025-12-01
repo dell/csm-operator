@@ -40,6 +40,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -2623,6 +2624,7 @@ func (suite *CSMControllerTestSuite) TestReconcileReplicationCRDSReturnError() {
 // customClient is our custom client that we will pass to removeDriverFromCluster
 // this lets us control what Delete/Get/ etc returns from within removeDriverFromCluster
 type customClient struct {
+	failOn string
 	client.Client
 }
 
@@ -2632,6 +2634,11 @@ func (c customClient) Delete(_ context.Context, obj client.Object, _ ...client.D
 	if strings.Contains(obj.GetName(), "failed-deletion") {
 		return fmt.Errorf("failed to delete: %s", obj.GetName())
 	}
+
+	if c.failOn == "delete" {
+		return fmt.Errorf("failed to delete: %s", obj.GetName())
+	}
+
 	return nil
 }
 
@@ -2800,97 +2807,195 @@ func Test_removeDriverFromCluster(t *testing.T) {
 }
 
 func TestApplyCsmDrCrd(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, bool, client.Client, operatorutils.OperatorConfig){
-		"success - applied for PowerStore CSM v2.16.0": func(*testing.T) (bool, csmv1.ContainerStorageModule, bool, client.Client, operatorutils.OperatorConfig) {
-			crd := &apiextv1.CustomResourceDefinition{
-				TypeMeta: metav1.TypeMeta{
-					Kind: "CustomResourceDefinition",
-				},
-				ObjectMeta: metav1.ObjectMeta{
+	testCases := []struct {
+		name       string
+		init       func(*testing.T) (csmv1.ContainerStorageModule, client.Client, operatorutils.OperatorConfig)
+		validate   func(client.Client) error
+		wantErr    bool
+		isDeleting bool
+	}{
+		{
+			name: "success - applied for PowerStore CSM v2.16.0",
+			init: func(t *testing.T) (csmv1.ContainerStorageModule, client.Client, operatorutils.OperatorConfig) {
+				csm := shared.MakeCSM(csmName, "powerstore", constants.DisasterRecoveryMinVersion)
+				csm.Spec.Driver.CSIDriverType = csmv1.PowerStore
+
+				err := apiextv1.AddToScheme(scheme.Scheme)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				client := fake.NewClientBuilder().WithObjects().Build()
+
+				return csm, client, operatorConfig
+			},
+			isDeleting: false,
+			validate: func(c client.Client) error {
+				key := client.ObjectKey{
 					Name: "volumejournals.dr.storage.dell.com",
-				},
-			}
+				}
+				crd := &apiextv1.CustomResourceDefinition{}
+				err := c.Get(t.Context(), key, crd)
+				if err != nil {
+					return nil
+				}
 
-			err := apiextv1.AddToScheme(scheme.Scheme)
-			if err != nil {
-				panic(err)
-			}
-
-			sourceClient := fake.NewClientBuilder().WithObjects(crd).Build()
-
-			csm := shared.MakeCSM(csmName, "powerstore", constants.DisasterRecoveryMinVersion)
-			csm.Spec.Driver.CSIDriverType = csmv1.PowerStore
-
-			return true, csm, false, sourceClient, operatorConfig
+				return nil
+			},
+			wantErr: false,
 		},
-		"success - not applied due to not compatible": func(*testing.T) (bool, csmv1.ContainerStorageModule, bool, client.Client, operatorutils.OperatorConfig) {
-			crd := &apiextv1.CustomResourceDefinition{
-				TypeMeta: metav1.TypeMeta{
-					Kind: "CustomResourceDefinition",
-				},
-				ObjectMeta: metav1.ObjectMeta{
+		{
+			name: "success - not applied due to incompatible version",
+			init: func(t *testing.T) (csmv1.ContainerStorageModule, client.Client, operatorutils.OperatorConfig) {
+				csm := shared.MakeCSM(csmName, "powerstore", "v2.15.0")
+				csm.Spec.Driver.CSIDriverType = csmv1.PowerStore
+
+				err := apiextv1.AddToScheme(scheme.Scheme)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				client := fake.NewClientBuilder().WithObjects().Build()
+
+				return csm, client, operatorConfig
+			},
+			isDeleting: false,
+			validate: func(_ client.Client) error {
+				return nil
+			},
+			wantErr: false,
+		},
+		{
+			name: "success - downgrade cleanup",
+			init: func(t *testing.T) (csmv1.ContainerStorageModule, client.Client, operatorutils.OperatorConfig) {
+				csm := shared.MakeCSM(csmName, "powerstore", "v2.15.0")
+				csm.Spec.Driver.CSIDriverType = csmv1.PowerStore
+
+				err := apiextv1.AddToScheme(scheme.Scheme)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				// Add the CRD to mimic that it is currently installed.
+				crd := &apiextv1.CustomResourceDefinition{
+					TypeMeta: metav1.TypeMeta{
+						Kind: "CustomResourceDefinition",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "volumejournals.dr.storage.dell.com",
+					},
+				}
+
+				client := fake.NewClientBuilder().WithObjects(crd).Build()
+
+				return csm, client, operatorConfig
+			},
+			isDeleting: false,
+			validate: func(c client.Client) error {
+				key := client.ObjectKey{
 					Name: "volumejournals.dr.storage.dell.com",
-				},
-			}
+				}
+				crd := &apiextv1.CustomResourceDefinition{}
+				err := c.Get(t.Context(), key, crd)
+				if err != nil {
+					if k8sErrors.IsNotFound(err) {
+						return nil
+					}
 
-			err := apiextv1.AddToScheme(scheme.Scheme)
-			if err != nil {
-				panic(err)
-			}
+					return err
+				}
 
-			sourceClient := fake.NewClientBuilder().WithObjects(crd).Build()
-
-			csm := shared.MakeCSM(csmName, "powerstore", "v2.15.0")
-			csm.Spec.Driver.CSIDriverType = csmv1.PowerStore
-
-			return true, csm, false, sourceClient, operatorConfig
+				return nil
+			},
+			wantErr: false,
 		},
-		"failed - invalid version check": func(*testing.T) (bool, csmv1.ContainerStorageModule, bool, client.Client, operatorutils.OperatorConfig) {
-			crd := &apiextv1.CustomResourceDefinition{
-				TypeMeta: metav1.TypeMeta{
-					Kind: "CustomResourceDefinition",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "volumejournals.dr.storage.dell.com",
-				},
-			}
+		{
+			name: "failed - invalid version check",
+			init: func(t *testing.T) (csmv1.ContainerStorageModule, client.Client, operatorutils.OperatorConfig) {
+				csm := shared.MakeCSM(csmName, "powerstore", "invalid")
+				csm.Spec.Driver.CSIDriverType = csmv1.PowerStore
 
-			err := apiextv1.AddToScheme(scheme.Scheme)
-			if err != nil {
-				panic(err)
-			}
+				err := apiextv1.AddToScheme(scheme.Scheme)
+				if err != nil {
+					t.Fatal(err)
+				}
 
-			sourceClient := fake.NewClientBuilder().WithObjects(crd).Build()
+				client := fake.NewClientBuilder().WithObjects().Build()
 
-			csm := shared.MakeCSM(csmName, "powerstore", "invalid")
-			csm.Spec.Driver.CSIDriverType = csmv1.PowerStore
-
-			return false, csm, false, sourceClient, operatorConfig
+				return csm, client, operatorConfig
+			},
+			isDeleting: false,
+			validate: func(_ client.Client) error {
+				return nil
+			},
+			wantErr: true,
 		},
-		"failed - unable to apply": func(*testing.T) (bool, csmv1.ContainerStorageModule, bool, client.Client, operatorutils.OperatorConfig) {
-			cluster := operatorutils.ClusterConfig{
-				ClusterCTRLClient: customClient{
-					Client: fake.NewClientBuilder().Build(),
-				},
-			}
+		{
+			name: "failed - unable to apply",
+			init: func(t *testing.T) (csmv1.ContainerStorageModule, client.Client, operatorutils.OperatorConfig) {
+				csm := shared.MakeCSM(csmName, "powerstore", constants.DisasterRecoveryMinVersion)
+				csm.Spec.Driver.CSIDriverType = csmv1.PowerStore
 
-			csm := shared.MakeCSM(csmName, "powerstore", constants.DisasterRecoveryMinVersion)
-			csm.Spec.Driver.CSIDriverType = csmv1.PowerStore
+				err := apiextv1.AddToScheme(scheme.Scheme)
+				if err != nil {
+					t.Fatal(err)
+				}
 
-			return false, csm, false, cluster.ClusterCTRLClient, operatorConfig
+				cluster := operatorutils.ClusterConfig{
+					ClusterCTRLClient: customClient{
+						Client: fake.NewClientBuilder().Build(),
+					},
+				}
+
+				return csm, cluster.ClusterCTRLClient, operatorConfig
+			},
+			isDeleting: false,
+			validate: func(_ client.Client) error {
+				return nil
+			},
+			wantErr: true,
+		},
+		{
+			name: "failed - unable to cleanup CSM DR CRD for incompatible version",
+			init: func(t *testing.T) (csmv1.ContainerStorageModule, client.Client, operatorutils.OperatorConfig) {
+				csm := shared.MakeCSM(csmName, "powerstore", "v2.15.0")
+				csm.Spec.Driver.CSIDriverType = csmv1.PowerStore
+
+				err := apiextv1.AddToScheme(scheme.Scheme)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				cluster := operatorutils.ClusterConfig{
+					ClusterCTRLClient: customClient{
+						failOn: "delete",
+						Client: fake.NewClientBuilder().Build(),
+					},
+				}
+
+				return csm, cluster.ClusterCTRLClient, operatorConfig
+			},
+			isDeleting: false,
+			validate: func(_ client.Client) error {
+				return nil
+			},
+			wantErr: true,
 		},
 	}
 
 	ctx := context.TODO()
-	for name, tc := range tests {
-		t.Run(name, func(t *testing.T) {
-			success, csm, isDeleting, sourceClient, op := tc(t)
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			csm, client, config := tt.init(t)
 
-			err := applyCSMDRCRD(ctx, csm, isDeleting, op, sourceClient)
-			if success {
-				assert.NoError(t, err)
-			} else {
-				assert.Error(t, err)
+			err := applyCSMDRCRD(ctx, csm, tt.isDeleting, config, client)
+			if err != nil && !tt.wantErr {
+				t.Errorf("Test %s did not expect an error but got: %v", tt.name, err)
+			}
+
+			err = tt.validate(client)
+			if err != nil {
+				t.Errorf("Test %s failed to validate: %v", tt.name, err)
 			}
 		})
 	}

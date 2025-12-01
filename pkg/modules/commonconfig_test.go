@@ -161,7 +161,7 @@ func TestCommonCertManager(t *testing.T) {
 	}
 }
 
-func TestCommonCSMDRCRDs(t *testing.T) {
+func TestPatchCSMDRCRDs(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, ctrlClient.Client, operatorutils.OperatorConfig){
 		"success - deleting": func(*testing.T) (bool, bool, ctrlClient.Client, operatorutils.OperatorConfig) {
 			crd := &apiextv1.CustomResourceDefinition{
@@ -217,7 +217,7 @@ func TestCommonCSMDRCRDs(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			success, isDeleting, sourceClient, op := tc(t)
 
-			err := CommonCSMDRCRDs(ctx, isDeleting, op, sourceClient)
+			err := PatchCSMDRCRDs(ctx, isDeleting, op, sourceClient)
 			if success {
 				assert.NoError(t, err)
 			} else {

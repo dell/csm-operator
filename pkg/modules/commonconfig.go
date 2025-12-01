@@ -184,7 +184,7 @@ func getCSMDRCRDs(op operatorutils.OperatorConfig) (string, error) {
 	return YamlString, nil
 }
 
-func CommonCSMDRCRDs(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, ctrlClient crclient.Client) error {
+func PatchCSMDRCRDs(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, ctrlClient crclient.Client) error {
 	crdYamlString, err := getCSMDRCRDs(op)
 	if err != nil {
 		return err
