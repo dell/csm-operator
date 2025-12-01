@@ -323,6 +323,10 @@ spec:
                   optional: true
             - name: X_CSI_REVPROXY_TLS_CERT_DIR
               value: /app/tls
+            - name: X_CSI_DYNAMIC_SG_ENABLED
+              value: "<X_CSI_DYNAMIC_SG_ENABLED>"
+            - name: X_CSI_POLLING_INTERVAL
+              value: "<X_CSI_POLLING_INTERVAL>"
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
