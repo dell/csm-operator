@@ -16,7 +16,10 @@ spec:
     - name: v1
       schema:
         openAPIV3Schema:
-          description: VolumeJournal is the Schema for the volumejournals API
+          description: |-
+            VolumeJournal is the Schema for the volumejournals API.
+            Where volumejournals are used to track and replay csi driver operations
+            that may have failed while provisioning or deleting metro volumes
           properties:
             apiVersion:
               description: |-
