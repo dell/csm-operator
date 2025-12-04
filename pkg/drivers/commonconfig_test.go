@@ -17,7 +17,7 @@ import (
 	"testing"
 
 	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/shared"
+	shared "eos2git.cec.lab.emc.com/CSM/csm-operator/tests/sharedutil"
 	"github.com/stretchr/testify/assert"
 	storagev1 "k8s.io/api/storage/v1"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"

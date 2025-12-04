@@ -14,9 +14,9 @@ import (
 
 	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
 	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/shared"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/shared/clientgoclient"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/shared/crclient"
+	shared "eos2git.cec.lab.emc.com/CSM/csm-operator/tests/sharedutil"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/sharedutil/clientgoclient"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/sharedutil/crclient"
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"

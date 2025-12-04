@@ -24,14 +24,13 @@ import (
 	"time"
 
 	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
-	v1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/constants"
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/modules"
-	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/shared"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/shared/clientgoclient"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/shared/crclient"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
+	shared "eos2git.cec.lab.emc.com/CSM/csm-operator/tests/sharedutil"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/sharedutil/clientgoclient"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/sharedutil/crclient"
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -206,7 +205,7 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 
 func TestRemoveFinalizer(t *testing.T) {
 	r := &ContainerStorageModuleReconciler{}
-	err := r.removeFinalizer(context.Background(), &v1.ContainerStorageModule{})
+	err := r.removeFinalizer(context.Background(), &csmv1.ContainerStorageModule{})
 	assert.Nil(t, err)
 }
 
@@ -256,7 +255,7 @@ func (suite *CSMControllerTestSuite) TestAuthorizationServerPreCheck() {
 }
 
 func (suite *CSMControllerTestSuite) TestResiliencyReconcile() {
-	suite.makeFakeResiliencyCSM(csmName, suite.namespace, true, append(getResiliencyModule(), getResiliencyModule()...), string(v1.PowerStore))
+	suite.makeFakeResiliencyCSM(csmName, suite.namespace, true, append(getResiliencyModule(), getResiliencyModule()...), string(csmv1.PowerStore))
 	suite.runFakeCSMManager("", false)
 	suite.deleteCSM(csmName)
 	suite.runFakeCSMManager("", true)
@@ -294,14 +293,14 @@ func (suite *CSMControllerTestSuite) TestContentWatch() {
 }
 
 func (suite *CSMControllerTestSuite) TestReverseProxyReconcile() {
-	suite.makeFakeRevProxyCSM(csmName, suite.namespace, true, getReverseProxyModule(), string(v1.PowerMax))
+	suite.makeFakeRevProxyCSM(csmName, suite.namespace, true, getReverseProxyModule(), string(csmv1.PowerMax))
 	suite.runFakeCSMManager("", false)
 	suite.deleteCSM(csmName)
 	suite.runFakeCSMManager("", true)
 }
 
 func (suite *CSMControllerTestSuite) TestReverseProxyWithSecretReconcile() {
-	csm := suite.buildFakeRevProxyCSM(csmName, suite.namespace, true, getReverseProxyModuleWithSecret(), string(v1.PowerMax))
+	csm := suite.buildFakeRevProxyCSM(csmName, suite.namespace, true, getReverseProxyModuleWithSecret(), string(csmv1.PowerMax))
 	csm.Spec.Driver.Common.Envs = append(csm.Spec.Driver.Common.Envs, corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"})
 	err := suite.fakeClient.Create(ctx, &csm)
 	assert.Nil(suite.T(), err)
@@ -316,7 +315,7 @@ func (suite *CSMControllerTestSuite) TestReverseProxySidecarReconcile() {
 	deploAsSidecar := corev1.EnvVar{Name: "DeployAsSidecar", Value: "true"}
 	revProxy[0].Components[0].Envs = append(revProxy[0].Components[0].Envs, deploAsSidecar)
 	modules.IsReverseProxySidecar = func() bool { return true }
-	suite.makeFakeRevProxyCSM(csmName, suite.namespace, true, revProxy, string(v1.PowerMax))
+	suite.makeFakeRevProxyCSM(csmName, suite.namespace, true, revProxy, string(csmv1.PowerMax))
 	suite.runFakeCSMManager("", false)
 	suite.deleteCSM(csmName)
 	suite.runFakeCSMManager("", true)
@@ -2211,7 +2210,7 @@ func (suite *CSMControllerTestSuite) TestReconcileAuthorization() {
 	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
 	assert.Nil(suite.T(), err)
 
-	csm.Spec.Modules[0] = v1.Module{}
+	csm.Spec.Modules[0] = csmv1.Module{}
 	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
 	assert.NotNil(suite.T(), err)
 
@@ -2319,7 +2318,7 @@ func (suite *CSMControllerTestSuite) makeFakeResiliencyCSM(name, ns string, with
 
 	csm := shared.MakeCSM(name, ns, configVersion)
 	csm.Spec.Driver.Common.Image = "image"
-	csm.Spec.Driver.CSIDriverType = v1.DriverType(driverType)
+	csm.Spec.Driver.CSIDriverType = csmv1.DriverType(driverType)
 
 	truebool := true
 	sideCarObjEnabledTrue := csmv1.ContainerTemplate{
@@ -2519,7 +2518,7 @@ func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 	return nil
 }
 
-func (suite *CSMControllerTestSuite) buildFakeRevProxyCSM(name string, ns string, withFinalizer bool, modules []v1.Module, driverType string) v1.ContainerStorageModule {
+func (suite *CSMControllerTestSuite) buildFakeRevProxyCSM(name string, ns string, withFinalizer bool, modules []csmv1.Module, driverType string) csmv1.ContainerStorageModule {
 	// Create secrets and config map for Reconcile
 	sec := shared.MakeSecret("csirevproxy-tls-secret", ns, configVersion)
 	err := suite.fakeClient.Create(ctx, sec)
@@ -2564,7 +2563,7 @@ func (suite *CSMControllerTestSuite) buildFakeRevProxyCSM(name string, ns string
 	return csm
 }
 
-func (suite *CSMControllerTestSuite) makeFakeRevProxyCSM(name string, ns string, withFinalizer bool, modules []v1.Module, driverType string) {
+func (suite *CSMControllerTestSuite) makeFakeRevProxyCSM(name string, ns string, withFinalizer bool, modules []csmv1.Module, driverType string) {
 	csm := suite.buildFakeRevProxyCSM(name, ns, withFinalizer, modules, driverType)
 
 	err := suite.fakeClient.Create(ctx, &csm)

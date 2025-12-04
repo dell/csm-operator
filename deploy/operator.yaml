@@ -496,6 +496,18 @@ rules:
       - list
       - watch
   - apiGroups:
+      - dr.storage.dell.com
+    resources:
+      - volumejournals
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
       - gateway.networking.k8s.io
     resources:
       - gateways
@@ -708,18 +720,6 @@ rules:
     resources:
       - dellcsivolumegroupsnapshots
       - dellcsivolumegroupsnapshots/status
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - dr.storage.dell.com
-    resources:
-      - volumejournals
     verbs:
       - create
       - delete

@@ -17,7 +17,7 @@ import (
 
 	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
 	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/shared"
+	shared "eos2git.cec.lab.emc.com/CSM/csm-operator/tests/sharedutil"
 	corev1 "k8s.io/api/core/v1"
 )
 

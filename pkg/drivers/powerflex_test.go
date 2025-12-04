@@ -18,8 +18,8 @@ import (
 	"testing"
 
 	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/shared"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/shared/crclient"
+	shared "eos2git.cec.lab.emc.com/CSM/csm-operator/tests/sharedutil"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/sharedutil/crclient"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
