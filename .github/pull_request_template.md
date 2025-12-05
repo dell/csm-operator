@@ -26,6 +26,7 @@ List the JIRA issues impacted by this PR:
 - [ ] I have commented my code, particularly in hard-to-understand areas
 - [ ] I have made corresponding changes to the documentation
 - [ ] I have added tests that prove my fix is effective or that my feature works
+- [ ] I have verified that all changes maintain idempotent behavior and can be safely re-executed without causing unintended side effects.
 - [ ] Backward compatibility is not broken
 
 # How Has This Been Tested?

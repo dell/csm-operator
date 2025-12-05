@@ -1,11 +1,17 @@
+# Copyright © 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+#
+# Dell Technologies, Dell and other trademarks are trademarks of Dell Inc.
+# or its subsidiaries. Other trademarks may be trademarks of their respective
+# owners.
+
 name: Weekly License Header Check
 
-on:
+on:  # yamllint disable-line rule:truthy
   schedule:
     - cron: '0 0 * * 1'  # Runs every Monday at 00:00 UTC
   workflow_dispatch:
 jobs:
   license-check:
-    name: Run License Header Checker
-    uses: dell/common-github-actions/.github/workflows/license-checker.yaml@main
+    name: Run License Header Check
+    uses: CSM/actions/.github/workflows/license-checker.yaml@main
     secrets: inherit
