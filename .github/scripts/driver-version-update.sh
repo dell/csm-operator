@@ -96,10 +96,11 @@ UpdateConfigVersion() {
 UpdateRelatedImages() {
     driverImageName=$1
     update_version=$2
+    previous_major_driver_version=$3
     input_file="bundle/manifests/dell-csm-operator.clusterserviceversion.yaml"
-    nightly_search_string_1=" - image: quay.io/dell/container-storage-modules/$driverImageName:nightly"
-    nightly_search_string_2="                  value: quay.io/dell/container-storage-modules/$driverImageName:nightly"
-    nightly_search_string_3="                \"image\": \"quay.io/dell/container-storage-modules/$driverImageName:nightly"
+    nightly_search_string_1=" - image: quay.io/dell/container-storage-modules/$driverImageName:v$previous_major_driver_version"
+    nightly_search_string_2="                  value: quay.io/dell/container-storage-modules/$driverImageName:v$previous_major_driver_version"
+    nightly_search_string_3="                \"image\": \"quay.io/dell/container-storage-modules/$driverImageName:v$previous_major_driver_version"
     new_line_1="   - image: quay.io/dell/container-storage-modules/$driverImageName:$update_version"
     new_line_2="                       value: quay.io/dell/container-storage-modules/$driverImageName:$update_version"
     new_line_3="               \"image\": \"quay.io/dell/container-storage-modules/$driverImageName:$update_version\","
@@ -148,8 +149,9 @@ UpdateNightlyRelatedImages() {
 UpdateBaseRelatedImages() {
     driverImageName=$1
     update_version=$2
+    previous_major_driver_version=$3
     input_file="config/manifests/bases/dell-csm-operator.clusterserviceversion.yaml"
-    nightly_search_string_1="  - image: quay.io/dell/container-storage-modules/$driverImageName:nightly"
+    nightly_search_string_1="  - image: quay.io/dell/container-storage-modules/$driverImageName:v$previous_major_driver_version"
     new_line_1="   - image: quay.io/dell/container-storage-modules/$driverImageName:$update_version"
     line_number=0
     while IFS= read -r line; do
@@ -372,8 +374,8 @@ UpdateMajorPowerflexDriver() {
         UpdateNightlyRelatedImages csi-vxflexos
         UpdateNightlyBaseRelatedImages csi-vxflexos
     else
-        UpdateRelatedImages csi-vxflexos "$update_config_version"
-        UpdateBaseRelatedImages csi-vxflexos "$update_config_version"
+        UpdateRelatedImages csi-vxflexos "$update_config_version" $previous_major_driver_version
+        UpdateBaseRelatedImages csi-vxflexos "$update_config_version" $previous_major_driver_version
     fi
 
     # Test data
@@ -612,8 +614,8 @@ UpdateMajorPowermaxDriver() {
         UpdateNightlyRelatedImages csi-powermax
         UpdateNightlyBaseRelatedImages csi-powermax
     else
-        UpdateRelatedImages csi-powermax "$update_config_version"
-        UpdateBaseRelatedImages csi-powermax "$update_config_version"
+        UpdateRelatedImages csi-powermax "$update_config_version" "$previous_major_driver_version"
+        UpdateBaseRelatedImages csi-powermax "$update_config_version" "$previous_major_driver_version"
     fi
 
     # Test data files
@@ -808,8 +810,8 @@ UpdateMajorPowerscaleDriver() {
         UpdateNightlyRelatedImages csi-isilon
         UpdateNightlyBaseRelatedImages csi-isilon
     else
-        UpdateRelatedImages csi-isilon "$update_config_version"
-        UpdateBaseRelatedImages csi-isilon "$update_config_version"
+        UpdateRelatedImages csi-isilon "$update_config_version" "$previous_major_driver_version"
+        UpdateBaseRelatedImages csi-isilon "$update_config_version" "$previous_major_driver_version"
     fi
 
     # Testdata
@@ -1019,8 +1021,8 @@ UpdateMajorPowerstoreDriver() {
         UpdateNightlyRelatedImages csi-powerstore
         UpdateNightlyBaseRelatedImages csi-powerstore
     else
-        UpdateRelatedImages csi-powerstore "$update_config_version"
-        UpdateBaseRelatedImages csi-powerstore "$update_config_version"
+        UpdateRelatedImages csi-powerstore "$update_config_version" "$previous_major_driver_version"
+        UpdateBaseRelatedImages csi-powerstore "$update_config_version" "$previous_major_driver_version"
     fi
 
     # Testdata
@@ -1210,8 +1212,8 @@ UpdateMajorUnityDriver() {
         UpdateNightlyRelatedImages csi-unity
         UpdateNightlyBaseRelatedImages csi-unity
     else
-        UpdateRelatedImages csi-unity "$update_config_version"
-        UpdateBaseRelatedImages csi-unity "$update_config_version"
+        UpdateRelatedImages csi-unity "$update_config_version" "$previous_major_driver_version"
+        UpdateBaseRelatedImages csi-unity "$update_config_version" "$previous_major_driver_version"
     fi
 
     # Test config
