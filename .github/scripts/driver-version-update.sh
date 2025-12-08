@@ -834,6 +834,9 @@ UpdateMajorPowerscaleDriver() {
         yq eval -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
     done
 
+    previous_driver_config_version="v$previous_major_driver_version"
+    previous_driver_image_version="quay.io/dell/container-storage-modules/csi-isilon:v$previous_major_driver_version" 
+
     second_previous_driver_version=$(GetSecondLatestDriverVersion "storage_csm_powerscale")
     second_previous_driver_config_version="v$second_previous_driver_version" 
     second_previous_driver_image_version="quay.io/dell/container-storage-modules/csi-isilon:v$second_previous_driver_version"
