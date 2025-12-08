@@ -6,7 +6,7 @@ metadata:
 spec:
   driver:
     csiDriverType: "powerflex"
-    configVersion: v2.15.1
+    configVersion: v2.16.0
     forceRemoveDriver: true
   modules:
     - name: resiliency

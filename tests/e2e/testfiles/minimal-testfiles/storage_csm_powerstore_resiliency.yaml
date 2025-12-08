@@ -6,7 +6,7 @@ metadata:
 spec:
   driver:
     csiDriverType: "powerstore"
-    configVersion: v2.15.1
+    configVersion: v2.16.0
   modules:
     - name: resiliency
       enabled: true

@@ -1,11 +1,6 @@
 # Driver Type
 powerscale:
   # List of Driver versions and modules that supports the version
-  v2.13.0:
-    authorization: "v2.1.0"
-    replication: "v1.11.0"
-    observability: "v1.11.0"
-    resiliency: "v1.12.0"
   v2.14.0:
     authorization: "v2.2.0"
     replication: "v1.12.0"
@@ -17,17 +12,17 @@ powerscale:
     observability: "v1.13.0"
     resiliency: "v1.14.0"
   v2.15.1:
+    authorization: "v2.3.0"
+    replication: "v1.13.0"
+    observability: "v1.13.1"
+    resiliency: "v1.14.0"
+  v2.16.0:
     authorization: "v2.3.0"
     replication: "v1.13.0"
     observability: "v1.13.1"
     resiliency: "v1.14.0"
 powerflex:
   # List of Driver versions and modules that supports the version
-  v2.13.0:
-    authorization: "v2.1.0"
-    replication: "v1.11.0"
-    observability: "v1.11.0"
-    resiliency: "v1.12.0"
   v2.14.0:
     authorization: "v2.2.0"
     replication: "v1.12.0"
@@ -44,14 +39,17 @@ powerflex:
     observability: "v1.13.0"
     resiliency: "v1.14.0"
   v2.15.1:
+    authorization: "v2.3.0"
+    replication: "v1.13.0"
+    observability: "v1.13.1"
+    resiliency: "v1.14.0"
+  v2.16.0:
     authorization: "v2.3.0"
     replication: "v1.13.0"
     observability: "v1.13.1"
     resiliency: "v1.14.0"
 powerstore:
   # List of Driver versions and modules that supports the version
-  v2.13.0:
-    resiliency: "v1.12.0"
   v2.14.0:
     resiliency: "v1.13.0"
   v2.14.1:
@@ -64,14 +62,12 @@ powerstore:
     resiliency: "v1.14.0"
     authorization: "v2.3.0"
     observability: "v1.13.1"
+  v2.16.0:
+    resiliency: "v1.14.0"
+    authorization: "v2.3.0"
+    observability: "v1.13.1"
 powermax:
   # List of Driver versions and modules that supports the version
-  v2.13.0:
-    csireverseproxy: "v2.12.0"
-    authorization: "v2.1.0"
-    replication: "v1.11.0"
-    observability: "v1.11.0"
-    resiliency: "v1.12.0"
   v2.14.0:
     csireverseproxy: "v2.13.0"
     authorization: "v2.2.0"
@@ -91,6 +87,12 @@ powermax:
     observability: "v1.13.0"
     resiliency: "v1.14.0"
   v2.15.1:
+    csireverseproxy: "v2.14.1"
+    authorization: "v2.3.0"
+    replication: "v1.13.0"
+    observability: "v1.13.1"
+    resiliency: "v1.14.0"
+  v2.16.0:
     csireverseproxy: "v2.14.1"
     authorization: "v2.3.0"
     replication: "v1.13.0"

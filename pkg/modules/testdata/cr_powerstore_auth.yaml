@@ -11,10 +11,12 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
-    configVersion: v2.15.1
+    configVersion: v2.16.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
+    common:
+      image: quay.io/dell/container-storage-modules/csi-powerstore:v2.16.0
   modules:
     - name: authorization
       # enable: Enable/Disable csm-authorization
