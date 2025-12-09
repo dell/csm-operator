@@ -316,3 +316,82 @@ func getDefaultKubeletPath() csmv1.ContainerStorageModule {
 
 	return res
 }
+
+func TestModifyPowermaxCRDynamicSGParameters(t *testing.T) {
+	tests := []struct {
+		name                 string
+		fileType             string
+		cr                   csmv1.ContainerStorageModule
+		expectedDynamicSG    string
+		expectedSyncInterval string
+	}{
+		{
+			name:                 "Node: dynamic SG enabled with sync interval",
+			fileType:             "Node",
+			cr:                   createCSMWithDynamicSGEnvs("true", "120"),
+			expectedDynamicSG:    "true",
+			expectedSyncInterval: "120",
+		},
+		{
+			name:                 "Node: dynamic SG disabled",
+			fileType:             "Node",
+			cr:                   createCSMWithDynamicSGEnvs("false", "60"),
+			expectedDynamicSG:    "false",
+			expectedSyncInterval: "60",
+		},
+		{
+			name:                 "Controller: dynamic SG enabled",
+			fileType:             "Controller",
+			cr:                   createCSMWithDynamicSGEnvs("true", "90"),
+			expectedDynamicSG:    "true",
+			expectedSyncInterval: "90",
+		},
+		{
+			name:                 "Controller: dynamic SG with default values",
+			fileType:             "Controller",
+			cr:                   createCSMWithDynamicSGEnvs("false", ""),
+			expectedDynamicSG:    "false",
+			expectedSyncInterval: "",
+		},
+		{
+			name:                 "Node: missing dynamic SG envs defaults",
+			fileType:             "Node",
+			cr:                   shared.MakeCSM("csm", "pmax-test", shared.PmaxConfigVersion),
+			expectedDynamicSG:    "false",
+			expectedSyncInterval: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			yamlString := CSIPmaxDynamicSGEnabled + " " + CSIPmaxSGSyncInterval
+
+			result := ModifyPowermaxCR(yamlString, tt.cr, tt.fileType)
+
+			assert.Containsf(t, result, tt.expectedDynamicSG, "expected dynamic SG value %q in result", tt.expectedDynamicSG)
+			if tt.expectedSyncInterval != "" {
+				assert.Containsf(t, result, tt.expectedSyncInterval, "expected sync interval value %q in result", tt.expectedSyncInterval)
+			}
+		})
+	}
+}
+
+// Helper function to create CSM with dynamic SG environment variables
+func createCSMWithDynamicSGEnvs(dynamicSGEnabled string, syncInterval string) csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "pmax-test", shared.PmaxConfigVersion)
+
+	envs := []corev1.EnvVar{
+		{Name: "X_CSI_DYNAMIC_SG_ENABLED", Value: dynamicSGEnabled},
+	}
+
+	if syncInterval != "" {
+		envs = append(envs, corev1.EnvVar{Name: "X_CSI_SG_SYNC_INTERVAL", Value: syncInterval})
+	}
+
+	res.Spec.Driver.Common.Envs = envs
+	res.Spec.Driver.AuthSecret = "csm-creds"
+	res.Spec.Driver.ConfigVersion = shared.PmaxConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.PowerMax
+
+	return res
+}

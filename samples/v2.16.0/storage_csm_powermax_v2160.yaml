@@ -148,6 +148,21 @@ spec:
         # Default value: "false"
         - name: "X_CSI_REVPROXY_USE_SECRET"
           value: "false"
+        # X_CSI_DYNAMIC_SG_ENABLED: Enable/Disable dynamic Storage Group support for the driver
+        # When enabled, the driver supports multiple Storage Groups under a single StorageClass
+        # When disabled (default), the driver maintains backward compatibility and uses a single Storage Group
+        # Allowed values:
+        #   "true"  - Enable dynamic Storage Group support
+        #   "false" - Disable dynamic Storage Group support (backward compatible)
+        # Default value: "false"
+        - name: "X_CSI_DYNAMIC_SG_ENABLED"
+          value: "false"
+        # X_CSI_SG_SYNC_INTERVAL: Specifies the time interval(in seconds) for syncing Storage Group details from the arrays
+        # This value is used to determine how frequently the driver syncs the Storage Group details with the array
+        # Allowed values: Any positive integer representing seconds
+        # Default value: "60"
+        - name: "X_CSI_SG_SYNC_INTERVAL"
+          value: "60"
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin- volume usage, volume condition

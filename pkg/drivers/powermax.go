@@ -48,21 +48,23 @@ const (
 	PowerMaxConfigVolumeMount = CSIPowerMaxSecretVolumeName
 
 	// CSIPmaxManagedArray and following used for replacing user values in config files
-	CSIPmaxManagedArray    = "<X_CSI_MANAGED_ARRAY>"
-	CSIPmaxEndpoint        = "<X_CSI_POWERMAX_ENDPOINT>"
-	CSIPmaxDebug           = "<X_CSI_POWERMAX_DEBUG>"
-	CSIPmaxPortGroup       = "<X_CSI_POWERMAX_PORTGROUPS>"
-	CSIPmaxProtocol        = "<X_CSI_TRANSPORT_PROTOCOL>"
-	CSIPmaxNodeTemplate    = "<X_CSI_IG_NODENAME_TEMPLATE>"
-	CSIPmaxModifyHostname  = "<X_CSI_IG_MODIFY_HOSTNAME>"
-	CSIPmaxHealthMonitor   = "<X_CSI_HEALTH_MONITOR_ENABLED>"
-	CSIPmaxTopology        = "<X_CSI_TOPOLOGY_CONTROL_ENABLED>"
-	CSIPmaxVsphere         = "<X_CSI_VSPHERE_ENABLED>"
-	CSIPmaxVspherePG       = "<X_CSI_VSPHERE_PORTGROUP>"
-	CSIPmaxVsphereHostname = "<X_CSI_VSPHERE_HOSTNAME>"
-	CSIPmaxVsphereHost     = "<X_CSI_VCENTER_HOST>"
-	CSIPmaxChap            = "<X_CSI_POWERMAX_ISCSI_ENABLE_CHAP>"
-	ReverseProxyTLSSecret  = "<X_CSI_REVPROXY_TLS_SECRET>" // #nosec G101
+	CSIPmaxManagedArray     = "<X_CSI_MANAGED_ARRAY>"
+	CSIPmaxEndpoint         = "<X_CSI_POWERMAX_ENDPOINT>"
+	CSIPmaxDebug            = "<X_CSI_POWERMAX_DEBUG>"
+	CSIPmaxPortGroup        = "<X_CSI_POWERMAX_PORTGROUPS>"
+	CSIPmaxProtocol         = "<X_CSI_TRANSPORT_PROTOCOL>"
+	CSIPmaxNodeTemplate     = "<X_CSI_IG_NODENAME_TEMPLATE>"
+	CSIPmaxModifyHostname   = "<X_CSI_IG_MODIFY_HOSTNAME>"
+	CSIPmaxHealthMonitor    = "<X_CSI_HEALTH_MONITOR_ENABLED>"
+	CSIPmaxTopology         = "<X_CSI_TOPOLOGY_CONTROL_ENABLED>"
+	CSIPmaxVsphere          = "<X_CSI_VSPHERE_ENABLED>"
+	CSIPmaxVspherePG        = "<X_CSI_VSPHERE_PORTGROUP>"
+	CSIPmaxVsphereHostname  = "<X_CSI_VSPHERE_HOSTNAME>"
+	CSIPmaxVsphereHost      = "<X_CSI_VCENTER_HOST>"
+	CSIPmaxChap             = "<X_CSI_POWERMAX_ISCSI_ENABLE_CHAP>"
+	ReverseProxyTLSSecret   = "<X_CSI_REVPROXY_TLS_SECRET>" // #nosec G101
+	CSIPmaxDynamicSGEnabled = "<X_CSI_DYNAMIC_SG_ENABLED>"
+	CSIPmaxSGSyncInterval   = "<X_CSI_SG_SYNC_INTERVAL>"
 
 	// CsiPmaxMaxVolumesPerNode - Maximum volumes that the controller can schedule on the node
 	CsiPmaxMaxVolumesPerNode = "<X_CSI_MAX_VOLUMES_PER_NODE>"
@@ -191,6 +193,8 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 	nodeHealthMonitor := "false"
 	storageCapacity := "true"
 	maxVolumesPerNode := ""
+	dynamicSGEnabled := "false"
+	sgSyncInterval := ""
 
 	// #nosec G101 - False positives
 	switch fileType {
@@ -232,6 +236,12 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 				}
 				if env.Name == "X_CSI_IG_NODENAME_TEMPLATE" {
 					nodeTemplate = env.Value
+				}
+				if env.Name == "X_CSI_DYNAMIC_SG_ENABLED" {
+					dynamicSGEnabled = env.Value
+				}
+				if env.Name == "X_CSI_SG_SYNC_INTERVAL" {
+					sgSyncInterval = env.Value
 				}
 			}
 		}
@@ -280,6 +290,8 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		yamlString = strings.ReplaceAll(yamlString, CsiPmaxMaxVolumesPerNode, maxVolumesPerNode)
 		yamlString = strings.ReplaceAll(yamlString, ReverseProxyTLSSecret, proxyTLSSecret)
 		yamlString = strings.ReplaceAll(yamlString, PowerMaxCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxDynamicSGEnabled, dynamicSGEnabled)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxSGSyncInterval, sgSyncInterval)
 	case "Controller":
 		if cr.Spec.Driver.Common != nil {
 			for _, env := range cr.Spec.Driver.Common.Envs {
@@ -315,6 +327,12 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 				}
 				if env.Name == "X_CSI_IG_NODENAME_TEMPLATE" {
 					nodeTemplate = env.Value
+				}
+				if env.Name == "X_CSI_DYNAMIC_SG_ENABLED" {
+					dynamicSGEnabled = env.Value
+				}
+				if env.Name == "X_CSI_SG_SYNC_INTERVAL" {
+					sgSyncInterval = env.Value
 				}
 			}
 		}
@@ -354,6 +372,8 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxChap, nodeChap)
 		yamlString = strings.ReplaceAll(yamlString, ReverseProxyTLSSecret, proxyTLSSecret)
 		yamlString = strings.ReplaceAll(yamlString, PowerMaxCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxDynamicSGEnabled, dynamicSGEnabled)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxSGSyncInterval, sgSyncInterval)
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"
