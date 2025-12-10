@@ -41,6 +41,7 @@ const (
 	PScaleConfigVersion        string = "v2.16.0"
 	PmaxConfigVersion          string = "v2.16.0"
 	AuthServerConfigVersion    string = "v2.1.0"
+	CosiConfigVersion          string = "v1.0.0"
 )
 
 // StorageKey is used to store a runtime object. It's used for both clientgo client and controller runtime client

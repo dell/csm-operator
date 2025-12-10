@@ -37,11 +37,14 @@ var defaultVolumeConfigName = map[csmv1.DriverType]string{
 
 const (
 	ConfigParamsFile = "driver-config-params.yaml"
+	// CSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
+	CSMNameSpace string = "<CSM_NAMESPACE>"
 )
 
 // GetController get controller yaml
 func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, driverName csmv1.DriverType) (*operatorutils.ControllerYAML, error) {
 	log := logger.GetLogger(ctx)
+	driverType := cr.Spec.Driver.CSIDriverType
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/controller.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
 	log.Debugw("GetController", "configMapPath", configMapPath)
 	buf, err := os.ReadFile(filepath.Clean(configMapPath))
@@ -51,21 +54,21 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	}
 
 	YamlString := operatorutils.ModifyCommonCR(string(buf), cr)
-	if cr.Spec.Driver.CSIDriverType == "powerstore" {
+	if driverType == "powerstore" {
 		YamlString = ModifyPowerstoreCR(YamlString, cr, "Controller")
 	}
 	log.Debugw("DriverSpec ", cr.Spec)
-	if cr.Spec.Driver.CSIDriverType == "unity" {
+	switch driverType {
+	case csmv1.Unity:
 		YamlString = ModifyUnityCR(YamlString, cr, "Controller")
-	}
-	if cr.Spec.Driver.CSIDriverType == "powerflex" {
+	case csmv1.PowerFlex:
 		YamlString = ModifyPowerflexCR(YamlString, cr, "Controller")
-	}
-	if cr.Spec.Driver.CSIDriverType == "powermax" {
+	case csmv1.PowerMax:
 		YamlString = ModifyPowermaxCR(YamlString, cr, "Controller")
-	}
-	if cr.Spec.Driver.CSIDriverType == "isilon" {
+	case csmv1.PowerScale:
 		YamlString = ModifyPowerScaleCR(YamlString, cr, "Controller")
+	case csmv1.Cosi:
+		YamlString = ModifyCosiCR(YamlString, cr, "Controller")
 	}
 
 	driverYAML, err := operatorutils.GetDriverYaml(YamlString, "Deployment")
@@ -163,16 +166,16 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	for i, v := range controllerYAML.Deployment.Spec.Template.Spec.Volumes {
 		newV := new(acorev1.VolumeApplyConfiguration)
 		if *v.Name == "certs" {
-			if cr.Spec.Driver.CSIDriverType == "isilon" || cr.Spec.Driver.CSIDriverType == "powerflex" {
+			if driverType == "isilon" || driverType == "powerflex" {
 				newV, err = getApplyCertVolume(cr)
 			}
-			if cr.Spec.Driver.CSIDriverType == "unity" {
+			if driverType == "unity" {
 				newV, err = getApplyCertVolumeUnity(cr)
 			}
-			if cr.Spec.Driver.CSIDriverType == "powermax" {
+			if driverType == "powermax" {
 				newV, err = getApplyCertVolumePowermax(cr)
 			}
-			if cr.Spec.Driver.CSIDriverType == "powerstore" {
+			if driverType == "powerstore" {
 				newV, err = getApplyCertVolumePowerstore(cr)
 			}
 			if err != nil {

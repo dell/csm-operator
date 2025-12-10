@@ -92,6 +92,9 @@ const (
 	// PowerStore - placeholder for constant powerstore
 	PowerStore DriverType = "powerstore"
 
+	// Cosi - placeholder for constant cosi
+	Cosi DriverType = "cosi"
+
 	// Provisioner - placeholder for constant
 	Provisioner = "provisioner"
 	// Attacher - placeholder for constant

@@ -10,8 +10,7 @@ spec:
     replicas: 1
     forceRemoveDriver: true
     common:
-      name: objectstorage-provisioner
-      image: "docker.io/dellemc/cosi:v0.3.0"
+      image: "quay.io/dell/container-storage-modules/cosi:v1.0.0"
       imagePullPolicy: IfNotPresent
       # Node selector for scheduling the COSI driver pod.
       nodeSelector: {}
@@ -24,10 +23,10 @@ spec:
         - name: CSI_LOG_LEVEL
           value: "4"
         # CSI_LOG_FORMAT sets the log output format.
-        # Values: "json", "text"
+        # Values: "json", "text", "pretty"
         # Default: "text"
         - name: CSI_LOG_FORMAT
-          value: "text"
+          value: "json"
         # OTEL_COLLECTOR_ADDRESS is the gRPC endpoint for the OTEL Collector.
         # Example: "otel-collector.namespace:4317"
         # Default: ""
@@ -37,12 +36,3 @@ spec:
       - name: objectstorage-provisioner-sidecar
         image: gcr.io/k8s-staging-sig-storage/objectstorage-sidecar:release-0.2
         imagePullPolicy: IfNotPresent
-        envs:
-          # VERBOSITY sets the log verbosity for the COSI driver sidecar.
-          # Typical range: -4 to 12. Higher values are more verbose.
-          # Full range: -2,147,483,648 to 2,147,483,647.
-          # Default: 5
-          #
-          # For details, see: https://github.com/kubernetes-sigs/container-object-storage-interface-provisioner-sidecar
-          - name: VERBOSITY
-            value: "5"

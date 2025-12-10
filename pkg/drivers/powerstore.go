@@ -71,9 +71,6 @@ const (
 	// CsiStorageCapacityEnabled - Storage capacity flag
 	CsiStorageCapacityEnabled = "false"
 
-	// PowerStoreCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
-	PowerStoreCSMNameSpace string = "<CSM_NAMESPACE>"
-
 	// PowerStoreDebug - will be used to control the GOPOWERSTORE_DEBUG variable
 	PowerStoreDebug string = "<GOPOWERSTORE_DEBUG>"
 
@@ -295,7 +292,7 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, VolumeDisconnectMaxRetries, volumeDisconnectMaxRetries)
 		yamlString = strings.ReplaceAll(yamlString, VolumeDisconnectRetryInterval, volumeDisconnectRetryInterval)
 		yamlString = strings.ReplaceAll(yamlString, VolumeDisconnectTimeoutSeconds, volumeDisconnectTimeoutSeconds)
-		yamlString = strings.ReplaceAll(yamlString, PowerStoreCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, CSMAuthEnabled, authEnabled)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreAPITimeout, powerstoreAPITimeout)
@@ -320,7 +317,7 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, CsiNfsAcls, nfsAcls)
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreExternalAccess, powerstoreExternalAccess)
-		yamlString = strings.ReplaceAll(yamlString, PowerStoreCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreAPITimeout, powerstoreAPITimeout)
 		yamlString = strings.ReplaceAll(yamlString, PodmonArrayConnectivityTimeout, podmonArrayConnectivityTimeout)

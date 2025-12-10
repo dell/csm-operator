@@ -60,9 +60,6 @@ const (
 	// CsiPowerflexExternalAccess -  External Access flag
 	CsiPowerflexExternalAccess = "<X_CSI_POWERFLEX_EXTERNAL_ACCESS>"
 
-	// PowerFlexCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
-	PowerFlexCSMNameSpace string = "<CSM_NAMESPACE>"
-
 	// ScaleioBinPath - name of volume that is mounted by the CSI plugin when not running on OCP
 	ScaleioBinPath = "scaleio-path-bin"
 
@@ -390,7 +387,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerflexExternalAccess, powerflexExternalAccess)
-		yamlString = strings.ReplaceAll(yamlString, PowerFlexCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexShowHTTP, showHTTP)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexProbeTimeout, probeTimeout)
@@ -433,7 +430,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, CsiPrefixRenameSdc, renameSdcPrefix)
 		yamlString = strings.ReplaceAll(yamlString, CsiVxflexosMaxVolumesPerNode, maxVolumesPerNode)
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
-		yamlString = strings.ReplaceAll(yamlString, PowerFlexCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexShowHTTP, showHTTP)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexSftpRepoAddress, sftpRepoAddress)
