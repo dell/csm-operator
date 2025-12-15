@@ -2980,6 +2980,28 @@ func TestApplyCsmDrCrd(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "failed - invalid csm version check",
+			init: func(t *testing.T) (csmv1.ContainerStorageModule, client.Client, operatorutils.OperatorConfig) {
+				csm := shared.MakeCSM(csmName, "powerstore", "")
+				csm.Spec.Version = shared.InvalidCSMVersion
+				csm.Spec.Driver.CSIDriverType = csmv1.PowerStore
+
+				err := apiextv1.AddToScheme(scheme.Scheme)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				client := fake.NewClientBuilder().WithObjects().Build()
+
+				return csm, client, operatorConfig
+			},
+			isDeleting: false,
+			validate: func(_ client.Client) error {
+				return nil
+			},
+			wantErr: true,
+		},
 	}
 
 	ctx := context.TODO()

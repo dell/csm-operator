@@ -112,11 +112,15 @@ var (
 func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, ct client.Client) error {
 	log := logger.GetLogger(ctx)
 
+	version, err := operatorutils.GetVersion(cr, operatorConfig)
+	if err != nil {
+		return err
+	}
 	// Check if driver version is supported by doing a stat on a config file
-	configFilePath := fmt.Sprintf("%s/driverconfig/powermax/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
+	configFilePath := fmt.Sprintf("%s/driverconfig/powermax/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, version)
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		log.Errorw("PreCheckPowerMax failed in version check", "Error", err.Error())
-		return fmt.Errorf("%s %s not supported", csmv1.PowerMax, cr.Spec.Driver.ConfigVersion)
+		return fmt.Errorf("%s %s not supported", csmv1.PowerMax, version)
 	}
 
 	secretName := cr.Name + "-creds"
@@ -132,7 +136,7 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 	}
 
 	found := &corev1.Secret{}
-	err := ct.Get(ctx, types.NamespacedName{Name: secretName, Namespace: cr.GetNamespace()}, found)
+	err = ct.Get(ctx, types.NamespacedName{Name: secretName, Namespace: cr.GetNamespace()}, found)
 	if err != nil {
 		log.Error(err, "Failed query for secret", secretName)
 		if errors.IsNotFound(err) {

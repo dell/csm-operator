@@ -70,11 +70,15 @@ func PrecheckUnity(ctx context.Context, cr *csmv1.ContainerStorageModule, operat
 	// Check for secret only
 	config := cr.Name + "-creds"
 
+	version, err := operatorutils.GetVersion(cr, operatorConfig)
+	if err != nil {
+		return err
+	}
 	// Check if driver version is supported by doing a stat on a config file
-	configFilePath := fmt.Sprintf("%s/driverconfig/unity/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
+	configFilePath := fmt.Sprintf("%s/driverconfig/unity/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, version)
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		log.Errorw("PreCheckUnity failed in version check", "Error", err.Error(), "Namespace", cr.Namespace)
-		return fmt.Errorf("%s %s not supported", csmv1.Unity, cr.Spec.Driver.ConfigVersion)
+		return fmt.Errorf("%s %s not supported", csmv1.Unity, version)
 	}
 
 	skipCertValid := true
