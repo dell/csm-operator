@@ -25,6 +25,8 @@ import (
 type ContainerStorageModuleSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	// Version specifies the CSM version
+	Version string `json:"version,omitempty" yaml:"version,omitempty"`
 
 	// Driver is a CSI Drivers for Dell Technologies
 	Driver Driver `json:"driver,omitempty" yaml:"driver,omitempty"`

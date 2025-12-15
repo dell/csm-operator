@@ -3397,3 +3397,87 @@ func TestGetEnvironmentVariable(t *testing.T) {
 		t.Errorf("Expected error, but got nil")
 	}
 }
+
+func TestGetVersion(t *testing.T) {
+	newCSM := func(specVersion, configVersion string, platform csmv1.DriverType) *csmv1.ContainerStorageModule {
+		return &csmv1.ContainerStorageModule{
+			Spec: csmv1.ContainerStorageModuleSpec{
+				Version: specVersion,
+				Driver: csmv1.Driver{
+					CSIDriverType: platform,
+					ConfigVersion: configVersion,
+					Common: &csmv1.ContainerTemplate{
+						ImagePullPolicy: corev1.PullAlways,
+					},
+				},
+			},
+		}
+	}
+
+	cases := []struct {
+		name        string
+		cr          *csmv1.ContainerStorageModule
+		op          OperatorConfig
+		want        string
+		expectedErr string
+	}{
+		{
+			name: "version_present",
+			cr:   newCSM("v1.16.0", "", csmv1.PowerScale),
+			op: OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			},
+			want:        "v2.16.0",
+			expectedErr: "",
+		},
+		{
+			name: "config_version_present",
+			cr:   newCSM("", "v2.16.0", csmv1.PowerStore),
+			op: OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			},
+			want:        "v2.16.0",
+			expectedErr: "",
+		},
+		{
+			name: "invalid_path",
+			cr:   newCSM("v1.16.0", "", csmv1.PowerStore),
+			op: OperatorConfig{
+				ConfigDirectory: "invalid/path",
+			},
+			want:        "",
+			expectedErr: "failed to read file invalid/path/common/csm-version-mapping.yaml: open invalid/path/common/csm-version-mapping.yaml: no such file or directory",
+		},
+		{
+			name: "invalid_platform",
+			cr:   newCSM("v1.16.0", "", "invalid"),
+			op: OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			},
+			want:        "",
+			expectedErr: "platform invalid does not exist in file ../../operatorconfig/common/csm-version-mapping.yaml",
+		},
+		{
+			name: "invalid_version",
+			cr:   newCSM("v1.10.0", "", csmv1.PowerStore),
+			op: OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			},
+			want:        "",
+			expectedErr: "config version for CSM version v1.10.0 does not exist in file ../../operatorconfig/common/csm-version-mapping.yaml",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+
+			got, err := GetVersion(tc.cr, tc.op)
+			if err != nil && err.Error() != tc.expectedErr {
+				t.Errorf("GetVersion() returned error = %v but expected error = %v", err, tc.expectedErr)
+			}
+			if got != tc.want {
+				t.Errorf("GetVersion() = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}

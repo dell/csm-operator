@@ -237,7 +237,6 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 	csm := new(csmv1.ContainerStorageModule)
 
 	log.Infow("reconcile for", "Namespace", req.Namespace, "Name", req.Name, "Attempt", r.GetUpdateCount())
-
 	// Fetch the ContainerStorageModuleReconciler instance
 	err := r.Client.Get(ctx, req.NamespacedName, csm)
 	if err != nil {
@@ -333,7 +332,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 	oldStatus := csm.GetCSMStatus()
 
 	// Set the driver annotation
-	isUpdated := applyConfigVersionAnnotations(ctx, csm)
+	isUpdated := applyConfigVersionAnnotations(ctx, csm, *operatorConfig)
 	if isUpdated {
 		err = r.GetClient().Update(ctx, csm)
 		if err != nil {
@@ -1601,7 +1600,10 @@ func (r *ContainerStorageModuleReconciler) checkUpgrade(ctx context.Context, cr 
 			// use powerscale instead of isilon as the folder name is powerscale
 			driverType = csmv1.PowerScaleName
 		}
-		newVersion := cr.Spec.Driver.ConfigVersion
+		newVersion, err := operatorutils.GetVersion(cr, operatorConfig)
+		if err != nil {
+			return false, err
+		}
 		return operatorutils.IsValidUpgrade(ctx, oldVersion, newVersion, driverType, operatorConfig)
 
 	}
@@ -1610,7 +1612,7 @@ func (r *ContainerStorageModuleReconciler) checkUpgrade(ctx context.Context, cr 
 }
 
 // applyConfigVersionAnnotations - applies the config version annotation to the instance.
-func applyConfigVersionAnnotations(ctx context.Context, instance *csmv1.ContainerStorageModule) bool {
+func applyConfigVersionAnnotations(ctx context.Context, instance *csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) bool {
 	log := logger.GetLogger(ctx)
 
 	annotations := instance.GetAnnotations()
@@ -1621,10 +1623,14 @@ func applyConfigVersionAnnotations(ctx context.Context, instance *csmv1.Containe
 	annotations[CSMVersionKey] = CSMVersion
 
 	var configVersion string
+	var err error
 	if instance.HasModule(csmv1.AuthorizationServer) {
 		configVersion = instance.GetModule(csmv1.AuthorizationServer).ConfigVersion
 	} else {
-		configVersion = instance.Spec.Driver.ConfigVersion
+		configVersion, err = operatorutils.GetVersion(instance, op)
+		if err != nil {
+			return false
+		}
 	}
 
 	if annotations[configVersionKey] != configVersion {
@@ -1671,14 +1677,18 @@ func (r *ContainerStorageModuleReconciler) ZoneValidation(ctx context.Context, c
 func applyCSMDRCRD(ctx context.Context, cr csmv1.ContainerStorageModule, isDeleting bool, op operatorutils.OperatorConfig, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
 
-	// CSM DR is only compatible starting with v2.16.0.
-	isCompatible, err := operatorutils.MinVersionCheck(constants.DisasterRecoveryMinVersion, cr.Spec.Driver.ConfigVersion)
+	version, err := operatorutils.GetVersion(&cr, op)
 	if err != nil {
-		return fmt.Errorf("error checking version: %s", cr.Spec.Driver.ConfigVersion)
+		return err
+	}
+	// CSM DR is only compatible starting with v2.16.0.
+	isCompatible, err := operatorutils.MinVersionCheck(constants.DisasterRecoveryMinVersion, version)
+	if err != nil {
+		return fmt.Errorf("error checking version: %s", version)
 	}
 
 	if !isCompatible {
-		log.Warnf("CSM Disaster Recovery (DR) is not compatible with version %s for %s", cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType)
+		log.Warnf("CSM Disaster Recovery (DR) is not compatible with version %s for %s", version, cr.Spec.Driver.CSIDriverType)
 
 		// Delete CSM DR CRDs if we are downgrading.
 		if err := modules.PatchCSMDRCRDs(ctx, true, op, ctrlClient); err != nil {

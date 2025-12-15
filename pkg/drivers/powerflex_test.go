@@ -30,21 +30,22 @@ import (
 )
 
 var (
-	powerFlexCSM              = csmForPowerFlex(pflexCSMName)
-	powerFlexCSMBadVersion    = csmForPowerFlexBadVersion()
-	powerFlexClient           = crclient.NewFakeClientNoInjector(objects)
-	configJSONFileGood        = fmt.Sprintf("%s/driverconfig/%s/config.json", config.ConfigDirectory, csmv1.PowerFlex)
-	configJSONFileBadUser     = fmt.Sprintf("%s/driverconfig/%s/config-empty-username.json", config.ConfigDirectory, csmv1.PowerFlex)
-	configJSONFileBadPW       = fmt.Sprintf("%s/driverconfig/%s/config-empty-password.json", config.ConfigDirectory, csmv1.PowerFlex)
-	configJSONFileBadSysID    = fmt.Sprintf("%s/driverconfig/%s/config-empty-sysid.json", config.ConfigDirectory, csmv1.PowerFlex)
-	configJSONFileBadEndPoint = fmt.Sprintf("%s/driverconfig/%s/config-empty-endpoint.json", config.ConfigDirectory, csmv1.PowerFlex)
-	configJSONFileTwoDefaults = fmt.Sprintf("%s/driverconfig/%s/config-two-defaults.json", config.ConfigDirectory, csmv1.PowerFlex)
-	configJSONFileBadMDM      = fmt.Sprintf("%s/driverconfig/%s/config-invalid-mdm.json", config.ConfigDirectory, csmv1.PowerFlex)
-	configJSONFileDuplSysID   = fmt.Sprintf("%s/driverconfig/%s/config-duplicate-sysid.json", config.ConfigDirectory, csmv1.PowerFlex)
-	configJSONFileEmpty       = fmt.Sprintf("%s/driverconfig/%s/config-empty.json", config.ConfigDirectory, csmv1.PowerFlex)
-	configJSONFileBad         = fmt.Sprintf("%s/driverconfig/%s/config-bad.json", config.ConfigDirectory, csmv1.PowerFlex)
-	powerFlexSecret           = shared.MakeSecretWithJSON(pflexCredsName, pFlexNS, configJSONFileGood)
-	fakeSecret                = shared.MakeSecret("fake-secret", "fake-ns", shared.PFlexConfigVersion)
+	powerFlexCSM               = csmForPowerFlex(pflexCSMName)
+	powerFlexCSMBadVersion     = csmForPowerFlexBadVersion()
+	powerFlexInvalidCSMVersion = csmForPowerFlexInvalidVersion()
+	powerFlexClient            = crclient.NewFakeClientNoInjector(objects)
+	configJSONFileGood         = fmt.Sprintf("%s/driverconfig/%s/config.json", config.ConfigDirectory, csmv1.PowerFlex)
+	configJSONFileBadUser      = fmt.Sprintf("%s/driverconfig/%s/config-empty-username.json", config.ConfigDirectory, csmv1.PowerFlex)
+	configJSONFileBadPW        = fmt.Sprintf("%s/driverconfig/%s/config-empty-password.json", config.ConfigDirectory, csmv1.PowerFlex)
+	configJSONFileBadSysID     = fmt.Sprintf("%s/driverconfig/%s/config-empty-sysid.json", config.ConfigDirectory, csmv1.PowerFlex)
+	configJSONFileBadEndPoint  = fmt.Sprintf("%s/driverconfig/%s/config-empty-endpoint.json", config.ConfigDirectory, csmv1.PowerFlex)
+	configJSONFileTwoDefaults  = fmt.Sprintf("%s/driverconfig/%s/config-two-defaults.json", config.ConfigDirectory, csmv1.PowerFlex)
+	configJSONFileBadMDM       = fmt.Sprintf("%s/driverconfig/%s/config-invalid-mdm.json", config.ConfigDirectory, csmv1.PowerFlex)
+	configJSONFileDuplSysID    = fmt.Sprintf("%s/driverconfig/%s/config-duplicate-sysid.json", config.ConfigDirectory, csmv1.PowerFlex)
+	configJSONFileEmpty        = fmt.Sprintf("%s/driverconfig/%s/config-empty.json", config.ConfigDirectory, csmv1.PowerFlex)
+	configJSONFileBad          = fmt.Sprintf("%s/driverconfig/%s/config-bad.json", config.ConfigDirectory, csmv1.PowerFlex)
+	powerFlexSecret            = shared.MakeSecretWithJSON(pflexCredsName, pFlexNS, configJSONFileGood)
+	fakeSecret                 = shared.MakeSecret("fake-secret", "fake-ns", shared.PFlexConfigVersion)
 
 	powerFlexTests = []struct {
 		// every single unit test name
@@ -74,6 +75,7 @@ var (
 		{"bad config", csmForPowerFlex("bad"), powerFlexClient, shared.MakeSecretWithJSON("bad-config", pFlexNS, configJSONFileBad), "unable to parse"},
 		{"Auth and Replication enabled with valid prefix", csmForPowerFlex("auth-repl-valid-prefix"), powerFlexClient, shared.MakeSecretWithJSON("auth-repl-valid-prefix-config", pFlexNS, configJSONFileGood), ""},
 		{"Auth and Replication enabled with invalid prefix", csmForPowerFlex("auth-repl-invalid-prefix"), powerFlexClient, shared.MakeSecretWithJSON("auth-repl-invalid-prefix-config", pFlexNS, configJSONFileGood), "volume name prefix"},
+		{"invalid csm version", powerFlexInvalidCSMVersion, powerFlexClient, powerFlexSecret, "config version for CSM version v1.10.0 does not exist in file ../../tests/config/common/csm-version-mapping.yaml"},
 	}
 
 	modifyPowerflexCRTests = []struct {
@@ -295,6 +297,17 @@ func csmForPowerFlexBadVersion() csmv1.ContainerStorageModule {
 
 	// Add pflex driver version
 	res.Spec.Driver.ConfigVersion = shared.BadConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+
+	return res
+}
+
+// makes a csm object with a bad version
+func csmForPowerFlexInvalidVersion() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM(pflexCSMName, pFlexNS, shared.PFlexConfigVersion)
+
+	// Add pflex driver version
+	res.Spec.Version = shared.InvalidCSMVersion
 	res.Spec.Driver.CSIDriverType = csmv1.PowerFlex
 
 	return res

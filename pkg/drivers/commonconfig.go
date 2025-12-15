@@ -60,7 +60,11 @@ const (
 func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, driverName csmv1.DriverType) (*operatorutils.ControllerYAML, error) {
 	log := logger.GetLogger(ctx)
 	driverType := cr.Spec.Driver.CSIDriverType
-	controllerPath := fmt.Sprintf("%s/driverconfig/%s/%s/controller.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
+	version, err := operatorutils.GetVersion(&cr, operatorConfig)
+	if err != nil {
+		return nil, err
+	}
+	controllerPath := fmt.Sprintf("%s/driverconfig/%s/%s/controller.yaml", operatorConfig.ConfigDirectory, driverName, version)
 	log.Debugw("GetController", "controllerPath", controllerPath)
 	buf, err := os.ReadFile(filepath.Clean(controllerPath))
 	if err != nil {
@@ -135,6 +139,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 					c.Image = &image
 				}
 			}
+
 			var commonEnvs, controllerEnvs []corev1.EnvVar
 			if cr.Spec.Driver.Common != nil {
 				commonEnvs = cr.Spec.Driver.Common.Envs
@@ -230,7 +235,11 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 // GetNode get node yaml
 func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, driverType csmv1.DriverType, filename string, ct client.Client) (*operatorutils.NodeYAML, error) {
 	log := logger.GetLogger(ctx)
-	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/%s", operatorConfig.ConfigDirectory, driverType, cr.Spec.Driver.ConfigVersion, filename)
+	version, err := operatorutils.GetVersion(&cr, operatorConfig)
+	if err != nil {
+		return nil, err
+	}
+	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/%s", operatorConfig.ConfigDirectory, driverType, version, filename)
 	log.Debugw("GetNode", "configMapPath", configMapPath)
 	buf, err := os.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {
@@ -448,7 +457,11 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 	log := logger.GetLogger(ctx)
 	var podmanLogFormat string
 	var podmanLogLevel string
-	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/driver-config-params.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
+	version, err := operatorutils.GetVersion(&cr, operatorConfig)
+	if err != nil {
+		return nil, err
+	}
+	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/driver-config-params.yaml", operatorConfig.ConfigDirectory, driverName, version)
 	log.Debugw("GetConfigMap", "configMapPath", configMapPath)
 
 	buf, err := os.ReadFile(filepath.Clean(configMapPath))
@@ -528,7 +541,11 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 // GetCSIDriver get driver
 func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, driverName csmv1.DriverType) (*storagev1.CSIDriver, error) {
 	log := logger.GetLogger(ctx)
-	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/csidriver.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
+	version, err := operatorutils.GetVersion(&cr, operatorConfig)
+	if err != nil {
+		return nil, err
+	}
+	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/csidriver.yaml", operatorConfig.ConfigDirectory, driverName, version)
 	log.Debugw("GetCSIDriver", "configMapPath", configMapPath)
 	buf, err := os.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {

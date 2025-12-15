@@ -108,15 +108,19 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 		}
 	}
 
+	version, err := operatorutils.GetVersion(cr, operatorConfig)
+	if err != nil {
+		return err
+	}
 	// Check if driver version is supported by doing a stat on a config file
-	configFilePath := fmt.Sprintf("%s/driverconfig/%s/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, csmv1.PowerFlex, cr.Spec.Driver.ConfigVersion)
+	configFilePath := fmt.Sprintf("%s/driverconfig/%s/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, csmv1.PowerFlex, version)
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		log.Errorw("PreCheckPowerFlex failed in version check", "Error", err.Error())
-		return fmt.Errorf("%s %s not supported", csmv1.PowerFlexName, cr.Spec.Driver.ConfigVersion)
+		return fmt.Errorf("%s %s not supported", csmv1.PowerFlexName, version)
 	}
 
 	// Check if MDM is set in the secret
-	_, err := GetMDMFromSecret(ctx, cr, ct)
+	_, err = GetMDMFromSecret(ctx, cr, ct)
 	if err != nil {
 		return err
 	}

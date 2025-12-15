@@ -107,11 +107,15 @@ func PrecheckPowerStore(ctx context.Context, cr *csmv1.ContainerStorageModule, o
 		config = cr.Spec.Driver.AuthSecret
 	}
 
+	version, err := operatorutils.GetVersion(cr, operatorConfig)
+	if err != nil {
+		return err
+	}
 	// Check if driver version is supported by doing a stat on a config file
-	configFilePath := fmt.Sprintf("%s/driverconfig/powerstore/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
+	configFilePath := fmt.Sprintf("%s/driverconfig/powerstore/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, version)
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		log.Errorw("PreCheckPowerStore failed in version check", "Error", err.Error())
-		return fmt.Errorf("%s %s not supported", csmv1.PowerStore, cr.Spec.Driver.ConfigVersion)
+		return fmt.Errorf("%s %s not supported", csmv1.PowerStore, version)
 	}
 
 	// Default values
