@@ -366,6 +366,10 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 				}
 			}
 		}
+
+		if(initcontainers[i].Image != nil){
+			initcontainers[i].Image = utils.ResolveImage(*initcontainers[i].Image, cr.Spec.Driver.CustomRegistry, cr.Spec.Driver.RetainImageRegistryPath)
+		}
 	}
 
 	nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.InitContainers = initcontainers

@@ -3805,6 +3805,12 @@ spec:
                         type: string
                     type: object
                   type: array
+                customRegistry:
+                  description: CustomRegistry is the image registry
+                  type: string
+                retainImageRegistryPath:
+                  description:  RetainImageRegistryPath is the flag to retain image registry path
+                  type: boolean
               type: object
             status:
               description:

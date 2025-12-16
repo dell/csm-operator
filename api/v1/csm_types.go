@@ -31,6 +31,14 @@ type ContainerStorageModuleSpec struct {
 
 	// Modules is list of Container Storage Module modules you want to deploy
 	Modules []Module `json:"modules,omitempty" yaml:"modules,omitempty"`
+
+	// CustomRegistry is the custom registry for the image
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Custom Registry"
+	CustomRegistry string `json:"customRegistry,omitempty" yaml:"customRegistry,omitempty"`
+
+	// RetainImageRegistryPath is the boolean flag used to retain image registry path
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Retain Image Registry Path"
+	retainImageRegistryPath bool `json:"retainImageRegistryPath,omitempty" yaml:"retainImageRegistryPath,omitempty"`
 }
 
 // ContainerStorageModuleStatus defines the observed state of ContainerStorageModule
