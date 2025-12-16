@@ -3812,6 +3812,12 @@ spec:
                   type: array
                 version:
                   type: string
+                customRegistry:
+                  description: CustomRegistry is the image registry
+                  type: string
+                retainImageRegistryPath:
+                  description:  RetainImageRegistryPath is the flag to retain image registry path
+                  type: boolean
               type: object
               x-kubernetes-validations:
                 - message: spec.version and spec.driver.configVersion cannot both be set

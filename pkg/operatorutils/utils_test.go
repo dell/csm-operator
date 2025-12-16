@@ -3481,3 +3481,116 @@ func TestGetVersion(t *testing.T) {
 		})
 	}
 }
+
+func TestResolveImage(t *testing.T) {
+	type args struct {
+		imagefile               string
+		customRegistry          string
+		retainImageRegistryPath bool
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "No custom registry - returns original image",
+			args: args{
+				imagefile:               "quay.io/dell/csi-powerflex:v2.0",
+				customRegistry:          "",
+				retainImageRegistryPath: false,
+			},
+			want: "quay.io/dell/csi-powerflex:v2.0",
+		},
+		{
+			name: "Custom registry + Retain Path (Simple image with no path)",
+			args: args{
+				imagefile:               "csi-powerflex:v2.0",
+				customRegistry:          "my-private-repo.com:5000",
+				retainImageRegistryPath: true,
+			},
+			want: "my-private-repo.com:5000/csi-powerflex:v2.0",
+		},
+		{
+			name: "Custom registry + Retain Path (Image with existing registry/namespace)",
+			args: args{
+				imagefile:               "docker.io/dell/csi-powerflex:v2.0",
+				customRegistry:          "my-local-registry",
+				retainImageRegistryPath: true,
+			},
+			// Logic: SplitN splits "docker.io" and "dell/csi-powerflex:v2.0".
+			// Keeps the second part.
+			want: "my-local-registry/dell/csi-powerflex:v2.0",
+		},
+		{
+			name: "Custom registry + Retain Path (Deeply nested image path)",
+			args: args{
+				imagefile:               "quay.io/organization/team/app:v1",
+				customRegistry:          "internal-registry",
+				retainImageRegistryPath: true,
+			},
+			// Logic: SplitN splits at first slash.
+			// "quay.io" (drop) | "organization/team/app:v1" (keep).
+			want: "internal-registry/organization/team/app:v1",
+		},
+		{
+			name: "Custom registry + NO Retain Path (Strips everything but image name)",
+			args: args{
+				imagefile:               "quay.io/dell/csi-powerflex:v2.0",
+				customRegistry:          "my-local-registry",
+				retainImageRegistryPath: false,
+			},
+			// Logic: LastIndexByte finds last slash. Keeps only "csi-powerflex:v2.0".
+			want: "my-local-registry/csi-powerflex:v2.0",
+		},
+		{
+			name: "Custom registry + NO Retain Path (Image has no slashes)",
+			args: args{
+				imagefile:               "nginx:latest",
+				customRegistry:          "docker.io",
+				retainImageRegistryPath: false,
+			},
+			want: "docker.io/nginx:latest",
+		},
+		{
+			name: "Whitespace handling - Trims inputs",
+			args: args{
+				imagefile:               "  alpine:3.14  ",
+				customRegistry:          "  my-reg  ",
+				retainImageRegistryPath: false,
+			},
+			want: "my-reg/alpine:3.14",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ResolveImage(tt.args.imagefile, tt.args.customRegistry, tt.args.retainImageRegistryPath); got != tt.want {
+				t.Errorf("ResolveImage() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestValidateCustomRegistry(t *testing.T) {
+	tests := []struct {
+		name     string
+		registry string
+		want     bool
+	}{
+		{"Valid Standard", "quay.io", true},
+		{"Valid With Port", "localhost:5000", true},
+		{"Valid With Path", "docker.io/dell", true},
+		{"Valid IP", "127.0.0.1:5000", true},
+		{"Invalid Scheme HTTP", "http://quay.io", false},
+		{"Invalid Scheme HTTPS", "https://quay.io", false},
+		{"Invalid Spaces", "quay .io", false},
+		{"Invalid Special Char", "quay.io!", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ValidateCustomRegistry(tt.registry); got != tt.want {
+				t.Errorf("ValidateCustomRegistry() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

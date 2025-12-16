@@ -14,6 +14,7 @@ package operatorutils
 
 import (
 	"bytes"
+	"regexp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -236,6 +237,59 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 	case string(csmv1.Resiliency):
 		*c.Image = img.Images.Podmon
 	}
+}
+
+func ResolveImage(imagefile, customRegistry string, retainImageRegistryPath bool) string {
+
+	imagefile = strings.TrimSpace(imagefile)
+	customRegistry = strings.TrimSpace(customRegistry)
+
+	// Backward compatibility: no override if customRegistry is unset
+	if customRegistry == "" {
+		return imagefile
+	}
+
+	//operatorConfig.retainImageRegistryPath
+	if retainImageRegistryPath {
+
+		//Retain the path metioned e.g. "dell/container-storage-modules/"
+		parts := strings.SplitN(imagefile, "/", 2)
+		if len(parts) == 2 {
+			isDomain := strings.Contains(parts[0], ".") || strings.Contains(parts[0], "localhost")
+			if isDomain {
+				imagefile = parts[1]
+			}
+		}
+	} else{
+		//Get the image file name from the image path
+		i := strings.LastIndexByte(imagefile, '/')
+		if i != -1 {
+			imagefile = imagefile[i+1:]
+		}
+	}
+	customRegistry = strings.TrimRight(customRegistry, "/")
+
+	return fmt.Sprintf("%s/%s", customRegistry, imagefile)
+}
+
+var registryRegex = regexp.MustCompile(`^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*|\[[a-f0-9:]+\])(:[0-9]+)?(/.*)?$`)
+
+func ValidateCustomRegistry(registry string) bool {
+	registry = strings.TrimSpace(registry)
+
+	// 1. Empty is technically "valid" in your logic (backward compatibility),
+	// but if you want to validate a NON-empty input:
+	if registry == "" {
+		return true
+	}
+
+	// 2. Reject schemes (Common user error)
+	if strings.HasPrefix(registry, "http://") || strings.HasPrefix(registry, "https://") {
+		return false
+	}
+
+	// 3. Regex check for DNS/IP formatting
+	return registryRegex.MatchString(registry)
 }
 
 // UpdateInitContainerApply -
