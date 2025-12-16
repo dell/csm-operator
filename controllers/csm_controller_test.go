@@ -1053,7 +1053,7 @@ func (suite *CSMControllerTestSuite) TestOldStandAloneModuleCleanup() {
 			if errorInjector != nil {
 				*errorInjector = true
 			}
-			driverConfig, _ := getDriverConfig(ctx, *csm, operatorConfig, r.Client)
+			driverConfig, _ := getDriverConfig(ctx, *csm, operatorConfig, r.Client, csmv1.VersionSpec{})
 			err := r.oldStandAloneModuleCleanup(ctx, csm, operatorConfig, driverConfig)
 
 			if expectedErr == "" {
