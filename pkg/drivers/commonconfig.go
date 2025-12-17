@@ -368,7 +368,8 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 		}
 
 		if(initcontainers[i].Image != nil){
-			initcontainers[i].Image = utils.ResolveImage(*initcontainers[i].Image, cr.Spec.Driver.CustomRegistry, cr.Spec.Driver.RetainImageRegistryPath)
+			initcontainers[i].Image =
+			operatorutils.ResolveImage(*initcontainers[i].Image, cr.Spec.Driver.CustomRegistry, cr.Spec.Driver.RetainImageRegistryPath)
 		}
 	}
 
