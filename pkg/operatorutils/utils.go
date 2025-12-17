@@ -14,7 +14,6 @@ package operatorutils
 
 import (
 	"bytes"
-	"regexp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -22,14 +21,16 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 
 	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
+	k8sClient "eos2git.cec.lab.emc.com/CSM/csm-operator/k8s"
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
-	goYAML "gopkg.in/yaml.v3"
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	goYAML "gopkg.in/yaml.v3"
 	admissionregistration "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -43,13 +44,10 @@ import (
 	t1 "k8s.io/apimachinery/pkg/types"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
-	"sigs.k8s.io/yaml"
-
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
-
-	k8sClient "eos2git.cec.lab.emc.com/CSM/csm-operator/k8s"
+	"sigs.k8s.io/yaml"
 )
 
 // wrapper for UT to allow more coverage when testing
@@ -260,7 +258,7 @@ func ResolveImage(imagefile, customRegistry string, retainImageRegistryPath bool
 				imagefile = parts[1]
 			}
 		}
-	} else{
+	} else {
 		//Get the image file name from the image path
 		i := strings.LastIndexByte(imagefile, '/')
 		if i != -1 {
