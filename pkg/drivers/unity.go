@@ -54,9 +54,6 @@ const (
 	// AllowedNetworks - list of networks that can be used for NFS traffic
 	AllowedNetworks = "<X_CSI_ALLOWED_NETWORKS>"
 
-	// UnityCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
-	UnityCSMNameSpace string = "<CSM_NAMESPACE>"
-
 	// UnityDebug - will be used to control the GOUNITY_DEBUG variable
 	UnityDebug string = "<GOUNITY_DEBUG>"
 
@@ -161,7 +158,7 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
 		yamlString = strings.ReplaceAll(yamlString, AllowedNetworks, allowedNetworks)
-		yamlString = strings.ReplaceAll(yamlString, UnityCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, UnityDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, UnityHTTP, showHTTP)
 	case "Controller":
@@ -173,7 +170,7 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
-		yamlString = strings.ReplaceAll(yamlString, UnityCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, UnityDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, UnityHTTP, showHTTP)
 	case "CSIDriverSpec":

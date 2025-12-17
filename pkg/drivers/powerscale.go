@@ -40,9 +40,6 @@ const (
 	// PowerScaleConfigVolumeMount -
 	PowerScaleConfigVolumeMount = "isilon-configs"
 
-	// PowerScaleCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
-	PowerScaleCSMNameSpace string = "<CSM_NAMESPACE>"
-
 	// PowerScaleDebug - will be used to control the GOISILON_DEBUG variable
 	PowerScaleDebug string = "<GOISILON_DEBUG>"
 
@@ -216,7 +213,7 @@ func ModifyPowerScaleCR(yamlString string, cr csmv1.ContainerStorageModule, file
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
-		yamlString = strings.ReplaceAll(yamlString, PowerScaleCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerScaleDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, PowerScaleCsiVolPrefix, csiVolPrefix) // applicable only for v2.14.0/controller.yaml
 	case "Node":
@@ -228,7 +225,7 @@ func ModifyPowerScaleCR(yamlString string, cr csmv1.ContainerStorageModule, file
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
-		yamlString = strings.ReplaceAll(yamlString, PowerScaleCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerScaleDebug, debug)
 	}
 	return yamlString

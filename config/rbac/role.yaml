@@ -513,6 +513,24 @@ rules:
       - update
       - watch
   - apiGroups:
+      - objectstorage.k8s.io
+    resources:
+      - bucketaccessclasses
+      - bucketaccessclasses/status
+      - bucketaccesses
+      - bucketaccesses/status
+      - bucketclaims
+      - bucketclaims/status
+      - buckets
+      - buckets/status
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
       - rbac.authorization.k8s.io
     resources:
       - clusterrolebindings

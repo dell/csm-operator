@@ -43,6 +43,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
+	confmetav1 "k8s.io/client-go/applyconfigurations/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/record"
@@ -135,6 +137,7 @@ var (
 
 	configVersion              = shared.ConfigVersion
 	pFlexConfigVersion         = shared.PFlexConfigVersion
+	cosiConfigVersion          = shared.CosiConfigVersion
 	oldConfigVersion           = shared.OldConfigVersion
 	upgradeConfigVersion       = shared.UpgradeConfigVersion
 	downgradeConfigVersion     = shared.DowngradeConfigVersion
@@ -479,6 +482,30 @@ func (suite *CSMControllerTestSuite) TestPowermaxAnnotation() {
 		panic(err)
 	}
 	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, shared.PmaxConfigVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	if err != nil {
+		panic(err)
+	}
+
+	reconciler := suite.createReconciler()
+	updateCSMError = true
+	_, err = reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	updateCSMError = false
+}
+
+func (suite *CSMControllerTestSuite) TestCosiAnnotation() {
+	csm := shared.MakeCSM(csmName, suite.namespace, cosiConfigVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.Cosi
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	err := suite.fakeClient.Create(ctx, &csm)
+	if err != nil {
+		panic(err)
+	}
+	sec := shared.MakeSecret(csmName+"-config", suite.namespace, cosiConfigVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	if err != nil {
 		panic(err)
@@ -873,6 +900,10 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 	replicationCSM.Spec.Modules = getReplicaModule()
 	replicationCSM.Spec.Driver.CSIDriverType = csmv1.PowerFlex
 
+	cosiCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	cosiCSM.Spec.Driver.CSIDriverType = csmv1.Cosi
+	cosiCSM.Spec.Driver.ConfigVersion = cosiConfigVersion
+
 	syncCSMTests := []struct {
 		name        string
 		csm         csmv1.ContainerStorageModule
@@ -889,6 +920,7 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 		{"replication module happy path", replicationCSM, operatorConfig, ""},
 		{"replication module bad op conf", replicationCSM, badOperatorConfig, "failed to deploy replication"},
 		{"minimal Pflex conf", minimalPowerFlexCSM, operatorConfig, ""},
+		{"cosi happy path", cosiCSM, operatorConfig, ""},
 	}
 
 	for _, tt := range syncCSMTests {
@@ -2657,14 +2689,49 @@ func Test_removeDriverFromCluster(t *testing.T) {
 	}
 
 	ctx := context.TODO()
-	type args struct {
-		driverConfig *DriverConfig
-	}
+	appsv1 := "apps/v1"
+	deployment := "Deployment"
+	daemonset := "DaemonSet"
+	csiDeployment := "csi-controller"
+	csiDaemonset := "csi-node"
+	cosiDeployment := "cosi"
+	namespace := "test-ns"
 	tests := []struct {
 		name         string
 		driverConfig *DriverConfig
 		expectedErr  string
 	}{
+		{
+			name: "Successfully delete CSI driver",
+			driverConfig: &DriverConfig{
+				Driver:    &storagev1.CSIDriver{},
+				ConfigMap: &corev1.ConfigMap{},
+				Node: &operatorutils.NodeYAML{
+					DaemonSetApplyConfig: confv1.DaemonSetApplyConfiguration{
+						TypeMetaApplyConfiguration: confmetav1.TypeMetaApplyConfiguration{
+							APIVersion: &appsv1,
+							Kind:       &daemonset,
+						},
+						ObjectMetaApplyConfiguration: &confmetav1.ObjectMetaApplyConfiguration{
+							Name:      &csiDaemonset,
+							Namespace: &namespace,
+						},
+					},
+				},
+				Controller: &operatorutils.ControllerYAML{
+					Deployment: confv1.DeploymentApplyConfiguration{
+						TypeMetaApplyConfiguration: confmetav1.TypeMetaApplyConfiguration{
+							APIVersion: &appsv1,
+							Kind:       &deployment,
+						},
+						ObjectMetaApplyConfiguration: &confmetav1.ObjectMetaApplyConfiguration{
+							Name:      &csiDeployment,
+							Namespace: &namespace,
+						},
+					},
+				},
+			},
+		},
 		{
 			name: "Fail to delete controller service account",
 
@@ -2789,6 +2856,34 @@ func Test_removeDriverFromCluster(t *testing.T) {
 				},
 			},
 			expectedErr: "failed to delete",
+		},
+		{
+			name: "Successfully delete COSI driver from cluster",
+			driverConfig: &DriverConfig{
+				Controller: &operatorutils.ControllerYAML{
+					Deployment: confv1.DeploymentApplyConfiguration{
+						TypeMetaApplyConfiguration: confmetav1.TypeMetaApplyConfiguration{
+							APIVersion: &appsv1,
+							Kind:       &deployment,
+						},
+						ObjectMetaApplyConfiguration: &confmetav1.ObjectMetaApplyConfiguration{
+							Name:      &cosiDeployment,
+							Namespace: &namespace,
+						},
+					},
+					Rbac: operatorutils.RbacYAML{
+						ClusterRoleBinding: rbacv1.ClusterRoleBinding{
+							TypeMeta: metav1.TypeMeta{
+								Kind:       "ClusterRoleBinding",
+								APIVersion: "rbac.authorization.k8s.io/v1",
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "test-cosi-cluster-role-binding",
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 	for _, tt := range tests {
