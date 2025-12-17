@@ -38,7 +38,7 @@ type ContainerStorageModuleSpec struct {
 
 	// RetainImageRegistryPath is the boolean flag used to retain image registry path
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Retain Image Registry Path"
-	retainImageRegistryPath bool `json:"retainImageRegistryPath,omitempty" yaml:"retainImageRegistryPath,omitempty"`
+	RetainImageRegistryPath bool `json:"retainImageRegistryPath,omitempty" yaml:"retainImageRegistryPath,omitempty"`
 }
 
 // ContainerStorageModuleStatus defines the observed state of ContainerStorageModule
