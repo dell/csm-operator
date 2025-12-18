@@ -39,15 +39,24 @@ const (
 	ConfigParamsFile = "driver-config-params.yaml"
 	// CSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	CSMNameSpace string = "<CSM_NAMESPACE>"
+
+	// CsiLogLevel - Defines the log level
+	CsiLogLevel = "<CSI_LOG_LEVEL>"
+
+	// CsiLogFormat - Defines the log format
+	CsiLogFormat = "<CSI_LOG_FORMAT>"
+
+	// OtelCollectorAddress - Defines the otel collector address
+	OtelCollectorAddress = "<OTEL_COLLECTOR_ADDRESS>"
 )
 
 // GetController get controller yaml
 func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, driverName csmv1.DriverType) (*operatorutils.ControllerYAML, error) {
 	log := logger.GetLogger(ctx)
 	driverType := cr.Spec.Driver.CSIDriverType
-	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/controller.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
-	log.Debugw("GetController", "configMapPath", configMapPath)
-	buf, err := os.ReadFile(filepath.Clean(configMapPath))
+	controllerPath := fmt.Sprintf("%s/driverconfig/%s/%s/controller.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
+	log.Debugw("GetController", "controllerPath", controllerPath)
+	buf, err := os.ReadFile(filepath.Clean(controllerPath))
 	if err != nil {
 		log.Errorw("GetController failed", "Error", err.Error())
 		return nil, err
@@ -68,7 +77,10 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	case csmv1.PowerScale:
 		YamlString = ModifyPowerScaleCR(YamlString, cr, "Controller")
 	case csmv1.Cosi:
-		YamlString = ModifyCosiCR(YamlString, cr, "Controller")
+		YamlString, err = ModifyCosiCR(YamlString, cr, "Controller")
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	driverYAML, err := operatorutils.GetDriverYaml(YamlString, "Deployment")
@@ -109,7 +121,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	containers := controllerYAML.Deployment.Spec.Template.Spec.Containers
 	newcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
 	for i, c := range containers {
-		if c.Name != nil && string(*c.Name) == "driver" {
+		if c.Name != nil && (string(*c.Name) == "driver" || string(*c.Name) == "objectstorage-provisioner") {
 			// Check if Common is not nil before accessing Envs
 			if cr.Spec.Driver.Common != nil {
 				if cr.Spec.Driver.Common.Image != "" {

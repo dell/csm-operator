@@ -134,6 +134,6 @@ spec:
       volumes:
         - name: cosi-config
           secret:
-            secretName: <DriverDefaultReleaseName>-config
+            secretName: cosi-config
         - name: cosi-socket-dir
           emptyDir: {}

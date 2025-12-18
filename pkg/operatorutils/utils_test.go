@@ -981,6 +981,32 @@ func TestGetCTRLObject(t *testing.T) {
 	// Test case: valid input
 	ctrlBuf = []byte(`
 apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: my-sa
+  namespace: default
+`)
+
+	expected = []crclient.Object{
+		&corev1.ServiceAccount{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "ServiceAccount",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-sa",
+				Namespace: "default",
+			},
+		},
+	}
+
+	result, err = GetCTRLObject(ctrlBuf)
+
+	assert.Nil(t, err)
+	assert.Equal(t, result, expected)
+
+	ctrlBuf = []byte(`
+apiVersion: v1
 kind: Service
 metadata:
   name: my-service
