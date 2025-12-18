@@ -1,0 +1,38 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: cosi
+  namespace: cosi
+spec:
+  driver:
+    csiDriverType: "cosi"
+    configVersion: v1.0.0
+    replicas: 1
+    forceRemoveDriver: true
+    common:
+      image: "csm.artifactory.cec.lab.emc.com/csm-users/cicd/cosi:nightly"
+      imagePullPolicy: Always
+      # Node selector for scheduling the COSI driver pod.
+      nodeSelector: {}
+      # Tolerations for scheduling the COSI driver pod.
+      tolerations: []
+      envs:
+        # CSI_LOG_LEVEL sets the log verbosity for the COSI driver.
+        # Values: 0–10
+        # Default: 4
+        - name: CSI_LOG_LEVEL
+          value: "4"
+        # CSI_LOG_FORMAT sets the log output format.
+        # Values: "json", "text", "pretty"
+        # Default: "text"
+        - name: CSI_LOG_FORMAT
+          value: "json"
+        # OTEL_COLLECTOR_ADDRESS is the gRPC endpoint for the OTEL Collector.
+        # Example: "otel-collector.namespace:4317"
+        # Default: ""
+        - name: OTEL_COLLECTOR_ADDRESS
+          value: ""
+    sideCars:
+      - name: objectstorage-provisioner-sidecar
+        image: gcr.io/k8s-staging-sig-storage/objectstorage-sidecar:release-0.2
+        imagePullPolicy: IfNotPresent
