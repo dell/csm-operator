@@ -68,6 +68,10 @@ const (
 
 	// CsiPowerstoreExternalAccess -  External Access flag
 	CsiPowerstoreExternalAccess = "<X_CSI_POWERSTORE_EXTERNAL_ACCESS>"
+
+	// CsiPowerstoreExclusiveAccess -  Exclusive Access flag
+	CsiPowerstoreExclusiveAccess = "<X_CSI_POWERSTORE_EXCLUSIVE_ACCESS>"
+
 	// CsiStorageCapacityEnabled - Storage capacity flag
 	CsiStorageCapacityEnabled = "false"
 
@@ -167,6 +171,7 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	chap := ""
 	healthMonitorNode := ""
 	powerstoreExternalAccess := ""
+	powerstoreExclusiveAccess := "false"
 	storageCapacity := "false"
 	maxVolumesPerNode := ""
 	volumeDisconnectMaxRetries := "5"
@@ -312,11 +317,15 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 				if env.Name == "X_CSI_POWERSTORE_EXTERNAL_ACCESS" {
 					powerstoreExternalAccess = env.Value
 				}
+				if env.Name == "X_CSI_POWERSTORE_EXCLUSIVE_ACCESS" {
+					powerstoreExclusiveAccess = env.Value
+				}
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiNfsAcls, nfsAcls)
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreExternalAccess, powerstoreExternalAccess)
+		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreExclusiveAccess, powerstoreExclusiveAccess)
 		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreAPITimeout, powerstoreAPITimeout)

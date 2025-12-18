@@ -251,10 +251,11 @@ func csmWithPowerstore(driver csmv1.DriverType, version string) csmv1.ContainerS
 	// Add controller fields specific
 	nfsAclsParam := corev1.EnvVar{Name: "X_CSI_NFS_ACLS"}
 	externalAccess := corev1.EnvVar{Name: "X_CSI_POWERSTORE_EXTERNAL_ACCESS"}
+	exclusiveAccess := corev1.EnvVar{Name: "X_CSI_POWERSTORE_EXCLUSIVE_ACCESS"}
 	res.Spec.Driver.Controller = &csmv1.ContainerTemplate{}
 	if res.Spec.Driver.Controller != nil {
 		res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
-		res.Spec.Driver.Controller.Envs = []corev1.EnvVar{nfsAclsParam, healthMonitor, externalAccess}
+		res.Spec.Driver.Controller.Envs = []corev1.EnvVar{nfsAclsParam, healthMonitor, externalAccess, exclusiveAccess}
 	}
 
 	if res.Spec.Driver.CSIDriverSpec != nil {
