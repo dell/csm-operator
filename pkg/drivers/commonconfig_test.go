@@ -122,7 +122,7 @@ func TestGetController(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := GetController(ctx, tt.csm, config, tt.driverName)
+			_, err := GetController(ctx, tt.csm, config, tt.driverName, csmv1.VersionSpec{})
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 			} else {

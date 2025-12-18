@@ -57,6 +57,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	"gopkg.in/yaml.v3"
+
+	"k8s.io/apimachinery/pkg/types"
 	// metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -772,8 +776,23 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		}
 	}
 
+	var matched csmv1.VersionSpec
+	if cr.Spec.Version != "" {
+		cm, err := r.FetchConfigMap(ctx, &cr)
+		if err != nil {
+			log.Error(err, "Failed to fetch configmap")
+			return err
+		}
+
+		matched, err = r.UpdateUsingConfigMap(ctx, &cr, cm)
+		if err != nil {
+			log.Error(err, "Failed to update using configmap")
+			return err
+		}
+	}
+
 	// Get Driver resources
-	driverConfig, err := getDriverConfig(ctx, cr, operatorConfig, ctrlClient)
+	driverConfig, err := getDriverConfig(ctx, cr, operatorConfig, ctrlClient, matched)
 	if err != nil {
 		return err
 	}
@@ -1195,6 +1214,7 @@ func getDriverConfig(ctx context.Context,
 	cr csmv1.ContainerStorageModule,
 	operatorConfig operatorutils.OperatorConfig,
 	ctrlClient client.Client,
+	matched csmv1.VersionSpec,
 ) (*DriverConfig, error) {
 	var (
 		err        error
@@ -1236,7 +1256,7 @@ func getDriverConfig(ctx context.Context,
 		}
 	}
 
-	controller, err = drivers.GetController(ctx, cr, operatorConfig, driverType)
+	controller, err = drivers.GetController(ctx, cr, operatorConfig, driverType, matched)
 	if err != nil {
 		return nil, fmt.Errorf("getting %s controller: %v", driverType, err)
 	}
@@ -1368,7 +1388,7 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	log := logger.GetLogger(ctx)
 
 	// Get Driver resources
-	driverConfig, err := getDriverConfig(ctx, instance, operatorConfig, r.Client)
+	driverConfig, err := getDriverConfig(ctx, instance, operatorConfig, r.Client, csmv1.VersionSpec{})
 	if err != nil {
 		log.Error("error in getDriverConfig")
 		return err
@@ -1691,4 +1711,80 @@ func applyCSMDRCRD(ctx context.Context, cr csmv1.ContainerStorageModule, isDelet
 	}
 
 	return nil
+}
+
+
+func (r *ContainerStorageModuleReconciler) FetchConfigMap(ctx context.Context, csm *csmv1.ContainerStorageModule) (corev1.ConfigMap, error) {
+	var cm corev1.ConfigMap
+	log := logger.GetLogger(ctx)
+	configMapName := "csm-images" // default fallback
+
+	log.Info("Using ConfigMap for image versions", "ConfigMap", configMapName)
+
+	// fetch the config map namespace
+	cmList := &corev1.ConfigMapList{}
+	err := r.Client.List(ctx, cmList)
+	if err != nil {
+		return cm, fmt.Errorf("Error listing configmaps %v", err)
+	}
+	var namespace string
+	for _, cmns := range cmList.Items {
+		if cmns.Name == configMapName {
+			log.Info("Found ConfigMap in namespace:", cmns.Namespace)
+			// TODO: need to handle the scenario where no configmap was found
+			// TODO: need to handle the scenarion if teo configMAPS with same name are found but in different namespaces
+			namespace = cmns.Namespace
+		}
+	}
+
+	// Fetch the ConfigMap from namespace
+	names := types.NamespacedName{
+		Name:      configMapName,
+		Namespace: namespace,
+	}
+	err = r.Client.Get(ctx, names, &cm)
+	if err != nil {
+		log.Error(err, "Failed to fetch ConfigMap", "ConfigMap", configMapName)
+		return cm, fmt.Errorf("Error fetching configmaps %v", err)
+	}
+	return cm, nil
+}
+
+func (r *ContainerStorageModuleReconciler) ValidateConfigMap(ctx context.Context, version csmv1.VersionSpec) error {
+	for key, val := range version.Images {
+		if val == "" {
+			return fmt.Errorf("value for key %q is empty", key)
+		}
+	}
+	return nil
+}
+
+func (r *ContainerStorageModuleReconciler) UpdateUsingConfigMap(ctx context.Context, csm *csmv1.ContainerStorageModule, cm corev1.ConfigMap) (matched csmv1.VersionSpec, err error) {
+	var versions []csmv1.VersionSpec
+	err = yaml.Unmarshal([]byte(cm.Data["versions.yaml"]), &versions)
+	if err != nil {
+		return matched, err
+	}
+
+	var versionFound bool = false
+	for _, v := range versions {
+		if v.Version == csm.Spec.Version {
+			matched = v
+			versionFound = true
+			break
+
+		}
+	}
+
+	//if none of the version matches with high level version
+	if versionFound == false {
+		return matched, fmt.Errorf("version %s not found in versions.yaml", csm.Spec.Version)
+	}
+
+	err = r.ValidateConfigMap(ctx, matched)
+	if err != nil {
+		return matched, err
+	}
+
+	return matched, nil
 }

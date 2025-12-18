@@ -368,7 +368,7 @@ func TestReverseProxyInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax)
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax, csmv1.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -379,7 +379,7 @@ func TestReverseProxyInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax)
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax, csmv1.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -397,7 +397,7 @@ func TestReverseProxyInjectDeployment(t *testing.T) {
 			customResource.Spec.Modules[0].Components[0].Envs = append(customResource.Spec.Modules[0].Components[0].Envs,
 				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"})
 
-			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax)
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax, csmv1.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -416,7 +416,7 @@ func TestReverseProxyInjectDeployment(t *testing.T) {
 			customResource.Spec.Modules[0].Components[0].Envs = append(customResource.Spec.Modules[0].Components[0].Envs,
 				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
 
-			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax)
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax, csmv1.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -435,7 +435,7 @@ func TestReverseProxyInjectDeployment(t *testing.T) {
 			customResource.Spec.Modules[0].Components[0].Envs = append(customResource.Spec.Modules[0].Components[0].Envs,
 				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
 
-			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax)
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax, csmv1.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -509,7 +509,7 @@ func TestAddReverseProxyServiceName(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax)
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax, csmv1.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
