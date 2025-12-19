@@ -938,54 +938,54 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 
 				node.Rbac.Role = *roleForNode
 
-            case csmv1.Replication:
-                log.Info("Injecting CSM Replication")
+			case csmv1.Replication:
+				log.Info("Injecting CSM Replication")
 
-                dp, err := modules.ReplicationInjectDeployment(
-                    controller.Deployment,
-                    cr,
-                    operatorConfig,
-                )
-                if err != nil {
-                    return fmt.Errorf("injecting replication into deployment: %v", err)
-                }
-                controller.Deployment = *dp
+				dp, err := modules.ReplicationInjectDeployment(
+					controller.Deployment,
+					cr,
+					operatorConfig,
+				)
+				if err != nil {
+					return fmt.Errorf("injecting replication into deployment: %v", err)
+				}
+				controller.Deployment = *dp
 
-                // Resolve and override the replicator sidecar image when spec.version is present.
-                // Precedence: ConfigMap -> RELATED_IMAGE_dell-csi-replicator
-                if cr.Spec.Version != "" {
-                    repImg := operatorutils.ResolveVersionedImageOrEnv(
-                        ctx,
-                        r.GetClient(),
-                        operatorutils.DefaultCSMImagesConfigMap,
-                        cr.Spec.Version,
-                        "dell-csi-replicator",
-                        "RELATED_IMAGE_dell-csi-replicator",
-                    )
+				// Resolve and override the replicator sidecar image when spec.version is present.
+				// Precedence: ConfigMap -> RELATED_IMAGE_dell-csi-replicator
+				if cr.Spec.Version != "" {
+					repImg := operatorutils.ResolveVersionedImageOrEnv(
+						ctx,
+						r.GetClient(),
+						operatorutils.DefaultCSMImagesConfigMap,
+						cr.Spec.Version,
+						"dell-csi-replicator",
+						"RELATED_IMAGE_dell-csi-replicator",
+					)
 
-                    if repImg != "" {
-                        for i := range controller.Deployment.Spec.Template.Spec.Containers {
-                            if controller.Deployment.Spec.Template.Spec.Containers[i].Name ==
-                                operatorutils.ReplicationSideCarName {
-                                controller.Deployment.Spec.Template.Spec.Containers[i].Image = repImg
-                                break
-                            }
-                        }
-                    }
-                }
+					if repImg != "" {
+						for i := range controller.Deployment.Spec.Template.Spec.Containers {
+							if controller.Deployment.Spec.Template.Spec.Containers[i].Name ==
+								operatorutils.ReplicationSideCarName {
+								controller.Deployment.Spec.Template.Spec.Containers[i].Image = repImg
+								break
+							}
+						}
+					}
+				}
 
-                clusterRole, err := modules.ReplicationInjectClusterRole(
-                    controller.Rbac.ClusterRole,
-                    cr,
-                    operatorConfig,
-                )
-                if err != nil {
-                    return fmt.Errorf("injecting replication into controller cluster role: %v", err)
-                }
-                controller.Rbac.ClusterRole = *clusterRole
-            }
-        }
-    }
+				clusterRole, err := modules.ReplicationInjectClusterRole(
+					controller.Rbac.ClusterRole,
+					cr,
+					operatorConfig,
+				)
+				if err != nil {
+					return fmt.Errorf("injecting replication into controller cluster role: %v", err)
+				}
+				controller.Rbac.ClusterRole = *clusterRole
+			}
+		}
+	}
 
 	log.Infof("Starting SYNC for %s cluster", clusterClient.ClusterID)
 	if cr.GetDriverType() == csmv1.Cosi {
@@ -1742,7 +1742,6 @@ func applyCSMDRCRD(ctx context.Context, cr csmv1.ContainerStorageModule, isDelet
 
 	return nil
 }
-
 
 func (r *ContainerStorageModuleReconciler) FetchConfigMap(ctx context.Context, csm *csmv1.ContainerStorageModule) (corev1.ConfigMap, error) {
 	var cm corev1.ConfigMap
