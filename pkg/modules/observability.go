@@ -296,6 +296,25 @@ var defaultSecretsName = map[csmv1.DriverType]string{
 	csmv1.PowerStore:     "<DriverDefaultReleaseName>-config",
 }
 
+// OLM relatedImages fallbacks for Observability
+const (
+	// versions.yaml flat keys
+	VersKeyTopology          = "karavi-topology"
+	VersKeyOtelCollector     = "karavi-otel-collector"
+	VersKeyMetricsPowerScale = "karavi-metrics-powerscale"
+	VersKeyMetricsPowerFlex  = "karavi-metrics-powerflex"
+	VersKeyMetricsPowerMax   = "karavi-metrics-powermax"
+	VersKeyMetricsPowerStore = "karavi-metrics-powerstore"
+
+	// Env fallbacks (OLM RELATED_IMAGE_* vars)
+	EnvRelatedTopology          = "RELATED_IMAGE_karavi-topology"
+	EnvRelatedOtelCollector     = "RELATED_IMAGE_karavi-otel-collector"
+	EnvRelatedMetricsPowerScale = "RELATED_IMAGE_karavi-metrics-powerscale"
+	EnvRelatedMetricsPowerFlex  = "RELATED_IMAGE_karavi-metrics-powerflex"
+	EnvRelatedMetricsPowerMax   = "RELATED_IMAGE_karavi-metrics-powermax"
+	EnvRelatedMetricsPowerStore = "RELATED_IMAGE_karavi-metrics-powerstore"
+)
+
 var defaultAuthSecretsName = []string{"karavi-authorization-config", "proxy-authz-tokens", "proxy-server-root-certificate"}
 
 // ObservabilityPrecheck  - runs precheck for CSM Otoolsabilitytools
@@ -326,6 +345,20 @@ func ObservabilityTopology(ctx context.Context, isDeleting bool, op operatorutil
 		topoObjects, err := getTopology(op, cr)
 		if err != nil {
 			return err
+		}
+
+		if cr.Spec.Version != "" {
+			img := operatorutils.ResolveVersionedImageOrEnv(
+				ctx,
+				ctrlClient,
+				operatorutils.DefaultCSMImagesConfigMap,
+				cr.Spec.Version,
+				VersKeyTopology,
+				EnvRelatedTopology,
+			)
+			if img != "" {
+				operatorutils.SetContainerImage(topoObjects, "karavi-topology", "karavi-topology", img)
+			}
 		}
 
 		for _, ctrlObj := range topoObjects {

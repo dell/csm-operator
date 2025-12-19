@@ -207,6 +207,22 @@ func ReplicationInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csm
 		return nil, err
 	}
 	container := *containerPtr
+
+    //override replicator sidecar image when CR.spec.version is set
+    if cr.Spec.Version != "" {
+        img := operatorutils.ResolveVersionedImageOrEnv(
+            context.TODO(),
+            operatorutils.GetCluster(context.TODO(), nil).ClusterCTRLClient,
+            operatorutils.DefaultCSMImagesConfigMap,
+            cr.Spec.Version,
+            "dell-csi-replicator",
+            "RELATED_IMAGE_dell-csi-replicator",
+        )
+        if img != "" {
+            container.Image = &img
+        }
+    }
+
 	dp.Spec.Template.Spec.Containers = append(dp.Spec.Template.Spec.Containers, container)
 
 	// inject replication in driver environment
