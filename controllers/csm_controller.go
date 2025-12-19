@@ -1051,7 +1051,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 
 	if replicationEnabled {
 		// This will also create the dell-replication-controller namespace.
-		if err = modules.ReplicationManagerController(ctx, false, operatorConfig, cr, clusterClient.ClusterCTRLClient, matched csmv1.VersionSpec); err != nil {
+		if err = modules.ReplicationManagerController(ctx, false, operatorConfig, cr, clusterClient.ClusterCTRLClient, matched); err != nil {
 			return fmt.Errorf("failed to deploy replication controller: %v", err)
 		}
 
@@ -1712,7 +1712,6 @@ func applyCSMDRCRD(ctx context.Context, cr csmv1.ContainerStorageModule, isDelet
 
 	return nil
 }
-
 
 func (r *ContainerStorageModuleReconciler) FetchConfigMap(ctx context.Context, csm *csmv1.ContainerStorageModule) (corev1.ConfigMap, error) {
 	var cm corev1.ConfigMap
