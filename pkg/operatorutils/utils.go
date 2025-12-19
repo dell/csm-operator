@@ -382,6 +382,13 @@ func GetCTRLObject(CtrlBuf []byte) ([]crclient.Object, error) {
 			return ctrlObjects, err
 		}
 		switch meta.Kind {
+		case "ServiceAccount":
+			var sa corev1.ServiceAccount
+			if err := yamlUnmarshal(raw, &sa); err != nil {
+				return ctrlObjects, err
+			}
+			ctrlObjects = append(ctrlObjects, &sa)
+
 		case "ClusterRole":
 			var cr rbacv1.ClusterRole
 			if err := yamlUnmarshal(raw, &cr); err != nil {

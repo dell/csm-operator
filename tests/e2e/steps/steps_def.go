@@ -88,6 +88,8 @@ var (
 	pstoreAuthSidecarMap     = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_SYSTEMID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSTORE_AUTH_ENDPOINT"}
 	unitySecretMap           = map[string]string{"REPLACE_USER": "UNITY_USER", "REPLACE_PASS": "UNITY_PASS", "REPLACE_ARRAYID": "UNITY_ARRAYID", "REPLACE_ENDPOINT": "UNITY_ENDPOINT", "REPLACE_POOL": "UNITY_POOL", "REPLACE_NAS": "UNITY_NAS"}
 	unityEphemeralVolumeMap  = map[string]string{"REPLACE_ARRAYID": "UNITY_ARRAYID", "REPLACE_POOL": "UNITY_POOL", "REPLACE_NAS": "UNITY_NAS"}
+
+	cosiSecretMap = map[string]string{"REPLACE_USER": "COSI_USER", "REPLACE_PASS": "COSI_PASS", "REPLACE_NAMESPACE": "COSI_NAMESPACE", "REPLACE_MGMT_ENDPOINT": "COSI_MGMT_ENDPOINT", "REPLACE_S3_ENDPOINT": "COSI_S3_ENDPOINT"}
 )
 
 var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration, ctrlClient client.Client) error {
@@ -849,7 +851,16 @@ func (step *Step) setUpSecret(_ Resource, templateFile, name, namespace, crType 
 	return nil
 }
 
-func (step *Step) setUpSecretFromFile(_ Resource, templateFile, name, namespace, crType string) error {
+func (step *Step) setUpSecretFromFile(resource Resource, templateFile, name, namespace, crType string) error {
+	return step.setUpSecretFromTemplateWithFieldName(resource, templateFile, "", name, namespace, crType)
+}
+
+func (step *Step) setUpSecretFromTemplateWithFieldName(_ Resource, templateFile, fieldName, name, namespace, crType string) error {
+	fileString, err := renderTemplate(crType, templateFile)
+	if err != nil {
+		return err
+	}
+
 	// if secret exists - delete it
 	if secretExists(namespace, name) {
 		err := execCommand("kubectl", "delete", "secret", "-n", namespace, name)
@@ -858,23 +869,19 @@ func (step *Step) setUpSecretFromFile(_ Resource, templateFile, name, namespace,
 		}
 	}
 
-	// find which map to use for secret values
-	mapValues, err := determineMap(crType)
+	filePath, err := writeRenderedFile(templateFile, fileString)
 	if err != nil {
 		return err
 	}
 
-	for key := range mapValues {
-		val := os.Getenv(mapValues[key])
-
-		err := replaceInFile(key, val, templateFile)
-		if err != nil {
-			return err
-		}
+	// create new secret
+	var fileArg string
+	if len(fieldName) > 0 {
+		fileArg = "--from-file=" + fieldName + "=" + filePath
+	} else {
+		fileArg = "--from-file=" + filePath
 	}
 
-	// create new secret
-	fileArg := "--from-file=" + templateFile
 	err = execCommand("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
 	if err != nil {
 		return fmt.Errorf("failed to create secret from file %s: %v", templateFile, err)
@@ -1072,6 +1079,8 @@ func determineMap(crType string) (map[string]string, error) {
 		mapValues = unitySecretMap
 	} else if crType == "unityEphemeral" {
 		mapValues = unityEphemeralVolumeMap
+	} else if crType == "cosi" {
+		mapValues = cosiSecretMap
 	} else if crType == "''" {
 		return mapValues, nil
 	} else {
