@@ -103,21 +103,20 @@ spec:
           image: quay.io/dell/container-storage-modules/cosi:v1.0.0
           imagePullPolicy: IfNotPresent
           args:
-            - "--log-level=<CSI_LOG_LEVEL>"
-            - "--log-format=<CSI_LOG_FORMAT>"
+            - "--driver-config-params=/cosi-config-params/driver-config-params.yaml"
             - "--otel-endpoint=<OTEL_COLLECTOR_ADDRESS>"
           volumeMounts:
             - name: cosi-config
               mountPath: /cosi
             - name: cosi-socket-dir
               mountPath: /var/lib/cosi
+            - name: cosi-config-params
+              mountPath: /cosi-config-params
         - name: objectstorage-provisioner-sidecar
           securityContext:
             readOnlyRootFilesystem: true
           image: gcr.io/k8s-staging-sig-storage/objectstorage-sidecar:release-0.2
           imagePullPolicy: IfNotPresent
-          args:
-            - "-v=<CSI_LOG_LEVEL>"
           volumeMounts:
             - name: cosi-socket-dir
               mountPath: /var/lib/cosi
@@ -135,5 +134,8 @@ spec:
         - name: cosi-config
           secret:
             secretName: <DriverDefaultReleaseName>-config
+        - name: cosi-config-params
+          configMap:
+            name: <DriverDefaultReleaseName>-config-params
         - name: cosi-socket-dir
           emptyDir: {}

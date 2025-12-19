@@ -949,6 +949,9 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		if err = rbac.SyncClusterRoleBindings(ctx, controller.Rbac.ClusterRoleBinding, clusterClient.ClusterCTRLClient); err != nil {
 			return err
 		}
+		if err = configmap.SyncConfigMap(ctx, *configMap, clusterClient.ClusterCTRLClient); err != nil {
+			return err
+		}
 		if err = deployment.SyncDeployment(ctx, controller.Deployment, clusterClient.ClusterK8sClient, cr.Name); err != nil {
 			return err
 		}
@@ -1220,11 +1223,6 @@ func getDriverConfig(ctx context.Context,
 		driverType = csmv1.PowerScaleName
 	}
 	if driverType != csmv1.Cosi {
-		configMap, err = drivers.GetConfigMap(ctx, cr, operatorConfig, driverType)
-		if err != nil {
-			return nil, fmt.Errorf("getting %s configMap: %v", driverType, err)
-		}
-
 		driver, err = drivers.GetCSIDriver(ctx, cr, operatorConfig, driverType)
 		if err != nil {
 			return nil, fmt.Errorf("getting %s CSIDriver: %v", driverType, err)
@@ -1234,6 +1232,10 @@ func getDriverConfig(ctx context.Context,
 		if err != nil {
 			return nil, fmt.Errorf("getting %s node: %v", driverType, err)
 		}
+	}
+	configMap, err = drivers.GetConfigMap(ctx, cr, operatorConfig, driverType)
+	if err != nil {
+		return nil, fmt.Errorf("getting %s configMap: %v", driverType, err)
 	}
 
 	controller, err = drivers.GetController(ctx, cr, operatorConfig, driverType)
