@@ -747,6 +747,21 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
 
+	var matched csmv1.VersionSpec
+	if cr.Spec.Version != "" {
+		cm, err := r.FetchConfigMap(ctx, &cr)
+		if err != nil {
+			log.Error(err, "Failed to fetch configmap")
+			return err
+		}
+
+		matched, err = r.UpdateUsingConfigMap(ctx, &cr, cm)
+		if err != nil {
+			log.Error(err, "Failed to update using configmap")
+			return err
+		}
+	}
+
 	// Create/Update Authorization Proxy Server
 	authorizationEnabled, _ := operatorutils.IsModuleEnabled(ctx, cr, csmv1.AuthorizationServer)
 	if authorizationEnabled {
@@ -773,21 +788,6 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		log.Infow("Create/Update Replication CRDs")
 		if err := r.reconcileReplicationCRDS(ctx, operatorConfig, cr, ctrlClient); err != nil {
 			return fmt.Errorf("failed to deploy replication CRDs: %v", err)
-		}
-	}
-
-	var matched csmv1.VersionSpec
-	if cr.Spec.Version != "" {
-		cm, err := r.FetchConfigMap(ctx, &cr)
-		if err != nil {
-			log.Error(err, "Failed to fetch configmap")
-			return err
-		}
-
-		matched, err = r.UpdateUsingConfigMap(ctx, &cr, cm)
-		if err != nil {
-			log.Error(err, "Failed to update using configmap")
-			return err
 		}
 	}
 
@@ -941,7 +941,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			case csmv1.Replication:
 				// This function adds replication sidecar to driver pods.
 				log.Info("Injecting CSM Replication")
-				dp, err := modules.ReplicationInjectDeployment(controller.Deployment, cr, operatorConfig)
+				dp, err := modules.ReplicationInjectDeployment(controller.Deployment, cr, operatorConfig, matched)
 				if err != nil {
 					return fmt.Errorf("injecting replication into deployment: %v", err)
 				}
@@ -1051,7 +1051,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 
 	if replicationEnabled {
 		// This will also create the dell-replication-controller namespace.
-		if err = modules.ReplicationManagerController(ctx, false, operatorConfig, cr, clusterClient.ClusterCTRLClient); err != nil {
+		if err = modules.ReplicationManagerController(ctx, false, operatorConfig, cr, clusterClient.ClusterCTRLClient, matched csmv1.VersionSpec); err != nil {
 			return fmt.Errorf("failed to deploy replication controller: %v", err)
 		}
 

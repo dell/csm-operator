@@ -122,7 +122,7 @@ func getRepctlPrefices(replicaModule csmv1.Module, driverType csmv1.DriverType) 
 	return replicationContextPrefix, replicationPrefix
 }
 
-func getReplicaApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
+func getReplicaApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, matched csmv1.VersionSpec) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
 	var err error
 	replicaModule := csmv1.Module{}
 	for _, m := range cr.Spec.Modules {
@@ -138,6 +138,16 @@ func getReplicaApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.Operato
 	}
 
 	YamlString := operatorutils.ModifyCommonCR(string(buf), cr)
+
+	var found bool = false
+	var image string
+	for k, v := range matched.Images {
+		if k == operatorutils.ReplicationSideCarName {
+			image = v
+			found = true
+			break
+		}
+	}
 
 	replicationContextPrefix, replicationPrefix := getRepctlPrefices(replicaModule, cr.Spec.Driver.CSIDriverType)
 	YamlString = strings.ReplaceAll(YamlString, DefaultReplicationPrefix, replicationPrefix)
@@ -157,6 +167,9 @@ func getReplicaApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.Operato
 				image := string(component.Image)
 				container.Image = &image
 			}
+			if found == true {
+				container.Image = &image
+			}
 			if component.ImagePullPolicy != "" {
 				container.ImagePullPolicy = &component.ImagePullPolicy
 			}
@@ -167,8 +180,8 @@ func getReplicaApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.Operato
 }
 
 // ReplicationInjectDeployment - inject replication into deployment
-func ReplicationInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*applyv1.DeploymentApplyConfiguration, error) {
-	replicaModule, containerPtr, err := getReplicaApplyCR(cr, op)
+func ReplicationInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, matched csmv1.VersionSpec) (*applyv1.DeploymentApplyConfiguration, error) {
+	replicaModule, containerPtr, err := getReplicaApplyCR(cr, op, matched)
 	if err != nil {
 		return nil, err
 	}
@@ -355,7 +368,7 @@ func ReplicationPrecheck(ctx context.Context, op operatorutils.OperatorConfig, r
 	return nil
 }
 
-func getReplicaController(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]crclient.Object, error) {
+func getReplicaController(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, matched csmv1.VersionSpec) ([]crclient.Object, error) {
 	YamlString := ""
 
 	replica, err := getReplicaModule(cr)
@@ -368,6 +381,30 @@ func getReplicaController(op operatorutils.OperatorConfig, cr csmv1.ContainerSto
 		return nil, err
 	}
 	YamlString = operatorutils.ModifyCommonCR(string(buf), cr)
+
+	var found1 bool = false
+	var found2 bool = false
+	var image1 string
+	var image2 string
+	var count int = 0
+	for k, v := range matched.Images {
+		if k == operatorutils.ReplicationControllerManager {
+			image1 = v
+			found1 = true
+			count = count + 1
+			if count == 2 {
+				break
+			}
+		}
+		if k == operatorutils.ReplicationControllerInit {
+			image2 = v
+			found2 = true
+			count = count + 1
+			if count == 2 {
+				break
+			}
+		}
+	}
 
 	logLevel := "debug"
 	replicaCount := "1"
@@ -382,6 +419,9 @@ func getReplicaController(op operatorutils.OperatorConfig, cr csmv1.ContainerSto
 		if component.Name == operatorutils.ReplicationControllerManager {
 			if component.Image != "" {
 				replicaImage = string(component.Image)
+			}
+			if found1 == true {
+				replicaImage = &image1
 			}
 			for _, env := range component.Envs {
 				if strings.Contains(DefaultLogLevel, env.Name) && env.Value != "" {
@@ -401,6 +441,9 @@ func getReplicaController(op operatorutils.OperatorConfig, cr csmv1.ContainerSto
 		} else if component.Name == operatorutils.ReplicationControllerInit {
 			if component.Image != "" {
 				replicaInitImage = string(component.Image)
+			}
+			if found2 == true {
+				replicaInitImage = &image2
 			}
 		}
 	}
