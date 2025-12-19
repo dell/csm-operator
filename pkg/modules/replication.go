@@ -421,7 +421,7 @@ func getReplicaController(op operatorutils.OperatorConfig, cr csmv1.ContainerSto
 				replicaImage = string(component.Image)
 			}
 			if found1 == true {
-				replicaImage = &image1
+				replicaImage = image1
 			}
 			for _, env := range component.Envs {
 				if strings.Contains(DefaultLogLevel, env.Name) && env.Value != "" {
@@ -443,7 +443,7 @@ func getReplicaController(op operatorutils.OperatorConfig, cr csmv1.ContainerSto
 				replicaInitImage = string(component.Image)
 			}
 			if found2 == true {
-				replicaInitImage = &image2
+				replicaInitImage = image2
 			}
 		}
 	}
@@ -482,8 +482,8 @@ func getReplicaModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error) {
 }
 
 // ReplicationManagerController -
-func ReplicationManagerController(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
-	ctrlObjects, err := getReplicaController(op, cr)
+func ReplicationManagerController(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, matched csmv1.VersionSpec) error {
+	ctrlObjects, err := getReplicaController(op, cr, matched)
 	if err != nil {
 		return err
 	}

@@ -695,7 +695,7 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 				return err
 			}
 			log.Infow("Deleting Replication controller", "clusterID:", clusterClient.ClusterID)
-			if err = modules.ReplicationManagerController(ctx, true, operatorConfig, *oldCR, clusterClient.ClusterCTRLClient); err != nil {
+			if err = modules.ReplicationManagerController(ctx, true, operatorConfig, *oldCR, clusterClient.ClusterCTRLClient, csmv1.VersionSpec{}); err != nil {
 				return err
 			}
 			log.Infow("Deleting Replication CRDs", "clusterID:", clusterClient)
@@ -1405,7 +1405,7 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	replicationEnabled, _ := operatorutils.IsModuleEnabled(ctx, instance, csmv1.Replication)
 	if replicationEnabled {
 		log.Infow("Deleting Replication controller")
-		if err = modules.ReplicationManagerController(ctx, true, operatorConfig, instance, clusterClient.ClusterCTRLClient); err != nil {
+		if err = modules.ReplicationManagerController(ctx, true, operatorConfig, instance, clusterClient.ClusterCTRLClient, csmv1.VersionSpec{}); err != nil {
 			return err
 		}
 		log.Infow("Deleting Replication configmap")

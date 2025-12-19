@@ -85,7 +85,7 @@ func TestReplicationInjectDeployment(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			success, dp, opConfig, cr := tc(t)
-			newDeployment, err := ReplicationInjectDeployment(dp, cr, opConfig)
+			newDeployment, err := ReplicationInjectDeployment(dp, cr, opConfig, csmv1.VersionSpec{})
 			if success {
 				assert.NoError(t, err)
 				if err := correctlyInjected(*newDeployment, cr); err != nil {
@@ -419,7 +419,7 @@ func TestReplicationManagerController(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
-			err := ReplicationManagerController(context.TODO(), isDeleting, op, cr, sourceClient)
+			err := ReplicationManagerController(context.TODO(), isDeleting, op, cr, sourceClient, csmv1.VersionSpec{Images: map[string]string{}})
 			if success {
 				assert.NoError(t, err)
 			} else {
