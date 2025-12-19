@@ -951,29 +951,6 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				}
 				controller.Deployment = *dp
 
-				// Resolve and override the replicator sidecar image when spec.version is present.
-				// Precedence: ConfigMap -> RELATED_IMAGE_dell-csi-replicator
-				if cr.Spec.Version != "" {
-					repImg := operatorutils.ResolveVersionedImageOrEnv(
-						ctx,
-						r.GetClient(),
-						operatorutils.DefaultCSMImagesConfigMap,
-						cr.Spec.Version,
-						"dell-csi-replicator",
-						"RELATED_IMAGE_dell-csi-replicator",
-					)
-
-					if repImg != "" {
-						for i := range controller.Deployment.Spec.Template.Spec.Containers {
-							if controller.Deployment.Spec.Template.Spec.Containers[i].Name ==
-								operatorutils.ReplicationSideCarName {
-								controller.Deployment.Spec.Template.Spec.Containers[i].Image = repImg
-								break
-							}
-						}
-					}
-				}
-
 				clusterRole, err := modules.ReplicationInjectClusterRole(
 					controller.Rbac.ClusterRole,
 					cr,

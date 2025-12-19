@@ -113,9 +113,6 @@ const (
 	EnvRelatedReplicator = "RELATED_IMAGE_dell-csi-replicator"
 	EnvRelatedController = "RELATED_IMAGE_dell-replication-controller-manager"
 
-    // Alias for flat key usage (same value as CMKeyReplicationController)
-    CMKeyReplicationControllerFlat = CMKey
-
 	// Name of the ConfigMap that carries versions.yaml
 	CSMImagesConfigMapName = "csm-images"
 )
@@ -207,7 +204,7 @@ func resolveReplicationControllerImageFlat(
 	if err == nil {
 		if entries, pErr := parseVersionsFlat(cm); pErr == nil {
 			if entry, ok := matchVersionFlat(entries, cr.Spec.Version); ok {
-				if img := entry[CMKeyReplicationControllerFlat]; img != "" {
+				if img := entry[CMKeyReplicationController]; img != "" {
 					return img
 				}
 				log.Info("ConfigMap entry lacks controller-manager image; falling back to env",
