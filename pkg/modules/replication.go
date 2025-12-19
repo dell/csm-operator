@@ -16,6 +16,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+    "os"
 
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -101,6 +102,129 @@ var ReplicationSupportedDrivers = map[string]SupportedDriverParam{
 		PluginIdentifier:              drivers.PowerStorePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerStoreConfigParamsVolumeMount,
 	},
+}
+
+
+
+const (
+    // Keys inside versions.yaml -> modules.<driver>
+    CMKeyReplicationSidecar    = "replication.dell-csi-replicator"
+    CMKeyReplicationController = "replication.dell-replication-controller-manager"
+
+    // OLM relatedImages fallbacks (internal defaults)
+    EnvRelatedReplicator = "RELATED_IMAGE_dell-csi-replicator"
+       EnvRelatedController = "RELATED_IMAGE_dell-replication-controller-manager"
+
+    // Name of the ConfigMap that carries versions.yaml
+    CSMImagesConfigMapName = "csm-images"
+)
+
+
+// Set image by container name
+func setImageOnNamedContainer(podSpec *corev1.PodSpec, containerName, image string) {
+    if podSpec == nil || image == "" {
+        return
+    }
+    for i := range podSpec.Containers {
+        if podSpec.Containers[i].Name == containerName {
+            podSpec.Containers[i].Image = image
+            return
+        }
+    }
+}
+
+// Fallback to the first container if the name differs
+func setFirstContainerImage(podSpec *corev1.PodSpec, image string) {
+    if podSpec == nil || image == "" || len(podSpec.Containers) == 0 {
+        return
+    }
+    podSpec.Containers[0].Image = image
+}
+
+// Locate csm-images ConfigMap
+func findCSMImagesConfigMap(ctx context.Context, ctrlClient crclient.Client) (*corev1.ConfigMap, error) {
+    cmList := &corev1.ConfigMapList{}
+    if err := ctrlClient.List(ctx, cmList); err != nil {
+        return nil, fmt.Errorf("error listing configmaps: %v", err)
+    }
+    var namespace string
+    for _, cm := range cmList.Items {
+        if cm.Name == CSMImagesConfigMapName {
+            namespace = cm.Namespace
+            break
+        }
+    }
+    if namespace == "" {
+        return nil, fmt.Errorf("%s ConfigMap not found", CSMImagesConfigMapName)
+    }
+    names := t1.NamespacedName{Name: CSMImagesConfigMapName, Namespace: namespace}
+    cm := &corev1.ConfigMap{}
+    if err := ctrlClient.Get(ctx, names, cm); err != nil {
+        if k8serrors.IsNotFound(err) {
+            return nil, fmt.Errorf("%s not found in namespace %s", CSMImagesConfigMapName, namespace)
+        }
+        return nil, fmt.Errorf("error fetching %s: %v", CSMImagesConfigMapName, err)
+    }
+    return cm, nil
+}
+
+// Parse flat versions.yaml as []map[string]string
+func parseVersionsFlat(cm *corev1.ConfigMap) ([]map[string]string, error) {
+    data, ok := cm.Data["versions.yaml"]
+    if !ok {
+        return nil, fmt.Errorf("versions.yaml not found in ConfigMap %s", cm.Name)
+    }
+    var entries []map[string]string
+    if err := yaml.Unmarshal([]byte(data), &entries); err != nil {
+        return nil, fmt.Errorf("failed to unmarshal versions.yaml: %v", err)
+    }
+    return entries, nil
+}
+
+// Find entry where entry["version"] == desired
+func matchVersionFlat(entries []map[string]string, desired string) (map[string]string, bool) {
+    for _, e := range entries {
+        if e["version"] == desired {
+            return e, true
+        }
+    }
+    return nil, false
+}
+
+// Resolve controller-manager image (ConfigMap -> env) for the new flat format
+func resolveReplicationControllerImageFlat(
+    ctx context.Context,
+    ctrlClient crclient.Client,
+    cr csmv1.ContainerStorageModule,
+) string {
+    log := logger.GetLogger(ctx)
+
+    if cr.Spec.Version == "" {
+        return ""
+    }
+
+    cm, err := findCSMImagesConfigMap(ctx, ctrlClient)
+    if err == nil {
+        if entries, pErr := parseVersionsFlat(cm); pErr == nil {
+            if entry, ok := matchVersionFlat(entries, cr.Spec.Version); ok {
+                if img := entry[CMKeyReplicationControllerFlat]; img != "" {
+                    return img // ✅ ConfigMap wins
+                }
+                log.Info("ConfigMap entry lacks controller-manager image; falling back to env",
+                    "version", cr.Spec.Version)
+            } else {
+                log.Info("Version not found in versions.yaml; falling back to env",
+                    "desiredVersion", cr.Spec.Version)
+            }
+        } else {
+            log.Info("Failed parsing versions.yaml; falling back to env", "error", pErr)
+        }
+    } else {
+        log.Info("csm-images ConfigMap not available; falling back to env", "error", err)
+    }
+
+    // Fallback to operator defaults (RELATED_IMAGE_* provided by OLM)
+       return os.Getenv(EnvRelatedController)
 }
 
 func getRepctlPrefices(replicaModule csmv1.Module, driverType csmv1.DriverType) (string, string) {
@@ -323,6 +447,15 @@ func ReplicationPrecheck(ctx context.Context, op operatorutils.OperatorConfig, r
 		if err != nil {
 			return err
 		}
+	} else {
+		// Fetch the version from the matched object
+		if matched.Modules != nil {
+			if driverModule, ok := matched.Modules[string(cr.Spec.Driver.CSIDriverType)]; ok {
+				if replication, ok := driverModule["replication"]; ok {
+					version = strings.Split(replication, ":")[1]
+				}
+			}
+		}
 	}
 
 	clusterClient := operatorutils.GetCluster(ctx, r)
@@ -445,19 +578,39 @@ func ReplicationManagerController(ctx context.Context, isDeleting bool, op opera
 		return err
 	}
 
-	for _, ctrlObj := range ctrlObjects {
-		if isDeleting {
-			if err := operatorutils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		} else {
-			if err := operatorutils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
-				return err
-			}
-		}
-	}
+    //override controller-manager image when version is set (ConfigMap -> env).
+    if !isDeleting && cr.Spec.Version != "" {
+        ctlImg := operatorutils.ResolveVersionedImageOrEnv(
+            ctx,
+            ctrlClient,
+            operatorutils.DefaultCSMImagesConfigMap,
+            cr.Spec.Version,
+            "dell-replication-controller-manager",            // flat key in versions.yaml
+            "RELATED_IMAGE_dell-replication-controller-manager",
+        )
+        if ctlImg != "" {
+            for _, obj := range ctrlObjects {
+                if dep, ok := obj.(*appsv1.Deployment); ok {
+                    setImageOnNamedContainer(&dep.Spec.Template.Spec, "dell-replication-controller-manager", ctlImg)
+                    setFirstContainerImage(&dep.Spec.Template.Spec, ctlImg) // fallback if name differs
+                }
+            }
+        }
+    }
 
-	return nil
+    // Apply/Delete (existing)
+    for _, ctrlObj := range ctrlObjects {
+        if isDeleting {
+            if err := operatorutils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
+                return err
+                       }
+        } else {
+            if err := operatorutils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+                return err
+            }
+        }
+    }
+    return nil
 }
 
 func CreateReplicationConfigmap(ctx context.Context, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, ctrlClient client.Client) ([]crclient.Object, error) {
