@@ -42,7 +42,7 @@ const (
 )
 
 // GetController get controller yaml
-func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, driverName csmv1.DriverType) (*operatorutils.ControllerYAML, error) {
+func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, driverName csmv1.DriverType, matched csmv1.VersionSpec) (*operatorutils.ControllerYAML, error) {
 	log := logger.GetLogger(ctx)
 	driverType := cr.Spec.Driver.CSIDriverType
 	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/controller.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
@@ -106,15 +106,29 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 		controllerYAML.Deployment.Spec.Template.Spec.NodeSelector = cr.Spec.Driver.Controller.NodeSelector
 	}
 
+	var found bool = false
+	var image string
+	for k, v := range matched.Images {
+		if k == string(cr.Spec.Driver.CSIDriverType) {
+			image = v
+			found = true
+			break
+		}
+	}
+
 	containers := controllerYAML.Deployment.Spec.Template.Spec.Containers
 	newcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
 	for i, c := range containers {
 		if c.Name != nil && string(*c.Name) == "driver" {
-			// Check if Common is not nil before accessing Envs
-			if cr.Spec.Driver.Common != nil {
-				if cr.Spec.Driver.Common.Image != "" {
-					image := string(cr.Spec.Driver.Common.Image)
-					c.Image = &image
+			if found {
+				c.Image = &image
+			} else {
+				// Check if Common is not nil before accessing Envs
+				if cr.Spec.Driver.Common != nil {
+					if cr.Spec.Driver.Common.Image != "" {
+						image := string(cr.Spec.Driver.Common.Image)
+						c.Image = &image
+					}
 				}
 			}
 			var commonEnvs, controllerEnvs []corev1.EnvVar

@@ -25,7 +25,7 @@ import (
 type ContainerStorageModuleSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-
+	Version string `json:"version,omitempty" yaml:"version,omitempty"`
 	// Driver is a CSI Drivers for Dell Technologies
 	Driver Driver `json:"driver,omitempty" yaml:"driver,omitempty"`
 
@@ -71,6 +71,11 @@ type ContainerStorageModuleList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []ContainerStorageModule `json:"items"`
+}
+
+type VersionSpec struct {
+	Version string            `yaml:"version"`
+	Images  map[string]string `yaml:",inline"`
 }
 
 func init() {
