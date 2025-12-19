@@ -15,7 +15,6 @@ package modules
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -136,92 +135,6 @@ func setFirstContainerImage(podSpec *corev1.PodSpec, image string) {
 		return
 	}
 	podSpec.Containers[0].Image = image
-}
-
-// Locate csm-images ConfigMap
-func findCSMImagesConfigMap(ctx context.Context, ctrlClient crclient.Client) (*corev1.ConfigMap, error) {
-	cmList := &corev1.ConfigMapList{}
-	if err := ctrlClient.List(ctx, cmList); err != nil {
-		return nil, fmt.Errorf("error listing configmaps: %v", err)
-	}
-	var namespace string
-	for _, cm := range cmList.Items {
-		if cm.Name == CSMImagesConfigMapName {
-			namespace = cm.Namespace
-			break
-		}
-	}
-	if namespace == "" {
-		return nil, fmt.Errorf("%s ConfigMap not found", CSMImagesConfigMapName)
-	}
-	names := t1.NamespacedName{Name: CSMImagesConfigMapName, Namespace: namespace}
-	cm := &corev1.ConfigMap{}
-	if err := ctrlClient.Get(ctx, names, cm); err != nil {
-		if k8serrors.IsNotFound(err) {
-			return nil, fmt.Errorf("%s not found in namespace %s", CSMImagesConfigMapName, namespace)
-		}
-		return nil, fmt.Errorf("error fetching %s: %v", CSMImagesConfigMapName, err)
-	}
-	return cm, nil
-}
-
-// Parse flat versions.yaml as []map[string]string
-func parseVersionsFlat(cm *corev1.ConfigMap) ([]map[string]string, error) {
-	data, ok := cm.Data["versions.yaml"]
-	if !ok {
-		return nil, fmt.Errorf("versions.yaml not found in ConfigMap %s", cm.Name)
-	}
-	var entries []map[string]string
-	if err := yaml.Unmarshal([]byte(data), &entries); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal versions.yaml: %v", err)
-	}
-	return entries, nil
-}
-
-// Find entry where entry["version"] == desired
-func matchVersionFlat(entries []map[string]string, desired string) (map[string]string, bool) {
-	for _, e := range entries {
-		if e["version"] == desired {
-			return e, true
-		}
-	}
-	return nil, false
-}
-
-// Resolve controller-manager image (ConfigMap -> env) for the new flat format
-func resolveReplicationControllerImageFlat(
-	ctx context.Context,
-	ctrlClient crclient.Client,
-	cr csmv1.ContainerStorageModule,
-) string {
-	log := logger.GetLogger(ctx)
-
-	if cr.Spec.Version == "" {
-		return ""
-	}
-
-	cm, err := findCSMImagesConfigMap(ctx, ctrlClient)
-	if err == nil {
-		if entries, pErr := parseVersionsFlat(cm); pErr == nil {
-			if entry, ok := matchVersionFlat(entries, cr.Spec.Version); ok {
-				if img := entry[CMKeyReplicationController]; img != "" {
-					return img
-				}
-				log.Info("ConfigMap entry lacks controller-manager image; falling back to env",
-					"version", cr.Spec.Version)
-			} else {
-				log.Info("Version not found in versions.yaml; falling back to env",
-					"desiredVersion", cr.Spec.Version)
-			}
-		} else {
-			log.Info("Failed parsing versions.yaml; falling back to env", "error", pErr)
-		}
-	} else {
-		log.Info("csm-images ConfigMap not available; falling back to env", "error", err)
-	}
-
-	// Fallback to operator defaults (RELATED_IMAGE_* provided by OLM)
-	return os.Getenv(EnvRelatedController)
 }
 
 func getRepctlPrefices(replicaModule csmv1.Module, driverType csmv1.DriverType) (string, string) {

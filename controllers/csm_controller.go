@@ -941,21 +941,13 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			case csmv1.Replication:
 				log.Info("Injecting CSM Replication")
 
-				dp, err := modules.ReplicationInjectDeployment(
-					controller.Deployment,
-					cr,
-					operatorConfig,
-				)
+				dp, err := modules.ReplicationInjectDeployment(controller.Deployment, cr, operatorConfig)
 				if err != nil {
 					return fmt.Errorf("injecting replication into deployment: %v", err)
 				}
 				controller.Deployment = *dp
 
-				clusterRole, err := modules.ReplicationInjectClusterRole(
-					controller.Rbac.ClusterRole,
-					cr,
-					operatorConfig,
-				)
+				clusterRole, err := modules.ReplicationInjectClusterRole(controller.Rbac.ClusterRole, cr, operatorConfig)
 				if err != nil {
 					return fmt.Errorf("injecting replication into controller cluster role: %v", err)
 				}
