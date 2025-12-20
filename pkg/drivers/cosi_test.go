@@ -98,15 +98,13 @@ func TestModifyCosiCRController(t *testing.T) {
 					{Key: "node-role.kubernetes.io/worker", Operator: corev1.TolerationOpExists, Effect: corev1.TaintEffectNoSchedule},
 				},
 				[]corev1.EnvVar{
-					{Name: "CSI_LOG_LEVEL", Value: "10"},
-					{Name: "CSI_LOG_FORMAT", Value: "text"},
+					{Name: "COSI_LOG_LEVEL", Value: "info"},
+					{Name: "COSI_LOG_FORMAT", Value: "text"},
 					{Name: "OTEL_COLLECTOR_ADDRESS", Value: "test:1234"},
 				}...),
 			func(t *testing.T, manifest string) {
-				assert.Contains(t, manifest, "--log-level=10")
-				assert.Contains(t, manifest, "--log-format=text")
+				assert.Contains(t, manifest, "--driver-config-params=/cosi-config-params/driver-config-params.yaml")
 				assert.Contains(t, manifest, "--otel-endpoint=test:1234")
-				assert.Contains(t, manifest, "-v=10")
 				assert.Contains(t, manifest, `node-role.kubernetes.io/worker: "true"`)
 				assert.Contains(t, manifest, "key: node-role.kubernetes.io/worker")
 				assert.Contains(t, manifest, "- effect: NoSchedule")

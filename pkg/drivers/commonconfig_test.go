@@ -145,8 +145,8 @@ func TestGetControllerCOSI(t *testing.T) {
 			{Key: "node-role.kubernetes.io/worker", Operator: corev1.TolerationOpExists, Effect: corev1.TaintEffectNoSchedule},
 		},
 		[]corev1.EnvVar{
-			{Name: "CSI_LOG_LEVEL", Value: "10"},
-			{Name: "CSI_LOG_FORMAT", Value: "text"},
+			{Name: "COSI_LOG_LEVEL", Value: "info"},
+			{Name: "COSI_LOG_FORMAT", Value: "text"},
 			{Name: "OTEL_COLLECTOR_ADDRESS", Value: "test:1234"},
 		}...)
 	_, err := GetController(context.Background(), csm, config, csmv1.Cosi)

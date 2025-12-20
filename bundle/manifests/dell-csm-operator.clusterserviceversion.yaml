@@ -116,12 +116,12 @@ metadata:
                 "tolerations": [],
                 "envs": [
                   {
-                    "name": "CSI_LOG_LEVEL",
-                    "value": "4"
+                    "name": "COSI_LOG_LEVEL",
+                    "value": "info"
                   },
                   {
-                    "name": "CSI_LOG_FORMAT",
-                    "value": "json"
+                    "name": "COSI_LOG_FORMAT",
+                    "value": "TEXT"
                   },
                   {
                     "name": "OTEL_COLLECTOR_ADDRESS",

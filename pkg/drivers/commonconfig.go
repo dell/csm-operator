@@ -38,7 +38,7 @@ var defaultVolumeConfigName = map[csmv1.DriverType]string{
 const (
 	ConfigParamsFile = "driver-config-params.yaml"
 	// CSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
-	CSMNameSpace string = "<CSM_NAMESPACE>"
+	CSMNameSpace = "<CSM_NAMESPACE>"
 
 	// CsiLogLevel - Defines the log level
 	CsiLogLevel = "<CSI_LOG_LEVEL>"
@@ -48,6 +48,12 @@ const (
 
 	// OtelCollectorAddress - Defines the otel collector address
 	OtelCollectorAddress = "<OTEL_COLLECTOR_ADDRESS>"
+
+	// CsiLogFormat - Defines the log format for cosi
+	CosiLogLevel = "COSI_LOG_LEVEL"
+
+	// CsiLogFormat - Defines the log format for cosi
+	CosiLogFormat = "COSI_LOG_FORMAT"
 )
 
 // GetController get controller yaml
@@ -476,11 +482,11 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 
 	if cr.Spec.Driver.Common != nil {
 		for _, env := range cr.Spec.Driver.Common.Envs {
-			if env.Name == "CSI_LOG_LEVEL" {
+			if env.Name == "CSI_LOG_LEVEL" || env.Name == CosiLogLevel {
 				cmValue += fmt.Sprintf("\n%s: %s", env.Name, env.Value)
 				podmanLogLevel = env.Value
 			}
-			if env.Name == "CSI_LOG_FORMAT" {
+			if env.Name == "CSI_LOG_FORMAT" || env.Name == CosiLogFormat {
 				cmValue += fmt.Sprintf("\n%s: %s", env.Name, env.Value)
 				podmanLogFormat = env.Value
 			}
