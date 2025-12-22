@@ -58,7 +58,7 @@ var yamlUnmarshal = func(data []byte, v interface{}) error {
 // K8sImagesConfig -
 type K8sImagesConfig struct {
 	K8sVersion string `json:"kubeversion" yaml:"kubeversion"`
-	Images	 struct {
+	Images struct {
 		Attacher			  string `json:"attacher" yaml:"attacher"`
 		Provisioner		   string `json:"provisioner" yaml:"provisioner"`
 		Snapshotter		   string `json:"snapshotter" yaml:"snapshotter"`
