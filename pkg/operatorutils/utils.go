@@ -838,7 +838,7 @@ func GetModuleDefaultVersion(driverConfigVersion string, driverType csmv1.Driver
 	if err != nil {
 		return "", err
 	}
-	fmt.Printf("GetModuleDefaultVersion: %v\n", support)
+
 	dType := driverType
 	if driverType == "isilon" {
 		dType = "powerscale"
@@ -1240,6 +1240,7 @@ func GetEnvironmentVariable(varName string) (string, error) {
 	return value, nil
 }
 
+// GetVersion returns the corresponding config version of the CSM version
 func GetVersion(cr *csmv1.ContainerStorageModule, op OperatorConfig) (string, error) {
 	if cr.Spec.Version != "" {
 		file := fmt.Sprintf("%s/common/csm-version-mapping.yaml", op.ConfigDirectory)
@@ -1253,7 +1254,7 @@ func GetVersion(cr *csmv1.ContainerStorageModule, op OperatorConfig) (string, er
 		if err != nil {
 			return "", err
 		}
-		fmt.Printf("Get mapping for csm: %v\n", support)
+
 		driverType := cr.Spec.Driver.CSIDriverType
 		if driverType == csmv1.PowerScale {
 			// use powerscale instead of isilon as the folder name is powerscale
@@ -1264,9 +1265,16 @@ func GetVersion(cr *csmv1.ContainerStorageModule, op OperatorConfig) (string, er
 			if configVersion, ok := csmVersion[cr.Spec.Version]; ok {
 				return configVersion, nil
 			}
-			return "", fmt.Errorf("config version for CSM version %s does not exist in file %s", cr.Spec.Version, file)
+
+			// Collect all the supported CSM versions to include in the error message
+			var keys []string
+			for k := range csmVersion {
+				keys = append(keys, k)
+			}
+
+			return "", fmt.Errorf("No custom resource configuration is available for CSM version %s. Supported CSM versions are: [%s]", cr.Spec.Version, strings.Join(keys, ", "))
 		}
-		return "", fmt.Errorf("platform %s does not exist in file %s", driverType, file)
+		return "", fmt.Errorf("Unsupported platform %s", driverType)
 	}
 	return cr.Spec.Driver.ConfigVersion, nil
 }

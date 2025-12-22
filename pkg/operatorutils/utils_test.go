@@ -3455,7 +3455,7 @@ func TestGetVersion(t *testing.T) {
 				ConfigDirectory: "../../operatorconfig",
 			},
 			want:        "",
-			expectedErr: "platform invalid does not exist in file ../../operatorconfig/common/csm-version-mapping.yaml",
+			expectedErr: "Unsupported platform invalid",
 		},
 		{
 			name: "invalid_version",
@@ -3464,13 +3464,12 @@ func TestGetVersion(t *testing.T) {
 				ConfigDirectory: "../../operatorconfig",
 			},
 			want:        "",
-			expectedErr: "config version for CSM version v1.10.0 does not exist in file ../../operatorconfig/common/csm-version-mapping.yaml",
+			expectedErr: "No custom resource configuration is available for CSM version v1.10.0. Supported CSM versions are: [v1.15.0, v1.15.1, v1.16.0, v1.14.0]",
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-
 			got, err := GetVersion(tc.cr, tc.op)
 			if err != nil && err.Error() != tc.expectedErr {
 				t.Errorf("GetVersion() returned error = %v but expected error = %v", err, tc.expectedErr)
