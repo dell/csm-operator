@@ -237,36 +237,61 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 	}
 }
 
-func ResolveImage(imagefile, customRegistry string, retainImageRegistryPath bool) string {
-	imagefile = strings.TrimSpace(imagefile)
-	customRegistry = strings.TrimSpace(customRegistry)
 
-	// Backward compatibility: no override if customRegistry is unset
-	if customRegistry == "" {
-		return imagefile
-	}
+package operatorutils
 
-	//operatorConfig.retainImageRegistryPath
-	if retainImageRegistryPath {
+import (
+    "fmt"
+    "strings"
+)
 
-		//Retain the path metioned e.g. "dell/container-storage-modules/"
-		parts := strings.SplitN(imagefile, "/", 2)
-		if len(parts) == 2 {
-			isDomain := strings.Contains(parts[0], ".") || strings.Contains(parts[0], "localhost")
-			if isDomain {
-				imagefile = parts[1]
-			}
-		}
-	} else {
-		//Get the image file name from the image path
-		i := strings.LastIndexByte(imagefile, '/')
-		if i != -1 {
-			imagefile = imagefile[i+1:]
-		}
-	}
-	customRegistry = strings.TrimRight(customRegistry, "/")
+// ResolveImage returns an image reference combining a custom registry with an
+// existing image path or name. If retainImageRegistryPath is true, the original
+// path segment (e.g., "org/repo/image:tag") is preserved while removing any
+// registry domain from imageFile. If customRegistry is empty, the original
+// imageFile is returned unchanged.
+//
+// Examples:
+//   ResolveImage("docker.io/dell/csm:1.2.3", "registry.example.com", true)
+//     -> "registry.example.com/dell/csm:1.2.3"
+//
+//   ResolveImage("docker.io/dell/csm:1.2.3", "registry.example.com", false)
+//     -> "registry.example.com/csm:1.2.3"
+//
+//   ResolveImage("csm:1.2.3", "registry.example.com", true)
+//     -> "registry.example.com/csm:1.2.3"
+//
+//   ResolveImage("csm:1.2.3", "", true)
+//     -> "csm:1.2.3"
+func ResolveImage(imageFile, customRegistry string, retainImageRegistryPath bool) string {
+    imageFile = strings.TrimSpace(imageFile)
+    customRegistry = strings.TrimSpace(customRegistry)
 
-	return fmt.Sprintf("%s/%s", customRegistry, imagefile)
+    // Backward compatibility: no override if customRegistry is unset.
+    if customRegistry == "" {
+        return imageFile
+    }
+
+    if retainImageRegistryPath {
+        // Retain the repository path (e.g., "dell/container-storage-modules/...").
+        // If the image contains a registry domain (has a dot or "localhost"),
+        // strip the domain and keep only the path segment.
+        parts := strings.SplitN(imageFile, "/", 2)
+        if len(parts) == 2 {
+            isDomain := strings.Contains(parts[0], ".") || parts[0] == "localhost"
+            if isDomain {
+                imageFile = parts[1]
+            }
+        }
+    } else {
+        // Keep only the final image name: e.g., "repo/image:tag" -> "image:tag".
+        if i := strings.LastIndexByte(imageFile, '/'); i != -1 {
+            imageFile = imageFile[i+1:]
+        }
+    }
+
+    customRegistry = strings.TrimRight(customRegistry, "/")
+    return fmt.Sprintf("%s/%s", customRegistry, imageFile)
 }
 
 var registryRegex = regexp.MustCompile(`^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*|\[[a-f0-9:]+\])(:[0-9]+)?(/.*)?$`)
