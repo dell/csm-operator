@@ -86,6 +86,9 @@ func (cr *ContainerStorageModule) GetCSMStatus() *ContainerStorageModuleStatus {
 
 // GetControllerName - Returns a controller
 func (cr *ContainerStorageModule) GetControllerName() string {
+	if cr.Spec.Driver.CSIDriverType == Cosi {
+		return cr.Name
+	}
 	return fmt.Sprintf("%s-controller", cr.Name)
 }
 

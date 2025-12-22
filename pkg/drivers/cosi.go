@@ -51,19 +51,11 @@ func PrecheckCosi(ctx context.Context, cr *csmv1.ContainerStorageModule, operato
 // ModifyCosiCR
 func ModifyCosiCR(yamlString string, cr csmv1.ContainerStorageModule, fileType string) (string, error) {
 	// default values for the envs
-	logLevel := "4"
-	logFormat := "json"
 	otelCollectorAddr := ""
 
 	// gather the env values from the CR
 	if cr.Spec.Driver.Common != nil {
 		for _, env := range cr.Spec.Driver.Common.Envs {
-			if env.Name == "CSI_LOG_LEVEL" {
-				logLevel = env.Value
-			}
-			if env.Name == "CSI_LOG_FORMAT" {
-				logFormat = env.Value
-			}
 			if env.Name == "OTEL_COLLECTOR_ADDRESS" {
 				otelCollectorAddr = env.Value
 			}
@@ -74,8 +66,6 @@ func ModifyCosiCR(yamlString string, cr csmv1.ContainerStorageModule, fileType s
 	switch fileType {
 	case "Controller":
 		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
-		yamlString = strings.ReplaceAll(yamlString, CsiLogLevel, logLevel)
-		yamlString = strings.ReplaceAll(yamlString, CsiLogFormat, logFormat)
 		yamlString = strings.ReplaceAll(yamlString, OtelCollectorAddress, otelCollectorAddr)
 	}
 

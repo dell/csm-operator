@@ -17,16 +17,16 @@ spec:
       # Tolerations for scheduling the COSI driver pod.
       tolerations: []
       envs:
-        # CSI_LOG_LEVEL sets the log verbosity for the COSI driver.
-        # Values: 0–10
-        # Default: 4
-        - name: CSI_LOG_LEVEL
-          value: "4"
-        # CSI_LOG_FORMAT sets the log output format.
-        # Values: "json", "text", "pretty"
-        # Default: "text"
-        - name: CSI_LOG_FORMAT
-          value: "json"
+        # COSI driver log level.
+        # Options are "PANIC", "FATAL", "ERROR", "WARN", "INFO",
+        # "DEBUG", and "TRACE".
+        - name: COSI_LOG_LEVEL
+          value: "INFO"
+        # COSI driver log format
+        # Allowed values: "TEXT" or "JSON"
+        # Default value: "TEXT"
+        - name: COSI_LOG_FORMAT
+          value: "TEXT"
         # OTEL_COLLECTOR_ADDRESS is the gRPC endpoint for the OTEL Collector.
         # Example: "otel-collector.namespace:4317"
         # Default: ""
