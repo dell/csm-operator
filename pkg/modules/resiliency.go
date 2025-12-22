@@ -198,7 +198,7 @@ func modifyPodmon(component csmv1.ContainerTemplate, container *acorev1.Containe
 	container.Args = operatorutils.ReplaceAllArgs(container.Args, component.Args)
 }
 
-func setResiliencyArgs(m csmv1.Module, mode string, container *acorev1.ContainerApplyConfiguration) {
+func setResiliencyArgs(m csmv1.Module, mode string, container *acorev1.ContainerApplyConfiguration, matched csmv1.VersionSpec) {
 	for _, component := range m.Components {
 		if component.Name == operatorutils.PodmonControllerComponent && mode == controllerMode {
 			modifyPodmon(component, container, matched)
@@ -254,8 +254,8 @@ func getResiliencyApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.Oper
 }
 
 // ResiliencyInjectDeployment - inject resiliency into deployment
-func ResiliencyInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, driverType string) (*applyv1.DeploymentApplyConfiguration, error) {
-	resiliencyModule, podmonPtr, err := getResiliencyApplyCR(cr, op, driverType, controllerMode)
+func ResiliencyInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, driverType string, matched csmv1.VersionSpec) (*applyv1.DeploymentApplyConfiguration, error) {
+	resiliencyModule, podmonPtr, err := getResiliencyApplyCR(cr, op, driverType, controllerMode, matched)
 	if err != nil {
 		return nil, err
 	}
@@ -294,8 +294,8 @@ func ResiliencyInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv
 }
 
 // ResiliencyInjectDaemonset  - inject resiliency into daemonset
-func ResiliencyInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, driverType string) (*applyv1.DaemonSetApplyConfiguration, error) {
-	resiliencyModule, podmonPtr, err := getResiliencyApplyCR(cr, op, driverType, nodeMode)
+func ResiliencyInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, driverType string, matched csmv1.VersionSpec) (*applyv1.DaemonSetApplyConfiguration, error) {
+	resiliencyModule, podmonPtr, err := getResiliencyApplyCR(cr, op, driverType, nodeMode, matched)
 	if err != nil {
 		return nil, err
 	}
