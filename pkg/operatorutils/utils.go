@@ -238,7 +238,6 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 }
 
 func ResolveImage(imagefile, customRegistry string, retainImageRegistryPath bool) string {
-
 	imagefile = strings.TrimSpace(imagefile)
 	customRegistry = strings.TrimSpace(customRegistry)
 
