@@ -3414,7 +3414,7 @@ func TestResolveImage(t *testing.T) {
 			want: "my-local-registry/dell/csi-powerflex:v2.0",
 		},
 		{
-			name: "Custom registry + Retain Path (Deeply nested image path)",
+			name: "Custom registry + Retain Path (Deeply nested image pat)",
 			args: args{
 				imagefile:               "quay.io/organization/team/app:v1",
 				customRegistry:          "internal-registry",
