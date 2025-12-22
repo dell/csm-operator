@@ -76,10 +76,14 @@ func checkVersion(moduleType, givenVersion, configPath string) error {
 }
 
 func readConfigFile(module csmv1.Module, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, filename string) ([]byte, error) {
-	var err error
+	//var err error
 	moduleConfigVersion := module.ConfigVersion
 	if moduleConfigVersion == "" {
-		moduleConfigVersion, err = operatorutils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, module.Name, op.ConfigDirectory)
+		version, err := operatorutils.GetVersion(&cr, op)
+		if err != nil {
+			return nil, err
+		}
+		moduleConfigVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, module.Name, op.ConfigDirectory)
 		if err != nil {
 			return nil, err
 		}

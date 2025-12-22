@@ -131,7 +131,11 @@ func ResiliencyInjectRole(role rbacv1.Role, cr csmv1.ContainerStorageModule, op 
 	}
 	resiliencyVersion := resiliencyModule.ConfigVersion
 	if resiliencyVersion == "" {
-		resiliencyVersion, err = operatorutils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, resiliencyModule.Name, op.ConfigDirectory)
+		version, err := operatorutils.GetVersion(&cr, op)
+		if err != nil {
+			return nil, err
+		}
+		resiliencyVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, resiliencyModule.Name, op.ConfigDirectory)
 		if err != nil {
 			return nil, err
 		}

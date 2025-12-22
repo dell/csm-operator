@@ -321,7 +321,11 @@ func ObservabilityPrecheck(ctx context.Context, op operatorutils.OperatorConfig,
 // ObservabilityTopology - delete or update topology objectstools
 func ObservabilityTopology(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
-	configVersion := cr.Spec.Driver.ConfigVersion
+
+	configVersion, err := operatorutils.GetVersion(&cr, op)
+	if err != nil {
+		return err
+	}
 	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
 		topoObjects, err := getTopology(op, cr)
 		if err != nil {
@@ -432,7 +436,10 @@ func getOtelCollector(op operatorutils.OperatorConfig, cr csmv1.ContainerStorage
 
 	nginxProxyImage := "quay.io/nginx/nginx-unprivileged:1.27"
 	otelCollectorImage := "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0"
-	configVersion := cr.Spec.Driver.ConfigVersion
+	configVersion, err := operatorutils.GetVersion(&cr, op)
+	if err != nil {
+		return YamlString, err
+	}
 	// Currently supported config versions by this operator(release candidate for CSM v2.14.0) are v2.11.0, v2.12.0, v2.13.0.
 	// These config versions were already supported by the released operators. So use the same otel image for them.
 	if configVersion == "v2.11.0" || configVersion == "v2.12.0" || configVersion == "v2.13.0" {
@@ -488,7 +495,10 @@ func PowerScaleMetrics(ctx context.Context, isDeleting bool, op operatorutils.Op
 		return fmt.Errorf("could not find deployment obj")
 	}
 
-	configVersion := cr.Spec.Driver.ConfigVersion
+	configVersion, err := operatorutils.GetVersion(&cr, op)
+	if err != nil {
+		return err
+	}
 	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
 		// append secret objects
 		powerscaleMetricsObjects, err = appendObservabilitySecrets(ctx, cr, powerscaleMetricsObjects, ctrlClient, k8sClient)
@@ -821,7 +831,10 @@ func parseObservabilityMetricsDeployment(ctx context.Context, deployment *appsv1
 		}
 	}
 
-	configVersion := cr.Spec.Driver.ConfigVersion
+	configVersion, err := operatorutils.GetVersion(&cr, op)
+	if err != nil {
+		return nil, err
+	}
 	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
 
 		// add prefix to secretName of auth volumes
@@ -874,7 +887,10 @@ func PowerFlexMetrics(ctx context.Context, isDeleting bool, op operatorutils.Ope
 		return fmt.Errorf("could not find deployment obj")
 	}
 
-	configVersion := cr.Spec.Driver.ConfigVersion
+	configVersion, err := operatorutils.GetVersion(&cr, op)
+	if err != nil {
+		return err
+	}
 	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
 		// append secret objects
 		powerflexMetricsObjects, err = appendObservabilitySecrets(ctx, cr, powerflexMetricsObjects, ctrlClient, k8sClient)
@@ -1175,8 +1191,12 @@ func PowerMaxMetrics(ctx context.Context, isDeleting bool, op operatorutils.Oper
 		return fmt.Errorf("could not find deployment obj")
 	}
 
+	version, err := operatorutils.GetVersion(&cr, op)
+	if err != nil {
+		return err
+	}
 	// Dynamic secret/configMap mounting is only supported in v2.14.0 and above
-	secretSupported, err := operatorutils.MinVersionCheck(drivers.PowerMaxMountCredentialMinVersion, cr.Spec.Driver.ConfigVersion)
+	secretSupported, err := operatorutils.MinVersionCheck(drivers.PowerMaxMountCredentialMinVersion, version)
 	if err != nil {
 		return err
 	}
@@ -1195,7 +1215,10 @@ func PowerMaxMetrics(ctx context.Context, isDeleting bool, op operatorutils.Oper
 		}
 	}
 
-	configVersion := cr.Spec.Driver.ConfigVersion
+	configVersion, err := operatorutils.GetVersion(&cr, op)
+	if err != nil {
+		return err
+	}
 	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
 		// append secret objects
 		powerMaxMetricsObjects, err = appendObservabilitySecrets(ctx, cr, powerMaxMetricsObjects, ctrlClient, k8sClient)

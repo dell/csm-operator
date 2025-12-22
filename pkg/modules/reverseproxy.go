@@ -149,7 +149,11 @@ func ReverseProxyServer(ctx context.Context, isDeleting bool, op operatorutils.O
 
 			// Mount Credential support is only introduced in CSM v2.14.0. Prior to this version, we will not try to dynamically
 			// add the necessary fields for either approach.
-			secretSupported, err := operatorutils.MinVersionCheck(drivers.PowerMaxMountCredentialMinVersion, cr.Spec.Driver.ConfigVersion)
+			version, err := operatorutils.GetVersion(&cr, op)
+			if err != nil {
+				return err
+			}
+			secretSupported, err := operatorutils.MinVersionCheck(drivers.PowerMaxMountCredentialMinVersion, version)
 			if err != nil {
 				return err
 			}
@@ -333,7 +337,11 @@ func ReverseProxyInjectDeployment(dp v1.DeploymentApplyConfiguration, cr csmv1.C
 	}
 
 	// Dynamic secret/configMap mounting is only supported in v2.14.0 and above
-	secretSupported, err := operatorutils.MinVersionCheck(drivers.PowerMaxMountCredentialMinVersion, cr.Spec.Driver.ConfigVersion)
+	version, err := operatorutils.GetVersion(&cr, op)
+	if err != nil {
+		return nil, err
+	}
+	secretSupported, err := operatorutils.MinVersionCheck(drivers.PowerMaxMountCredentialMinVersion, version)
 	if err != nil {
 		return nil, err
 	}
