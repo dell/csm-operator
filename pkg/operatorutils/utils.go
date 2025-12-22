@@ -242,19 +242,6 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 // path segment (e.g., "org/repo/image:tag") is preserved while removing any
 // registry domain from imageFile. If customRegistry is empty, the original
 // imageFile is returned unchanged.
-//
-// Examples:
-//   ResolveImage("docker.io/dell/csm:1.2.3", "registry.example.com", true)
-//     -> "registry.example.com/dell/csm:1.2.3"
-//
-//   ResolveImage("docker.io/dell/csm:1.2.3", "registry.example.com", false)
-//     -> "registry.example.com/csm:1.2.3"
-//
-//   ResolveImage("csm:1.2.3", "registry.example.com", true)
-//     -> "registry.example.com/csm:1.2.3"
-//
-//   ResolveImage("csm:1.2.3", "", true)
-//     -> "csm:1.2.3"
 func ResolveImage(imageFile, customRegistry string, retainImageRegistryPath bool) string {
     imageFile = strings.TrimSpace(imageFile)
     customRegistry = strings.TrimSpace(customRegistry)
