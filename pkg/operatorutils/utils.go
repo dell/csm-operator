@@ -3,7 +3,7 @@
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
 //  You may obtain a copy of the License at
-//       http://www.apache.org/licenses/LICENSE-2.0
+//	   http://www.apache.org/licenses/LICENSE-2.0
 //  Unless required by applicable law or agreed to in writing, software
 //  distributed under the License is distributed on an "AS IS" BASIS,
 //  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,34 +58,34 @@ var yamlUnmarshal = func(data []byte, v interface{}) error {
 // K8sImagesConfig -
 type K8sImagesConfig struct {
 	K8sVersion string `json:"kubeversion" yaml:"kubeversion"`
-	Images     struct {
-		Attacher              string `json:"attacher" yaml:"attacher"`
-		Provisioner           string `json:"provisioner" yaml:"provisioner"`
-		Snapshotter           string `json:"snapshotter" yaml:"snapshotter"`
-		Registrar             string `json:"registrar" yaml:"registrar"`
-		Resizer               string `json:"resizer" yaml:"resizer"`
+	Images	 struct {
+		Attacher			  string `json:"attacher" yaml:"attacher"`
+		Provisioner		   string `json:"provisioner" yaml:"provisioner"`
+		Snapshotter		   string `json:"snapshotter" yaml:"snapshotter"`
+		Registrar			 string `json:"registrar" yaml:"registrar"`
+		Resizer			   string `json:"resizer" yaml:"resizer"`
 		Externalhealthmonitor string `json:"externalhealthmonitorcontroller" yaml:"externalhealthmonitorcontroller"`
-		Sdc                   string `json:"sdc" yaml:"sdc"`
-		Sdcmonitor            string `json:"sdcmonitor" yaml:"sdcmonitor"`
-		Podmon                string `json:"podmon" yaml:"podmon"`
-		CSIRevProxy           string `json:"csiReverseProxy" yaml:"csiReverseProxy"`
+		Sdc				   string `json:"sdc" yaml:"sdc"`
+		Sdcmonitor			string `json:"sdcmonitor" yaml:"sdcmonitor"`
+		Podmon				string `json:"podmon" yaml:"podmon"`
+		CSIRevProxy		   string `json:"csiReverseProxy" yaml:"csiReverseProxy"`
 	} `json:"images" yaml:"images"`
 }
 
 // OperatorConfig -
 type OperatorConfig struct {
-	IsOpenShift     bool
-	K8sVersion      K8sImagesConfig
+	IsOpenShift	 bool
+	K8sVersion	  K8sImagesConfig
 	ConfigDirectory string
 }
 
 // RbacYAML -
 type RbacYAML struct {
-	ServiceAccount     corev1.ServiceAccount
-	ClusterRole        rbacv1.ClusterRole
+	ServiceAccount	 corev1.ServiceAccount
+	ClusterRole		rbacv1.ClusterRole
 	ClusterRoleBinding rbacv1.ClusterRoleBinding
-	Role               rbacv1.Role
-	RoleBinding        rbacv1.RoleBinding
+	Role			   rbacv1.Role
+	RoleBinding		rbacv1.RoleBinding
 }
 
 // UpgradePaths a list of versions eligible to upgrade the current version
@@ -96,24 +96,24 @@ type UpgradePaths struct {
 // ControllerYAML -
 type ControllerYAML struct {
 	Deployment confv1.DeploymentApplyConfiguration
-	Rbac       RbacYAML
+	Rbac	   RbacYAML
 }
 
 // StatefulControllerYAML -
 type StatefulControllerYAML struct {
 	StatefulSet confv1.StatefulSetApplyConfiguration
-	Rbac        RbacYAML
+	Rbac		RbacYAML
 }
 
 // NodeYAML -
 type NodeYAML struct {
 	DaemonSetApplyConfig confv1.DaemonSetApplyConfiguration
-	Rbac                 RbacYAML
+	Rbac				 RbacYAML
 }
 
 // ClusterConfig -
 type ClusterConfig struct {
-	ClusterID         string
+	ClusterID		 string
 	ClusterCTRLClient crclient.Client
 	ClusterK8sClient  kubernetes.Interface
 }
@@ -243,34 +243,34 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 // registry domain from imageFile. If customRegistry is empty, the original
 // imageFile is returned unchanged.
 func ResolveImage(imageFile, customRegistry string, retainImageRegistryPath bool) string {
-    imageFile = strings.TrimSpace(imageFile)
-    customRegistry = strings.TrimSpace(customRegistry)
+	imageFile = strings.TrimSpace(imageFile)
+	customRegistry = strings.TrimSpace(customRegistry)
 
-    // Backward compatibility: no override if customRegistry is unset.
-    if customRegistry == "" {
-        return imageFile
-    }
+	// Backward compatibility: no override if customRegistry is unset.
+	if customRegistry == "" {
+		return imageFile
+	}
 
-    if retainImageRegistryPath {
-        // Retain the repository path (e.g., "dell/container-storage-modules/...").
-        // If the image contains a registry domain (has a dot or "localhost"),
-        // strip the domain and keep only the path segment.
-        parts := strings.SplitN(imageFile, "/", 2)
-        if len(parts) == 2 {
-            isDomain := strings.Contains(parts[0], ".") || parts[0] == "localhost"
-            if isDomain {
-                imageFile = parts[1]
-            }
-        }
-    } else {
-        // Keep only the final image name: e.g., "repo/image:tag" -> "image:tag".
-        if i := strings.LastIndexByte(imageFile, '/'); i != -1 {
-            imageFile = imageFile[i+1:]
-        }
-    }
+	if retainImageRegistryPath {
+		// Retain the repository path (e.g., "dell/container-storage-modules/...").
+		// If the image contains a registry domain (has a dot or "localhost"),
+		// strip the domain and keep only the path segment.
+		parts := strings.SplitN(imageFile, "/", 2)
+		if len(parts) == 2 {
+			isDomain := strings.Contains(parts[0], ".") || parts[0] == "localhost"
+			if isDomain {
+				imageFile = parts[1]
+			}
+		}
+	} else {
+		// Keep only the final image name: e.g., "repo/image:tag" -> "image:tag".
+		if i := strings.LastIndexByte(imageFile, '/'); i != -1 {
+			imageFile = imageFile[i+1:]
+		}
+	}
 
-    customRegistry = strings.TrimRight(customRegistry, "/")
-    return fmt.Sprintf("%s/%s", customRegistry, imageFile)
+	customRegistry = strings.TrimRight(customRegistry, "/")
+	return fmt.Sprintf("%s/%s", customRegistry, imageFile)
 }
 
 var registryRegex = regexp.MustCompile(`^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*|\[[a-f0-9:]+\])(:[0-9]+)?(/.*)?$`)
@@ -352,7 +352,7 @@ func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 				sRef := old.ValueFrom.SecretKeyRef
 				if sRef != nil {
 					secret := &acorev1.SecretKeySelectorApplyConfiguration{
-						Key:      sRef.Key,
+						Key:	  sRef.Key,
 						Optional: sRef.Optional,
 					}
 					secret.WithName(*sRef.Name)
@@ -763,7 +763,7 @@ func GetDriverYaml(YamlString, kind string) (interface{}, error) {
 		}
 		return ControllerYAML{
 			Deployment: dp,
-			Rbac:       rbac,
+			Rbac:	   rbac,
 		}, nil
 	} else if kind == "DaemonSet" {
 		var dsac confv1.DaemonSetApplyConfiguration
@@ -774,7 +774,7 @@ func GetDriverYaml(YamlString, kind string) (interface{}, error) {
 		}
 		return NodeYAML{
 			DaemonSetApplyConfig: dsac,
-			Rbac:                 rbac,
+			Rbac:				 rbac,
 		}, nil
 	}
 
@@ -964,7 +964,7 @@ func getConfigData(ctx context.Context, clusterID string, ctrlClient crclient.Cl
 	log := logger.GetLogger(ctx)
 	secret := &corev1.Secret{}
 	if err := ctrlClient.Get(ctx, t1.NamespacedName{
-		Name:      clusterID,
+		Name:	  clusterID,
 		Namespace: ReplicationControllerNameSpace,
 	}, secret); err != nil {
 		if k8serror.IsNotFound(err) {
@@ -1023,7 +1023,7 @@ func GetCluster(_ context.Context, r ReconcileCSM) ClusterConfig {
 	clusterClient := ClusterConfig{
 		ClusterCTRLClient: r.GetClient(),
 		ClusterK8sClient:  r.GetK8sClient(),
-		ClusterID:         DefaultSourceClusterID,
+		ClusterID:		 DefaultSourceClusterID,
 	}
 	return clusterClient
 }
