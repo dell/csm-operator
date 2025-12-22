@@ -53,7 +53,7 @@ var (
 		{"bad version", unityCSMBadVersion, unityClient, unitySecret, "not supported"},
 		{"invalid value for skip cert validation", unityCSMBadSkipCert, unityClient, unitySecret, "is an invalid value for X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION"},
 		{"invalid value for cert secret cnt", unityCSMBadCertCnt, unityClient, unitySecret, "is an invalid value for CERT_SECRET_COUNT"},
-		{"invalid csm version", unityInvalidCSMVersion, unityClient, unitySecret, "config version for CSM version v1.10.0 does not exist in file ../../tests/config/common/csm-version-mapping.yaml"},
+		{"invalid csm version", unityInvalidCSMVersion, unityClient, unitySecret, "No custom resource configuration is available for CSM version v1.10.0"},
 	}
 
 	unityPrecheckTests = []struct {

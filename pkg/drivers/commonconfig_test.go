@@ -63,7 +63,7 @@ var (
 		{"pmax happy path", pmaxCSM, csmv1.PowerMax, "node.yaml", ""},
 		{"pmax common env without node section", csmForPowerMax("common-env-override-no-node"), csmv1.PowerMax, "node.yaml", ""},
 		{"config file is invalid", csm, badDriver, "bad.yaml", "unmarshal"},
-		{"config file is invalid", csm1, badDriver, "bad.yaml", "config version for CSM version v1.10.0 does not exist in file ../../tests/config/common/csm-version-mapping.yaml"},
+		{"config file is invalid", csm1, badDriver, "bad.yaml", "No custom resource configuration is available for CSM version v1.10.0"},
 	}
 )
 
