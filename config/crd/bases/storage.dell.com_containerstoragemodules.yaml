@@ -3816,7 +3816,7 @@ spec:
                   description: CustomRegistry is the image registry
                   type: string
                 retainImageRegistryPath:
-                  description:  RetainImageRegistryPath is the flag to retain image registry path
+                  description: RetainImageRegistryPath is the flag to retain image registry path
                   type: boolean
               type: object
               x-kubernetes-validations:
