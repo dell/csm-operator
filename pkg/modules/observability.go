@@ -347,7 +347,7 @@ func ObservabilityTopology(ctx context.Context, isDeleting bool, op operatorutil
 	return nil
 }
 
-func getTopology(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]crclient.Object, error) {
+func getTopology(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, matched csmv1.VersionSpec) ([]crclient.Object, error) {
 	obs, err := getObservabilityModule(cr)
 	if err != nil {
 		return nil, err
@@ -364,7 +364,9 @@ func getTopology(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModul
 
 	for _, component := range obs.Components {
 		if component.Name == ObservabilityTopologyName {
-			if component.Image != "" {
+			if img, ok := matched.Images[component.Name]; ok && img != "" {
+				topologyImage = img
+			} else if component.Image != "" {
 				topologyImage = string(component.Image)
 			}
 			for _, env := range component.Envs {
@@ -416,7 +418,7 @@ func OtelCollector(ctx context.Context, isDeleting bool, op operatorutils.Operat
 }
 
 // getOtelCollector - get otel collector yaml string
-func getOtelCollector(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getOtelCollector(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, matched csmv1.VersionSpec) (string, error) {
 	YamlString := ""
 
 	obs, err := getObservabilityModule(cr)
@@ -441,7 +443,9 @@ func getOtelCollector(op operatorutils.OperatorConfig, cr csmv1.ContainerStorage
 
 	for _, component := range obs.Components {
 		if component.Name == ObservabilityOtelCollectorName {
-			if component.Image != "" {
+			if img, ok := matched.Images[component.Name]; ok && img != "" {
+				otelCollectorImage = img
+			} else if component.Image != "" {
 				otelCollectorImage = string(component.Image)
 			}
 			for _, env := range component.Envs {
@@ -600,7 +604,7 @@ func PowerStoreMetrics(ctx context.Context, isDeleting bool, op operatorutils.Op
 }
 
 // getPowerStoreMetricsObjects - get powerstore metrics yaml string
-func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]crclient.Object, error) {
+func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, matched csmv1.VersionSpec) ([]crclient.Object, error) {
 	obs, err := getObservabilityModule(cr)
 	if err != nil {
 		return nil, err
@@ -631,7 +635,9 @@ func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 
 	for _, component := range obs.Components {
 		if component.Name == ObservabilityMetricsPowerStoreName {
-			if component.Image != "" {
+			if img, ok := matched.Images[component.Name]; ok && img != "" {
+				obsPstoreImage = img
+			} else if component.Image != "" {
 				obsPstoreImage = string(component.Image)
 			}
 			for _, env := range component.Envs {
@@ -698,8 +704,8 @@ func getPowerStoreMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 	return metricsObjects, nil
 }
 
-// getPowerScaleMetricsObjects - get powerscale metrics yaml string
-func getPowerScaleMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]crclient.Object, error) {
+// getPowerScaleMetricsObjects - prefer matched.Images over CR image; fallback to YAML
+func getPowerScaleMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, matched csmv1.VersionSpec) ([]crclient.Object, error) {
 	obs, err := getObservabilityModule(cr)
 	if err != nil {
 		return nil, err
@@ -729,7 +735,9 @@ func getPowerScaleMetricsObjects(op operatorutils.OperatorConfig, cr csmv1.Conta
 
 	for _, component := range obs.Components {
 		if component.Name == ObservabilityMetricsPowerScaleName {
-			if component.Image != "" {
+			if img, ok := matched.Images[component.Name]; ok && img != "" {
+				pscaleImage = img
+			} else if component.Image != "" {
 				pscaleImage = string(component.Image)
 			}
 			for _, env := range component.Envs {
@@ -920,8 +928,8 @@ func PowerFlexMetrics(ctx context.Context, isDeleting bool, op operatorutils.Ope
 	return nil
 }
 
-// getPowerFlexMetricsObject - get powerflex metrics yaml string
-func getPowerFlexMetricsObject(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]crclient.Object, error) {
+// getPowerFlexMetricsObject - prefer matched.Images over CR image; fallback to YAML
+func getPowerFlexMetricsObject(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, matched csmv1.VersionSpec) ([]crclient.Object, error) {
 	obs, err := getObservabilityModule(cr)
 	if err != nil {
 		return nil, err
@@ -949,7 +957,9 @@ func getPowerFlexMetricsObject(op operatorutils.OperatorConfig, cr csmv1.Contain
 
 	for _, component := range obs.Components {
 		if component.Name == ObservabilityMetricsPowerFlexName {
-			if component.Image != "" {
+			if img, ok := matched.Images[component.Name]; ok && img != "" {
+				pflexImage = img
+			} else if component.Image != "" {
 				pflexImage = string(component.Image)
 			}
 			for _, env := range component.Envs {
@@ -1296,8 +1306,8 @@ func setPowerMaxMetricsConfigMap(dp *confv1.DeploymentApplyConfiguration, cr csm
 	return nil
 }
 
-// getPowerMaxMetricsObject - get powermax metrics yaml string
-func getPowerMaxMetricsObject(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]crclient.Object, error) {
+// getPowerMaxMetricsObject - prefer matched.Images over CR image; fallback to YAML
+func getPowerMaxMetricsObject(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, matched csmv1.VersionSpec) ([]crclient.Object, error) {
 	obs, err := getObservabilityModule(cr)
 	if err != nil {
 		return nil, err
@@ -1324,7 +1334,9 @@ func getPowerMaxMetricsObject(op operatorutils.OperatorConfig, cr csmv1.Containe
 
 	for _, component := range obs.Components {
 		if component.Name == ObservabilityMetricsPowerMaxName {
-			if component.Image != "" {
+			if img, ok := matched.Images[component.Name]; ok && img != "" {
+				pmaxImage = img
+			} else if component.Image != "" {
 				pmaxImage = string(component.Image)
 			}
 			for _, env := range component.Envs {

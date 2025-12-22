@@ -181,20 +181,17 @@ func getResiliencyEnv(resiliencyModule csmv1.Module, _ csmv1.DriverType) string 
 	return ""
 }
 
-// Apply resiliency module from the manifest file to the podmon sidecar
-func modifyPodmon(component csmv1.ContainerTemplate, container *acorev1.ContainerApplyConfiguration) {
-	if component.Image != "" {
-		image := string(component.Image)
-		if container.Image != nil {
-			*container.Image = image
-		}
-		container.Image = &image
+// Apply resiliency (podmon) module from the manifest file to the sidecar.
+func modifyPodmon(component csmv1.ContainerTemplate, container *acorev1.ContainerApplyConfiguration, matched csmv1.VersionSpec) {
+	if img, ok := matched.Images[component.Name]; ok && img != "" {
+		container.Image = &img
+	} else if component.Image != "" {
+		img := string(component.Image)
+		container.Image = &img
 	}
 	if component.ImagePullPolicy != "" {
-		if container.ImagePullPolicy != nil {
-			*container.ImagePullPolicy = component.ImagePullPolicy
-		}
-		container.ImagePullPolicy = &component.ImagePullPolicy
+		pp := component.ImagePullPolicy
+		container.ImagePullPolicy = &pp
 	}
 	emptyEnv := make([]corev1.EnvVar, 0)
 	container.Env = operatorutils.ReplaceAllApplyCustomEnvs(container.Env, emptyEnv, component.Envs)
@@ -204,10 +201,10 @@ func modifyPodmon(component csmv1.ContainerTemplate, container *acorev1.Containe
 func setResiliencyArgs(m csmv1.Module, mode string, container *acorev1.ContainerApplyConfiguration) {
 	for _, component := range m.Components {
 		if component.Name == operatorutils.PodmonControllerComponent && mode == controllerMode {
-			modifyPodmon(component, container)
+			modifyPodmon(component, container, matched)
 		}
-		if component.Name == operatorutils.PodmonNodeComponent && mode == "node" {
-			modifyPodmon(component, container)
+		if component.Name == operatorutils.PodmonNodeComponent && mode == nodeMode {
+			modifyPodmon(component, container, matched)
 		}
 	}
 }
@@ -224,7 +221,7 @@ func getPollRateFromArgs(args []string) string {
 	return ""
 }
 
-func getResiliencyApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, driverType, mode string) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
+func getResiliencyApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, driverType, mode string, matched csmv1.VersionSpec) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
 	resiliencyModule := csmv1.Module{}
 	for _, m := range cr.Spec.Modules {
 		if m.Name == csmv1.Resiliency {
@@ -251,8 +248,8 @@ func getResiliencyApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.Oper
 	if err != nil {
 		return nil, nil, err
 	}
-	// read args from the respective components
-	setResiliencyArgs(resiliencyModule, mode, &container)
+	// read args from the respective components and set image/pull policy using matched
+	setResiliencyArgs(resiliencyModule, mode, &container, matched)
 	return &resiliencyModule, &container, nil
 }
 
