@@ -156,9 +156,7 @@ func TestGetControllerCOSI(t *testing.T) {
 func TestGetNode(t *testing.T) {
 	ctx := context.Background()
 	foundInitMdm := false
-	// config := operatorutils.OperatorConfig{
-	// 	ConfigDirectory: "../../operatorconfig",
-	// }
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			node, err := GetNode(ctx, tt.csm, config, tt.driverName, tt.filename, ctrlClientFake.NewClientBuilder().Build())
