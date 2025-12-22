@@ -350,7 +350,11 @@ func getAuthApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op ope
 
 	authConfigVersion := authModule.ConfigVersion
 	if authConfigVersion == "" {
-		authConfigVersion, err = operatorutils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+		version, err := operatorutils.GetVersion(&cr, op)
+		if err != nil {
+			return nil, nil, err
+		}
+		authConfigVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -468,7 +472,11 @@ func getAuthApplyVolumes(ctx context.Context, cr csmv1.ContainerStorageModule, o
 
 	authConfigVersion := authModule.ConfigVersion
 	if authConfigVersion == "" {
-		authConfigVersion, err = operatorutils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+		version, err := operatorutils.GetVersion(&cr, op)
+		if err != nil {
+			return nil, err
+		}
+		authConfigVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
 		if err != nil {
 			return nil, err
 		}
