@@ -221,6 +221,17 @@ func TestResiliencyInjectRole(t *testing.T) {
 		"success - mode is controller": func(*testing.T) (bool, rbacv1.Role, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client) {
 			return true, rbacv1.Role{}, operatorConfig, csmv1.ContainerStorageModule{}, "node.yaml", c
 		},
+		"failure - GetModuleDefaultVersion error": func(*testing.T) (bool, rbacv1.Role, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client) {
+			customResource, _ := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
+			for i := range customResource.Spec.Modules {
+				if customResource.Spec.Modules[i].Name == csmv1.Resiliency {
+					customResource.Spec.Modules[i].ConfigVersion = ""
+				}
+			}
+			// Set a driver version that likely doesn't have a default resiliency mapping
+			customResource.Spec.Driver.ConfigVersion = "9.9.9-invalid"
+			return false, rbacv1.Role{}, operatorConfig, customResource, "node", c
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
