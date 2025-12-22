@@ -237,14 +237,6 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 	}
 }
 
-
-package operatorutils
-
-import (
-    "fmt"
-    "strings"
-)
-
 // ResolveImage returns an image reference combining a custom registry with an
 // existing image path or name. If retainImageRegistryPath is true, the original
 // path segment (e.g., "org/repo/image:tag") is preserved while removing any
