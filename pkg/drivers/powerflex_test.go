@@ -75,7 +75,7 @@ var (
 		{"bad config", csmForPowerFlex("bad"), powerFlexClient, shared.MakeSecretWithJSON("bad-config", pFlexNS, configJSONFileBad), "unable to parse"},
 		{"Auth and Replication enabled with valid prefix", csmForPowerFlex("auth-repl-valid-prefix"), powerFlexClient, shared.MakeSecretWithJSON("auth-repl-valid-prefix-config", pFlexNS, configJSONFileGood), ""},
 		{"Auth and Replication enabled with invalid prefix", csmForPowerFlex("auth-repl-invalid-prefix"), powerFlexClient, shared.MakeSecretWithJSON("auth-repl-invalid-prefix-config", pFlexNS, configJSONFileGood), "volume name prefix"},
-		{"invalid csm version", powerFlexInvalidCSMVersion, powerFlexClient, powerFlexSecret, "config version for CSM version v1.10.0 does not exist in file ../../tests/config/common/csm-version-mapping.yaml"},
+		{"invalid csm version", powerFlexInvalidCSMVersion, powerFlexClient, powerFlexSecret, "No custom resource configuration is available for CSM version v1.10.0"},
 	}
 
 	modifyPowerflexCRTests = []struct {

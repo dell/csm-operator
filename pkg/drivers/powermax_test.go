@@ -58,7 +58,7 @@ var (
 		{"missing secret", powerMaxCSM, powerMaxClient, pMaxfakeSecret, "failed to find secret"},
 		{"bad version", powerMaxCSMBadVersion, powerMaxClient, powerMaxSecret, "not supported"},
 		{"bad latest version", powermaxDefaultKubeletPath, powerMaxClient, powerMaxSecret, ""},
-		{"invalid csm version", powerMaxInvalidCSMVersion, powerMaxClient, powerMaxSecret, "config version for CSM version v1.10.0 does not exist in file ../../tests/config/common/csm-version-mapping.yaml"},
+		{"invalid csm version", powerMaxInvalidCSMVersion, powerMaxClient, powerMaxSecret, "No custom resource configuration is available for CSM version v1.10.0"},
 	}
 )
 

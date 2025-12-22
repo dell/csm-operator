@@ -53,7 +53,7 @@ var (
 	}{
 		{"happy path", powerStoreCSM, powerStoreClient, powerStoreSecret, ""},
 		{"bad version", powerStoreCSMBadVersion, powerStoreClient, powerStoreSecret, "not supported"},
-		{"invalid csm version", powerStoreInvalidCSMVersion, powerStoreClient, powerStoreSecret, "config version for CSM version v1.10.0 does not exist in file ../../tests/config/common/csm-version-mapping.yaml"},
+		{"invalid csm version", powerStoreInvalidCSMVersion, powerStoreClient, powerStoreSecret, "No custom resource configuration is available for CSM version v1.10.0"},
 	}
 
 	powerStoreCertsVolumeTests = []struct {

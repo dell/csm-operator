@@ -68,7 +68,7 @@ var (
 		{"missing secret", powerScaleCSM, powerScaleClient, powerScaleSecret, "failed to find secret"},
 		{"bad version", powerScaleCSMBadVersion, powerScaleClient, powerScaleSecret, "not supported"},
 		{"missing envs", powerScaleCSMEmptyEnv, powerScaleClient, powerScaleSecret, "failed to find secret"},
-		{"invalid csm version", powerScaleInvalidCSMVersion, powerScaleClient, powerScaleSecret, "config version for CSM version v1.10.0 does not exist in file ../../tests/config/common/csm-version-mapping.yaml"},
+		{"invalid csm version", powerScaleInvalidCSMVersion, powerScaleClient, powerScaleSecret, "No custom resource configuration is available for CSM version v1.10.0"},
 	}
 
 	powerScaleCommonEnvTest = []struct {
