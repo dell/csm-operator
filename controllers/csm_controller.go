@@ -1510,6 +1510,11 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		return nil
 	}
 
+	//Check if valid custom registry is mentioned
+	if operatorutils.ValidateCustomRegistry(cr.Spec.CustomRegistry) == false {
+		return fmt.Errorf("invalid custom registry: %s", cr.Spec.CustomRegistry)
+	}
+
 	// check for owner reference
 	deployments := r.K8sClient.AppsV1().Deployments(cr.Namespace)
 	driver, err := deployments.Get(ctx, cr.Name+"-controller", metav1.GetOptions{})
