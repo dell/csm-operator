@@ -147,6 +147,8 @@ spec:
               value: <DriverDefaultReleaseName>
             - name: X_CSI_PROBE_TIMEOUT
               value: <X_CSI_PROBE_TIMEOUT>
+            - name: X_CSI_AUTH_TYPE
+              value: <X_CSI_AUTH_TYPE>
           volumeMounts:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
