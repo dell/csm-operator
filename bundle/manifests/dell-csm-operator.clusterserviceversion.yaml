@@ -3768,13 +3768,6 @@ spec:
             path: controllerStatus.failed
             x-descriptors:
               - urn:alm:descriptor:text
-          - description:
-              LastSuccessfulConfiguration is configurations details only when
-              the CSM CR goes into a successful state
-            displayName: LastSuccessfulConfiguration
-            path: lastSuccessfulConfiguration
-            x-descriptors:
-              - urn:alm:descriptor:text
           - description: Available is the number of available pods
             displayName: Available
             path: nodeStatus.available
