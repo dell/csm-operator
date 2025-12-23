@@ -53,7 +53,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDeployment, err := ResiliencyInjectDeployment(controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerStore))
+			newDeployment, err := ResiliencyInjectDeployment(controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerStore), csmv1.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -81,7 +81,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDeployment, err := ResiliencyInjectDeployment(controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerScale))
+			newDeployment, err := ResiliencyInjectDeployment(controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerScale), csmv1.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -96,7 +96,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDeployment, err := ResiliencyInjectDeployment(controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerFlexName))
+			newDeployment, err := ResiliencyInjectDeployment(controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerFlexName), csmv1.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -111,7 +111,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDeployment, err := ResiliencyInjectDeployment(controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerMax))
+			newDeployment, err := ResiliencyInjectDeployment(controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerMax), csmv1.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -134,7 +134,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			success, dp, opConfig, cr := tc(t)
-			newDeployment, err := ResiliencyInjectDeployment(dp, cr, opConfig, string(csmv1.PowerStore))
+			newDeployment, err := ResiliencyInjectDeployment(dp, cr, opConfig, string(csmv1.PowerStore), csmv1.VersionSpec{})
 			if success {
 				assert.NoError(t, err)
 				if newDeployment == nil {
@@ -372,7 +372,7 @@ func TestResiliencyInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDaemonSet, err := ResiliencyInjectDaemonset(nodeYAML.DaemonSetApplyConfig, customResource, operatorConfig, string(csmv1.PowerStore))
+			newDaemonSet, err := ResiliencyInjectDaemonset(nodeYAML.DaemonSetApplyConfig, customResource, operatorConfig, string(csmv1.PowerStore), csmv1.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -400,7 +400,7 @@ func TestResiliencyInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDaemonSet, err := ResiliencyInjectDaemonset(ds, customResource, opConfig, string(csmv1.PowerStore))
+			newDaemonSet, err := ResiliencyInjectDaemonset(ds, customResource, opConfig, string(csmv1.PowerStore), csmv1.VersionSpec{})
 			if success {
 				assert.NoError(t, err)
 				if newDaemonSet == nil {
@@ -426,7 +426,7 @@ func checkApplyContainersResiliency(containers []acorev1.ContainerApplyConfigura
 	podmonAPIPort := getResiliencyEnv(resiliencyModule, cr.Spec.Driver.CSIDriverType)
 	var container acorev1.ContainerApplyConfiguration
 	// fetch podmonArrayConnectivityPollRate
-	setResiliencyArgs(resiliencyModule, nodeMode, &container)
+	setResiliencyArgs(resiliencyModule, nodeMode, &container, csmv1.VersionSpec{})
 	podmonArrayConnectivityPollRate := getPollRateFromArgs(container.Args)
 
 	for _, cnt := range containers {

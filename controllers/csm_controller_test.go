@@ -2139,13 +2139,13 @@ func (suite *CSMControllerTestSuite) TestReconcileObservabilityError() {
 	badOperatorConfig := operatorutils.OperatorConfig{
 		ConfigDirectory: "../in-valid-path",
 	}
-	err := reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, nil, suite.fakeClient, suite.k8sClient)
+	err := reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, nil, suite.fakeClient, suite.k8sClient, csmv1.VersionSpec{})
 	assert.NotNil(suite.T(), err)
 
 	for i := range csm.Spec.Modules[0].Components {
 		fmt.Printf("Component name: %s\n", csm.Spec.Modules[0].Components[i].Name)
 		csm.Spec.Modules[0].Components[i].Enabled = &[]bool{false}[0]
-		err = reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, nil, suite.fakeClient, suite.k8sClient)
+		err = reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, nil, suite.fakeClient, suite.k8sClient, csmv1.VersionSpec{})
 		if i < len(csm.Spec.Modules[0].Components)-1 {
 			assert.NotNil(suite.T(), err)
 		} else {
@@ -2180,7 +2180,7 @@ func (suite *CSMControllerTestSuite) TestReconcileObservabilityErrorBadComponent
 	goodModules := csm.Spec.Modules[0].Components
 	csm.Spec.Modules[0].Components = append(badComponent, csm.Spec.Modules[0].Components...)
 
-	err := reconciler.reconcileObservability(ctx, false, operatorConfig, csm, nil, suite.fakeClient, suite.k8sClient)
+	err := reconciler.reconcileObservability(ctx, false, operatorConfig, csm, nil, suite.fakeClient, suite.k8sClient, csmv1.VersionSpec{})
 	assert.NotNil(suite.T(), err)
 
 	csm.Spec.Modules[0].Components = goodModules
@@ -2206,7 +2206,7 @@ func (suite *CSMControllerTestSuite) TestReconcileObservabilityErrorBadCert() {
 
 	fmt.Printf("[TestReconcileObservabilityErrorBadCert] module components: %+v\n", csm.Spec.Modules[0].Components)
 
-	err := reconciler.reconcileObservability(ctx, false, operatorConfig, csm, nil, suite.fakeClient, suite.k8sClient)
+	err := reconciler.reconcileObservability(ctx, false, operatorConfig, csm, nil, suite.fakeClient, suite.k8sClient, csmv1.VersionSpec{})
 	assert.NotNil(suite.T(), err)
 
 	csm.Spec.Modules[0].Components = goodModules

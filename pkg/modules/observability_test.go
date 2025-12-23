@@ -470,7 +470,7 @@ func TestPowerScaleMetrics(t *testing.T) {
 			}
 			k8sClient := clientgoclient.NewFakeClient(fakeClient)
 			// pre-run to generate objects
-			err = PowerScaleMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+			err = PowerScaleMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient, csmv1.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -553,7 +553,7 @@ func TestPowerScaleMetrics(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			success, isDeleting, cr, sourceClient, op := tc(t)
 			k8sClient := clientgoclient.NewFakeClient(sourceClient)
-			err := PowerScaleMetrics(ctx, isDeleting, op, cr, sourceClient, k8sClient)
+			err := PowerScaleMetrics(ctx, isDeleting, op, cr, sourceClient, k8sClient, csmv1.VersionSpec{})
 			if success {
 				assert.NoError(t, err)
 			} else {
@@ -631,7 +631,7 @@ func TestOtelCollector(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
-			err := OtelCollector(ctx, isDeleting, op, cr, sourceClient)
+			err := OtelCollector(ctx, isDeleting, op, cr, sourceClient, csmv1.VersionSpec{})
 			if success {
 				assert.NoError(t, err)
 			} else {
@@ -709,7 +709,7 @@ func TestPowerFlexMetrics(t *testing.T) {
 			k8sClient := clientgoclient.NewFakeClient(sourceClient)
 
 			// pre-run to generate objects
-			err = PowerFlexMetrics(ctx, false, operatorConfig, tmpCR, sourceClient, k8sClient)
+			err = PowerFlexMetrics(ctx, false, operatorConfig, tmpCR, sourceClient, k8sClient, csmv1.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -772,7 +772,7 @@ func TestPowerFlexMetrics(t *testing.T) {
 			}
 			k8sClient := clientgoclient.NewFakeClient(fakeClient)
 			// pre-run to generate objects
-			err = PowerFlexMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+			err = PowerFlexMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient, csmv1.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -832,7 +832,7 @@ func TestPowerFlexMetrics(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			success, isDeleting, cr, sourceClient, op := tc(t)
 			k8sClient := clientgoclient.NewFakeClient(sourceClient)
-			err := PowerFlexMetrics(ctx, isDeleting, op, cr, sourceClient, k8sClient)
+			err := PowerFlexMetrics(ctx, isDeleting, op, cr, sourceClient, k8sClient, csmv1.VersionSpec{})
 			if success {
 				assert.NoError(t, err)
 			} else {
@@ -892,7 +892,7 @@ func TestPowerStoreMetrics(t *testing.T) {
 			k8sClient := clientgoclient.NewFakeClient(sourceClient)
 
 			// pre-run to generate objects
-			err = PowerStoreMetrics(ctx, false, operatorConfig, tmpCR, sourceClient, k8sClient)
+			err = PowerStoreMetrics(ctx, false, operatorConfig, tmpCR, sourceClient, k8sClient, csmv1.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -917,7 +917,7 @@ func TestPowerStoreMetrics(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			success, isDeleting, cr, sourceClient, op := tc(t)
 			k8sClient := clientgoclient.NewFakeClient(sourceClient)
-			err := PowerStoreMetrics(ctx, isDeleting, op, cr, sourceClient, k8sClient)
+			err := PowerStoreMetrics(ctx, isDeleting, op, cr, sourceClient, k8sClient, csmv1.VersionSpec{})
 			if success {
 				assert.NoError(t, err)
 			} else {
@@ -995,7 +995,7 @@ func TestPowerMaxMetrics(t *testing.T) {
 			k8sClient := clientgoclient.NewFakeClient(sourceClient)
 
 			// pre-run to generate objects
-			err = PowerMaxMetrics(ctx, false, operatorConfig, tmpCR, sourceClient, k8sClient)
+			err = PowerMaxMetrics(ctx, false, operatorConfig, tmpCR, sourceClient, k8sClient, csmv1.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -1058,7 +1058,7 @@ func TestPowerMaxMetrics(t *testing.T) {
 			}
 			k8sClient := clientgoclient.NewFakeClient(fakeClient)
 			// pre-run to generate objects
-			err = PowerMaxMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+			err = PowerMaxMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient, csmv1.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -1166,7 +1166,7 @@ func TestPowerMaxMetrics(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			success, isDeleting, cr, sourceClient, op := tc(t)
 			k8sClient := clientgoclient.NewFakeClient(sourceClient)
-			err := PowerMaxMetrics(ctx, isDeleting, op, cr, sourceClient, k8sClient)
+			err := PowerMaxMetrics(ctx, isDeleting, op, cr, sourceClient, k8sClient, csmv1.VersionSpec{})
 			if success {
 				assert.NoError(t, err)
 			} else {

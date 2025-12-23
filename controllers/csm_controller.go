@@ -722,7 +722,7 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 
 			// remove module observability
 			log.Infow("Deleting observability")
-			if err = r.reconcileObservability(ctx, true, operatorConfig, *oldCR, components, clusterClient.ClusterCTRLClient, clusterClient.ClusterK8sClient); err != nil {
+			if err = r.reconcileObservability(ctx, true, operatorConfig, *oldCR, components, clusterClient.ClusterCTRLClient, clusterClient.ClusterK8sClient, csmv1.VersionSpec{}); err != nil {
 				return err
 			}
 
@@ -1091,33 +1091,23 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 			}
 		}
 	}
-	comp2reconFunc := map[string]func(context.Context, bool, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, client.Client) error{
-		modules.ObservabilityOtelCollectorName: func(
-			ctx context.Context,
-			isDeleting bool,
-			op operatorutils.OperatorConfig,
-			cr csmv1.ContainerStorageModule,
-			ctrlClient client.Client,
-		) error {
-			return modules.OtelCollector(ctx, isDeleting, op, cr, ctrlClient, matched)
-		},
+
+	// Handlers that REQUIRE the matched VersionSpec
+	compWithVersionFunc := map[string]func(context.Context, bool, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, client.Client, csmv1.VersionSpec) error{
+		modules.ObservabilityOtelCollectorName: modules.OtelCollector,
+	}
+
+	// Topology is only supported in v2.13 and v2.14
+	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
+		compWithVersionFunc[modules.ObservabilityTopologyName] = modules.ObservabilityTopology
+	}
+
+	// Handlers that DO NOT REQUIRE the matched VersionSpec
+	compNoVersionFunc := map[string]func(context.Context, bool, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, client.Client) error{
 		modules.ObservabilityCertManagerComponent: modules.CommonCertManager,
 	}
-	// This will be deleted once we remove the old CSM versions which support topology
 
-	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
-		comp2reconFunc[modules.ObservabilityTopologyName] = func(
-			ctx context.Context,
-			isDeleting bool,
-			op operatorutils.OperatorConfig,
-			cr csmv1.ContainerStorageModule,
-			ctrlClient client.Client,
-		) error {
-			// Forward the matched VersionSpec from reconcileObservability’s argument
-			return modules.ObservabilityTopology(ctx, isDeleting, op, cr, ctrlClient, matched)
-		}
-	}
-
+	// Metrics handlers (these require k8sClient and matched VersionSpec)
 	metricsComp2reconFunc := map[string]func(context.Context, bool, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, client.Client, kubernetes.Interface, csmv1.VersionSpec) error{
 		modules.ObservabilityMetricsPowerScaleName: modules.PowerScaleMetrics,
 		modules.ObservabilityMetricsPowerFlexName:  modules.PowerFlexMetrics,
@@ -1128,21 +1118,48 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 	for _, comp := range components {
 		log.Infow(fmt.Sprintf("reconcile %s", comp))
 		var err error
+
 		switch comp {
-		case modules.ObservabilityOtelCollectorName, modules.ObservabilityCertManagerComponent:
-			err = comp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient)
-		// This will be deleted once we remove the old CSM versions which support topology
-		case modules.ObservabilityTopologyName:
-			if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
-				err = comp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient)
+		case modules.ObservabilityCertManagerComponent:
+			if fn, ok := compNoVersionFunc[comp]; ok {
+				err = fn(ctx, isDeleting, op, cr, ctrlClient)
+			} else {
+				err = fmt.Errorf("unsupported component type: %v", comp)
 			}
-		case modules.ObservabilityMetricsPowerScaleName, modules.ObservabilityMetricsPowerFlexName, modules.ObservabilityMetricsPowerMaxName, modules.ObservabilityMetricsPowerStoreName:
-			err = metricsComp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient, k8sClient)
+
+		case modules.ObservabilityOtelCollectorName:
+			if fn, ok := compWithVersionFunc[comp]; ok {
+				err = fn(ctx, isDeleting, op, cr, ctrlClient, matched)
+			} else {
+				err = fmt.Errorf("unsupported component type: %v", comp)
+			}
+
+		case modules.ObservabilityTopologyName:
+			// Only reconcile topology for v2.13/v2.14
+			if fn, ok := compWithVersionFunc[comp]; ok {
+				err = fn(ctx, isDeleting, op, cr, ctrlClient, matched)
+			} else {
+				log.Infow("skip reconcile topology for unsupported configVersion",
+					"component", comp, "configVersion", configVersion)
+				continue
+			}
+
+		case modules.ObservabilityMetricsPowerScaleName,
+			modules.ObservabilityMetricsPowerFlexName,
+			modules.ObservabilityMetricsPowerMaxName,
+			modules.ObservabilityMetricsPowerStoreName:
+			if fn, ok := metricsComp2reconFunc[comp]; ok {
+				err = fn(ctx, isDeleting, op, cr, ctrlClient, k8sClient, matched)
+			} else {
+				err = fmt.Errorf("unsupported metrics component: %v", comp)
+			}
+
 		default:
 			err = fmt.Errorf("unsupported component type: %v", comp)
 		}
+
 		if err != nil {
-			log.Errorf("failed to reconcile %s", comp)
+			log.Errorf("failed to reconcile %s: %v", comp, err)
 			return err
 		}
 	}
@@ -1442,7 +1459,7 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	// remove module observability
 	if observabilityEnabled, _ := operatorutils.IsModuleEnabled(ctx, instance, csmv1.Observability); observabilityEnabled {
 		log.Infow("Deleting observability")
-		if err = r.reconcileObservability(ctx, true, operatorConfig, instance, nil, clusterClient.ClusterCTRLClient, clusterClient.ClusterK8sClient); err != nil {
+		if err = r.reconcileObservability(ctx, true, operatorConfig, instance, nil, clusterClient.ClusterCTRLClient, clusterClient.ClusterK8sClient, csmv1.VersionSpec{}); err != nil {
 			return err
 		}
 	}
