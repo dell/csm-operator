@@ -58,6 +58,7 @@ spec:
               properties:
                 driver:
                   description: Driver is a CSI Drivers for Dell Technologies
+                  maxProperties: 20
                   properties:
                     authSecret:
                       description: AuthSecret is the name of the credentials secret for the driver
@@ -2107,6 +2108,7 @@ spec:
                               type: object
                             type: array
                         type: object
+                      maxItems: 20
                       type: array
                     snapshotClass:
                       description: SnapshotClass is the specification for Snapshot Classes
@@ -2131,6 +2133,7 @@ spec:
                   description: Modules is list of Container Storage Module modules you want to deploy
                   items:
                     description: Module defines the desired state of a ContainerStorageModule
+                    maxProperties: 10
                     properties:
                       components:
                         description: Components is the specification for CSM components containers
@@ -2537,6 +2540,7 @@ spec:
                                 type: object
                               type: array
                           type: object
+                        maxItems: 20
                         type: array
                       configVersion:
                         description: ConfigVersion is the configuration version of the module
@@ -2957,8 +2961,22 @@ spec:
                         description: Name is name of ContainerStorageModule modules
                         type: string
                     type: object
+                  maxItems: 20
                   type: array
+                version:
+                  type: string
               type: object
+              x-kubernetes-validations:
+                - message: spec.version and spec.driver.configVersion cannot both be set
+                  rule: '!(has(self.version) && self.version != "" && has(self.driver.configVersion) && self.driver.configVersion != "")'
+                - message: spec.driver.common.image is forbidden when spec.version is set
+                  rule: '!(has(self.version) && self.version != "" && has(self.driver.common) && has(self.driver.common.image) && self.driver.common.image != "")'
+                - message: spec.driver.sideCars[*].image is forbidden when spec.version is set
+                  rule: '!(has(self.version) && self.version != "" && has(self.driver.sideCars) && self.driver.sideCars.exists(sc, has(sc.image) && sc.image != ""))'
+                - message: spec.modules[*].components[*].image is forbidden when spec.version is set
+                  rule: '!(has(self.version) && self.version != "" && has(self.modules) && self.modules.exists(m, has(m.components) && m.components.exists(c, has(c.image) && c.image != "")))'
+                - message: spec.modules[*].configVersion is forbidden when spec.version is set
+                  rule: '!(has(self.version) && self.version != "" && has(self.modules) && self.modules.exists(m, has(m.configVersion) && m.configVersion != ""))'
             status:
               description: ContainerStorageModuleStatus defines the observed state of ContainerStorageModule
               properties:
