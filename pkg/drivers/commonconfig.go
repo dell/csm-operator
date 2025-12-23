@@ -368,11 +368,11 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 		}
 
 		if initcontainers[i].Image != nil && cr.Spec.CustomRegistry != "" {
-			resoledImagePath := operatorutils.ResolveImage(
+			resolvedImagePath := operatorutils.ResolveImage(
 				*initcontainers[i].Image,
 				cr.Spec.CustomRegistry,
 				cr.Spec.RetainImageRegistryPath)
-			initcontainers[i].Image = &resoledImagePath
+			initcontainers[i].Image = &resolvedImagePath
 		}
 	}
 
