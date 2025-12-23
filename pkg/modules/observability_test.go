@@ -329,7 +329,7 @@ func TestObservabilityTopologyController(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
-			err := ObservabilityTopology(ctx, isDeleting, op, cr, sourceClient)
+			err := ObservabilityTopology(ctx, isDeleting, op, cr, sourceClient, csmv1.VersionSpec{})
 			if success {
 				assert.NoError(t, err)
 			} else {
@@ -407,7 +407,7 @@ func TestPowerScaleMetrics(t *testing.T) {
 			k8sClient := clientgoclient.NewFakeClient(sourceClient)
 
 			// pre-run to generate objects
-			err = PowerScaleMetrics(ctx, false, operatorConfig, tmpCR, sourceClient, k8sClient)
+			err = PowerScaleMetrics(ctx, false, operatorConfig, tmpCR, sourceClient, k8sClient, csmv1.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}

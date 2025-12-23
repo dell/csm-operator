@@ -319,11 +319,11 @@ func ObservabilityPrecheck(ctx context.Context, op operatorutils.OperatorConfig,
 }
 
 // ObservabilityTopology - delete or update topology objectstools
-func ObservabilityTopology(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+func ObservabilityTopology(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, matched csmv1.VersionSpec) error {
 	log := logger.GetLogger(ctx)
 	configVersion := cr.Spec.Driver.ConfigVersion
 	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
-		topoObjects, err := getTopology(op, cr)
+		topoObjects, err := getTopology(op, cr, matched)
 		if err != nil {
 			return err
 		}
@@ -391,8 +391,8 @@ func getTopology(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModul
 }
 
 // OtelCollector - delete or update otel collector objects
-func OtelCollector(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
-	YamlString, err := getOtelCollector(op, cr)
+func OtelCollector(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, matched csmv1.VersionSpec) error {
+	YamlString, err := getOtelCollector(op, cr, matched)
 	if err != nil {
 		return err
 	}
@@ -465,10 +465,10 @@ func getOtelCollector(op operatorutils.OperatorConfig, cr csmv1.ContainerStorage
 }
 
 // PowerScaleMetrics - delete or update powerscale metrics objects
-func PowerScaleMetrics(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
+func PowerScaleMetrics(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, k8sClient kubernetes.Interface, matched csmv1.VersionSpec) error {
 	log := logger.GetLogger(ctx)
 
-	powerscaleMetricsObjects, err := getPowerScaleMetricsObjects(op, cr)
+	powerscaleMetricsObjects, err := getPowerScaleMetricsObjects(op, cr, matched)
 	if err != nil {
 		return err
 	}
@@ -539,10 +539,10 @@ func PowerScaleMetrics(ctx context.Context, isDeleting bool, op operatorutils.Op
 }
 
 // PowerStoreMetrics - delete or update powerstore metrics objects
-func PowerStoreMetrics(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
+func PowerStoreMetrics(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, k8sClient kubernetes.Interface, matched csmv1.VersionSpec) error {
 	log := logger.GetLogger(ctx)
 
-	powerstoreMetricsObjects, err := getPowerStoreMetricsObjects(op, cr)
+	powerstoreMetricsObjects, err := getPowerStoreMetricsObjects(op, cr, matched)
 	if err != nil {
 		return err
 	}
@@ -855,10 +855,10 @@ func parseObservabilityMetricsDeployment(ctx context.Context, deployment *appsv1
 }
 
 // PowerFlexMetrics - delete or update powerflex metrics objects
-func PowerFlexMetrics(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
+func PowerFlexMetrics(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, k8sClient kubernetes.Interface, matched csmv1.VersionSpec) error {
 	log := logger.GetLogger(ctx)
 
-	powerflexMetricsObjects, err := getPowerFlexMetricsObject(op, cr)
+	powerflexMetricsObjects, err := getPowerFlexMetricsObject(op, cr, matched)
 	if err != nil {
 		return err
 	}
@@ -1158,10 +1158,10 @@ func IssuerCertServiceObs(ctx context.Context, isDeleting bool, op operatorutils
 }
 
 // PowerMaxMetrics - delete or update powermax metrics objects
-func PowerMaxMetrics(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
+func PowerMaxMetrics(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, k8sClient kubernetes.Interface, matched csmv1.VersionSpec) error {
 	log := logger.GetLogger(ctx)
 
-	powerMaxMetricsObjects, err := getPowerMaxMetricsObject(op, cr)
+	powerMaxMetricsObjects, err := getPowerMaxMetricsObject(op, cr, matched)
 	if err != nil {
 		return err
 	}

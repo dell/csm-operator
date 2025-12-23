@@ -893,7 +893,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 
 				// for controller-pod
 				driverName := string(cr.Spec.Driver.CSIDriverType)
-				dp, err := modules.ResiliencyInjectDeployment(controller.Deployment, cr, operatorConfig, driverName)
+				dp, err := modules.ResiliencyInjectDeployment(controller.Deployment, cr, operatorConfig, driverName, matched)
 				if err != nil {
 					return fmt.Errorf("injecting resiliency into deployment: %v", err)
 				}
@@ -916,7 +916,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				controller.Rbac.Role = *role
 
 				// for node-pod
-				ds, err := modules.ResiliencyInjectDaemonset(node.DaemonSetApplyConfig, cr, operatorConfig, driverName)
+				ds, err := modules.ResiliencyInjectDaemonset(node.DaemonSetApplyConfig, cr, operatorConfig, driverName, matched)
 				if err != nil {
 					return fmt.Errorf("injecting resiliency into daemonset: %v", err)
 				}
@@ -1067,7 +1067,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 	if observabilityEnabled, _ := operatorutils.IsModuleEnabled(ctx, cr, csmv1.Observability); observabilityEnabled {
 		log.Infow("Create/Update observability")
 
-		if err = r.reconcileObservability(ctx, false, operatorConfig, cr, nil, clusterClient.ClusterCTRLClient, clusterClient.ClusterK8sClient); err != nil {
+		if err = r.reconcileObservability(ctx, false, operatorConfig, cr, nil, clusterClient.ClusterCTRLClient, clusterClient.ClusterK8sClient, matched); err != nil {
 			return err
 		}
 	}
@@ -1077,7 +1077,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 
 // reconcileObservability - Delete/Create/Update observability components
 // isDeleting - true: Delete; false: Create/Update
-func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, components []string, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
+func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, components []string, ctrlClient client.Client, k8sClient kubernetes.Interface, matched csmv1.VersionSpec) error {
 	log := logger.GetLogger(ctx)
 
 	configVersion := cr.Spec.Driver.ConfigVersion
@@ -1092,14 +1092,33 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 		}
 	}
 	comp2reconFunc := map[string]func(context.Context, bool, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, client.Client) error{
-		modules.ObservabilityOtelCollectorName:    modules.OtelCollector,
+		modules.ObservabilityOtelCollectorName: func(
+			ctx context.Context,
+			isDeleting bool,
+			op operatorutils.OperatorConfig,
+			cr csmv1.ContainerStorageModule,
+			ctrlClient client.Client,
+		) error {
+			return modules.OtelCollector(ctx, isDeleting, op, cr, ctrlClient, matched)
+		},
 		modules.ObservabilityCertManagerComponent: modules.CommonCertManager,
 	}
 	// This will be deleted once we remove the old CSM versions which support topology
+
 	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
-		comp2reconFunc[modules.ObservabilityTopologyName] = modules.ObservabilityTopology
+		comp2reconFunc[modules.ObservabilityTopologyName] = func(
+			ctx context.Context,
+			isDeleting bool,
+			op operatorutils.OperatorConfig,
+			cr csmv1.ContainerStorageModule,
+			ctrlClient client.Client,
+		) error {
+			// Forward the matched VersionSpec from reconcileObservability’s argument
+			return modules.ObservabilityTopology(ctx, isDeleting, op, cr, ctrlClient, matched)
+		}
 	}
-	metricsComp2reconFunc := map[string]func(context.Context, bool, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, client.Client, kubernetes.Interface) error{
+
+	metricsComp2reconFunc := map[string]func(context.Context, bool, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, client.Client, kubernetes.Interface, csmv1.VersionSpec) error{
 		modules.ObservabilityMetricsPowerScaleName: modules.PowerScaleMetrics,
 		modules.ObservabilityMetricsPowerFlexName:  modules.PowerFlexMetrics,
 		modules.ObservabilityMetricsPowerMaxName:   modules.PowerMaxMetrics,
