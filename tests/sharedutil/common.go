@@ -41,7 +41,6 @@ const (
 	PScaleConfigVersion        string = "v2.16.0"
 	PmaxConfigVersion          string = "v2.16.0"
 	AuthServerConfigVersion    string = "v2.1.0"
-	InvalidCSMVersion          string = "v1.10.0"
 	CosiConfigVersion          string = "v1.0.0"
 	InvalidCSMVersion          string = "v1.10.0"
 )
