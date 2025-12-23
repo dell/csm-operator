@@ -3824,6 +3824,9 @@ spec:
                       description: Failed is the number of failed pods
                       type: string
                   type: object
+                lastSuccessfulConfiguration:
+                  description: LastSuccessfulConfiguration is configurations details only when the CSM CR goes into a successful state
+                  type: string
                 nodeStatus:
                   description: NodeStatus is the status of Controller pods
                   properties:
