@@ -43,6 +43,7 @@ const (
 	AuthServerConfigVersion    string = "v2.1.0"
 	InvalidCSMVersion          string = "v1.10.0"
 	CosiConfigVersion          string = "v1.0.0"
+	InvalidCSMVersion          string = "v1.10.0"
 )
 
 // StorageKey is used to store a runtime object. It's used for both clientgo client and controller runtime client

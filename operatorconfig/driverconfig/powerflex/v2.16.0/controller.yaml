@@ -269,6 +269,8 @@ spec:
               value: <GOSCALEIO_SHOWHTTP>
             - name: X_CSI_PROBE_TIMEOUT
               value: <X_CSI_PROBE_TIMEOUT>
+            - name: X_CSI_AUTH_TYPE
+              value: <X_CSI_AUTH_TYPE>
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi

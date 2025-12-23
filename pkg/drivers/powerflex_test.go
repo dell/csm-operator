@@ -247,6 +247,23 @@ var (
 			fileType: "Controller",
 			expected: "X_CSI_PROBE_TIMEOUT=5s",
 		},
+		{
+			name:       "update common X_CSI_AUTH_TYPE value in CR",
+			yamlString: "X_CSI_AUTH_TYPE=<X_CSI_AUTH_TYPE>",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{Name: "X_CSI_AUTH_TYPE", Value: "OIDC"},
+							},
+						},
+					},
+				},
+			},
+			fileType: "Controller",
+			expected: "X_CSI_AUTH_TYPE=OIDC",
+		},
 	}
 )
 

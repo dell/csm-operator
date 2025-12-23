@@ -115,6 +115,8 @@ spec:
               value: false
             - name: SSL_CERT_DIR
               value: /certs
+            - name: X_CSI_POWERFLEX_NODE_CHROOT_PATH
+              value: /noderoot
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
             - name: X_CSI_APPROVE_SDC_ENABLED
@@ -133,20 +135,46 @@ spec:
           volumeMounts:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
-            - name: volumedevices-path
-              mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi/volumeDevices
               mountPropagation: "Bidirectional"
             - name: pods-path
               mountPath: <KUBELET_CONFIG_DIR>/pods
               mountPropagation: "Bidirectional"
-            - name: noderoot
-              mountPath: /noderoot
+            - name: csi-path
+              mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
+              mountPropagation: "Bidirectional"
             - name: dev
               mountPath: /dev
             - name: vxflexos-config
               mountPath: /vxflexos-config
             - name: vxflexos-config-params
               mountPath: /vxflexos-config-params
+            # sbin trees (mount whole sbin so other admin tools are available)
+            - name: sbin
+              mountPath: /noderoot/sbin
+              readOnly: true
+            - name: usrsbin
+              mountPath: /noderoot/usr/sbin
+              readOnly: true
+            # host glibc + libs (so chroot uses host loader + libraries)
+            - name: lib64
+              mountPath: /noderoot/lib64
+              readOnly: true
+            - name: usrlib64
+              mountPath: /noderoot/usr/lib64
+              readOnly: true
+            # kernel interfaces and device nodes
+            - name: dev
+              mountPath: /noderoot/dev
+            - name: sys
+              mountPath: /noderoot/sys
+            - name: proc
+              mountPath: /noderoot/proc
+            - name: run-udev
+              mountPath: /noderoot/run/udev
+            # nvme nqn
+            - name: hostnqn
+              mountPath: /noderoot/etc/nvme
+              readOnly: true
             - name: certs
               mountPath: /certs
               readOnly: true
@@ -262,22 +290,54 @@ spec:
           hostPath:
             path: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
             type: DirectoryOrCreate
-        - name: volumedevices-path
-          hostPath:
-            path: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi/volumeDevices
-            type: DirectoryOrCreate
         - name: pods-path
           hostPath:
             path: <KUBELET_CONFIG_DIR>/pods
             type: Directory
-        - name: noderoot
+        - name: csi-path
           hostPath:
-            path: /
-            type: Directory
+            path: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
         - name: dev
           hostPath:
             path: /dev
             type: Directory
+        - name: sys
+          hostPath:
+            path: /sys
+            type: Directory
+        - name: proc
+          hostPath:
+            path: /proc
+            type: Directory
+        - name: run-udev
+          hostPath:
+            path: /run/udev
+            type: DirectoryOrCreate
+        - name: sbin
+          hostPath:
+            path: /sbin
+            type: Directory
+        - name: usrsbin
+          hostPath:
+            path: /usr/sbin
+            type: Directory
+        - name: lib64
+          hostPath:
+            path: /lib64
+            type: Directory
+        - name: usrlib64
+          hostPath:
+            path: /usr/lib64
+            type: Directory
+        - name: hostnqn
+          hostPath:
+            path: /etc/nvme
+            type: DirectoryOrCreate
+        # will be removed if installing on OpenShift
+        - name: scaleio-path-bin
+          hostPath:
+            path: /bin/emc/scaleio/
+            type: DirectoryOrCreate
         - name: scaleio-path-opt
           hostPath:
             path: /opt/emc/scaleio/sdc/bin

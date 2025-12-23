@@ -83,6 +83,8 @@ const (
 
 	// PowerFlexProbeTimeout - will be used to control the X_CSI_PROBE_TIMEOUT variable
 	PowerFlexProbeTimeout string = "<X_CSI_PROBE_TIMEOUT>"
+
+	PowerFlexAuthType string = "<X_CSI_AUTH_TYPE>"
 )
 
 // PrecheckPowerFlex do input validation
@@ -361,6 +363,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	sftpRepoUser := ""
 	sftpEnabled := ""
 	probeTimeout := "10s"
+	authType := ""
 
 	if cr.Spec.Driver.Common != nil {
 		for _, env := range cr.Spec.Driver.Common.Envs {
@@ -372,6 +375,9 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 			}
 			if env.Name == "X_CSI_PROBE_TIMEOUT" {
 				probeTimeout = env.Value
+			}
+			if env.Name == "X_CSI_AUTH_TYPE" {
+				authType = env.Value
 			}
 		}
 	}
@@ -395,6 +401,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexShowHTTP, showHTTP)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexProbeTimeout, probeTimeout)
+		yamlString = strings.ReplaceAll(yamlString, PowerFlexAuthType, authType)
 
 	case "Node":
 		if cr.Spec.Driver.Node != nil {
@@ -441,6 +448,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexSftpRepoUser, sftpRepoUser)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexSdcRepoEnabled, sftpEnabled)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexProbeTimeout, probeTimeout)
+		yamlString = strings.ReplaceAll(yamlString, PowerFlexAuthType, authType)
 
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
