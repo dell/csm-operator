@@ -3,7 +3,7 @@
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
 //  You may obtain a copy of the License at
-//	   http://www.apache.org/licenses/LICENSE-2.0
+//       http://www.apache.org/licenses/LICENSE-2.0
 //  Unless required by applicable law or agreed to in writing, software
 //  distributed under the License is distributed on an "AS IS" BASIS,
 //  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -74,18 +74,18 @@ type K8sImagesConfig struct {
 
 // OperatorConfig -
 type OperatorConfig struct {
-	IsOpenShift	 bool
-	K8sVersion	  K8sImagesConfig
+	IsOpenShift     bool
+	K8sVersion      K8sImagesConfig
 	ConfigDirectory string
 }
 
 // RbacYAML -
 type RbacYAML struct {
-	ServiceAccount	 corev1.ServiceAccount
-	ClusterRole		rbacv1.ClusterRole
+	ServiceAccount     corev1.ServiceAccount
+	ClusterRole        rbacv1.ClusterRole
 	ClusterRoleBinding rbacv1.ClusterRoleBinding
-	Role			   rbacv1.Role
-	RoleBinding		rbacv1.RoleBinding
+	Role               rbacv1.Role
+	RoleBinding        rbacv1.RoleBinding
 }
 
 // UpgradePaths a list of versions eligible to upgrade the current version
@@ -96,24 +96,24 @@ type UpgradePaths struct {
 // ControllerYAML -
 type ControllerYAML struct {
 	Deployment confv1.DeploymentApplyConfiguration
-	Rbac	   RbacYAML
+	Rbac       RbacYAML
 }
 
 // StatefulControllerYAML -
 type StatefulControllerYAML struct {
 	StatefulSet confv1.StatefulSetApplyConfiguration
-	Rbac		RbacYAML
+	Rbac        RbacYAML
 }
 
 // NodeYAML -
 type NodeYAML struct {
 	DaemonSetApplyConfig confv1.DaemonSetApplyConfiguration
-	Rbac				 RbacYAML
+	Rbac                 RbacYAML
 }
 
 // ClusterConfig -
 type ClusterConfig struct {
-	ClusterID		 string
+	ClusterID         string
 	ClusterCTRLClient crclient.Client
 	ClusterK8sClient  kubernetes.Interface
 }
@@ -352,7 +352,7 @@ func ReplaceAllApplyCustomEnvs(driverEnv []acorev1.EnvVarApplyConfiguration,
 				sRef := old.ValueFrom.SecretKeyRef
 				if sRef != nil {
 					secret := &acorev1.SecretKeySelectorApplyConfiguration{
-						Key:	  sRef.Key,
+						Key:      sRef.Key,
 						Optional: sRef.Optional,
 					}
 					secret.WithName(*sRef.Name)
@@ -763,7 +763,7 @@ func GetDriverYaml(YamlString, kind string) (interface{}, error) {
 		}
 		return ControllerYAML{
 			Deployment: dp,
-			Rbac:	   rbac,
+			Rbac:       rbac,
 		}, nil
 	} else if kind == "DaemonSet" {
 		var dsac confv1.DaemonSetApplyConfiguration
@@ -774,7 +774,7 @@ func GetDriverYaml(YamlString, kind string) (interface{}, error) {
 		}
 		return NodeYAML{
 			DaemonSetApplyConfig: dsac,
-			Rbac:				 rbac,
+			Rbac:                 rbac,
 		}, nil
 	}
 
@@ -964,7 +964,7 @@ func getConfigData(ctx context.Context, clusterID string, ctrlClient crclient.Cl
 	log := logger.GetLogger(ctx)
 	secret := &corev1.Secret{}
 	if err := ctrlClient.Get(ctx, t1.NamespacedName{
-		Name:	  clusterID,
+		Name:      clusterID,
 		Namespace: ReplicationControllerNameSpace,
 	}, secret); err != nil {
 		if k8serror.IsNotFound(err) {
@@ -1023,7 +1023,7 @@ func GetCluster(_ context.Context, r ReconcileCSM) ClusterConfig {
 	clusterClient := ClusterConfig{
 		ClusterCTRLClient: r.GetClient(),
 		ClusterK8sClient:  r.GetK8sClient(),
-		ClusterID:		 DefaultSourceClusterID,
+		ClusterID:         DefaultSourceClusterID,
 	}
 	return clusterClient
 }
