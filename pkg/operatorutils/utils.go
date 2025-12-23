@@ -72,7 +72,6 @@ type K8sImagesConfig struct {
 	} `json:"images" yaml:"images"`
 }
 
-
 // OperatorConfig -
 type OperatorConfig struct {
 	IsOpenShift	 bool
