@@ -58,18 +58,18 @@ var yamlUnmarshal = func(data []byte, v interface{}) error {
 // K8sImagesConfig -
 type K8sImagesConfig struct {
 	K8sVersion string `json:"kubeversion" yaml:"kubeversion"`
-    Images     struct {
-        Attacher              string `json:"attacher" yaml:"attacher"`
-        Provisioner           string `json:"provisioner" yaml:"provisioner"`
-        Snapshotter           string `json:"snapshotter" yaml:"snapshotter"`
-        Registrar             string `json:"registrar" yaml:"registrar"`
-        Resizer               string `json:"resizer" yaml:"resizer"`
-        Externalhealthmonitor string `json:"externalhealthmonitorcontroller" yaml:"externalhealthmonitorcontroller"`
-        Sdc                   string `json:"sdc" yaml:"sdc"`
-        Sdcmonitor            string `json:"sdcmonitor" yaml:"sdcmonitor"`
-        Podmon                string `json:"podmon" yaml:"podmon"`
-        CSIRevProxy           string `json:"csiReverseProxy" yaml:"csiReverseProxy"`
-    } `json:"images" yaml:"images"`
+	Images     struct {
+		Attacher              string `json:"attacher" yaml:"attacher"`
+		Provisioner           string `json:"provisioner" yaml:"provisioner"`
+		Snapshotter           string `json:"snapshotter" yaml:"snapshotter"`
+		Registrar             string `json:"registrar" yaml:"registrar"`
+		Resizer               string `json:"resizer" yaml:"resizer"`
+		Externalhealthmonitor string `json:"externalhealthmonitorcontroller" yaml:"externalhealthmonitorcontroller"`
+		Sdc                   string `json:"sdc" yaml:"sdc"`
+		Sdcmonitor            string `json:"sdcmonitor" yaml:"sdcmonitor"`
+		Podmon                string `json:"podmon" yaml:"podmon"`
+		CSIRevProxy           string `json:"csiReverseProxy" yaml:"csiReverseProxy"`
+	} `json:"images" yaml:"images"`
 }
 
 
