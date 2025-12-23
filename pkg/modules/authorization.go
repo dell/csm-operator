@@ -527,14 +527,14 @@ func getAuthApplyVolumes(ctx context.Context, cr csmv1.ContainerStorageModule, o
 }
 
 // AuthInjectDaemonset  - inject authorization into daemonset
-func AuthInjectDaemonset(ctx context.Context, ds applyv1.DaemonSetApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, ctrlClient crclient.Client) (*applyv1.DaemonSetApplyConfiguration, error) {
+func AuthInjectDaemonset(ctx context.Context, ds applyv1.DaemonSetApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, ctrlClient crclient.Client, matched csmv1.VersionSpec) (*applyv1.DaemonSetApplyConfiguration, error) {
 	authModule, containerPtr, err := getAuthApplyCR(ctx, cr, op, ctrlClient)
 	if err != nil {
 		return nil, err
 	}
 
 	container := *containerPtr
-	operatorutils.UpdateSideCarApply(authModule.Components, &container)
+	operatorutils.UpdateSideCarApply(authModule.Components, &container, matched)
 
 	vols, err := getAuthApplyVolumes(ctx, cr, op, authModule.Components[0], ctrlClient)
 	if err != nil {
@@ -555,14 +555,14 @@ func AuthInjectDaemonset(ctx context.Context, ds applyv1.DaemonSetApplyConfigura
 }
 
 // AuthInjectDeployment - inject authorization into deployment
-func AuthInjectDeployment(ctx context.Context, dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, ctrlClient crclient.Client) (*applyv1.DeploymentApplyConfiguration, error) {
+func AuthInjectDeployment(ctx context.Context, dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, ctrlClient crclient.Client, matched csmv1.VersionSpec) (*applyv1.DeploymentApplyConfiguration, error) {
 	authModule, containerPtr, err := getAuthApplyCR(ctx, cr, op, ctrlClient)
 	if err != nil {
 		return nil, err
 	}
 
 	container := *containerPtr
-	operatorutils.UpdateSideCarApply(authModule.Components, &container)
+	operatorutils.UpdateSideCarApply(authModule.Components, &container, matched)
 
 	vols, err := getAuthApplyVolumes(ctx, cr, op, authModule.Components[0], ctrlClient)
 	if err != nil {

@@ -169,7 +169,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 		}
 		if !removeContainer {
 			operatorutils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &c)
-			operatorutils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &c)
+			operatorutils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &c, matched)
 			newcontainers = append(newcontainers, c)
 		}
 
@@ -336,7 +336,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 		}
 		if !removeContainer {
 			operatorutils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &containers[i])
-			operatorutils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &containers[i])
+			operatorutils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &containers[i], csmv1.VersionSpec{})
 			newcontainers = append(newcontainers, c)
 		}
 	}

@@ -152,6 +152,8 @@ const (
 	DefaultSourceClusterID = "default-source-cluster"
 	// AuthorizationNamespace - authorization
 	AuthorizationNamespace = "authorization"
+	// AuthSidecarComponent - karavi-authorization-proxy component
+	AuthSidecarComponent = "karavi-authorization-proxy"
 	// PodmonControllerComponent - podmon-controller
 	PodmonControllerComponent = "podmon-controller"
 	// PodmonNodeComponent - podmon-node
@@ -194,13 +196,26 @@ func SplitYaml(gaintYAML []byte) ([][]byte, error) {
 }
 
 // UpdateSideCarApply -
-func UpdateSideCarApply(sideCars []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration) {
-	UpdateContainerApply(sideCars, c)
+func UpdateSideCarApply(sideCars []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration, matched csmv1.VersionSpec) {
+	UpdateContainerApply(sideCars, c, matched)
 }
 
-func UpdateContainerApply(toBeApplied []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration) {
+func UpdateContainerApply(toBeApplied []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration, matched csmv1.VersionSpec) {
+	var found bool = false
+	var image string
+	for k, v := range matched.Images {
+		if k == AuthSidecarComponent && *c.Name == AuthSidecarComponent {
+			image = v
+			found = true
+			break
+		}
+	}
 	for _, ctr := range toBeApplied {
 		if *c.Name == ctr.Name {
+			if found {
+				img := image
+				c.Image = &img
+			}
 			if ctr.Image != "" {
 				*c.Image = string(ctr.Image)
 			}
@@ -240,7 +255,7 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 
 // UpdateInitContainerApply -
 func UpdateInitContainerApply(initContainers []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration) {
-	UpdateContainerApply(initContainers, c)
+	UpdateContainerApply(initContainers, c, csmv1.VersionSpec{})
 }
 
 // ReplaceAllApplyCustomEnvs -

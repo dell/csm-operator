@@ -768,7 +768,7 @@ func TestUpdateSideCarApply(t *testing.T) {
 	},
 	)
 
-	UpdateSideCarApply(sideCars, container)
+	UpdateSideCarApply(sideCars, container, csmv1.VersionSpec{})
 
 	expectedContainer := acorev1.Container().WithName("sidecar1").WithImage("sidecar1-image").WithImagePullPolicy("sidecar1-image-pull-policy").
 		WithEnv(&acorev1.EnvVarApplyConfiguration{
