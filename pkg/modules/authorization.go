@@ -642,8 +642,22 @@ func AuthorizationPrecheck(ctx context.Context, op operatorutils.OperatorConfig,
 
 	secrets := []string{"proxy-authz-tokens"}
 
+	authConfigVersion := ""
+	if auth.ConfigVersion == "" {
+		version, err := operatorutils.GetVersion(&cr, op)
+		if err != nil {
+			return err
+		}
+		authConfigVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+		if err != nil {
+			return err
+		}
+	} else {
+		authConfigVersion = auth.ConfigVersion
+	}
+
 	// Karavi authorization config is not required in config v2.4.0 and later (CSM 1.16) due to driver secret
-	driverSecretVersion, err := operatorutils.MinVersionCheck("v2.4.0", auth.ConfigVersion)
+	driverSecretVersion, err := operatorutils.MinVersionCheck("v2.4.0", authConfigVersion)
 	if err != nil {
 		return err
 	}
@@ -672,13 +686,24 @@ func AuthorizationPrecheck(ctx context.Context, op operatorutils.OperatorConfig,
 func AuthorizationServerPrecheck(ctx context.Context, op operatorutils.OperatorConfig, auth csmv1.Module, cr csmv1.ContainerStorageModule, r operatorutils.ReconcileCSM) error {
 	log := logger.GetLogger(ctx)
 
-	if auth.ConfigVersion != "" {
-		err := checkVersion(string(csmv1.Authorization), auth.ConfigVersion, op.ConfigDirectory)
+	if auth.ConfigVersion == "" {
+		version, err := operatorutils.GetVersion(&cr, op)
 		if err != nil {
 			return err
 		}
-	} else {
-		return fmt.Errorf("authorization version is empty")
+		auth.ConfigVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+		if err != nil {
+			return err
+		}
+	}
+
+	if auth.ConfigVersion == "" {
+		return fmt.Errorf("authorization version is empty after resolution")
+	}
+
+	// Validate the (non-empty) version here
+	if err := checkVersion(string(csmv1.Authorization), auth.ConfigVersion, op.ConfigDirectory); err != nil {
+		return err
 	}
 
 	configComponentFound := false
