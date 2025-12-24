@@ -16,6 +16,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -283,6 +284,17 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 		newStatus.ControllerStatus, "Node", newStatus.NodeStatus)
 
 	running, merr := calculateState(ctx, instance, r, newStatus)
+
+	// Add last successful configuration into status if deployment is running
+	// and controller has desired replicas to handle the last successful configuration change
+	replicas := instance.Spec.Driver.Replicas
+	if newStatus.ControllerStatus.Desired == strconv.Itoa(int(replicas)) && running {
+		if lastAnnotations := instance.GetAnnotations(); lastAnnotations != nil {
+			if lastApplied := lastAnnotations["kubectl.kubernetes.io/last-applied-configuration"]; lastApplied != "" {
+				instance.Status.LastSuccessfulConfiguration = lastApplied
+			}
+		}
+	}
 
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		log := logger.GetLogger(ctx)

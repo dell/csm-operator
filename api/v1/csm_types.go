@@ -53,6 +53,10 @@ type ContainerStorageModuleStatus struct {
 	// State is the state of the driver installation
 	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="State",xDescriptors="urn:alm:descriptor:text"
 	State CSMStateType `json:"state,omitempty" yaml:"state"`
+
+	// LastSuccessfulConfiguration is configurations details only when the CSM CR goes into a successful state
+	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="LastSuccessfulConfiguration",xDescriptors="urn:alm:descriptor:text"
+	LastSuccessfulConfiguration string `json:"lastSuccessfulConfiguration,omitempty"`
 }
 
 // +kubebuilder:validation:Optional
