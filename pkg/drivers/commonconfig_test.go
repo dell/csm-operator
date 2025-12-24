@@ -19,6 +19,7 @@ import (
 	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
 	shared "eos2git.cec.lab.emc.com/CSM/csm-operator/tests/sharedutil"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -130,6 +131,22 @@ func TestGetController(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetControllerCOSI(t *testing.T) {
+	csm := csmForCosi(csmv1.Cosi, map[string]string{
+		"node-role.kubernetes.io/worker": "true",
+	},
+		[]corev1.Toleration{
+			{Key: "node-role.kubernetes.io/worker", Operator: corev1.TolerationOpExists, Effect: corev1.TaintEffectNoSchedule},
+		},
+		[]corev1.EnvVar{
+			{Name: "COSI_LOG_LEVEL", Value: "info"},
+			{Name: "COSI_LOG_FORMAT", Value: "text"},
+			{Name: "OTEL_COLLECTOR_ADDRESS", Value: "test:1234"},
+		}...)
+	_, err := GetController(context.Background(), csm, config, csmv1.Cosi)
+	assert.Nil(t, err)
 }
 
 func TestGetNode(t *testing.T) {

@@ -206,10 +206,10 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 		log.Infof("error from getDeploymentStatus: %s", controllerErr.Error())
 	}
 
-	// Auth proxy has no daemonset. Putting this if/else in here and setting nodeStatusGood to true by
+	// Auth proxy and Cosi driver have no daemonset. Putting this if/else in here and setting nodeStatusGood to true by
 	// default is a little hacky but will be fixed when we refactor the status code in CSM 1.10 or 1.11
 	log.Infof("instance.GetName() is %s", instance.GetName())
-	if instance.GetName() != "" && !isAuthorizationProxyServer(instance) {
+	if instance.GetName() != "" && !isAuthorizationProxyServer(instance) && instance.Spec.Driver.CSIDriverType != csmv1.Cosi {
 		expected, nodeStatus, daemonSetErr := getDaemonSetStatus(ctx, instance, r)
 		newStatus.NodeStatus = nodeStatus
 		if daemonSetErr != nil {

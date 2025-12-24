@@ -2069,3 +2069,19 @@
       run:
         - /bin/bash modify_zoning_labels.sh remove-all-zones
         - kubectl get nodes --show-labels
+
+- scenario: "Install COSI Driver"
+  paths:
+    - "testfiles/storage_csm_cosi.yaml"
+  tags:
+    - "cosi"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create Secret from template [testfiles/cosi-templates/cosi-secret.yaml] as field [config.yaml] named [cosi-config] in namespace [cosi] for [cosi]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [cosi] driver from CR [1] is installed"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [cosi] driver from CR [1] is not installed"

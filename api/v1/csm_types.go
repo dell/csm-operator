@@ -22,14 +22,23 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // ContainerStorageModuleSpec defines the desired state of ContainerStorageModule
+// +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.driver.configVersion) && self.driver.configVersion != \"\")",message="spec.version and spec.driver.configVersion cannot both be set"
+// +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.driver.common) && has(self.driver.common.image) && self.driver.common.image != \"\")",message="spec.driver.common.image is forbidden when spec.version is set"
+// +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.driver.sideCars) && self.driver.sideCars.exists(sc, has(sc.image) && sc.image != \"\"))",message="spec.driver.sideCars[*].image is forbidden when spec.version is set"
+// +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.modules) && self.modules.exists(m, has(m.components) && m.components.exists(c, has(c.image) && c.image != \"\")))",message="spec.modules[*].components[*].image is forbidden when spec.version is set"
+// +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.modules) && self.modules.exists(m, has(m.configVersion) && m.configVersion != \"\"))",message="spec.modules[*].configVersion is forbidden when spec.version is set"
 type ContainerStorageModuleSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	// +kubebuilder:validation:Optional
 	Version string `json:"version,omitempty" yaml:"version,omitempty"`
+
 	// Driver is a CSI Drivers for Dell Technologies
 	Driver Driver `json:"driver,omitempty" yaml:"driver,omitempty"`
 
 	// Modules is list of Container Storage Module modules you want to deploy
+	// +kubebuilder:validation:MaxItems=20
 	Modules []Module `json:"modules,omitempty" yaml:"modules,omitempty"`
 }
 
@@ -73,11 +82,6 @@ type ContainerStorageModuleList struct {
 	Items           []ContainerStorageModule `json:"items"`
 }
 
-type VersionSpec struct {
-	Version string            `yaml:"version"`
-	Images  map[string]string `yaml:",inline"`
-}
-
 func init() {
 	SchemeBuilder.Register(&ContainerStorageModule{}, &ContainerStorageModuleList{})
 }
@@ -89,6 +93,9 @@ func (cr *ContainerStorageModule) GetCSMStatus() *ContainerStorageModuleStatus {
 
 // GetControllerName - Returns a controller
 func (cr *ContainerStorageModule) GetControllerName() string {
+	if cr.Spec.Driver.CSIDriverType == Cosi {
+		return cr.Name
+	}
 	return fmt.Sprintf("%s-controller", cr.Name)
 }
 

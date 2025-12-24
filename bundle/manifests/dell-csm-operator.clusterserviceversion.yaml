@@ -100,6 +100,49 @@ metadata:
           "apiVersion": "storage.dell.com/v1",
           "kind": "ContainerStorageModule",
           "metadata": {
+            "name": "cosi",
+            "namespace": "cosi"
+          },
+          "spec": {
+            "driver": {
+              "csiDriverType": "cosi",
+              "configVersion": "v1.0.0",
+              "replicas": 1,
+              "forceRemoveDriver": true,
+              "common": {
+                "image": "quay.io/dell/container-storage-modules/cosi:v1.0.0",
+                "imagePullPolicy": "IfNotPresent",
+                "nodeSelector": {},
+                "tolerations": [],
+                "envs": [
+                  {
+                    "name": "COSI_LOG_LEVEL",
+                    "value": "info"
+                  },
+                  {
+                    "name": "COSI_LOG_FORMAT",
+                    "value": "TEXT"
+                  },
+                  {
+                    "name": "OTEL_COLLECTOR_ADDRESS",
+                    "value": ""
+                  }
+                ]
+              },
+              "sideCars": [
+                {
+                  "name": "objectstorage-provisioner-sidecar",
+                  "image": "gcr.io/k8s-staging-sig-storage/objectstorage-sidecar:release-0.2",
+                  "imagePullPolicy": "IfNotPresent"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "apiVersion": "storage.dell.com/v1",
+          "kind": "ContainerStorageModule",
+          "metadata": {
             "name": "isilon",
             "namespace": "isilon"
           },

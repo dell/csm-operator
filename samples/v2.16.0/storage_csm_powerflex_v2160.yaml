@@ -63,6 +63,10 @@ spec:
         # Default value: 10s
         - name: X_CSI_PROBE_TIMEOUT
           value: "10s"
+        # X_CSI_AUTH_TYPE: Specify the authentication type to be used.
+        # Allowed values: OIDC, "" empty
+        - name: X_CSI_AUTH_TYPE
+          value: ""
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
@@ -86,7 +90,7 @@ spec:
           - name: HOST_PID
             value: "1"
           - name: MDM
-            value: "10.xx.xx.xx,10.xx.xx.xx" # do not add mdm value here if it is present in secret
+            value: "10.xx.xx.xx,10.xx.xx.xx"  # do not add mdm value here if it is present in secret
             # health monitor is disabled by default, refer to driver documentation before enabling it
             # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
             # Default monitor-interval: 60s
@@ -218,11 +222,11 @@ spec:
         name: sdc
         envs:
           - name: MDM
-            value: "10.xx.xx.xx,10.xx.xx.xx" # provide MDM value
+            value: "10.xx.xx.xx,10.xx.xx.xx"  # provide MDM value
           - name: REPO_ADDRESS
-            value: "sftp://0.0.0.0" # SFTP/private repository address. Format: "protocol://address"
+            value: "sftp://0.0.0.0"  # SFTP/private repository address. Format: "protocol://address"
           - name: REPO_USER
-            value: "sdcRepoUser" # provide username to authenticate to the SFTP repo
+            value: "sdcRepoUser"  # provide username to authenticate to the SFTP repo
           - name: MODULE_SIGCHECK
             value: "0"
   modules:

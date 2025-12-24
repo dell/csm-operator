@@ -13,6 +13,7 @@
 package drivers
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -21,7 +22,9 @@ import (
 	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
 	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
+	appsv1 "k8s.io/api/apps/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 )
 
 // PrecheckCosi for input validation
@@ -46,14 +49,61 @@ func PrecheckCosi(ctx context.Context, cr *csmv1.ContainerStorageModule, operato
 }
 
 // ModifyCosiCR
-func ModifyCosiCR(yamlString string, cr csmv1.ContainerStorageModule, fileType string) string {
-	// TODO
-	// nodeSelector and tolerations to be added dynamicly, if added in CSM CR
-	log := logger.GetLogger(context.TODO())
-	log.Info("Unimplemented")
+func ModifyCosiCR(yamlString string, cr csmv1.ContainerStorageModule, fileType string) (string, error) {
+	// default values for the envs
+	otelCollectorAddr := ""
+
+	// gather the env values from the CR
+	if cr.Spec.Driver.Common != nil {
+		for _, env := range cr.Spec.Driver.Common.Envs {
+			if env.Name == "OTEL_COLLECTOR_ADDRESS" {
+				otelCollectorAddr = env.Value
+			}
+		}
+	}
+
+	// replace the placeholders with actual values
 	switch fileType {
 	case "Controller":
 		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, OtelCollectorAddress, otelCollectorAddr)
 	}
-	return yamlString
+
+	// if nodeSelector or tolerations are provided, we need to modify the deployment object
+	if cr.Spec.Driver.Common != nil && (len(cr.Spec.Driver.Common.NodeSelector) > 0 || len(cr.Spec.Driver.Common.Tolerations) > 0) {
+		objects, err := operatorutils.GetCTRLObject([]byte(yamlString))
+		if err != nil {
+			return "", fmt.Errorf("parsing controller objects: %v", err)
+		}
+
+		var dp *appsv1.Deployment
+		for _, obj := range objects {
+			if obj, ok := obj.(*appsv1.Deployment); ok {
+				dp = obj
+				break
+			}
+		}
+
+		if dp == nil {
+			return "", fmt.Errorf("failed to find cosi controller deployment object")
+		}
+
+		dp.Spec.Template.Spec.NodeSelector = cr.Spec.Driver.Common.NodeSelector
+		dp.Spec.Template.Spec.Tolerations = cr.Spec.Driver.Common.Tolerations
+
+		// Marshal each object back to YAML and join with "---"
+		var buf bytes.Buffer
+		for i, obj := range objects {
+			b, err := yaml.Marshal(obj)
+			if err != nil {
+				return "", fmt.Errorf("marshalling object %d: %w", i, err)
+			}
+			if i > 0 {
+				buf.WriteString("---\n")
+			}
+			buf.Write(b)
+		}
+		return buf.String(), nil
+	}
+	return yamlString, nil
 }

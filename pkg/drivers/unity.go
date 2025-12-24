@@ -36,9 +36,6 @@ const (
 	// UnityConfigParamsVolumeMount - Volume mount
 	UnityConfigParamsVolumeMount = "csi-unity-config-params"
 
-	// CsiLogLevel - Defines the log level
-	CsiLogLevel = "<CSI_LOG_LEVEL>"
-
 	// AllowRWOMultipodAccess - Defines if multiple pod should have access to a volume
 	AllowRWOMultipodAccess = "<X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS>"
 

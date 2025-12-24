@@ -73,6 +73,7 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Set secret for driver from CR \[(\d+)\] to \[([^"]*)\]$`, step.setDriverSecret)
 	runner.addStep(`^Create Secret with template \[([^"]*)\] name \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpSecret)
 	runner.addStep(`^Create Secret from file \[([^"]*)\] name \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpSecretFromFile)
+	runner.addStep(`^Create Secret from template \[([^"]*)\] as field \[([^"]*)\] named \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpSecretFromTemplateWithFieldName)
 	runner.addStep(`^Generate and Create SFTP Secrets from template \[([^"]*)\] private-secret \[([^"]*)\] public-secret \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]$`, step.generateAndCreateSftpSecrets)
 	runner.addStep(`^Create ConfigMap with template \[([^"]*)\] name \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpConfigMap)
 	runner.addStep(`^Create resource with template \[([^"]*)\] for \[([^"]*)\]`, step.createResource)

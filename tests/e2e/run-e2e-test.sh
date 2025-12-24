@@ -22,6 +22,7 @@ export ACK_GINKGO_RC=true
 export PROG="${0}"
 export GINKGO_OPTS="--timeout 5h"
 export E2E_VERBOSE=false
+export CHECK_PREREQUISITES_ONLY=false
 
 # Start with all modules false, they can be enabled by command line arguments
 export AUTHORIZATION=false
@@ -103,7 +104,9 @@ function checkForGinkgo() {
     echo "go mod vendor or go get ginkgo error"
     exit 1
   fi
+}
 
+function runTests() {
   # Uncomment for authorization proxy server
   #cp $DELLCTL /usr/local/bin/
 
@@ -148,6 +151,7 @@ function usage() {
   echo "Options:"
   echo "  Optional"
   echo "  -h                                           print out helptext"
+  echo "  -c                                           check for pre-requisites only"
   echo "  -v                                           enable verbose logging"
   echo "  --dellctl=<path to dellctl binary>           use to specify dellctl binary, if not in PATH"
   echo "  --kube-cfg=<path to kubeconfig file>         use to specify non-default kubeconfig file"
@@ -159,6 +163,7 @@ function usage() {
   echo "  --auth-proxy                                 use to run e2e auth-proxy suite"
   echo "  --resiliency                                 use to run e2e resiliency suite"
   echo "  --no-modules                                 use to run e2e suite without any modules"
+  echo "  --cosi                                       use to run e2e cosi suite"
   echo "  --pflex                                      use to run e2e powerflex suite"
   echo "  --pscale                                     use to run e2e powerscale suite"
   echo "  --pstore                                     use to run e2e powerstore suite"
@@ -177,7 +182,7 @@ function usage() {
 ###############################################################################
 # Parse command-line options
 ###############################################################################
-while getopts ":hv-:" optchar; do
+while getopts ":hcv-:" optchar; do
   case "${optchar}" in
   -)
     case "${OPTARG}" in
@@ -203,6 +208,8 @@ while getopts ":hv-:" optchar; do
       export OBSERVABILITY=false
       export RESILIENCY=false
       ;;
+    cosi)
+      export COSI=true ;;
     pscale)
       export POWERSCALE=true ;;
     pstore)
@@ -256,6 +263,9 @@ while getopts ":hv-:" optchar; do
   h)
     usage
     ;;
+  c)
+    export CHECK_PREREQUISITES_ONLY=true
+    ;;
   v)
     E2E_VERBOSE=true
     ;;
@@ -300,4 +310,10 @@ if [[ $AUTHORIZATIONPROXYSERVER == "true" ]]; then
 fi
 
 checkForGinkgo
-# runTests
+
+if [[ $CHECK_PREREQUISITES_ONLY == "true" ]]; then
+  echo "Skipping tests because check prerequisites only was requested."
+  exit 0
+fi
+
+runTests

@@ -38,7 +38,22 @@ var defaultVolumeConfigName = map[csmv1.DriverType]string{
 const (
 	ConfigParamsFile = "driver-config-params.yaml"
 	// CSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
-	CSMNameSpace string = "<CSM_NAMESPACE>"
+	CSMNameSpace = "<CSM_NAMESPACE>"
+
+	// CsiLogLevel - Defines the log level
+	CsiLogLevel = "<CSI_LOG_LEVEL>"
+
+	// CsiLogFormat - Defines the log format
+	CsiLogFormat = "<CSI_LOG_FORMAT>"
+
+	// OtelCollectorAddress - Defines the otel collector address
+	OtelCollectorAddress = "<OTEL_COLLECTOR_ADDRESS>"
+
+	// CsiLogFormat - Defines the log format for cosi
+	CosiLogLevel = "COSI_LOG_LEVEL"
+
+	// CsiLogFormat - Defines the log format for cosi
+	CosiLogFormat = "COSI_LOG_FORMAT"
 )
 
 // GetController get controller yaml
@@ -119,7 +134,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	containers := controllerYAML.Deployment.Spec.Template.Spec.Containers
 	newcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
 	for i, c := range containers {
-		if c.Name != nil && string(*c.Name) == "driver" {
+		if c.Name != nil && (string(*c.Name) == "driver" || string(*c.Name) == "objectstorage-provisioner") {
 			if found {
 				c.Image = &image
 			} else {

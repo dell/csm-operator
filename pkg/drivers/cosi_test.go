@@ -15,6 +15,7 @@ package drivers
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
@@ -32,7 +33,7 @@ const (
 )
 
 var (
-	cosiCSM           = csmForCosi("")
+	cosiCSM           = csmForCosi("", nil, nil)
 	cosiCSMBadVersion = csmForCosiBadVersion()
 	cosiClient        = crclient.NewFakeClientNoInjector(objects)
 	cosiSecret        = shared.MakeSecret(secretName, namespace, shared.CosiConfigVersion)
@@ -80,7 +81,51 @@ func TestPrecheckCosi(t *testing.T) {
 	}
 }
 
-func csmForCosi(driver csmv1.DriverType) csmv1.ContainerStorageModule {
+func TestModifyCosiCRController(t *testing.T) {
+	tests := []struct {
+		name               string
+		controllerYamlPath string
+		cr                 csmv1.ContainerStorageModule
+		checkFn            func(t *testing.T, manifest string)
+	}{
+		{
+			"it modifies envs, tolerations, and node selectors",
+			"testdata/cosi-controller.yaml",
+			csmForCosi(csmv1.Cosi, map[string]string{
+				"node-role.kubernetes.io/worker": "true",
+			},
+				[]corev1.Toleration{
+					{Key: "node-role.kubernetes.io/worker", Operator: corev1.TolerationOpExists, Effect: corev1.TaintEffectNoSchedule},
+				},
+				[]corev1.EnvVar{
+					{Name: "COSI_LOG_LEVEL", Value: "info"},
+					{Name: "COSI_LOG_FORMAT", Value: "text"},
+					{Name: "OTEL_COLLECTOR_ADDRESS", Value: "test:1234"},
+				}...),
+			func(t *testing.T, manifest string) {
+				assert.Contains(t, manifest, "--driver-config-params=/cosi-config-params/driver-config-params.yaml")
+				assert.Contains(t, manifest, "--otel-endpoint=test:1234")
+				assert.Contains(t, manifest, `node-role.kubernetes.io/worker: "true"`)
+				assert.Contains(t, manifest, "key: node-role.kubernetes.io/worker")
+				assert.Contains(t, manifest, "- effect: NoSchedule")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			controllerYaml, err := os.ReadFile(tt.controllerYamlPath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			manifest, err := ModifyCosiCR(string(controllerYaml), tt.cr, "Controller")
+			assert.Nil(t, err)
+			tt.checkFn(t, manifest)
+		})
+	}
+}
+
+func csmForCosi(driver csmv1.DriverType, selectors map[string]string, tolerations []corev1.Toleration, envs ...corev1.EnvVar) csmv1.ContainerStorageModule {
 	res := shared.MakeCSM(crName, namespace, shared.CosiConfigVersion)
 
 	// Add image name
@@ -93,10 +138,18 @@ func csmForCosi(driver csmv1.DriverType) csmv1.ContainerStorageModule {
 	res.Spec.Driver.CSIDriverType = driver
 
 	// Add environment variables
+
 	envVar1 := corev1.EnvVar{Name: "CSI_LOG_LEVEL", Value: "10"}
 	envVar2 := corev1.EnvVar{Name: "CSI_LOG_FORMAT", Value: "text"}
 	envVar3 := corev1.EnvVar{Name: "OTEL_COLLECTOR_ADDRESS", Value: "test:1234"}
-	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVar1, envVar2, envVar3}
+	envVars := []corev1.EnvVar{envVar1, envVar2, envVar3}
+	if len(envs) > 0 {
+		envVars = envs
+	}
+	res.Spec.Driver.Common.Envs = envVars
+
+	res.Spec.Driver.Common.NodeSelector = selectors
+	res.Spec.Driver.Common.Tolerations = tolerations
 
 	// Add sidecar
 	sideCarObj := csmv1.ContainerTemplate{
