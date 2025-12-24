@@ -1063,7 +1063,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, components []string, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
 	log := logger.GetLogger(ctx)
 
-	configVersion, err := operatorutils.GetVersion(&cr, op)
+	configVersion, err := operatorutils.GetVersion(ctx, &cr, op)
 	if err != nil {
 		return err
 	}
@@ -1505,10 +1505,7 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		return fmt.Errorf("unsupported driver type %s", cr.Spec.Driver.CSIDriverType)
 	}
 
-	upgradeValid, err :=
-	
-	
-	cr, operatorConfig)
+	upgradeValid, err := r.checkUpgrade(ctx, cr, operatorConfig)
 	if err != nil {
 		return fmt.Errorf("failed upgrade check: %v", err)
 	} else if !upgradeValid {
