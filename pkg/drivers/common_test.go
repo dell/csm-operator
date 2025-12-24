@@ -36,7 +36,7 @@ var (
 )
 
 // makes a csm object with tolerations
-func csmWithTolerations(driver csmv1.DriverType, version string) csmv1.ContainerStorageModule {
+func csmWithTolerations(driver csmv1.DriverType, version string, csmVersion string) csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
 	// Add tolerations, node selector to controller and node
@@ -92,6 +92,10 @@ func csmWithTolerations(driver csmv1.DriverType, version string) csmv1.Container
 
 	// Add pscale driver version
 	res.Spec.Driver.ConfigVersion = version
+	if csmVersion != "" {
+		res.Spec.Driver.ConfigVersion = ""
+		res.Spec.Version = csmVersion
+	}
 
 	// Add pscale driver type
 	res.Spec.Driver.CSIDriverType = driver

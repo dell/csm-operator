@@ -1239,3 +1239,44 @@ func GetEnvironmentVariable(varName string) (string, error) {
 	}
 	return value, nil
 }
+
+// GetVersion returns the corresponding config version of the CSM version
+func GetVersion(ctx context.Context, cr *csmv1.ContainerStorageModule, op OperatorConfig) (string, error) {
+	if cr.Spec.Version != "" {
+		log := logger.GetLogger(ctx)
+		file := fmt.Sprintf("%s/common/csm-version-mapping.yaml", op.ConfigDirectory)
+		buf, err := os.ReadFile(filepath.Clean(file))
+		if err != nil {
+			return "", fmt.Errorf("failed to read file %s: %s", file, err.Error())
+		}
+
+		support := map[csmv1.DriverType]map[string]string{}
+		err = yamlUnmarshal(buf, &support)
+		if err != nil {
+			return "", err
+		}
+
+		driverType := cr.Spec.Driver.CSIDriverType
+		if driverType == csmv1.PowerScale {
+			// use powerscale instead of isilon as the folder name is powerscale
+			driverType = csmv1.PowerScaleName
+		}
+
+		if csmVersion, ok := support[driverType]; ok {
+			if configVersion, ok := csmVersion[cr.Spec.Version]; ok {
+				return configVersion, nil
+			}
+
+			// Collect all the supported CSM versions to include in the error message
+			var keys []string
+			for k := range csmVersion {
+				keys = append(keys, k)
+			}
+			log.Errorf("No custom resource configuration is available for CSM version %s. Supported CSM versions are: [%s]", cr.Spec.Version, strings.Join(keys, ", "))
+			return "", fmt.Errorf("No custom resource configuration is available for CSM version %s. Supported CSM versions are: [%s]", cr.Spec.Version, strings.Join(keys, ", "))
+		}
+		log.Errorf("Unsupported platform %s", driverType)
+		return "", fmt.Errorf("Unsupported platform %s", driverType)
+	}
+	return cr.Spec.Driver.ConfigVersion, nil
+}

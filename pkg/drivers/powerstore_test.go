@@ -27,16 +27,17 @@ import (
 )
 
 var (
-	powerStoreCSM            = csmForPowerStore("csm")
-	powerStoreCSMBadVersion  = csmForPowerStoreBadVersion()
-	powerStoreCSMBadCertCnt  = csmForPowerStoreBadCertCnt()
-	powerStoreCSMEmptyEnv    = csmForPowerStoreWithEmptyEnv()
-	powerStoreCSMBadSkipCert = csmForPowerStoreBadSkipCert()
-	powerStoreSkipCertFalse  = csmForPowerStoreSkipCertFalse()
-	powerStoreClient         = crclient.NewFakeClientNoInjector(objects)
-	configJSONFileGoodPStore = fmt.Sprintf("%s/driverconfig/%s/config.json", config.ConfigDirectory, csmv1.PowerStore)
-	powerStoreSecret         = shared.MakeSecretWithJSON("csm-config", "driver-test", configJSONFileGoodPStore)
-	fakeSecretPstore         = shared.MakeSecret("fake-secret", "fake-ns", shared.PStoreConfigVersion)
+	powerStoreCSM               = csmForPowerStore("csm")
+	powerStoreCSMBadVersion     = csmForPowerStoreBadVersion()
+	powerStoreInvalidCSMVersion = csmForPowerStoreInvalidVersion()
+	powerStoreCSMBadCertCnt     = csmForPowerStoreBadCertCnt()
+	powerStoreCSMEmptyEnv       = csmForPowerStoreWithEmptyEnv()
+	powerStoreCSMBadSkipCert    = csmForPowerStoreBadSkipCert()
+	powerStoreSkipCertFalse     = csmForPowerStoreSkipCertFalse()
+	powerStoreClient            = crclient.NewFakeClientNoInjector(objects)
+	configJSONFileGoodPStore    = fmt.Sprintf("%s/driverconfig/%s/config.json", config.ConfigDirectory, csmv1.PowerStore)
+	powerStoreSecret            = shared.MakeSecretWithJSON("csm-config", "driver-test", configJSONFileGoodPStore)
+	fakeSecretPstore            = shared.MakeSecret("fake-secret", "fake-ns", shared.PStoreConfigVersion)
 
 	powerStoreTests = []struct {
 		// every single unit test name
@@ -52,6 +53,7 @@ var (
 	}{
 		{"happy path", powerStoreCSM, powerStoreClient, powerStoreSecret, ""},
 		{"bad version", powerStoreCSMBadVersion, powerStoreClient, powerStoreSecret, "not supported"},
+		{"invalid csm version", powerStoreInvalidCSMVersion, powerStoreClient, powerStoreSecret, "No custom resource configuration is available for CSM version v1.10.0"},
 	}
 
 	powerStoreCertsVolumeTests = []struct {
@@ -373,6 +375,17 @@ func csmForPowerStoreBadVersion() csmv1.ContainerStorageModule {
 
 	// Add pstore driver version
 	res.Spec.Driver.ConfigVersion = shared.BadConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
+
+	return res
+}
+
+// makes a csm object with a invalid csm version
+func csmForPowerStoreInvalidVersion() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.PStoreConfigVersion)
+
+	// Add pstore driver version
+	res.Spec.Version = shared.InvalidCSMVersion
 	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
 
 	return res

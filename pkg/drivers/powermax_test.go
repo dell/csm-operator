@@ -34,6 +34,7 @@ var (
 	powerMaxBadReverseProxySecret = csmWithBadReverseProxySecret()
 	powerMaxCSMNoProxy            = csmForPowerMaxNOProxy()
 	powerMaxCSMBadVersion         = csmForPowerMaxBadVersion()
+	powerMaxInvalidCSMVersion     = csmForPowerMaxInvalidVersion()
 	powermaxDefaultKubeletPath    = getDefaultKubeletPath()
 	powerMaxClient                = crclient.NewFakeClientNoInjector(objects)
 	powerMaxSecret                = shared.MakeSecret("csm-creds", "pmax-test", shared.PmaxConfigVersion)
@@ -57,6 +58,7 @@ var (
 		{"missing secret", powerMaxCSM, powerMaxClient, pMaxfakeSecret, "failed to find secret"},
 		{"bad version", powerMaxCSMBadVersion, powerMaxClient, powerMaxSecret, "not supported"},
 		{"bad latest version", powermaxDefaultKubeletPath, powerMaxClient, powerMaxSecret, ""},
+		{"invalid csm version", powerMaxInvalidCSMVersion, powerMaxClient, powerMaxSecret, "No custom resource configuration is available for CSM version v1.10.0"},
 	}
 )
 
@@ -303,6 +305,17 @@ func csmForPowerMaxBadVersion() csmv1.ContainerStorageModule {
 
 	// Add pmax driver version
 	res.Spec.Driver.ConfigVersion = "v0"
+	res.Spec.Driver.CSIDriverType = csmv1.PowerMax
+
+	return res
+}
+
+// makes a csm object with tolerations
+func csmForPowerMaxInvalidVersion() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "pmax-test", shared.PmaxConfigVersion)
+
+	// Add pmax driver version
+	res.Spec.Version = shared.InvalidCSMVersion
 	res.Spec.Driver.CSIDriverType = csmv1.PowerMax
 
 	return res

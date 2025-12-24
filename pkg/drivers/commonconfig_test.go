@@ -25,7 +25,8 @@ import (
 )
 
 var (
-	csm                  = csmWithTolerations(csmv1.PowerScaleName, shared.ConfigVersion)
+	csm                  = csmWithTolerations(csmv1.PowerScaleName, shared.ConfigVersion, "")
+	csm1                 = csmWithTolerations(csmv1.PowerScaleName, "", shared.InvalidCSMVersion)
 	pFlexCSM             = csmForPowerFlex(pflexCSMName)
 	pStoreCSM            = csmWithPowerstore(csmv1.PowerStore, shared.PStoreConfigVersion)
 	pScaleCSM            = csmWithPowerScale(csmv1.PowerScale, shared.PScaleConfigVersion)
@@ -62,6 +63,7 @@ var (
 		{"pmax happy path", pmaxCSM, csmv1.PowerMax, "node.yaml", ""},
 		{"pmax common env without node section", csmForPowerMax("common-env-override-no-node"), csmv1.PowerMax, "node.yaml", ""},
 		{"config file is invalid", csm, badDriver, "bad.yaml", "unmarshal"},
+		{"config file is invalid", csm1, badDriver, "bad.yaml", "No custom resource configuration is available for CSM version v1.10.0"},
 	}
 )
 
@@ -109,11 +111,13 @@ func TestGetUpgradeInfo(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := GetUpgradeInfo(ctx, config, tt.driverName, tt.csm.Spec.Driver.ConfigVersion)
-			if tt.expectedErr == "" {
-				assert.Nil(t, err)
-			} else {
-				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
+			if tt.csm.Spec.Driver.ConfigVersion != "" {
+				_, err := GetUpgradeInfo(ctx, config, tt.driverName, tt.csm.Spec.Driver.ConfigVersion)
+				if tt.expectedErr == "" {
+					assert.Nil(t, err)
+				} else {
+					assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
+				}
 			}
 		})
 	}
@@ -152,6 +156,7 @@ func TestGetControllerCOSI(t *testing.T) {
 func TestGetNode(t *testing.T) {
 	ctx := context.Background()
 	foundInitMdm := false
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			node, err := GetNode(ctx, tt.csm, config, tt.driverName, tt.filename, ctrlClientFake.NewClientBuilder().Build())
