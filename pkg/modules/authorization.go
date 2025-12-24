@@ -350,7 +350,7 @@ func getAuthApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op ope
 
 	authConfigVersion := authModule.ConfigVersion
 	if authConfigVersion == "" {
-		version, err := operatorutils.GetVersion(&cr, op)
+		version, err := operatorutils.GetVersion(ctx, &cr, op)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -472,7 +472,7 @@ func getAuthApplyVolumes(ctx context.Context, cr csmv1.ContainerStorageModule, o
 
 	authConfigVersion := authModule.ConfigVersion
 	if authConfigVersion == "" {
-		version, err := operatorutils.GetVersion(&cr, op)
+		version, err := operatorutils.GetVersion(ctx, &cr, op)
 		if err != nil {
 			return nil, err
 		}
@@ -644,7 +644,7 @@ func AuthorizationPrecheck(ctx context.Context, op operatorutils.OperatorConfig,
 
 	authConfigVersion := ""
 	if auth.ConfigVersion == "" {
-		version, err := operatorutils.GetVersion(&cr, op)
+		version, err := operatorutils.GetVersion(ctx, &cr, op)
 		if err != nil {
 			return err
 		}
@@ -687,7 +687,7 @@ func AuthorizationServerPrecheck(ctx context.Context, op operatorutils.OperatorC
 	log := logger.GetLogger(ctx)
 
 	if auth.ConfigVersion == "" {
-		version, err := operatorutils.GetVersion(&cr, op)
+		version, err := operatorutils.GetVersion(ctx, &cr, op)
 		if err != nil {
 			return err
 		}

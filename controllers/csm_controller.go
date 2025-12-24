@@ -1505,7 +1505,10 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		return fmt.Errorf("unsupported driver type %s", cr.Spec.Driver.CSIDriverType)
 	}
 
-	upgradeValid, err := r.checkUpgrade(ctx, cr, operatorConfig)
+	upgradeValid, err :=
+	
+	
+	cr, operatorConfig)
 	if err != nil {
 		return fmt.Errorf("failed upgrade check: %v", err)
 	} else if !upgradeValid {

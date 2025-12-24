@@ -149,7 +149,7 @@ func ReverseProxyServer(ctx context.Context, isDeleting bool, op operatorutils.O
 
 			// Mount Credential support is only introduced in CSM v2.14.0. Prior to this version, we will not try to dynamically
 			// add the necessary fields for either approach.
-			version, err := operatorutils.GetVersion(&cr, op)
+			version, err := operatorutils.GetVersion(ctx, &cr, op)
 			if err != nil {
 				return err
 			}

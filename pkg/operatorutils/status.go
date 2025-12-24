@@ -479,7 +479,7 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 
 	namespace := instance.GetNamespace()
 	//configVersion := instance.Spec.Driver.ConfigVersion
-	configVersion, err := GetVersion(instance, op)
+	configVersion, err := GetVersion(ctx, instance, op)
 	if err != nil {
 		return false, err
 	}

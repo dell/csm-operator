@@ -322,7 +322,7 @@ func ObservabilityPrecheck(ctx context.Context, op operatorutils.OperatorConfig,
 func ObservabilityTopology(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
 
-	configVersion, err := operatorutils.GetVersion(&cr, op)
+	configVersion, err := operatorutils.GetVersion(ctx, &cr, op)
 	if err != nil {
 		return err
 	}
@@ -495,7 +495,7 @@ func PowerScaleMetrics(ctx context.Context, isDeleting bool, op operatorutils.Op
 		return fmt.Errorf("could not find deployment obj")
 	}
 
-	configVersion, err := operatorutils.GetVersion(&cr, op)
+	configVersion, err := operatorutils.GetVersion(ctx, &cr, op)
 	if err != nil {
 		return err
 	}
@@ -831,7 +831,7 @@ func parseObservabilityMetricsDeployment(ctx context.Context, deployment *appsv1
 		}
 	}
 
-	configVersion, err := operatorutils.GetVersion(&cr, op)
+	configVersion, err := operatorutils.GetVersion(ctx, &cr, op)
 	if err != nil {
 		return nil, err
 	}
@@ -887,7 +887,7 @@ func PowerFlexMetrics(ctx context.Context, isDeleting bool, op operatorutils.Ope
 		return fmt.Errorf("could not find deployment obj")
 	}
 
-	configVersion, err := operatorutils.GetVersion(&cr, op)
+	configVersion, err := operatorutils.GetVersion(ctx, &cr, op)
 	if err != nil {
 		return err
 	}
@@ -1191,7 +1191,7 @@ func PowerMaxMetrics(ctx context.Context, isDeleting bool, op operatorutils.Oper
 		return fmt.Errorf("could not find deployment obj")
 	}
 
-	version, err := operatorutils.GetVersion(&cr, op)
+	version, err := operatorutils.GetVersion(ctx, &cr, op)
 	if err != nil {
 		return err
 	}
@@ -1215,7 +1215,7 @@ func PowerMaxMetrics(ctx context.Context, isDeleting bool, op operatorutils.Oper
 		}
 	}
 
-	configVersion, err := operatorutils.GetVersion(&cr, op)
+	configVersion, err := operatorutils.GetVersion(ctx, &cr, op)
 	if err != nil {
 		return err
 	}
