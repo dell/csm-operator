@@ -145,7 +145,7 @@ func TestGetControllerCOSI(t *testing.T) {
 			{Name: "COSI_LOG_FORMAT", Value: "text"},
 			{Name: "OTEL_COLLECTOR_ADDRESS", Value: "test:1234"},
 		}...)
-	_, err := GetController(context.Background(), csm, config, csmv1.Cosi)
+	_, err := GetController(context.Background(), csm, config, csmv1.Cosi, csmv1.VersionSpec{})
 	assert.Nil(t, err)
 }
 

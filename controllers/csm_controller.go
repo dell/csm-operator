@@ -876,13 +876,13 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			switch m.Name {
 			case csmv1.Authorization:
 				log.Info("Injecting CSM Authorization")
-				dp, err := modules.AuthInjectDeployment(ctx, controller.Deployment, cr, operatorConfig, ctrlClient)
+				dp, err := modules.AuthInjectDeployment(ctx, controller.Deployment, cr, operatorConfig, ctrlClient, matched)
 				if err != nil {
 					return fmt.Errorf("injecting auth into deployment: %v", err)
 				}
 				controller.Deployment = *dp
 
-				ds, err := modules.AuthInjectDaemonset(ctx, node.DaemonSetApplyConfig, cr, operatorConfig, ctrlClient)
+				ds, err := modules.AuthInjectDaemonset(ctx, node.DaemonSetApplyConfig, cr, operatorConfig, ctrlClient, matched)
 				if err != nil {
 					return fmt.Errorf("injecting auth into deamonset: %v", err)
 				}

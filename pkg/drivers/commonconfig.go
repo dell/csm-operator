@@ -83,7 +83,10 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	case csmv1.PowerScale:
 		YamlString = ModifyPowerScaleCR(YamlString, cr, "Controller")
 	case csmv1.Cosi:
-		YamlString = ModifyCosiCR(YamlString, cr, "Controller")
+		YamlString, err = ModifyCosiCR(YamlString, cr, "Controller")
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	driverYAML, err := operatorutils.GetDriverYaml(YamlString, "Deployment")

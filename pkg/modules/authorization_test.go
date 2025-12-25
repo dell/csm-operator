@@ -258,7 +258,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDaemonSet, err := AuthInjectDaemonset(context.TODO(), nodeYAML.DaemonSetApplyConfig, customResource, operatorConfig, ctrlClientFake.NewFakeClient())
+			newDaemonSet, err := AuthInjectDaemonset(context.TODO(), nodeYAML.DaemonSetApplyConfig, customResource, operatorConfig, ctrlClientFake.NewFakeClient(), csmv1.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -275,7 +275,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDaemonSet, err := AuthInjectDaemonset(context.TODO(), nodeYAML.DaemonSetApplyConfig, customResource, operatorConfig, ctrlClientFake.NewFakeClient())
+			newDaemonSet, err := AuthInjectDaemonset(context.TODO(), nodeYAML.DaemonSetApplyConfig, customResource, operatorConfig, ctrlClientFake.NewFakeClient(), csmv1.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -306,7 +306,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDaemonSet, err := AuthInjectDaemonset(context.TODO(), ds, customResource, opConfig, ctrlClientFake.NewFakeClient())
+			newDaemonSet, err := AuthInjectDaemonset(context.TODO(), ds, customResource, opConfig, ctrlClientFake.NewFakeClient(), csmv1.VersionSpec{})
 			if success {
 				assert.NoError(t, err)
 				if err := correctlyInjected(*newDaemonSet, string(customResource.Spec.Driver.CSIDriverType), skipCertificateValidation, authVersion, customResource); err != nil {
@@ -373,7 +373,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 				panic(err)
 			}
 			ctrlClient := ctrlClientFake.NewFakeClient()
-			newDeployment, err := AuthInjectDeployment(context.TODO(), controllerYAML.Deployment, tmpCR, operatorConfig, ctrlClient)
+			newDeployment, err := AuthInjectDeployment(context.TODO(), controllerYAML.Deployment, tmpCR, operatorConfig, ctrlClient, csmv1.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -404,7 +404,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 				panic(err)
 			}
 			ctrlClient := ctrlClientFake.NewFakeClient()
-			newDeployment, err := AuthInjectDeployment(context.TODO(), controllerYAML.Deployment, tmpCR, operatorConfig, ctrlClient)
+			newDeployment, err := AuthInjectDeployment(context.TODO(), controllerYAML.Deployment, tmpCR, operatorConfig, ctrlClient, csmv1.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -429,7 +429,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			success, skipCertificateValidation, dp, opConfig, cr, authVersion, client := tc(t)
-			newDeployment, err := AuthInjectDeployment(context.TODO(), dp, cr, opConfig, client)
+			newDeployment, err := AuthInjectDeployment(context.TODO(), dp, cr, opConfig, client, csmv1.VersionSpec{})
 			if success {
 				assert.NoError(t, err)
 				if err := correctlyInjected(*newDeployment, string(cr.Spec.Driver.CSIDriverType), skipCertificateValidation, authVersion, cr, client); err != nil {

@@ -73,6 +73,11 @@ type ContainerStorageModule struct {
 	Status ContainerStorageModuleStatus `json:"status,omitempty"`
 }
 
+type VersionSpec struct {
+	Version string            `yaml:"version"`
+	Images  map[string]string `yaml:",inline"`
+}
+
 //+kubebuilder:object:root=true
 
 // ContainerStorageModuleList contains a list of ContainerStorageModule
