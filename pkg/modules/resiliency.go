@@ -273,8 +273,8 @@ func ResiliencyInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv
 	if driverType == string(csmv1.PowerScale) {
 		driverType = string(csmv1.PowerScaleName)
 	}
-	// we need to set these ENV for PowerStore, PowerMax & PowerScale only
-	if driverType == string(csmv1.PowerScaleName) || driverType == string(csmv1.PowerStore) || driverType == string(csmv1.PowerMax) {
+	// we need to set these ENV for PowerStore, PowerMax, PowerScale & PowerFlex only
+	if driverType == string(csmv1.PowerScaleName) || driverType == string(csmv1.PowerStore) || driverType == string(csmv1.PowerMax) || driverType == string(csmv1.PowerFlex) {
 		for i, cnt := range dp.Spec.Template.Spec.Containers {
 			if *cnt.Name == "driver" {
 				podmonAPIPort := getResiliencyEnv(*resiliencyModule, cr.Spec.Driver.CSIDriverType)
