@@ -29,7 +29,7 @@ spec:
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: "quay.io/dell/container-storage-modules/csi-powerstore:nightly"
+      image: "csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-powerstore:nightly"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_POWERSTORE_NODE_NAME_PREFIX
@@ -193,7 +193,7 @@ spec:
       configVersion: v1.14.0
       components:
         - name: podmon-controller
-          image: quay.io/dell/container-storage-modules/podmon:nightly
+          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:nightly
           imagePullPolicy: IfNotPresent
           args:
             - "--labelvalue=csi-powerstore"
@@ -208,7 +208,7 @@ spec:
             - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
             - "--driverPath=csi-powerstore.dellemc.com"
         - name: podmon-node
-          image: quay.io/dell/container-storage-modules/podmon:nightly
+          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:nightly
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
@@ -242,7 +242,7 @@ spec:
           # image: Image to use for dell-csi-replicator. This shouldn't be changed
           # Allowed values: string
           # Default value: None
-          image: quay.io/dell/container-storage-modules/dell-csi-replicator:nightly
+          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/dell-csi-replicator:nightly
           envs:
             # replicationPrefix: prefix to prepend to storage classes parameters
             # Allowed values: string
@@ -256,7 +256,7 @@ spec:
         - name: dell-replication-controller-manager
           # image: Defines controller image. This shouldn't be changed
           # Allowed values: string
-          image: quay.io/dell/container-storage-modules/dell-replication-controller:nightly
+          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/dell-replication-controller:nightly
           envs:
             # Replication log level
             # Allowed values: "error", "warn"/"warning", "info", "debug"
@@ -332,7 +332,7 @@ spec:
           enabled: false
           # image: Defines PowerStore metrics image. This shouldn't be changed
           # Allowed values: string
-          image: quay.io/dell/container-storage-modules/csm-metrics-powerstore:nightly
+          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-metrics-powerstore:nightly
           envs:
             # POWERSTORE_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerStore
             # Allowed values: int

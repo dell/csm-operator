@@ -16,7 +16,7 @@ spec:
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: "quay.io/dell/container-storage-modules/csi-vxflexos:nightly"
+      image: "csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-vxflexos:nightly"
       imagePullPolicy: Always
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -167,7 +167,7 @@ spec:
       configVersion: v2.3.0
       components:
         - name: karavi-authorization-proxy
-          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
+          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-sidecar:nightly
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
@@ -197,7 +197,7 @@ spec:
           # enabled: Enable/Disable PowerFlex metrics
           enabled: false
           # image: Defines PowerFlex metrics image. This shouldn't be changed
-          image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:nightly
+          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-metrics-powerflex:nightly
           envs:
             # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
             # Allowed values: int

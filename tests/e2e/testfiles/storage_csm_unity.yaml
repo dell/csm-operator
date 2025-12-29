@@ -22,7 +22,7 @@ spec:
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: "quay.io/dell/container-storage-modules/csi-unity:nightly"
+      image: "csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-unity:nightly"
       imagePullPolicy: Always
       envs:
         - name: X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS

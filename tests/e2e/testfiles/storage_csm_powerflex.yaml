@@ -21,7 +21,7 @@ spec:
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: "quay.io/dell/container-storage-modules/csi-vxflexos:nightly"
+      image: "csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-vxflexos:nightly"
       imagePullPolicy: Always
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -177,7 +177,7 @@ spec:
       configVersion: v2.2.0
       components:
         - name: karavi-authorization-proxy
-          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
+          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-sidecar:nightly
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
@@ -222,7 +222,7 @@ spec:
           # enabled: Enable/Disable PowerFlex metrics
           enabled: false
           # image: Defines PowerFlex metrics image. This shouldn't be changed
-          image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:nightly
+          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-metrics-powerflex:nightly
           envs:
             # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
             # Allowed values: int
@@ -289,7 +289,7 @@ spec:
           # image: Image to use for dell-csi-replicator. This shouldn't be changed
           # Allowed values: string
           # Default value: None
-          image: quay.io/dell/container-storage-modules/dell-csi-replicator:nightly
+          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/dell-csi-replicator:nightly
           envs:
             # replicationPrefix: prefix to prepend to storage classes parameters
             # Allowed values: string
@@ -303,7 +303,7 @@ spec:
         - name: dell-replication-controller-manager
           # image: Defines controller image. This shouldn't be changed
           # Allowed values: string
-          image: quay.io/dell/container-storage-modules/dell-replication-controller:nightly
+          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/dell-replication-controller:nightly
           envs:
             # Replication log level
             # Allowed values: "error", "warn"/"warning", "info", "debug"
@@ -338,7 +338,7 @@ spec:
       configVersion: v1.14.0
       components:
         - name: podmon-controller
-          image: quay.io/dell/container-storage-modules/podmon:nightly
+          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:nightly
           imagePullPolicy: Always
           args:
             - "--csisock=unix:/var/run/csi/csi.sock"
@@ -349,7 +349,7 @@ spec:
             - "--driverPodLabelValue=dell-storage"
             - "--ignoreVolumelessPods=false"
         - name: podmon-node
-          image: quay.io/dell/container-storage-modules/podmon:nightly
+          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:nightly
           imagePullPolicy: Always
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster

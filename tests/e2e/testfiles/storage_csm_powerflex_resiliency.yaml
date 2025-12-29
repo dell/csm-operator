@@ -32,7 +32,7 @@ spec:
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: "quay.io/dell/container-storage-modules/csi-vxflexos:nightly"
+      image: "csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-vxflexos:nightly"
       imagePullPolicy: Always
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -189,7 +189,7 @@ spec:
       configVersion: v1.14.0
       components:
         - name: podmon-controller
-          image: quay.io/dell/container-storage-modules/podmon:nightly
+          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:nightly
           imagePullPolicy: Always
           args:
             - "--csisock=unix:/var/run/csi/csi.sock"
@@ -200,7 +200,7 @@ spec:
             - "--driverPodLabelValue=dell-storage"
             - "--ignoreVolumelessPods=false"
         - name: podmon-node
-          image: quay.io/dell/container-storage-modules/podmon:nightly
+          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:nightly
           imagePullPolicy: Always
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster

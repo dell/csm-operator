@@ -10,7 +10,7 @@ spec:
     csiDriverType: "powerstore"
     configVersion: v2.16.0
     common:
-      image: "quay.io/dell/container-storage-modules/csi-powerstore:nightly"
+      image: "csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-powerstore:nightly"
       imagePullPolicy: Always
   modules:
     - name: resiliency
