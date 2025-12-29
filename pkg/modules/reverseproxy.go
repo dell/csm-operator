@@ -337,11 +337,7 @@ func ReverseProxyInjectDeployment(ctx context.Context, dp v1.DeploymentApplyConf
 	}
 
 	// Dynamic secret/configMap mounting is only supported in v2.14.0 and above
-<<<<<<< HEAD
 	version, err := operatorutils.GetVersion(ctx, &cr, op)
-=======
-	version, err := operatorutils.GetVersion(&cr, op)
->>>>>>> 7cba14b359174e3ba977a7ffd4511ee28093ca0c
 	if err != nil {
 		return nil, err
 	}

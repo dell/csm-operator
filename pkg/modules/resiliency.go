@@ -131,11 +131,7 @@ func ResiliencyInjectRole(ctx context.Context, role rbacv1.Role, cr csmv1.Contai
 	}
 	resiliencyVersion := resiliencyModule.ConfigVersion
 	if resiliencyVersion == "" {
-<<<<<<< HEAD
 		version, err := operatorutils.GetVersion(ctx, &cr, op)
-=======
-		version, err := operatorutils.GetVersion(&cr, op)
->>>>>>> 7cba14b359174e3ba977a7ffd4511ee28093ca0c
 		if err != nil {
 			return nil, err
 		}
