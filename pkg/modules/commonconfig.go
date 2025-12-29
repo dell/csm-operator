@@ -76,7 +76,7 @@ func checkVersion(moduleType, givenVersion, configPath string) error {
 }
 
 func readConfigFile(ctx context.Context, module csmv1.Module, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, filename string) ([]byte, error) {
-	//var err error
+	// var err error
 	moduleConfigVersion := module.ConfigVersion
 	if moduleConfigVersion == "" {
 		version, err := operatorutils.GetVersion(ctx, &cr, op)

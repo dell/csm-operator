@@ -478,7 +478,6 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 	}
 
 	namespace := instance.GetNamespace()
-	//configVersion := instance.Spec.Driver.ConfigVersion
 	configVersion, err := GetVersion(ctx, instance, op)
 	if err != nil {
 		return false, err
@@ -570,7 +569,7 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 }
 
 // authProxyStatusCheck - calculate success state for auth proxy
-func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus, op OperatorConfig) (bool, error) {
+func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus, _ OperatorConfig) (bool, error) {
 	log := logger.GetLogger(ctx)
 	certEnabled := false
 	nginxEnabled := false
