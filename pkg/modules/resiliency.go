@@ -93,7 +93,7 @@ func ResiliencyPrecheck(ctx context.Context, op operatorutils.OperatorConfig, re
 }
 
 // ResiliencyInjectClusterRole - inject resiliency into clusterrole
-func ResiliencyInjectClusterRole(clusterRole rbacv1.ClusterRole, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, mode string) (*rbacv1.ClusterRole, error) {
+func ResiliencyInjectClusterRole(ctx context.Context, clusterRole rbacv1.ClusterRole, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, mode string) (*rbacv1.ClusterRole, error) {
 	var err error
 	roleFileName := mode + "-clusterroles.yaml"
 	resiliencyModule, err := getResiliencyModule(cr)
@@ -101,7 +101,7 @@ func ResiliencyInjectClusterRole(clusterRole rbacv1.ClusterRole, cr csmv1.Contai
 		return nil, err
 	}
 	// roleFiles are under moduleConfig for node & controller mode
-	buf, err := readConfigFile(resiliencyModule, cr, op, roleFileName)
+	buf, err := readConfigFile(ctx, resiliencyModule, cr, op, roleFileName)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func ResiliencyInjectClusterRole(clusterRole rbacv1.ClusterRole, cr csmv1.Contai
 }
 
 // ResiliencyInjectRole - inject resiliency into role
-func ResiliencyInjectRole(role rbacv1.Role, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, mode string) (*rbacv1.Role, error) {
+func ResiliencyInjectRole(ctx context.Context, role rbacv1.Role, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, mode string) (*rbacv1.Role, error) {
 	// There are no roles for controller in Resliency
 	if mode == "controller" {
 		return &role, nil
@@ -131,7 +131,11 @@ func ResiliencyInjectRole(role rbacv1.Role, cr csmv1.ContainerStorageModule, op 
 	}
 	resiliencyVersion := resiliencyModule.ConfigVersion
 	if resiliencyVersion == "" {
-		resiliencyVersion, err = operatorutils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, resiliencyModule.Name, op.ConfigDirectory)
+		version, err := operatorutils.GetVersion(ctx, &cr, op)
+		if err != nil {
+			return nil, err
+		}
+		resiliencyVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, resiliencyModule.Name, op.ConfigDirectory)
 		if err != nil {
 			return nil, err
 		}
@@ -144,7 +148,7 @@ func ResiliencyInjectRole(role rbacv1.Role, cr csmv1.ContainerStorageModule, op 
 		return &role, nil
 	}
 	// roleFiles are under moduleConfig for node & controller mode
-	buf, err := readConfigFile(resiliencyModule, cr, op, roleFileName)
+	buf, err := readConfigFile(ctx, resiliencyModule, cr, op, roleFileName)
 	if err != nil {
 		return nil, err
 	}
@@ -224,7 +228,7 @@ func getPollRateFromArgs(args []string) string {
 	return ""
 }
 
-func getResiliencyApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, driverType, mode string) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
+func getResiliencyApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, driverType, mode string) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
 	resiliencyModule := csmv1.Module{}
 	for _, m := range cr.Spec.Modules {
 		if m.Name == csmv1.Resiliency {
@@ -239,7 +243,7 @@ func getResiliencyApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.Oper
 		driverType = string(csmv1.PowerFlex)
 	}
 	fileToRead := "container-" + driverType + "-" + mode + ".yaml"
-	buf, err := readConfigFile(resiliencyModule, cr, op, fileToRead)
+	buf, err := readConfigFile(ctx, resiliencyModule, cr, op, fileToRead)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -257,8 +261,8 @@ func getResiliencyApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.Oper
 }
 
 // ResiliencyInjectDeployment - inject resiliency into deployment
-func ResiliencyInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, driverType string) (*applyv1.DeploymentApplyConfiguration, error) {
-	resiliencyModule, podmonPtr, err := getResiliencyApplyCR(cr, op, driverType, controllerMode)
+func ResiliencyInjectDeployment(ctx context.Context, dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, driverType string) (*applyv1.DeploymentApplyConfiguration, error) {
+	resiliencyModule, podmonPtr, err := getResiliencyApplyCR(ctx, cr, op, driverType, controllerMode)
 	if err != nil {
 		return nil, err
 	}
@@ -297,8 +301,8 @@ func ResiliencyInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv
 }
 
 // ResiliencyInjectDaemonset  - inject resiliency into daemonset
-func ResiliencyInjectDaemonset(ds applyv1.DaemonSetApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, driverType string) (*applyv1.DaemonSetApplyConfiguration, error) {
-	resiliencyModule, podmonPtr, err := getResiliencyApplyCR(cr, op, driverType, nodeMode)
+func ResiliencyInjectDaemonset(ctx context.Context, ds applyv1.DaemonSetApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, driverType string) (*applyv1.DaemonSetApplyConfiguration, error) {
+	resiliencyModule, podmonPtr, err := getResiliencyApplyCR(ctx, cr, op, driverType, nodeMode)
 	if err != nil {
 		return nil, err
 	}

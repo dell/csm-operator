@@ -122,7 +122,7 @@ func getRepctlPrefices(replicaModule csmv1.Module, driverType csmv1.DriverType) 
 	return replicationContextPrefix, replicationPrefix
 }
 
-func getReplicaApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
+func getReplicaApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
 	var err error
 	replicaModule := csmv1.Module{}
 	for _, m := range cr.Spec.Modules {
@@ -132,7 +132,7 @@ func getReplicaApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.Operato
 		}
 	}
 
-	buf, err := readConfigFile(replicaModule, cr, op, "container.yaml")
+	buf, err := readConfigFile(ctx, replicaModule, cr, op, "container.yaml")
 	if err != nil {
 		return nil, nil, err
 	}
@@ -167,8 +167,8 @@ func getReplicaApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.Operato
 }
 
 // ReplicationInjectDeployment - inject replication into deployment
-func ReplicationInjectDeployment(dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*applyv1.DeploymentApplyConfiguration, error) {
-	replicaModule, containerPtr, err := getReplicaApplyCR(cr, op)
+func ReplicationInjectDeployment(ctx context.Context, dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*applyv1.DeploymentApplyConfiguration, error) {
+	replicaModule, containerPtr, err := getReplicaApplyCR(ctx, cr, op)
 	if err != nil {
 		return nil, err
 	}
@@ -286,7 +286,7 @@ func CheckClusterRoleReplica(rules []rbacv1.PolicyRule) error {
 }
 
 // ReplicationInjectClusterRole - inject replication into clusterrole
-func ReplicationInjectClusterRole(clusterRole rbacv1.ClusterRole, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*rbacv1.ClusterRole, error) {
+func ReplicationInjectClusterRole(ctx context.Context, clusterRole rbacv1.ClusterRole, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*rbacv1.ClusterRole, error) {
 	var err error
 
 	replicaModule, err := getReplicaModule(cr)
@@ -294,7 +294,7 @@ func ReplicationInjectClusterRole(clusterRole rbacv1.ClusterRole, cr csmv1.Conta
 		return nil, err
 	}
 
-	buf, err := readConfigFile(replicaModule, cr, op, "rules.yaml")
+	buf, err := readConfigFile(ctx, replicaModule, cr, op, "rules.yaml")
 	if err != nil {
 		return nil, err
 	}
@@ -355,7 +355,7 @@ func ReplicationPrecheck(ctx context.Context, op operatorutils.OperatorConfig, r
 	return nil
 }
 
-func getReplicaController(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]crclient.Object, error) {
+func getReplicaController(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]crclient.Object, error) {
 	YamlString := ""
 
 	replica, err := getReplicaModule(cr)
@@ -363,7 +363,7 @@ func getReplicaController(op operatorutils.OperatorConfig, cr csmv1.ContainerSto
 		return nil, err
 	}
 
-	buf, err := readConfigFile(replica, cr, op, "controller.yaml")
+	buf, err := readConfigFile(ctx, replica, cr, op, "controller.yaml")
 	if err != nil {
 		return nil, err
 	}
@@ -440,7 +440,7 @@ func getReplicaModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error) {
 
 // ReplicationManagerController -
 func ReplicationManagerController(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
-	ctrlObjects, err := getReplicaController(op, cr)
+	ctrlObjects, err := getReplicaController(ctx, op, cr)
 	if err != nil {
 		return err
 	}
@@ -466,7 +466,7 @@ func CreateReplicationConfigmap(ctx context.Context, cr csmv1.ContainerStorageMo
 		return nil, err
 	}
 
-	buf, err := readConfigFile(replica, cr, op, "dell-replication-controller-config.yaml")
+	buf, err := readConfigFile(ctx, replica, cr, op, "dell-replication-controller-config.yaml")
 	if err != nil {
 		return nil, err
 	}
@@ -507,7 +507,7 @@ func DeleteReplicationConfigmap(ctrlClient client.Client) error {
 	return nil
 }
 
-func getReplicationCrdDeploy(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getReplicationCrdDeploy(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	yamlString := ""
 
 	repl, err := getReplicaModule(cr)
@@ -515,7 +515,7 @@ func getReplicationCrdDeploy(op operatorutils.OperatorConfig, cr csmv1.Container
 		return yamlString, err
 	}
 
-	buf, err := readConfigFile(repl, cr, op, ReplicationCrds)
+	buf, err := readConfigFile(ctx, repl, cr, op, ReplicationCrds)
 	if err != nil {
 		return yamlString, err
 	}
@@ -525,7 +525,7 @@ func getReplicationCrdDeploy(op operatorutils.OperatorConfig, cr csmv1.Container
 }
 
 func ReplicationCrdDeploy(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-	yamlString, err := getReplicationCrdDeploy(op, cr)
+	yamlString, err := getReplicationCrdDeploy(ctx, op, cr)
 	if err != nil {
 		return err
 	}
@@ -534,7 +534,7 @@ func ReplicationCrdDeploy(ctx context.Context, op operatorutils.OperatorConfig, 
 }
 
 func DeleteReplicationCrds(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-	yamlString, err := getReplicationCrdDeploy(op, cr)
+	yamlString, err := getReplicationCrdDeploy(ctx, op, cr)
 	if err != nil {
 		return err
 	}
