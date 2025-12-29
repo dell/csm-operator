@@ -436,7 +436,11 @@ func getOtelCollector(ctx context.Context, op operatorutils.OperatorConfig, cr c
 
 	nginxProxyImage := "quay.io/nginx/nginx-unprivileged:1.27"
 	otelCollectorImage := "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0"
+<<<<<<< HEAD
 	configVersion, err := operatorutils.GetVersion(ctx, &cr, op)
+=======
+	configVersion, err := operatorutils.GetVersion(&cr, op)
+>>>>>>> 7cba14b359174e3ba977a7ffd4511ee28093ca0c
 	if err != nil {
 		return YamlString, err
 	}
