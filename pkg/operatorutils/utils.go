@@ -246,7 +246,7 @@ func ResolveImage(imageFile, customRegistry string, retainImageRegistryPath bool
 	imageFile = strings.TrimSpace(imageFile)
 	customRegistry = strings.TrimSpace(customRegistry)
 	log := logger.GetLogger(ctx)
-	log.Errorw("Resolving image", "imageFile", imageFile, "customRegistry", customRegistry)
+	log.Info("Resolving image", "imageFile", imageFile, "customRegistry", customRegistry)
 	// Backward compatibility: no override if customRegistry is unset.
 	if customRegistry == "" {
 		return imageFile
@@ -269,7 +269,7 @@ func ResolveImage(imageFile, customRegistry string, retainImageRegistryPath bool
 			imageFile = imageFile[i+1:]
 		}
 	}
-	log.Errorw("Resolving image", "imageFile", imageFile, "customRegistry", customRegistry)
+	log.Error("Resolving image", "imageFile", imageFile, "customRegistry", customRegistry)
 
 	customRegistry = strings.TrimRight(customRegistry, "/")
 	return fmt.Sprintf("%s/%s", customRegistry, imageFile)
@@ -286,8 +286,8 @@ func ValidateCustomRegistry(registry string) bool {
 		return true
 	}
 
-	// 2. Reject schemes (Common user error)
-	if strings.HasPrefix(registry, "http://") || strings.HasPrefix(registry, "https://") {
+	// 2. Length check
+	if len(registry) > 255 {
 		return false
 	}
 
