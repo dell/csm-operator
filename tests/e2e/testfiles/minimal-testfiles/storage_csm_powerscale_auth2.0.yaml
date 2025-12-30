@@ -10,7 +10,7 @@ spec:
     replicas: 1
     forceRemoveDriver: true
     common:
-      image: "quay.io/dell/container-storage-modules/csi-isilon:nightly"
+      image: "csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-isilon:nightly"
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization

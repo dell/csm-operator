@@ -8,7 +8,7 @@ spec:
     csiDriverType: "powermax"
     configVersion: v2.16.0
     common:
-      image: "quay.io/dell/container-storage-modules/csi-powermax:nightly"
+      image: "csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-powermax:nightly"
       envs:
         - name: X_CSI_MANAGED_ARRAYS
           value: "REPLACE_ARRAYS"
@@ -24,7 +24,7 @@ spec:
       configVersion: v2.3.0
       components:
         - name: karavi-authorization-proxy
-          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
+          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-sidecar:nightly
           envs:
             - name: "PROXY_HOST"
               value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"

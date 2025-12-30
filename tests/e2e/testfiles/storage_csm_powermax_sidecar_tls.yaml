@@ -44,7 +44,7 @@ spec:
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: quay.io/dell/container-storage-modules/csi-powermax:nightly
+      image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-powermax:nightly
       # imagePullPolicy: Policy to determine if the image should be pulled prior to starting the container.
       # Allowed values:
       #  Always: Always pull the image.
@@ -257,7 +257,7 @@ spec:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
           # Default value: None
-          image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly
+          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csipowermax-reverseproxy:nightly
           imagePullPolicy: Always
           envs:
             # "tlsSecret" defines the TLS secret that is created with certificate
