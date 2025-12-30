@@ -3455,7 +3455,7 @@ func TestResolveImage(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := ResolveImage(tt.args.imagefile, tt.args.customRegistry, tt.args.retainImageRegistryPath); got != tt.want {
+			if got := ResolveImage(ctx, tt.args.imagefile, tt.args.customRegistry, tt.args.retainImageRegistryPath); got != tt.want {
 				t.Errorf("ResolveImage() = %v, want %v", got, tt.want)
 			}
 		})
