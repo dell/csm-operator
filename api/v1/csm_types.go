@@ -22,11 +22,6 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // ContainerStorageModuleSpec defines the desired state of ContainerStorageModule
-// +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.driver.configVersion) && self.driver.configVersion != \"\")",message="spec.version and spec.driver.configVersion cannot both be set"
-// +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.driver.common) && has(self.driver.common.image) && self.driver.common.image != \"\")",message="spec.driver.common.image is forbidden when spec.version is set"
-// +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.driver.sideCars) && self.driver.sideCars.exists(sc, has(sc.image) && sc.image != \"\"))",message="spec.driver.sideCars[*].image is forbidden when spec.version is set"
-// +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.modules) && self.modules.exists(m, has(m.components) && m.components.exists(c, has(c.image) && c.image != \"\")))",message="spec.modules[*].components[*].image is forbidden when spec.version is set"
-// +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.modules) && self.modules.exists(m, has(m.configVersion) && m.configVersion != \"\"))",message="spec.modules[*].configVersion is forbidden when spec.version is set"
 type ContainerStorageModuleSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
@@ -47,7 +42,7 @@ type ContainerStorageModuleSpec struct {
 
 	// RetainImageRegistryPath is the boolean flag used to retain image registry path
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Retain Image Registry Path"
-	retainImageRegistryPath bool `json:"retainImageRegistryPath,omitempty" yaml:"retainImageRegistryPath,omitempty"`
+	RetainImageRegistryPath bool `json:"retainImageRegistryPath,omitempty" yaml:"retainImageRegistryPath,omitempty"`
 }
 
 // ContainerStorageModuleStatus defines the observed state of ContainerStorageModule
