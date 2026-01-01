@@ -1511,8 +1511,8 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 	}
 
 	//Check if valid custom registry is mentioned
-	if operatorutils.ValidateCustomRegistry(cr.Spec.CustomRegistry) == false {
-		return fmt.Errorf("invalid custom registry: %s", cr.Spec.CustomRegistry)
+	if operatorutils.ValidateCustomRegistry(ctx, cr.Spec.CustomRegistry) == false {
+		log.Info("Empty or Invalid custom registry mentioned in the CR: ", cr.Spec.CustomRegistry)
 	}
 
 	// check for owner reference

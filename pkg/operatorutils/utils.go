@@ -21,9 +21,10 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
+	"net/url"
+	"time"
 
 	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
 	k8sClient "eos2git.cec.lab.emc.com/CSM/csm-operator/k8s"
@@ -242,14 +243,44 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 // path segment (e.g., "org/repo/image:tag") is preserved while removing any
 // registry domain from imageFile. If customRegistry is empty, the original
 // imageFile is returned unchanged.
-func ResolveImage(ctx context.Context, imageFile, customRegistry string, retainImageRegistryPath bool) string {
-	imageFile = strings.TrimSpace(imageFile)
-	customRegistry = strings.TrimSpace(customRegistry)
+func ResolveImage(ctx context.Context, originalImageFile, cr csmv1.ContainerStorageModule) string {
+	version        := strings.TrimSpace(cr.Spec.Version)
+    configMapName  := strings.TrimSpace(cr.Spec.configMap)       // note: field name per your snippet
+    configVersion  := strings.TrimSpace(cr.Spec.ConfigVersion)
+	customRegistry := strings.TrimSpace(cr.Spec.CustomRegistry)
+	retainImageRegistryPath := cr.Spec.RetainImageRegistryPath
+	imageFile 		:= strings.TrimSpace(originalImageFile)
+
 	log := logger.GetLogger(ctx)
-	log.Info("Resolving image", "imageFile", imageFile, "customRegistry", customRegistry)
+	log.Info("ResolveImage, imageFile ", imageFile, ", customRegistry ", customRegistry, ", retainImageRegistryPath ", retainImageRegistryPath )
+
+	//If version is not specified, no override shall be done
+	if cr.Spec.Version == "" {
+		log.Info("ResolveImage, version not specified, no custom registry override be done")
+		return originalImageFile
+	}
+
+	//If configversion is specified, no override shall be done
+	if cr.Spec.ConfigVersion != "" {
+		log.Info("ResolveImage, Both version & configversion specified, no custom registry override be done")
+		return originalImageFile
+	}
+
+	//configmap is specified, no override shall be done
+	if cr.Spec.configMap == "" {
+		log.Info("ResolveImage, Both version & configmap specified, no custom registry override be done")
+		return originalImageFile
+	}
+
+	//Check if valid custom registry mentioned in the CR
+	if !ValidateCustomRegistry(ctx, customRegistry){
+			log.Info("ResolveImage, Using original Image path",originalImageFile)
+			return originalImageFile
+	}
+
 	// Backward compatibility: no override if customRegistry is unset.
 	if customRegistry == "" {
-		return imageFile
+		return originalImageFile
 	}
 
 	if retainImageRegistryPath {
@@ -269,30 +300,46 @@ func ResolveImage(ctx context.Context, imageFile, customRegistry string, retainI
 			imageFile = imageFile[i+1:]
 		}
 	}
-	log.Error("Resolving image", "imageFile", imageFile, "customRegistry", customRegistry)
 
-	customRegistry = strings.TrimRight(customRegistry, "/")
-	return fmt.Sprintf("%s/%s", customRegistry, imageFile)
+	resolvedPath := fmt.Sprintf("%s/%s", customRegistry, imageFile)
+	log.Info( "ResolveImage, resolved Image path ",resolvedPath)
+
+	return resolvedPath;
 }
 
-var registryRegex = regexp.MustCompile(`^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*|\[[a-f0-9:]+\])(:[0-9]+)?(/.*)?$`)
-
-func ValidateCustomRegistry(registry string) bool {
+func ValidateCustomRegistry(ctx context.Context, registry string) bool {
 	registry = strings.TrimSpace(registry)
+	log := logger.GetLogger(ctx)
 
-	// 1. Empty is technically "valid" in your logic (backward compatibility),
-	// but if you want to validate a NON-empty input:
+	// 1. Empty is technically "valid" (backward compatibility),
 	if registry == "" {
-		return true
+		log.Info("ValidateCustomRegistry, Custom registry not mentioned in the CR file")
+		return false
 	}
 
 	// 2. Length check
 	if len(registry) > 255 {
-		return false
+		log.Error("ValidateCustomRegistry, Custom registry exceeeds the length limit")
+		return true
+		//Returning true so that, the reconciliation loop indicates the issue to customer
+		//As per the discussion on 31/Dec
 	}
 
-	// 3. Regex check for DNS/IP formatting
-	return registryRegex.MatchString(registry)
+	// 4. Check if URL scheme is valid
+	customRegistryURL := strings.TrimRight(registry, "/")
+	if(!strings.HasPrefix(customRegistryURL, "http://") && !strings.HasPrefix(customRegistryURL, "https://")) {
+		customRegistryURL = "http://" + customRegistryURL
+	}
+
+	u, err := url.Parse(customRegistryURL)
+	if (err == nil && u.Scheme != "" && u.Host != "") {
+		log.Info("ValidateCustomRegistry, custom registry URL scheme is valid")
+	} else {
+		log.Error("ValidateCustomRegistry, Invalid custom registry in the CR file, ", "customRegistry ", registry)
+		//Returning true so that, the reconciliation loop indicates the issue to customer
+		//As per the discussion on 31/Dec
+	}
+	return true
 }
 
 // UpdateInitContainerApply -

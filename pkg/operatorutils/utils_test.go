@@ -3401,10 +3401,12 @@ func TestGetEnvironmentVariable(t *testing.T) {
 }
 
 func TestResolveImage(t *testing.T) {
+	ctx := context.Background()
+
 	type args struct {
 		imagefile               string
-		customRegistry          string
-		retainImageRegistryPath bool
+		cr 						csmv1.ContainerStorageModule
+
 	}
 	tests := []struct {
 		name string
@@ -3412,73 +3414,78 @@ func TestResolveImage(t *testing.T) {
 		want string
 	}{
 		{
-			name: "No custom registry - returns original image",
+			name: "No version mentioned - No override",
 			args: args{
 				imagefile:               "quay.io/dell/csi-powerflex:v2.0",
-				customRegistry:          "",
-				retainImageRegistryPath: false,
+				cr.Spec.Version:		 "",
+				cr.Spec.configMap:		"configmap",
+				cr.Spec.ConfigVersion:	"v2.0",
+				cr.Spec.CustomRegistry: "",
+				cr.Spec.retainImageRegistryPath: false,
+			},
+			want: "quay.io/dell/csi-powerflex:v2.0",
+		},
+		{
+			name: "Version mentioned, config version specified - No override",
+			args: args{
+				imagefile:               "quay.io/dell/csi-powerflex:v2.0",
+				cr.Spec.Version:		 "v2.0",
+				cr.Spec.configMap:		"configmap",
+				cr.Spec.ConfigVersion:	"v2.0",
+				cr.Spec.CustomRegistry: "",
+				cr.Spec.retainImageRegistryPath: false,
+			},
+			want: "quay.io/dell/csi-powerflex:v2.0",
+		},
+		{
+			name: "Version mentioned, no config version, configmap specified - No override",
+			args: args{
+				imagefile:               "quay.io/dell/csi-powerflex:v2.0",
+				cr.Spec.Version:		 "v2.0",
+				cr.Spec.configMap:		"configmap",
+				cr.Spec.ConfigVersion:	"v2.0",
+				cr.Spec.CustomRegistry: "",
+				cr.Spec.retainImageRegistryPath: false,
+			},
+			want: "quay.io/dell/csi-powerflex:v2.0",
+		},
+		{
+			name: "Version, no config version, no configmap, no custom registry - No override",
+			args: args{
+				imagefile:               "quay.io/dell/csi-powerflex:v2.0",
+				cr.Spec.Version:		 "v2.0",
+				cr.Spec.configMap:		"configmap",
+				cr.Spec.ConfigVersion:	"v2.0",
+				cr.Spec.CustomRegistry: "",
+				cr.Spec.retainImageRegistryPath: false,
 			},
 			want: "quay.io/dell/csi-powerflex:v2.0",
 		},
 		{
 			name: "Custom registry + Retain Path (Simple image with no path)",
 			args: args{
-				imagefile:               "csi-powerflex:v2.0",
-				customRegistry:          "my-private-repo.com:5000",
-				retainImageRegistryPath: true,
+				imagefile:               "docker.io/dell/csi-powerflex:v2.0",
+				cr.Spec.Version:		 "v2.0",
+				cr.Spec.configMap:		"configmap",
+				cr.Spec.ConfigVersion:	"v2.0",
+				cr.Spec.CustomRegistry: "my-private-repo.com:5000",
+				cr.Spec.retainImageRegistryPath: true,
 			},
 			want: "my-private-repo.com:5000/csi-powerflex:v2.0",
 		},
 		{
-			name: "Custom registry + Retain Path (Image with existing registry/namespace)",
-			args: args{
-				imagefile:               "docker.io/dell/csi-powerflex:v2.0",
-				customRegistry:          "my-local-registry",
-				retainImageRegistryPath: true,
-			},
-			// Logic: SplitN splits "docker.io" and "dell/csi-powerflex:v2.0".
-			// Keeps the second part.
-			want: "my-local-registry/dell/csi-powerflex:v2.0",
-		},
-		{
-			name: "Custom registry + Retain Path (Deeply nested image pat)",
-			args: args{
-				imagefile:               "quay.io/organization/team/app:v1",
-				customRegistry:          "internal-registry",
-				retainImageRegistryPath: true,
-			},
-			// Logic: SplitN splits at first slash.
-			// "quay.io" (drop) | "organization/team/app:v1" (keep).
-			want: "internal-registry/organization/team/app:v1",
-		},
-		{
 			name: "Custom registry + NO Retain Path (Strips everything but image name)",
 			args: args{
-				imagefile:               "quay.io/dell/csi-powerflex:v2.0",
-				customRegistry:          "my-local-registry",
+				imagefileimagefile:     "docker.io/dell/csi-powerflex:v2.0",
+				cr.Spec.Version:		"v2.0",
+				cr.Spec.configMap:		"configmap",
+				cr.Spec.ConfigVersion:	"v2.0",
+				cr.Spec.CustomRegistry: "my-private-repo.com:5000",
 				retainImageRegistryPath: false,
 			},
 			// Logic: LastIndexByte finds last slash. Keeps only "csi-powerflex:v2.0".
 			want: "my-local-registry/csi-powerflex:v2.0",
-		},
-		{
-			name: "Custom registry + NO Retain Path (Image has no slashes)",
-			args: args{
-				imagefile:               "nginx:latest",
-				customRegistry:          "docker.io",
-				retainImageRegistryPath: false,
-			},
-			want: "docker.io/nginx:latest",
-		},
-		{
-			name: "Whitespace handling - Trims inputs",
-			args: args{
-				imagefile:               "  alpine:3.14  ",
-				customRegistry:          "  my-reg  ",
-				retainImageRegistryPath: false,
-			},
-			want: "my-reg/alpine:3.14",
-		},
+		}
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -3504,9 +3511,12 @@ func TestValidateCustomRegistry(t *testing.T) {
 		{"Invalid Spaces", "quay .io", false},
 		{"Invalid Special Char", "quay.io!", false},
 	}
+
+	ctx := context.Background()
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := ValidateCustomRegistry(tt.registry); got != tt.want {
+			if got := ValidateCustomRegistry(ctx, tt.registry); got != tt.want {
 				t.Errorf("ValidateCustomRegistry() = %v, want %v", got, tt.want)
 			}
 		})

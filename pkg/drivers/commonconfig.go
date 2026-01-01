@@ -316,8 +316,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 			resolvedImagePath := operatorutils.ResolveImage(
 				ctx,
 				*c.Image,
-				cr.Spec.CustomRegistry,
-				cr.Spec.RetainImageRegistryPath)
+				cr)
 			c.Image = &resolvedImagePath
 
 			var commonEnvs, nodeEnvs []corev1.EnvVar
@@ -351,13 +350,15 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 					removeContainer = false
 					log.Infow("Container to be enabled", "name", *c.Name)
 
-					resolvedSidecarImagePath := operatorutils.ResolveImage(
+					resolvedSidecarImagePath := string(s.Image)
+					resolvedSidecarImagePath = operatorutils.ResolveImage(
 						ctx,
-						*s.Image,
+						resolvedSidecarImagePath,
 						cr.Spec.CustomRegistry,
 						cr.Spec.RetainImageRegistryPath)
-					log.Infow("Resolved sidecar image path", "image", *s.Image, "resolved", resolvedSidecarImagePath)
-					// s.Image = &resolvedSidecarImagePath
+					log.Info("Resolved sidecar image path", "image", string(s.Image), "resolved", resolvedSidecarImagePath)
+					var resolvedSidecarImage csmv1.ImageType = csmv1.ImageType(resolvedSidecarImagePath)
+					s.Image = resolvedSidecarImage
 				}
 				break
 			}
