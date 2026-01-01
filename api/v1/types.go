@@ -180,7 +180,6 @@ type PodStatus struct {
 
 // Driver of CSIDriver
 // +k8s:openapi-gen=true
-// +kubebuilder:validation:MaxProperties=20
 type Driver struct {
 	// CSIDriverType is the CSI Driver type for Dell Technologies - e.g, powermax, powerflex,...
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="CSI Driver Type"
