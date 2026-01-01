@@ -134,7 +134,6 @@ const (
 )
 
 // Module defines the desired state of a ContainerStorageModule
-// +kubebuilder:validation:MaxProperties=10
 type Module struct {
 	// Name is name of ContainerStorageModule modules
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Name"
@@ -150,7 +149,6 @@ type Module struct {
 
 	// Components is the specification for CSM components containers
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ContainerStorageModule components specification"
-	// +kubebuilder:validation:MaxItems=20
 	Components []ContainerTemplate `json:"components,omitempty" yaml:"components,omitempty"`
 
 	// ForceRemoveModule is the boolean flag used to remove authorization proxy server deployment when CR is deleted
@@ -216,7 +214,6 @@ type Driver struct {
 
 	// SideCars is the specification for CSI sidecar containers
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="CSI SideCars specification"
-	// +kubebuilder:validation:MaxItems=20
 	SideCars []ContainerTemplate `json:"sideCars,omitempty" yaml:"sideCars"`
 
 	// InitContainers is the specification for Driver InitContainers
