@@ -33,6 +33,7 @@ import (
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/sharedutil/crclient"
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -1053,7 +1054,7 @@ func (suite *CSMControllerTestSuite) TestOldStandAloneModuleCleanup() {
 			if errorInjector != nil {
 				*errorInjector = true
 			}
-			driverConfig, _ := getDriverConfig(ctx, *csm, operatorConfig, r.Client)
+			driverConfig, _ := getDriverConfig(ctx, *csm, operatorConfig, r.Client, operatorutils.VersionSpec{})
 			err := r.oldStandAloneModuleCleanup(ctx, csm, operatorConfig, driverConfig)
 
 			if expectedErr == "" {
@@ -3115,4 +3116,102 @@ func TestApplyCsmDrCrd(t *testing.T) {
 			}
 		})
 	}
+}
+
+func (suite *CSMControllerTestSuite) TestSyncCSMConfigMapMissingNoError() {
+	ctx := context.Background()
+
+	scheme := runtime.NewScheme()
+	require.NoError(suite.T(), corev1.AddToScheme(scheme))
+	require.NoError(suite.T(), rbacv1.AddToScheme(scheme))
+	require.NoError(suite.T(), appsv1.AddToScheme(scheme))
+	require.NoError(suite.T(), storagev1.AddToScheme(scheme))
+	require.NoError(suite.T(), csmv1.AddToScheme(scheme))
+
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		Build()
+
+	_, log := logger.GetNewContextWithLogger("0")
+	reconciler := &ContainerStorageModuleReconciler{
+		Client:               fakeClient,
+		K8sClient:            suite.k8sClient,
+		Scheme:               scheme,
+		Log:                  log,
+		Config:               operatorConfig,
+		EventRecorder:        record.NewFakeRecorder(100),
+		ContentWatchChannels: map[string]chan struct{}{},
+		ContentWatchLock:     sync.Mutex{},
+	}
+
+	csm := shared.MakeCSM(csmName, "test-namespace", configVersion)
+	csm.Spec.Version = "v1.15.0"
+	csm.Spec.Driver.CSIDriverType = "isilon"
+	csm.Spec.Driver.Common.Image = "quay.io/dell/container-storage-modules/isilon:v2.14.0"
+
+	require.NoError(suite.T(), fakeClient.Create(ctx, &csm))
+
+	err := reconciler.SyncCSM(ctx, csm, operatorConfig, reconciler.Client)
+
+	assert.NoError(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) TestSyncCSMConfigMapPresentNoMatchError() {
+	ctx := context.Background()
+
+	scheme := runtime.NewScheme()
+	require.NoError(suite.T(), corev1.AddToScheme(scheme))
+	require.NoError(suite.T(), rbacv1.AddToScheme(scheme))
+	require.NoError(suite.T(), appsv1.AddToScheme(scheme))
+	require.NoError(suite.T(), storagev1.AddToScheme(scheme))
+	require.NoError(suite.T(), csmv1.AddToScheme(scheme))
+
+	versionsYAML := "- version: v1.15.0\n" +
+		"  images:\n" +
+		"    csi-driver: \"registry.example.com/driver:v1.15.0\"\n" +
+		"    sidecar:    \"registry.example.com/sidecar:v1.15.0\"\n" +
+		"- version: v1.15.1\n" +
+		"  images:\n" +
+		"    csi-driver: \"registry.example.com/driver:v1.15.1\"\n" +
+		"    sidecar:    \"registry.example.com/sidecar:v1.15.1\"\n"
+
+	assert.NotContains(suite.T(), versionsYAML, "\t", "YAML must not contain tabs")
+
+	cm := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      operatorutils.CSMImages,
+			Namespace: "test-namespace",
+		},
+		Data: map[string]string{
+			"versions.yaml": versionsYAML,
+		},
+	}
+
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(cm).
+		Build()
+
+	_, log := logger.GetNewContextWithLogger("0")
+	reconciler := &ContainerStorageModuleReconciler{
+		Client:               fakeClient,
+		K8sClient:            suite.k8sClient,
+		Scheme:               scheme,
+		Log:                  log,
+		Config:               operatorConfig,
+		EventRecorder:        record.NewFakeRecorder(100),
+		ContentWatchChannels: map[string]chan struct{}{},
+		ContentWatchLock:     sync.Mutex{},
+	}
+
+	csm := shared.MakeCSM(csmName, "test-namespace", configVersion)
+	csm.Spec.Version = "v1.16.0"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
+	csm.Spec.Driver.Common.Image = "quay.io/dell/container-storage-modules/isilon:v2.15.0"
+	require.NoError(suite.T(), fakeClient.Create(ctx, &csm))
+
+	err := reconciler.SyncCSM(ctx, csm, operatorConfig, reconciler.Client)
+
+	assert.Error(suite.T(), err, "SyncCSM must return error if CR version not found in versions.yaml")
+	assert.Contains(suite.T(), err.Error(), "version v1.16.0 not found")
 }

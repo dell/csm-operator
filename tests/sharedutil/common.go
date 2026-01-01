@@ -260,6 +260,24 @@ func MakeConfigMap(name, ns, _ string) *corev1.ConfigMap {
 	}
 }
 
+// MakeVersionsConfigMap returns a ConfigMap object containing a "versions.yaml"
+// key with the provided configmapdata value.
+func MakeVersionsConfigMap(name, ns, configmapdata string) *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: corev1.SchemeGroupVersion.String(),
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: ns,
+		},
+		Data: map[string]string{
+			"versions.yaml": configmapdata,
+		},
+	}
+}
+
 // MakeSecretWithJSON returns a driver pre-req secret array-config
 func MakeSecretWithJSON(name string, ns string, configFile string) *corev1.Secret {
 	configJSON, _ := os.ReadFile(filepath.Clean(configFile)) // #nosec G304

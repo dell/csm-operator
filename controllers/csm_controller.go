@@ -771,8 +771,19 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		}
 	}
 
+	// Install/update via configmap
+	var matched operatorutils.VersionSpec
+	if cr.Spec.Version != "" {
+		var err error
+		matched, err = operatorutils.ResolveVersionFromConfigMap(ctx, ctrlClient, &cr)
+		if err != nil {
+			log.Error(err, "Failed to get version from configmap")
+			return err
+		}
+	}
+
 	// Get Driver resources
-	driverConfig, err := getDriverConfig(ctx, cr, operatorConfig, ctrlClient)
+	driverConfig, err := getDriverConfig(ctx, cr, operatorConfig, ctrlClient, matched)
 	if err != nil {
 		return err
 	}
@@ -1200,6 +1211,7 @@ func getDriverConfig(ctx context.Context,
 	cr csmv1.ContainerStorageModule,
 	operatorConfig operatorutils.OperatorConfig,
 	ctrlClient client.Client,
+	matched operatorutils.VersionSpec,
 ) (*DriverConfig, error) {
 	var (
 		err        error
@@ -1240,7 +1252,7 @@ func getDriverConfig(ctx context.Context,
 		return nil, fmt.Errorf("getting %s configMap: %v", driverType, err)
 	}
 
-	controller, err = drivers.GetController(ctx, cr, operatorConfig, driverType)
+	controller, err = drivers.GetController(ctx, cr, operatorConfig, driverType, matched)
 	if err != nil {
 		return nil, fmt.Errorf("getting %s controller: %v", driverType, err)
 	}
@@ -1372,7 +1384,7 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 	log := logger.GetLogger(ctx)
 
 	// Get Driver resources
-	driverConfig, err := getDriverConfig(ctx, instance, operatorConfig, r.Client)
+	driverConfig, err := getDriverConfig(ctx, instance, operatorConfig, r.Client, operatorutils.VersionSpec{})
 	if err != nil {
 		log.Error("error in getDriverConfig")
 		return err
