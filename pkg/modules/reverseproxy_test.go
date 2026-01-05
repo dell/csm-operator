@@ -449,7 +449,7 @@ func TestReverseProxyInjectDeployment(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			success, dp, op, cr := tc(t)
-			_, err := ReverseProxyInjectDeployment(dp, cr, op)
+			_, err := ReverseProxyInjectDeployment(ctx, dp, cr, op)
 			if success {
 				assert.NoError(t, err)
 			} else {

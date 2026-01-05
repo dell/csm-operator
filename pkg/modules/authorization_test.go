@@ -675,6 +675,24 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 
 			return false, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
+		"fail - version empty after resolution": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			auth := tmpCR.Spec.Modules[0]
+			auth.ConfigVersion = ""
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
+				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
+			}
+
+			// This will return false because we expect the check "if auth.ConfigVersion == """ to catch it
+			return false, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {

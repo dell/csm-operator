@@ -342,12 +342,12 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 	}
 
 	newStatus := csm.GetCSMStatus()
-	requeue := operatorutils.HandleSuccess(ctx, csm, r, newStatus, oldStatus)
+	requeue := operatorutils.HandleSuccess(ctx, csm, r, newStatus, oldStatus, *operatorConfig)
 
 	// Update the driver
 	syncErr := r.SyncCSM(ctx, *csm, *operatorConfig, r.Client)
 	if syncErr == nil && !requeue.Requeue {
-		err = operatorutils.UpdateStatus(ctx, csm, r, newStatus)
+		err = operatorutils.UpdateStatus(ctx, csm, r, newStatus, *operatorConfig)
 		if err != nil && !unitTestRun {
 			log.Error(err, "Failed to update CR status")
 			operatorutils.LogEndReconcile()
@@ -446,7 +446,7 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 		newStatus.ControllerStatus.Desired = strconv.Itoa(int(desired))
 		newStatus.ControllerStatus.Failed = strconv.Itoa(int(numberUnavailable))
 
-		err = operatorutils.UpdateStatus(ctx, csm, r, newStatus)
+		err = operatorutils.UpdateStatus(ctx, csm, r, newStatus, r.Config)
 		if err != nil {
 			log.Debugw("deployment status ", "pods", err.Error())
 		} else {
@@ -486,7 +486,7 @@ func (r *ContainerStorageModuleReconciler) handlePodsUpdate(_ interface{}, obj i
 		log.Infow("csm prev status ", "state", csm.Status)
 		newStatus := csm.GetCSMStatus()
 
-		err = operatorutils.UpdateStatus(ctx, csm, r, newStatus)
+		err = operatorutils.UpdateStatus(ctx, csm, r, newStatus, r.Config)
 		state := csm.GetCSMStatus().State
 		stamp := fmt.Sprintf("at %d", time.Now().UnixNano())
 		if state != "0" && err != nil {
@@ -539,7 +539,7 @@ func (r *ContainerStorageModuleReconciler) handleDaemonsetUpdate(oldObj interfac
 
 		log.Infow("csm prev status ", "state", csm.Status)
 		newStatus := csm.GetCSMStatus()
-		err = operatorutils.UpdateStatus(ctx, csm, r, newStatus)
+		err = operatorutils.UpdateStatus(ctx, csm, r, newStatus, r.Config)
 		if err != nil {
 			log.Debugw("daemonset status ", "pods", err.Error())
 		} else {
@@ -818,7 +818,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				return fmt.Errorf("unable to reconcile reverse-proxy service: %v", err)
 			}
 			log.Info("Injecting CSI ReverseProxy")
-			dp, err := modules.ReverseProxyInjectDeployment(controller.Deployment, cr, operatorConfig)
+			dp, err := modules.ReverseProxyInjectDeployment(ctx, controller.Deployment, cr, operatorConfig)
 			if err != nil {
 				return fmt.Errorf("unable to inject ReverseProxy into deployment: %v", err)
 			}
@@ -884,14 +884,14 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 
 				// for controller-pod
 				driverName := string(cr.Spec.Driver.CSIDriverType)
-				dp, err := modules.ResiliencyInjectDeployment(controller.Deployment, cr, operatorConfig, driverName)
+				dp, err := modules.ResiliencyInjectDeployment(ctx, controller.Deployment, cr, operatorConfig, driverName)
 				if err != nil {
 					return fmt.Errorf("injecting resiliency into deployment: %v", err)
 				}
 				controller.Deployment = *dp
 
 				// Injecting clusterroles
-				clusterRole, err := modules.ResiliencyInjectClusterRole(controller.Rbac.ClusterRole, cr, operatorConfig, "controller")
+				clusterRole, err := modules.ResiliencyInjectClusterRole(ctx, controller.Rbac.ClusterRole, cr, operatorConfig, "controller")
 				if err != nil {
 					return fmt.Errorf("injecting resiliency into controller cluster role: %v", err)
 				}
@@ -899,7 +899,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				controller.Rbac.ClusterRole = *clusterRole
 
 				// Injecting roles
-				role, err := modules.ResiliencyInjectRole(controller.Rbac.Role, cr, operatorConfig, "controller")
+				role, err := modules.ResiliencyInjectRole(ctx, controller.Rbac.Role, cr, operatorConfig, "controller")
 				if err != nil {
 					return fmt.Errorf("injecting resiliency into controller role: %v", err)
 				}
@@ -907,14 +907,14 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				controller.Rbac.Role = *role
 
 				// for node-pod
-				ds, err := modules.ResiliencyInjectDaemonset(node.DaemonSetApplyConfig, cr, operatorConfig, driverName)
+				ds, err := modules.ResiliencyInjectDaemonset(ctx, node.DaemonSetApplyConfig, cr, operatorConfig, driverName)
 				if err != nil {
 					return fmt.Errorf("injecting resiliency into daemonset: %v", err)
 				}
 				node.DaemonSetApplyConfig = *ds
 
 				// Injecting clusterroles
-				clusterRoleForNode, err := modules.ResiliencyInjectClusterRole(node.Rbac.ClusterRole, cr, operatorConfig, "node")
+				clusterRoleForNode, err := modules.ResiliencyInjectClusterRole(ctx, node.Rbac.ClusterRole, cr, operatorConfig, "node")
 				if err != nil {
 					return fmt.Errorf("injecting resiliency into node cluster role: %v", err)
 				}
@@ -922,7 +922,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				node.Rbac.ClusterRole = *clusterRoleForNode
 
 				// Injecting roles
-				roleForNode, err := modules.ResiliencyInjectRole(node.Rbac.Role, cr, operatorConfig, "node")
+				roleForNode, err := modules.ResiliencyInjectRole(ctx, node.Rbac.Role, cr, operatorConfig, "node")
 				if err != nil {
 					return fmt.Errorf("injecting resiliency into controller role: %v", err)
 				}
@@ -932,13 +932,13 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			case csmv1.Replication:
 				// This function adds replication sidecar to driver pods.
 				log.Info("Injecting CSM Replication")
-				dp, err := modules.ReplicationInjectDeployment(controller.Deployment, cr, operatorConfig)
+				dp, err := modules.ReplicationInjectDeployment(ctx, controller.Deployment, cr, operatorConfig)
 				if err != nil {
 					return fmt.Errorf("injecting replication into deployment: %v", err)
 				}
 				controller.Deployment = *dp
 
-				clusterRole, err := modules.ReplicationInjectClusterRole(controller.Rbac.ClusterRole, cr, operatorConfig)
+				clusterRole, err := modules.ReplicationInjectClusterRole(ctx, controller.Rbac.ClusterRole, cr, operatorConfig)
 				if err != nil {
 					return fmt.Errorf("injecting replication into controller cluster role: %v", err)
 				}
@@ -1074,7 +1074,10 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, components []string, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
 	log := logger.GetLogger(ctx)
 
-	configVersion := cr.Spec.Driver.ConfigVersion
+	configVersion, err := operatorutils.GetVersion(ctx, &cr, op)
+	if err != nil {
+		return err
+	}
 	// if components is empty, reconcile all enabled components
 	if len(components) == 0 {
 		if enabled, obs := operatorutils.IsModuleEnabled(ctx, cr, csmv1.Observability); enabled {

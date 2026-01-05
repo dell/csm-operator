@@ -350,7 +350,11 @@ func getAuthApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op ope
 
 	authConfigVersion := authModule.ConfigVersion
 	if authConfigVersion == "" {
-		authConfigVersion, err = operatorutils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+		version, err := operatorutils.GetVersion(ctx, &cr, op)
+		if err != nil {
+			return nil, nil, err
+		}
+		authConfigVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -468,7 +472,11 @@ func getAuthApplyVolumes(ctx context.Context, cr csmv1.ContainerStorageModule, o
 
 	authConfigVersion := authModule.ConfigVersion
 	if authConfigVersion == "" {
-		authConfigVersion, err = operatorutils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+		version, err := operatorutils.GetVersion(ctx, &cr, op)
+		if err != nil {
+			return nil, err
+		}
+		authConfigVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
 		if err != nil {
 			return nil, err
 		}
@@ -634,8 +642,22 @@ func AuthorizationPrecheck(ctx context.Context, op operatorutils.OperatorConfig,
 
 	secrets := []string{"proxy-authz-tokens"}
 
+	authConfigVersion := ""
+	if auth.ConfigVersion == "" {
+		version, err := operatorutils.GetVersion(ctx, &cr, op)
+		if err != nil {
+			return err
+		}
+		authConfigVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+		if err != nil {
+			return err
+		}
+	} else {
+		authConfigVersion = auth.ConfigVersion
+	}
+
 	// Karavi authorization config is not required in config v2.4.0 and later (CSM 1.16) due to driver secret
-	driverSecretVersion, err := operatorutils.MinVersionCheck("v2.4.0", auth.ConfigVersion)
+	driverSecretVersion, err := operatorutils.MinVersionCheck("v2.4.0", authConfigVersion)
 	if err != nil {
 		return err
 	}
@@ -664,13 +686,24 @@ func AuthorizationPrecheck(ctx context.Context, op operatorutils.OperatorConfig,
 func AuthorizationServerPrecheck(ctx context.Context, op operatorutils.OperatorConfig, auth csmv1.Module, cr csmv1.ContainerStorageModule, r operatorutils.ReconcileCSM) error {
 	log := logger.GetLogger(ctx)
 
-	if auth.ConfigVersion != "" {
-		err := checkVersion(string(csmv1.Authorization), auth.ConfigVersion, op.ConfigDirectory)
+	if auth.ConfigVersion == "" {
+		version, err := operatorutils.GetVersion(ctx, &cr, op)
 		if err != nil {
 			return err
 		}
-	} else {
-		return fmt.Errorf("authorization version is empty")
+		auth.ConfigVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+		if err != nil {
+			return err
+		}
+	}
+
+	if auth.ConfigVersion == "" {
+		return fmt.Errorf("authorization version is empty after resolution")
+	}
+
+	// Validate the (non-empty) version here
+	if err := checkVersion(string(csmv1.Authorization), auth.ConfigVersion, op.ConfigDirectory); err != nil {
+		return err
 	}
 
 	configComponentFound := false
@@ -704,14 +737,14 @@ func AuthorizationServerPrecheck(ctx context.Context, op operatorutils.OperatorC
 }
 
 // getAuthorizationServerDeployment - apply dynamic values to the deployment manifest before installation
-func getAuthorizationServerDeployment(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 	auth, err := getAuthorizationModule(cr)
 	if err != nil {
 		return YamlString, err
 	}
 
-	buf, err := readConfigFile(auth, cr, op, AuthDeploymentManifest)
+	buf, err := readConfigFile(ctx, auth, cr, op, AuthDeploymentManifest)
 	if err != nil {
 		return YamlString, err
 	}
@@ -787,7 +820,7 @@ func getAuthorizationServerDeployment(op operatorutils.OperatorConfig, cr csmv1.
 }
 
 // getAuthorizationLocalProvisioner for redis
-func getAuthorizationLocalProvisioner(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (bool, string, error) {
+func getAuthorizationLocalProvisioner(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (bool, string, error) {
 	auth, err := getAuthorizationModule(cr)
 	if err != nil {
 		return false, "", err
@@ -796,7 +829,7 @@ func getAuthorizationLocalProvisioner(op operatorutils.OperatorConfig, cr csmv1.
 	for _, component := range auth.Components {
 		if component.Name == AuthRedisComponent {
 			if component.RedisStorageClass == "" {
-				buf, err := readConfigFile(auth, cr, op, AuthLocalProvisionerManifest)
+				buf, err := readConfigFile(ctx, auth, cr, op, AuthLocalProvisionerManifest)
 				if err != nil {
 					return false, "", err
 				}
@@ -814,7 +847,7 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op oper
 		return err
 	}
 
-	useLocalStorage, yamlString, err := getAuthorizationLocalProvisioner(op, cr)
+	useLocalStorage, yamlString, err := getAuthorizationLocalProvisioner(ctx, op, cr)
 	if err != nil {
 		return err
 	}
@@ -826,7 +859,7 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op oper
 		}
 	}
 
-	YamlString, err := getAuthorizationServerDeployment(op, cr)
+	YamlString, err := getAuthorizationServerDeployment(ctx, op, cr)
 	if err != nil {
 		return err
 	}
@@ -1802,7 +1835,7 @@ func AuthorizationIngress(ctx context.Context, isDeleting, isOpenShift bool, cr 
 }
 
 // getNginxIngressController - configure nginx ingress controller with the specified namespace before installation
-func getNginxIngressController(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getNginxIngressController(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 
 	auth, err := getAuthorizationModule(cr)
@@ -1810,7 +1843,7 @@ func getNginxIngressController(op operatorutils.OperatorConfig, cr csmv1.Contain
 		return YamlString, err
 	}
 
-	buf, err := readConfigFile(auth, cr, op, AuthNginxIngressManifest)
+	buf, err := readConfigFile(ctx, auth, cr, op, AuthNginxIngressManifest)
 	if err != nil {
 		return YamlString, err
 	}
@@ -1826,7 +1859,7 @@ func getNginxIngressController(op operatorutils.OperatorConfig, cr csmv1.Contain
 
 // NginxIngressController - apply/delete nginx ingress controller objects
 func NginxIngressController(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-	YamlString, err := getNginxIngressController(op, cr)
+	YamlString, err := getNginxIngressController(ctx, op, cr)
 	if err != nil {
 		return err
 	}
@@ -1840,7 +1873,7 @@ func NginxIngressController(ctx context.Context, isDeleting bool, op operatoruti
 }
 
 // getPolicies - configure policies with the specified namespace before installation
-func getPolicies(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getPolicies(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	YamlString := ""
 
 	auth, err := getAuthorizationModule(cr)
@@ -1848,7 +1881,7 @@ func getPolicies(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModul
 		return YamlString, err
 	}
 
-	buf, err := readConfigFile(auth, cr, op, AuthPolicyManifest)
+	buf, err := readConfigFile(ctx, auth, cr, op, AuthPolicyManifest)
 	if err != nil {
 		return YamlString, err
 	}
@@ -1862,7 +1895,7 @@ func getPolicies(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModul
 
 // InstallPolicies - apply/delete authorization opa policy objects
 func InstallPolicies(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-	YamlString, err := getPolicies(op, cr)
+	YamlString, err := getPolicies(ctx, op, cr)
 	if err != nil {
 		return err
 	}
@@ -1899,7 +1932,7 @@ func getCerts(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.Con
 		// use custom tls secret
 		if authCertificate != "" && authPrivateKey != "" {
 			log.Info("using user provided certificate and key for authorization")
-			buf, err := readConfigFile(authModule, cr, op, AuthCustomCert)
+			buf, err := readConfigFile(ctx, authModule, cr, op, AuthCustomCert)
 			if err != nil {
 				return false, YamlString, err
 			}
@@ -1978,7 +2011,7 @@ func InstallWithCerts(ctx context.Context, isDeleting bool, op operatorutils.Ope
 }
 
 // getAuthCrdDeploy - apply and deploy authorization crd manifest
-func getAuthCrdDeploy(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getAuthCrdDeploy(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	yamlString := ""
 
 	auth, err := getAuthorizationModule(cr)
@@ -1986,7 +2019,7 @@ func getAuthCrdDeploy(op operatorutils.OperatorConfig, cr csmv1.ContainerStorage
 		return yamlString, err
 	}
 
-	buf, err := readConfigFile(auth, cr, op, AuthCrds)
+	buf, err := readConfigFile(ctx, auth, cr, op, AuthCrds)
 	if err != nil {
 		return yamlString, err
 	}
@@ -2013,7 +2046,7 @@ func AuthCrdDeploy(ctx context.Context, op operatorutils.OperatorConfig, cr csmv
 		return err
 	}
 
-	yamlString, err := getAuthCrdDeploy(op, cr)
+	yamlString, err := getAuthCrdDeploy(ctx, op, cr)
 	if err != nil {
 		return err
 	}
