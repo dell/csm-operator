@@ -39,8 +39,8 @@ LABEL vendor="Dell Technologies" \
     name="dell-csm-operator" \
     summary="Operator for installing Dell CSI Drivers and Dell CSM Modules" \
     description="Common Operator for installing various Dell CSI Drivers and Dell CSM Modules" \
-    release="1.15.1" \
-    version="1.10.1" \
+    release="1.16.0" \
+    version="1.11.0" \
     license="Dell CSM Operator Apache License"
 
 COPY licenses /licenses
