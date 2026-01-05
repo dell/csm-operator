@@ -22,8 +22,8 @@ metadata:
   name: <DriverDefaultReleaseName>
 rules:
   - apiGroups:
-      - objectstorage.k8s.io  # COSI resources are grouped here
-    resources:  # we do not add bucketclasses here, as those are managed by COSI Controller
+      - objectstorage.k8s.io # COSI resources are grouped here
+    resources: # we do not add bucketclasses here, as those are managed by COSI Controller
       - buckets
       - bucketclaims
       - bucketaccesses
@@ -32,7 +32,7 @@ rules:
       - bucketaccesses/status
       - bucketclaims/status
       - bucketaccessclasses/status
-    verbs:  # CRUD + list/watch
+    verbs: # CRUD + list/watch
       - create
       - get
       - update
@@ -42,8 +42,8 @@ rules:
   - apiGroups:
       - coordination.k8s.io
     resources:
-      - leases  # lease is created during leader election process by COSI Provisioner Sidecar
-    verbs:  # CRUD + list/watch
+      - leases # lease is created during leader election process by COSI Provisioner Sidecar
+    verbs: # CRUD + list/watch
       - create
       - get
       - update
@@ -51,15 +51,23 @@ rules:
       - list
       - watch
   - apiGroups:
-      - ""  # empty for default API group
+      - "" # empty for default API group
     resources:
-      - events  # events are emmited from COSI Provisioner Sidecar
-      - secrets  # secrets are created by COSI Provisioner Sidecar as a part of access granting
-    verbs:  # CRUD
+      - events # events are emmited from COSI Provisioner Sidecar
+      - secrets # secrets are created by COSI Provisioner Sidecar as a part of access granting
+    verbs: # CRUD
       - create
       - get
       - update
       - delete
+  - apiGroups:
+      - security.openshift.io
+    resourceNames:
+      - privileged
+    resources:
+      - securitycontextconstraints
+    verbs:
+      - use
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
