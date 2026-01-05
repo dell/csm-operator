@@ -44,6 +44,7 @@ import (
 	confcorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	confmetav1 "k8s.io/client-go/applyconfigurations/meta/v1"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/yaml"
@@ -3480,4 +3481,353 @@ func TestGetVersion(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Tests: ValidateConfigMap
+func TestValidateConfigMap(t *testing.T) {
+	cases := []struct {
+		name        string
+		version     VersionSpec
+		expectedErr string
+	}{
+		{
+			name: "valid_images_all_present",
+			version: VersionSpec{
+				Version: "v1.16.0",
+				Images: map[string]string{
+					"driver":  "repo/driver:1",
+					"sidecar": "repo/sidecar:1",
+				},
+			},
+			expectedErr: "",
+		},
+		{
+			name: "invalid_empty_image_value",
+			version: VersionSpec{
+				Version: "v1.16.0",
+				Images: map[string]string{
+					"driver":  "repo/driver:1",
+					"sidecar": "",
+				},
+			},
+			expectedErr: `value for key "sidecar" is empty`,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateConfigMap(tc.version)
+			if tc.expectedErr == "" && err != nil {
+				t.Fatalf("ValidateConfigMap() unexpected error: %v", err)
+			}
+			if tc.expectedErr != "" {
+				if err == nil || err.Error() != tc.expectedErr {
+					t.Fatalf("ValidateConfigMap() error = %v, want = %v", err, tc.expectedErr)
+				}
+			}
+		})
+	}
+}
+
+func newCSM(specVersion string) *csmv1.ContainerStorageModule {
+	return &csmv1.ContainerStorageModule{
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Version: specVersion,
+			Driver: csmv1.Driver{
+				Common: &csmv1.ContainerTemplate{
+					ImagePullPolicy: corev1.PullAlways,
+				},
+			},
+		},
+	}
+}
+
+// Helper: setup scheme for fake client
+func buildScheme(t *testing.T) *runtime.Scheme {
+	t.Helper()
+	s := runtime.NewScheme()
+	if err := corev1.AddToScheme(s); err != nil {
+		t.Fatalf("failed to add corev1 to scheme: %v", err)
+	}
+	if err := csmv1.AddToScheme(s); err != nil {
+		t.Fatalf("failed to add csmv1 to scheme: %v", err)
+	}
+	return s
+}
+
+// Helper: build fake client with provided objects
+func buildFakeClient(t *testing.T, objs ...client.Object) client.Client {
+	t.Helper()
+	scheme := buildScheme(t)
+	return fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
+}
+
+// Helper: make a ConfigMap named CSMImages in a given namespace
+func makeImagesConfigMap(namespace string, data map[string]string) *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		TypeMeta:   metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{Name: CSMImages, Namespace: namespace},
+		Data:       data,
+	}
+}
+
+// Compose a versions.yaml string given slices of VersionSpec
+func marshalVersionsYAML(t *testing.T, versions []VersionSpec) string {
+	t.Helper()
+	b, err := yaml.Marshal(versions)
+	if err != nil {
+		t.Fatalf("failed to marshal versions: %v", err)
+	}
+	return string(b)
+}
+
+// Tests UpdateUsingConfigMap
+func TestUpdateUsingConfigMap(t *testing.T) {
+	validVersions := []VersionSpec{
+		{
+			Version: "v1.16.0",
+			Images: map[string]string{
+				"driver":  "repo/driver:1",
+				"sidecar": "repo/sidecar:1",
+			},
+		},
+		{
+			Version: "v2.16.0",
+			Images: map[string]string{
+				"driver":  "repo/driver:2",
+				"sidecar": "repo/sidecar:2",
+			},
+		},
+	}
+
+	invalidImages := []VersionSpec{
+		{
+			Version: "v1.16.0",
+			Images: map[string]string{
+				"driver":  "repo/driver:1",
+				"sidecar": "",
+			},
+		},
+	}
+
+	cases := []struct {
+		name        string
+		cr          *csmv1.ContainerStorageModule
+		cm          corev1.ConfigMap
+		want        VersionSpec
+		expectedErr string
+	}{
+		{
+			name: "empty_cm_data_returns_zero_spec",
+			cr:   newCSM("v1.16.0"),
+			cm:   corev1.ConfigMap{Data: map[string]string{}},
+			want: VersionSpec{},
+		},
+		{
+			name: "malformed_yaml_returns_error",
+			cr:   newCSM("v1.16.0"),
+			cm: corev1.ConfigMap{
+				Data: map[string]string{
+					"versions.yaml": "!! not a valid yaml !!",
+				},
+			},
+			want:        VersionSpec{},
+			expectedErr: "yaml: unmarshal errors", // substring check
+		},
+		{
+			name: "version_not_found_in_yaml",
+			cr:   newCSM("v9.99.9"),
+			cm: corev1.ConfigMap{
+				Data: map[string]string{
+					"versions.yaml": marshalVersionsYAML(t, validVersions),
+				},
+			},
+			want:        VersionSpec{},
+			expectedErr: "version v9.99.9 not found in versions.yaml",
+		},
+		{
+			name: "valid_match_returns_version_spec",
+			cr:   newCSM("v2.16.0"),
+			cm: corev1.ConfigMap{
+				Data: map[string]string{
+					"versions.yaml": marshalVersionsYAML(t, validVersions),
+				},
+			},
+			want: VersionSpec{
+				Version: "v2.16.0",
+				Images: map[string]string{
+					"driver":  "repo/driver:2",
+					"sidecar": "repo/sidecar:2",
+				},
+			},
+		},
+		{
+			name: "valid_match_but_empty_image_fails_validation",
+			cr:   newCSM("v1.16.0"),
+			cm: corev1.ConfigMap{
+				Data: map[string]string{
+					"versions.yaml": marshalVersionsYAML(t, invalidImages),
+				},
+			},
+			want: VersionSpec{
+				Version: "v1.16.0",
+				Images: map[string]string{
+					"driver":  "repo/driver:1",
+					"sidecar": "",
+				},
+			},
+			expectedErr: `value for key "sidecar" is empty`,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := UpdateUsingConfigMap(tc.cr, tc.cm)
+			if tc.expectedErr == "" && err != nil {
+				t.Fatalf("UpdateUsingConfigMap() unexpected error: %v", err)
+			}
+			if tc.expectedErr != "" {
+				if err == nil || !contains(err.Error(), tc.expectedErr) {
+					t.Fatalf("UpdateUsingConfigMap() error = %v, want contains = %v", err, tc.expectedErr)
+				}
+			}
+			if !versionSpecEqual(got, tc.want) {
+				t.Fatalf("UpdateUsingConfigMap() = %#v, want %#v", got, tc.want)
+			}
+		})
+	}
+}
+
+// Tests ResolveVersionFromConfigMap
+func TestResolveVersionFromConfigMap(t *testing.T) {
+	valid := []VersionSpec{
+		{
+			Version: "v1.16.0",
+			Images: map[string]string{
+				"driver":  "repo/driver:1",
+				"sidecar": "repo/sidecar:1",
+			},
+		},
+	}
+
+	invalid := []VersionSpec{
+		{
+			Version: "v1.16.0",
+			Images: map[string]string{
+				"driver":  "repo/driver:1",
+				"sidecar": "",
+			},
+		},
+	}
+
+	cases := []struct {
+		name        string
+		clientObjs  []client.Object
+		cr          *csmv1.ContainerStorageModule
+		want        VersionSpec
+		expectedErr string
+	}{
+		{
+			name:       "no_configmap_present_returns_zero_spec_and_no_error",
+			clientObjs: []client.Object{},
+			cr:         newCSM("v1.16.0"),
+			want:       VersionSpec{},
+		},
+		{
+			name: "valid_flow_returns_matched_version",
+			clientObjs: []client.Object{
+				makeImagesConfigMap("csm-ns", map[string]string{
+					"versions.yaml": marshalVersionsYAML(t, valid),
+				}),
+			},
+			cr: newCSM("v1.16.0"),
+			want: VersionSpec{
+				Version: "v1.16.0",
+				Images: map[string]string{
+					"driver":  "repo/driver:1",
+					"sidecar": "repo/sidecar:1",
+				},
+			},
+		},
+		{
+			name: "invalid_images_value_fails_validation",
+			clientObjs: []client.Object{
+				makeImagesConfigMap("csm-ns", map[string]string{
+					"versions.yaml": marshalVersionsYAML(t, invalid),
+				}),
+			},
+			cr: newCSM("v1.16.0"),
+			want: VersionSpec{
+				Version: "v1.16.0",
+				Images: map[string]string{
+					"driver":  "repo/driver:1",
+					"sidecar": "",
+				},
+			},
+			expectedErr: `value for key "sidecar" is empty`,
+		},
+		{
+			name: "version_not_found_in_versions_yaml",
+			clientObjs: []client.Object{
+				makeImagesConfigMap("csm-ns", map[string]string{
+					"versions.yaml": marshalVersionsYAML(t, []VersionSpec{
+						{Version: "v2.0.0", Images: map[string]string{"driver": "x", "sidecar": "y"}},
+					}),
+				}),
+			},
+			cr:          newCSM("v1.16.0"),
+			want:        VersionSpec{},
+			expectedErr: "version v1.16.0 not found in versions.yaml",
+		},
+	}
+
+	ctx := context.Background()
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cl := buildFakeClient(t, tc.clientObjs...)
+			got, err := ResolveVersionFromConfigMap(ctx, cl, tc.cr)
+
+			if tc.expectedErr == "" && err != nil {
+				t.Fatalf("ResolveVersionFromConfigMap() unexpected error: %v", err)
+			}
+			if tc.expectedErr != "" {
+				if err == nil || !contains(err.Error(), tc.expectedErr) {
+					t.Fatalf("ResolveVersionFromConfigMap() error = %v, want contains = %v", err, tc.expectedErr)
+				}
+			}
+			if !versionSpecEqual(got, tc.want) {
+				t.Fatalf("ResolveVersionFromConfigMap() = %#v, want %#v", got, tc.want)
+			}
+		})
+	}
+}
+
+// Helpers: comparisons / contains
+func contains(s, substr string) bool {
+	return substr == "" || (s != "" && (len(substr) == 0 || (len(s) >= len(substr) && (indexOf(s, substr) >= 0))))
+}
+
+func indexOf(s, substr string) int {
+	return index(s, substr)
+}
+
+// Straightforward rune-safe substring search for predictability in tests
+func index(haystack, needle string) int {
+	return len(fmt.Appendf(nil, "%s", haystack[:])) - len(fmt.Appendf(nil, "%s", haystack[len(needle):]))
+}
+
+// Safer comparison for VersionSpec maps
+func versionSpecEqual(a, b VersionSpec) bool {
+	if a.Version != b.Version {
+		return false
+	}
+	if len(a.Images) != len(b.Images) {
+		return false
+	}
+	for k, v := range a.Images {
+		if b.Images[k] != v {
+			return false
+		}
+	}
+	return true
 }

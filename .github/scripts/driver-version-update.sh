@@ -1,8 +1,7 @@
 #!/bin/bash
 # yq is prerequisite for this script
-# Step1: Folder creation and deletion and modification ------> Usage for major/minor nightly update: bash ./.github/scripts/driver-version-update.sh --driver_update_type "major" --release_type "nightly" --powerscale_version "2.16.0" --powermax_version "2.16.0" --powerflex_version "2.16.0" --powerstore_version "2.16.0" --unity_version "2.16.0"
-# Step2: Changes nightly to given version ---------> Usage for major/minor tag update: bash ./.github/scripts/driver-version-update.sh --driver_update_type "major" --release_type "tag" --powerscale_version "2.16.0" --powermax_version "2.16.0" --powerflex_version "2.16.0" --powerstore_version "2.16.0" --unity_version "2.16.0"
-# Only for patch update: Usage for patch update: bash ./.github/scripts/driver-version-update.sh --driver_update_type "patch" --release_type "nightly" --powerscale_version "2.15.1" --powermax_version "2.15.1" --powerflex_version "2.15.1" --powerstore_version "2.15.1" --unity_version "2.15.1"
+# Step1: Folder creation and deletion and modification ------> Usage for major/minor tag update: bash ./.github/scripts/driver-version-update.sh --driver_update_type "major" --release_type "tag" --powerscale_version "2.16.0" --powermax_version "2.16.0" --powerflex_version "2.16.0" --powerstore_version "2.16.0" --unity_version "2.16.0"
+# TODO: Only for patch update: Usage for patch update: bash ./.github/scripts/driver-version-update.sh --driver_update_type "patch" --release_type "tag" --powerscale_version "2.15.1" --powermax_version "2.15.1" --powerflex_version "2.15.1" --powerstore_version "2.15.1" --unity_version "2.15.1"
 
 cd "$GITHUB_WORKSPACE"
 
@@ -120,30 +119,6 @@ UpdateRelatedImages() {
     done <"$input_file"
 }
 
-# For Updating nightly Related Images in bundle/manifests/dell-csm-operator.clusterserviceversion.yaml
-UpdateNightlyRelatedImages() {
-    driverImageName=$1
-    input_file="bundle/manifests/dell-csm-operator.clusterserviceversion.yaml"
-    search_string_1=" - image: quay.io/dell/container-storage-modules/$driverImageName:v"
-    search_string_2="                  value: quay.io/dell/container-storage-modules/$driverImageName:v"
-    search_string_3="                \"image\": \"quay.io/dell/container-storage-modules/$driverImageName:v"
-    new_line_1="   - image: quay.io/dell/container-storage-modules/$driverImageName:nightly"
-    new_line_2="                       value: quay.io/dell/container-storage-modules/$driverImageName:nightly"
-    new_line_3="               \"image\": \"quay.io/dell/container-storage-modules/$driverImageName:nightly\","
-    line_number=0
-    while IFS= read -r line; do
-        line_number=$((line_number + 1))
-        if [[ "$line" == *"$search_string_1"* ]]; then
-            sed -i "$line_number c\ $new_line_1" "$input_file"
-        fi
-        if [[ "$line" == *"$search_string_2"* ]]; then
-            sed -i "$line_number c\ $new_line_2" "$input_file"
-        fi
-        if [[ "$line" == *"$search_string_3"* ]]; then
-            sed -i "$line_number c\ $new_line_3" "$input_file"
-        fi
-    done <"$input_file"
-}
 
 # For Updating Related Images in config/manifests/bases/dell-csm-operator.clusterserviceversion.yaml
 UpdateBaseRelatedImages() {
@@ -162,20 +137,6 @@ UpdateBaseRelatedImages() {
     done <"$input_file"
 }
 
-# For Updating nightly Related Images in config/manifests/bases/dell-csm-operator.clusterserviceversion.yaml
-UpdateNightlyBaseRelatedImages() {
-    driverImageName=$1
-    input_file="config/manifests/bases/dell-csm-operator.clusterserviceversion.yaml"
-    search_string_1="  - image: quay.io/dell/container-storage-modules/$driverImageName:v"
-    new_line_1="   - image: quay.io/dell/container-storage-modules/$driverImageName:nightly"
-    line_number=0
-    while IFS= read -r line; do
-        line_number=$((line_number + 1))
-        if [[ "$line" == *"$search_string_1"* ]]; then
-            sed -i "$line_number c\ $new_line_1" "$input_file"
-        fi
-    done <"$input_file"
-}
 # For creating the latest driver sample file in samples folder
 CreateLatestSampleFile() {
     prefix=$1                     # e.g. "storage_csm_powerflex"
@@ -370,13 +331,8 @@ UpdateMajorPowerflexDriver() {
 
     # CSV
     UpdateConfigVersion csi-vxflexos "$update_config_version"
-    if [ "$release_type" == "nightly" ]; then
-        UpdateNightlyRelatedImages csi-vxflexos
-        UpdateNightlyBaseRelatedImages csi-vxflexos
-    else
-        UpdateRelatedImages csi-vxflexos "$update_config_version" $previous_major_driver_version
-        UpdateBaseRelatedImages csi-vxflexos "$update_config_version" $previous_major_driver_version
-    fi
+    UpdateRelatedImages csi-vxflexos "$update_config_version" $previous_major_driver_version
+    UpdateBaseRelatedImages csi-vxflexos "$update_config_version" $previous_major_driver_version
 
     # Test data
     for f in cr_powerflex_observability_custom_cert_missing_key cr_powerflex_observability_custom_cert cr_powerflex_observability cr_powerflex_replica cr_powerflex_resiliency; do
@@ -489,13 +445,8 @@ UpdatePatchPowerflexDriver() {
 
     # Update related images in CSV
     UpdateConfigVersion csi-vxflexos $update_config_version
-    if [ "$release_type" == "nightly" ]; then
-        UpdateNightlyRelatedImages csi-vxflexos
-        UpdateNightlyBaseRelatedImages csi-vxflexos
-    else
-        UpdateRelatedImages csi-vxflexos $update_config_version
-        UpdateBaseRelatedImages csi-vxflexos $update_config_version
-    fi
+    UpdateRelatedImages csi-vxflexos $update_config_version
+    UpdateBaseRelatedImages csi-vxflexos $update_config_version
 
     # Update test data files
     for i in \
@@ -610,13 +561,8 @@ UpdateMajorPowermaxDriver() {
 
     # CSV updates
     UpdateConfigVersion csi-powermax "$update_config_version"
-    if [ "$release_type" == "nightly" ]; then
-        UpdateNightlyRelatedImages csi-powermax
-        UpdateNightlyBaseRelatedImages csi-powermax
-    else
-        UpdateRelatedImages csi-powermax "$update_config_version" "$previous_major_driver_version"
-        UpdateBaseRelatedImages csi-powermax "$update_config_version" "$previous_major_driver_version"
-    fi
+    UpdateRelatedImages csi-powermax "$update_config_version" "$previous_major_driver_version"
+    UpdateBaseRelatedImages csi-powermax "$update_config_version" "$previous_major_driver_version"
 
     # Test data files
     for i in cr_powermax_observability_use_secret cr_powermax_observability cr_powermax_replica cr_powermax_resiliency cr_powermax_reverseproxy_sidecar cr_powermax_reverseproxy_use_secret cr_powermax_reverseproxy; do
@@ -704,13 +650,8 @@ UpdatePatchPowermaxDriver() {
         operatorconfig/driverconfig/powermax/v$driver_version_update/upgrade-path.yaml
 
     UpdateConfigVersion csi-powermax $update_config_version
-    if [ "$release_type" == "nightly" ]; then
-        UpdateNightlyRelatedImages csi-powermax
-        UpdateNightlyBaseRelatedImages csi-powermax
-    else
         UpdateRelatedImages csi-powermax $update_config_version
         UpdateBaseRelatedImages csi-powermax $update_config_version
-    fi
 
     # Update testdata YAMLs
     declare -a configArr=(
@@ -806,13 +747,8 @@ UpdateMajorPowerscaleDriver() {
 
     # CSV updates
     UpdateConfigVersion csi-isilon "$update_config_version"
-    if [ "$release_type" == "nightly" ]; then
-        UpdateNightlyRelatedImages csi-isilon
-        UpdateNightlyBaseRelatedImages csi-isilon
-    else
-        UpdateRelatedImages csi-isilon "$update_config_version" "$previous_major_driver_version"
-        UpdateBaseRelatedImages csi-isilon "$update_config_version" "$previous_major_driver_version"
-    fi
+    UpdateRelatedImages csi-isilon "$update_config_version" "$previous_major_driver_version"
+    UpdateBaseRelatedImages csi-isilon "$update_config_version" "$previous_major_driver_version"
 
     # Testdata
     for i in cr_powerscale_auth_missing_skip_cert_env cr_powerscale_auth_validate_cert cr_powerscale_auth cr_powerscale_observability cr_powerscale_replica cr_powerscale_resiliency cr_powerscale_auth_driver_secret; do
@@ -916,13 +852,8 @@ UpdatePatchPowerscaleDriver() {
 
     # CSV updates
     UpdateConfigVersion csi-isilon $update_config_version
-    if [ "$release_type" == "nightly" ]; then
-        UpdateNightlyRelatedImages csi-isilon
-        UpdateNightlyBaseRelatedImages csi-isilon
-    else
         UpdateRelatedImages csi-isilon $update_config_version
         UpdateBaseRelatedImages csi-isilon $update_config_version
-    fi
 
     # Testdata files
     for i in \
@@ -1017,13 +948,8 @@ UpdateMajorPowerstoreDriver() {
 
     # CSVs
     UpdateConfigVersion csi-powerstore "$update_config_version"
-    if [ "$release_type" == "nightly" ]; then
-        UpdateNightlyRelatedImages csi-powerstore
-        UpdateNightlyBaseRelatedImages csi-powerstore
-    else
-        UpdateRelatedImages csi-powerstore "$update_config_version" "$previous_major_driver_version"
-        UpdateBaseRelatedImages csi-powerstore "$update_config_version" "$previous_major_driver_version"
-    fi
+    UpdateRelatedImages csi-powerstore "$update_config_version" "$previous_major_driver_version"
+    UpdateBaseRelatedImages csi-powerstore "$update_config_version" "$previous_major_driver_version"
 
     # Testdata
     for i in cr_powerstore_resiliency cr_powerstore_auth cr_powerstore_observability cr_powerstore_replica; do
@@ -1116,13 +1042,8 @@ UpdatePatchPowerstoreDriver() {
 
     # CSV and image reference updates
     UpdateConfigVersion csi-powerstore $update_config_version
-    if [ "$release_type" == "nightly" ]; then
-        UpdateNightlyRelatedImages csi-powerstore
-        UpdateNightlyBaseRelatedImages csi-powerstore
-    else
-        UpdateRelatedImages csi-powerstore $update_config_version
-        UpdateBaseRelatedImages csi-powerstore $update_config_version
-    fi
+    UpdateRelatedImages csi-powerstore $update_config_version
+    UpdateBaseRelatedImages csi-powerstore $update_config_version
 
     # Testdata patching
     yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' pkg/modules/testdata/cr_powerstore_resiliency.yaml
@@ -1208,13 +1129,8 @@ UpdateMajorUnityDriver() {
 
     # CSV and base CSV
     UpdateConfigVersion csi-unity "$update_config_version"
-    if [ "$release_type" == "nightly" ]; then
-        UpdateNightlyRelatedImages csi-unity
-        UpdateNightlyBaseRelatedImages csi-unity
-    else
-        UpdateRelatedImages csi-unity "$update_config_version" "$previous_major_driver_version"
-        UpdateBaseRelatedImages csi-unity "$update_config_version" "$previous_major_driver_version"
-    fi
+    UpdateRelatedImages csi-unity "$update_config_version" "$previous_major_driver_version"
+    UpdateBaseRelatedImages csi-unity "$update_config_version" "$previous_major_driver_version"
 
     # Test config
     cp -a --update tests/config/driverconfig/unity/v$previous_major_driver_version/. tests/config/driverconfig/unity/v$driver_version_update
@@ -1299,13 +1215,8 @@ UpdatePatchUnityDriver() {
 
     # CSV and base manifest updates
     UpdateConfigVersion csi-unity $update_config_version
-    if [ "$release_type" == "nightly" ]; then
-        UpdateNightlyRelatedImages csi-unity
-        UpdateNightlyBaseRelatedImages csi-unity
-    else
-        UpdateRelatedImages csi-unity $update_config_version
-        UpdateBaseRelatedImages csi-unity $update_config_version
-    fi
+    UpdateRelatedImages csi-unity $update_config_version
+    UpdateBaseRelatedImages csi-unity $update_config_version
 
     # Test driver config update
     cp -a --update tests/config/driverconfig/unity/v$previous_patch_driver_version \
@@ -1534,6 +1445,9 @@ UpdateBadDriver() {
     driver_delete_version="$major_version.$delete_minor_version.$patch_version"
     DeleteIfExists tests/config/driverconfig/badDriver/v$driver_delete_version
 }
+
+
+#----------------------------Entry Point------------------------------------------
 
 if [ "$driver_update_type" == "major" ]; then
     if [ ! -z "$powerscale_version" -a "$powerscale_version" != " " ]; then

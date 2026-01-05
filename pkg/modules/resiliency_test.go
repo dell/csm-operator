@@ -38,7 +38,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerStore)
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerStore, operatorutils.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -49,11 +49,11 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerStore)
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerStore, operatorutils.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
-			newDeployment, err := ResiliencyInjectDeployment(controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerStore))
+			newDeployment, err := ResiliencyInjectDeployment(ctx, controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerStore))
 			if err != nil {
 				panic(err)
 			}
@@ -64,7 +64,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerStore)
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerStore, operatorutils.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -77,11 +77,11 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerScaleName)
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerScaleName, operatorutils.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
-			newDeployment, err := ResiliencyInjectDeployment(controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerScale))
+			newDeployment, err := ResiliencyInjectDeployment(ctx, controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerScale))
 			if err != nil {
 				panic(err)
 			}
@@ -92,11 +92,11 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerFlex)
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerFlex, operatorutils.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
-			newDeployment, err := ResiliencyInjectDeployment(controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerFlexName))
+			newDeployment, err := ResiliencyInjectDeployment(ctx, controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerFlexName))
 			if err != nil {
 				panic(err)
 			}
@@ -107,11 +107,11 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax)
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax, operatorutils.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
-			newDeployment, err := ResiliencyInjectDeployment(controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerMax))
+			newDeployment, err := ResiliencyInjectDeployment(ctx, controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerMax))
 			if err != nil {
 				panic(err)
 			}
@@ -122,7 +122,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax)
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax, operatorutils.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -134,7 +134,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			success, dp, opConfig, cr := tc(t)
-			newDeployment, err := ResiliencyInjectDeployment(dp, cr, opConfig, string(csmv1.PowerStore))
+			newDeployment, err := ResiliencyInjectDeployment(ctx, dp, cr, opConfig, string(csmv1.PowerStore))
 			if success {
 				assert.NoError(t, err)
 				if newDeployment == nil {
@@ -160,7 +160,7 @@ func TestResiliencyInjectClusterRole(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerStore)
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerStore, operatorutils.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -174,7 +174,7 @@ func TestResiliencyInjectClusterRole(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerStore)
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerStore, operatorutils.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -187,7 +187,7 @@ func TestResiliencyInjectClusterRole(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			success, clusterRole, opConfig, cr := tc(t)
-			newClusterRole, err := ResiliencyInjectClusterRole(clusterRole, cr, opConfig, "controller")
+			newClusterRole, err := ResiliencyInjectClusterRole(ctx, clusterRole, cr, opConfig, "controller")
 			if success {
 				assert.NoError(t, err)
 				if newClusterRole == nil {
@@ -221,13 +221,24 @@ func TestResiliencyInjectRole(t *testing.T) {
 		"success - mode is controller": func(*testing.T) (bool, rbacv1.Role, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client) {
 			return true, rbacv1.Role{}, operatorConfig, csmv1.ContainerStorageModule{}, "node.yaml", c
 		},
+		"failure - GetModuleDefaultVersion error": func(*testing.T) (bool, rbacv1.Role, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client) {
+			customResource, _ := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
+			for i := range customResource.Spec.Modules {
+				if customResource.Spec.Modules[i].Name == csmv1.Resiliency {
+					customResource.Spec.Modules[i].ConfigVersion = ""
+				}
+			}
+			// Set a driver version that likely doesn't have a default resiliency mapping
+			customResource.Spec.Driver.ConfigVersion = "9.9.9-invalid"
+			return false, rbacv1.Role{}, operatorConfig, customResource, "node", c
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			success, role, opConfig, cr, _, _ := tc(t)
-			newRole, err := ResiliencyInjectRole(role, cr, opConfig, "node")
+			newRole, err := ResiliencyInjectRole(ctx, role, cr, opConfig, "node")
 			if name == "success - mode is controller" {
-				newRole, err = ResiliencyInjectRole(role, cr, opConfig, "controller")
+				newRole, err = ResiliencyInjectRole(ctx, role, cr, opConfig, "controller")
 			}
 
 			if success {
@@ -372,7 +383,7 @@ func TestResiliencyInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDaemonSet, err := ResiliencyInjectDaemonset(nodeYAML.DaemonSetApplyConfig, customResource, operatorConfig, string(csmv1.PowerStore))
+			newDaemonSet, err := ResiliencyInjectDaemonset(ctx, nodeYAML.DaemonSetApplyConfig, customResource, operatorConfig, string(csmv1.PowerStore))
 			if err != nil {
 				panic(err)
 			}
@@ -400,7 +411,7 @@ func TestResiliencyInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDaemonSet, err := ResiliencyInjectDaemonset(ds, customResource, opConfig, string(csmv1.PowerStore))
+			newDaemonSet, err := ResiliencyInjectDaemonset(ctx, ds, customResource, opConfig, string(csmv1.PowerStore))
 			if success {
 				assert.NoError(t, err)
 				if newDaemonSet == nil {

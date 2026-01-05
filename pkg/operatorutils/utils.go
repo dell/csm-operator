@@ -39,6 +39,7 @@ import (
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	t1 "k8s.io/apimachinery/pkg/types"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
@@ -46,6 +47,7 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	k8sClient "eos2git.cec.lab.emc.com/CSM/csm-operator/k8s"
@@ -129,6 +131,12 @@ type LatestVersion struct {
 	Version string `yaml:"version"`
 }
 
+// VersionSpec defines the version of the driver and its images
+type VersionSpec struct {
+	Version string            `yaml:"version"`
+	Images  map[string]string `yaml:",inline"`
+}
+
 const (
 	// DefaultReleaseName constant
 	DefaultReleaseName = "<DriverDefaultReleaseName>"
@@ -166,6 +174,8 @@ const (
 	DefaultKubeletConfigDir = "/var/lib/kubelet"
 	// ObservabilityNamespace - karavi
 	ObservabilityNamespace = "karavi"
+	// configmap
+	CSMImages = "csm-images"
 )
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
@@ -1279,4 +1289,103 @@ func GetVersion(ctx context.Context, cr *csmv1.ContainerStorageModule, op Operat
 		return "", fmt.Errorf("Unsupported platform %s", driverType)
 	}
 	return cr.Spec.Driver.ConfigVersion, nil
+}
+
+// ResolveVersionFromConfigMap returns the configmap if it exists
+func ResolveVersionFromConfigMap(ctx context.Context, ctrlClient client.Client, cr *csmv1.ContainerStorageModule) (matched VersionSpec, err error) {
+	// Fetch the ConfigMap
+	cm, err := FetchConfigMap(ctx, ctrlClient)
+	if err != nil {
+		return matched, err
+	}
+
+	// Update (resolve) using the ConfigMap contents
+	matched, err = UpdateUsingConfigMap(cr, cm)
+	if err != nil {
+		return matched, err
+	}
+
+	return matched, nil
+}
+
+func FetchConfigMap(ctx context.Context, ctrlClient client.Client) (corev1.ConfigMap, error) {
+	var cm corev1.ConfigMap
+	log := logger.GetLogger(ctx)
+
+	// list all configmaps in all namespaces
+	cmList := &corev1.ConfigMapList{}
+	if err := ctrlClient.List(ctx, cmList); err != nil {
+		return cm, fmt.Errorf("error listing configmaps %v", err)
+	}
+
+	found := false
+	var namespace string
+	for _, cmns := range cmList.Items {
+		if cmns.Name == CSMImages {
+			log.Info("Using ConfigMap %s to resolve image mappings for specified version", cmns.Namespace)
+			namespace = cmns.Namespace
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		// Preserve previous behavior: return zero value cm and nil error.
+		return cm, nil
+	}
+
+	// Fetch the ConfigMap from its namespace
+	configMapName := types.NamespacedName{
+		Name:      CSMImages,
+		Namespace: namespace,
+	}
+	if err := ctrlClient.Get(ctx, configMapName, &cm); err != nil {
+		log.Error(err, "Failed to fetch ConfigMap", "ConfigMap", CSMImages)
+		return cm, fmt.Errorf("error fetching configmaps %v", err)
+	}
+	return cm, nil
+}
+
+func ValidateConfigMap(version VersionSpec) error {
+	// validate that each key has a value. no key is left empty
+	for key, val := range version.Images {
+		if val == "" {
+			return fmt.Errorf("value for key %q is empty", key)
+		}
+	}
+	return nil
+}
+
+func UpdateUsingConfigMap(csm *csmv1.ContainerStorageModule, cm corev1.ConfigMap) (matched VersionSpec, err error) {
+	if len(cm.Data) == 0 {
+		return matched, nil
+	}
+
+	// Unmarshal the version list under "versions.yaml"
+	var versions []VersionSpec
+	if err = yaml.Unmarshal([]byte(cm.Data["versions.yaml"]), &versions); err != nil {
+		return matched, err
+	}
+
+	// Find a match for the high-level CSM CR version
+	versionFound := false
+	for _, v := range versions {
+		if v.Version == csm.Spec.Version {
+			matched = v
+			versionFound = true
+			break
+		}
+	}
+
+	// If none of the version matches with high level version, raise an error
+	if !versionFound {
+		return matched, fmt.Errorf("version %s not found in versions.yaml", csm.Spec.Version)
+	}
+
+	// Validate the matched version
+	if err = ValidateConfigMap(matched); err != nil {
+		return matched, err
+	}
+
+	return matched, nil
 }

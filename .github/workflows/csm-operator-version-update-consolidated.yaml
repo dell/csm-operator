@@ -14,23 +14,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Update module versions in CSM-Operator
+name: CSM Operator version update consolidated
 # reusable workflow
 on:  # yamllint disable-line rule:truthy
   workflow_call:
   workflow_dispatch:
     inputs:
       csm-version:
-        description: 'CSM program version, ex: v1.16.0, v1.17.0, ...'
+        description: 'CSM version, ex: v1.14.0, v1.15.0, ...'
         required: true
       operator-version:
-        description: "Latest operator version, ex: v1.11.0, v1.12.0, ..."
+        description: "CSM Operator Version (v1.11.0)"
         required: true
         type: string
 jobs:
   version-update:
-    uses: CSM/actions/.github/workflows/operator-module-version-update.yaml@main
-    name: CSM Operator Module Version Update
+    uses: CSM/actions/.github/workflows/csm-operator-version-update-all.yaml@main
+    name: Operator version update
     with:
       csm-version: ${{ inputs.csm-version }}
       operator-version: ${{ inputs.operator-version}}

@@ -50,7 +50,7 @@ func TestReplicationInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerScaleName)
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerScaleName, operatorutils.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -61,7 +61,7 @@ func TestReplicationInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax)
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax, operatorutils.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -72,7 +72,7 @@ func TestReplicationInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerScaleName)
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerScaleName, operatorutils.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -85,7 +85,7 @@ func TestReplicationInjectDeployment(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			success, dp, opConfig, cr := tc(t)
-			newDeployment, err := ReplicationInjectDeployment(dp, cr, opConfig)
+			newDeployment, err := ReplicationInjectDeployment(ctx, dp, cr, opConfig)
 			if success {
 				assert.NoError(t, err)
 				if err := correctlyInjected(*newDeployment, cr); err != nil {
@@ -107,7 +107,7 @@ func TestReplicationInjectClusterRole(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerScaleName)
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerScaleName, operatorutils.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -121,7 +121,7 @@ func TestReplicationInjectClusterRole(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerScaleName)
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerScaleName, operatorutils.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -131,7 +131,7 @@ func TestReplicationInjectClusterRole(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			success, clusterRole, opConfig, cr := tc(t)
-			newClusterRole, err := ReplicationInjectClusterRole(clusterRole, cr, opConfig)
+			newClusterRole, err := ReplicationInjectClusterRole(ctx, clusterRole, cr, opConfig)
 			if success {
 				assert.NoError(t, err)
 				assert.NoError(t, CheckClusterRoleReplica(newClusterRole.Rules))
@@ -507,7 +507,7 @@ func TestGetReplicationCrdDeploy(t *testing.T) {
 		panic(err)
 	}
 
-	yaml, err := getReplicationCrdDeploy(realConfig, customResource)
+	yaml, err := getReplicationCrdDeploy(ctx, realConfig, customResource)
 	assert.NoError(t, err)
 	assert.Contains(t, yaml, "kind: CustomResourceDefinition")
 }

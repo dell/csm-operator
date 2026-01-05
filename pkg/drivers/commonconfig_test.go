@@ -17,6 +17,7 @@ import (
 	"testing"
 
 	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
+	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
 	shared "eos2git.cec.lab.emc.com/CSM/csm-operator/tests/sharedutil"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -127,7 +128,7 @@ func TestGetController(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := GetController(ctx, tt.csm, config, tt.driverName)
+			_, err := GetController(ctx, tt.csm, config, tt.driverName, operatorutils.VersionSpec{})
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 			} else {
@@ -149,7 +150,7 @@ func TestGetControllerCOSI(t *testing.T) {
 			{Name: "COSI_LOG_FORMAT", Value: "text"},
 			{Name: "OTEL_COLLECTOR_ADDRESS", Value: "test:1234"},
 		}...)
-	_, err := GetController(context.Background(), csm, config, csmv1.Cosi)
+	_, err := GetController(context.Background(), csm, config, csmv1.Cosi, operatorutils.VersionSpec{})
 	assert.Nil(t, err)
 }
 
