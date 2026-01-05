@@ -30,7 +30,7 @@ on:  # yamllint disable-line rule:truthy
 
 jobs:
   version-update:
-    uses: CSM/actions/.github/workflows/operator-version-update.yaml@main
+    uses: CSM/actions/.github/workflows/operator-version-update.yaml@usr/evgeny/add-cosi
     name: Operator version update
     with:
       csm-version: ${{ inputs.csm-version }}
