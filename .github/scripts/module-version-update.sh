@@ -59,90 +59,103 @@ pmax_driver_ver="$(echo -e "${pmax_driver_ver}" | sed -e 's/^[[:space:]]*//' -e 
 pflex_driver_ver="$(echo -e "${pflex_driver_ver}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
 
 update_config_version_yq() {
-  local f="$1"
-  local module_name="$2"
-  local new_version="$3"
+   local f="$1"
+   local module_name="$2"
+   local new_version="$3"
 
-  [[ -f "$f" ]] || { echo "skip (missing): $f"; return 0; }
-  command -v yq >/dev/null 2>&1 || { echo "ERROR: yq (mikefarah v4) not found"; return 1; }
+   [[ -f "$f" ]] || { echo "skip (missing): $f"; return 0; }
+   command -v yq >/dev/null 2>&1 || { echo "ERROR: yq (mikefarah v4) not found"; return 1; }
 
-  # 1) Module exists?
-  if ! MODULE_NAME="$module_name" yq -e '
-    (.. | select(type == "!!map" and has("name") and .name == strenv(MODULE_NAME)))
-  ' "$f" >/dev/null 2>&1; then
-    return 0
-  fi
+   # 1) Module exists?
+   if ! MODULE_NAME="$module_name" yq -e '
+      (.. | select(type == "!!map" and has("name") and .name == strenv(MODULE_NAME)))
+   ' "$f" >/dev/null 2>&1; then
+      return 0
+   fi
 
-  # 2) Module has configVersion?
-  if ! MODULE_NAME="$module_name" yq -e '
-    (.. | select(
-      type == "!!map" and has("name") and .name == strenv(MODULE_NAME) and has("configVersion")
-    ))
-  ' "$f" >/dev/null 2>&1; then
-    return 0
-  fi
-
-  # 3) Current value
-  CURRENT_VER="$(MODULE_NAME="$module_name" yq '
-    (.. | select(
-      type == "!!map" and has("name") and .name == strenv(MODULE_NAME) and has("configVersion")
-    ).configVersion) // ""
-  ' "$f" | head -n1)"
-
-  # 4) Skip if already desired
-  [[ "$CURRENT_VER" == "$new_version" ]] && return 0
-
-  # 5) Final guard: only update if assignable nodes exist
-  if MODULE_NAME="$module_name" yq -e '
-    (.. | select(
-      type == "!!map" and has("name") and .name == strenv(MODULE_NAME) and has("configVersion")
-    ))
-  ' "$f" >/dev/null 2>&1; then
-    MODULE_NAME="$module_name" NEW_VERSION="$new_version" \
-    yq -i '
+   # 2) Module has configVersion?
+   if ! MODULE_NAME="$module_name" yq -e '
       (.. | select(
-        type == "!!map" and has("name") and .name == strenv(MODULE_NAME) and has("configVersion")
-      )) |= (.configVersion = strenv(NEW_VERSION))
-    ' "$f" 2>/dev/null
-  fi
+         type == "!!map" and has("name") and .name == strenv(MODULE_NAME) and has("configVersion")
+      ))
+   ' "$f" >/dev/null 2>&1; then
+      return 0
+   fi
+
+   # 3) Current value — emit only one match; no head in a pipeline
+   local CURRENT_VER
+   CURRENT_VER="$(
+      MODULE_NAME="$module_name" \
+      yq -r '
+      # collect matches into an array, then pick element 0 (first)
+      [
+         (.. | select(
+            type == "!!map"
+            and has("name")
+            and .name == strenv(MODULE_NAME)
+            and has("configVersion")
+         ).configVersion)
+      ][0] // ""
+      ' "$f"
+   )"
+
+   # 4) Skip if already desired
+   [[ "$CURRENT_VER" == "$new_version" ]] && return 0
+
+   # 5) Final guard: only update if assignable nodes exist
+   if MODULE_NAME="$module_name" yq -e '
+      (.. | select(
+         type == "!!map" and has("name") and .name == strenv(MODULE_NAME) and has("configVersion")
+      ))
+   ' "$f" >/dev/null 2>&1; then
+      MODULE_NAME="$module_name" NEW_VERSION="$new_version" \
+      yq -i '
+         (.. | select(
+         type == "!!map"
+         and has("name")
+         and .name == strenv(MODULE_NAME)
+         and has("configVersion")
+         )) |= (.configVersion = strenv(NEW_VERSION))
+      ' "$f" 2>/dev/null
+   fi
 }
 
 
 
 semver_n_minus_one() {
-  local ver="$1"             # e.g., "v2.4.0"
-  local prefix=""
-  local core="$ver"
+   local ver="$1"             # e.g., "v2.4.0"
+   local prefix=""
+   local core="$ver"
 
-  # Preserve leading 'v' if present
-  if [[ "$core" =~ ^v(.*)$ ]]; then
-    prefix="v"
-    core="${BASH_REMATCH[1]}"
-  fi
+   # Preserve leading 'v' if present
+   if [[ "$core" =~ ^v(.*)$ ]]; then
+      prefix="v"
+      core="${BASH_REMATCH[1]}"
+   fi
 
-  # Parse X.Y.Z
-  local major minor patch
-  IFS='.' read -r major minor patch <<< "$core"
+   # Parse X.Y.Z
+   local major minor patch
+   IFS='.' read -r major minor patch <<< "$core"
 
-  # Basic validation
-  if [[ -z "$major" || -z "$minor" || -z "$patch" || ! "$major" =~ ^[0-9]+$ || ! "$minor" =~ ^[0-9]+$ || ! "$patch" =~ ^[0-9]+$ ]]; then
-    echo "ERROR: Not a valid semver: $ver" >&2
-    printf "%s\n" "$ver"
-    return 1
-  fi
+   # Basic validation
+   if [[ -z "$major" || -z "$minor" || -z "$patch" || ! "$major" =~ ^[0-9]+$ || ! "$minor" =~ ^[0-9]+$ || ! "$patch" =~ ^[0-9]+$ ]]; then
+      echo "ERROR: Not a valid semver: $ver" >&2
+      printf "%s\n" "$ver"
+      return 1
+   fi
 
-  if (( minor > 0 )); then
-    minor=$((minor - 1))
-  else
-    # Policy decision: when MINOR == 0.
-    # Option A (current): warn and keep original.
-    # Option B: decrement MAJOR (if >0) and set MINOR to something (e.g., max), set PATCH=0.
-    echo "WARNING: N-1 for $ver: minor == 0, keeping original (policy)." >&2
-    printf "%s%s\n" "$prefix" "$major.$minor.$patch"
-    return 0
-  fi
+   if (( minor > 0 )); then
+      minor=$((minor - 1))
+   else
+      # Policy decision: when MINOR == 0.
+      # Option A (current): warn and keep original.
+      # Option B: decrement MAJOR (if >0) and set MINOR to something (e.g., max), set PATCH=0.
+      echo "WARNING: N-1 for $ver: minor == 0, keeping original (policy)." >&2
+      printf "%s%s\n" "$prefix" "$major.$minor.$patch"
+      return 0
+   fi
 
-  printf "%s%s\n" "$prefix" "$major.$minor.$patch"
+   printf "%s%s\n" "$prefix" "$major.$minor.$patch"
 }
 
 
@@ -150,7 +163,8 @@ semver_n_minus_one() {
 
 update_observability_tag_only() {
    echo "<------------------ OBSERVABILITY -------------------->"
-   set -euo pipefail
+   set -Eeuo pipefail
+   trap 'echo "❌ Error at line ${LINENO}: ${BASH_COMMAND}" >&2' ERR
 
    OBS_ROOT="$GITHUB_WORKSPACE/operatorconfig/moduleconfig/observability"
 
@@ -174,7 +188,7 @@ update_observability_tag_only() {
          "$f"
       fi
    }
- 
+   
    retag_obs_version_dir() {
       local dir="$1"
       cd "$dir" || { echo "❌ Cannot cd to $dir"; return 1; }
@@ -192,9 +206,9 @@ update_observability_tag_only() {
    }
 
    
-  # -----------------------------
-  # Bundle CSV updates (modular, tag-only)
-  # -----------------------------
+   # -----------------------------
+   # Bundle CSV updates (modular, tag-only)
+   # -----------------------------
    update_obs_bundle_manifest_images() {
       local csv="$GITHUB_WORKSPACE/bundle/manifests/dell-csm-operator.clusterserviceversion.yaml"
       [[ -f "$csv" ]] || { echo "↷ Skip missing: $csv"; return 0; }
@@ -226,7 +240,7 @@ update_observability_tag_only() {
          -e "s|^\(\s*value:\s*docker\.io/otel/opentelemetry-collector\)\(:[^[:space:]]*\)\{0,1\}|\1:${otel_col}|g" \
          "$csv"
       fi
-  }
+   }
 
    
    update_obs_bundle_manifest_config_version() {
@@ -384,7 +398,8 @@ update_observability_tag_only() {
 # It removes all nightly behavior and validates after updates.
 update_resiliency_tag_only() {
    echo "<------------------ Resiliency -------------------->"
-   set -euo pipefail
+   set -Eeuo pipefail
+   trap 'echo "❌ Error at line ${LINENO}: ${BASH_COMMAND}" >&2' ERR
 
    # Paths
    RES_ROOT="$GITHUB_WORKSPACE/operatorconfig/moduleconfig/resiliency"
@@ -402,70 +417,70 @@ update_resiliency_tag_only() {
    SAMPLES_DIR="$GITHUB_WORKSPACE/samples/$CSI_POWERMAX"
    TESTFILES_DIR="$GITHUB_WORKSPACE/tests/e2e/testfiles"
 
-update_podmon_tag_in_file() {
-  local f="$1"
-  [[ -f "$f" ]] || { echo "↷ Skip missing: $f"; return 0; }
+   update_podmon_tag_in_file() {
+      local f="$1"
+      [[ -f "$f" ]] || { echo "↷ Skip missing: $f"; return 0; }
 
-  # Ensure res_ver is set (fail early if missing)
-  : "${res_ver:?res_ver is required (e.g., v1.15.0)}"
+      # Ensure res_ver is set (fail early if missing)
+      : "${res_ver:?res_ver is required (e.g., v1.15.0)}"
 
-  # Normalize CRLF if file came from Windows (optional but helpful)
-  if grep -q $'\r' "$f"; then
-    sed -i 's/\r$//' "$f"
-  fi
-
-  # Replace any podmon occurrence and its optional tag with :$res_ver
-  sed -E -i "s|(quay\.io/dell/container-storage-modules/podmon)(:[^[:space:]\",]+)?|\1:${res_ver}|g" "$f"
-}
-   
-# Positional update of "configVersion" near podmon block
-update_podmon_bundle_manifest_config_version() {
-  local input_file="$1"     # path to file to modify
-  local offset="${2:-5}"    # default offset = 5, can be overridden
-  local newver="${res_ver}" # uses env var res_ver, or set explicitly below
-
-  # Validate inputs
-  [[ -z "$input_file" ]] && { echo "✖ Missing input_file"; return 1; }
-  [[ -f "$input_file" ]] || { echo "↷ Skip missing: $input_file"; return 0; }
-  [[ -n "$newver" ]] || { echo "✖ Missing newver (res_ver). Set res_ver or pass as 3rd arg."; return 1; }
-
-  local search_string1="quay.io/dell/container-storage-modules/podmon"
-  local search_string2="imagePullPolicy"
-
-  local line_number=0
-  local tmp_line=0
-
-  # Read file line-by-line and peek the next line
-  while IFS= read -r line; do
-    line_number=$((line_number + 1))
-
-    if [[ "$line" == *"$search_string1"* ]]; then
-      # Peek next line (safe if EOF)
-      IFS= read -r next_line || true
-
-      if [[ "$next_line" == *"$search_string2"* ]]; then
-        # Compute target line number: start line + offset + tmp_line
-        local line_number_tmp=$((line_number + offset + tmp_line))
-        tmp_line=$((tmp_line + 1))
-
-        # Get target line content
-        local data
-        data="$(sed -n "${line_number_tmp}p" "$input_file" || true)"
-
-        if [[ "$data" == *"configVersion"* ]]; then
-          # Preserve indentation from the existing line
-          local indent
-          indent="$(printf '%s\n' "$data" | sed -E 's/^([[:space:]]*).*/\1/')"
-
-          # Replace the whole line using sed; maintain trailing comma
-          sed -E -i "${line_number_tmp}s|^.*\$|${indent}\"configVersion\": \"${newver}\",|" "$input_file"
-        else
-          echo "ℹ Target line ${line_number_tmp} does not contain configVersion; skipped."
-        fi
+      # Normalize CRLF if file came from Windows (optional but helpful)
+      if grep -q $'\r' "$f"; then
+         sed -i 's/\r$//' "$f"
       fi
-    fi
-  done < "$input_file"
-}
+
+      # Replace any podmon occurrence and its optional tag with :$res_ver
+      sed -E -i "s|(quay\.io/dell/container-storage-modules/podmon)(:[^[:space:]\",]+)?|\1:${res_ver}|g" "$f"
+      }
+         
+      # Positional update of "configVersion" near podmon block
+      update_podmon_bundle_manifest_config_version() {
+      local input_file="$1"     # path to file to modify
+      local offset="${2:-5}"    # default offset = 5, can be overridden
+      local newver="${res_ver}" # uses env var res_ver, or set explicitly below
+
+      # Validate inputs
+      [[ -z "$input_file" ]] && { echo "✖ Missing input_file"; return 1; }
+      [[ -f "$input_file" ]] || { echo "↷ Skip missing: $input_file"; return 0; }
+      [[ -n "$newver" ]] || { echo "✖ Missing newver (res_ver). Set res_ver or pass as 3rd arg."; return 1; }
+
+      local search_string1="quay.io/dell/container-storage-modules/podmon"
+      local search_string2="imagePullPolicy"
+
+      local line_number=0
+      local tmp_line=0
+
+      # Read file line-by-line and peek the next line
+      while IFS= read -r line; do
+         line_number=$((line_number + 1))
+
+         if [[ "$line" == *"$search_string1"* ]]; then
+            # Peek next line (safe if EOF)
+            IFS= read -r next_line || true
+
+            if [[ "$next_line" == *"$search_string2"* ]]; then
+            # Compute target line number: start line + offset + tmp_line
+            local line_number_tmp=$((line_number + offset + tmp_line))
+            tmp_line=$((tmp_line + 1))
+
+            # Get target line content
+            local data
+            data="$(sed -n "${line_number_tmp}p" "$input_file" || true)"
+
+            if [[ "$data" == *"configVersion"* ]]; then
+               # Preserve indentation from the existing line
+               local indent
+               indent="$(printf '%s\n' "$data" | sed -E 's/^([[:space:]]*).*/\1/')"
+
+               # Replace the whole line using sed; maintain trailing comma
+               sed -E -i "${line_number_tmp}s|^.*\$|${indent}\"configVersion\": \"${newver}\",|" "$input_file"
+            else
+               echo "ℹ Target line ${line_number_tmp} does not contain configVersion; skipped."
+            fi
+            fi
+         fi
+      done < "$input_file"
+   }
 
    update_and_validate_files() {
       local files=("$@")
@@ -610,7 +625,8 @@ update_podmon_bundle_manifest_config_version() {
 
 update_replication_tag_only() {
    echo "<------------------ Replication -------------------->"
-   set -euo pipefail
+   set -Eeuo pipefail
+   trap 'echo "❌ Error at line ${LINENO}: ${BASH_COMMAND}" >&2' ERR
 
    REPL_ROOT="$GITHUB_WORKSPACE/operatorconfig/moduleconfig/replication"
    BUNDLE_CSV="$GITHUB_WORKSPACE/bundle/manifests/dell-csm-operator.clusterserviceversion.yaml"
@@ -648,53 +664,53 @@ update_replication_tag_only() {
          -e "s|quay.io/dell/container-storage-modules/dell-replication-controller.*|quay.io/dell/container-storage-modules/dell-replication-controller:${ver}|g" \
          "$f"
    }
- 
+
 # Positional update of "configVersion" near dell-replication-controller block
-update_replication_bundle_manifest_config_version() {
-  local input_file="$1"     # path to file you want to modify
-  local offset="${2:-4}"    # default offset = 4, can be overridden
-  local newver="${rep_ver}" # uses env var rep_ver, or set explicitly below
+   update_replication_bundle_manifest_config_version() {
+      local input_file="$1"     # path to file you want to modify
+      local offset="${2:-4}"    # default offset = 4, can be overridden
+      local newver="${rep_ver}" # uses env var rep_ver, or set explicitly below
 
 
-  # Validate inputs
-  [[ -z "$input_file" ]] && { echo "✖ Missing input_file"; return 1; }
-  [[ -f "$input_file" ]] || { echo "↷ Skip missing: $input_file"; return 0; }
-  [[ -n "$newver" ]] || { echo "✖ Missing newver (rep_ver). Set rep_ver or pass as 3rd arg."; return 1; }
+      # Validate inputs
+      [[ -z "$input_file" ]] && { echo "✖ Missing input_file"; return 1; }
+      [[ -f "$input_file" ]] || { echo "↷ Skip missing: $input_file"; return 0; }
+      [[ -n "$newver" ]] || { echo "✖ Missing newver (rep_ver). Set rep_ver or pass as 3rd arg."; return 1; }
 
-  local search_string1="quay.io/dell/container-storage-modules/dell-replication-controller"
-  local search_string2="dell-replication-controller-manager"
+      local search_string1="quay.io/dell/container-storage-modules/dell-replication-controller"
+      local search_string2="dell-replication-controller-manager"
 
-  local line_number=0
-  local tmp_line=0
+      local line_number=0
+      local tmp_line=0
 
-  # We read the file line-by-line and peek the next line when needed
-  while IFS= read -r line; do
-    line_number=$((line_number + 1))
+      # We read the file line-by-line and peek the next line when needed
+      while IFS= read -r line; do
+         line_number=$((line_number + 1))
 
-    if [[ "$line" == *"$search_string1"* ]]; then
-      # Read the next line (peek)
-      IFS= read -r next_line || true
+         if [[ "$line" == *"$search_string1"* ]]; then
+            # Read the next line (peek)
+            IFS= read -r next_line || true
 
-      if [[ "$next_line" == *"$search_string2"* ]]; then
-        # Compute target line number at fixed offset (+ offset + tmp_line to handle multiple matches)
-        local line_number_tmp=$((line_number + offset + tmp_line))
-        tmp_line=$((tmp_line + 1))
+            if [[ "$next_line" == *"$search_string2"* ]]; then
+            # Compute target line number at fixed offset (+ offset + tmp_line to handle multiple matches)
+            local line_number_tmp=$((line_number + offset + tmp_line))
+            tmp_line=$((tmp_line + 1))
 
-        # Fetch target line content
-        local data
-        data="$(sed -n "${line_number_tmp}p" "$input_file" || true)"
+            # Fetch target line content
+            local data
+            data="$(sed -n "${line_number_tmp}p" "$input_file" || true)"
 
-        if [[ "$data" == *"configVersion"* ]]; then
-          local indent
-          indent="$(printf '%s\n' "$data" | sed -E 's/^([[:space:]]*).*/\1/')"
-          sed -E -i "${line_number_tmp}s|^.*\$|${indent}\"configVersion\": \"${newver}\",|" "$input_file"
-        else
-          echo "ℹ Target line ${line_number_tmp} does not contain configVersion; skipped."
-        fi
-      fi
-    fi
-  done < "$input_file"
-}
+            if [[ "$data" == *"configVersion"* ]]; then
+               local indent
+               indent="$(printf '%s\n' "$data" | sed -E 's/^([[:space:]]*).*/\1/')"
+               sed -E -i "${line_number_tmp}s|^.*\$|${indent}\"configVersion\": \"${newver}\",|" "$input_file"
+            else
+               echo "ℹ Target line ${line_number_tmp} does not contain configVersion; skipped."
+            fi
+            fi
+         fi
+      done < "$input_file"
+   }
 
    update_replication_bundle_manifest_images() {
       local csv="$BUNDLE_CSV"
@@ -791,37 +807,38 @@ update_replication_bundle_manifest_config_version() {
    done
 
    local tf_dir="$GITHUB_WORKSPACE/tests/e2e/testfiles"
-if [[ -d "$tf_dir" ]]; then
-  shopt -s nullglob
-  # Compute N-1 version from auth_v2 (e.g., v2.4.0 -> v2.3.0)
-  replication_minus_1="$(semver_n_minus_one "$rep_ver")"
-  for f in "$tf_dir"/storage_csm_*; do
-    base="$(basename "$f")"
-    # Special-case file: set authorization to N-1
-    if [[ "$base" == "storage_csm_powerflex_downgrade.yaml" ]]; then
-      # Only touch if module exists & change is needed
-      update_config_version_yq "$f" "replication" "$replication_minus_1"
-      # If your images should also reflect N-1, update them:
-      update_repl_tags_in_file "$f" "$replication_minus_1"
-      continue
-    fi
-    # Default behavior for other files
-    if grep -q "name: replication" "$f"; then
-      update_config_version_yq "$f" "replication" "$rep_ver"
-    fi
-    # Keep using the regular image update for auth (current version)
-    update_repl_tags_in_file "$f" "$rep_ver"
-  done
+   if [[ -d "$tf_dir" ]]; then
+   shopt -s nullglob
+   # Compute N-1 version from auth_v2 (e.g., v2.4.0 -> v2.3.0)
+   replication_minus_1="$(semver_n_minus_one "$rep_ver")"
+   for f in "$tf_dir"/storage_csm_*; do
+      base="$(basename "$f")"
+      # Special-case file: set authorization to N-1
+      if [[ "$base" == "storage_csm_powerflex_downgrade.yaml" ]]; then
+         # Only touch if module exists & change is needed
+         update_config_version_yq "$f" "replication" "$replication_minus_1"
+         # If your images should also reflect N-1, update them:
+         update_repl_tags_in_file "$f" "$replication_minus_1"
+         continue
+      fi
+      # Default behavior for other files
+      if grep -q "name: replication" "$f"; then
+         update_config_version_yq "$f" "replication" "$rep_ver"
+      fi
+      # Keep using the regular image update for auth (current version)
+      update_repl_tags_in_file "$f" "$rep_ver"
+   done
 
-  shopt -u nullglob
-fi
+   shopt -u nullglob
+   fi
 
    echo "✅ Replication Module config -> ${rep_ver} updated successfully (tag-only, no nightly)."
 }
 
 update_reverseproxy_tag_only() {
    echo "<------------------ ReverseProxy -------------------->"
-   set -euo pipefail
+   set -Eeuo pipefail
+   trap 'echo "❌ Error at line ${LINENO}: ${BASH_COMMAND}" >&2' ERR
 
    RP_ROOT="$GITHUB_WORKSPACE/operatorconfig/moduleconfig/csireverseproxy"
    BUNDLE_CSV="$GITHUB_WORKSPACE/bundle/manifests/dell-csm-operator.clusterserviceversion.yaml"
@@ -849,16 +866,16 @@ update_reverseproxy_tag_only() {
    }
 
    
-update_revproxy_tags_in_file() {
-  local f="$1"
-  [[ -f "$f" ]] || { echo "↷ Skip missing: $f"; return 0; }
-  [[ -n "$revproxy_ver" ]] || { echo "✖ Missing revproxy_ver"; return 1; }
+   update_revproxy_tags_in_file() {
+      local f="$1"
+      [[ -f "$f" ]] || { echo "↷ Skip missing: $f"; return 0; }
+      [[ -n "$revproxy_ver" ]] || { echo "✖ Missing revproxy_ver"; return 1; }
 
-  # One sed invocation, one expression; extended regex for ? and +
-  sed -E -i \
-    "s|(quay\.io/dell/container-storage-modules/csipowermax-reverseproxy)(:[^\"'[:space:]]+)?|\1:${revproxy_ver}|g" \
-    "$f"
-}
+      # One sed invocation, one expression; extended regex for ? and +
+      sed -E -i \
+         "s|(quay\.io/dell/container-storage-modules/csipowermax-reverseproxy)(:[^\"'[:space:]]+)?|\1:${revproxy_ver}|g" \
+         "$f"
+   }
 
    # Bundle/manifests CSV: update images & configVersion (pattern-based)
    update_reverseproxy_bundle_manifest_images() {
@@ -874,53 +891,53 @@ update_revproxy_tags_in_file() {
 
    
 # Positional update of "configVersion" near csipowermax-reverseproxy block
-update_reverseproxy_bundle_manifest_config_version() {
-  local input_file="$1"        # path to file to modify
-  local offset="${2:-4}"       # default offset = 4 (as in your snippet)
-  local newver="${revproxy_ver}"  # uses env var revproxy_ver, or third arg
+   update_reverseproxy_bundle_manifest_config_version() {
+      local input_file="$1"        # path to file to modify
+      local offset="${2:-4}"       # default offset = 4 (as in your snippet)
+      local newver="${revproxy_ver}"  # uses env var revproxy_ver, or third arg
 
-  # Validate inputs
-  [[ -z "$input_file" ]] && { echo "✖ Missing input_file"; return 1; }
-  [[ -f "$input_file" ]] || { echo "↷ Skip missing: $input_file"; return 0; }
-  [[ -n "$newver" ]] || { echo "✖ Missing newver (revproxy_ver). Set revproxy_ver or pass as 3rd arg."; return 1; }
+      # Validate inputs
+      [[ -z "$input_file" ]] && { echo "✖ Missing input_file"; return 1; }
+      [[ -f "$input_file" ]] || { echo "↷ Skip missing: $input_file"; return 0; }
+      [[ -n "$newver" ]] || { echo "✖ Missing newver (revproxy_ver). Set revproxy_ver or pass as 3rd arg."; return 1; }
 
-  local search_string1="quay.io/dell/container-storage-modules/csipowermax-reverseproxy"
-  local search_string2="csipowermax-reverseproxy"
+      local search_string1="quay.io/dell/container-storage-modules/csipowermax-reverseproxy"
+      local search_string2="csipowermax-reverseproxy"
 
-  local line_number=0
-  local tmp_line=0
+      local line_number=0
+      local tmp_line=0
 
-  # Read file line-by-line and peek the next line
-  while IFS= read -r line; do
-    line_number=$((line_number + 1))
+      # Read file line-by-line and peek the next line
+      while IFS= read -r line; do
+         line_number=$((line_number + 1))
 
-    if [[ "$line" == *"$search_string1"* ]]; then
-      # Peek next line; if EOF, next_line will be empty but won't break
-      IFS= read -r next_line || true
+         if [[ "$line" == *"$search_string1"* ]]; then
+            # Peek next line; if EOF, next_line will be empty but won't break
+            IFS= read -r next_line || true
 
-      if [[ "$next_line" == *"$search_string2"* ]]; then
-        # Compute target line number: start line + offset + tmp_line
-        local line_number_tmp=$((line_number + offset + tmp_line))
-        tmp_line=$((tmp_line + 1))
+            if [[ "$next_line" == *"$search_string2"* ]]; then
+            # Compute target line number: start line + offset + tmp_line
+            local line_number_tmp=$((line_number + offset + tmp_line))
+            tmp_line=$((tmp_line + 1))
 
-        # Get target line content
-        local data
-        data="$(sed -n "${line_number_tmp}p" "$input_file" || true)"
+            # Get target line content
+            local data
+            data="$(sed -n "${line_number_tmp}p" "$input_file" || true)"
 
-        if [[ "$data" == *"configVersion"* ]]; then
-          # Preserve indentation from the existing line
-          local indent
-          indent="$(printf '%s\n' "$data" | sed -E 's/^([[:space:]]*).*/\1/')"
+            if [[ "$data" == *"configVersion"* ]]; then
+               # Preserve indentation from the existing line
+               local indent
+               indent="$(printf '%s\n' "$data" | sed -E 's/^([[:space:]]*).*/\1/')"
 
-          # Replace the whole line; keep trailing comma
-          sed -E -i "${line_number_tmp}s|^.*\$|${indent}\"configVersion\": \"${newver}\",|" "$input_file"
-        else
-          echo "ℹ Target line ${line_number_tmp} does not contain configVersion; skipped."
-        fi
-      fi
-    fi
-  done < "$input_file"
-}
+               # Replace the whole line; keep trailing comma
+               sed -E -i "${line_number_tmp}s|^.*\$|${indent}\"configVersion\": \"${newver}\",|" "$input_file"
+            else
+               echo "ℹ Target line ${line_number_tmp} does not contain configVersion; skipped."
+            fi
+            fi
+         fi
+      done < "$input_file"
+   }
    # -----------------------------
    # Copy latest if needed; ALWAYS retag inside revproxy_ver
    # -----------------------------
@@ -1004,7 +1021,8 @@ update_reverseproxy_bundle_manifest_config_version() {
 update_authorization_v2_tag_only() {
 
    echo "<------------------ Authorization V2 -------------------->"
-   set -euo pipefail
+   set -Eeuo pipefail
+   trap 'echo "❌ Error at line ${LINENO}: ${BASH_COMMAND}" >&2' ERR
 
    # --- Inputs / defaults ---
    local AUTH_ROOT="$GITHUB_WORKSPACE/operatorconfig/moduleconfig/authorization"
@@ -1094,22 +1112,22 @@ update_authorization_v2_tag_only() {
       update_auth_images_in_file "$f"
    }
 
-update_auth_bundle_manifest_images() {
-      local csv="$BUNDLE_CSV"
-  [[ -f "$csv" ]] || { echo "↷ Skip missing: $csv"; return 0; }
+   update_auth_bundle_manifest_images() {
+         local csv="$BUNDLE_CSV"
+   [[ -f "$csv" ]] || { echo "↷ Skip missing: $csv"; return 0; }
 
-  # 1) Images & values (your existing helper)
-  update_auth_images_in_file "$csv"
+   # 1) Images & values (your existing helper)
+   update_auth_images_in_file "$csv"
 
-  # 2) Service keys embedding image strings (unchanged logic, just consistent quoting)
-  sed -i'' \
-    -e 's|"authorizationController": "quay\.io/dell/container-storage-modules/csm-authorization-controller\(:[^",]*\)\{0,1\}"|"authorizationController": "quay.io/dell/container-storage-modules/csm-authorization-controller:'"${auth_v2}"'"|g' \
-    -e 's|"proxyService": "quay\.io/dell/container-storage-modules/csm-authorization-proxy\(:[^",]*\)\{0,1\}"|"proxyService": "quay.io/dell/container-storage-modules/csm-authorization-proxy:'"${auth_v2}"'"|g' \
-    -e 's|"roleService": "quay\.io/dell/container-storage-modules/csm-authorization-role\(:[^",]*\)\{0,1\}"|"roleService": "quay.io/dell/container-storage-modules/csm-authorization-role:'"${auth_v2}"'"|g' \
-    -e 's|"storageService": "quay\.io/dell/container-storage-modules/csm-authorization-storage\(:[^",]*\)\{0,1\}"|"storageService": "quay.io/dell/container-storage-modules/csm-authorization-storage:'"${auth_v2}"'"|g' \
-    -e 's|"tenantService": "quay\.io/dell/container-storage-modules/csm-authorization-tenant\(:[^",]*\)\{0,1\}"|"tenantService": "quay.io/dell/container-storage-modules/csm-authorization-tenant:'"${auth_v2}"'"|g' \
-    "$csv"
-}
+   # 2) Service keys embedding image strings (unchanged logic, just consistent quoting)
+   sed -i'' \
+      -e 's|"authorizationController": "quay\.io/dell/container-storage-modules/csm-authorization-controller\(:[^",]*\)\{0,1\}"|"authorizationController": "quay.io/dell/container-storage-modules/csm-authorization-controller:'"${auth_v2}"'"|g' \
+      -e 's|"proxyService": "quay\.io/dell/container-storage-modules/csm-authorization-proxy\(:[^",]*\)\{0,1\}"|"proxyService": "quay.io/dell/container-storage-modules/csm-authorization-proxy:'"${auth_v2}"'"|g' \
+      -e 's|"roleService": "quay\.io/dell/container-storage-modules/csm-authorization-role\(:[^",]*\)\{0,1\}"|"roleService": "quay.io/dell/container-storage-modules/csm-authorization-role:'"${auth_v2}"'"|g' \
+      -e 's|"storageService": "quay\.io/dell/container-storage-modules/csm-authorization-storage\(:[^",]*\)\{0,1\}"|"storageService": "quay.io/dell/container-storage-modules/csm-authorization-storage:'"${auth_v2}"'"|g' \
+      -e 's|"tenantService": "quay\.io/dell/container-storage-modules/csm-authorization-tenant\(:[^",]*\)\{0,1\}"|"tenantService": "quay.io/dell/container-storage-modules/csm-authorization-tenant:'"${auth_v2}"'"|g' \
+      "$csv"
+   }
 
    delete_n_minus_offset_dir() {
       local root_dir="$1"
@@ -1143,95 +1161,93 @@ update_auth_bundle_manifest_images() {
       rm -rf "$root_dir/$dir_to_delete"
    }
 
-# Update module-level "configVersion" inside any JSON `"modules": [...]` block
-# for modules named "authorization" or "authorization-proxy-server".
-# Works within alm-examples (JSON-in-string) as well as any other JSON blocks in the file.
-# Usage: update_auth_bundle_manifest_configversion <file> <new_version>
-update_auth_bundle_manifest_configversion() {
-  local f="$1"
-  local newver="$2"
+   # Update module-level "configVersion" inside any JSON `"modules": [...]` block
+   # for modules named "authorization" or "authorization-proxy-server".
+   # Works within alm-examples (JSON-in-string) as well as any other JSON blocks in the file.
+   # Usage: update_auth_bundle_manifest_configversion <file> <new_version>
+   update_auth_bundle_manifest_configversion() {
+      local f="$1"
+      local newver="$2"
 
-  [[ -f "$f" ]] || { echo "↷ Skip missing: $f"; return 0; }
-  [[ -n "$newver" ]] || { echo "✖ Missing new version"; return 1; }
+      [[ -f "$f" ]] || { echo "↷ Skip missing: $f"; return 0; }
+      [[ -n "$newver" ]] || { echo "✖ Missing new version"; return 1; }
 
-  # We write to a temp and then move it back to avoid partial edits.
-  local tmp="${f}.tmp.$$"
+      # We write to a temp and then move it back to avoid partial edits.
+      local tmp="${f}.tmp.$$"
 
-  awk -v NEWVER="$newver" '
-    # State vars
-    BEGIN {
-      in_modules = 0;            # we are inside a "modules": [ ... ] array
-      collecting = 0;            # collecting one module object {...}
-      depth = 0;                 # brace depth for the current collected object
-      buf = "";                  # buffer for current module object
-    }
+      awk -v NEWVER="$newver" '
+         # State vars
+         BEGIN {
+            in_modules = 0;            # we are inside a "modules": [ ... ] array
+            collecting = 0;            # collecting one module object {...}
+            depth = 0;                 # brace depth for the current collected object
+            buf = "";                  # buffer for current module object
+         }
 
-    # Helper: count braces on a line (we accept braces in strings; it is fine for our use)
-    function count_braces(s,    nopen, nclose) {
-      nopen = gsub(/\{/, "{", s);          # increments per "{"
-      nclose = gsub(/\}/, "}", s);         # increments per "}"
-      return nopen - nclose;               # net change
-    }
+         # Helper: count braces on a line (we accept braces in strings; it is fine for our use)
+         function count_braces(s,    nopen, nclose) {
+            nopen = gsub(/\{/, "{", s);          # increments per "{"
+            nclose = gsub(/\}/, "}", s);         # increments per "}"
+            return nopen - nclose;               # net change
+         }
 
-    {
-      line = $0
+         {
+            line = $0
 
-      # Detect entering/exiting a modules array in JSON
-      if (!collecting) {
-        # Enter modules when we see "modules": [
-        if (line ~ /"[[:space:]]*modules[[:space:]]*":[[:space:]]*\[/) {
-          in_modules = 1
-        }
-        # Leave modules when the array ends ("]") and we are not collecting an object
-        if (in_modules && line ~ /^[[:space:]]*\][[:space:]]*,?[[:space:]]*$/) {
-          in_modules = 0
-        }
-      }
+            # Detect entering/exiting a modules array in JSON
+            if (!collecting) {
+            # Enter modules when we see "modules": [
+            if (line ~ /"[[:space:]]*modules[[:space:]]*":[[:space:]]*\[/) {
+               in_modules = 1
+            }
+            # Leave modules when the array ends ("]") and we are not collecting an object
+            if (in_modules && line ~ /^[[:space:]]*\][[:space:]]*,?[[:space:]]*$/) {
+               in_modules = 0
+            }
+            }
 
-      # If inside modules and we see start of an object, begin collecting
-      if (in_modules && !collecting && line ~ /^[[:space:]]*\{[[:space:]]*$/) {
-        collecting = 1
-        buf = line "\n"
-        depth = 1
-        next
-      }
+            # If inside modules and we see start of an object, begin collecting
+            if (in_modules && !collecting && line ~ /^[[:space:]]*\{[[:space:]]*$/) {
+            collecting = 1
+            buf = line "\n"
+            depth = 1
+            next
+            }
 
-      # If we are collecting a module object, accumulate and track depth
-      if (collecting) {
-        buf = buf line "\n"
-        depth += count_braces(line)
+            # If we are collecting a module object, accumulate and track depth
+            if (collecting) {
+            buf = buf line "\n"
+            depth += count_braces(line)
 
-        # Did we finish the module object? (depth returns to 0)
-        if (depth == 0) {
-          # Decide whether to patch: only if module name is authorization or authorization-proxy-server
-          if (buf ~ /"[[:space:]]*name[[:space:]]*":[[:space:]]*"authorization-proxy-server"/ \
-              || buf ~ /"[[:space:]]*name[[:space:]]*":[[:space:]]*"authorization"/) {
+            # Did we finish the module object? (depth returns to 0)
+            if (depth == 0) {
+               # Decide whether to patch: only if module name is authorization or authorization-proxy-server
+               if (buf ~ /"[[:space:]]*name[[:space:]]*":[[:space:]]*"authorization-proxy-server"/ \
+                  || buf ~ /"[[:space:]]*name[[:space:]]*":[[:space:]]*"authorization"/) {
 
-            # Replace the module-level configVersion (quoted JSON)
-            # Only the first occurrence at module level is changed; other modules untouched.
-            gsub(/"configVersion"[[:space:]]*:[[:space:]]*"[^"]+"/, "\"configVersion\": \"" NEWVER "\"", buf)
+                  # Replace the module-level configVersion (quoted JSON)
+                  # Only the first occurrence at module level is changed; other modules untouched.
+                  gsub(/"configVersion"[[:space:]]*:[[:space:]]*"[^"]+"/, "\"configVersion\": \"" NEWVER "\"", buf)
 
-            # Optional: you can also update proxy/role/storage/tenant/controller fields if needed here.
-          }
+                  # Optional: you can also update proxy/role/storage/tenant/controller fields if needed here.
+               }
 
-          # Print the patched (or original) module object and reset
-          printf "%s", buf
-          collecting = 0
-          buf = ""
-          next
-        }
+               # Print the patched (or original) module object and reset
+               printf "%s", buf
+               collecting = 0
+               buf = ""
+               next
+            }
 
-        # Keep collecting until the object ends
-        next
-      }
+            # Keep collecting until the object ends
+            next
+            }
 
-      # Default: print the line verbatim
-      print line
-    }
-  ' "$f" > "$tmp" && mv "$tmp" "$f"
-
-}
-
+            # Default: print the line verbatim
+            print line
+         }
+      ' "$f" > "$tmp" && mv "$tmp" "$f"
+   }
 
    # ---------------------------------------------------------------------------
    # Main flow
@@ -1280,31 +1296,31 @@ update_auth_bundle_manifest_configversion() {
       update_auth_images_in_file "$f"
    done
 
-shopt -s nullglob
+   shopt -s nullglob
 
 
-for f in "$GITHUB_WORKSPACE/pkg/modules/testdata"/cr_*; do
-  base="$(basename "$f")"
+   for f in "$GITHUB_WORKSPACE/pkg/modules/testdata"/cr_*; do
+   base="$(basename "$f")"
 
-  case "$base" in
-    # Auth proxy explicit skips
-    cr_auth_proxy_v2.2.0.yaml|\
-    cr_auth_proxy_v230.yaml|\
-    cr_powerflex_observability_214.yaml|\
-    cr_powerscale_observability_214.yaml|\
-    cr_powermax_observability_214.yaml|\
-    cr_powerscale_observability_with_topology.yaml|\
-    cr_powermax_observability_214.yaml|\
-    cr_powerflex_observability_with_old_otel_image.yaml)
-      continue
-      ;;
-  esac
+   case "$base" in
+      # Auth proxy explicit skips
+      cr_auth_proxy_v2.2.0.yaml|\
+      cr_auth_proxy_v230.yaml|\
+      cr_powerflex_observability_214.yaml|\
+      cr_powerscale_observability_214.yaml|\
+      cr_powermax_observability_214.yaml|\
+      cr_powerscale_observability_with_topology.yaml|\
+      cr_powermax_observability_214.yaml|\
+      cr_powerflex_observability_with_old_otel_image.yaml)
+         continue
+         ;;
+   esac
 
-  update_config_version_yq "$f" "authorization-proxy-server" "$auth_v2" 
-  update_auth_images_in_file "$f"
-done
+   update_config_version_yq "$f" "authorization-proxy-server" "$auth_v2" 
+   update_auth_images_in_file "$f"
+   done
 
-shopt -u nullglob
+   shopt -u nullglob
 
    local auth_samples="$GITHUB_WORKSPACE/samples/authorization/csm_authorization_proxy_server_${auth_v2}.yaml"
    if [[ -f "$auth_samples" ]]; then
@@ -1345,44 +1361,44 @@ shopt -u nullglob
    done
 
    # tests/e2e/testfiles (minimal-testfiles)
-local mt_dir="$GITHUB_WORKSPACE/tests/e2e/testfiles/minimal-testfiles"
-if [[ -d "$mt_dir" ]]; then
-    shopt -s nullglob
-    for f in "$mt_dir"/*; do
-    # ---- Default logic for all other files ----
-        update_config_version_yq "$f" "authorization" "$auth_v2" 
-        update_auth_images_in_file "$f" 
-    done
-    shopt -u nullglob
-fi
+   local mt_dir="$GITHUB_WORKSPACE/tests/e2e/testfiles/minimal-testfiles"
+   if [[ -d "$mt_dir" ]]; then
+      shopt -s nullglob
+      for f in "$mt_dir"/*; do
+      # ---- Default logic for all other files ----
+         update_config_version_yq "$f" "authorization" "$auth_v2" 
+         update_auth_images_in_file "$f" 
+      done
+      shopt -u nullglob
+   fi
 
 
    # tests/e2e/testfiles — only update files that have an authorization block
-local tf_dir="$GITHUB_WORKSPACE/tests/e2e/testfiles"
-if [[ -d "$tf_dir" ]]; then
-  shopt -s nullglob
-  # Compute N-1 version from auth_v2 (e.g., v2.4.0 -> v2.3.0)
-  auth_v2_minus_1="$(semver_n_minus_one "$auth_v2")"
-  for f in "$tf_dir"/storage_csm_*; do
-    base="$(basename "$f")"
-    # Special-case file: set authorization to N-1
-    if [[ "$base" == "storage_csm_powerflex_auth_n_minus_1.yaml" ]]; then
-      # Only touch if module exists & change is needed
-      update_config_version_yq "$f" "authorization" "$auth_v2_minus_1"
-      # If your images should also reflect N-1, update them:
-      update_auth_images_in_file "$f" "$auth_v2_minus_1"
-      continue
-    fi
-    # Default behavior for other files
-    if grep -q "name: authorization" "$f"; then
-      update_config_version_yq "$f" "authorization" "$auth_v2"
-    fi
-    # Keep using the regular image update for auth (current version)
-    update_auth_images_in_file "$f" "$auth_v2"
-  done
+   local tf_dir="$GITHUB_WORKSPACE/tests/e2e/testfiles"
+   if [[ -d "$tf_dir" ]]; then
+   shopt -s nullglob
+   # Compute N-1 version from auth_v2 (e.g., v2.4.0 -> v2.3.0)
+   auth_v2_minus_1="$(semver_n_minus_one "$auth_v2")"
+   for f in "$tf_dir"/storage_csm_*; do
+      base="$(basename "$f")"
+      # Special-case file: set authorization to N-1
+      if [[ "$base" == "storage_csm_powerflex_auth_n_minus_1.yaml" ]]; then
+         # Only touch if module exists & change is needed
+         update_config_version_yq "$f" "authorization" "$auth_v2_minus_1"
+         # If your images should also reflect N-1, update them:
+         update_auth_images_in_file "$f" "$auth_v2_minus_1"
+         continue
+      fi
+      # Default behavior for other files
+      if grep -q "name: authorization" "$f"; then
+         update_config_version_yq "$f" "authorization" "$auth_v2"
+      fi
+      # Keep using the regular image update for auth (current version)
+      update_auth_images_in_file "$f" "$auth_v2"
+   done
 
-  shopt -u nullglob
-fi
+   shopt -u nullglob
+   fi
 
    # --- Prune n-PRUNE_OFFSET, protecting source & target ---
    delete_n_minus_offset_dir "$AUTH_ROOT" "$PRUNE_OFFSET" "$dir_to_copy" "$auth_v2"
@@ -1393,7 +1409,8 @@ fi
 
 
 update_version_values_inplace() {
-   set -euo pipefail
+   set -Eeuo pipefail
+   trap 'echo "❌ Error at line ${LINENO}: ${BASH_COMMAND}" >&2' ERR
 
    # Per-driver target versions; if a variable is empty, that driver is skipped.
    CSI_POWERSCALE="${CSI_POWERSCALE:-}"
