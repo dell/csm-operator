@@ -23,66 +23,76 @@
 #  6. dell-csm-operator.clusterserviceversion.yaml
 #  7. manager.yaml
 
-op_version="$CSM_OPERATOR"
-op_ver_fmt="  version: ${op_version:1}"
-op_version_v="${op_version:1}"
-csm_ver_v="$CSM_VERSION"
-csm_ver_wv="${csm_ver_v:1}"
+# Usage: bash ./.github/scripts/operator-version-update.sh --operator_version "v1.11.0" --csm_version "v1.16.0"
 
-update_flag="$2"
-update_flag="$(echo -e "${update_flag}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+cd "$GITHUB_WORKSPACE"
 
-echo "Latest version -->> $op_version"
-echo "CSM Version -->> $csm_ver_v"
+# Initialize variables with default values
+operator_version=""
+csm_version=""
 
-if [[ "$update_flag" == "nightly" ]]; then
-   echo "Updating csm-operator with nightly flag"
-        cd $GITHUB_WORKSPACE
-        sed -i "s/release=\"[^\"]*\"/release=\"${csm_ver_wv}\"/g" Dockerfile
-        sed -i "s/version=\"[^\"]*\"/version=\"${op_version_v}\"/g" Dockerfile
-        echo "Dockerfile updated"
-
-        k_file="kustomization.yaml"
-        for k_dir in {'config/install/','config/manager/'}; do
-        cd "$GITHUB_WORKSPACE/$k_dir"
-        sed -i "s/newTag: .*/newTag: ${op_version}/" $k_file
-        done
-        echo "kustomization.yaml updated"
-
-        cd $GITHUB_WORKSPACE
-        sed -i "s/CSMVersion: .*/CSMVersion: ${csm_ver_v}/g" config/manager/manager.yaml
-        sed -i "s/dell-csm-operator:.*/dell-csm-operator:${op_version}/g" config/manager/manager.yaml
-
-        cd "$GITHUB_WORKSPACE"
-        sed -i "s/CSMVersion = .*/CSMVersion = \"${csm_ver_v}\"/g" controllers/csm_controller.go
-        echo "csm_controller.go updated"
-
-        sed -i "s/dell-csm-operator:.*/dell-csm-operator:${op_version}/g" deploy/olm/operator_community.yaml
-        sed -i "s/dell-csm-operator:.*/dell-csm-operator:nightly/g" deploy/operator.yaml
-        sed -i "s/CSMVersion: .*/CSMVersion: ${csm_ver_v}/g" deploy/operator.yaml
-        echo "operator.yaml updated"
-
-        d_file="docker.mk"
-        sed -i "s/VERSION ?=.*/VERSION ?= ${op_version}/g" $d_file
-        sed -i "s/BUNDLE_VERSION ?=.*/BUNDLE_VERSION ?= ${op_version_v}/g" $d_file
-        sed -i "s/example.com\/operator-catalog:.*/example.com\/operator-catalog:${op_version})./g" $d_file
-        echo "docker.mk updated"
-
-        file="dell-csm-operator.clusterserviceversion.yaml"
-        for i_dir in {'bundle/manifests/','config/manifests/bases/'}; do
-            cd "$GITHUB_WORKSPACE/$i_dir"
-            sed -i "s/dell-csm-operator:.*/dell-csm-operator:${op_version}/g" $file
-            sed -i "s/name: dell-csm-operator.v.*/name: dell-csm-operator.${op_version}/g" $file
-            sed -i "s/^[[:space:]][[:space:]]version: .*/  version: ${op_version_v}/g" $file
-            awk -v var="$op_ver_fmt" '/skips/{ n=NR+2 } NR==n{$0=var }1' $file > $file.tmp
-            mv -f $file.tmp $file
-            rm -f $file.tmp
-        done
-        echo "dell-csm-operator.clusterserviceversion.yaml updated"
-        echo "OPERATOR VERSION UPDATE COMPLETE"
+# Set options for the getopt command
+options=$(getopt -o "" -l "operator_version:,csm_version:" -- "$@")
+if [ $? -ne 0 ]; then
+    echo "Invalid arguments."
+    exit 1
 fi
-if [[ "$update_flag" == "tag" ]]; then
-   echo "Updating csm-operator with latest tag"
-        cd "$GITHUB_WORKSPACE"
-        sed -i "s/dell-csm-operator:.*/dell-csm-operator:${op_version}/g" deploy/operator.yaml
-fi
+eval set -- "$options"
+
+# Read the named argument values
+while [ $# -gt 0 ]; do
+    case "$1" in
+    --operator_version)
+        operator_version="$2"
+        shift
+        ;;
+    --csm_version)
+        csm_version="$2"
+        shift
+        ;;
+    --) shift ;;
+    esac
+    shift
+done
+
+op_version_wv="${operator_version:1}"
+csm_ver_wv="${csm_version:1}"
+
+echo "Latest version -->> $operator_version"
+echo "CSM Version -->> $csm_version"
+
+echo "Updating csm-operator"
+sed -i "s/release=\"[^\"]*\"/release=\"${csm_ver_wv}\"/g" Dockerfile
+sed -i "s/version=\"[^\"]*\"/version=\"${op_version_wv}\"/g" Dockerfile
+echo "Dockerfile updated"
+
+sed -i "s/newTag: .*/newTag: ${operator_version}/" config/install/kustomization.yaml
+sed -i "s/newTag: .*/newTag: ${operator_version}/" config/manager/kustomization.yaml
+echo "kustomization.yaml updated"
+
+sed -i "s/CSMVersion: .*/CSMVersion: ${csm_version}/g" config/manager/manager.yaml
+sed -i "s/dell-csm-operator:.*/dell-csm-operator:${operator_version}/g" config/manager/manager.yaml
+
+sed -i "s/CSMVersion = .*/CSMVersion = \"${csm_version}\"/g" controllers/csm_controller.go
+echo "csm_controller.go updated"
+
+sed -i "s/dell-csm-operator:.*/dell-csm-operator:${operator_version}/g" deploy/olm/operator_community.yaml
+sed -i "s/dell-csm-operator:.*/dell-csm-operator:${operator_version}/g" deploy/operator.yaml
+sed -i "s/CSMVersion: .*/CSMVersion: ${csm_version}/g" deploy/operator.yaml
+echo "operator.yaml updated"
+
+sed -i "s/VERSION ?=.*/VERSION ?= ${operator_version}/g" docker.mk
+sed -i "s/BUNDLE_VERSION ?=.*/BUNDLE_VERSION ?= ${op_version_wv}/g" docker.mk
+sed -i "s/example.com\/operator-catalog:.*/example.com\/operator-catalog:${operator_version})./g" docker.mk
+echo "docker.mk updated"
+
+file="dell-csm-operator.clusterserviceversion.yaml"
+for i_dir in {'bundle/manifests/','config/manifests/bases/'}; do
+    sed -i "s/dell-csm-operator:.*/dell-csm-operator:${operator_version}/g" "$i_dir/$file"
+    sed -i "s/name: dell-csm-operator.v.*/name: dell-csm-operator.${operator_version}/g" "$i_dir/$file"
+    sed -i "s/CSMVersion: .*/CSMVersion: ${csm_version}/g" "$i_dir/$file"
+    sed -i "s/^[[:space:]][[:space:]]version: .*/  version: ${op_version_wv}/g" "$i_dir/$file"
+done
+echo "dell-csm-operator.clusterserviceversion.yaml updated"
+
+echo "OPERATOR VERSION UPDATE COMPLETE"
