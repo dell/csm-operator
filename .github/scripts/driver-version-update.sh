@@ -183,7 +183,6 @@ CreateLatestSampleFile() {
         exit 1
     fi
 
-
     if [[ "$prefix" == "storage_csm_cosi" ]]; then
         versioned_folder="samples/cosi/v$major.$minor.0"
     else
@@ -197,7 +196,12 @@ CreateLatestSampleFile() {
 # Get minUpgradePath
 GetMinUpgradePath() {
     prefix=$1
-    files=$(find samples/v*/ -type f -name "${prefix}_v*.yaml")
+    if [[ "$prefix" == "storage_csm_cosi" ]]; then
+        search_paths="samples/cosi/v*/"
+    else
+        search_paths="samples/v*/"
+    fi
+    files=$(find $search_paths -type f -name "${prefix}_v*.yaml")
 
     if [ -z "$files" ]; then
         echo "0.0.0"
@@ -1432,7 +1436,7 @@ UpdatePatchCOSIDriver() {
     yq eval -i 'with(select(.spec.template.spec.containers[0].name == "objectstorage-provisioner"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' \
         operatorconfig/driverconfig/cosi/v$driver_version_update/controller.yaml
 
-    min_upgrade_path=$(GetMinUpgradePath "storage_csm_unity")
+    min_upgrade_path=$(GetMinUpgradePath "storage_csm_cosi")
     yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' \
         operatorconfig/driverconfig/cosi/v$driver_version_update/upgrade-path.yaml
 
