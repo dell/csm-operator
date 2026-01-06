@@ -149,8 +149,14 @@ CreateLatestSampleFile() {
     latest_file=""
     latest_version=""
 
+    if [[ "$prefix" == "storage_csm_cosi" ]]; then
+        folder=samples/cosi/v*/
+    else
+        folder=samples/v*/
+    fi
+
     # Search for files inside versioned folders: samples/v*/[prefix]_v*.yaml
-    for file in $(find samples/v*/ -type f -name "${prefix}_v*.yaml"); do
+    for file in $(find $folder -type f -name "${prefix}_v*.yaml"); do
             version_part=$(basename "$file" | grep -oE '[0-9]+')
             echo "Version_part: $version_part"
             if [[ $version_part -gt ${latest_version:-0} ]]; then
