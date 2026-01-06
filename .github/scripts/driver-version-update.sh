@@ -178,7 +178,11 @@ CreateLatestSampleFile() {
     fi
 
 
-    versioned_folder="samples/v$major.$minor.0"
+    if [[ "$prefix" == "storage_csm_cosi" ]]; then
+        versioned_folder="samples/cosi/v$major.$minor.0"
+    else
+        versioned_folder="samples/v$major.$minor.0"
+    fi
     mkdir -p "$versioned_folder"
 
     cp -v --update "$latest_file" "$versioned_folder/${prefix}_v${driver_sample_file_suffix}.yaml"
