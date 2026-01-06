@@ -162,8 +162,17 @@ CreateLatestSampleFile() {
 
     # Extract major, minor from suffix: e.g. 2160 -> 2.16.0
     major="${driver_sample_file_suffix:0:1}"
-    minor="${driver_sample_file_suffix:1:2}"
-    patch="${driver_sample_file_suffix:3:1}"
+    if [[ ${#driver_sample_file_suffix} -eq 4 ]]; then
+        minor="${driver_sample_file_suffix:1:2}"
+        patch="${driver_sample_file_suffix:3:1}"
+    elif [[ ${#driver_sample_file_suffix} -eq 3 ]]; then
+        minor="${driver_sample_file_suffix:1:1}"
+        patch="${driver_sample_file_suffix:2:1}"
+    else
+        echo "Unexpected suffix length: ${#driver_sample_file_suffix} (value: '$driver_sample_file_suffix')" >&2
+        exit 1
+    fi
+
 
     versioned_folder="samples/v$major.$minor.0"
     mkdir -p "$versioned_folder"
@@ -1305,15 +1314,6 @@ UpdateMajorCOSIDriver() {
         UpdateBaseRelatedImages cosi "$update_config_version" "$previous_major_driver_version"
     fi
 
-    # Testdata
-    # for i in cr_cosi_resiliency cr_cosi_auth cr_cosi_observability cr_cosi_replica; do
-    #     yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' pkg/modules/testdata/$i.yaml
-    #     yq -i '.spec.driver.common.image = "'"$new_image_version"'"' pkg/modules/testdata/$i.yaml
-    # done
-
-    # yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' pkg/modules/testdata/cr_cosi_resiliency.yaml
-    # yq -i '.spec.driver.common.image = "'"$new_image_version"'"' pkg/modules/testdata/cr_cosi_resiliency.yaml
-
     # Test driver config
     cp -a --update tests/config/driverconfig/cosi/v$previous_major_driver_version/. tests/config/driverconfig/cosi/v$driver_version_update
     DeleteIfExists tests/config/driverconfig/cosi/v$driver_delete_version
@@ -1401,10 +1401,6 @@ UpdatePatchCOSIDriver() {
         UpdateBaseRelatedImages cosi $update_config_version
     fi
 
-    # Testdata patching
-    # yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' pkg/modules/testdata/cr_cosi_resiliency.yaml
-    # yq -i '.spec.driver.common.image = "'"$new_image_version"'"' pkg/modules/testdata/cr_cosi_resiliency.yaml
-
     # Test driver config
     cp -a --update tests/config/driverconfig/cosi/v$previous_patch_driver_version \
           tests/config/driverconfig/cosi/v$driver_version_update
@@ -1479,7 +1475,7 @@ elif [ "$driver_update_type" == "patch" ]; then
         UpdatePatchUnityDriver $unity_version $release_type
     fi
     if [ ! -z "$cosi_version" -a "$cosi_version" != " " ]; then
-        UpdatePatchCOSIDriver $unity_version $release_type
+        UpdatePatchCOSIDriver $cosi_version $release_type
     fi
 else
     echo "invalid driver_update_type"
