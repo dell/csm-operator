@@ -230,7 +230,13 @@ GetMinUpgradePath() {
 # Get latest(n-1) driver version where n is the version we are adding the support for in this release
 GetLatestDriverVersion() {
     prefix=$1
-    files=$(find samples/v*/ -type f -name "${prefix}_v*.yaml")
+    if [[ "$prefix" == "storage_csm_cosi" ]]; then
+        search_paths="samples/cosi/v*/"
+    else
+        search_paths="samples/v*/"
+    fi
+
+    files=$(find $search_paths -type f -name "${prefix}_v*.yaml")
     if [ -z "$files" ]; then
         echo "0.0.0"
         return
@@ -1323,7 +1329,7 @@ UpdateMajorCOSIDriver() {
     # Operator config updates
     cp -a --update operatorconfig/driverconfig/cosi/v$previous_major_driver_version/. operatorconfig/driverconfig/cosi/v$driver_version_update
 
-    yq eval -i 'with(select(.spec.template.spec.containers[5].name == "driver"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' operatorconfig/driverconfig/cosi/v$driver_version_update/controller.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "objectstorage-provisioner"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' operatorconfig/driverconfig/cosi/v$driver_version_update/controller.yaml
 
     # Delete N-3 versioned sample folder and driver config
     delete_minor_version=$((minor_version - 3))
@@ -1383,7 +1389,7 @@ UpdatePatchCOSIDriver() {
     driver_sample_file_suffix=$(echo "$driver_version_update" | tr -d '.' | tr -d '\n')
     previous_driver_sample_file_suffix=$(echo "$previous_patch_driver_version" | tr -d '.' | tr -d '\n')
 
-    sample_version_folder="samples/v$major_version.$minor_version.0"
+    sample_version_folder="samples/cosi/v$major_version.$minor_version.0"
     mkdir -p "$sample_version_folder/minimal-samples"
 
     # Copy previous patch as new patch
@@ -1437,7 +1443,7 @@ UpdatePatchCOSIDriver() {
           tests/config/driverconfig/cosi/v$driver_version_update
     DeleteIfExists tests/config/driverconfig/cosi/v$previous_patch_driver_version
 
-    yq eval -i 'with(select(.spec.template.spec.containers[5].name == "driver"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' \
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "objectstorage-provisioner"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' \
         tests/config/driverconfig/cosi/v$driver_version_update/controller.yaml
 
     yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' \
