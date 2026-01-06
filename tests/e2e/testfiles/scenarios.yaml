@@ -112,7 +112,7 @@
     - "Delete Authorization CRDs [2]"
     - "Validate [authorization] module pods from CR [1] is not installed"
 
-- scenario: "Install PowerScale Driver(Standalone)"
+- scenario: "Install PowerScale Driver(Standalone) Using Version Parameter"
   paths:
     - "testfiles/storage_csm_powerscale.yaml"
   tags:
@@ -131,7 +131,7 @@
     - "Delete custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is not installed"
 
-- scenario: "Install PowerScale Driver with first alternate sample file"
+- scenario: "Install PowerScale Driver with first alternate sample file using version"
   paths:
     - "testfiles/storage_csm_powerscale_alt_vals_1.yaml"
   tags:
@@ -153,7 +153,7 @@
       run:
         - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_1_values.csv dell powerscale
 
-- scenario: "Install PowerScale Driver with second alternate sample file"
+- scenario: "Install PowerScale Driver with second alternate sample file using version"
   paths:
     - "testfiles/storage_csm_powerscale_alt_vals_2.yaml"
   tags:
@@ -175,7 +175,7 @@
       run:
         - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_2_values.csv dell powerscale
 
-- scenario: "Install PowerScale Driver with third alternate sample file"
+- scenario: "Install PowerScale Driver with third alternate sample file using version"
   paths:
     - "testfiles/storage_csm_powerscale_alt_vals_3.yaml"
   tags:
@@ -199,7 +199,7 @@
       run:
         - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_3_values.csv dell powerscale
 
-- scenario: "Install PowerScale Driver with health monitor"
+- scenario: "Install PowerScale Driver with health monitor using version"
   paths:
     - "testfiles/storage_csm_powerscale_health_monitor.yaml"
   tags:
@@ -217,7 +217,7 @@
     - "Delete custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is not installed"
 
-- scenario: "Install PowerScale Driver(With Replication)"
+- scenario: "Install PowerScale Driver(With Replication) using version"
   paths:
     - "testfiles/storage_csm_powerscale_replica.yaml"
   tags:
@@ -236,7 +236,7 @@
     - "Delete custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is not installed"
 
-- scenario: "Install PowerScale Driver(Standalone), Enable/Disable Replication"
+- scenario: "Install PowerScale Driver(Standalone), Enable/Disable Replication using version"
   paths:
     - "testfiles/storage_csm_powerscale.yaml"
     - "testfiles/storage_csm_powerscale_replica.yaml"
@@ -262,7 +262,7 @@
     - "Delete custom resource [2]"
     - "Validate [powerscale] driver from CR [2] is not installed"
 
-- scenario: "Uninstall PowerScale Driver"
+- scenario: "Uninstall PowerScale Driver using version"
   paths:
     - "testfiles/storage_csm_powerscale.yaml"
   tags:
@@ -278,11 +278,12 @@
     - "Delete custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is not installed"
 
-- scenario: "Install PowerScale Driver(With Observability)"
+- scenario: "Install PowerScale Driver(With Observability) using version"
   paths:
     - "testfiles/storage_csm_powerscale_observability.yaml"
   tags:
     - "observability"
+    - "powerscale"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
@@ -296,7 +297,7 @@
     - "Delete custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is not installed"
 
-- scenario: "Install PowerScale Driver(Standalone), Enable/Disable Observability"
+- scenario: "Install PowerScale Driver(Standalone), Enable/Disable Observability using version"
   paths:
     - "testfiles/storage_csm_powerscale.yaml"
   tags:
@@ -583,7 +584,7 @@
   tags:
     - "authorization"
     - "authorizationproxyserver"
-    - "powerscale"
+    # - "powerscale"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [3]"
@@ -616,7 +617,7 @@
   tags:
     - "authorization"
     - "authorizationproxyserver"
-    - "powerscale"
+    # - "powerscale"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [3]"
@@ -651,7 +652,7 @@
   tags:
     - "authorizationproxyserver"
     - "authorization"
-    - "powerscale"
+    # - "powerscale"
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
@@ -687,7 +688,7 @@
   tags:
     - "authorizationproxyserver"
     - "authorization"
-    - "powerscale"
+    # - "powerscale"
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
@@ -1046,7 +1047,7 @@
     - "Delete custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is not installed"
 
-- scenario: "Install PowerScale Driver(With Resiliency)"
+- scenario: "Install PowerScale Driver(With Resiliency) using version"
   paths:
     - "testfiles/storage_csm_powerscale_resiliency.yaml"
   tags:
@@ -1064,7 +1065,7 @@
     - "Delete custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is not installed"
 
-- scenario: "Install PowerScale Driver(Standalone), Enable/Disable Resiliency"
+- scenario: "Install PowerScale Driver(Standalone), Enable/Disable Resiliency using version"
   paths:
     - "testfiles/storage_csm_powerscale.yaml"
   tags:

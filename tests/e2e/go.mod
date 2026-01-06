@@ -5,7 +5,7 @@ go 1.25
 require (
 	eos2git.cec.lab.emc.com/CSM/csm-operator v0.0.0
 	github.com/onsi/ginkgo/v2 v2.27.3
-	github.com/onsi/gomega v1.38.2
+	github.com/onsi/gomega v1.38.3
 	golang.org/x/mod v0.27.0
 	k8s.io/api v0.33.0
 	k8s.io/apimachinery v0.33.0

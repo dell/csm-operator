@@ -4,6 +4,7 @@ metadata:
   name: powerscale
   namespace: dell
 spec:
+  version: v2.16.0
   driver:
     csiDriverType: "isilon"
     csiDriverSpec:
@@ -11,14 +12,14 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
-    configVersion: v2.16.0
+    # configVersion: v2.16.0
     authSecret: csm-creds
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     # Uninstall CSI Driver and/or modules when CR is deleted
     forceRemoveDriver: true
     common:
-      image: "csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-isilon:nightly"
+      # image: "csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-isilon:nightly"
       imagePullPolicy: Always
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
@@ -227,10 +228,10 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: false
-      configVersion: v2.3.0
+      # configVersion: v2.3.0
       components:
         - name: karavi-authorization-proxy
-          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-sidecar:nightly
+          # image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-sidecar:nightly
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
@@ -247,13 +248,13 @@ spec:
       #   false: disable replication feature(do not install dell-csi-replicator sidecar)
       # Default value: false
       enabled: false
-      configVersion: v1.13.0
+      # configVersion: v1.13.0
       components:
         - name: dell-csi-replicator
           # image: Image to use for dell-csi-replicator. This shouldn't be changed
           # Allowed values: string
           # Default value: None
-          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/dell-csi-replicator:nightly
+          # image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/dell-csi-replicator:nightly
           envs:
             # replicationPrefix: prefix to prepend to storage classes parameters
             # Allowed values: string
@@ -268,7 +269,7 @@ spec:
         - name: dell-replication-controller-manager
           # image: Defines controller image. This shouldn't be changed
           # Allowed values: string
-          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/dell-replication-controller:nightly
+          # image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/dell-replication-controller:nightly
           envs:
             # Replication log level
             # Allowed values: "error", "warn"/"warning", "info", "debug"
@@ -292,19 +293,19 @@ spec:
         - name: dell-replication-controller-init
           # image: Defines replication init container image. This shouldn't be changed
           # Allowed values: string
-          image: dellemc/dell-replication-init:v1.0.1
+          # image: dellemc/dell-replication-init:v1.0.1
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
       enabled: false
-      configVersion: v1.13.0
+      # configVersion: v1.13.0
       components:
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
           enabled: false
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
-          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0
+          # image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0
           envs:
             # image of nginx proxy image
             # Allowed values: string
@@ -316,7 +317,7 @@ spec:
           enabled: false
           # image: Defines PowerScale metrics image. This shouldn't be changed
           # Allowed values: string
-          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-metrics-powerscale:nightly
+          # image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-metrics-powerscale:nightly
           envs:
             # POWERSCALE_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerScale
             # Allowed values: int

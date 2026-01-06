@@ -19,6 +19,7 @@ metadata:
   name: isilon
   namespace: isilon
 spec:
+  version: v2.16.0
   driver:
     csiDriverType: "isilon"
     csiDriverSpec:
@@ -26,14 +27,14 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
-    configVersion: v2.16.0
+    # configVersion: v2.16.0
     authSecret: isilon-creds
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     # Uninstall CSI Driver and/or modules when CR is deleted
     forceRemoveDriver: true
     common:
-      image: "csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-isilon:nightly"
+      # image: "csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-isilon:nightly"
       imagePullPolicy: Always
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
@@ -264,10 +265,10 @@ spec:
       #   false: disable Resiliency feature(do not deploy podmon sidecar)
       # Default value: false
       enabled: true
-      configVersion: v1.14.0
+      # configVersion: v1.14.0
       components:
         - name: podmon-controller
-          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:nightly
+          # image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:nightly
           imagePullPolicy: Always
           args:
             - "--csisock=unix:/var/run/csi/csi.sock"
@@ -280,7 +281,7 @@ spec:
             - "--driverPodLabelValue=dell-storage"
             - "--ignoreVolumelessPods=false"
         - name: podmon-node
-          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:nightly
+          # image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:nightly
           imagePullPolicy: Always
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster
