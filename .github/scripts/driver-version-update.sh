@@ -280,7 +280,7 @@ CreateLatestMinimalSampleFile() {
     destination_folder=$3  # e.g. samples/v2.16.0/minimal-samples
 
     # Get list of all minimal-samples folders
-    if [[ "$prefix" == "storage_csm_cosi" ]]; then
+    if [[ "$prefix" == "cosi" ]]; then
         search_paths="samples/cosi/v*/minimal-samples"
     else
         search_paths="samples/v*/minimal-samples"
