@@ -247,8 +247,16 @@ GetLatestDriverVersion() {
 
     # Extract digits from version suffix safely (e.g., 2160 -> 2.16.0)
     major=$(echo "$version_suffix" | cut -c1)
-    minor=$(echo "$version_suffix" | cut -c2-3)
-    patch=$(echo "$version_suffix" | cut -c4)
+    if [[ ${#version_suffix} -eq 4 ]]; then
+        minor=$(echo "$version_suffix" | cut -c2-3)
+        patch=$(echo "$version_suffix" | cut -c4)
+    elif [[ ${#version_suffix} -eq 3 ]]; then
+        minor=$(echo "$version_suffix" | cut -c2)
+        patch=$(echo "$version_suffix" | cut -c3)
+    else
+        echo "Unexpected version suffix length: ${#version_suffix}" >&2
+        exit 1
+    fi
 
     latest_driver_version="${major}.${minor}.${patch}"
     echo "$latest_driver_version"
