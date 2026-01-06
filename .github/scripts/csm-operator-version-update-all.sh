@@ -1,6 +1,6 @@
 
 #!/usr/bin/env bash
-# CSM unified version update orchestrator (TAG-ONLY, scoped)
+# CSM unified version update orchestrator
 # Order when --scope=all: Operator -> Drivers -> Modules
 # Reuses:
 #   ./.github/scripts/operator-version-update.sh   (expects env CSM_OPERATOR, CSM_VERSION; pass 'tag')
@@ -15,7 +15,7 @@ cd "${REPO_ROOT}"
 
 export GITHUB_WORKSPACE="${GITHUB_WORKSPACE:-$REPO_ROOT}"
 
-# --- CLI flags (TAG-ONLY) ---
+# --- CLI flags ---
 SCOPE="all"               # operator | drivers | modules | all
 OPERATOR_VERSION=""       # vX.Y.Z (exported as CSM_OPERATOR)
 CSM_VERSION=""            # vX.Y.Z (exported as CSM_VERSION)
@@ -47,14 +47,14 @@ Operator:
   --operator_version vA.B.C                  # used when scope includes operator
   --csm_version      vA.B.C
 
-Drivers (TAG-ONLY):
+Drivers:
   --powerscale_version X.Y.Z
   --powermax_version  X.Y.Z
   --powerflex_version X.Y.Z
   --powerstore_version X.Y.Z
   --unity_version     X.Y.Z
 
-Modules (TAG-ONLY):
+Modules:
   --update_modules {all|observability,resiliency,replication,reverseproxy,authorization}
   --obs_version      vA.B.C
   --res_version      vA.B.C
@@ -104,7 +104,7 @@ run_operator_updates() {
   [[ -n "$CSM_VERSION"     ]] || { echo "❌ --csm_version (vX.Y.Z) is required"; exit 1; }
   export CSM_OPERATOR="$OPERATOR_VERSION"
   export CSM_VERSION="$CSM_VERSION"
-  echo "→ Updating operator (tag-only): operator=$OPERATOR_VERSION, csm=$CSM_VERSION"
+  echo "→ Updating operator: operator=$OPERATOR_VERSION, csm=$CSM_VERSION"
   bash ".github/scripts/operator-version-update.sh" "_" "tag"
 }
 
@@ -112,7 +112,7 @@ run_driver_updates() {
   [[ "$SCOPE" == "drivers" || "$SCOPE" == "all" ]] || return 0
   local all="${POWERSCALE_VERSION}${POWERMAX_VERSION}${POWERFLEX_VERSION}${POWERSTORE_VERSION}${UNITY_VERSION}"
   [[ -z "$all" ]] && { echo "ℹ️ Skipping driver updates (no driver versions provided)"; return 0; }
-  echo "→ Updating drivers (tag-only)"
+  echo "→ Updating drivers"
   bash ".github/scripts/driver-version-update.sh" \
     --driver_update_type "major" \
     --release_type "tag" \
@@ -139,7 +139,7 @@ run_module_updates() {
   [[ -n "$POWERSTORE_VERSION" ]] && CSI_POWERSTORE="v${POWERSTORE_VERSION}"  && pstore_driver_ver="$(ver_suffix "${CSI_POWERSTORE}")"
   IFS=',' read -r -a mods <<<"$UPDATE_MODULES"
   [[ "$UPDATE_MODULES" == "all" ]] && mods=(observability resiliency replication reverseproxy authorization)
-  echo "→ Updating modules (tag-only): ${mods[*]}"
+  echo "→ Updating modules: ${mods[*]}"
   for m in "${mods[@]}"; do
     case "$m" in
       observability)  update_observability_tag_only ;;
@@ -159,4 +159,4 @@ run_operator_updates
 run_driver_updates
 run_module_updates
 
-echo "✅ Completed scope='${SCOPE}' (tag-only)."
+echo "✅ Completed scope='${SCOPE}'."
