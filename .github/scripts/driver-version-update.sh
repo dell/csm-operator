@@ -53,6 +53,10 @@ while [ $# -gt 0 ]; do
         unity_version="$2"
         shift
         ;;
+    --cosi_version)
+        cosi_version="$2"
+        shift
+        ;;
     --) shift ;;
     esac
     shift
