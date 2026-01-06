@@ -280,7 +280,7 @@ CreateLatestMinimalSampleFile() {
     destination_folder=$3  # e.g. samples/v2.16.0/minimal-samples
 
     # Get list of all minimal-samples folders
-    all_folders=$(ls -d samples/v*/minimal-samples 2>/dev/null | grep -vF "$destination_folder" | sort -Vr)
+    all_folders=$(ls -d samples/v*/minimal-samples samples/cosi/v*/minimal-samples 2>/dev/null | grep -vF "$destination_folder" | sort -Vr)
 
     if [ -z "$all_folders" ]; then
         echo "❌ No other minimal-sample folders found to copy from"
