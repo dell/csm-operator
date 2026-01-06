@@ -1322,7 +1322,7 @@ UpdateMajorCOSIDriver() {
     cp -a --update tests/config/driverconfig/cosi/v$previous_major_driver_version/. tests/config/driverconfig/cosi/v$driver_version_update
     DeleteIfExists tests/config/driverconfig/cosi/v$driver_delete_version
 
-    yq eval -i 'with(select(.spec.template.spec.containers[5].name == "driver"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' tests/config/driverconfig/cosi/v$driver_version_update/controller.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "objectstorage-provisioner"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' tests/config/driverconfig/cosi/v$driver_version_update/controller.yaml
 
     yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' tests/config/driverconfig/cosi/v$driver_version_update/upgrade-path.yaml
 
@@ -1335,8 +1335,8 @@ UpdateMajorCOSIDriver() {
         yq eval -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
     done
 
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[7].value = "'"$new_image_version"'")' config/manager/manager.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[7].value = "'"$new_image_version"'")' deploy/operator.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[8].value = "'"$new_image_version"'")' config/manager/manager.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[8].value = "'"$new_image_version"'")' deploy/operator.yaml
 }
 
 # For Updating COSI Driver Patch Version
@@ -1388,7 +1388,7 @@ UpdatePatchCOSIDriver() {
           operatorconfig/driverconfig/cosi/v$driver_version_update
     DeleteIfExists operatorconfig/driverconfig/cosi/v$previous_patch_driver_version
 
-    yq eval -i 'with(select(.spec.template.spec.containers[5].name == "driver"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' \
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "objectstorage-provisioner"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' \
         operatorconfig/driverconfig/cosi/v$driver_version_update/controller.yaml
 
     min_upgrade_path=$(GetMinUpgradePath "storage_csm_unity")
@@ -1425,8 +1425,8 @@ UpdatePatchCOSIDriver() {
     done
 
     # Manager env image patch
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[7].value = "'"$new_image_version"'")' config/manager/manager.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[7].value = "'"$new_image_version"'")' deploy/operator.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[8].value = "'"$new_image_version"'")' config/manager/manager.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[8].value = "'"$new_image_version"'")' deploy/operator.yaml
 }
 
 UpdateBadDriver() {
