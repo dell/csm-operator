@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -596,6 +597,11 @@ func (r *ContainerStorageModuleReconciler) ContentWatch(csm *csmv1.ContainerStor
 
 	stopCh := make(chan struct{})
 	sharedInformerFactory.Start(stopCh)
+
+	// UT only: don't block on sync to avoid bookmark requirement
+	if os.Getenv("UNIT_TEST") == "true" {
+		return stopCh, nil
+	}
 	sharedInformerFactory.WaitForCacheSync(stopCh)
 
 	return stopCh, nil
