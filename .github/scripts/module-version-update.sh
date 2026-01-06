@@ -13,8 +13,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 # Reading actual release version from csm repository
+
 obs_ver="$KARAVI_OBSERVABILITY"
 auth_v2="$CSM_AUTHORIZATION_V2"
 rep_ver="$CSM_REPLICATION"
@@ -1488,81 +1488,29 @@ update_version_values_inplace() {
    echo "res_ver=${res_ver:-<unset>}"
    echo "revproxy_ver=${revproxy_ver:-<unset>}"
 
-   # Work on a temp file, streaming and updating line-by-line
-   local tmp; tmp="$(mktemp)"
+   yq -i '
+   .powerscale["'"$CSI_POWERSCALE"'"].authorization = "'"$auth_v2"'" |
+   .powerscale["'"$CSI_POWERSCALE"'"].replication   = "'"$rep_ver"'" |
+   .powerscale["'"$CSI_POWERSCALE"'"].observability = "'"$obs_ver"'" |
+   .powerscale["'"$CSI_POWERSCALE"'"].resiliency    = "'"$res_ver"'" |
 
-   awk -v V_PSCALE="$CSI_POWERSCALE" \
-         -v V_PFLEX="$CSI_VXFLEXOS" \
-         -v V_PSTORE="$CSI_POWERSTORE" \
-         -v V_PMAX="$CSI_POWERMAX" \
-         -v AUTH="$auth_v2" \
-         -v REP="$rep_ver" \
-         -v OBS="$obs_ver" \
-         -v RES="$res_ver" \
-         -v REVPROXY="$revproxy_ver" '
-      # Track current driver section and whether we are inside the target version block
-      BEGIN { driver=""; in_ver=0 }
+   .powerflex["'"$CSI_VXFLEXOS"'"].authorization = "'"$auth_v2"'" |
+   .powerflex["'"$CSI_VXFLEXOS"'"].replication   = "'"$rep_ver"'" |
+   .powerflex["'"$CSI_VXFLEXOS"'"].observability = "'"$obs_ver"'" |
+   .powerflex["'"$CSI_VXFLEXOS"'"].resiliency    = "'"$res_ver"'" |
 
-      # Detect driver headers precisely at column 0
-      /^[[:space:]]*powerscale:[[:space:]]*$/ { driver="powerscale"; in_ver=0; print; next }
-      /^[[:space:]]*powerflex:[[:space:]]*$/  { driver="powerflex";  in_ver=0; print; next }
-      /^[[:space:]]*powerstore:[[:space:]]*$/ { driver="powerstore"; in_ver=0; print; next }
-      /^[[:space:]]*powermax:[[:space:]]*$/   { driver="powermax";   in_ver=0; print; next }
+   .powerstore["'"$CSI_POWERSTORE"'"].resiliency    = "'"$res_ver"'" |
+   .powerstore["'"$CSI_POWERSTORE"'"].authorization = "'"$auth_v2"'" |
+   .powerstore["'"$CSI_POWERSTORE"'"].observability = "'"$obs_ver"'" |
+   .powerstore["'"$CSI_POWERSTORE"'"].replication     = "'"$rep_ver"'" |
 
-      # Enter target version block for the current driver
-      # Version header lines are at 2-space indent: "  vX.Y.Z:"
-      {
-         if (driver=="powerscale" && V_PSCALE!="" && $0 ~ ("^[[:space:]]{2}" V_PSCALE ":[[:space:]]*$")) { in_ver=1; print; next }
-         if (driver=="powerflex"  && V_PFLEX!=""  && $0 ~ ("^[[:space:]]{2}" V_PFLEX  ":[[:space:]]*$")) { in_ver=1; print; next }
-         if (driver=="powerstore" && V_PSTORE!="" && $0 ~ ("^[[:space:]]{2}" V_PSTORE ":[[:space:]]*$")) { in_ver=1; print; next }
-         if (driver=="powermax"   && V_PMAX!=""   && $0 ~ ("^[[:space:]]{2}" V_PMAX   ":[[:space:]]*$")) { in_ver=1; print; next }
-      }
+   .powermax["'"$CSI_POWERMAX"'"].csireverseproxy = "'"$revproxy_ver"'" |
+   .powermax["'"$CSI_POWERMAX"'"].authorization   = "'"$auth_v2"'" |
+   .powermax["'"$CSI_POWERMAX"'"].replication     = "'"$rep_ver"'" |
+   .powermax["'"$CSI_POWERMAX"'"].observability   = "'"$obs_ver"'" |
+   .powermax["'"$CSI_POWERMAX"'"].resiliency      = "'"$res_ver"'"
+   ' "$vv"
 
-      # Leaving a version block: the next version header (2 spaces) ends the current block
-      in_ver==1 && /^[[:space:]]{2}v[0-9]+\.[0-9]+\.[0-9]+:[[:space:]]*$/ { in_ver=0; print; next }
-
-      # Also leave if the next top-level header (column 0) starts
-      in_ver==1 && /^[^[:space:]]/ { in_ver=0; print; next }
-
-      # === Within the target version block: update only module lines for that driver ===
-      in_ver==1 && driver=="powerscale" {
-         if     ($0 ~ /^[[:space:]]{4}authorization:[[:space:]]*/) { print "    authorization: \"" AUTH "\""; next }
-         else if($0 ~ /^[[:space:]]{4}replication:[[:space:]]*/)   { print "    replication: \""   REP  "\""; next }
-         else if($0 ~ /^[[:space:]]{4}observability:[[:space:]]*/) { print "    observability: \"" OBS  "\""; next }
-         else if($0 ~ /^[[:space:]]{4}resiliency:[[:space:]]*/)    { print "    resiliency: \""    RES  "\""; next }
-         else { print; next }
-      }
-
-      in_ver==1 && driver=="powerflex" {
-         if     ($0 ~ /^[[:space:]]{4}authorization:[[:space:]]*/) { print "    authorization: \"" AUTH "\""; next }
-         else if($0 ~ /^[[:space:]]{4}replication:[[:space:]]*/)   { print "    replication: \""   REP  "\""; next }
-         else if($0 ~ /^[[:space:]]{4}observability:[[:space:]]*/) { print "    observability: \"" OBS  "\""; next }
-         else if($0 ~ /^[[:space:]]{4}resiliency:[[:space:]]*/)    { print "    resiliency: \""    RES  "\""; next }
-         else { print; next }
-      }
-
-      in_ver==1 && driver=="powerstore" {
-         if     ($0 ~ /^[[:space:]]{4}resiliency:[[:space:]]*/)    { print "    resiliency: \""    RES  "\""; next }
-         else if($0 ~ /^[[:space:]]{4}authorization:[[:space:]]*/) { print "    authorization: \"" AUTH "\""; next }
-         else if($0 ~ /^[[:space:]]{4}observability:[[:space:]]*/) { print "    observability: \"" OBS  "\""; next }
-         else if($0 ~ /^[[:space:]]{4}replication:[[:space:]]*/)   { print "    replication: \""   REP  "\""; next }
-         else { print; next }
-      }
-
-      in_ver==1 && driver=="powermax" {
-         if     ($0 ~ /^[[:space:]]{4}csireverseproxy:[[:space:]]*/) { print "    csireverseproxy: \"" REVPROXY "\""; next }
-         else if($0 ~ /^[[:space:]]{4}authorization:[[:space:]]*/)   { print "    authorization: \""   AUTH    "\""; next }
-         else if($0 ~ /^[[:space:]]{4}replication:[[:space:]]*/)     { print "    replication: \""     REP     "\""; next }
-         else if($0 ~ /^[[:space:]]{4}observability:[[:space:]]*/)   { print "    observability: \""   OBS     "\""; next }
-         else if($0 ~ /^[[:space:]]{4}resiliency:[[:space:]]*/)      { print "    resiliency: \""      RES     "\""; next }
-         else { print; next }
-      }
-
-      # Default: pass-through
-      { print }
-   ' "$vv" > "$tmp"
-
-   mv "$tmp" "$vv"
 
    echo "✅ Updated values in ${vv} (in-place):"
    [[ -n "$CSI_POWERSCALE" ]] && echo "   - powerscale: ${CSI_POWERSCALE}"
