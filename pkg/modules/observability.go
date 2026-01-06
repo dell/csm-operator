@@ -33,6 +33,12 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+// Test seams (overridden in unit tests)
+var (
+	getObservabilityModuleFn = getObservabilityModule
+	readConfigFileFn         = readConfigFile
+)
+
 const (
 	// ObservabilityOtelCollectorName - component otel-collector
 	ObservabilityOtelCollectorName string = "otel-collector"
@@ -352,12 +358,12 @@ func ObservabilityTopology(ctx context.Context, isDeleting bool, op operatorutil
 }
 
 func getTopology(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]crclient.Object, error) {
-	obs, err := getObservabilityModule(cr)
+	obs, err := getObservabilityModuleFn(cr)
 	if err != nil {
 		return nil, err
 	}
 
-	buf, err := readConfigFile(ctx, obs, cr, op, TopologyYamlFile)
+	buf, err := readConfigFileFn(ctx, obs, cr, op, TopologyYamlFile)
 	if err != nil {
 		return nil, err
 	}
@@ -394,7 +400,12 @@ func getTopology(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.
 
 // OtelCollector - delete or update otel collector objects
 func OtelCollector(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
-	YamlString, err := getOtelCollector(ctx, op, cr)
+	log := logger.GetLogger(ctx)
+	matched, err := operatorutils.ResolveVersionFromConfigMap(ctx, ctrlClient, &cr)
+	if err != nil {
+		log.Errorw("image resolution via ConfigMap failed", "err", err, "specVersion", cr.Spec.Version)
+	}
+	YamlString, err := getOtelCollector(ctx, op, cr, matched)
 	if err != nil {
 		return err
 	}
@@ -420,7 +431,7 @@ func OtelCollector(ctx context.Context, isDeleting bool, op operatorutils.Operat
 }
 
 // getOtelCollector - get otel collector yaml string
-func getOtelCollector(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getOtelCollector(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, matched operatorutils.VersionSpec) (string, error) {
 	YamlString := ""
 
 	obs, err := getObservabilityModule(cr)
@@ -448,6 +459,11 @@ func getOtelCollector(ctx context.Context, op operatorutils.OperatorConfig, cr c
 
 	for _, component := range obs.Components {
 		if component.Name == ObservabilityOtelCollectorName {
+			if matched.Version != "" {
+				if img := matched.Images[component.Name]; img != "" {
+					otelCollectorImage = img
+				}
+			}
 			if component.Image != "" {
 				otelCollectorImage = string(component.Image)
 			}
@@ -471,7 +487,17 @@ func getOtelCollector(ctx context.Context, op operatorutils.OperatorConfig, cr c
 func PowerScaleMetrics(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
 	log := logger.GetLogger(ctx)
 
-	powerscaleMetricsObjects, err := getPowerScaleMetricsObjects(ctx, op, cr)
+	var matched operatorutils.VersionSpec
+	if cr.Spec.Version != "" {
+		var err error
+		matched, err = operatorutils.ResolveVersionFromConfigMap(ctx, ctrlClient, &cr)
+		if err != nil {
+			log.Error(err, "Failed to get version from configmap")
+			return err
+		}
+	}
+
+	powerscaleMetricsObjects, err := getPowerScaleMetricsObjects(ctx, op, cr, matched)
 	if err != nil {
 		return err
 	}
@@ -548,7 +574,17 @@ func PowerScaleMetrics(ctx context.Context, isDeleting bool, op operatorutils.Op
 func PowerStoreMetrics(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
 	log := logger.GetLogger(ctx)
 
-	powerstoreMetricsObjects, err := getPowerStoreMetricsObjects(ctx, op, cr)
+	var matched operatorutils.VersionSpec
+	if cr.Spec.Version != "" {
+		var err error
+		matched, err = operatorutils.ResolveVersionFromConfigMap(ctx, ctrlClient, &cr)
+		if err != nil {
+			log.Error(err, "Failed to get version from configmap")
+			return err
+		}
+	}
+
+	powerstoreMetricsObjects, err := getPowerStoreMetricsObjects(ctx, op, cr, matched)
 	if err != nil {
 		return err
 	}
@@ -610,7 +646,7 @@ func PowerStoreMetrics(ctx context.Context, isDeleting bool, op operatorutils.Op
 }
 
 // getPowerStoreMetricsObjects - get powerstore metrics yaml string
-func getPowerStoreMetricsObjects(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]crclient.Object, error) {
+func getPowerStoreMetricsObjects(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, matched operatorutils.VersionSpec) ([]crclient.Object, error) {
 	obs, err := getObservabilityModule(cr)
 	if err != nil {
 		return nil, err
@@ -641,6 +677,11 @@ func getPowerStoreMetricsObjects(ctx context.Context, op operatorutils.OperatorC
 
 	for _, component := range obs.Components {
 		if component.Name == ObservabilityMetricsPowerStoreName {
+			if matched.Version != "" {
+				if img := matched.Images[component.Name]; img != "" {
+					obsPstoreImage = img
+				}
+			}
 			if component.Image != "" {
 				obsPstoreImage = string(component.Image)
 			}
@@ -709,7 +750,7 @@ func getPowerStoreMetricsObjects(ctx context.Context, op operatorutils.OperatorC
 }
 
 // getPowerScaleMetricsObjects - get powerscale metrics yaml string
-func getPowerScaleMetricsObjects(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]crclient.Object, error) {
+func getPowerScaleMetricsObjects(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, matched operatorutils.VersionSpec) ([]crclient.Object, error) {
 	obs, err := getObservabilityModule(cr)
 	if err != nil {
 		return nil, err
@@ -739,6 +780,11 @@ func getPowerScaleMetricsObjects(ctx context.Context, op operatorutils.OperatorC
 
 	for _, component := range obs.Components {
 		if component.Name == ObservabilityMetricsPowerScaleName {
+			if matched.Version != "" {
+				if img := matched.Images[component.Name]; img != "" {
+					pscaleImage = img
+				}
+			}
 			if component.Image != "" {
 				pscaleImage = string(component.Image)
 			}
@@ -863,7 +909,17 @@ func parseObservabilityMetricsDeployment(ctx context.Context, deployment *appsv1
 func PowerFlexMetrics(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
 	log := logger.GetLogger(ctx)
 
-	powerflexMetricsObjects, err := getPowerFlexMetricsObject(ctx, op, cr)
+	var matched operatorutils.VersionSpec
+	if cr.Spec.Version != "" {
+		var err error
+		matched, err = operatorutils.ResolveVersionFromConfigMap(ctx, ctrlClient, &cr)
+		if err != nil {
+			log.Error(err, "Failed to get version from configmap")
+			return err
+		}
+	}
+
+	powerflexMetricsObjects, err := getPowerFlexMetricsObject(ctx, op, cr, matched)
 	if err != nil {
 		return err
 	}
@@ -937,13 +993,13 @@ func PowerFlexMetrics(ctx context.Context, isDeleting bool, op operatorutils.Ope
 }
 
 // getPowerFlexMetricsObject - get powerflex metrics yaml string
-func getPowerFlexMetricsObject(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]crclient.Object, error) {
-	obs, err := getObservabilityModule(cr)
+func getPowerFlexMetricsObject(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, matched operatorutils.VersionSpec) ([]crclient.Object, error) {
+	obs, err := getObservabilityModuleFn(cr)
 	if err != nil {
 		return nil, err
 	}
 
-	buf, err := readConfigFile(ctx, obs, cr, op, PflexObsYamlFile)
+	buf, err := readConfigFileFn(ctx, obs, cr, op, PflexObsYamlFile)
 	if err != nil {
 		return nil, err
 	}
@@ -965,6 +1021,11 @@ func getPowerFlexMetricsObject(ctx context.Context, op operatorutils.OperatorCon
 
 	for _, component := range obs.Components {
 		if component.Name == ObservabilityMetricsPowerFlexName {
+			if matched.Version != "" {
+				if img := matched.Images[component.Name]; img != "" {
+					pflexImage = img
+				}
+			}
 			if component.Image != "" {
 				pflexImage = string(component.Image)
 			}
@@ -1166,8 +1227,17 @@ func IssuerCertServiceObs(ctx context.Context, isDeleting bool, op operatorutils
 // PowerMaxMetrics - delete or update powermax metrics objects
 func PowerMaxMetrics(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, k8sClient kubernetes.Interface) error {
 	log := logger.GetLogger(ctx)
+	var matched operatorutils.VersionSpec
+	if cr.Spec.Version != "" {
+		var err error
+		matched, err = operatorutils.ResolveVersionFromConfigMap(ctx, ctrlClient, &cr)
+		if err != nil {
+			log.Error(err, "Failed to get version from configmap")
+			return err
+		}
+	}
 
-	powerMaxMetricsObjects, err := getPowerMaxMetricsObject(ctx, op, cr)
+	powerMaxMetricsObjects, err := getPowerMaxMetricsObject(ctx, op, cr, matched)
 	if err != nil {
 		return err
 	}
@@ -1320,7 +1390,7 @@ func setPowerMaxMetricsConfigMap(dp *confv1.DeploymentApplyConfiguration, cr csm
 }
 
 // getPowerMaxMetricsObject - get powermax metrics yaml string
-func getPowerMaxMetricsObject(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]crclient.Object, error) {
+func getPowerMaxMetricsObject(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, matched operatorutils.VersionSpec) ([]crclient.Object, error) {
 	obs, err := getObservabilityModule(cr)
 	if err != nil {
 		return nil, err
@@ -1347,6 +1417,11 @@ func getPowerMaxMetricsObject(ctx context.Context, op operatorutils.OperatorConf
 
 	for _, component := range obs.Components {
 		if component.Name == ObservabilityMetricsPowerMaxName {
+			if matched.Version != "" {
+				if img := matched.Images[component.Name]; img != "" {
+					pmaxImage = img
+				}
+			}
 			if component.Image != "" {
 				pmaxImage = string(component.Image)
 			}

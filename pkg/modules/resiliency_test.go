@@ -15,12 +15,14 @@ package modules
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
 	drivers "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/drivers"
 	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
@@ -53,7 +55,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDeployment, err := ResiliencyInjectDeployment(ctx, controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerStore))
+			newDeployment, err := ResiliencyInjectDeployment(ctx, controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerStore), operatorutils.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -81,7 +83,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDeployment, err := ResiliencyInjectDeployment(ctx, controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerScale))
+			newDeployment, err := ResiliencyInjectDeployment(ctx, controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerScale), operatorutils.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -96,7 +98,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDeployment, err := ResiliencyInjectDeployment(ctx, controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerFlexName))
+			newDeployment, err := ResiliencyInjectDeployment(ctx, controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerFlexName), operatorutils.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -111,7 +113,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDeployment, err := ResiliencyInjectDeployment(ctx, controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerMax))
+			newDeployment, err := ResiliencyInjectDeployment(ctx, controllerYAML.Deployment, customResource, operatorConfig, string(csmv1.PowerMax), operatorutils.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -134,7 +136,7 @@ func TestResiliencyInjectDeployment(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			success, dp, opConfig, cr := tc(t)
-			newDeployment, err := ResiliencyInjectDeployment(ctx, dp, cr, opConfig, string(csmv1.PowerStore))
+			newDeployment, err := ResiliencyInjectDeployment(ctx, dp, cr, opConfig, string(csmv1.PowerStore), operatorutils.VersionSpec{})
 			if success {
 				assert.NoError(t, err)
 				if newDeployment == nil {
@@ -383,7 +385,7 @@ func TestResiliencyInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDaemonSet, err := ResiliencyInjectDaemonset(ctx, nodeYAML.DaemonSetApplyConfig, customResource, operatorConfig, string(csmv1.PowerStore))
+			newDaemonSet, err := ResiliencyInjectDaemonset(ctx, nodeYAML.DaemonSetApplyConfig, customResource, operatorConfig, string(csmv1.PowerStore), operatorutils.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -411,7 +413,7 @@ func TestResiliencyInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			newDaemonSet, err := ResiliencyInjectDaemonset(ctx, ds, customResource, opConfig, string(csmv1.PowerStore))
+			newDaemonSet, err := ResiliencyInjectDaemonset(ctx, ds, customResource, opConfig, string(csmv1.PowerStore), operatorutils.VersionSpec{})
 			if success {
 				assert.NoError(t, err)
 				if newDaemonSet == nil {
@@ -437,7 +439,7 @@ func checkApplyContainersResiliency(containers []acorev1.ContainerApplyConfigura
 	podmonAPIPort := getResiliencyEnv(resiliencyModule, cr.Spec.Driver.CSIDriverType)
 	var container acorev1.ContainerApplyConfiguration
 	// fetch podmonArrayConnectivityPollRate
-	setResiliencyArgs(resiliencyModule, nodeMode, &container)
+	setResiliencyArgs(resiliencyModule, nodeMode, &container, operatorutils.VersionSpec{})
 	podmonArrayConnectivityPollRate := getPollRateFromArgs(container.Args)
 
 	for _, cnt := range containers {
@@ -481,4 +483,302 @@ func checkApplyContainersResiliency(containers []acorev1.ContainerApplyConfigura
 		}
 	}
 	return nil
+}
+
+func TestResiliencyPrecheck_ClusterClientCreationError_NoOp(t *testing.T) {
+	type fakeControllerRuntimeClientWrapper func(clusterConfigData []byte) (ctrlClient.Client, error)
+
+	cr, err := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	module := cr.Spec.Modules[0] // resiliency module
+	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+	// Simulate cluster client creation failure
+	fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
+		return nil, fmt.Errorf("synthetic cluster client creation failure")
+	}
+
+	// Save + restore wrappers
+	oldNewControllerRuntimeClientWrapper := operatorutils.NewControllerRuntimeClientWrapper
+	oldNewK8sClientWrapper := operatorutils.NewK8sClientWrapper
+	defer func() {
+		operatorutils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
+		operatorutils.NewK8sClientWrapper = oldNewK8sClientWrapper
+	}()
+
+	operatorutils.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
+	operatorutils.NewK8sClientWrapper = func(_ []byte) (*kubernetes.Clientset, error) { return nil, nil }
+
+	fakeReconcile := operatorutils.FakeReconcileCSM{
+		Client:    sourceClient,
+		K8sClient: fake.NewSimpleClientset(),
+	}
+
+	// NOTE: ResiliencyPrecheck logs and returns nil on wrapper errors in your implementation
+	err = ResiliencyPrecheck(context.TODO(), operatorConfig, module, cr, &fakeReconcile)
+	assert.NoError(t, err, "ResiliencyPrecheck is tolerant of wrapper errors")
+}
+
+func TestResiliencyPrecheck_K8sClientCreationError_NoOp(t *testing.T) {
+	type fakeControllerRuntimeClientWrapper func(clusterConfigData []byte) (ctrlClient.Client, error)
+
+	cr, err := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	module := cr.Spec.Modules[0]
+	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+	// Cluster client creation succeeds
+	fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
+		return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
+	}
+
+	oldNewControllerRuntimeClientWrapper := operatorutils.NewControllerRuntimeClientWrapper
+	oldNewK8sClientWrapper := operatorutils.NewK8sClientWrapper
+	defer func() {
+		operatorutils.NewControllerRuntimeClientWrapper = oldNewControllerRuntimeClientWrapper
+		operatorutils.NewK8sClientWrapper = oldNewK8sClientWrapper
+	}()
+
+	operatorutils.NewControllerRuntimeClientWrapper = fakeControllerRuntimeClient
+	// Simulate k8s client creation failure (implementation tolerates this)
+	operatorutils.NewK8sClientWrapper = func(_ []byte) (*kubernetes.Clientset, error) {
+		return nil, fmt.Errorf("synthetic k8s client creation failure")
+	}
+
+	fakeReconcile := operatorutils.FakeReconcileCSM{
+		Client:    sourceClient,
+		K8sClient: fake.NewSimpleClientset(),
+	}
+
+	err = ResiliencyPrecheck(context.TODO(), operatorConfig, module, cr, &fakeReconcile)
+	assert.NoError(t, err, "ResiliencyPrecheck is tolerant of k8s wrapper errors")
+}
+
+func TestResiliencyInjectDeployment_ArgsAndEnvConsistency(t *testing.T) {
+	ctx := context.Background()
+
+	cr, err := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctrlYAML, err := drivers.GetController(ctx, cr, operatorConfig, csmv1.PowerStore, operatorutils.VersionSpec{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dp, err := ResiliencyInjectDeployment(ctx, ctrlYAML.Deployment, cr, operatorConfig, string(csmv1.PowerStore), operatorutils.VersionSpec{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.NotNil(t, dp)
+
+	// Use the existing helper to verify driver env + sidecar args match expected poll rate & API port
+	if err := checkApplyContainersResiliency(dp.Spec.Template.Spec.Containers, cr); err != nil {
+		t.Fatalf("resiliency container checks failed: %v", err)
+	}
+
+	// Explicit sidecar presence + safe arg prefix check (no slicing)
+	const pollPrefix = "--arrayConnectivityPollRate="
+	foundSidecar := false
+	foundPollArg := false
+
+	for _, c := range dp.Spec.Template.Spec.Containers {
+		if c.Name != nil && *c.Name == operatorutils.ResiliencySideCarName {
+			foundSidecar = true
+			for _, a := range c.Args {
+				if strings.HasPrefix(a, pollPrefix) {
+					foundPollArg = true
+					break
+				}
+			}
+		}
+	}
+
+	assert.True(t, foundSidecar, "expected resiliency sidecar (podmon) to be injected")
+	assert.True(t, foundPollArg, "expected argument with prefix --arrayConnectivityPollRate= in podmon sidecar")
+}
+
+func TestResiliencyInjectDaemonset_SidecarPresent(t *testing.T) {
+	ctx := context.Background()
+	cr, err := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	nodeYAML, err := drivers.GetNode(ctx, cr, operatorConfig, csmv1.PowerStore, "node.yaml", ctrlClientFake.NewClientBuilder().Build())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ds, err := ResiliencyInjectDaemonset(ctx, nodeYAML.DaemonSetApplyConfig, cr, operatorConfig, string(csmv1.PowerStore), operatorutils.VersionSpec{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.NotNil(t, ds)
+
+	// Check the podmon sidecar exists
+	foundSidecar := false
+	for _, c := range ds.Spec.Template.Spec.Containers {
+		if c.Name != nil && *c.Name == operatorutils.ResiliencySideCarName {
+			foundSidecar = true
+			break
+		}
+	}
+	assert.True(t, foundSidecar, "expected resiliency sidecar to be present in daemonset")
+}
+
+// matched.Version is non-empty and matched.Images has an entry for the container name -> image is overridden from matched.
+func TestModifyPodmon_UsesMatchedImageWhenVersionSet(t *testing.T) {
+	name := "podmon"
+	originalImage := "registry.example/podmon:old"
+	matchedImage := "registry.example/podmon:from-matched"
+
+	matched := operatorutils.VersionSpec{
+		Version: "v9.9.9", // non-empty to trigger the branch
+		Images:  map[string]string{name: matchedImage},
+	}
+
+	// Component does NOT set Image/PullPolicy -> matched should be applied
+	component := csmv1.ContainerTemplate{
+		Image:           csmv1.ImageType(""),
+		ImagePullPolicy: corev1.PullPolicy(""), // keep empty to avoid override
+		Envs:            nil,
+		Args:            nil,
+	}
+
+	// Build container apply configuration
+	container := acorev1.Container().
+		WithName(name).
+		WithImage(originalImage)
+
+	// Act
+	modifyPodmon(component, container, matched)
+
+	// Assert
+	if container.Image == nil {
+		t.Fatalf("container.Image should not be nil after modifyPodmon")
+	}
+	if *container.Image != matchedImage {
+		t.Fatalf("expected image %q from matched.Images, got %q", matchedImage, *container.Image)
+	}
+}
+
+// Case 2: matched.Version is empty -> skip matched override; image remains original (since component.Image is not set)
+func TestModifyPodmon_SkipsMatchedWhenVersionEmpty(t *testing.T) {
+	name := "podmon"
+	originalImage := "registry.example/podmon:unchanged"
+	matchedImage := "registry.example/podmon:should-NOT-apply"
+
+	matched := operatorutils.VersionSpec{
+		Version: "", // empty -> branch skipped
+		Images:  map[string]string{name: matchedImage},
+	}
+
+	component := csmv1.ContainerTemplate{
+		Image:           csmv1.ImageType(""),
+		ImagePullPolicy: corev1.PullPolicy(""),
+		Envs:            nil,
+		Args:            nil,
+	}
+
+	container := acorev1.Container().
+		WithName(name).
+		WithImage(originalImage)
+
+	modifyPodmon(component, container, matched)
+
+	if container.Image == nil {
+		t.Fatalf("container.Image should not be nil after modifyPodmon")
+	}
+	if *container.Image != originalImage {
+		t.Fatalf("expected image to remain %q when matched.Version is empty, got %q", originalImage, *container.Image)
+	}
+}
+
+// Case 3: component overrides should take precedence over matched.Images (for both Image and ImagePullPolicy)
+func TestModifyPodmon_ComponentOverridesImageAndPullPolicy(t *testing.T) {
+	name := "podmon"
+	originalImage := "registry.example/podmon:old"
+	matchedImage := "registry.example/podmon:from-matched"
+	componentImage := "registry.example/podmon:cr-override"
+
+	matched := operatorutils.VersionSpec{
+		Version: "v1.16.0", // any non-empty to ensure branch executes
+		Images:  map[string]string{name: matchedImage},
+	}
+
+	component := csmv1.ContainerTemplate{
+		Image:           csmv1.ImageType(componentImage), // cast to csmv1.ImageType
+		ImagePullPolicy: corev1.PullAlways,               // component policy override
+		Envs:            nil,
+		Args:            nil,
+	}
+
+	container := acorev1.Container().
+		WithName(name).
+		WithImage(originalImage).
+		WithImagePullPolicy(corev1.PullIfNotPresent) // initial policy
+
+	modifyPodmon(component, container, matched)
+
+	// Image should be component override (not matched)
+	if container.Image == nil {
+		t.Fatalf("container.Image should not be nil after modifyPodmon")
+	}
+	if *container.Image != componentImage {
+		t.Fatalf("expected image %q from component override, got %q", componentImage, *container.Image)
+	}
+
+	// Pull policy should be component override
+	if container.ImagePullPolicy == nil {
+		t.Fatalf("container.ImagePullPolicy should not be nil after modifyPodmon")
+	}
+	if string(*container.ImagePullPolicy) != string(corev1.PullAlways) {
+		t.Fatalf("expected pull policy %q from component override, got %q", corev1.PullAlways, *container.ImagePullPolicy)
+	}
+}
+
+func TestModifyPodmon_ReplacesEnvAndArgs(t *testing.T) {
+	name := "podmon"
+	matched := operatorutils.VersionSpec{} // not relevant for env/args
+
+	component := csmv1.ContainerTemplate{
+		Envs: []corev1.EnvVar{
+			{Name: "FOO", Value: "bar"},
+		},
+		Args: []string{"--enable", "--level=debug"},
+	}
+
+	// Build container WITHOUT an initial arg
+	container := acorev1.Container().
+		WithName(name).
+		WithEnv(acorev1.EnvVar().WithName("FOO").WithValue("old"))
+		// NOTE: intentionally NOT calling WithArgs("--old")
+
+	// Act
+	modifyPodmon(component, container, matched)
+
+	// Assert env replacement
+	found := false
+	for _, e := range container.Env {
+		if e.Name != nil && *e.Name == "FOO" && e.Value != nil && *e.Value == "bar" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected env FOO=bar to be present after replacement")
+	}
+
+	// Assert args replacement (now exact match)
+	if len(container.Args) != 2 || container.Args[0] != "--enable" || container.Args[1] != "--level=debug" {
+		t.Fatalf("expected args [--enable --level=debug], got %v", container.Args)
+	}
 }

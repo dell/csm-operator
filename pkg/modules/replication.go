@@ -122,7 +122,7 @@ func getRepctlPrefices(replicaModule csmv1.Module, driverType csmv1.DriverType) 
 	return replicationContextPrefix, replicationPrefix
 }
 
-func getReplicaApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
+func getReplicaApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, matched operatorutils.VersionSpec) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
 	var err error
 	replicaModule := csmv1.Module{}
 	for _, m := range cr.Spec.Modules {
@@ -153,6 +153,11 @@ func getReplicaApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op 
 
 	for _, component := range replicaModule.Components {
 		if component.Name == operatorutils.ReplicationSideCarName {
+			if matched.Version != "" {
+				if img := matched.Images[component.Name]; img != "" {
+					container.Image = &img
+				}
+			}
 			if component.Image != "" {
 				image := string(component.Image)
 				container.Image = &image
@@ -167,8 +172,8 @@ func getReplicaApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op 
 }
 
 // ReplicationInjectDeployment - inject replication into deployment
-func ReplicationInjectDeployment(ctx context.Context, dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*applyv1.DeploymentApplyConfiguration, error) {
-	replicaModule, containerPtr, err := getReplicaApplyCR(ctx, cr, op)
+func ReplicationInjectDeployment(ctx context.Context, dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, matched operatorutils.VersionSpec) (*applyv1.DeploymentApplyConfiguration, error) {
+	replicaModule, containerPtr, err := getReplicaApplyCR(ctx, cr, op, matched)
 	if err != nil {
 		return nil, err
 	}
@@ -355,7 +360,7 @@ func ReplicationPrecheck(ctx context.Context, op operatorutils.OperatorConfig, r
 	return nil
 }
 
-func getReplicaController(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]crclient.Object, error) {
+func getReplicaController(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, matched operatorutils.VersionSpec) ([]crclient.Object, error) {
 	YamlString := ""
 
 	replica, err := getReplicaModule(cr)
@@ -380,6 +385,11 @@ func getReplicaController(ctx context.Context, op operatorutils.OperatorConfig, 
 
 	for _, component := range replica.Components {
 		if component.Name == operatorutils.ReplicationControllerManager {
+			if matched.Version != "" {
+				if img := matched.Images[component.Name]; img != "" {
+					replicaImage = img
+				}
+			}
 			if component.Image != "" {
 				replicaImage = string(component.Image)
 			}
@@ -440,7 +450,15 @@ func getReplicaModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error) {
 
 // ReplicationManagerController -
 func ReplicationManagerController(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
-	ctrlObjects, err := getReplicaController(ctx, op, cr)
+	var matched operatorutils.VersionSpec
+	if cr.Spec.Version != "" {
+		var err error
+		matched, err = operatorutils.ResolveVersionFromConfigMap(ctx, ctrlClient, &cr)
+		if err != nil {
+			return err
+		}
+	}
+	ctrlObjects, err := getReplicaController(ctx, op, cr, matched)
 	if err != nil {
 		return err
 	}

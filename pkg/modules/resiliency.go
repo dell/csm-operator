@@ -186,7 +186,13 @@ func getResiliencyEnv(resiliencyModule csmv1.Module, _ csmv1.DriverType) string 
 }
 
 // Apply resiliency module from the manifest file to the podmon sidecar
-func modifyPodmon(component csmv1.ContainerTemplate, container *acorev1.ContainerApplyConfiguration) {
+func modifyPodmon(component csmv1.ContainerTemplate, container *acorev1.ContainerApplyConfiguration, matched operatorutils.VersionSpec) {
+	if matched.Version != "" {
+		containerName := *container.Name
+		if img := matched.Images[containerName]; img != "" {
+			*container.Image = img
+		}
+	}
 	if component.Image != "" {
 		image := string(component.Image)
 		if container.Image != nil {
@@ -205,13 +211,13 @@ func modifyPodmon(component csmv1.ContainerTemplate, container *acorev1.Containe
 	container.Args = operatorutils.ReplaceAllArgs(container.Args, component.Args)
 }
 
-func setResiliencyArgs(m csmv1.Module, mode string, container *acorev1.ContainerApplyConfiguration) {
+func setResiliencyArgs(m csmv1.Module, mode string, container *acorev1.ContainerApplyConfiguration, matched operatorutils.VersionSpec) {
 	for _, component := range m.Components {
 		if component.Name == operatorutils.PodmonControllerComponent && mode == controllerMode {
-			modifyPodmon(component, container)
+			modifyPodmon(component, container, matched)
 		}
 		if component.Name == operatorutils.PodmonNodeComponent && mode == "node" {
-			modifyPodmon(component, container)
+			modifyPodmon(component, container, matched)
 		}
 	}
 }
@@ -228,7 +234,7 @@ func getPollRateFromArgs(args []string) string {
 	return ""
 }
 
-func getResiliencyApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, driverType, mode string) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
+func getResiliencyApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, driverType, mode string, matched operatorutils.VersionSpec) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
 	resiliencyModule := csmv1.Module{}
 	for _, m := range cr.Spec.Modules {
 		if m.Name == csmv1.Resiliency {
@@ -256,13 +262,13 @@ func getResiliencyApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, 
 		return nil, nil, err
 	}
 	// read args from the respective components
-	setResiliencyArgs(resiliencyModule, mode, &container)
+	setResiliencyArgs(resiliencyModule, mode, &container, matched)
 	return &resiliencyModule, &container, nil
 }
 
 // ResiliencyInjectDeployment - inject resiliency into deployment
-func ResiliencyInjectDeployment(ctx context.Context, dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, driverType string) (*applyv1.DeploymentApplyConfiguration, error) {
-	resiliencyModule, podmonPtr, err := getResiliencyApplyCR(ctx, cr, op, driverType, controllerMode)
+func ResiliencyInjectDeployment(ctx context.Context, dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, driverType string, matched operatorutils.VersionSpec) (*applyv1.DeploymentApplyConfiguration, error) {
+	resiliencyModule, podmonPtr, err := getResiliencyApplyCR(ctx, cr, op, driverType, controllerMode, matched)
 	if err != nil {
 		return nil, err
 	}
@@ -301,8 +307,8 @@ func ResiliencyInjectDeployment(ctx context.Context, dp applyv1.DeploymentApplyC
 }
 
 // ResiliencyInjectDaemonset  - inject resiliency into daemonset
-func ResiliencyInjectDaemonset(ctx context.Context, ds applyv1.DaemonSetApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, driverType string) (*applyv1.DaemonSetApplyConfiguration, error) {
-	resiliencyModule, podmonPtr, err := getResiliencyApplyCR(ctx, cr, op, driverType, nodeMode)
+func ResiliencyInjectDaemonset(ctx context.Context, ds applyv1.DaemonSetApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, driverType string, matched operatorutils.VersionSpec) (*applyv1.DaemonSetApplyConfiguration, error) {
+	resiliencyModule, podmonPtr, err := getResiliencyApplyCR(ctx, cr, op, driverType, nodeMode, matched)
 	if err != nil {
 		return nil, err
 	}
