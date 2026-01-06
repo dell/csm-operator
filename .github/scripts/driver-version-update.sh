@@ -199,7 +199,18 @@ GetMinUpgradePath() {
         if [ -z "$version_suffix" ]; then
             echo "0.0.0"
         else
-            min_upgrade_path="${version_suffix:0:1}.${version_suffix:1:2}.${version_suffix:3:1}"
+            major="${version_suffix:0:1}"
+            if [[ ${#version_suffix} -eq 4 ]]; then
+                minor="${version_suffix:1:2}"
+                patch="${version_suffix:3:1}"
+            elif [[ ${#version_suffix} -eq 3 ]]; then
+                minor="${version_suffix:1:1}"
+                patch="${version_suffix:2:1}"
+            else
+                echo "Unexpected suffix length: ${#version_suffix} (value: '$version_suffix')" >&2
+                exit 1
+            fi
+            min_upgrade_path="${major}.${minor}.${patch}"
             echo "$min_upgrade_path"
         fi
     fi
@@ -1269,7 +1280,7 @@ UpdateMajorCOSIDriver() {
 
     previous_major_driver_version=$(GetLatestDriverVersion "storage_csm_cosi")
     driver_sample_file_suffix=$(echo "$driver_version_update" | tr -d '.' | tr -d '\n')
-    sample_version_folder="samples/v$major_version.$minor_version.0"
+    sample_version_folder="samples/cosi/v$major_version.$minor_version.0"
 
     mkdir -p "$sample_version_folder/minimal-samples"
 
