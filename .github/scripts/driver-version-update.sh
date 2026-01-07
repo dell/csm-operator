@@ -1461,6 +1461,20 @@ UpdateBadDriver() {
     DeleteIfExists tests/config/driverconfig/badDriver/v$driver_delete_version
 }
 
+ExtractVersionFromSuffix() {
+    version_suffix=$1
+    major=$((10#$(echo "$version_suffix" | cut -c1)))
+    if [[ ${#version_suffix} -eq 4 ]]; then
+        minor=$((10#$(echo "$version_suffix" | cut -c2-3)))
+        patch=$((10#$(echo "$version_suffix" | cut -c4)))
+    elif [[ ${#version_suffix} -eq 3 ]]; then
+        minor=$((10#$(echo "$version_suffix" | cut -c2)))
+        patch=$((10#$(echo "$version_suffix" | cut -c3)))
+    else
+        echo "Unexpected version suffix length: ${#version_suffix}" >&2
+        exit 1
+    fi
+}
 
 #----------------------------Entry Point------------------------------------------
 
@@ -1500,18 +1514,3 @@ else
     echo "invalid driver_update_type"
     exit 1
 fi
-
-ExtractVersionFromSuffix() {
-    version_suffix=$1
-    major=$((10#$(echo "$version_suffix" | cut -c1)))
-    if [[ ${#version_suffix} -eq 4 ]]; then
-        minor=$((10#$(echo "$version_suffix" | cut -c2-3)))
-        patch=$((10#$(echo "$version_suffix" | cut -c4)))
-    elif [[ ${#version_suffix} -eq 3 ]]; then
-        minor=$((10#$(echo "$version_suffix" | cut -c2)))
-        patch=$((10#$(echo "$version_suffix" | cut -c3)))
-    else
-        echo "Unexpected version suffix length: ${#version_suffix}" >&2
-        exit 1
-    fi
-}
