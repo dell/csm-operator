@@ -19,4 +19,4 @@ spec:
   modules:
     - name: authorization
       enabled: true
-      configVersion: v2.3.0
+      configVersion: v2.4.0

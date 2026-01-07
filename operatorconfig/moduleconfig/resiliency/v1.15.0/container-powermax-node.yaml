@@ -14,23 +14,24 @@
 #
 #
 name: podmon
-image: quay.io/dell/container-storage-modules/podmon:v1.12.0
-imagePullPolicy: Always
 securityContext:
   privileged: true
   capabilities:
     add: ["SYS_ADMIN"]
   allowPrivilegeEscalation: true
+image: quay.io/dell/container-storage-modules/podmon:v1.15.0
+imagePullPolicy: Always
 args:
-  - "--labelvalue=csi-vxflexos"
+  - "--labelvalue=csi-powermax"
+  - "--arrayConnectivityPollRate=60"
   - "--leaderelection=false"
   - "--driverPodLabelValue=dell-storage"
   - "--ignoreVolumelessPods=false"
-  - "--arrayConnectivityPollRate=5"
-  # Below 3 args should not be modified.
-  - "--csisock=unix:/var/lib/kubelet/plugins/vxflexos.emc.dell.com/csi_sock"
+  # Below 4 args should not be modified.
+  - "--csisock=unix:/var/lib/kubelet/plugins/powermax.emc.dell.com/csi_sock"
   - "--mode=node"
-  - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
+  - "--driver-config-params=/powermax-config-params/driver-config-params.yaml"
+  - "--driverPath=csi-powermax.dellemc.com"
 env:
   - name: "X_CSI_PODMON_API_PORT"
     value: "8083"
@@ -58,7 +59,10 @@ volumeMounts:
     mountPath: <KUBELET_CONFIG_DIR>/pods
     mountPropagation: "Bidirectional"
   - name: driver-path
-    mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
+    mountPath: <KUBELET_CONFIG_DIR>/plugins/powermax.emc.dell.com
+    mountPropagation: "Bidirectional"
+  - name: csi-path
+    mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
     mountPropagation: "Bidirectional"
   - name: dev
     mountPath: /dev
@@ -66,5 +70,5 @@ volumeMounts:
     mountPath: /usr-bin
   - name: var-run
     mountPath: /var/run
-  - name: vxflexos-config-params
-    mountPath: /vxflexos-config-params
+  - name: powermax-config-params
+    mountPath: /powermax-config-params

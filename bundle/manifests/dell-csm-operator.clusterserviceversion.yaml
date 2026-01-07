@@ -24,7 +24,7 @@ metadata:
                     "name": "cert-manager"
                   },
                   {
-                    "authorizationController": "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.3.0",
+                    "authorizationController": "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.4.0",
                     "authorizationControllerReplicas": 1,
                     "certificate": "",
                     "controllerReconcileInterval": "5m",
@@ -43,13 +43,13 @@ metadata:
                         "ingressClassName": "nginx"
                       }
                     ],
-                    "proxyService": "quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.3.0",
+                    "proxyService": "quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.4.0",
                     "proxyServiceReplicas": 1,
-                    "roleService": "quay.io/dell/container-storage-modules/csm-authorization-role:v2.3.0",
+                    "roleService": "quay.io/dell/container-storage-modules/csm-authorization-role:v2.4.0",
                     "roleServiceReplicas": 1,
-                    "storageService": "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.3.0",
+                    "storageService": "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.4.0",
                     "storageServiceReplicas": 1,
-                    "tenantService": "quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.3.0",
+                    "tenantService": "quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.4.0",
                     "tenantServiceReplicas": 1
                   },
                   {
@@ -88,7 +88,7 @@ metadata:
                     }
                   }
                 ],
-                "configVersion": "v2.3.0",
+                "configVersion": "v2.4.0",
                 "enabled": true,
                 "forceRemoveModule": true,
                 "name": "authorization-proxy-server"
@@ -320,11 +320,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0",
+                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.4.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v2.3.0",
+                "configVersion": "v2.4.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -341,7 +341,7 @@ metadata:
                         "value": "powerscale"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/dell-csi-replicator:v1.13.0",
+                    "image": "quay.io/dell/container-storage-modules/dell-csi-replicator:v1.14.0",
                     "name": "dell-csi-replicator"
                   },
                   {
@@ -371,11 +371,11 @@ metadata:
                         "value": "false"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0",
+                    "image": "quay.io/dell/container-storage-modules/dell-replication-controller:v1.14.0",
                     "name": "dell-replication-controller-manager"
                   }
                 ],
-                "configVersion": "v1.13.0",
+                "configVersion": "v1.14.0",
                 "enabled": false,
                 "name": "replication"
               },
@@ -390,7 +390,7 @@ metadata:
                         "value": "quay.io/nginx/nginx-unprivileged:1.27"
                       }
                     ],
-                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0",
+                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.142.0",
                     "name": "otel-collector",
                     "privateKey": ""
                   },
@@ -458,11 +458,11 @@ metadata:
                         "value": "otel-collector:55680"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.10.0",
+                    "image": "quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.11.0",
                     "name": "metrics-powerscale"
                   }
                 ],
-                "configVersion": "v1.13.0",
+                "configVersion": "v1.14.0",
                 "enabled": false,
                 "name": "observability"
               },
@@ -481,7 +481,7 @@ metadata:
                       "--driverPath=csi-isilon.dellemc.com",
                       "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
                     ],
-                    "image": "quay.io/dell/container-storage-modules/podmon:v1.14.0",
+                    "image": "quay.io/dell/container-storage-modules/podmon:v1.15.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
@@ -503,12 +503,12 @@ metadata:
                         "value": "8083"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/podmon:v1.14.0",
+                    "image": "quay.io/dell/container-storage-modules/podmon:v1.15.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
                 ],
-                "configVersion": "v1.14.0",
+                "configVersion": "v1.15.0",
                 "enabled": false,
                 "name": "resiliency"
               }
@@ -704,11 +704,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.14.1",
+                    "image": "quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.15.0",
                     "name": "csipowermax-reverseproxy"
                   }
                 ],
-                "configVersion": "v2.14.1",
+                "configVersion": "v2.15.0",
                 "name": "csireverseproxy"
               },
               {
@@ -724,11 +724,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0",
+                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.4.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v2.3.0",
+                "configVersion": "v2.4.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -745,7 +745,7 @@ metadata:
                         "value": "powermax"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/dell-csi-replicator:v1.13.0",
+                    "image": "quay.io/dell/container-storage-modules/dell-csi-replicator:v1.14.0",
                     "name": "dell-csi-replicator"
                   },
                   {
@@ -775,11 +775,11 @@ metadata:
                         "value": "false"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0",
+                    "image": "quay.io/dell/container-storage-modules/dell-replication-controller:v1.14.0",
                     "name": "dell-replication-controller-manager"
                   }
                 ],
-                "configVersion": "v1.13.0",
+                "configVersion": "v1.14.0",
                 "enabled": false,
                 "name": "replication"
               },
@@ -794,7 +794,7 @@ metadata:
                         "value": "quay.io/nginx/nginx-unprivileged:1.27"
                       }
                     ],
-                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0",
+                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.142.0",
                     "name": "otel-collector",
                     "privateKey": ""
                   },
@@ -850,11 +850,11 @@ metadata:
                         "value": "powermax-reverseproxy-config"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.8.0",
+                    "image": "quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.9.0",
                     "name": "metrics-powermax"
                   }
                 ],
-                "configVersion": "v1.13.0",
+                "configVersion": "v1.14.0",
                 "enabled": false,
                 "name": "observability"
               },
@@ -873,7 +873,7 @@ metadata:
                       "--driver-config-params=/powermax-config-params/driver-config-params.yaml",
                       "--driverPath=csi-powermax.dellemc.com"
                     ],
-                    "image": "quay.io/dell/container-storage-modules/podmon:v1.14.0",
+                    "image": "quay.io/dell/container-storage-modules/podmon:v1.15.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
@@ -895,12 +895,12 @@ metadata:
                         "value": "8083"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/podmon:v1.14.0",
+                    "image": "quay.io/dell/container-storage-modules/podmon:v1.15.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
                 ],
-                "configVersion": "v1.14.0",
+                "configVersion": "v1.15.0",
                 "enabled": false,
                 "name": "resiliency"
               }
@@ -1060,11 +1060,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0",
+                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.4.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v2.3.0",
+                "configVersion": "v2.4.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -1083,7 +1083,7 @@ metadata:
                       "--driver-config-params=/powerstore-config-params/driver-config-params.yaml",
                       "--driverPath=csi-powerstore.dellemc.com"
                     ],
-                    "image": "quay.io/dell/container-storage-modules/podmon:v1.14.0",
+                    "image": "quay.io/dell/container-storage-modules/podmon:v1.15.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
@@ -1105,12 +1105,12 @@ metadata:
                         "value": "8083"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/podmon:v1.14.0",
+                    "image": "quay.io/dell/container-storage-modules/podmon:v1.15.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
                 ],
-                "configVersion": "v1.14.0",
+                "configVersion": "v1.15.0",
                 "enabled": false,
                 "name": "resiliency"
               },
@@ -1127,7 +1127,7 @@ metadata:
                         "value": "powerstore"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/dell-csi-replicator:v1.13.0",
+                    "image": "quay.io/dell/container-storage-modules/dell-csi-replicator:v1.14.0",
                     "name": "dell-csi-replicator"
                   },
                   {
@@ -1157,11 +1157,11 @@ metadata:
                         "value": "false"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0",
+                    "image": "quay.io/dell/container-storage-modules/dell-replication-controller:v1.14.0",
                     "name": "dell-replication-controller-manager"
                   }
                 ],
-                "configVersion": "v1.13.0",
+                "configVersion": "v1.14.0",
                 "enabled": false,
                 "name": "replication"
               },
@@ -1176,7 +1176,7 @@ metadata:
                         "value": "quay.io/nginx/nginx-unprivileged:1.27"
                       }
                     ],
-                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0",
+                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.142.0",
                     "name": "otel-collector",
                     "privateKey": ""
                   },
@@ -1244,11 +1244,11 @@ metadata:
                         "value": "otel-collector:55680"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.13.0",
+                    "image": "quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.14.0",
                     "name": "metrics-powerstore"
                   }
                 ],
-                "configVersion": "v1.13.0",
+                "configVersion": "v1.14.0",
                 "enabled": false,
                 "name": "observability"
               }
@@ -1591,11 +1591,11 @@ metadata:
                         "value": "true"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0",
+                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.4.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
-                "configVersion": "v2.3.0",
+                "configVersion": "v2.4.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -1610,7 +1610,7 @@ metadata:
                         "value": "quay.io/nginx/nginx-unprivileged:1.27"
                       }
                     ],
-                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0",
+                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.142.0",
                     "name": "otel-collector",
                     "privateKey": ""
                   },
@@ -1670,11 +1670,11 @@ metadata:
                         "value": "otel-collector:55680"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.13.1",
+                    "image": "quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.14.0",
                     "name": "metrics-powerflex"
                   }
                 ],
-                "configVersion": "v1.13.1",
+                "configVersion": "v1.14.0",
                 "enabled": false,
                 "name": "observability"
               },
@@ -1691,7 +1691,7 @@ metadata:
                         "value": "powerflex"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/dell-csi-replicator:v1.13.0",
+                    "image": "quay.io/dell/container-storage-modules/dell-csi-replicator:v1.14.0",
                     "name": "dell-csi-replicator"
                   },
                   {
@@ -1721,11 +1721,11 @@ metadata:
                         "value": "false"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0",
+                    "image": "quay.io/dell/container-storage-modules/dell-replication-controller:v1.14.0",
                     "name": "dell-replication-controller-manager"
                   }
                 ],
-                "configVersion": "v1.13.0",
+                "configVersion": "v1.14.0",
                 "enabled": false,
                 "name": "replication"
               },
@@ -1743,7 +1743,7 @@ metadata:
                       "--mode=controller",
                       "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
                     ],
-                    "image": "quay.io/dell/container-storage-modules/podmon:v1.14.0",
+                    "image": "quay.io/dell/container-storage-modules/podmon:v1.15.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
@@ -1764,12 +1764,12 @@ metadata:
                         "value": "8083"
                       }
                     ],
-                    "image": "quay.io/dell/container-storage-modules/podmon:v1.14.0",
+                    "image": "quay.io/dell/container-storage-modules/podmon:v1.15.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
                 ],
-                "configVersion": "v1.14.0",
+                "configVersion": "v1.15.0",
                 "enabled": false,
                 "name": "resiliency"
               }
@@ -4544,7 +4544,7 @@ spec:
                       - name: RELATED_IMAGE_csi-powermax
                         value: quay.io/dell/container-storage-modules/csi-powermax:v2.16.0
                       - name: RELATED_IMAGE_csipowermax-reverseproxy
-                        value: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.14.1
+                        value: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.15.0
                       - name: RELATED_IMAGE_csi-powerstore
                         value: quay.io/dell/container-storage-modules/csi-powerstore:v2.16.0
                       - name: RELATED_IMAGE_csi-unity
@@ -4554,33 +4554,33 @@ spec:
                       - name: RELATED_IMAGE_sdc
                         value: quay.io/dell/storage/powerflex/sdc:4.5.4
                       - name: RELATED_IMAGE_karavi-authorization-proxy
-                        value: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0
+                        value: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.4.0
                       - name: RELATED_IMAGE_csm-authorization-proxy
-                        value: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.3.0
+                        value: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.4.0
                       - name: RELATED_IMAGE_csm-authorization-tenant
-                        value: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.3.0
+                        value: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.4.0
                       - name: RELATED_IMAGE_csm-authorization-role
-                        value: quay.io/dell/container-storage-modules/csm-authorization-role:v2.3.0
+                        value: quay.io/dell/container-storage-modules/csm-authorization-role:v2.4.0
                       - name: RELATED_IMAGE_csm-authorization-storage
-                        value: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.3.0
+                        value: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.4.0
                       - name: RELATED_IMAGE_csm-authorization-controller
-                        value: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.3.0
+                        value: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.4.0
                       - name: RELATED_IMAGE_dell-csi-replicator
-                        value: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.13.0
+                        value: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.14.0
                       - name: RELATED_IMAGE_dell-replication-controller-manager
-                        value: quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0
+                        value: quay.io/dell/container-storage-modules/dell-replication-controller:v1.14.0
                       - name: RELATED_IMAGE_otel-collector
-                        value: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0
+                        value: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.142.0
                       - name: RELATED_IMAGE_metrics-powerscale
-                        value: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.10.0
+                        value: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.11.0
                       - name: RELATED_IMAGE_metrics-powermax
-                        value: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.8.0
+                        value: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.9.0
                       - name: RELATED_IMAGE_metrics-powerflex
-                        value: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.13.1
+                        value: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.14.0
                       - name: RELATED_IMAGE_metrics-powerstore
-                        value: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.13.0
+                        value: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.14.0
                       - name: RELATED_IMAGE_podmon-node
-                        value: quay.io/dell/container-storage-modules/podmon:v1.14.0
+                        value: quay.io/dell/container-storage-modules/podmon:v1.15.0
                       - name: RELATED_IMAGE_kube-rbac-proxy
                         value: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
                       - name: RELATED_IMAGE_attacher
@@ -4672,7 +4672,7 @@ spec:
       name: csi-isilon
     - image: quay.io/dell/container-storage-modules/csi-powermax:v2.16.0
       name: csi-powermax
-    - image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.14.1
+    - image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.15.0
       name: csipowermax-reverseproxy
     - image: quay.io/dell/container-storage-modules/csi-powerstore:v2.16.0
       name: csi-powerstore
@@ -4682,33 +4682,33 @@ spec:
       name: csi-vxflexos
     - image: quay.io/dell/storage/powerflex/sdc:4.5.4
       name: sdc
-    - image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.4.0
       name: karavi-authorization-proxy
-    - image: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.3.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.4.0
       name: csm-authorization-proxy
-    - image: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.3.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.4.0
       name: csm-authorization-tenant
-    - image: quay.io/dell/container-storage-modules/csm-authorization-role:v2.3.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-role:v2.4.0
       name: csm-authorization-role
-    - image: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.3.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.4.0
       name: csm-authorization-storage
-    - image: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.3.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.4.0
       name: csm-authorization-controller
-    - image: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.13.0
+    - image: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.14.0
       name: dell-csi-replicator
-    - image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0
+    - image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.14.0
       name: dell-replication-controller-manager
-    - image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0
+    - image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.142.0
       name: otel-collector
-    - image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.10.0
+    - image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.11.0
       name: metrics-powerscale
-    - image: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.8.0
+    - image: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.9.0
       name: metrics-powermax
-    - image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.13.1
+    - image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.14.0
       name: metrics-powerflex
-    - image: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.13.0
+    - image: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.14.0
       name: metrics-powerstore
-    - image: quay.io/dell/container-storage-modules/podmon:v1.14.0
+    - image: quay.io/dell/container-storage-modules/podmon:v1.15.0
       name: podmon-node
     - image: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
       name: kube-rbac-proxy

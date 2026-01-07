@@ -21,7 +21,7 @@ spec:
   modules:
     - name: authorization
       enabled: true
-      configVersion: v2.3.0
+      configVersion: v2.4.0
       components:
         - name: karavi-authorization-proxy
           image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-sidecar:nightly

@@ -9,7 +9,7 @@ spec:
     - name: authorization-proxy-server
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v2.3.0
+      configVersion: v2.4.0
       forceRemoveModule: true
       components:
         # For Kubernetes Container Platform only
@@ -87,7 +87,6 @@ spec:
           redisCommander: rediscommander
           sentinel: sentinel
           redisReplicas: 5
-
         - name: config
           configSecretProviderClass:
             # Name of the SecretProviderClass that holds the config secretObject.
@@ -97,7 +96,6 @@ spec:
               # Path for Conjur secret that stores the config secret.
               conjur:
                 secretPath: secrets/config-object
-
         - name: storage-system-credentials
           secretProviderClasses:
             conjur:

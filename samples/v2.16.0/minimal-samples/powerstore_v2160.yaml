@@ -15,7 +15,7 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: false
-      configVersion: v2.3.0
+      configVersion: v2.4.0
       components:
         - name: karavi-authorization-proxy
           envs:
