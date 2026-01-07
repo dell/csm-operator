@@ -171,17 +171,7 @@ CreateLatestSampleFile() {
     fi
 
     # Extract major, minor from suffix: e.g. 2160 -> 2.16.0
-    major="${driver_sample_file_suffix:0:1}"
-    if [[ ${#driver_sample_file_suffix} -eq 4 ]]; then
-        minor="${driver_sample_file_suffix:1:2}"
-        patch="${driver_sample_file_suffix:3:1}"
-    elif [[ ${#driver_sample_file_suffix} -eq 3 ]]; then
-        minor="${driver_sample_file_suffix:1:1}"
-        patch="${driver_sample_file_suffix:2:1}"
-    else
-        echo "Unexpected suffix length: ${#driver_sample_file_suffix} (value: '$driver_sample_file_suffix')" >&2
-        exit 1
-    fi
+    ExtractVersionFromSuffix $driver_sample_file_suffix
 
     if [[ "$prefix" == "storage_csm_cosi" ]]; then
         versioned_folder="samples/cosi/v$major.$minor.0"
@@ -213,17 +203,7 @@ GetMinUpgradePath() {
         if [ -z "$version_suffix" ]; then
             echo "0.0.0"
         else
-            major="${version_suffix:0:1}"
-            if [[ ${#version_suffix} -eq 4 ]]; then
-                minor="${version_suffix:1:2}"
-                patch="${version_suffix:3:1}"
-            elif [[ ${#version_suffix} -eq 3 ]]; then
-                minor="${version_suffix:1:1}"
-                patch="${version_suffix:2:1}"
-            else
-                echo "Unexpected suffix length: ${#version_suffix} (value: '$version_suffix')" >&2
-                exit 1
-            fi
+            ExtractVersionFromSuffix $version_suffix
             min_upgrade_path="${major}.${minor}.${patch}"
             echo "$min_upgrade_path"
         fi
@@ -250,17 +230,7 @@ GetLatestDriverVersion() {
     version_suffix=$(basename "$latest_file" | sed -E "s/^${prefix}_v([0-9]+)\.yaml$/\1/")
 
     # Extract digits from version suffix safely (e.g., 2160 -> 2.16.0)
-    major=$(echo "$version_suffix" | cut -c1)
-    if [[ ${#version_suffix} -eq 4 ]]; then
-        minor=$(echo "$version_suffix" | cut -c2-3)
-        patch=$(echo "$version_suffix" | cut -c4)
-    elif [[ ${#version_suffix} -eq 3 ]]; then
-        minor=$(echo "$version_suffix" | cut -c2)
-        patch=$(echo "$version_suffix" | cut -c3)
-    else
-        echo "Unexpected version suffix length: ${#version_suffix}" >&2
-        exit 1
-    fi
+    ExtractVersionFromSuffix $version_suffix
 
     latest_driver_version="${major}.${minor}.${patch}"
     echo "$latest_driver_version"
@@ -1530,3 +1500,18 @@ else
     echo "invalid driver_update_type"
     exit 1
 fi
+
+ExtractVersionFromSuffix() {
+    version_suffix=$1
+    major=$((10#$(echo "$version_suffix" | cut -c1)))
+    if [[ ${#version_suffix} -eq 4 ]]; then
+        minor=$((10#$(echo "$version_suffix" | cut -c2-3)))
+        patch=$((10#$(echo "$version_suffix" | cut -c4)))
+    elif [[ ${#version_suffix} -eq 3 ]]; then
+        minor=$((10#$(echo "$version_suffix" | cut -c2)))
+        patch=$((10#$(echo "$version_suffix" | cut -c3)))
+    else
+        echo "Unexpected version suffix length: ${#version_suffix}" >&2
+        exit 1
+    fi
+}
