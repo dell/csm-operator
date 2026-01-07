@@ -1976,7 +1976,7 @@ func getAuthProxyServer() []csmv1.Module {
 		{
 			Name:              csmv1.AuthorizationServer,
 			Enabled:           true,
-			ConfigVersion:     "v2.1.0",
+			ConfigVersion:     "v2.2.0",
 			ForceRemoveModule: true,
 			Components: []csmv1.ContainerTemplate{
 				{

@@ -245,7 +245,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			authVersion := "v2.3.0"
+			authVersion := "v2.4.0"
 
 			return true, true, nodeYAML.DaemonSetApplyConfig, operatorConfig, authVersion
 		},
@@ -262,7 +262,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			authVersion := "v2.3.0"
+			authVersion := "v2.4.0"
 
 			return true, true, *newDaemonSet, operatorConfig, authVersion
 		},
@@ -279,7 +279,7 @@ func TestAuthInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			authVersion := "v2.3.0"
+			authVersion := "v2.4.0"
 
 			return true, false, *newDaemonSet, operatorConfig, authVersion
 		},
@@ -347,7 +347,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			authVersion := "v2.3.0"
+			authVersion := "v2.4.0"
 			return true, true, controllerYAML.Deployment, operatorConfig, customResource, authVersion, ctrlClientFake.NewFakeClient()
 		},
 		"success - greenfield injection missing skip certificate validation env": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client) {
@@ -359,7 +359,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			authVersion := "v2.3.0"
+			authVersion := "v2.4.0"
 			return true, true, controllerYAML.Deployment, operatorConfig, customResource, authVersion, ctrlClientFake.NewFakeClient()
 		},
 		"success - brownfield injection": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client) {
@@ -377,7 +377,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			authVersion := "v2.3.0"
+			authVersion := "v2.4.0"
 			return true, true, *newDeployment, operatorConfig, customResource, authVersion, ctrlClient
 		},
 		"success - greenfield injection with driver secret": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client) {
@@ -408,7 +408,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			authVersion := "v2.3.0"
+			authVersion := "v2.4.0"
 			return true, false, *newDeployment, operatorConfig, customResource, authVersion, ctrlClient
 		},
 		"fail - bad config path": func(*testing.T) (bool, bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, string, ctrlClient.Client) {
@@ -422,7 +422,7 @@ func TestAuthInjectDeployment(t *testing.T) {
 			}
 			tmpOperatorConfig := operatorConfig
 			tmpOperatorConfig.ConfigDirectory = "bad/path"
-			authVersion := "v2.3.0"
+			authVersion := "v2.4.0"
 			return false, true, controllerYAML.Deployment, tmpOperatorConfig, customResource, authVersion, ctrlClientFake.NewFakeClient()
 		},
 	}

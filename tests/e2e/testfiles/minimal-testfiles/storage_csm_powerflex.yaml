@@ -13,7 +13,7 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: false
-      configVersion: v2.2.0
+      configVersion: v2.4.0
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature
       # Allowed values:

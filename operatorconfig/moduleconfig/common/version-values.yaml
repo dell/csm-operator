@@ -17,10 +17,10 @@ powerscale:
     observability: "v1.13.1"
     resiliency: "v1.14.0"
   v2.16.0:
-    authorization: "v2.3.0"
-    replication: "v1.13.0"
-    observability: "v1.13.1"
-    resiliency: "v1.14.0"
+    authorization: "v2.4.0"
+    replication: "v1.14.0"
+    observability: "v1.14.0"
+    resiliency: "v1.15.0"
 powerflex:
   # List of Driver versions and modules that supports the version
   v2.14.0:
@@ -44,10 +44,10 @@ powerflex:
     observability: "v1.13.1"
     resiliency: "v1.14.0"
   v2.16.0:
-    authorization: "v2.3.0"
-    replication: "v1.13.0"
-    observability: "v1.13.1"
-    resiliency: "v1.14.0"
+    authorization: "v2.4.0"
+    replication: "v1.14.0"
+    observability: "v1.14.0"
+    resiliency: "v1.15.0"
 powerstore:
   # List of Driver versions and modules that supports the version
   v2.14.0:
@@ -65,10 +65,10 @@ powerstore:
     replication: "v1.13.0"
     observability: "v1.13.1"
   v2.16.0:
-    resiliency: "v1.14.0"
-    authorization: "v2.3.0"
-    replication: "v1.13.0"
-    observability: "v1.13.1"
+    resiliency: "v1.15.0"
+    authorization: "v2.4.0"
+    observability: "v1.14.0"
+    replication: "v1.14.0"
 powermax:
   # List of Driver versions and modules that supports the version
   v2.14.0:
@@ -96,8 +96,8 @@ powermax:
     observability: "v1.13.1"
     resiliency: "v1.14.0"
   v2.16.0:
-    csireverseproxy: "v2.14.1"
-    authorization: "v2.3.0"
-    replication: "v1.13.0"
-    observability: "v1.13.1"
-    resiliency: "v1.14.0"
+    csireverseproxy: "v2.15.0"
+    authorization: "v2.4.0"
+    replication: "v1.14.0"
+    observability: "v1.14.0"
+    resiliency: "v1.15.0"

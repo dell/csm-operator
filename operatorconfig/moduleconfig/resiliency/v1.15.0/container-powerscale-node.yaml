@@ -14,21 +14,34 @@
 #
 #
 name: podmon
-image: quay.io/dell/container-storage-modules/podmon:v1.12.0
+image: quay.io/dell/container-storage-modules/podmon:v1.15.0
 imagePullPolicy: Always
+securityContext:
+  privileged: true
+  capabilities:
+    add: ["SYS_ADMIN"]
+  allowPrivilegeEscalation: true
 args:
   - "--labelvalue=csi-isilon"
   - "--arrayConnectivityPollRate=60"
-  - "--skipArrayConnectionValidation=false"
+  - "--leaderelection=false"
   - "--driverPodLabelValue=dell-storage"
   - "--ignoreVolumelessPods=false"
-  - "--arrayConnectivityConnectionLossThreshold=3"
   # Below 4 args should not be modified.
-  - "--csisock=unix:/var/run/csi/csi.sock"
-  - "--mode=controller"
+  - "--csisock=unix:/var/lib/kubelet/plugins/csi-isilon/csi_sock"
+  - "--mode=node"
   - "--driverPath=csi-isilon.dellemc.com"
   - "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
 env:
+  - name: "X_CSI_PODMON_API_PORT"
+    value: "8083"
+  - name: KUBE_NODE_NAME
+    valueFrom:
+      fieldRef:
+        apiVersion: v1
+        fieldPath: spec.nodeName
+  - name: X_CSI_PRIVATE_MOUNT_DIR
+    value: /var/lib/kubelet
   - name: MY_NODE_NAME
     valueFrom:
       fieldRef:
@@ -42,7 +55,20 @@ env:
       fieldRef:
         fieldPath: metadata.namespace
 volumeMounts:
-  - name: socket-dir
-    mountPath: /var/run/csi
+  - name: kubelet-pods
+    mountPath: <KUBELET_CONFIG_DIR>/pods
+    mountPropagation: "Bidirectional"
+  - name: driver-path
+    mountPath: <KUBELET_CONFIG_DIR>/plugins/csi-isilon
+    mountPropagation: "Bidirectional"
+  - name: csi-path
+    mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
+    mountPropagation: "Bidirectional"
+  - name: dev
+    mountPath: /dev
+  - name: usr-bin
+    mountPath: /usr-bin
+  - name: var-run
+    mountPath: /var/run
   - name: csi-isilon-config-params
     mountPath: /csi-isilon-config-params

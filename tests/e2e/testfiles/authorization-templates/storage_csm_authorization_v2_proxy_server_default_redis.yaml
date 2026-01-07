@@ -9,7 +9,7 @@ spec:
     - name: authorization-proxy-server
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v2.3.0
+      configVersion: v2.4.0
       forceRemoveModule: true
       components:
         # For Kubernetes Container Platform only
@@ -89,19 +89,16 @@ spec:
           # NOTE: the storage class must NOT be a storage class provisioned by a CSI driver using this installation of CSM Authorization
           # Default value: None
           storageclass: ""
-
         - name: config
           configSecretProviderClass:
             # Name of the SecretProviderClass that holds the config secretObject.
             - secretProviderClassName: array-creds
               # The name of the Kubernetes secret created by the CSI driver
               configSecretName: config-secret
-
         - name: storage-system-credentials
           secretProviderClasses:
             vault:
               - array-creds
-
 ---
 apiVersion: v1
 kind: ConfigMap

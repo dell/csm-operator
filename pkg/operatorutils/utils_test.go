@@ -3045,7 +3045,7 @@ func TestGetUpgradeInfo(t *testing.T) {
 	ctx := context.Background()
 
 	// Test case: corrupted upgrade path file
-	oldVersion := "v2.1.0"
+	oldVersion := "v2.2.0"
 
 	// Create a malformed upgrade path file
 	tempDir := t.TempDir()
@@ -3301,7 +3301,7 @@ func Test_getUpgradeInfo(t *testing.T) {
 					ConfigDirectory: "../../operatorconfig",
 				},
 				csmCompType: csmv1.Authorization,
-				oldVersion:  "v2.1.0",
+				oldVersion:  "v2.2.0",
 			},
 			want:        "",
 			expectedErr: "mock yamlUnmarshal error",
