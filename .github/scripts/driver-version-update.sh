@@ -74,7 +74,7 @@ UpdateConfigVersion() {
     while IFS= read -r line; do
         line_number=$((line_number + 1))
         # For COSI check the driver type first and then find the configVersion
-        if [[ "$line" == "\"csiDriverType\": \"$driverImageName\"" ]]; then
+        if [[ "$line" == *"\"csiDriverType\": \"$driverImageName\""* ]]; then
             line_number=$((line_number + 1))
             sed -i "$line_number s/.*/              \"configVersion\": \""$update_config_version"\",/" "$input_file"
             break
@@ -88,10 +88,11 @@ UpdateConfigVersion() {
             fi
         fi
     done <"$input_file"
+    line_number=0
     while IFS= read -r line; do
         line_number=$((line_number + 1))
         # For COSI check the driver type first and then find the configVersion
-        if [[ "$line" == "\"csiDriverType\": \"$driverImageName\"" ]]; then
+        if [[ "$line" == *"\"csiDriverType\": \"$driverImageName\""* ]]; then
             line_number=$((line_number + 1))
             sed -i "$line_number s/.*/              \"configVersion\": \""$update_config_version"\",/" "$input_file"
             break
