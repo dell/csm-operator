@@ -18,14 +18,13 @@ import (
 	"strings"
 	"testing"
 
+	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/drivers"
 	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
+	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
-
-	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
-	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -449,7 +448,7 @@ func TestReverseProxyInjectDeployment(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			success, dp, op, cr := tc(t)
-			_, err := ReverseProxyInjectDeployment(ctx, dp, cr, op)
+			_, err := ReverseProxyInjectDeployment(ctx, dp, cr, op, operatorutils.VersionSpec{})
 			if success {
 				assert.NoError(t, err)
 			} else {
@@ -739,6 +738,79 @@ func TestResetDeployAsSidecar(t *testing.T) {
 			ResetDeployAsSidecar()
 			if got := deployAsSidecar; got != tt.want {
 				t.Errorf("ResetDeployAsSidecar() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGetRevProxyVolumeComp_TLSSecretConditional(t *testing.T) {
+	tests := []struct {
+		name              string
+		configVersion     string
+		envTLSSecretValue string
+		envConfigMapValue string
+		expectTLSVolume   bool
+	}{
+		{
+			name:              "older than v2.12.0 -> tls secret volume appended",
+			configVersion:     "v2.11.9",
+			envTLSSecretValue: "custom-revproxy-tls-secret",
+			envConfigMapValue: "custom-revproxy-configmap",
+			expectTLSVolume:   true,
+		},
+		{
+			name:              "at v2.12.0 -> tls secret volume NOT appended",
+			configVersion:     "v2.12.0",
+			envTLSSecretValue: "custom-revproxy-tls-secret",
+			envConfigMapValue: "custom-revproxy-configmap",
+			expectTLSVolume:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			revProxyModule := csmv1.Module{
+				Name:          csmv1.ReverseProxy,
+				ConfigVersion: tt.configVersion,
+				Components: []csmv1.ContainerTemplate{
+					{
+						Name: ReverseProxyServerComponent,
+						Envs: []corev1.EnvVar{
+							{Name: "X_CSI_REVPROXY_TLS_SECRET", Value: tt.envTLSSecretValue},
+							{Name: "X_CSI_CONFIG_MAP_NAME", Value: tt.envConfigMapValue},
+						},
+					},
+				},
+			}
+
+			vols := getRevProxyVolumeComp(revProxyModule)
+
+			// There is always at least 1 volume: the configMap.
+			// TLS secret volume is conditional on version being older than v2.12.0.
+			if tt.expectTLSVolume {
+				if len(vols) != 2 {
+					t.Fatalf("expected 2 volumes (configMap + tls secret) but got %d", len(vols))
+				}
+				// Validate second volume is TLS secret and carries the expected SecretName.
+				tlsVol := vols[1]
+				if tlsVol.Name == nil || *tlsVol.Name != RevProxyTLSSecretVolName {
+					t.Fatalf("expected TLS volume name %q, got %v", RevProxyTLSSecretVolName, tlsVol.Name)
+				}
+				if tlsVol.VolumeSourceApplyConfiguration.Secret == nil ||
+					tlsVol.VolumeSourceApplyConfiguration.Secret.SecretName == nil ||
+					*tlsVol.VolumeSourceApplyConfiguration.Secret.SecretName != tt.envTLSSecretValue {
+					t.Fatalf("expected TLS SecretName %q, got %+v",
+						tt.envTLSSecretValue, tlsVol.VolumeSourceApplyConfiguration.Secret)
+				}
+			} else {
+				if len(vols) != 1 {
+					t.Fatalf("expected 1 volume (only configMap) but got %d", len(vols))
+				}
+				// Ensure the only volume present is the configMap volume.
+				cfgVol := vols[0]
+				if cfgVol.VolumeSourceApplyConfiguration.ConfigMap == nil {
+					t.Fatalf("expected configMap volume, but got %+v", cfgVol.VolumeSourceApplyConfiguration)
+				}
 			}
 		})
 	}

@@ -579,6 +579,50 @@ func TestAuthorizationPreCheck(t *testing.T) {
 
 			return false, auth, tmpCR, client
 		},
+		"success - auto-add SKIP_CERTIFICATE_VALIDATION when missing": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
+			if err != nil {
+				panic(err)
+			}
+			namespace := customResource.Namespace
+			tmpCR := customResource
+			auth := tmpCR.Spec.Modules[0]
+
+			// Use v2.3.0 so karavi-authorization-config is still required (driver secret not used)
+			auth.ConfigVersion = "v2.3.0"
+
+			// Remove SKIP_CERTIFICATE_VALIDATION from the karavi-authorization-proxy component envs
+			for i, comp := range auth.Components {
+				if comp.Name == "karavi-authorization-proxy" {
+					filtered := []corev1.EnvVar{}
+					for _, e := range comp.Envs {
+						if e.Name != "SKIP_CERTIFICATE_VALIDATION" {
+							filtered = append(filtered, e)
+						}
+					}
+					auth.Components[i].Envs = filtered
+					break
+				}
+			}
+
+			// Ensure PROXY_HOST is not empty (AuthorizationPrecheck requires it)
+			for i, e := range auth.Components[0].Envs {
+				if e.Name == "PROXY_HOST" && e.Value == "" {
+					auth.Components[0].Envs[i].Value = "proxy.example.local"
+				}
+			}
+
+			// Seed only the required secrets for v2.3.0:
+			// - proxy-authz-tokens
+			// - karavi-authorization-config
+			// DO NOT seed proxy-server-root-certificate so success proves that SKIP_CERTIFICATE_VALIDATION=true was auto-added.
+			karaviAuthconfig := getSecret(namespace, "karavi-authorization-config")
+			proxyAuthzTokens := getSecret(namespace, "proxy-authz-tokens")
+			client := ctrlClientFake.NewClientBuilder().WithObjects(karaviAuthconfig, proxyAuthzTokens).Build()
+
+			// Expect success: auto-added SKIP_CERTIFICATE_VALIDATION=true -> no cert required
+			return true, auth, tmpCR, client
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -2845,4 +2889,105 @@ func TestRemoveVaultFromStorageService(t *testing.T) {
 	}
 
 	ctrlClient.Delete(ctx, &dp)
+}
+
+func TestGetAuthApplyCR_ConfigMapImageOverride(t *testing.T) {
+	ctx := context.Background()
+
+	// Load a CR that has the Authorization module
+	cr, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Ensure spec.version is set (so logs are informative; not strictly required for the seam)
+	cr.Spec.Version = "v1.16.0"
+
+	// Fake client (no objects needed because we override the resolver)
+	client := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+	// Override resolver seam to return a matched version with image for the proxy key.
+	orig := resolveVersionFromConfigMapAuth
+	resolveVersionFromConfigMapAuth = func(_ context.Context, _ ctrlClient.Client, _ *csmv1.ContainerStorageModule) (operatorutils.VersionSpec, error) {
+		return operatorutils.VersionSpec{
+			Version: "v1.16.0",
+			Images:  map[string]string{"karavi-authorization-proxy": "registry.example/proxy:from-configmap"},
+		}, nil
+	}
+	defer func() { resolveVersionFromConfigMapAuth = orig }()
+
+	// Act
+	authModule, container, err := getAuthApplyCR(ctx, cr, operatorConfig, client)
+	if err != nil {
+		t.Fatalf("getAuthApplyCR returned error: %v", err)
+	}
+	if authModule == nil || container == nil {
+		t.Fatalf("expected non-nil authModule and container")
+	}
+
+	// Assert: image should be overridden by matched.Images[proxyKey]
+	if container.Image == nil {
+		t.Fatalf("expected container.Image to be set")
+	}
+	if *container.Image != "registry.example/proxy:from-configmap" {
+		t.Fatalf("expected image override to 'registry.example/proxy:from-configmap', got %q", *container.Image)
+	}
+}
+
+func TestGetAuthApplyCR_ConfigMapNoImageForKey(t *testing.T) {
+	ctx := context.Background()
+
+	// Load a CR that has the Authorization module
+	cr, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	cr.Spec.Version = "v1.16.0"
+
+	client := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+	// First, capture the template image by calling with matched.Images empty (no override).
+	orig := resolveVersionFromConfigMapAuth
+	resolveVersionFromConfigMapAuth = func(_ context.Context, _ ctrlClient.Client, _ *csmv1.ContainerStorageModule) (operatorutils.VersionSpec, error) {
+		return operatorutils.VersionSpec{
+			Version: "v1.16.0",
+			Images:  map[string]string{}, // no image for the proxy key
+		}, nil
+	}
+	defer func() { resolveVersionFromConfigMapAuth = orig }()
+
+	authModule, container, err := getAuthApplyCR(ctx, cr, operatorConfig, client)
+	if err != nil {
+		t.Fatalf("getAuthApplyCR returned error: %v", err)
+	}
+	if authModule == nil || container == nil {
+		t.Fatalf("expected non-nil authModule and container")
+	}
+
+	// Assert: since matched.Images lacks the proxy key, image must NOT be overridden.
+	if container.Image == nil {
+		t.Fatalf("expected container.Image to be set by template")
+	}
+	defaultImage := *container.Image
+	if defaultImage == "" {
+		t.Fatalf("expected non-empty template image")
+	}
+
+	// Now, re-run with a different resolver STILL not providing the proxy key, and ensure it stays unchanged
+	resolveVersionFromConfigMapAuth = func(_ context.Context, _ ctrlClient.Client, _ *csmv1.ContainerStorageModule) (operatorutils.VersionSpec, error) {
+		return operatorutils.VersionSpec{
+			Version: "v1.16.0",
+			Images:  map[string]string{"some-other-key": "registry.example/other:tag"}, // not the proxy key
+		}, nil
+	}
+
+	_, container2, err := getAuthApplyCR(ctx, cr, operatorConfig, client)
+	if err != nil {
+		t.Fatalf("getAuthApplyCR returned error on second call: %v", err)
+	}
+	if container2.Image == nil {
+		t.Fatalf("expected container.Image to remain set")
+	}
+	if *container2.Image != defaultImage {
+		t.Fatalf("expected image to remain %q when no proxy key image provided, got %q", defaultImage, *container2.Image)
+	}
 }

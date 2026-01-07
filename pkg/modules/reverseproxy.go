@@ -133,7 +133,15 @@ func ReverseProxyPrecheck(ctx context.Context, op operatorutils.OperatorConfig, 
 // ReverseProxyServer - apply/delete deployment objects
 func ReverseProxyServer(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	log := logger.GetLogger(ctx)
-	YamlString, err := getReverseProxyDeployment(op, cr)
+	var matched operatorutils.VersionSpec
+	if cr.Spec.Version != "" {
+		var err error
+		matched, err = operatorutils.ResolveVersionFromConfigMap(ctx, ctrlClient, &cr)
+		if err != nil {
+			return err
+		}
+	}
+	YamlString, err := getReverseProxyDeployment(op, cr, matched)
 	if err != nil {
 		return err
 	}
@@ -259,7 +267,7 @@ func getReverseProxyService(ctx context.Context, op operatorutils.OperatorConfig
 }
 
 // getReverseProxyDeployment - updates deployment manifest with reverseproxy CRD values
-func getReverseProxyDeployment(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getReverseProxyDeployment(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, matched operatorutils.VersionSpec) (string, error) {
 	YamlString := ""
 	revProxy, err := getReverseProxyModule(cr)
 	if err != nil {
@@ -281,6 +289,11 @@ func getReverseProxyDeployment(op operatorutils.OperatorConfig, cr csmv1.Contain
 
 	for _, component := range revProxy.Components {
 		if component.Name == ReverseProxyServerComponent {
+			if matched.Version != "" {
+				if img := matched.Images[component.Name]; img != "" {
+					image = img
+				}
+			}
 			if string(component.Image) != "" {
 				image = string(component.Image)
 			}
@@ -309,7 +322,7 @@ func getReverseProxyDeployment(op operatorutils.OperatorConfig, cr csmv1.Contain
 }
 
 // ReverseProxyInjectDeployment injects reverseproxy container as sidecar into controller
-func ReverseProxyInjectDeployment(ctx context.Context, dp v1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*v1.DeploymentApplyConfiguration, error) {
+func ReverseProxyInjectDeployment(ctx context.Context, dp v1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, matched operatorutils.VersionSpec) (*v1.DeploymentApplyConfiguration, error) {
 	revProxyModule, containerPtr, err := getRevproxyApplyCR(ctx, cr, op)
 	if err != nil {
 		return nil, err
@@ -319,6 +332,11 @@ func ReverseProxyInjectDeployment(ctx context.Context, dp v1.DeploymentApplyConf
 	// update the image
 	for _, side := range revProxyModule.Components {
 		if side.Name == ReverseProxyServerComponent {
+			if matched.Version != "" {
+				if img := matched.Images[side.Name]; img != "" {
+					*container.Image = img
+				}
+			}
 			if side.Image != "" {
 				*container.Image = string(side.Image)
 			}

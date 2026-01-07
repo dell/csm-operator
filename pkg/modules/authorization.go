@@ -44,6 +44,8 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+var resolveVersionFromConfigMapAuth = operatorutils.ResolveVersionFromConfigMap
+
 const (
 	// AuthDeploymentManifest - deployment resources and ingress rules for authorization module
 	AuthDeploymentManifest = "deployment.yaml"
@@ -339,6 +341,7 @@ func CheckApplyContainersAuth(containers []acorev1.ContainerApplyConfiguration, 
 }
 
 func getAuthApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, ctrlClient crclient.Client) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
+	log := logger.GetLogger(ctx)
 	var err error
 	authModule := csmv1.Module{}
 	for _, m := range cr.Spec.Modules {
@@ -455,6 +458,22 @@ func getAuthApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op ope
 			newConfigPath := "/" + newConfigName
 			container.VolumeMounts[i].MountPath = &newConfigPath
 		}
+	}
+
+	matched, err := resolveVersionFromConfigMapAuth(ctx, ctrlClient, &cr)
+	if err != nil {
+		log.Errorw("Image resolution via ConfigMap csm-images failed", "err", err, "specVersion", cr.Spec.Version)
+	}
+	if matched.Version != "" {
+		proxyKey := "karavi-authorization-proxy"
+		if img := matched.Images[proxyKey]; img != "" {
+			container.Image = &img
+			log.Infow("Overriding container image from ConfigMap csm-images", "key", proxyKey, "image", img, "specVersion", matched.Version)
+		} else {
+			log.Infow("No image found for key", "key", proxyKey, "specVersion", matched.Version)
+		}
+	} else {
+		log.Infow("No ConfigMap match for spec.version; using template image", "specVersion", cr.Spec.Version)
 	}
 
 	return &authModule, &container, nil

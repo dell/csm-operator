@@ -13,8 +13,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 # Reading actual release version from csm repository
+
 obs_ver="$KARAVI_OBSERVABILITY"
 auth_v2="$CSM_AUTHORIZATION_V2"
 rep_ver="$CSM_REPLICATION"
@@ -382,12 +382,10 @@ update_observability_tag_only() {
          cr_powermax_observability_214.yaml|\
          cr_powerscale_observability_with_topology.yaml|\
          cr_powerscale_observability_214.yaml)
-            # echo "↷ Skip explicitly: $base"
             continue
             ;;
       esac
 
-      # echo "→ Updating $base"
       update_config_version_yq "$f" "observability" "$obs_ver" 
       update_metrics_tag_in_file "$f" 
    done
@@ -1129,6 +1127,16 @@ update_authorization_v2_tag_only() {
       "$csv"
    }
 
+   
+# Deletes n-${offset} version dir and updates files by replacing n-${offset} -> n-$(offset-1)
+# - Version directories must be named like v2.1.0, v2.2.0 and sortable by `sort -V`.
+# - Protects directories if they match protect_dir_1 or protect_dir_2.
+# - Updates a hardcoded set of files by replacing the *derived* old_version with new_version.
+# - No version hardcoding; all derived from the directory listing.
+#
+# Usage:
+#   delete_n_minus_offset_dir "$AUTH_ROOT" "3" "$dir_to_copy" "v2.4.0"
+#
    delete_n_minus_offset_dir() {
       local root_dir="$1"
       local offset="${2:-3}"
@@ -1137,29 +1145,71 @@ update_authorization_v2_tag_only() {
 
       [[ -d "$root_dir" ]] || { echo "❌ Root dir not found: $root_dir"; return 1; }
 
-      mapfile -t dirs < <(cd "$root_dir" && ls -d */ 2>/dev/null | sed 's%/$%%' | sort -V)
+      # Collect version directories (only those starting with 'v' to avoid noise)
+      mapfile -t dirs < <(cd "$root_dir" && ls -d v*/ 2>/dev/null | sed 's%/$%%' | sort -V)
       if (( ${#dirs[@]} == 0 )); then
-         echo "ℹ️ No version directories in $root_dir; nothing to delete."
+         echo "ℹ️ No version directories in $root_dir; nothing to delete or update."
          return 0
       fi
 
       local last_index=$(( ${#dirs[@]} - 1 ))
-      local del_index=$(( last_index - offset ))
+      local del_index=$(( last_index - offset ))          # n-offset (e.g., n-3)
+      local upd_index=$(( del_index + 1 ))                # n-(offset-1) (e.g., n-2)
+
       if (( del_index < 0 )); then
          echo "ℹ️ Not enough directories to delete n-${offset} (have ${#dirs[@]}). Skipping."
          return 0
       fi
-
-      local dir_to_delete="${dirs[$del_index]}"
-      if { [[ -n "$protect_dir_1" && "$dir_to_delete" == "$protect_dir_1" ]]; } || \
-         { [[ -n "$protect_dir_2" && "$dir_to_delete" == "$protect_dir_2" ]]; }; then
-         echo "ℹ️ n-${offset} resolves to a protected directory (${dir_to_delete}). Skipping delete."
+      if (( upd_index < 0 || upd_index > last_index )); then
+         echo "ℹ️ Cannot derive new_version for n-$((${offset}-1)); skipping update."
          return 0
       fi
 
+      local old_version="${dirs[$del_index]}"             # e.g., v2.1.0
+      local new_version="${dirs[$upd_index]}"             # e.g., v2.2.0
+      local dir_to_delete="$old_version"
+
+      # Protection checks
+      if { [[ -n "$protect_dir_1" && "$dir_to_delete" == "$protect_dir_1" ]]; } || \
+         { [[ -n "$protect_dir_2" && "$dir_to_delete" == "$protect_dir_2" ]]; }; then
+         echo "ℹ️ n-${offset} resolves to a protected directory (${dir_to_delete}). Skipping delete and update."
+         return 0
+      fi
+
+      echo "• Versions: ${dirs[*]}"
+      echo "• old_version (n-${offset}): ${old_version}"
+      echo "• new_version (n-$((${offset}-1))): ${new_version}"
+
+      # Delete the n-offset directory
       echo "→ Deleting n-${offset} directory: $root_dir/$dir_to_delete"
       rm -rf "$root_dir/$dir_to_delete"
+
+      # ---- Hardcoded files to update (paths only; versions are derived above) ----
+      # Add/adjust file paths as needed. The script will replace ONLY old_version -> new_version.
+      local FILES_TO_UPDATE=(
+         "$GITHUB_WORKSPACE/controllers/csm_controller_test.go"
+         "$GITHUB_WORKSPACE/pkg/operatorutils/utils_test.go"
+      )
+
+      # Update each file
+      for file in "${FILES_TO_UPDATE[@]}"; do
+         if [[ ! -f "$file" ]]; then
+            echo "⚠️ File not found: $file (skipping)"
+            continue
+         fi
+
+         # Only replace exact old_version to new_version to avoid unintended edits.
+         if grep -q "$old_version" "$file"; then
+            echo "→ Updating $file: $old_version → $new_version"
+            sed -i "s/${old_version}/${new_version}/g" "$file"
+         else
+            echo "ℹ️ $file does not reference ${old_version}; nothing to change."
+         fi
+      done
+
+      echo "✅ Done."
    }
+
 
    # Update module-level "configVersion" inside any JSON `"modules": [...]` block
    # for modules named "authorization" or "authorization-proxy-server".
@@ -1311,7 +1361,14 @@ update_authorization_v2_tag_only() {
       cr_powermax_observability_214.yaml|\
       cr_powerscale_observability_with_topology.yaml|\
       cr_powermax_observability_214.yaml|\
-      cr_powerflex_observability_with_old_otel_image.yaml)
+      cr_powerflex_observability_with_old_otel_image.yaml|\
+      cr_auth_proxy.yaml|\
+      cr_auth_proxy_bad_vault_ca.yaml|\
+      cr_auth_proxy_bad_vault_cert.yaml|\
+      cr_auth_proxy_bad_vault_key.yaml|\
+      cr_auth_proxy_multiple_vaults.yaml|\
+      cr_auth_proxy_vault_ca.yaml|\
+      cr_auth_proxy_vault_cert.yaml)
          continue
          ;;
    esac
@@ -1324,7 +1381,6 @@ update_authorization_v2_tag_only() {
 
    local auth_samples="$GITHUB_WORKSPACE/samples/authorization/csm_authorization_proxy_server_${auth_v2}.yaml"
    if [[ -f "$auth_samples" ]]; then
-      echo "2733-------> Updating ${auth_samples}"
       sed -i -E "s#^configVersion:\s*v.*$#configVersion: ${auth_v2}#g" "$auth_samples"
       update_auth_images_in_file "$auth_samples"
    fi
@@ -1418,84 +1474,43 @@ update_version_values_inplace() {
    CSI_POWERSTORE="${CSI_POWERSTORE:-}"
    CSI_POWERMAX="${CSI_POWERMAX:-}"
 
-   local vv="$GITHUB_WORKSPACE/operatorconfig/moduleconfig/common/version-values.yaml"
-   [[ -f "$vv" ]] || { echo "❌ Missing $vv"; return 1; }
+   vv="$GITHUB_WORKSPACE/operatorconfig/moduleconfig/common/version-values.yaml"
+   test -f "$vv" && echo "Found version-values.yaml" || { echo "Missing file"; exit 1; }
 
-   # Work on a temp file, streaming and updating line-by-line
-   local tmp; tmp="$(mktemp)"
+   # Show current values and env vars:
+   echo "CSI_POWERSCALE=${CSI_POWERSCALE:-<unset>}"
+   echo "CSI_VXFLEXOS=${CSI_VXFLEXOS:-<unset>}"
+   echo "CSI_POWERSTORE=${CSI_POWERSTORE:-<unset>}"
+   echo "CSI_POWERMAX=${CSI_POWERMAX:-<unset>}"
+   echo "auth_v2=${auth_v2:-<unset>}"
+   echo "rep_ver=${rep_ver:-<unset>}"
+   echo "obs_ver=${obs_ver:-<unset>}"
+   echo "res_ver=${res_ver:-<unset>}"
+   echo "revproxy_ver=${revproxy_ver:-<unset>}"
 
-   awk -v V_PSCALE="$CSI_POWERSCALE" \
-         -v V_PFLEX="$CSI_VXFLEXOS" \
-         -v V_PSTORE="$CSI_POWERSTORE" \
-         -v V_PMAX="$CSI_POWERMAX" \
-         -v AUTH="$auth_v2" \
-         -v REP="$rep_ver" \
-         -v OBS="$obs_ver" \
-         -v RES="$res_ver" \
-         -v REVPROXY="$revproxy_ver" '
-      # Track current driver section and whether we are inside the target version block
-      BEGIN { driver=""; in_ver=0 }
+   yq -i '
+   .powerscale["'"$CSI_POWERSCALE"'"].authorization = "'"$auth_v2"'" |
+   .powerscale["'"$CSI_POWERSCALE"'"].replication   = "'"$rep_ver"'" |
+   .powerscale["'"$CSI_POWERSCALE"'"].observability = "'"$obs_ver"'" |
+   .powerscale["'"$CSI_POWERSCALE"'"].resiliency    = "'"$res_ver"'" |
 
-      # Detect driver headers precisely at column 0
-      /^[[:space:]]*powerscale:[[:space:]]*$/ { driver="powerscale"; in_ver=0; print; next }
-      /^[[:space:]]*powerflex:[[:space:]]*$/  { driver="powerflex";  in_ver=0; print; next }
-      /^[[:space:]]*powerstore:[[:space:]]*$/ { driver="powerstore"; in_ver=0; print; next }
-      /^[[:space:]]*powermax:[[:space:]]*$/   { driver="powermax";   in_ver=0; print; next }
+   .powerflex["'"$CSI_VXFLEXOS"'"].authorization = "'"$auth_v2"'" |
+   .powerflex["'"$CSI_VXFLEXOS"'"].replication   = "'"$rep_ver"'" |
+   .powerflex["'"$CSI_VXFLEXOS"'"].observability = "'"$obs_ver"'" |
+   .powerflex["'"$CSI_VXFLEXOS"'"].resiliency    = "'"$res_ver"'" |
 
-      # Enter target version block for the current driver
-      # Version header lines are at 2-space indent: "  vX.Y.Z:"
-      {
-         if (driver=="powerscale" && V_PSCALE!="" && $0 ~ ("^[[:space:]]{2}" V_PSCALE ":[[:space:]]*$")) { in_ver=1; print; next }
-         if (driver=="powerflex"  && V_PFLEX!=""  && $0 ~ ("^[[:space:]]{2}" V_PFLEX  ":[[:space:]]*$")) { in_ver=1; print; next }
-         if (driver=="powerstore" && V_PSTORE!="" && $0 ~ ("^[[:space:]]{2}" V_PSTORE ":[[:space:]]*$")) { in_ver=1; print; next }
-         if (driver=="powermax"   && V_PMAX!=""   && $0 ~ ("^[[:space:]]{2}" V_PMAX   ":[[:space:]]*$")) { in_ver=1; print; next }
-      }
+   .powerstore["'"$CSI_POWERSTORE"'"].resiliency    = "'"$res_ver"'" |
+   .powerstore["'"$CSI_POWERSTORE"'"].authorization = "'"$auth_v2"'" |
+   .powerstore["'"$CSI_POWERSTORE"'"].observability = "'"$obs_ver"'" |
+   .powerstore["'"$CSI_POWERSTORE"'"].replication     = "'"$rep_ver"'" |
 
-      # Leaving a version block: the next version header (2 spaces) ends the current block
-      in_ver==1 && /^[[:space:]]{2}v[0-9]+\.[0-9]+\.[0-9]+:[[:space:]]*$/ { in_ver=0; print; next }
+   .powermax["'"$CSI_POWERMAX"'"].csireverseproxy = "'"$revproxy_ver"'" |
+   .powermax["'"$CSI_POWERMAX"'"].authorization   = "'"$auth_v2"'" |
+   .powermax["'"$CSI_POWERMAX"'"].replication     = "'"$rep_ver"'" |
+   .powermax["'"$CSI_POWERMAX"'"].observability   = "'"$obs_ver"'" |
+   .powermax["'"$CSI_POWERMAX"'"].resiliency      = "'"$res_ver"'"
+   ' "$vv"
 
-      # Also leave if the next top-level header (column 0) starts
-      in_ver==1 && /^[^[:space:]]/ { in_ver=0; print; next }
-
-      # === Within the target version block: update only module lines for that driver ===
-      in_ver==1 && driver=="powerscale" {
-         if     ($0 ~ /^[[:space:]]{4}authorization:[[:space:]]*/) { print "    authorization: \"" AUTH "\""; next }
-         else if($0 ~ /^[[:space:]]{4}replication:[[:space:]]*/)   { print "    replication: \""   REP  "\""; next }
-         else if($0 ~ /^[[:space:]]{4}observability:[[:space:]]*/) { print "    observability: \"" OBS  "\""; next }
-         else if($0 ~ /^[[:space:]]{4}resiliency:[[:space:]]*/)    { print "    resiliency: \""    RES  "\""; next }
-         else { print; next }
-      }
-
-      in_ver==1 && driver=="powerflex" {
-         if     ($0 ~ /^[[:space:]]{4}authorization:[[:space:]]*/) { print "    authorization: \"" AUTH "\""; next }
-         else if($0 ~ /^[[:space:]]{4}replication:[[:space:]]*/)   { print "    replication: \""   REP  "\""; next }
-         else if($0 ~ /^[[:space:]]{4}observability:[[:space:]]*/) { print "    observability: \"" OBS  "\""; next }
-         else if($0 ~ /^[[:space:]]{4}resiliency:[[:space:]]*/)    { print "    resiliency: \""    RES  "\""; next }
-         else { print; next }
-      }
-
-      in_ver==1 && driver=="powerstore" {
-         if     ($0 ~ /^[[:space:]]{4}resiliency:[[:space:]]*/)    { print "    resiliency: \""    RES  "\""; next }
-         else if($0 ~ /^[[:space:]]{4}authorization:[[:space:]]*/) { print "    authorization: \"" AUTH "\""; next }
-         else if($0 ~ /^[[:space:]]{4}observability:[[:space:]]*/) { print "    observability: \"" OBS  "\""; next }
-         else if($0 ~ /^[[:space:]]{4}replication:[[:space:]]*/)   { print "    replication: \""   REP  "\""; next }
-         else { print; next }
-      }
-
-      in_ver==1 && driver=="powermax" {
-         if     ($0 ~ /^[[:space:]]{4}csireverseproxy:[[:space:]]*/) { print "    csireverseproxy: \"" REVPROXY "\""; next }
-         else if($0 ~ /^[[:space:]]{4}authorization:[[:space:]]*/)   { print "    authorization: \""   AUTH    "\""; next }
-         else if($0 ~ /^[[:space:]]{4}replication:[[:space:]]*/)     { print "    replication: \""     REP     "\""; next }
-         else if($0 ~ /^[[:space:]]{4}observability:[[:space:]]*/)   { print "    observability: \""   OBS     "\""; next }
-         else if($0 ~ /^[[:space:]]{4}resiliency:[[:space:]]*/)      { print "    resiliency: \""      RES     "\""; next }
-         else { print; next }
-      }
-
-      # Default: pass-through
-      { print }
-   ' "$vv" > "$tmp"
-
-   mv "$tmp" "$vv"
 
    echo "✅ Updated values in ${vv} (in-place):"
    [[ -n "$CSI_POWERSCALE" ]] && echo "   - powerscale: ${CSI_POWERSCALE}"

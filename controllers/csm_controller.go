@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -596,6 +597,11 @@ func (r *ContainerStorageModuleReconciler) ContentWatch(csm *csmv1.ContainerStor
 
 	stopCh := make(chan struct{})
 	sharedInformerFactory.Start(stopCh)
+
+	// UT only: don't block on sync to avoid bookmark requirement
+	if os.Getenv("UNIT_TEST") == "true" {
+		return stopCh, nil
+	}
 	sharedInformerFactory.WaitForCacheSync(stopCh)
 
 	return stopCh, nil
@@ -818,7 +824,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				return fmt.Errorf("unable to reconcile reverse-proxy service: %v", err)
 			}
 			log.Info("Injecting CSI ReverseProxy")
-			dp, err := modules.ReverseProxyInjectDeployment(ctx, controller.Deployment, cr, operatorConfig)
+			dp, err := modules.ReverseProxyInjectDeployment(ctx, controller.Deployment, cr, operatorConfig, matched)
 			if err != nil {
 				return fmt.Errorf("unable to inject ReverseProxy into deployment: %v", err)
 			}
@@ -884,7 +890,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 
 				// for controller-pod
 				driverName := string(cr.Spec.Driver.CSIDriverType)
-				dp, err := modules.ResiliencyInjectDeployment(ctx, controller.Deployment, cr, operatorConfig, driverName)
+				dp, err := modules.ResiliencyInjectDeployment(ctx, controller.Deployment, cr, operatorConfig, driverName, matched)
 				if err != nil {
 					return fmt.Errorf("injecting resiliency into deployment: %v", err)
 				}
@@ -907,7 +913,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 				controller.Rbac.Role = *role
 
 				// for node-pod
-				ds, err := modules.ResiliencyInjectDaemonset(ctx, node.DaemonSetApplyConfig, cr, operatorConfig, driverName)
+				ds, err := modules.ResiliencyInjectDaemonset(ctx, node.DaemonSetApplyConfig, cr, operatorConfig, driverName, matched)
 				if err != nil {
 					return fmt.Errorf("injecting resiliency into daemonset: %v", err)
 				}
@@ -932,7 +938,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			case csmv1.Replication:
 				// This function adds replication sidecar to driver pods.
 				log.Info("Injecting CSM Replication")
-				dp, err := modules.ReplicationInjectDeployment(ctx, controller.Deployment, cr, operatorConfig)
+				dp, err := modules.ReplicationInjectDeployment(ctx, controller.Deployment, cr, operatorConfig, matched)
 				if err != nil {
 					return fmt.Errorf("injecting replication into deployment: %v", err)
 				}

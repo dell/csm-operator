@@ -303,3 +303,116 @@ data:
 		})
 	}
 }
+
+// Asserts CRDs are kept on uninstall (CommonCertManager delete path keeps CRDs).
+func TestCommonCertManager_CRDsArePreservedOnDelete(t *testing.T) {
+	ctx := context.TODO()
+	cr, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cmCRD := &apiextv1.CustomResourceDefinition{
+		TypeMeta:   metav1.TypeMeta{Kind: "CustomResourceDefinition"},
+		ObjectMeta: metav1.ObjectMeta{Name: "certificates.cert-manager.io"},
+	}
+	err = apiextv1.AddToScheme(scheme.Scheme)
+	if err != nil {
+		t.Fatal(err)
+	}
+	src := ctrlClientFake.NewClientBuilder().WithObjects(cmCRD).Build()
+
+	err = CommonCertManager(ctx, true, operatorConfig, cr, src)
+	assert.NoError(t, err)
+
+	got := &apiextv1.CustomResourceDefinition{}
+	err = src.Get(ctx, client.ObjectKey{Name: "certificates.cert-manager.io"}, got)
+	assert.NoError(t, err, "CRD must remain present after uninstall")
+}
+
+// Success apply path in applyDeleteObjects.
+func TestApplyDeleteObjects_SuccessApply(t *testing.T) {
+	ctx := context.TODO()
+	cli := fake.NewClientBuilder().Build()
+
+	yml := `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ut-config
+  namespace: default
+data:
+  k: v
+`
+
+	err := applyDeleteObjects(ctx, cli, yml, false)
+	assert.NoError(t, err)
+
+	cm := &corev1.ConfigMap{}
+	err = cli.Get(ctx, client.ObjectKey{Name: "ut-config", Namespace: "default"}, cm)
+	assert.NoError(t, err)
+	assert.Equal(t, "v", cm.Data["k"])
+}
+
+// Success delete path in applyDeleteObjects.
+func TestApplyDeleteObjects_SuccessDelete(t *testing.T) {
+	ctx := context.TODO()
+	cli := fake.NewClientBuilder().Build()
+
+	cm := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{Name: "ut-del", Namespace: "default"},
+		Data:       map[string]string{"k": "v"},
+	}
+	assert.NoError(t, cli.Create(ctx, cm))
+
+	yml := `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ut-del
+  namespace: default
+data:
+  k: v
+`
+
+	err := applyDeleteObjects(ctx, cli, yml, true)
+	assert.NoError(t, err)
+
+	got := &corev1.ConfigMap{}
+	err = cli.Get(ctx, client.ObjectKey{Name: "ut-del", Namespace: "default"}, got)
+	assert.Error(t, err)
+}
+
+// Multi-document YAML path in applyDeleteObjects (apply & delete).
+func TestApplyDeleteObjects_MultiDocYAML(t *testing.T) {
+	ctx := context.TODO()
+	cli := fake.NewClientBuilder().Build()
+
+	yml := `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ut-cm-1
+  namespace: default
+data:
+  k1: v1
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ut-secret-1
+  namespace: default
+type: Opaque
+stringData:
+  s1: v1
+`
+
+	err := applyDeleteObjects(ctx, cli, yml, false)
+	assert.NoError(t, err)
+
+	assert.NoError(t, cli.Get(ctx, client.ObjectKey{Name: "ut-cm-1", Namespace: "default"}, &corev1.ConfigMap{}))
+	assert.NoError(t, cli.Get(ctx, client.ObjectKey{Name: "ut-secret-1", Namespace: "default"}, &corev1.Secret{}))
+
+	err = applyDeleteObjects(ctx, cli, yml, true)
+	assert.NoError(t, err)
+
+	assert.Error(t, cli.Get(ctx, client.ObjectKey{Name: "ut-cm-1", Namespace: "default"}, &corev1.ConfigMap{}))
+	assert.Error(t, cli.Get(ctx, client.ObjectKey{Name: "ut-secret-1", Namespace: "default"}, &corev1.Secret{}))
+}
