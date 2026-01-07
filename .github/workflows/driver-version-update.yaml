@@ -32,7 +32,7 @@ on:  # yamllint disable-line rule:truthy
           - tag
 jobs:
   version-update:
-    uses: CSM/actions/.github/workflows/operator-driver-version-update.yaml@usr/evgeny/add-cosi
+    uses: CSM/actions/.github/workflows/operator-driver-version-update.yaml@main
     name: CSM Operator Driver Version Update
     with:
       csm-version: ${{ inputs.csm-version }}
