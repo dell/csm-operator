@@ -163,13 +163,13 @@ CreateLatestSampleFile() {
     latest_version=""
 
     if [[ "$prefix" == "storage_csm_cosi" ]]; then
-        folder=samples/cosi/v*/
+        folder=samples/cosi/v\*/
     else
         folder=samples/v*/
     fi
 
     # Search for files inside versioned folders: samples/v*/[prefix]_v*.yaml
-    for file in $(find "$folder" -type f -name "${prefix}_v*.yaml"); do
+    for file in $(find $folder -type f -name "${prefix}_v*.yaml"); do
             version_part=$(basename "$file" | grep -oE '[0-9]+')
             echo "Version_part: $version_part"
             if [[ $version_part -gt ${latest_version:-0} ]]; then
@@ -204,7 +204,7 @@ GetMinUpgradePath() {
     else
         search_paths="samples/v*/"
     fi
-    files=$(find "$search_paths" -type f -name "${prefix}_v*.yaml")
+    files=$(find $search_paths -type f -name "${prefix}_v*.yaml")
 
     if [ -z "$files" ]; then
         echo "0.0.0"
@@ -233,7 +233,7 @@ GetLatestDriverVersion() {
         search_paths="samples/v*/"
     fi
 
-    files=$(find "$search_paths" -type f -name "${prefix}_v*.yaml")
+    files=$(find $search_paths -type f -name "${prefix}_v*.yaml")
     if [ -z "$files" ]; then
         echo "0.0.0"
         return
@@ -287,7 +287,7 @@ CreateLatestMinimalSampleFile() {
         search_paths="samples/v*/minimal-samples"
     fi
 
-    all_folders=$(ls -d "$search_paths" 2>/dev/null | grep -vF "$destination_folder" | sort -Vr)
+    all_folders=$(ls -d $search_paths 2>/dev/null | grep -vF "$destination_folder" | sort -Vr)
 
     if [ -z "$all_folders" ]; then
         echo "❌ No other minimal-sample folders found to copy from"
