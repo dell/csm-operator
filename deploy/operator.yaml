@@ -1011,5 +1011,7 @@ spec:
             allowPrivilegeEscalation: false
       securityContext:
         runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       serviceAccountName: dell-csm-operator-manager-service-account
       terminationGracePeriodSeconds: 10
