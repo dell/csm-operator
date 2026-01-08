@@ -184,7 +184,7 @@ CreateLatestSampleFile() {
     fi
 
     # Extract major, minor from suffix: e.g. 2160 -> 2.16.0
-    ExtractVersionFromSuffix $driver_sample_file_suffix
+    ExtractVersionFromSuffix "$driver_sample_file_suffix"
 
     if [[ "$prefix" == "storage_csm_cosi" ]]; then
         versioned_folder="samples/cosi/v$major.$minor.0"
@@ -216,7 +216,7 @@ GetMinUpgradePath() {
         if [ -z "$version_suffix" ]; then
             echo "0.0.0"
         else
-            ExtractVersionFromSuffix $version_suffix
+            ExtractVersionFromSuffix "$version_suffix"
             min_upgrade_path="${major}.${minor}.${patch}"
             echo "$min_upgrade_path"
         fi
@@ -243,7 +243,7 @@ GetLatestDriverVersion() {
     version_suffix=$(basename "$latest_file" | sed -E "s/^${prefix}_v([0-9]+)\.yaml$/\1/")
 
     # Extract digits from version suffix safely (e.g., 2160 -> 2.16.0)
-    ExtractVersionFromSuffix $version_suffix
+    ExtractVersionFromSuffix "$version_suffix"
 
     latest_driver_version="${major}.${minor}.${patch}"
     echo "$latest_driver_version"
