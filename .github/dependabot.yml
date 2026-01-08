@@ -32,7 +32,7 @@ registries:
     #   password: ${{ secrets.DELL_HARBOR_TOKEN_RW_SVC_NPDRP }}
 updates:
   - package-ecosystem: "github-actions"
-    directory: "/"  # Location of package manifests
+    directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
     commit-message:
@@ -45,12 +45,14 @@ updates:
       - github
     ignore:
       # For GitHub Actions, upload-artifact@v4+ and download-artifact@v4+ are not currently supported on GHES
-      - dependency-name: 'actions/upload-artifact'
-        versions: '>= 4'
-      - dependency-name: 'actions/download-artifact'
-        versions: '>= 4'
+      - dependency-name: "actions/upload-artifact"
+        versions: ">= 4"
+      - dependency-name: "actions/download-artifact"
+        versions: ">= 4"
+      - dependency-name: "actions/checkout"
+        versions: ">= 4"
   - package-ecosystem: "gomod"
-    directory: "/"  # Location of package manifests
+    directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
       day: "sunday"
@@ -64,6 +66,8 @@ updates:
       - dependency-name: "*"
         update-types:
           - version-update:semver-patch
+      - dependency-name: "github.com/container-storage-interface/spec"
+      - dependency-name: "github.com/kubernetes-csi/csi-lib-utils"
     groups:
       all-updates:
         patterns:
@@ -71,7 +75,7 @@ updates:
     registries:
       - github
   - package-ecosystem: "docker"
-    directory: "/controller"  # Location of package manifests
+    directory: "/controller" # Location of package manifests
     schedule:
       interval: "weekly"
     commit-message:
@@ -81,7 +85,7 @@ updates:
         patterns:
           - "*"
   - package-ecosystem: "docker"
-    directory: "/"  # Location of package manifests
+    directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
     commit-message:
