@@ -157,12 +157,6 @@ spec:
         # Default value: "false"
         - name: "X_CSI_DYNAMIC_SG_ENABLED"
           value: "false"
-        # X_CSI_SG_SYNC_INTERVAL: Specifies the time interval(in seconds) for syncing Storage Group details from the arrays
-        # This value is used to determine how frequently the driver syncs the Storage Group details with the array
-        # Allowed values: Any positive integer representing seconds
-        # Default value: "60"
-        - name: "X_CSI_SG_SYNC_INTERVAL"
-          value: "60"
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin- volume usage, volume condition

@@ -64,7 +64,6 @@ const (
 	CSIPmaxChap             = "<X_CSI_POWERMAX_ISCSI_ENABLE_CHAP>"
 	ReverseProxyTLSSecret   = "<X_CSI_REVPROXY_TLS_SECRET>" // #nosec G101
 	CSIPmaxDynamicSGEnabled = "<X_CSI_DYNAMIC_SG_ENABLED>"
-	CSIPmaxSGSyncInterval   = "<X_CSI_SG_SYNC_INTERVAL>"
 
 	// CsiPmaxMaxVolumesPerNode - Maximum volumes that the controller can schedule on the node
 	CsiPmaxMaxVolumesPerNode = "<X_CSI_MAX_VOLUMES_PER_NODE>"
@@ -195,7 +194,6 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 	storageCapacity := "true"
 	maxVolumesPerNode := ""
 	dynamicSGEnabled := "false"
-	sgSyncInterval := ""
 
 	// #nosec G101 - False positives
 	switch fileType {
@@ -240,9 +238,6 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 				}
 				if env.Name == "X_CSI_DYNAMIC_SG_ENABLED" {
 					dynamicSGEnabled = env.Value
-				}
-				if env.Name == "X_CSI_SG_SYNC_INTERVAL" {
-					sgSyncInterval = env.Value
 				}
 			}
 		}
@@ -292,7 +287,6 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		yamlString = strings.ReplaceAll(yamlString, ReverseProxyTLSSecret, proxyTLSSecret)
 		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxDynamicSGEnabled, dynamicSGEnabled)
-		yamlString = strings.ReplaceAll(yamlString, CSIPmaxSGSyncInterval, sgSyncInterval)
 	case "Controller":
 		if cr.Spec.Driver.Common != nil {
 			for _, env := range cr.Spec.Driver.Common.Envs {
@@ -331,9 +325,6 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 				}
 				if env.Name == "X_CSI_DYNAMIC_SG_ENABLED" {
 					dynamicSGEnabled = env.Value
-				}
-				if env.Name == "X_CSI_SG_SYNC_INTERVAL" {
-					sgSyncInterval = env.Value
 				}
 			}
 		}
@@ -374,7 +365,6 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		yamlString = strings.ReplaceAll(yamlString, ReverseProxyTLSSecret, proxyTLSSecret)
 		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxDynamicSGEnabled, dynamicSGEnabled)
-		yamlString = strings.ReplaceAll(yamlString, CSIPmaxSGSyncInterval, sgSyncInterval)
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"

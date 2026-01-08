@@ -332,59 +332,50 @@ func getDefaultKubeletPath() csmv1.ContainerStorageModule {
 
 func TestModifyPowermaxCRDynamicSGParameters(t *testing.T) {
 	tests := []struct {
-		name                 string
-		fileType             string
-		cr                   csmv1.ContainerStorageModule
-		expectedDynamicSG    string
-		expectedSyncInterval string
+		name              string
+		fileType          string
+		cr                csmv1.ContainerStorageModule
+		expectedDynamicSG string
 	}{
 		{
-			name:                 "Node: dynamic SG enabled with sync interval",
-			fileType:             "Node",
-			cr:                   createCSMWithDynamicSGEnvs("true", "120"),
-			expectedDynamicSG:    "true",
-			expectedSyncInterval: "120",
+			name:              "Node: dynamic SG enabled with sync interval",
+			fileType:          "Node",
+			cr:                createCSMWithDynamicSGEnvs("true", "120"),
+			expectedDynamicSG: "true",
 		},
 		{
-			name:                 "Node: dynamic SG disabled",
-			fileType:             "Node",
-			cr:                   createCSMWithDynamicSGEnvs("false", "60"),
-			expectedDynamicSG:    "false",
-			expectedSyncInterval: "60",
+			name:              "Node: dynamic SG disabled",
+			fileType:          "Node",
+			cr:                createCSMWithDynamicSGEnvs("false", "60"),
+			expectedDynamicSG: "false",
 		},
 		{
-			name:                 "Controller: dynamic SG enabled",
-			fileType:             "Controller",
-			cr:                   createCSMWithDynamicSGEnvs("true", "90"),
-			expectedDynamicSG:    "true",
-			expectedSyncInterval: "90",
+			name:              "Controller: dynamic SG enabled",
+			fileType:          "Controller",
+			cr:                createCSMWithDynamicSGEnvs("true", "90"),
+			expectedDynamicSG: "true",
 		},
 		{
-			name:                 "Controller: dynamic SG with default values",
-			fileType:             "Controller",
-			cr:                   createCSMWithDynamicSGEnvs("false", ""),
-			expectedDynamicSG:    "false",
-			expectedSyncInterval: "",
+			name:              "Controller: dynamic SG with default values",
+			fileType:          "Controller",
+			cr:                createCSMWithDynamicSGEnvs("false", ""),
+			expectedDynamicSG: "false",
 		},
 		{
-			name:                 "Node: missing dynamic SG envs defaults",
-			fileType:             "Node",
-			cr:                   shared.MakeCSM("csm", "pmax-test", shared.PmaxConfigVersion),
-			expectedDynamicSG:    "false",
-			expectedSyncInterval: "",
+			name:              "Node: missing dynamic SG envs defaults",
+			fileType:          "Node",
+			cr:                shared.MakeCSM("csm", "pmax-test", shared.PmaxConfigVersion),
+			expectedDynamicSG: "false",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			yamlString := CSIPmaxDynamicSGEnabled + " " + CSIPmaxSGSyncInterval
+			yamlString := CSIPmaxDynamicSGEnabled
 
 			result := ModifyPowermaxCR(yamlString, tt.cr, tt.fileType)
 
 			assert.Containsf(t, result, tt.expectedDynamicSG, "expected dynamic SG value %q in result", tt.expectedDynamicSG)
-			if tt.expectedSyncInterval != "" {
-				assert.Containsf(t, result, tt.expectedSyncInterval, "expected sync interval value %q in result", tt.expectedSyncInterval)
-			}
 		})
 	}
 }
