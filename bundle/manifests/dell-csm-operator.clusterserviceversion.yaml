@@ -106,11 +106,11 @@ metadata:
           "spec": {
             "driver": {
               "csiDriverType": "cosi",
-              "configVersion": "v1.0.0",
+              "configVersion": "v1.1.0",
               "replicas": 1,
               "forceRemoveDriver": true,
               "common": {
-                "image": "quay.io/dell/container-storage-modules/cosi:v1.0.0",
+                "image": "quay.io/dell/container-storage-modules/cosi:v1.1.0",
                 "imagePullPolicy": "IfNotPresent",
                 "nodeSelector": {},
                 "tolerations": [],
