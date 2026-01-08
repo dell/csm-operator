@@ -201,6 +201,27 @@ spec:
         # Default value: "0"
         - name: X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE
           value: "0"
+        # X_CSI_VOLUME_DISCONNECT_MAX_RETRIES: Defines the maximum number of retry attempts for volume disconnection.
+        # Allowed values: Positive integers
+        # Optional: true
+        # Examples: 3, 5, 10
+        # Default value: 5
+        - name: X_CSI_VOLUME_DISCONNECT_MAX_RETRIES
+          value: "5"
+        # X_CSI_VOLUME_DISCONNECT_RETRY_INTERVAL: Defines the wait time between volume disconnection retries.
+        # Allowed values: Number followed by unit (s, m, h)
+        # Optional: true
+        # Examples: 5s, 30s, 1m
+        # Default value: 5s
+        - name: X_CSI_VOLUME_DISCONNECT_RETRY_INTERVAL
+          value: "5s"
+        # X_CSI_VOLUME_DISCONNECT_TIMEOUT_SECONDS: Defines the timeout duration for each volume disconnection attempt.
+        # Allowed values: Number followed by unit (s, m, h)
+        # Optional: true
+        # Examples: 60s, 2m, 1h
+        # Default value: 120s
+        - name: X_CSI_VOLUME_DISCONNECT_TIMEOUT_SECONDS
+          value: "120s"
       # nodeSelector: Define node selection constraints for node pods.
       # For the pod to be eligible to run on a node, the node must have each
       # of the indicated key-value pairs as labels.
