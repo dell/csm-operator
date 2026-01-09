@@ -166,12 +166,16 @@ spec:
             - name: scaleio-path-opt
               mountPath: /opt/emc/scaleio/sdc/bin
               readOnly: true
-            - name: dev
-              mountPath: /dev
             - name: vxflexos-config
               mountPath: /vxflexos-config
             - name: vxflexos-config-params
               mountPath: /vxflexos-config-params
+            - name: dev
+              mountPath: /dev
+            - name: sys
+              mountPath: /sys
+            - name: run-udev
+              mountPath: /run/udev
             # sbin trees (mount whole sbin so other admin tools are available)
             - name: sbin
               mountPath: /noderoot/sbin
