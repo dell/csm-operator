@@ -1248,7 +1248,7 @@ func getDriverConfig(ctx context.Context,
 			return nil, fmt.Errorf("getting %s CSIDriver: %v", driverType, err)
 		}
 
-		node, err = drivers.GetNode(ctx, cr, operatorConfig, driverType, NodeYaml, ctrlClient)
+		node, err = drivers.GetNode(ctx, cr, operatorConfig, driverType, NodeYaml, ctrlClient, matched)
 		if err != nil {
 			return nil, fmt.Errorf("getting %s node: %v", driverType, err)
 		}
@@ -1529,6 +1529,11 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 	} else if !upgradeValid {
 		log.Infof("upgrade is not valid")
 		return nil
+	}
+
+	// Check if valid custom registry is mentioned
+	if operatorutils.ValidateCustomRegistry(ctx, cr.Spec.CustomRegistry) != nil {
+		return fmt.Errorf("failed custom registry validation: %v", err)
 	}
 
 	// check for owner reference

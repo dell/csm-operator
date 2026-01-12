@@ -27,7 +27,7 @@ import (
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/constants"
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/modules"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
+	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
 	shared "eos2git.cec.lab.emc.com/CSM/csm-operator/tests/sharedutil"
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/sharedutil/clientgoclient"
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/sharedutil/crclient"

@@ -1844,19 +1844,22 @@ spec:
 	}
 
 	// Assert: component.Image should win over matched.Images
+	want := "registry.example/karavi-metrics-powerflex:from-matched"
 	found := false
 	for _, obj := range objs {
 		if dep, ok := obj.(*appsv1.Deployment); ok {
 			for _, c := range dep.Spec.Template.Spec.Containers {
 				if c.Name == "karavi-metrics-powerflex" {
-					if c.Image == "registry.example/karavi-metrics-powerflex:from-component" {
+					if c.Image == want {
 						found = true
+					} else {
+						t.Errorf("unexpected image for container %q: got=%q want=%q", c.Name, c.Image, want)
 					}
 				}
 			}
 		}
 	}
 	if !found {
-		t.Fatalf("expected karavi-metrics-powerflex image from component override, not from matched")
+		t.Fatalf("expected karavi-metrics-powerflex image from matched.Images to override component/template")
 	}
 }

@@ -346,6 +346,15 @@ func TestReverseProxyServer(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return false, false, tmpCR, sourceClient, operatorConfig
 		},
+		"success - creating as deployment": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			tmpCR, err := getCustomResource("./testdata/cr_powermax_reverseproxy_csm_version.yaml")
+			if err != nil {
+				panic(err)
+			}
+			deployAsSidecar = false
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {

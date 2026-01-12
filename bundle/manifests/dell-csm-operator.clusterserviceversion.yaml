@@ -1806,6 +1806,9 @@ spec:
         kind: ContainerStorageModule
         name: containerstoragemodules.storage.dell.com
         specDescriptors:
+          - description: CustomRegistry is the custom registry for the image
+            displayName: Custom Registry
+            path: customRegistry
           - description: AuthSecret is the name of the credentials secret for the driver
             displayName: Auth Secret
             path: driver.authSecret
@@ -3752,6 +3755,10 @@ spec:
           - description: Name is name of ContainerStorageModule modules
             displayName: Name
             path: modules[0].name
+          - description: RetainImageRegistryPath is the boolean flag used to retain image
+              registry path
+            displayName: Retain Image Registry Path
+            path: retainImageRegistryPath
         statusDescriptors:
           - description: Available is the number of available pods
             displayName: Available

@@ -59,6 +59,9 @@ spec:
             spec:
               description: ContainerStorageModuleSpec defines the desired state of ContainerStorageModule
               properties:
+              customRegistry:
+                description: CustomRegistry is the custom registry for the image
+                type: string
                 driver:
                   description: Driver is a CSI Drivers for Dell Technologies
                   maxProperties: 20
@@ -3810,6 +3813,10 @@ spec:
                     type: object
                   maxItems: 20
                   type: array
+              retainImageRegistryPath:
+                description: RetainImageRegistryPath is the boolean flag used to retain
+                  image registry path
+                type: boolean
                 version:
                   type: string
               type: object
@@ -3843,6 +3850,16 @@ spec:
                   rule:
                     '!(has(self.version) && self.version != "" && has(self.modules)
                     && self.modules.exists(m, has(m.configVersion) && m.configVersion
+                    != ""))'
+                - message: spec.customRegistry is forbidden when spec.version is empty
+                  rule:
+                    '!(has(self.customRegistry) && self.customRegistry != "" && !(has(self.version)
+                    && self.version != ""))'
+                - message: spec.retainImageRegistryPath is forbidden unless both spec.version
+                    and spec.customRegistry are set
+                  rule:
+                    '!(has(self.retainImageRegistryPath) && !(has(self.version) &&
+                    self.version != "" && has(self.customRegistry) && self.customRegistry
                     != ""))'
             status:
               description:

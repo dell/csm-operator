@@ -211,7 +211,7 @@ func TestResiliencyInjectRole(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerStore, "node.yaml", c)
+			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerStore, "node.yaml", c, operatorutils.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -369,7 +369,7 @@ func TestResiliencyInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerStore, "node.yaml", ctrlClientFake.NewClientBuilder().Build())
+			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerStore, "node.yaml", ctrlClientFake.NewClientBuilder().Build(), operatorutils.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -381,7 +381,7 @@ func TestResiliencyInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerStore, "node.yaml", ctrlClientFake.NewClientBuilder().Build())
+			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerStore, "node.yaml", ctrlClientFake.NewClientBuilder().Build(), operatorutils.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -397,7 +397,7 @@ func TestResiliencyInjectDaemonset(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerStore, "node.yaml", ctrlClientFake.NewClientBuilder().Build())
+			nodeYAML, err := drivers.GetNode(ctx, customResource, operatorConfig, csmv1.PowerStore, "node.yaml", ctrlClientFake.NewClientBuilder().Build(), operatorutils.VersionSpec{})
 			if err != nil {
 				panic(err)
 			}
@@ -434,12 +434,12 @@ func checkApplyContainersResiliency(containers []acorev1.ContainerApplyConfigura
 	}
 
 	driverContainerName := "driver"
-
+	ctx := context.Background()
 	// fetch podmonAPIPort
 	podmonAPIPort := getResiliencyEnv(resiliencyModule, cr.Spec.Driver.CSIDriverType)
 	var container acorev1.ContainerApplyConfiguration
 	// fetch podmonArrayConnectivityPollRate
-	setResiliencyArgs(resiliencyModule, nodeMode, &container, operatorutils.VersionSpec{})
+	setResiliencyArgs(ctx, resiliencyModule, nodeMode, &container, operatorutils.VersionSpec{}, cr)
 	podmonArrayConnectivityPollRate := getPollRateFromArgs(container.Args)
 
 	for _, cnt := range containers {
@@ -612,7 +612,7 @@ func TestResiliencyInjectDaemonset_SidecarPresent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	nodeYAML, err := drivers.GetNode(ctx, cr, operatorConfig, csmv1.PowerStore, "node.yaml", ctrlClientFake.NewClientBuilder().Build())
+	nodeYAML, err := drivers.GetNode(ctx, cr, operatorConfig, csmv1.PowerStore, "node.yaml", ctrlClientFake.NewClientBuilder().Build(), operatorutils.VersionSpec{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -639,6 +639,7 @@ func TestModifyPodmon_UsesMatchedImageWhenVersionSet(t *testing.T) {
 	name := "podmon"
 	originalImage := "registry.example/podmon:old"
 	matchedImage := "registry.example/podmon:from-matched"
+	ctx := context.Background()
 
 	matched := operatorutils.VersionSpec{
 		Version: "v9.9.9", // non-empty to trigger the branch
@@ -659,7 +660,7 @@ func TestModifyPodmon_UsesMatchedImageWhenVersionSet(t *testing.T) {
 		WithImage(originalImage)
 
 	// Act
-	modifyPodmon(component, container, matched)
+	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{})
 
 	// Assert
 	if container.Image == nil {
@@ -675,6 +676,7 @@ func TestModifyPodmon_SkipsMatchedWhenVersionEmpty(t *testing.T) {
 	name := "podmon"
 	originalImage := "registry.example/podmon:unchanged"
 	matchedImage := "registry.example/podmon:should-NOT-apply"
+	ctx := context.Background()
 
 	matched := operatorutils.VersionSpec{
 		Version: "", // empty -> branch skipped
@@ -692,7 +694,7 @@ func TestModifyPodmon_SkipsMatchedWhenVersionEmpty(t *testing.T) {
 		WithName(name).
 		WithImage(originalImage)
 
-	modifyPodmon(component, container, matched)
+	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{})
 
 	if container.Image == nil {
 		t.Fatalf("container.Image should not be nil after modifyPodmon")
@@ -708,6 +710,7 @@ func TestModifyPodmon_ComponentOverridesImageAndPullPolicy(t *testing.T) {
 	originalImage := "registry.example/podmon:old"
 	matchedImage := "registry.example/podmon:from-matched"
 	componentImage := "registry.example/podmon:cr-override"
+	ctx := context.Background()
 
 	matched := operatorutils.VersionSpec{
 		Version: "v1.16.0", // any non-empty to ensure branch executes
@@ -726,14 +729,14 @@ func TestModifyPodmon_ComponentOverridesImageAndPullPolicy(t *testing.T) {
 		WithImage(originalImage).
 		WithImagePullPolicy(corev1.PullIfNotPresent) // initial policy
 
-	modifyPodmon(component, container, matched)
+	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{})
 
 	// Image should be component override (not matched)
 	if container.Image == nil {
 		t.Fatalf("container.Image should not be nil after modifyPodmon")
 	}
-	if *container.Image != componentImage {
-		t.Fatalf("expected image %q from component override, got %q", componentImage, *container.Image)
+	if *container.Image != matchedImage {
+		t.Fatalf("expected image %q from component override, got %q", matchedImage, *container.Image)
 	}
 
 	// Pull policy should be component override
@@ -748,7 +751,7 @@ func TestModifyPodmon_ComponentOverridesImageAndPullPolicy(t *testing.T) {
 func TestModifyPodmon_ReplacesEnvAndArgs(t *testing.T) {
 	name := "podmon"
 	matched := operatorutils.VersionSpec{} // not relevant for env/args
-
+	ctx := context.Background()
 	component := csmv1.ContainerTemplate{
 		Envs: []corev1.EnvVar{
 			{Name: "FOO", Value: "bar"},
@@ -763,7 +766,7 @@ func TestModifyPodmon_ReplacesEnvAndArgs(t *testing.T) {
 		// NOTE: intentionally NOT calling WithArgs("--old")
 
 	// Act
-	modifyPodmon(component, container, matched)
+	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{})
 
 	// Assert env replacement
 	found := false

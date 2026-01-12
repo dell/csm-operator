@@ -446,6 +446,9 @@ func getOtelCollector(ctx context.Context, op operatorutils.OperatorConfig, cr c
 	YamlString = string(buf)
 
 	nginxProxyImage := "quay.io/nginx/nginx-unprivileged:1.27"
+	if cr.Spec.CustomRegistry != "" {
+		nginxProxyImage = operatorutils.ResolveImage(ctx, nginxProxyImage, cr)
+	}
 	otelCollectorImage := "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0"
 	configVersion, err := operatorutils.GetVersion(ctx, &cr, op)
 	if err != nil {
@@ -463,13 +466,19 @@ func getOtelCollector(ctx context.Context, op operatorutils.OperatorConfig, cr c
 				if img := matched.Images[component.Name]; img != "" {
 					otelCollectorImage = img
 				}
-			}
-			if component.Image != "" {
+			} else if cr.Spec.CustomRegistry != "" {
+				otelCollectorImage = operatorutils.ResolveImage(ctx, otelCollectorImage, cr)
+			} else if component.Image != "" {
 				otelCollectorImage = string(component.Image)
 			}
+
 			for _, env := range component.Envs {
 				if strings.Contains(NginxProxyImage, env.Name) {
-					nginxProxyImage = env.Value
+					if cr.Spec.CustomRegistry != "" {
+						nginxProxyImage = operatorutils.ResolveImage(ctx, env.Value, cr)
+					} else {
+						nginxProxyImage = env.Value
+					}
 				}
 			}
 		}
@@ -677,14 +686,7 @@ func getPowerStoreMetricsObjects(ctx context.Context, op operatorutils.OperatorC
 
 	for _, component := range obs.Components {
 		if component.Name == ObservabilityMetricsPowerStoreName {
-			if matched.Version != "" {
-				if img := matched.Images[component.Name]; img != "" {
-					obsPstoreImage = img
-				}
-			}
-			if component.Image != "" {
-				obsPstoreImage = string(component.Image)
-			}
+			obsPstoreImage = operatorutils.GetFinalImage(ctx, cr, matched, component, YamlString)
 			for _, env := range component.Envs {
 				if strings.Contains(PstoreMaxConcurrentQueries, env.Name) {
 					maxConcurrentQueries = env.Value
@@ -744,6 +746,7 @@ func getPowerStoreMetricsObjects(ctx context.Context, op operatorutils.OperatorC
 	if err != nil {
 		return nil, err
 	}
+
 	operatorutils.SetContainerImage(metricsObjects, "karavi-metrics-powerstore", "karavi-metrics-powerstore", obsPstoreImage)
 
 	return metricsObjects, nil
@@ -780,14 +783,7 @@ func getPowerScaleMetricsObjects(ctx context.Context, op operatorutils.OperatorC
 
 	for _, component := range obs.Components {
 		if component.Name == ObservabilityMetricsPowerScaleName {
-			if matched.Version != "" {
-				if img := matched.Images[component.Name]; img != "" {
-					pscaleImage = img
-				}
-			}
-			if component.Image != "" {
-				pscaleImage = string(component.Image)
-			}
+			pscaleImage = operatorutils.GetFinalImage(ctx, cr, matched, component, YamlString)
 			for _, env := range component.Envs {
 				if strings.Contains(PowerscaleLogLevel, env.Name) {
 					logLevel = env.Value
@@ -844,6 +840,7 @@ func getPowerScaleMetricsObjects(ctx context.Context, op operatorutils.OperatorC
 	if err != nil {
 		return nil, err
 	}
+
 	operatorutils.SetContainerImage(metricsObjects, "karavi-metrics-powerscale", "karavi-metrics-powerscale", pscaleImage)
 
 	return metricsObjects, nil
@@ -1021,14 +1018,7 @@ func getPowerFlexMetricsObject(ctx context.Context, op operatorutils.OperatorCon
 
 	for _, component := range obs.Components {
 		if component.Name == ObservabilityMetricsPowerFlexName {
-			if matched.Version != "" {
-				if img := matched.Images[component.Name]; img != "" {
-					pflexImage = img
-				}
-			}
-			if component.Image != "" {
-				pflexImage = string(component.Image)
-			}
+			pflexImage = operatorutils.GetFinalImage(ctx, cr, matched, component, YamlString)
 			for _, env := range component.Envs {
 				if strings.Contains(PowerflexLogLevel, env.Name) {
 					logLevel = env.Value
@@ -1079,6 +1069,7 @@ func getPowerFlexMetricsObject(ctx context.Context, op operatorutils.OperatorCon
 	if err != nil {
 		return nil, err
 	}
+
 	operatorutils.SetContainerImage(metricsObjects, "karavi-metrics-powerflex", "karavi-metrics-powerflex", pflexImage)
 
 	return metricsObjects, nil
@@ -1417,14 +1408,7 @@ func getPowerMaxMetricsObject(ctx context.Context, op operatorutils.OperatorConf
 
 	for _, component := range obs.Components {
 		if component.Name == ObservabilityMetricsPowerMaxName {
-			if matched.Version != "" {
-				if img := matched.Images[component.Name]; img != "" {
-					pmaxImage = img
-				}
-			}
-			if component.Image != "" {
-				pmaxImage = string(component.Image)
-			}
+			pmaxImage = operatorutils.GetFinalImage(ctx, cr, matched, component, YamlString)
 			for _, env := range component.Envs {
 				if strings.Contains(PmaxLogLevel, env.Name) {
 					logLevel = env.Value

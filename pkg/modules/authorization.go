@@ -473,7 +473,10 @@ func getAuthApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op ope
 			log.Infow("No image found for key", "key", proxyKey, "specVersion", matched.Version)
 		}
 	} else {
-		log.Infow("No ConfigMap match for spec.version; using template image", "specVersion", cr.Spec.Version)
+		if cr.Spec.CustomRegistry != "" {
+			img := operatorutils.ResolveImage(ctx, *container.Image, cr)
+			container.Image = &img
+		}
 	}
 
 	return &authModule, &container, nil
@@ -561,8 +564,7 @@ func AuthInjectDaemonset(ctx context.Context, ds applyv1.DaemonSetApplyConfigura
 	}
 
 	container := *containerPtr
-	operatorutils.UpdateSideCarApply(authModule.Components, &container)
-
+	operatorutils.UpdateSideCarApply(ctx, authModule.Components, &container, cr, operatorutils.VersionSpec{})
 	vols, err := getAuthApplyVolumes(ctx, cr, op, authModule.Components[0], ctrlClient)
 	if err != nil {
 		return nil, err
@@ -589,7 +591,7 @@ func AuthInjectDeployment(ctx context.Context, dp applyv1.DeploymentApplyConfigu
 	}
 
 	container := *containerPtr
-	operatorutils.UpdateSideCarApply(authModule.Components, &container)
+	operatorutils.UpdateSideCarApply(ctx, authModule.Components, &container, cr, operatorutils.VersionSpec{})
 
 	vols, err := getAuthApplyVolumes(ctx, cr, op, authModule.Components[0], ctrlClient)
 	if err != nil {

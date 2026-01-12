@@ -160,7 +160,7 @@ func TestGetNode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			node, err := GetNode(ctx, tt.csm, config, tt.driverName, tt.filename, ctrlClientFake.NewClientBuilder().Build())
+			node, err := GetNode(ctx, tt.csm, config, tt.driverName, tt.filename, ctrlClientFake.NewClientBuilder().Build(), operatorutils.VersionSpec{})
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 				initcontainers := node.DaemonSetApplyConfig.Spec.Template.Spec.InitContainers

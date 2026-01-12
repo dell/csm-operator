@@ -186,20 +186,23 @@ func getResiliencyEnv(resiliencyModule csmv1.Module, _ csmv1.DriverType) string 
 }
 
 // Apply resiliency module from the manifest file to the podmon sidecar
-func modifyPodmon(component csmv1.ContainerTemplate, container *acorev1.ContainerApplyConfiguration, matched operatorutils.VersionSpec) {
+func modifyPodmon(ctx context.Context, component csmv1.ContainerTemplate, container *acorev1.ContainerApplyConfiguration, matched operatorutils.VersionSpec, cr csmv1.ContainerStorageModule) {
 	if matched.Version != "" {
 		containerName := *container.Name
 		if img := matched.Images[containerName]; img != "" {
 			*container.Image = img
 		}
-	}
-	if component.Image != "" {
+	} else if cr.Spec.CustomRegistry != "" {
+		image := operatorutils.ResolveImage(ctx, *container.Image, cr)
+		*container.Image = image
+	} else if component.Image != "" {
 		image := string(component.Image)
 		if container.Image != nil {
 			*container.Image = image
 		}
 		container.Image = &image
 	}
+
 	if component.ImagePullPolicy != "" {
 		if container.ImagePullPolicy != nil {
 			*container.ImagePullPolicy = component.ImagePullPolicy
@@ -211,13 +214,13 @@ func modifyPodmon(component csmv1.ContainerTemplate, container *acorev1.Containe
 	container.Args = operatorutils.ReplaceAllArgs(container.Args, component.Args)
 }
 
-func setResiliencyArgs(m csmv1.Module, mode string, container *acorev1.ContainerApplyConfiguration, matched operatorutils.VersionSpec) {
+func setResiliencyArgs(ctx context.Context, m csmv1.Module, mode string, container *acorev1.ContainerApplyConfiguration, matched operatorutils.VersionSpec, cr csmv1.ContainerStorageModule) {
 	for _, component := range m.Components {
 		if component.Name == operatorutils.PodmonControllerComponent && mode == controllerMode {
-			modifyPodmon(component, container, matched)
+			modifyPodmon(ctx, component, container, matched, cr)
 		}
 		if component.Name == operatorutils.PodmonNodeComponent && mode == "node" {
-			modifyPodmon(component, container, matched)
+			modifyPodmon(ctx, component, container, matched, cr)
 		}
 	}
 }
@@ -261,8 +264,9 @@ func getResiliencyApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, 
 	if err != nil {
 		return nil, nil, err
 	}
+
 	// read args from the respective components
-	setResiliencyArgs(resiliencyModule, mode, &container, matched)
+	setResiliencyArgs(ctx, resiliencyModule, mode, &container, matched, cr)
 	return &resiliencyModule, &container, nil
 }
 

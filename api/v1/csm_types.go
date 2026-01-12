@@ -27,6 +27,8 @@ import (
 // +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.driver.sideCars) && self.driver.sideCars.exists(sc, has(sc.image) && sc.image != \"\"))",message="spec.driver.sideCars[*].image is forbidden when spec.version is set"
 // +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.modules) && self.modules.exists(m, has(m.components) && m.components.exists(c, has(c.image) && c.image != \"\")))",message="spec.modules[*].components[*].image is forbidden when spec.version is set"
 // +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.modules) && self.modules.exists(m, has(m.configVersion) && m.configVersion != \"\"))",message="spec.modules[*].configVersion is forbidden when spec.version is set"
+// +kubebuilder:validation:XValidation:rule="!(has(self.customRegistry) && self.customRegistry != \"\" && !(has(self.version) && self.version != \"\"))",message="spec.customRegistry is forbidden when spec.version is empty"
+// +kubebuilder:validation:XValidation:rule="!(has(self.retainImageRegistryPath) && !(has(self.version) && self.version != \"\" && has(self.customRegistry) && self.customRegistry != \"\"))",message="spec.retainImageRegistryPath is forbidden unless both spec.version and spec.customRegistry are set"
 type ContainerStorageModuleSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
@@ -40,6 +42,14 @@ type ContainerStorageModuleSpec struct {
 	// Modules is list of Container Storage Module modules you want to deploy
 	// +kubebuilder:validation:MaxItems=20
 	Modules []Module `json:"modules,omitempty" yaml:"modules,omitempty"`
+
+	// CustomRegistry is the custom registry for the image
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Custom Registry"
+	CustomRegistry string `json:"customRegistry,omitempty" yaml:"customRegistry,omitempty"`
+
+	// RetainImageRegistryPath is the boolean flag used to retain image registry path
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Retain Image Registry Path"
+	RetainImageRegistryPath bool `json:"retainImageRegistryPath,omitempty" yaml:"retainImageRegistryPath,omitempty"`
 }
 
 // ContainerStorageModuleStatus defines the observed state of ContainerStorageModule

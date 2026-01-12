@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -178,6 +179,8 @@ const (
 	CSMImages = "csm-images"
 )
 
+var configMapPath string
+
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
 func SplitYaml(gaintYAML []byte) ([][]byte, error) {
 	decoder := goYAML.NewDecoder(bytes.NewReader(gaintYAML))
@@ -204,13 +207,19 @@ func SplitYaml(gaintYAML []byte) ([][]byte, error) {
 }
 
 // UpdateSideCarApply -
-func UpdateSideCarApply(sideCars []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration) {
-	UpdateContainerApply(sideCars, c)
+func UpdateSideCarApply(ctx context.Context, sideCars []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule, matched VersionSpec) {
+	UpdateContainerApply(ctx, sideCars, c, cr, matched)
 }
 
-func UpdateContainerApply(toBeApplied []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration) {
+func UpdateContainerApply(ctx context.Context, toBeApplied []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule, matched VersionSpec) {
 	for _, ctr := range toBeApplied {
-		if *c.Name == ctr.Name {
+		if matched.Version != "" {
+			if img := matched.Images[ctr.Name]; img != "" {
+				*c.Image = img
+			}
+		} else if cr.Spec.CustomRegistry != "" {
+			*c.Image = ResolveImage(ctx, string(*c.Image), cr)
+		} else if *c.Name == ctr.Name {
 			if ctr.Image != "" {
 				*c.Image = string(ctr.Image)
 			}
@@ -249,8 +258,8 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 }
 
 // UpdateInitContainerApply -
-func UpdateInitContainerApply(initContainers []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration) {
-	UpdateContainerApply(initContainers, c)
+func UpdateInitContainerApply(ctx context.Context, initContainers []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule, matched VersionSpec) {
+	UpdateContainerApply(ctx, initContainers, c, cr, matched)
 }
 
 // ReplaceAllApplyCustomEnvs -
@@ -1388,4 +1397,116 @@ func UpdateUsingConfigMap(csm *csmv1.ContainerStorageModule, cm corev1.ConfigMap
 	}
 
 	return matched, nil
+}
+
+// ResolveImage returns an image reference combining a custom registry with an
+// existing image path or name. If retainImageRegistryPath is true, the original
+// path segment (e.g., "org/repo/image:tag") is preserved while removing any
+// registry domain from imageFile. If customRegistry is empty, the original
+// imageFile is returned unchanged.
+func ResolveImage(ctx context.Context, originalImageFile string, cr csmv1.ContainerStorageModule) string {
+	version := strings.TrimSpace(cr.Spec.Version)
+	customRegistry := strings.TrimSpace(cr.Spec.CustomRegistry)
+	retainImageRegistryPath := cr.Spec.RetainImageRegistryPath
+	imageFile := strings.TrimSpace(originalImageFile)
+
+	log := logger.GetLogger(ctx)
+
+	// If version is not specified, no override shall be done
+	if version == "" {
+		log.Info("ResolveImage, version not specified, no custom registry override be done")
+		return originalImageFile
+	}
+
+	// Backward compatibility: no override if customRegistry is unset.
+	if customRegistry == "" {
+		return originalImageFile
+	}
+
+	if retainImageRegistryPath {
+		// Retain the repository path (e.g., "dell/container-storage-modules/...").
+		// If the image contains a registry domain (has a dot or "localhost"),
+		// strip the domain and keep only the path segment.
+		parts := strings.SplitN(imageFile, "/", 2)
+		if len(parts) == 2 {
+			isDomain := strings.Contains(parts[0], ".") || parts[0] == "localhost"
+			if isDomain {
+				imageFile = parts[1]
+			}
+		}
+	} else {
+		// Keep only the final image name: e.g., "repo/image:tag" -> "image:tag".
+		if i := strings.LastIndexByte(imageFile, '/'); i != -1 {
+			imageFile = imageFile[i+1:]
+		}
+	}
+
+	resolvedPath := fmt.Sprintf("%s/%s", customRegistry, imageFile)
+	log.Info("ResolveImage, resolved Image path ", resolvedPath)
+
+	return resolvedPath
+}
+
+func ValidateCustomRegistry(ctx context.Context, registry string) error {
+	registry = strings.TrimSpace(registry)
+	log := logger.GetLogger(ctx)
+
+	// Check if custom registry is mentioned in the CR
+	if registry == "" {
+		log.Info("Custom registry is not mentioned in the CR")
+		return nil
+	}
+
+	// Check if URL scheme is valid
+	customRegistryURL := strings.TrimRight(registry, "/")
+	if !strings.HasPrefix(customRegistryURL, "http://") && !strings.HasPrefix(customRegistryURL, "https://") {
+		customRegistryURL = "http://" + customRegistryURL
+	}
+
+	u, err := url.Parse(customRegistryURL)
+	if err == nil && u.Scheme != "" && u.Host != "" {
+		log.Info("ValidateCustomRegistry, custom registry URL scheme is valid")
+	} else {
+		log.Error("ValidateCustomRegistry, Invalid custom registry in the CR file, ", "customRegistry ", registry)
+		return err
+	}
+	return nil
+}
+
+// GetImageField returns the image field from the yaml string
+func GetImageField(YamlString string) string {
+	var image string
+	lines := strings.Split(YamlString, "\n")
+	if len(lines) == 1 {
+		return YamlString
+	}
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+
+		if strings.HasPrefix(line, "image:") {
+			image = strings.TrimSpace(strings.TrimPrefix(line, "image:"))
+		}
+	}
+	return image
+}
+
+// GetFinalImage returns the final image
+func GetFinalImage(ctx context.Context, cr csmv1.ContainerStorageModule, matched VersionSpec, component csmv1.ContainerTemplate, YamlString string) string {
+	var finalImage string
+	switch {
+	case matched.Version != "":
+		if img := matched.Images[component.Name]; img != "" {
+			finalImage = img
+		}
+
+	case cr.Spec.CustomRegistry != "":
+		finalImage = ResolveImage(ctx, GetImageField(YamlString), cr)
+
+	case component.Image != "":
+		finalImage = string(component.Image)
+
+	default:
+		finalImage = YamlString
+	}
+	return finalImage
 }

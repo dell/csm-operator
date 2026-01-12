@@ -141,7 +141,7 @@ func ReverseProxyServer(ctx context.Context, isDeleting bool, op operatorutils.O
 			return err
 		}
 	}
-	YamlString, err := getReverseProxyDeployment(op, cr, matched)
+	YamlString, err := getReverseProxyDeployment(ctx, op, cr, matched)
 	if err != nil {
 		return err
 	}
@@ -267,14 +267,26 @@ func getReverseProxyService(ctx context.Context, op operatorutils.OperatorConfig
 }
 
 // getReverseProxyDeployment - updates deployment manifest with reverseproxy CRD values
-func getReverseProxyDeployment(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, matched operatorutils.VersionSpec) (string, error) {
+func getReverseProxyDeployment(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, matched operatorutils.VersionSpec) (string, error) {
 	YamlString := ""
 	revProxy, err := getReverseProxyModule(cr)
 	if err != nil {
 		return YamlString, err
 	}
 
-	deploymentPath := fmt.Sprintf("%s/moduleconfig/%s/%s/%s", op.ConfigDirectory, csmv1.ReverseProxy, revProxy.ConfigVersion, ReverseProxyDeployment)
+	revProxyConfigVersion := revProxy.ConfigVersion
+	if revProxyConfigVersion == "" {
+		version, err := operatorutils.GetVersion(ctx, &cr, op)
+		if err != nil {
+			return YamlString, err
+		}
+		revProxyConfigVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, csmv1.ReverseProxy, op.ConfigDirectory)
+		if err != nil {
+			return YamlString, err
+		}
+	}
+
+	deploymentPath := fmt.Sprintf("%s/moduleconfig/%s/%s/%s", op.ConfigDirectory, csmv1.ReverseProxy, revProxyConfigVersion, ReverseProxyDeployment)
 	buf, err := os.ReadFile(filepath.Clean(deploymentPath))
 	if err != nil {
 		return YamlString, err
@@ -289,14 +301,7 @@ func getReverseProxyDeployment(op operatorutils.OperatorConfig, cr csmv1.Contain
 
 	for _, component := range revProxy.Components {
 		if component.Name == ReverseProxyServerComponent {
-			if matched.Version != "" {
-				if img := matched.Images[component.Name]; img != "" {
-					image = img
-				}
-			}
-			if string(component.Image) != "" {
-				image = string(component.Image)
-			}
+			image = operatorutils.GetFinalImage(ctx, cr, matched, component, image)
 			for _, env := range component.Envs {
 				if env.Name == "X_CSI_REVPROXY_TLS_SECRET" {
 					proxyTLSSecret = env.Value
@@ -332,14 +337,7 @@ func ReverseProxyInjectDeployment(ctx context.Context, dp v1.DeploymentApplyConf
 	// update the image
 	for _, side := range revProxyModule.Components {
 		if side.Name == ReverseProxyServerComponent {
-			if matched.Version != "" {
-				if img := matched.Images[side.Name]; img != "" {
-					*container.Image = img
-				}
-			}
-			if side.Image != "" {
-				*container.Image = string(side.Image)
-			}
+			*container.Image = operatorutils.GetFinalImage(ctx, cr, matched, side, *container.Image)
 		}
 	}
 	dp.Spec.Template.Spec.Containers = append(dp.Spec.Template.Spec.Containers, container)

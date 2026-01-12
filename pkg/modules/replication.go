@@ -153,15 +153,7 @@ func getReplicaApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op 
 
 	for _, component := range replicaModule.Components {
 		if component.Name == operatorutils.ReplicationSideCarName {
-			if matched.Version != "" {
-				if img := matched.Images[component.Name]; img != "" {
-					container.Image = &img
-				}
-			}
-			if component.Image != "" {
-				image := string(component.Image)
-				container.Image = &image
-			}
+			*container.Image = operatorutils.GetFinalImage(ctx, cr, matched, component, *container.Image)
 			if component.ImagePullPolicy != "" {
 				container.ImagePullPolicy = &component.ImagePullPolicy
 			}
@@ -361,6 +353,8 @@ func ReplicationPrecheck(ctx context.Context, op operatorutils.OperatorConfig, r
 }
 
 func getReplicaController(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, matched operatorutils.VersionSpec) ([]crclient.Object, error) {
+	log := logger.GetLogger(ctx)
+	log.Infow("getReplicaController")
 	YamlString := ""
 
 	replica, err := getReplicaModule(cr)
@@ -385,14 +379,7 @@ func getReplicaController(ctx context.Context, op operatorutils.OperatorConfig, 
 
 	for _, component := range replica.Components {
 		if component.Name == operatorutils.ReplicationControllerManager {
-			if matched.Version != "" {
-				if img := matched.Images[component.Name]; img != "" {
-					replicaImage = img
-				}
-			}
-			if component.Image != "" {
-				replicaImage = string(component.Image)
-			}
+			replicaImage = operatorutils.GetFinalImage(ctx, cr, matched, component, YamlString)
 			for _, env := range component.Envs {
 				if strings.Contains(DefaultLogLevel, env.Name) && env.Value != "" {
 					logLevel = env.Value
@@ -450,6 +437,8 @@ func getReplicaModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error) {
 
 // ReplicationManagerController -
 func ReplicationManagerController(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+	log := logger.GetLogger(ctx)
+	log.Infow("replication controller manager")
 	var matched operatorutils.VersionSpec
 	if cr.Spec.Version != "" {
 		var err error

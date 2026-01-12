@@ -128,6 +128,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 		controllerYAML.Deployment.Spec.Template.Spec.NodeSelector = cr.Spec.Driver.Controller.NodeSelector
 	}
 
+	// Checking if driver image is present in config map
 	found := false
 	var image string
 	for k, v := range matched.Images {
@@ -144,6 +145,9 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 		if c.Name != nil && (string(*c.Name) == "driver" || string(*c.Name) == "objectstorage-provisioner") {
 			if found {
 				c.Image = &image
+			} else if cr.Spec.CustomRegistry != "" {
+				resolvedImagePath := operatorutils.ResolveImage(ctx, string(*c.Image), cr)
+				c.Image = &resolvedImagePath
 			} else {
 				// Check if Common is not nil before accessing Envs
 				if cr.Spec.Driver.Common != nil {
@@ -192,7 +196,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 		}
 		if !removeContainer {
 			operatorutils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &c)
-			operatorutils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &c)
+			operatorutils.UpdateSideCarApply(ctx, cr.Spec.Driver.SideCars, &c, cr, matched)
 			newcontainers = append(newcontainers, c)
 		}
 
@@ -247,7 +251,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 }
 
 // GetNode get node yaml
-func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, driverType csmv1.DriverType, filename string, ct client.Client) (*operatorutils.NodeYAML, error) {
+func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, driverType csmv1.DriverType, filename string, ct client.Client, matched operatorutils.VersionSpec) (*operatorutils.NodeYAML, error) {
 	log := logger.GetLogger(ctx)
 	version, err := operatorutils.GetVersion(ctx, &cr, operatorConfig)
 	if err != nil {
@@ -316,17 +320,36 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 		nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.NodeSelector = cr.Spec.Driver.Node.NodeSelector
 	}
 
+	// Checking if driver image is present in config map
+	found := false
+	var image string
+	for k, v := range matched.Images {
+		if k == string(cr.Spec.Driver.CSIDriverType) {
+			image = v
+			found = true
+			break
+		}
+	}
+
 	containers := nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Containers
 	newcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
 	for i, c := range containers {
 		if c.Name != nil && string(*c.Name) == "driver" {
-			if cr.Spec.Driver.Common != nil {
-				// With minimal, this will override the node image if the driver image is overridden.
-				if cr.Spec.Driver.Common.Image != "" {
-					image := string(cr.Spec.Driver.Common.Image)
-					c.Image = &image
+			if found {
+				c.Image = &image
+			} else if cr.Spec.CustomRegistry != "" {
+				resolvedImagePath := operatorutils.ResolveImage(ctx, string(*c.Image), cr)
+				c.Image = &resolvedImagePath
+			} else {
+				if cr.Spec.Driver.Common != nil {
+					// With minimal, this will override the node image if the driver image is overridden.
+					if cr.Spec.Driver.Common.Image != "" {
+						image := string(cr.Spec.Driver.Common.Image)
+						c.Image = &image
+					}
 				}
 			}
+
 			var commonEnvs, nodeEnvs []corev1.EnvVar
 			if cr.Spec.Driver.Common != nil {
 				commonEnvs = cr.Spec.Driver.Common.Envs
@@ -363,7 +386,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 		}
 		if !removeContainer {
 			operatorutils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &containers[i])
-			operatorutils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &containers[i])
+			operatorutils.UpdateSideCarApply(ctx, cr.Spec.Driver.SideCars, &containers[i], cr, matched)
 			newcontainers = append(newcontainers, c)
 		}
 	}
@@ -396,7 +419,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 
 	for i := range initcontainers {
 		operatorutils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &initcontainers[i])
-		operatorutils.UpdateInitContainerApply(updatedCr.Spec.Driver.InitContainers, &initcontainers[i])
+		operatorutils.UpdateInitContainerApply(ctx, updatedCr.Spec.Driver.InitContainers, &initcontainers[i], cr, matched)
 		// mdm-container is exclusive to powerflex driver deamonset, will use the driver image as an init container
 		if *initcontainers[i].Name == "mdm-container" {
 			// driver minimial manifest may not have common section
@@ -405,6 +428,12 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 					image := string(cr.Spec.Driver.Common.Image)
 					initcontainers[i].Image = &image
 				}
+			}
+		} else if *initcontainers[i].Name == "sdc" {
+			if updatedCr.Spec.CustomRegistry != "" {
+				resolvedImagePath := operatorutils.ResolveImage(ctx, string(*initcontainers[i].Image), cr)
+				initcontainers[i].Image = &resolvedImagePath
+				log.Debugw(fmt.Sprintf("custom registry resolved initcontianer sdc image: %s", *initcontainers[i].Image))
 			}
 		}
 	}
