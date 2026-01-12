@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2025 DELL Inc. or its subsidiaries.
+# Copyright 2025-2026 DELL Inc. or its subsidiaries.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,47 +14,75 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This script updates the sidecar versions across CSM-operator files
-attacher_ver="$1"
-snapshotter_ver="$2"
-provisioner_ver="$3"
-registrar_ver="$4"
-health_monitor_ver="$5"
-metadata_retriever_ver="$6"
-resizer_ver="$7"
-sdc_ver="$8"
+# This script updates CSI sidecar versions across CSM-operator files
+set -ex
 
-cd $GITHUB_WORKSPACE
+CONFIG_DIR="operatorconfig/driverconfig/common"
 
-for sidecar in {attacher,provisioner,snapshotter,registrar,resizer,external-health-monitor,sdc,metadata-retriever}
-  do
-    echo "Updating sidecar version for -->> $sidecar"
-    old_sidecar_ver=$(cat operatorconfig/driverconfig/common/default.yaml | grep $sidecar | egrep 'registry.k8s.io|quay.io'  | awk '{print $2}')
-    old_sidecar_sub_string=$(echo $old_sidecar_ver | awk -F':' '{print $1}')
+# Helper to fetch latest tag from registry.k8s.io for a given image name
+get_latest_registry_tag() {
+  local image=$1
+  curl -sL "https://registry.k8s.io/v2/sig-storage/${image}/tags/list" \
+    | jq -r '.tags | map(select(test("^v?[0-9]"))) | .[]' \
+    | sort -V \
+    | tail -n 1
+}
 
-    files_to_be_modified=$(grep -rl $old_sidecar_ver)
+# Fetch latest tags
+latest_attacher_tag=$(get_latest_registry_tag "csi-attacher")
+latest_provisioner_tag=$(get_latest_registry_tag "csi-provisioner")
+latest_snapshotter_tag=$(get_latest_registry_tag "csi-snapshotter")
+latest_registrar_tag=$(get_latest_registry_tag "csi-node-driver-registrar")
+latest_resizer_tag=$(get_latest_registry_tag "csi-resizer")
+latest_healthmonitor_tag=$(get_latest_registry_tag "csi-external-health-monitor-controller")
 
-       for file in $files_to_be_modified
-         do
-            if [ $sidecar == 'attacher' ]; then
-              sed -i "s|${old_sidecar_ver}|${old_sidecar_sub_string}:${attacher_ver}|g" $file
-            elif [ $sidecar == 'provisioner' ]; then
-              sed -i "s|${old_sidecar_ver}|${old_sidecar_sub_string}:${provisioner_ver}|g" $file
-            elif [ $sidecar == 'snapshotter' ]; then
-              sed -i "s|${old_sidecar_ver}|${old_sidecar_sub_string}:${snapshotter_ver}|g" $file
-            elif [ $sidecar == 'registrar' ]; then
-              sed -i "s|${old_sidecar_ver}|${old_sidecar_sub_string}:${registrar_ver}|g" $file
-            elif [ $sidecar == 'resizer' ]; then
-              sed -i "s|${old_sidecar_ver}|${old_sidecar_sub_string}:${resizer_ver}|g" $file
-            elif [ $sidecar == 'external-health-monitor' ]; then
-             sed -i "s|${old_sidecar_ver}|${old_sidecar_sub_string}:${health_monitor_ver}|g" $file
-            elif [ $sidecar == 'sdc' ]; then
-              sed -i "s|${old_sidecar_ver}|${old_sidecar_sub_string}:${sdc_ver}|g" $file
-            elif [ $sidecar == 'metadata-retriever' ]; then
-              sed -i "s|${old_sidecar_ver}|${old_sidecar_sub_string}:${metadata_retriever_ver}|g" $file
-            fi
-         done
-         echo "Done updating sidecar version for -->> $sidecar"
+latest_sdc_tag=$(curl -s "https://hub.docker.com/v2/repositories/dellemc/sdc/tags?page_size=100" \
+  | jq -r '.results[].name' \
+  | grep -E '^[0-9]+\.[0-9]+(\.[0-9]+)?$' \
+  | sort -V | tail -n 1)
 
-  done
-  echo "SIDECAR Version update complete"
+latest_sdc_quay_tag=$(curl -sL "https://quay.io/api/v1/repository/dell/storage/powerflex/sdc/tag/" \
+  | jq -r '.tags[]?.name' \
+  | grep -E '^[0-9]+\.[0-9]+(\.[0-9]+)?$' \
+  | sort -V | tail -n 1)
+
+latest_meta_tag=$(curl -sL "https://quay.io/api/v1/repository/dell/container-storage-modules/csi-metadata-retriever/tag/" \
+  | jq -r '.tags[]?.name' \
+  | grep -E '^v?[0-9]+\.[0-9]+(\.[0-9]+)?$' \
+  | sort -V | tail -n 1)
+
+echo "Latest tags fetched."
+
+# Get top 3 latest k8s YAML files
+top_k8s_files=$(find "$CONFIG_DIR" -maxdepth 1 -type f -name "k8s-*-values.yaml" \
+  | sed -E 's|.*/k8s-([0-9]+)\.([0-9]+)-values\.yaml|\1.\2 &|' \
+  | sort -Vr \
+  | head -n 3 \
+  | awk '{print $2}')
+
+# Always include default.yaml
+files_to_update=("$CONFIG_DIR/default.yaml")
+for f in $top_k8s_files; do
+  files_to_update+=("$f")
+done
+
+# Update selected files
+for file in "${files_to_update[@]}"; do
+  echo "Updating $file"
+
+  sed -i -E "s|(registry.k8s.io/sig-storage/csi-attacher:)[^ ]+|\1${latest_attacher_tag}|" "$file"
+  sed -i -E "s|(registry.k8s.io/sig-storage/csi-provisioner:)[^ ]+|\1${latest_provisioner_tag}|" "$file"
+  sed -i -E "s|(registry.k8s.io/sig-storage/csi-snapshotter:)[^ ]+|\1${latest_snapshotter_tag}|" "$file"
+  sed -i -E "s|(registry.k8s.io/sig-storage/csi-node-driver-registrar:)[^ ]+|\1${latest_registrar_tag}|" "$file"
+  sed -i -E "s|(registry.k8s.io/sig-storage/csi-resizer:)[^ ]+|\1${latest_resizer_tag}|" "$file"
+  sed -i -E "s|(registry.k8s.io/sig-storage/csi-external-health-monitor-controller:)[^ ]+|\1${latest_healthmonitor_tag}|" "$file"
+
+  sed -i -E "s|(dellemc/sdc:)[^ ]+|\1${latest_sdc_tag}|" "$file"
+  sed -i -E "s|(quay.io/dell/storage/powerflex/sdc:)[^ ]+|\1${latest_sdc_quay_tag}|" "$file"
+  sed -i -E "s|(quay.io/dell/container-storage-modules/csi-metadata-retriever:)[^ ]+|\1${latest_meta_tag}|" "$file"
+  sed -i -E "s|(dellemc/csi-metadata-retriever:)[^ ]+|\1${latest_meta_tag}|" "$file"
+
+  echo "Updated $file"
+done
+
+echo "All files updated."
