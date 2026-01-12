@@ -95,6 +95,9 @@ const (
 
 	// Deprecated: PowerStoreNfsExportDirectory - NFS Export Directory
 	PowerStoreNfsExportDirectory = "<X_CSI_NFS_EXPORT_DIRECTORY>"
+
+	// CSMDREnabled - Flag to indicate if CSM-DR is enabled
+	CSMDREnabled string = "<X_CSM_DR_ENABLED>"
 )
 
 // PrecheckPowerStore do input validation
@@ -186,6 +189,7 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	debug := "false"
 	authEnabled := ""
 	foundAuthEnv := false
+	enableCSMDR := IsCSMDREnabled(cr)
 
 	authorizationModuleFound := false
 
@@ -309,6 +313,7 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsClientPort, nfsClientPort)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsServerPort, nfsServerPort)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsExportDirectory, nfsExportDirectory)
+		yamlString = strings.ReplaceAll(yamlString, CSMDREnabled, enableCSMDR)
 	case "Controller":
 		if cr.Spec.Driver.Controller != nil {
 			for _, env := range cr.Spec.Driver.Controller.Envs {
@@ -337,6 +342,7 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsClientPort, nfsClientPort)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsServerPort, nfsServerPort)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsExportDirectory, nfsExportDirectory)
+		yamlString = strings.ReplaceAll(yamlString, CSMDREnabled, enableCSMDR)
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"

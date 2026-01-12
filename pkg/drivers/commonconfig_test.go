@@ -14,6 +14,7 @@ package drivers
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
@@ -195,6 +196,98 @@ func TestGetNode(t *testing.T) {
 
 			} else {
 				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
+			}
+		})
+	}
+}
+
+func TestIsCSMDREnabled(t *testing.T) {
+	tests := []struct {
+		name        string
+		cr          csmv1.ContainerStorageModule
+		expected    string
+		expectedErr string
+	}{
+		{
+			name: "X_CSM_DR_ENABLED is true",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{
+									Name:  "X_CSM_DR_ENABLED",
+									Value: "true",
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: "true",
+		},
+		{
+			name: "X_CSM_DR_ENABLED is false",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{
+									Name:  "X_CSM_DR_ENABLED",
+									Value: "false",
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: "false",
+		},
+		{
+			name: "X_CSM_DR_ENABLED is not set",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{},
+						},
+					},
+				},
+			},
+			expected: "true",
+		},
+		{
+			name: "X_CSM_DR_ENABLED is empty",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{
+									Name:  "X_CSM_DR_ENABLED",
+									Value: "",
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: "true",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := IsCSMDREnabled(tt.cr)
+			if tt.expectedErr == "" {
+				if result != tt.expected {
+					t.Errorf("Expected %s, but got %s", tt.expected, result)
+				}
+			} else {
+				if !strings.Contains(result, tt.expectedErr) {
+					t.Errorf("Expected error containing %q, but got %s", tt.expectedErr, result)
+				}
 			}
 		})
 	}

@@ -312,6 +312,8 @@ spec:
               value: "5m"
             - name: X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT
               value: "<X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT>"
+            - name: X_CSM_DR_ENABLED
+              value: "<X_CSM_DR_ENABLED>"
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi

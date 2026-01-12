@@ -631,3 +631,18 @@ func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 
 	return &csidriver, nil
 }
+
+func IsCSMDREnabled(cr csmv1.ContainerStorageModule) string {
+	enableCSMDR := "true"
+
+	if cr.Spec.Driver.Common != nil {
+		for _, env := range cr.Spec.Driver.Common.Envs {
+			if env.Name == "X_CSM_DR_ENABLED" && env.Value != "" {
+				enableCSMDR = env.Value
+				break
+			}
+		}
+	}
+
+	return enableCSMDR
+}

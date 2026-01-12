@@ -89,6 +89,13 @@ spec:
         # Default value: 10s
         - name: "X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT"
           value: "10s"
+        # X_CSM_DR_ENABLED: Enable/Disable CSM Disaster Recovery.
+        # Allowed values:
+        #   true: enable CSM Disaster Recovery
+        #   false: disable CSM Disaster Recovery
+        # Default value: true
+        - name: "X_CSM_DR_ENABLED"
+          value: "true"
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner

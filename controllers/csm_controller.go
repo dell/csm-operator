@@ -1034,8 +1034,10 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		return err
 	}
 
+	enableCSMDR := drivers.IsCSMDREnabled(cr)
+	log.Infow(fmt.Sprintf("Is CSM DR enabled: %s", enableCSMDR))
 	// Create/Update CSM DR CRD for PowerStore
-	if cr.GetDriverType() == csmv1.PowerStore {
+	if cr.GetDriverType() == csmv1.PowerStore && enableCSMDR == "true" {
 		err = applyCSMDRCRD(ctx, cr, false, operatorConfig, clusterClient.ClusterCTRLClient)
 		if err != nil {
 			return err
