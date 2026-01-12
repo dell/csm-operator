@@ -1,2 +1,5 @@
 web:
   jwtsigningsecret: secret
+proxy: 
+  readtimeout: 120s 
+  writetimeout: 120s
