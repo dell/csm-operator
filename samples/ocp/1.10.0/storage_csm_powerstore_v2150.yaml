@@ -401,7 +401,7 @@ spec:
             # Allowed values: String
             # Default value: true
             - name: "POWERSTORE_VOLUME_IO_POLL_FREQUENCY"
-              value: "10"
+              value: "20"
             # POWERSTORE_SPACE_POLL_FREQUENCY: set polling frequency to get cluster capacity metrics data
             # Allowed values: int
             # Default value: 300

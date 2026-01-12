@@ -827,11 +827,11 @@ metadata:
                       },
                       {
                         "name": "POWERMAX_CAPACITY_POLL_FREQUENCY",
-                        "value": "10"
+                        "value": "20"
                       },
                       {
                         "name": "POWERMAX_PERFORMANCE_POLL_FREQUENCY",
-                        "value": "10"
+                        "value": "20"
                       },
                       {
                         "name": "POWERMAX_LOG_LEVEL",
@@ -1197,7 +1197,7 @@ metadata:
                       },
                       {
                         "name": "POWERSTORE_VOLUME_IO_POLL_FREQUENCY",
-                        "value": "10"
+                        "value": "20"
                       },
                       {
                         "name": "POWERSTORE_SPACE_POLL_FREQUENCY",

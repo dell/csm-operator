@@ -53,7 +53,7 @@ spec:
             - name: "POWERSTORE_VOLUME_METRICS_ENABLED"
               value: "true"
             - name: "POWERSTORE_VOLUME_IO_POLL_FREQUENCY"
-              value: "10"
+              value: "20"
             - name: "POWERSTORE_SPACE_POLL_FREQUENCY"
               value: "300"
             - name: "POWERSTORE_ARRAY_POLL_FREQUENCY"
