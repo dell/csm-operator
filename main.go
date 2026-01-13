@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -71,8 +71,9 @@ const (
 )
 
 var (
-	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	scheme         = runtime.NewScheme()
+	setupLog       = ctrl.Log.WithName("setup")
+	ManifestSemver = "dev"
 )
 
 func init() {
@@ -88,7 +89,7 @@ func init() {
 }
 
 func printVersion(log *zap.SugaredLogger) {
-	log.Debugw("Operator Version", "Version", core.SemVer, "Commit ID", core.CommitSha32, "Commit SHA", string(core.CommitTime.Format(time.RFC1123)))
+	log.Debugf("Operator Version: %s, Build Time: %s", ManifestSemver, core.CommitTime.Format(time.RFC1123))
 	log.Debugf("Go Version: %s", osruntime.Version())
 	log.Debugf("Go OS/Arch: %s/%s", osruntime.GOOS, osruntime.GOARCH)
 }

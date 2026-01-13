@@ -1,5 +1,10 @@
-include docker.mk
-include overrides.mk
+# Copyright © 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
+#
+# Dell Technologies, Dell and other trademarks are trademarks of Dell Inc.
+# or its subsidiaries. Other trademarks may be trademarks of their respective 
+# owners.
+
+include images.mk
 
 # CHANNELS define the bundle channels used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "candidate,fast,stable")
@@ -67,29 +72,6 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
-#Generate semver.mk
-.PHONY: gen-semver
-gen-semver: generate
-	(cd core; rm -f core_generated.go; go generate)
-	go run core/semver/semver.go -f mk > semver.mk
-
--include semver.mk
-
-ifdef NOTES
-	RELNOTE="-$(NOTES)"
-else
-	RELNOTE=
-endif
-
-# Operator version tagged with build number. For e.g. - v1.8.0.001
-VERSION ?= v$(MAJOR).$(MINOR).$(PATCH)$(RELNOTE)
-
-ifdef VERSION
-  $(info VERSION is: $(VERSION))  # Print the version for debugging
-else
-  $(error VERSION is not defined! Check semver.mk generation.)
-endif
-
 fmt: ## Run go fmt against code.
 	go fmt ./...
 
@@ -121,31 +103,19 @@ go-code-tester:
 
 ##@ Build
 
+# This will be overridden during image build.
+IMAGE_VERSION ?= 0.0.0
+LDFLAGS = "-X main.ManifestSemver=$(IMAGE_VERSION)"
+
 tidy:
 	go mod tidy
 	cd tests/e2e/ && go mod tidy
 
 build: gen-semver fmt vet ## Build manager binary.
-	go build -mod=vendor -o bin/manager main.go
+	go build -mod=vendor -ldflags $(LDFLAGS) -o bin/manager main.go
 
 run: generate gen-semver fmt vet static-manifests ## Run a controller from your host.
 	go run ./main.go
-
-podman-build: vendor gen-semver download-csm-common ## Build podman image with the manager.
-	$(eval include csm-common.mk)
-	podman build --pull . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
-
-docker: vendor gen-semver download-csm-common ## Build docker image with the manager.
-	$(eval include csm-common.mk)
-	docker build --pull . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
-
-podman-build-no-cache: vendor gen-semver download-csm-common ## Build podman image with the manager.
-	$(eval include csm-common.mk)
-	podman build --pull --no-cache . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
-
-podman-push: ## Tags and pushes image with the manager.
-	podman tag ${DEFAULT_IMG} ${IMG}
-	podman push ${IMG}
 
 ##@ Deployment
 
@@ -171,9 +141,6 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
 
 ##@ Build Dependencies
-
-vendor:
-	GOPRIVATE=eos2git.cec.lab.emc.com go mod vendor
 
 ## Location to install dependencies to
 LOCALBIN ?= $(shell pwd)/bin
@@ -275,13 +242,6 @@ catalog-push: gen-semver ## Push a catalog image.
 .PHONY: lint
 lint: build
 	golangci-lint run --fix
-
-# Download common CSM configuration file used for builds
-.PHONY: download-csm-common
-download-csm-common:
-	git clone --depth 1 git@eos2git.cec.lab.emc.com:CSM/csm.git csm-temp-repo
-	cp csm-temp-repo/config/csm-common.mk .
-	rm -rf csm-temp-repo
 
 # build catalog image with File based catalog file
 .PHONY: catalog-build-fbc

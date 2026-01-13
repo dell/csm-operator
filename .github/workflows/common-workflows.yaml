@@ -1,4 +1,4 @@
-# Copyright © 2024 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2024-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Dell Technologies, Dell and other trademarks are trademarks of Dell Inc.
 # or its subsidiaries. Other trademarks may be trademarks of their respective
@@ -39,5 +39,5 @@ jobs:
     with:
       images: |
         dell-csm-operator
-      build-images-cmd: "make docker"
+      build-images-cmd: "make images"
     secrets: inherit

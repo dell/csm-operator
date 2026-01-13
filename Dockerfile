@@ -1,4 +1,4 @@
-# Copyright © 2021 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2021-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,35 +12,31 @@
 
 ARG BASEIMAGE
 ARG GOIMAGE
+ARG VERSION="1.11.0"
 
 FROM $GOIMAGE as builder
-WORKDIR /workspace
+ARG VERSION
 
-COPY go.mod go.mod
-COPY go.sum go.sum
-COPY main.go main.go
-COPY api/ api/
-COPY controllers/ controllers/
-COPY core/ core/
-COPY pkg/ pkg/
-COPY k8s/ k8s/
-COPY vendor/ vendor/
+RUN mkdir -p /go/src/csm-operator
+COPY ./ /go/src/csm-operator
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -mod=vendor -a -o manager main.go
+WORKDIR /go/src/csm-operator
+RUN make build IMAGE_VERSION=$VERSION
 
 FROM $BASEIMAGE as final
+ARG VERSION
 ENV USER_UID=1001 \
     USER_NAME=dell-csm-operator
 WORKDIR /
-COPY --from=builder /workspace/manager .
-COPY operatorconfig/ /etc/config/dell-csm-operator
+COPY --from=builder /go/src/csm-operator/bin/manager .
+COPY --from=builder /go/src/csm-operator/operatorconfig/ /etc/config/dell-csm-operator
 LABEL vendor="Dell Technologies" \
     maintainer="Dell Technologies" \
     name="dell-csm-operator" \
     summary="Operator for installing Dell CSI Drivers and Dell CSM Modules" \
     description="Common Operator for installing various Dell CSI Drivers and Dell CSM Modules" \
     release="1.16.0" \
-    version="1.11.0" \
+    version=$VERSION \
     license="Dell CSM Operator Apache License"
 
 COPY licenses /licenses
