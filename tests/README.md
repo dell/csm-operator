@@ -43,6 +43,7 @@ Any time changes made to the operator are being checked into the main branch, sa
   - (if running unity suite) `unity`
   - (if running powermax suite) `powermax`
   - (if running powerstore suite) `powerstore`, `test-powerstore`
+  - (if running cosi suite) `dell-cosi`
 - For Authorization V2:
   - The following components must be installed on your cluster:
     - Secrets Store CSI Driver

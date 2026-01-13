@@ -4,8 +4,8 @@ go 1.25.0
 
 require (
 	eos2git.cec.lab.emc.com/CSM/csm-operator v1.10.1
-	github.com/onsi/ginkgo/v2 v2.27.3
-	github.com/onsi/gomega v1.38.3
+	github.com/onsi/ginkgo/v2 v2.27.5
+	github.com/onsi/gomega v1.39.0
 	golang.org/x/mod v0.31.0
 	k8s.io/api v0.35.0
 	k8s.io/apimachinery v0.35.0
