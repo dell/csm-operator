@@ -3258,11 +3258,11 @@ spec:
               type: object
               x-kubernetes-validations:
                 - message: spec.version and spec.driver.configVersion cannot both be set
-                  rule: '!(has(self.version) && self.version != "" && has(self.driver.configVersion) && self.driver.configVersion != "")'
+                  rule: '!(has(self.version) && self.version != "" && has(self.driver) && has(self.driver.configVersion) && self.driver.configVersion != "")'
                 - message: spec.driver.common.image is forbidden when spec.version is set
-                  rule: '!(has(self.version) && self.version != "" && has(self.driver.common) && has(self.driver.common.image) && self.driver.common.image != "")'
+                  rule: '!(has(self.version) && self.version != "" && has(self.driver) && has(self.driver.common) && has(self.driver.common.image) && self.driver.common.image != "")'
                 - message: spec.driver.sideCars[*].image is forbidden when spec.version is set
-                  rule: '!(has(self.version) && self.version != "" && has(self.driver.sideCars) && self.driver.sideCars.exists(sc, has(sc.image) && sc.image != ""))'
+                  rule: '!(has(self.version) && self.version != "" && has(self.driver) && has(self.driver.sideCars) && self.driver.sideCars.exists(sc, has(sc.image) && sc.image != ""))'
                 - message: spec.modules[*].components[*].image is forbidden when spec.version is set
                   rule: '!(has(self.version) && self.version != "" && has(self.modules) && self.modules.exists(m, has(m.components) && m.components.exists(c, has(c.image) && c.image != "")))'
                 - message: spec.modules[*].configVersion is forbidden when spec.version is set

@@ -376,7 +376,7 @@ func TestObservabilityTopologyController(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
-			err := ObservabilityTopology(ctx, isDeleting, op, cr, sourceClient)
+			err := ObservabilityTopology(ctx, isDeleting, op, cr, sourceClient, operatorutils.VersionSpec{})
 			if success {
 				assert.NoError(t, err)
 			} else {
@@ -788,7 +788,7 @@ func TestOtelCollector(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
-			err := OtelCollector(ctx, isDeleting, op, cr, sourceClient)
+			err := OtelCollector(ctx, isDeleting, op, cr, sourceClient, operatorutils.VersionSpec{})
 			if success {
 				assert.NoError(t, err)
 			} else {

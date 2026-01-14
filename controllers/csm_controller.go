@@ -748,6 +748,17 @@ func (r *ContainerStorageModuleReconciler) oldStandAloneModuleCleanup(ctx contex
 func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
 
+	// Install/update via configmap
+	var matched operatorutils.VersionSpec
+	if cr.Spec.Version != "" {
+		var err error
+		matched, err = operatorutils.ResolveVersionFromConfigMap(ctx, ctrlClient, &cr)
+		if err != nil {
+			log.Error(err, "Failed to get version from configmap")
+			return err
+		}
+	}
+
 	// Create/Update Authorization Proxy Server
 	authorizationEnabled, _ := operatorutils.IsModuleEnabled(ctx, cr, csmv1.AuthorizationServer)
 	if authorizationEnabled {
@@ -755,7 +766,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		if err := r.reconcileAuthorizationCRDS(ctx, operatorConfig, cr, ctrlClient); err != nil {
 			return fmt.Errorf("failed to deploy authorization proxy server: %v", err)
 		}
-		if err := r.reconcileAuthorization(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
+		if err := r.reconcileAuthorization(ctx, false, operatorConfig, cr, ctrlClient, matched); err != nil {
 			return fmt.Errorf("failed to deploy authorization proxy server: %v", err)
 		}
 		return nil
@@ -774,17 +785,6 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		log.Infow("Create/Update Replication CRDs")
 		if err := r.reconcileReplicationCRDS(ctx, operatorConfig, cr, ctrlClient); err != nil {
 			return fmt.Errorf("failed to deploy replication CRDs: %v", err)
-		}
-	}
-
-	// Install/update via configmap
-	var matched operatorutils.VersionSpec
-	if cr.Spec.Version != "" {
-		var err error
-		matched, err = operatorutils.ResolveVersionFromConfigMap(ctx, ctrlClient, &cr)
-		if err != nil {
-			log.Error(err, "Failed to get version from configmap")
-			return err
 		}
 	}
 
@@ -1096,7 +1096,7 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 			}
 		}
 	}
-	comp2reconFunc := map[string]func(context.Context, bool, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, client.Client) error{
+	comp2reconFunc := map[string]func(context.Context, bool, operatorutils.OperatorConfig, csmv1.ContainerStorageModule, client.Client, operatorutils.VersionSpec) error{
 		modules.ObservabilityOtelCollectorName:    modules.OtelCollector,
 		modules.ObservabilityCertManagerComponent: modules.CommonCertManager,
 	}
@@ -1116,11 +1116,11 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 		var err error
 		switch comp {
 		case modules.ObservabilityOtelCollectorName, modules.ObservabilityCertManagerComponent:
-			err = comp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient)
+			err = comp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient, operatorutils.VersionSpec{})
 		// This will be deleted once we remove the old CSM versions which support topology
 		case modules.ObservabilityTopologyName:
 			if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
-				err = comp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient)
+				err = comp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient, operatorutils.VersionSpec{})
 			}
 		case modules.ObservabilityMetricsPowerScaleName, modules.ObservabilityMetricsPowerFlexName, modules.ObservabilityMetricsPowerMaxName, modules.ObservabilityMetricsPowerStoreName:
 			err = metricsComp2reconFunc[comp](ctx, isDeleting, op, cr, ctrlClient, k8sClient)
@@ -1142,12 +1142,12 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 }
 
 // reconcileAuthorization - deploy authorization proxy server
-func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, matched operatorutils.VersionSpec) error {
 	log := logger.GetLogger(ctx)
 
 	if operatorutils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthCertManagerComponent) {
 		log.Infow("Reconcile authorization cert-manager")
-		if err := modules.CommonCertManager(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+		if err := modules.CommonCertManager(ctx, isDeleting, op, cr, ctrlClient, matched); err != nil {
 			return fmt.Errorf("unable to reconcile cert-manager for authorization: %v", err)
 		}
 	}
@@ -1457,7 +1457,7 @@ func (r *ContainerStorageModuleReconciler) removeModule(ctx context.Context, ins
 
 	if authorizationEnabled, _ := operatorutils.IsModuleEnabled(ctx, instance, csmv1.AuthorizationServer); authorizationEnabled {
 		log.Infow("Deleting Authorization Proxy Server")
-		if err := r.reconcileAuthorization(ctx, true, operatorConfig, instance, ctrlClient); err != nil {
+		if err := r.reconcileAuthorization(ctx, true, operatorConfig, instance, ctrlClient, operatorutils.VersionSpec{}); err != nil {
 			return err
 		}
 	}

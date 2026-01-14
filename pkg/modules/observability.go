@@ -327,7 +327,7 @@ func ObservabilityPrecheck(ctx context.Context, op operatorutils.OperatorConfig,
 }
 
 // ObservabilityTopology - delete or update topology objectstools
-func ObservabilityTopology(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+func ObservabilityTopology(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, _ operatorutils.VersionSpec) error {
 	log := logger.GetLogger(ctx)
 
 	var matched operatorutils.VersionSpec
@@ -409,7 +409,7 @@ func getTopology(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.
 }
 
 // OtelCollector - delete or update otel collector objects
-func OtelCollector(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+func OtelCollector(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, _ operatorutils.VersionSpec) error {
 	log := logger.GetLogger(ctx)
 	matched, err := operatorutils.ResolveVersionFromConfigMap(ctx, ctrlClient, &cr)
 	if err != nil {
