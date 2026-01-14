@@ -14,6 +14,7 @@ package operatorutils
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -257,6 +258,17 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 
 	log.Infof("setting new status to [%v]", newStatus)
 	SetStatus(ctx, r, instance, newStatus)
+	if isAuthorizationProxyServer(instance) && instance.Status.State == constants.Succeeded {
+		copyCR := instance.DeepCopy()
+		delete(copyCR.Annotations, "kubectl.kubernetes.io/last-applied-configuration")
+		copyCR.ManagedFields = nil
+		copyCR.Status = csmv1.ContainerStorageModuleStatus{}
+		out, err := json.Marshal(copyCR)
+		if err != nil {
+			log.Error(err, "error marshalling CR to annotation")
+		}
+		instance.Status.LastSuccessfulConfiguration = string(out)
+	}
 	return running, err
 }
 
