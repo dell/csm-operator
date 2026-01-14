@@ -4,19 +4,15 @@ metadata:
   name: isilon
   namespace: isilon
 spec:
+  version: v1.16.0
   driver:
     csiDriverType: "isilon"
-    configVersion: v2.16.0
     forceRemoveDriver: true
-    common:
-      image: quay.io/dell/container-storage-modules/csi-isilon:v2.16.0
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: false
-      # For Auth 2.0, use v2.2.0 as configVersion
-      configVersion: v2.4.0
       components:
         - name: karavi-authorization-proxy
           envs:
