@@ -215,7 +215,10 @@ func UpdateContainerApply(ctx context.Context, toBeApplied []csmv1.ContainerTemp
 	for _, ctr := range toBeApplied {
 		if matched.Version != "" {
 			if img := matched.Images[ctr.Name]; img != "" {
-				*c.Image = img
+				if *c.Name == ctr.Name {
+					*c.Image = img
+					break
+				}
 			}
 		} else if cr.Spec.CustomRegistry != "" {
 			*c.Image = ResolveImage(ctx, string(*c.Image), cr)
