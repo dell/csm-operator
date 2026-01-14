@@ -758,7 +758,7 @@ func AuthorizationServerPrecheck(ctx context.Context, op operatorutils.OperatorC
 }
 
 // getAuthorizationServerDeployment - apply dynamic values to the deployment manifest before installation
-func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) (string, error) {
 	YamlString := ""
 	auth, err := getAuthorizationModule(cr)
 	if err != nil {
@@ -796,6 +796,35 @@ func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.Oper
 
 		// redis component
 		if component.Name == AuthRedisComponent {
+
+			var matched operatorutils.VersionSpec
+			if cr.Spec.Version != "" {
+				var err error
+				matched, err = operatorutils.ResolveVersionFromConfigMap(ctx, ctrlClient, &cr)
+				if err != nil {
+					return "", err
+				}
+			}
+
+			// default redis component from cr - Remove when 220 support is dropped
+			redisImage := component.Redis
+			redisCommanderImage := component.Commander
+
+			// Config map gets highest priority
+			if matched.Version != "" {
+				redisKey := "redis"
+				redisCommanderKey := "rediscommander"
+				if img := matched.Images[redisKey]; img != "" {
+					redisImage = img
+				}
+				if commanderImg := matched.Images[redisCommanderKey]; commanderImg != "" {
+					redisCommanderImage = commanderImg
+				}
+			} else if cr.Spec.CustomRegistry != "" {
+				// Followed by custom registry
+				redisImage = operatorutils.ResolveImage(ctx, redisImage, cr)
+				redisCommanderImage = operatorutils.ResolveImage(ctx, redisCommanderImage, cr)
+			}
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisImage, component.Redis)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommanderImage, component.Commander)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisName, component.RedisName)
@@ -880,7 +909,7 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op oper
 		}
 	}
 
-	YamlString, err := getAuthorizationServerDeployment(ctx, op, cr)
+	YamlString, err := getAuthorizationServerDeployment(ctx, op, cr, ctrlClient)
 	if err != nil {
 		return err
 	}
