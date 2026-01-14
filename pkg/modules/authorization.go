@@ -803,26 +803,26 @@ func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.Oper
 			roleServiceImage := component.RoleService
 			storageServiceImage := component.StorageService
 			controllerImage := component.AuthorizationController
-			authProxyImages := map[string]string{
-				"proxy-service":            proxyServerImage,
-				"tenant-service":           opaImage,
-				"role-service":             roleServiceImage,
-				"storage-service":          storageServiceImage,
-				"opa":                      opaImage,
-				"opa-kube-mgmt":            opaKubeMgmtImage,
-				"authorization-controller": controllerImage,
+			authProxyImages := map[string]*string{
+				"proxy-service":            &proxyServerImage,
+				"tenant-service":           &opaImage,
+				"role-service":             &roleServiceImage,
+				"storage-service":          &storageServiceImage,
+				"opa":                      &opaImage,
+				"opa-kube-mgmt":            &opaKubeMgmtImage,
+				"authorization-controller": &controllerImage,
 			}
 			// Config map gets highest priority
 			if matched.Version != "" {
 				for key := range authProxyImages {
 					if img := matched.Images[key]; img != "" {
-						authProxyImages[key] = img
+						*authProxyImages[key] = img
 					}
 				}
 			} else if cr.Spec.CustomRegistry != "" {
 				// Followed by custom registry
 				for key := range authProxyImages {
-					authProxyImages[key] = operatorutils.ResolveImage(ctx, authProxyImages[key], cr)
+					*authProxyImages[key] = operatorutils.ResolveImage(ctx, *authProxyImages[key], cr)
 				}
 			}
 
