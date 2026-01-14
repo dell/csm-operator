@@ -266,6 +266,7 @@ type ContainerTemplate struct {
 
 	// Envs is the set of environment variables for the container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Container Environment vars"
+	// +kubebuilder:validation:MaxItems=30
 	Envs []corev1.EnvVar `json:"envs,omitempty" yaml:"envs"`
 
 	// Tolerations is the list of tolerations for the driver pods

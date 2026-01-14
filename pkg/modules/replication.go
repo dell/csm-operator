@@ -151,6 +151,15 @@ func getReplicaApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op 
 		return nil, nil, err
 	}
 
+	// For minimal manifest image override with configmap where component isn't mentioned
+	if len(replicaModule.Components) == 0 {
+		var synthetic csmv1.ContainerTemplate
+		synthetic = csmv1.ContainerTemplate{
+			Name: operatorutils.ReplicationSideCarName,
+		}
+		*container.Image = operatorutils.GetFinalImage(ctx, cr, matched, synthetic, *container.Image)
+	}
+
 	for _, component := range replicaModule.Components {
 		if component.Name == operatorutils.ReplicationSideCarName {
 			*container.Image = operatorutils.GetFinalImage(ctx, cr, matched, component, *container.Image)
@@ -376,6 +385,15 @@ func getReplicaController(ctx context.Context, op operatorutils.OperatorConfig, 
 	replicaInitImage := ""
 	disablePVCRemapState := "false"
 	allowPVCCreationOnTarget := "false"
+
+	// For minimal manifest when components aren't mentioned
+	if len(replica.Components) == 0 {
+		var synthetic csmv1.ContainerTemplate
+		synthetic = csmv1.ContainerTemplate{
+			Name: operatorutils.ReplicationControllerManager,
+		}
+		replicaImage = operatorutils.GetFinalImage(ctx, cr, matched, synthetic, YamlString)
+	}
 
 	for _, component := range replica.Components {
 		if component.Name == operatorutils.ReplicationControllerManager {

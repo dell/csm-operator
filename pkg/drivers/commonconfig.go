@@ -436,6 +436,27 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 				log.Debugw(fmt.Sprintf("custom registry resolved initcontianer sdc image: %s", *initcontainers[i].Image))
 			}
 		}
+		if *initcontainers[i].Name == "sdc" {
+			// Checking if sdc initcontainer image is present in config map
+			found2 := false
+			for k, v := range matched.Images {
+				if k == "sdc" {
+					image = v
+					found2 = true
+					break
+				}
+			}
+			if found2 {
+				initcontainers[i].Image = &image
+				log.Infow("SDC initcontainer image resolved from ConfigMap",
+					"image", image,
+				)
+			} else if updatedCr.Spec.CustomRegistry != "" {
+				resolvedImagePath := operatorutils.ResolveImage(ctx, string(*initcontainers[i].Image), cr)
+				initcontainers[i].Image = &resolvedImagePath
+				log.Debugw(fmt.Sprintf("custom registry resolved initcontianer sdc image: %s", *initcontainers[i].Image))
+			}
+		}
 	}
 
 	nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.InitContainers = initcontainers

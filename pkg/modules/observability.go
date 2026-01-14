@@ -35,8 +35,10 @@ import (
 
 // Test seams (overridden in unit tests)
 var (
-	getObservabilityModuleFn = getObservabilityModule
-	readConfigFileFn         = readConfigFile
+	getObservabilityModuleFn      = getObservabilityModule
+	readConfigFileFn              = readConfigFile
+	resolveVersionFromConfigMapFn = operatorutils.ResolveVersionFromConfigMap
+	getVersionFn                  = operatorutils.GetVersion
 )
 
 const (
@@ -328,12 +330,22 @@ func ObservabilityPrecheck(ctx context.Context, op operatorutils.OperatorConfig,
 func ObservabilityTopology(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
 	log := logger.GetLogger(ctx)
 
-	configVersion, err := operatorutils.GetVersion(ctx, &cr, op)
+	var matched operatorutils.VersionSpec
+	if cr.Spec.Version != "" {
+		var err error
+		matched, err = resolveVersionFromConfigMapFn(ctx, ctrlClient, &cr)
+		if err != nil {
+			log.Error(err, "Failed to get version from configmap")
+			return err
+		}
+	}
+
+	configVersion, err := getVersionFn(ctx, &cr, op)
 	if err != nil {
 		return err
 	}
 	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
-		topoObjects, err := getTopology(ctx, op, cr)
+		topoObjects, err := getTopology(ctx, op, cr, matched)
 		if err != nil {
 			return err
 		}
@@ -357,7 +369,7 @@ func ObservabilityTopology(ctx context.Context, isDeleting bool, op operatorutil
 	return nil
 }
 
-func getTopology(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) ([]crclient.Object, error) {
+func getTopology(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, matched operatorutils.VersionSpec) ([]crclient.Object, error) {
 	obs, err := getObservabilityModuleFn(cr)
 	if err != nil {
 		return nil, err
@@ -374,9 +386,7 @@ func getTopology(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.
 
 	for _, component := range obs.Components {
 		if component.Name == ObservabilityTopologyName {
-			if component.Image != "" {
-				topologyImage = string(component.Image)
-			}
+			topologyImage = operatorutils.GetFinalImage(ctx, cr, matched, component, YamlString)
 			for _, env := range component.Envs {
 				if strings.Contains(TopologyLogLevel, env.Name) {
 					logLevel = env.Value
@@ -446,7 +456,11 @@ func getOtelCollector(ctx context.Context, op operatorutils.OperatorConfig, cr c
 	YamlString = string(buf)
 
 	nginxProxyImage := "quay.io/nginx/nginx-unprivileged:1.27"
-	if cr.Spec.CustomRegistry != "" {
+	if matched.Version != "" {
+		if img := matched.Images["nginx-proxy"]; img != "" {
+			nginxProxyImage = img
+		}
+	} else if cr.Spec.CustomRegistry != "" {
 		nginxProxyImage = operatorutils.ResolveImage(ctx, nginxProxyImage, cr)
 	}
 	otelCollectorImage := "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0"
@@ -474,7 +488,11 @@ func getOtelCollector(ctx context.Context, op operatorutils.OperatorConfig, cr c
 
 			for _, env := range component.Envs {
 				if strings.Contains(NginxProxyImage, env.Name) {
-					if cr.Spec.CustomRegistry != "" {
+					if matched.Version != "" {
+						if img := matched.Images["nginx-proxy"]; img != "" {
+							nginxProxyImage = img
+						}
+					} else if cr.Spec.CustomRegistry != "" {
 						nginxProxyImage = operatorutils.ResolveImage(ctx, env.Value, cr)
 					} else {
 						nginxProxyImage = env.Value

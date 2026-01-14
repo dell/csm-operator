@@ -29,6 +29,8 @@ import (
 // +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.modules) && self.modules.exists(m, has(m.configVersion) && m.configVersion != \"\"))",message="spec.modules[*].configVersion is forbidden when spec.version is set"
 // +kubebuilder:validation:XValidation:rule="!(has(self.customRegistry) && self.customRegistry != \"\" && !(has(self.version) && self.version != \"\"))",message="spec.customRegistry is forbidden when spec.version is empty"
 // +kubebuilder:validation:XValidation:rule="!(has(self.retainImageRegistryPath) && !(has(self.version) && self.version != \"\" && has(self.customRegistry) && self.customRegistry != \"\"))",message="spec.retainImageRegistryPath is forbidden unless both spec.version and spec.customRegistry are set"
+// +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.driver) && has(self.driver.initContainers) && self.driver.initContainers.exists(ic, has(ic.image) && ic.image != \"\"))",message="spec.driver.initContainers[*].image is forbidden when spec.version is set"
+// +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.modules) && self.modules.exists(m, has(m.components) && m.components.exists(c, has(c.envs) && c.envs.exists(e, has(e.name) && e.name == \"NGINX_PROXY_IMAGE\"))))",message="env NGINX_PROXY_IMAGE is forbidden when spec.version is set"
 type ContainerStorageModuleSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
@@ -74,6 +76,7 @@ type ContainerStorageModuleStatus struct {
 // +kubebuilder:printcolumn:name="CreationTime",type=date,JSONPath=`.metadata.creationTimestamp`
 // +kubebuilder:printcolumn:name="CSIDriverType",type=string,JSONPath=`.spec.driver.csiDriverType`,description="Type of CSIDriver"
 // +kubebuilder:printcolumn:name="ConfigVersion",type=string,JSONPath=`.spec.driver.configVersion`,description="Version of CSIDriver"
+// +kubebuilder:printcolumn:name="Version",type=string,JSONPath=`.spec.version`,description="CSM Version"
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`,description="State of Installation"
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status

@@ -785,3 +785,135 @@ func TestModifyPodmon_ReplacesEnvAndArgs(t *testing.T) {
 		t.Fatalf("expected args [--enable --level=debug], got %v", container.Args)
 	}
 }
+
+func TestSetResiliencyArgs_SyntheticControllerMode_OverridesImageFromMatched(t *testing.T) {
+	ctx := context.Background()
+
+	// Minimal resiliency module with NO components → triggers synthetic branch.
+	resiliency := csmv1.Module{
+		Name:       csmv1.Resiliency,
+		Enabled:    true,
+		Components: nil, // key point: empty
+	}
+
+	// Construct a container that represents podmon in controller mode.
+	// The override uses matched.Images[*container.Name], so ensure Name matches the key we set in matched.Images below.
+	name := "podmon"
+	image := "registry.example/podmon:template"
+	container := &acorev1.ContainerApplyConfiguration{
+		Name:  &name,
+		Image: &image,
+		// You can set Args/Env/PullPolicy if you want to extend coverage for modifyPodmon later.
+	}
+
+	// Matched spec with non-empty version and an image for container.Name → triggers modifyPodmon's matched path.
+	matched := operatorutils.VersionSpec{
+		Version: "v1.16.0",
+		Images: map[string]string{
+			name: "registry.example/podmon:override-controller",
+		},
+	}
+
+	// Minimal CR; only needed for modifyPodmon fallbacks (not used since matched.Version != "")
+	cr := csmv1.ContainerStorageModule{
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Driver: csmv1.Driver{CSIDriverType: csmv1.PowerScaleName}, // driver type not used in modifyPodmon's matched path
+		},
+	}
+
+	// Act: controller mode synthetic branch.
+	setResiliencyArgs(ctx, resiliency, controllerMode, container, matched, cr)
+
+	// Assert: container.Image must be overridden by matched.Images[*container.Name].
+	if container.Image == nil {
+		t.Fatalf("container.Image should not be nil after setResiliencyArgs")
+	}
+	got := *container.Image
+	want := "registry.example/podmon:override-controller"
+	if got != want {
+		t.Errorf("unexpected image after synthetic controller override: got=%s want=%s", got, want)
+	}
+}
+
+func TestSetResiliencyArgs_SyntheticNodeMode_OverridesImageFromMatched(t *testing.T) {
+	ctx := context.Background()
+
+	// Minimal resiliency module with NO components → triggers synthetic branch.
+	resiliency := csmv1.Module{
+		Name:       csmv1.Resiliency,
+		Enabled:    true,
+		Components: nil, // key point: empty
+	}
+
+	// Construct a container that represents podmon in node mode.
+	// The override uses matched.Images[*container.Name], so ensure Name matches the key we set in matched.Images below.
+	name := "podmon-node"
+	image := "registry.example/podmon-node:template"
+	container := &acorev1.ContainerApplyConfiguration{
+		Name:  &name,
+		Image: &image,
+	}
+
+	// Matched spec with non-empty version and an image for container.Name → triggers modifyPodmon's matched path.
+	matched := operatorutils.VersionSpec{
+		Version: "v1.16.0",
+		Images: map[string]string{
+			name: "registry.example/podmon-node:override",
+		},
+	}
+
+	cr := csmv1.ContainerStorageModule{} // not used by matched path
+
+	// Act: node mode synthetic branch.
+	setResiliencyArgs(ctx, resiliency, nodeMode, container, matched, cr)
+
+	// Assert: container.Image must be overridden by matched.Images[*container.Name].
+	if container.Image == nil {
+		t.Fatalf("container.Image should not be nil after setResiliencyArgs")
+	}
+	got := *container.Image
+	want := "registry.example/podmon-node:override"
+	if got != want {
+		t.Errorf("unexpected image after synthetic node override: got=%s want=%s", got, want)
+	}
+}
+
+func TestSetResiliencyArgs_SyntheticUnsupportedMode_NoChange(t *testing.T) {
+	ctx := context.Background()
+
+	// Minimal resiliency module with NO components → triggers synthetic branch logic, but the mode is unsupported → default: return (no-op).
+	resiliency := csmv1.Module{
+		Name:       csmv1.Resiliency,
+		Enabled:    true,
+		Components: nil,
+	}
+
+	name := "podmon"
+	image := "registry.example/podmon:template"
+	container := &acorev1.ContainerApplyConfiguration{
+		Name:  &name,
+		Image: &image,
+	}
+
+	// Even if matched is provided, since mode is unsupported the function will early-return without modifying the container.
+	matched := operatorutils.VersionSpec{
+		Version: "v1.16.0",
+		Images: map[string]string{
+			name: "registry.example/podmon:override-should-not-apply",
+		},
+	}
+
+	cr := csmv1.ContainerStorageModule{}
+
+	// Act: unsupported mode
+	setResiliencyArgs(ctx, resiliency, "unsupported-mode", container, matched, cr)
+
+	// Assert: no change expected
+	if container.Image == nil {
+		t.Fatalf("container.Image should not be nil")
+	}
+	got := *container.Image
+	if got != image {
+		t.Errorf("image unexpectedly changed for unsupported mode: got=%s want=%s", got, image)
+	}
+}

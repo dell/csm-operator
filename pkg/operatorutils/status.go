@@ -302,7 +302,7 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 	replicas := instance.Spec.Driver.Replicas
 	if newStatus.ControllerStatus.Desired == strconv.Itoa(int(replicas)) && running {
 		if lastAnnotations := instance.GetAnnotations(); lastAnnotations != nil {
-			if lastApplied := lastAnnotations["kubectl.kubernetes.io/last-applied-configuration"]; lastApplied != "" {
+			if lastApplied := lastAnnotations["storage.dell.com/PreviouslyAppliedConfiguration"]; lastApplied != "" {
 				instance.Status.LastSuccessfulConfiguration = lastApplied
 			}
 		}

@@ -1534,7 +1534,8 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 	}
 
 	// Check if valid custom registry is mentioned
-	if operatorutils.ValidateCustomRegistry(ctx, cr.Spec.CustomRegistry) != nil {
+	err = operatorutils.ValidateCustomRegistry(ctx, cr.Spec.CustomRegistry)
+	if err != nil {
 		return fmt.Errorf("failed custom registry validation: %v", err)
 	}
 

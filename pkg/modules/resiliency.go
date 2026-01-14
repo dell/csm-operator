@@ -215,6 +215,23 @@ func modifyPodmon(ctx context.Context, component csmv1.ContainerTemplate, contai
 }
 
 func setResiliencyArgs(ctx context.Context, m csmv1.Module, mode string, container *acorev1.ContainerApplyConfiguration, matched operatorutils.VersionSpec, cr csmv1.ContainerStorageModule) {
+	// handle minimal manifest (no components listed) for override with configmap
+	if len(m.Components) == 0 {
+		var synthetic csmv1.ContainerTemplate
+		switch mode {
+		case controllerMode:
+			synthetic = csmv1.ContainerTemplate{
+				Name: operatorutils.PodmonControllerComponent,
+			}
+		case "node":
+			synthetic = csmv1.ContainerTemplate{
+				Name: operatorutils.PodmonNodeComponent,
+			}
+		default:
+			return
+		}
+		modifyPodmon(ctx, synthetic, container, matched, cr)
+	}
 	for _, component := range m.Components {
 		if component.Name == operatorutils.PodmonControllerComponent && mode == controllerMode {
 			modifyPodmon(ctx, component, container, matched, cr)

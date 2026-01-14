@@ -2057,7 +2057,7 @@ func TestUpdateStatusSetsLastSuccessfulConfiguration(t *testing.T) {
 			UID:             "test-uid",
 			ResourceVersion: "1",
 			Annotations: map[string]string{
-				"kubectl.kubernetes.io/last-applied-configuration": `{"driver":"replicas=1"}`,
+				"storage.dell.com/PreviouslyAppliedConfiguration": `{"driver":"replicas=1"}`,
 			},
 		},
 		Status: csmv1.ContainerStorageModuleStatus{
