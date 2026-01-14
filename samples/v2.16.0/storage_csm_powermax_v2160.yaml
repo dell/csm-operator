@@ -156,7 +156,7 @@ spec:
         #   "false" - Disable dynamic Storage Group support (backward compatible)
         # Default value: "false"
         - name: "X_CSI_DYNAMIC_SG_ENABLED"
-          value: "false"
+          value: "true"
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin- volume usage, volume condition
