@@ -151,7 +151,7 @@ func TestCommonCertManager(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
-			err := CommonCertManager(context.TODO(), isDeleting, op, cr, sourceClient)
+			err := CommonCertManager(context.TODO(), isDeleting, op, cr, sourceClient, operatorutils.VersionSpec{})
 			if success {
 				assert.NoError(t, err)
 			} else {
@@ -322,7 +322,7 @@ func TestCommonCertManager_CRDsArePreservedOnDelete(t *testing.T) {
 	}
 	src := ctrlClientFake.NewClientBuilder().WithObjects(cmCRD).Build()
 
-	err = CommonCertManager(ctx, true, operatorConfig, cr, src)
+	err = CommonCertManager(ctx, true, operatorConfig, cr, src, operatorutils.VersionSpec{})
 	assert.NoError(t, err)
 
 	got := &apiextv1.CustomResourceDefinition{}

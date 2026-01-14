@@ -862,7 +862,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: cert-manager-cainjector
-          image: "quay.io/jetstack/cert-manager-cainjector:v1.11.0"
+          image: <CERT_MANAGER_CAINJECTOR_IMAGE>
           imagePullPolicy: IfNotPresent
           args:
             - --v=2
@@ -921,7 +921,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: cert-manager-controller
-          image: "quay.io/jetstack/cert-manager-controller:v1.11.0"
+          image: <CERT_MANAGER_CONTROLLER_IMAGE>
           imagePullPolicy: IfNotPresent
           args:
             - --v=2
@@ -983,7 +983,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: cert-manager-webhook
-          image: "quay.io/jetstack/cert-manager-webhook:v1.11.0"
+          image: <CERT_MANAGER_WEBHOOK_IMAGE>
           imagePullPolicy: IfNotPresent
           args:
             - --v=2
