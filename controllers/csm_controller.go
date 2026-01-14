@@ -1154,7 +1154,7 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 
 	if operatorutils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
 		log.Infow("Reconcile authorization proxy-server")
-		if err := modules.AuthorizationServerDeployment(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+		if err := modules.AuthorizationServerDeployment(ctx, isDeleting, op, cr, ctrlClient, matched); err != nil {
 			return fmt.Errorf("unable to reconcile authorization proxy server: %v", err)
 		}
 

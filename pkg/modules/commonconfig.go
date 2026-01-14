@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
 	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -94,15 +95,27 @@ func checkVersion(moduleType, givenVersion, configPath string) error {
 }
 
 func readConfigFile(ctx context.Context, module csmv1.Module, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, filename string) ([]byte, error) {
+	log := logger.GetLogger(ctx)
 	moduleConfigVersion := module.ConfigVersion
 	if moduleConfigVersion == "" {
 		version, err := operatorutils.GetVersion(ctx, &cr, op)
 		if err != nil {
 			return nil, err
 		}
-		moduleConfigVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, module.Name, op.ConfigDirectory)
+		log.Infof("Version: %s", version)
+		// Default config version is not needed for Authorization >= 2.4.0
+		authAtLeast24, err := operatorutils.MinVersionCheck("v2.4.0", version)
 		if err != nil {
 			return nil, err
+		}
+		if authAtLeast24 && module.Name == csmv1.AuthorizationServer {
+			moduleConfigVersion = version
+			module.ConfigVersion = version
+		} else {
+			moduleConfigVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, module.Name, op.ConfigDirectory)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 

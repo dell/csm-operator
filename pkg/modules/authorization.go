@@ -712,9 +712,18 @@ func AuthorizationServerPrecheck(ctx context.Context, op operatorutils.OperatorC
 		if err != nil {
 			return err
 		}
-		auth.ConfigVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+		// Default config version is not needed for Authorization >= 2.4.0
+		atLeast24, err := operatorutils.MinVersionCheck("v2.4.0", version)
 		if err != nil {
 			return err
+		}
+		if atLeast24 {
+			auth.ConfigVersion = version
+		} else {
+			auth.ConfigVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -758,7 +767,7 @@ func AuthorizationServerPrecheck(ctx context.Context, op operatorutils.OperatorC
 }
 
 // getAuthorizationServerDeployment - apply dynamic values to the deployment manifest before installation
-func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) (string, error) {
+func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, matched operatorutils.VersionSpec) (string, error) {
 	YamlString := ""
 	auth, err := getAuthorizationModule(cr)
 	if err != nil {
@@ -776,17 +785,58 @@ func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.Oper
 	for _, component := range auth.Components {
 		// proxy-server component
 		if component.Name == AuthProxyServerComponent {
-			YamlString = strings.ReplaceAll(YamlString, AuthServerImage, component.ProxyService)
+
+			var matched operatorutils.VersionSpec
+			if cr.Spec.Version != "" {
+				var err error
+				matched, err = operatorutils.ResolveVersionFromConfigMap(ctx, ctrlClient, &cr)
+				if err != nil {
+					return "", err
+				}
+			}
+
+			// default redis component from cr - Remove when 220 support is dropped
+			proxyServerImage := component.ProxyService
+			opaImage := component.Opa
+			opaKubeMgmtImage := component.OpaKubeMgmt
+			tenantServiceImage := component.TenantService
+			roleServiceImage := component.RoleService
+			storageServiceImage := component.StorageService
+			controllerImage := component.AuthorizationController
+			authProxyImages := map[string]string{
+				"proxy-service":            proxyServerImage,
+				"tenant-service":           opaImage,
+				"role-service":             roleServiceImage,
+				"storage-service":          storageServiceImage,
+				"opa":                      opaImage,
+				"opa-kube-mgmt":            opaKubeMgmtImage,
+				"authorization-controller": controllerImage,
+			}
+			// Config map gets highest priority
+			if matched.Version != "" {
+				for key := range authProxyImages {
+					if img := matched.Images[key]; img != "" {
+						authProxyImages[key] = img
+					}
+				}
+			} else if cr.Spec.CustomRegistry != "" {
+				// Followed by custom registry
+				for key := range authProxyImages {
+					authProxyImages[key] = operatorutils.ResolveImage(ctx, authProxyImages[key], cr)
+				}
+			}
+
+			YamlString = strings.ReplaceAll(YamlString, AuthServerImage, proxyServerImage)
 			YamlString = strings.ReplaceAll(YamlString, AuthProxyServiceReplicas, strconv.Itoa(component.ProxyServiceReplicas))
-			YamlString = strings.ReplaceAll(YamlString, AuthOpaImage, component.Opa)
-			YamlString = strings.ReplaceAll(YamlString, AuthOpaKubeMgmtImage, component.OpaKubeMgmt)
-			YamlString = strings.ReplaceAll(YamlString, AuthTenantServiceImage, component.TenantService)
+			YamlString = strings.ReplaceAll(YamlString, AuthOpaImage, opaImage)
+			YamlString = strings.ReplaceAll(YamlString, AuthOpaKubeMgmtImage, opaKubeMgmtImage)
+			YamlString = strings.ReplaceAll(YamlString, AuthTenantServiceImage, tenantServiceImage)
 			YamlString = strings.ReplaceAll(YamlString, AuthTenantServiceReplicas, strconv.Itoa(component.TenantServiceReplicas))
-			YamlString = strings.ReplaceAll(YamlString, AuthRoleServiceImage, component.RoleService)
+			YamlString = strings.ReplaceAll(YamlString, AuthRoleServiceImage, roleServiceImage)
 			YamlString = strings.ReplaceAll(YamlString, AuthRoleServiceReplicas, strconv.Itoa(component.RoleServiceReplicas))
-			YamlString = strings.ReplaceAll(YamlString, AuthStorageServiceImage, component.StorageService)
+			YamlString = strings.ReplaceAll(YamlString, AuthStorageServiceImage, storageServiceImage)
 			YamlString = strings.ReplaceAll(YamlString, AuthStorageServiceReplicas, strconv.Itoa(component.StorageServiceReplicas))
-			YamlString = strings.ReplaceAll(YamlString, AuthControllerImage, component.AuthorizationController)
+			YamlString = strings.ReplaceAll(YamlString, AuthControllerImage, controllerImage)
 			YamlString = strings.ReplaceAll(YamlString, AuthControllerReplicas, strconv.Itoa(component.AuthorizationControllerReplicas))
 			YamlString = strings.ReplaceAll(YamlString, AuthLeaderElectionEnabled, strconv.FormatBool(component.LeaderElection))
 			YamlString = strings.ReplaceAll(YamlString, AuthControllerReconcileInterval, component.ControllerReconcileInterval)
@@ -825,8 +875,8 @@ func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.Oper
 				redisImage = operatorutils.ResolveImage(ctx, redisImage, cr)
 				redisCommanderImage = operatorutils.ResolveImage(ctx, redisCommanderImage, cr)
 			}
-			YamlString = strings.ReplaceAll(YamlString, AuthRedisImage, component.Redis)
-			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommanderImage, component.Commander)
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisImage, redisImage)
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommanderImage, redisCommanderImage)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisName, component.RedisName)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommander, component.RedisCommander)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisSentinel, component.Sentinel)
@@ -891,11 +941,18 @@ func getAuthorizationLocalProvisioner(ctx context.Context, op operatorutils.Oper
 }
 
 // AuthorizationServerDeployment - apply/delete deployment objects
-func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, matched operatorutils.VersionSpec) error {
+	log := logger.GetLogger(ctx)
 	authModule, err := getAuthorizationModule(cr)
 	if err != nil {
 		return err
 	}
+
+	configVersion, err := operatorutils.GetVersion(ctx, &cr, op)
+	if err != nil {
+		return err
+	}
+	authModule.ConfigVersion = configVersion
 
 	useLocalStorage, yamlString, err := getAuthorizationLocalProvisioner(ctx, op, cr)
 	if err != nil {
@@ -909,7 +966,7 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op oper
 		}
 	}
 
-	YamlString, err := getAuthorizationServerDeployment(ctx, op, cr, ctrlClient)
+	YamlString, err := getAuthorizationServerDeployment(ctx, op, cr, ctrlClient, matched)
 	if err != nil {
 		return err
 	}
@@ -919,6 +976,7 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op oper
 		return err
 	}
 
+	log.Infof("Config version of auth module: %s", authModule.ConfigVersion)
 	// scaffolds are applied only for v2.3.0 and above for secret provider class mounts and volumes
 	ok, err := operatorutils.MinVersionCheck("v2.3.0", authModule.ConfigVersion)
 	if err != nil {

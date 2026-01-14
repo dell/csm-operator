@@ -1284,6 +1284,15 @@ func GetVersion(ctx context.Context, cr *csmv1.ContainerStorageModule, op Operat
 			driverType = csmv1.PowerScaleName
 		}
 
+		if driverType == "" {
+			for _, m := range cr.Spec.Modules {
+				if m.Name == csmv1.AuthorizationServer {
+					driverType = csmv1.DriverType(csmv1.AuthorizationServer)
+					break
+				}
+			}
+		}
+
 		if csmVersion, ok := support[driverType]; ok {
 			if configVersion, ok := csmVersion[cr.Spec.Version]; ok {
 				return configVersion, nil
