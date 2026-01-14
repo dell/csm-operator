@@ -39,7 +39,7 @@ on:  # yamllint disable-line rule:truthy
 jobs:
   csm-release:
     name: Release CSM Drivers and Modules
-    uses: CSM/actions/.github/workflows/csm-release-driver-module.yaml@main
+    uses: CSM/actions/.github/workflows/csm-release-driver-module.yaml@usr/falfaroc/test-single-release
     with:
       option: ${{ github.event.inputs.option || 'minor' }}
       version: ${{ github.event.inputs.version || '' }}
