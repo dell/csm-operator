@@ -463,7 +463,7 @@ func getOtelCollector(ctx context.Context, op operatorutils.OperatorConfig, cr c
 	} else if cr.Spec.CustomRegistry != "" {
 		nginxProxyImage = operatorutils.ResolveImage(ctx, nginxProxyImage, cr)
 	}
-	otelCollectorImage := "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0"
+	otelCollectorImage := "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.143.1"
 	configVersion, err := operatorutils.GetVersion(ctx, &cr, op)
 	if err != nil {
 		return "", err
