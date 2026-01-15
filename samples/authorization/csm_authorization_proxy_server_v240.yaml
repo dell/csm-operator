@@ -87,8 +87,8 @@ spec:
               # conjur:
               #  usernamePath: secrets/redis-username
               #  passwordPath: secrets/redis-password
-          redis: redis:8.2.0-alpine
-          commander: rediscommander/redis-commander:latest
+          # redis: redis:8.2.0-alpine
+          # commander: rediscommander/redis-commander:latest
           redisName: redis-csm
           redisCommander: rediscommander
           sentinel: sentinel

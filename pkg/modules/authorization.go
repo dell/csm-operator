@@ -767,7 +767,7 @@ func AuthorizationServerPrecheck(ctx context.Context, op operatorutils.OperatorC
 }
 
 // getAuthorizationServerDeployment - apply dynamic values to the deployment manifest before installation
-func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, matched operatorutils.VersionSpec) (string, error) {
+func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, matched operatorutils.VersionSpec) (string, error) {
 	YamlString := ""
 	auth, err := getAuthorizationModule(cr)
 	if err != nil {
@@ -786,15 +786,6 @@ func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.Oper
 		// proxy-server component
 		if component.Name == AuthProxyServerComponent {
 
-			var matched operatorutils.VersionSpec
-			if cr.Spec.Version != "" {
-				var err error
-				matched, err = operatorutils.ResolveVersionFromConfigMap(ctx, ctrlClient, &cr)
-				if err != nil {
-					return "", err
-				}
-			}
-
 			// default redis component from cr - Remove when 220 support is dropped
 			proxyServerImage := component.ProxyService
 			opaImage := component.Opa
@@ -812,18 +803,9 @@ func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.Oper
 				"opa-kube-mgmt":            &opaKubeMgmtImage,
 				"authorization-controller": &controllerImage,
 			}
-			// Config map gets highest priority
-			if matched.Version != "" {
-				for key := range authProxyImages {
-					if img := matched.Images[key]; img != "" {
-						*authProxyImages[key] = img
-					}
-				}
-			} else if cr.Spec.CustomRegistry != "" {
-				// Followed by custom registry
-				for key := range authProxyImages {
-					*authProxyImages[key] = operatorutils.ResolveImage(ctx, *authProxyImages[key], cr)
-				}
+
+			for key := range authProxyImages {
+				*authProxyImages[key] = getImageForKey(ctx, key, *authProxyImages[key], cr, matched)
 			}
 
 			YamlString = strings.ReplaceAll(YamlString, AuthServerImage, proxyServerImage)
@@ -846,35 +828,10 @@ func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.Oper
 
 		// redis component
 		if component.Name == AuthRedisComponent {
-
-			var matched operatorutils.VersionSpec
-			if cr.Spec.Version != "" {
-				var err error
-				matched, err = operatorutils.ResolveVersionFromConfigMap(ctx, ctrlClient, &cr)
-				if err != nil {
-					return "", err
-				}
-			}
-
 			// default redis component from cr - Remove when 220 support is dropped
-			redisImage := component.Redis
-			redisCommanderImage := component.Commander
+			redisImage := getImageForKey(ctx, "redis", component.Redis, cr, matched)
+			redisCommanderImage := getImageForKey(ctx, "rediscommander", component.Redis, cr, matched)
 
-			// Config map gets highest priority
-			if matched.Version != "" {
-				redisKey := "redis"
-				redisCommanderKey := "rediscommander"
-				if img := matched.Images[redisKey]; img != "" {
-					redisImage = img
-				}
-				if commanderImg := matched.Images[redisCommanderKey]; commanderImg != "" {
-					redisCommanderImage = commanderImg
-				}
-			} else if cr.Spec.CustomRegistry != "" {
-				// Followed by custom registry
-				redisImage = operatorutils.ResolveImage(ctx, redisImage, cr)
-				redisCommanderImage = operatorutils.ResolveImage(ctx, redisCommanderImage, cr)
-			}
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisImage, redisImage)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommanderImage, redisCommanderImage)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisName, component.RedisName)
@@ -943,16 +900,21 @@ func getAuthorizationLocalProvisioner(ctx context.Context, op operatorutils.Oper
 // AuthorizationServerDeployment - apply/delete deployment objects
 func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, matched operatorutils.VersionSpec) error {
 	log := logger.GetLogger(ctx)
-	authModule, err := getAuthorizationModule(cr)
-	if err != nil {
-		return err
-	}
 
 	configVersion, err := operatorutils.GetVersion(ctx, &cr, op)
 	if err != nil {
 		return err
 	}
-	authModule.ConfigVersion = configVersion
+	for i, m := range cr.Spec.Modules {
+		if m.Name == csmv1.AuthorizationServer {
+			cr.Spec.Modules[i].ConfigVersion = configVersion
+		}
+	}
+
+	authModule, err := getAuthorizationModule(cr)
+	if err != nil {
+		return err
+	}
 
 	useLocalStorage, yamlString, err := getAuthorizationLocalProvisioner(ctx, op, cr)
 	if err != nil {
@@ -966,7 +928,7 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op oper
 		}
 	}
 
-	YamlString, err := getAuthorizationServerDeployment(ctx, op, cr, ctrlClient, matched)
+	YamlString, err := getAuthorizationServerDeployment(ctx, op, cr, matched)
 	if err != nil {
 		return err
 	}
@@ -984,33 +946,33 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op oper
 	}
 
 	if ok {
-		err = applyDeleteAuthorizationRedisStatefulsetV2(ctx, isDeleting, cr, ctrlClient)
+		err = applyDeleteAuthorizationRedisStatefulsetV2(ctx, isDeleting, cr, ctrlClient, matched)
 		if err != nil {
 			return err
 		}
 
-		err = applyDeleteAuthorizationRediscommanderDeploymentV2(ctx, isDeleting, cr, ctrlClient)
+		err = applyDeleteAuthorizationRediscommanderDeploymentV2(ctx, isDeleting, cr, ctrlClient, matched)
 		if err != nil {
 			return err
 		}
 
-		err = applyDeleteAuthorizationSentinelStatefulsetV2(ctx, isDeleting, cr, ctrlClient)
+		err = applyDeleteAuthorizationSentinelStatefulsetV2(ctx, isDeleting, cr, ctrlClient, matched)
 		if err != nil {
 			return err
 		}
 
-		err = applyDeleteAuthorizationProxyServerV2(ctx, isDeleting, cr, ctrlClient)
+		err = applyDeleteAuthorizationProxyServerV2(ctx, isDeleting, cr, ctrlClient, matched)
 		if err != nil {
 			return err
 		}
 
-		err = applyDeleteAuthorizationTenantServiceV2(ctx, isDeleting, cr, ctrlClient)
+		err = applyDeleteAuthorizationTenantServiceV2(ctx, isDeleting, cr, ctrlClient, matched)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = authorizationStorageServiceV2(ctx, isDeleting, cr, ctrlClient)
+	err = authorizationStorageServiceV2(ctx, isDeleting, cr, ctrlClient, matched)
 	if err != nil {
 		return err
 	}
@@ -1018,7 +980,7 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op oper
 	return nil
 }
 
-func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, matched operatorutils.VersionSpec) error {
 	log := logger.GetLogger(ctx)
 	authModule, err := getAuthorizationModule(cr)
 	if err != nil {
@@ -1053,7 +1015,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		switch component.Name {
 		case AuthProxyServerComponent:
 			replicas = component.StorageServiceReplicas
-			image = component.StorageService
+			image = getImageForKey(ctx, "storage-service", component.StorageService, cr, matched)
 			leaderElection = component.LeaderElection
 			otelCollector = component.OpenTelemetryCollectorAddress
 		case AuthRedisComponent:
@@ -1450,7 +1412,7 @@ func configureConjurSecretProvider(secretProviderClasses *csmv1.StorageSystemSec
 	}
 }
 
-func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, matched operatorutils.VersionSpec) error {
 	authModule, err := getAuthorizationModule(cr)
 	if err != nil {
 		return err
@@ -1467,9 +1429,9 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 		switch component.Name {
 		case AuthProxyServerComponent:
 			replicas = component.ProxyServiceReplicas
-			proxyImage = component.ProxyService
-			opaImage = component.Opa
-			opaKubeMgmtImage = component.OpaKubeMgmt
+			proxyImage = getImageForKey(ctx, "proxy-service", component.ProxyService, cr, matched)
+			opaImage = getImageForKey(ctx, "redis", component.Opa, cr, matched)
+			opaKubeMgmtImage = getImageForKey(ctx, "opa-kube-mgmt", component.Opa, cr, matched)
 		case AuthRedisComponent:
 			sentinelName = component.Sentinel
 			redisReplicas = component.RedisReplicas
@@ -1507,7 +1469,7 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 	return nil
 }
 
-func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, matched operatorutils.VersionSpec) error {
 	authModule, err := getAuthorizationModule(cr)
 	if err != nil {
 		return err
@@ -1521,7 +1483,7 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 	for _, component := range authModule.Components {
 		switch component.Name {
 		case AuthProxyServerComponent:
-			image = component.TenantService
+			image = getImageForKey(ctx, "tenant-service", component.TenantService, cr, matched)
 			replicas = component.TenantServiceReplicas
 		case AuthRedisComponent:
 			sentinelName = component.Sentinel
@@ -1560,7 +1522,7 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 	return nil
 }
 
-func applyDeleteAuthorizationRedisStatefulsetV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func applyDeleteAuthorizationRedisStatefulsetV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, matched operatorutils.VersionSpec) error {
 	authModule, err := getAuthorizationModule(cr)
 	if err != nil {
 		return err
@@ -1569,11 +1531,12 @@ func applyDeleteAuthorizationRedisStatefulsetV2(ctx context.Context, isDeleting 
 	redisName := ""
 	image := ""
 	redisReplicas := 0
+
 	for _, component := range authModule.Components {
 		switch component.Name {
 		case AuthRedisComponent:
 			redisName = component.RedisName
-			image = component.Redis
+			image = getImageForKey(ctx, "redis", component.Redis, cr, matched)
 			redisReplicas = component.RedisReplicas
 			updateRedisGlobalVars(component)
 		default:
@@ -1607,7 +1570,7 @@ func applyDeleteAuthorizationRedisStatefulsetV2(ctx context.Context, isDeleting 
 	return nil
 }
 
-func applyDeleteAuthorizationRediscommanderDeploymentV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func applyDeleteAuthorizationRediscommanderDeploymentV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, matched operatorutils.VersionSpec) error {
 	authModule, err := getAuthorizationModule(cr)
 	if err != nil {
 		return err
@@ -1622,7 +1585,7 @@ func applyDeleteAuthorizationRediscommanderDeploymentV2(ctx context.Context, isD
 		case AuthRedisComponent:
 			rediscommanderName = component.RedisCommander
 			sentinelName = component.Sentinel
-			image = component.Commander
+			image = getImageForKey(ctx, "rediscommander", component.Commander, cr, matched)
 			redisReplicas = component.RedisReplicas
 			updateRedisGlobalVars(component)
 		default:
@@ -1656,7 +1619,7 @@ func applyDeleteAuthorizationRediscommanderDeploymentV2(ctx context.Context, isD
 	return nil
 }
 
-func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, matched operatorutils.VersionSpec) error {
 	authModule, err := getAuthorizationModule(cr)
 	if err != nil {
 		return err
@@ -1671,7 +1634,7 @@ func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleti
 		case AuthRedisComponent:
 			sentinelName = component.Sentinel
 			redisName = component.RedisName
-			image = component.Redis
+			image = getImageForKey(ctx, "redis", component.Redis, cr, matched)
 			redisReplicas = component.RedisReplicas
 			updateRedisGlobalVars(component)
 		default:
@@ -2528,4 +2491,19 @@ func updateConjurAnnotations(annotations map[string]string, paths ...string) {
 	sb.WriteString(strings.Join(lines, "\n"))
 
 	annotations["conjur.org/secrets"] = sb.String()
+}
+
+func getImageForKey(ctx context.Context, key string, defaultImage string, cr csmv1.ContainerStorageModule, matched operatorutils.VersionSpec) string {
+	// Config map gets highest priority
+	returnImg := defaultImage
+	if matched.Version != "" {
+		if img := matched.Images[key]; img != "" {
+			returnImg = img
+		}
+	} else if cr.Spec.CustomRegistry != "" {
+		// Followed by custom registry
+		returnImg = operatorutils.ResolveImage(ctx, returnImg, cr)
+	}
+
+	return returnImg
 }
