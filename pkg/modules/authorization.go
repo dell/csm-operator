@@ -1430,7 +1430,7 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 		case AuthProxyServerComponent:
 			replicas = component.ProxyServiceReplicas
 			proxyImage = getImageForKey(ctx, "proxy-service", component.ProxyService, cr, matched)
-			opaImage = getImageForKey(ctx, "redis", component.Opa, cr, matched)
+			opaImage = getImageForKey(ctx, "opa", component.Opa, cr, matched)
 			opaKubeMgmtImage = getImageForKey(ctx, "opa-kube-mgmt", component.Opa, cr, matched)
 		case AuthRedisComponent:
 			sentinelName = component.Sentinel
