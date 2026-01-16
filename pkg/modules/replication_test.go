@@ -734,3 +734,104 @@ func TestGetReplicaController_CoversInitComponentBranch(t *testing.T) {
 		t.Log("Deployment has no init containers; the branch was still covered by setting the ReplicationControllerInit component.Image.")
 	}
 }
+
+func TestGetReplicaApplyCR_SyntheticComponentImageOverride(t *testing.T) {
+	ctx := context.Background()
+
+	// Load a replication CR that has the replication module present
+	cr, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+	if err != nil {
+		panic(err)
+	}
+	if len(cr.Spec.Modules) == 0 {
+		t.Fatalf("replication CR must include at least one module")
+	}
+
+	// Force the synthetic branch: no components in the replication module
+	replica := cr.Spec.Modules[0]
+	replica.Name = csmv1.Replication
+	replica.Components = nil
+	cr.Spec.Modules[0] = replica
+
+	// Use the real operatorconfig so readConfigFile("container.yaml") succeeds
+	op := operatorutils.OperatorConfig{
+		ConfigDirectory: "../../operatorconfig",
+	}
+
+	// Matched VersionSpec with image for the replication sidecar
+	matched := operatorutils.VersionSpec{
+		Version: "v1.16.0", // any non-empty version is fine here
+		Images: map[string]string{
+			operatorutils.ReplicationSideCarName: "registry.example/replication-sidecar:override",
+		},
+	}
+
+	// Act
+	mod, container, err := getReplicaApplyCR(ctx, cr, op, matched)
+	assert.NoError(t, err, "getReplicaApplyCR should not error when container.yaml is present")
+	if mod == nil || container == nil {
+		t.Fatalf("expected non-nil module and container")
+	}
+	if container.Image == nil {
+		t.Fatalf("container.Image should not be nil after YAML unmarshal")
+	}
+
+	// Assert: synthetic branch should set image from matched.Images[ReplicationSideCarName]
+	got := *container.Image
+	want := "registry.example/replication-sidecar:override"
+	assert.Equal(t, want, got, "synthetic ReplicationSideCarName image should be overridden by matched.Images")
+}
+
+func TestGetReplicaController_SyntheticManagerImageOverride(t *testing.T) {
+	ctx := context.Background()
+
+	// Load a replication CR that contains the replication module
+	cr, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+	if err != nil {
+		panic(err)
+	}
+	if len(cr.Spec.Modules) == 0 {
+		t.Fatalf("replication CR must include at least one module")
+	}
+
+	// Force synthetic branch: empty components in replication module
+	replica := cr.Spec.Modules[0]
+	replica.Name = csmv1.Replication
+	replica.Components = nil
+	cr.Spec.Modules[0] = replica
+
+	// Use real operatorconfig directory so readConfigFile("controller.yaml") succeeds
+	op := operatorutils.OperatorConfig{
+		ConfigDirectory: "../../operatorconfig",
+	}
+
+	// Provide matched VersionSpec with image for the manager; non-empty Version triggers the override path in GetFinalImage
+	matched := operatorutils.VersionSpec{
+		Version: "v1.16.0", // any non-empty version should be fine
+		Images: map[string]string{
+			operatorutils.ReplicationControllerManager: "registry.example/replication-manager:override",
+		},
+	}
+
+	// Act
+	ctrlObjects, err := getReplicaController(ctx, op, cr, matched)
+	assert.NoError(t, err, "getReplicaController should not error with valid operatorconfig")
+
+	// Find deployment and assert the manager image is set from matched.Images in the synthetic path
+	var dep *appsv1.Deployment
+	for _, obj := range ctrlObjects {
+		if d, ok := obj.(*appsv1.Deployment); ok {
+			dep = d
+			break
+		}
+	}
+	if dep == nil {
+		t.Fatalf("expected a Deployment in ctrlObjects, got none")
+	}
+	if len(dep.Spec.Template.Spec.Containers) == 0 {
+		t.Fatalf("expected at least one container in deployment")
+	}
+	got := dep.Spec.Template.Spec.Containers[0].Image
+	want := "registry.example/replication-manager:override"
+	assert.Equal(t, want, got, "synthetic ReplicationControllerManager image should be overridden by matched.Images")
+}

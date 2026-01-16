@@ -4,9 +4,9 @@ metadata:
   name: powermax
   namespace: powermax
 spec:
+  version: v1.16.0
   driver:
     csiDriverType: "powermax"
-    configVersion: v2.16.0
     forceRemoveDriver: true
     common:
       envs:
@@ -18,14 +18,11 @@ spec:
           value: ""
         - name: X_CSI_TRANSPORT_PROTOCOL
           value: ""
-      image: quay.io/dell/container-storage-modules/csi-powermax:v2.16.0
   # These are the modules which are optional and can be enabled by specifying to enable/disable.
   modules:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: false
-      # For Auth 2.0, use v2.2.0 as configVersion
-      configVersion: v2.4.0
       components:
         - name: karavi-authorization-proxy
           envs:

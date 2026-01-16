@@ -384,7 +384,7 @@ func TestObservabilityTopologyController(t *testing.T) {
 			}
 			// Extra validation for the override case to ensure branch coverage in getTopology:
 			if name == "Success - topology image and loglevel override" {
-				topoObjs, topoErr := getTopology(ctx, op, cr)
+				topoObjs, topoErr := getTopology(ctx, op, cr, operatorutils.VersionSpec{})
 				if topoErr != nil {
 					t.Fatalf("getTopology returned error: %v", topoErr)
 				}
@@ -1647,7 +1647,7 @@ spec:
 	op := operatorConfig
 
 	// Act
-	objs, err := getTopology(ctx, op, cr)
+	objs, err := getTopology(ctx, op, cr, operatorutils.VersionSpec{})
 	if err != nil {
 		t.Fatalf("getTopology returned error: %v", err)
 	}
@@ -1862,4 +1862,68 @@ spec:
 	if !found {
 		t.Fatalf("expected karavi-metrics-powerflex image from matched.Images to override component/template")
 	}
+}
+
+func TestObservabilityTopology_VersionResolveBranches(t *testing.T) {
+	ctx := context.Background()
+
+	// Save & restore seams
+	origResolve := resolveVersionFromConfigMapFn
+	origGetVersion := getVersionFn
+	defer func() {
+		resolveVersionFromConfigMapFn = origResolve
+		getVersionFn = origGetVersion
+	}()
+
+	t.Run("success - version set and ResolveVersionFromConfigMap returns matched", func(t *testing.T) {
+		customResource, err := getCustomResource("./testdata/cr_powerscale_observability_with_topology.yaml")
+		if err != nil {
+			t.Fatalf("failed to load CR: %v", err)
+		}
+		// Force version resolution path
+		customResource.Spec.Version = "v2.14.0"
+
+		sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+		// Stub resolver success
+		resolveVersionFromConfigMapFn = func(_ context.Context, _ ctrlClient.Client, _ *csmv1.ContainerStorageModule) (operatorutils.VersionSpec, error) {
+			return operatorutils.VersionSpec{
+				Version: "v2.14.0",
+				Images: map[string]string{
+					ObservabilityTopologyName: "registry.example/karavi-topology:from-matched",
+				},
+			}, nil
+		}
+
+		// Stub GetVersion → must pass the contains("v2.14") check
+		getVersionFn = func(_ context.Context, _ *csmv1.ContainerStorageModule, _ operatorutils.OperatorConfig) (string, error) {
+			return "v2.14.0", nil
+		}
+
+		// Act
+		err = ObservabilityTopology(ctx, false /* isDeleting */, operatorConfig, customResource, sourceClient)
+		assert.NoError(t, err, "expected success when version resolves from configmap and GetVersion returns v2.14.x")
+	})
+
+	t.Run("fail - version set and ResolveVersionFromConfigMap returns error", func(t *testing.T) {
+		customResource, err := getCustomResource("./testdata/cr_powerscale_observability_with_topology.yaml")
+		if err != nil {
+			t.Fatalf("failed to load CR: %v", err)
+		}
+		customResource.Spec.Version = "v2.14.0"
+
+		sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+		resolveVersionFromConfigMapFn = func(_ context.Context, _ ctrlClient.Client, _ *csmv1.ContainerStorageModule) (operatorutils.VersionSpec, error) {
+			return operatorutils.VersionSpec{}, fmt.Errorf("forced resolve error")
+		}
+
+		// Optionally stub GetVersion to something valid—won’t be reached due to early error
+		getVersionFn = func(_ context.Context, _ *csmv1.ContainerStorageModule, _ operatorutils.OperatorConfig) (string, error) {
+			return "v2.14.0", nil
+		}
+
+		err = ObservabilityTopology(ctx, false, operatorConfig, customResource, sourceClient)
+		assert.Error(t, err, "expected error when version resolution fails")
+	})
 }

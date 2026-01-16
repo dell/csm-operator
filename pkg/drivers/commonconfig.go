@@ -197,6 +197,15 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 		if !removeContainer {
 			operatorutils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &c)
 			operatorutils.UpdateSideCarApply(ctx, cr.Spec.Driver.SideCars, &c, cr, matched)
+			if len(cr.Spec.Driver.SideCars) == 0 {
+				if matched.Version != "" {
+					if img := matched.Images[*containers[i].Name]; img != "" {
+						*c.Image = img
+					}
+				} else if cr.Spec.CustomRegistry != "" {
+					*c.Image = operatorutils.ResolveImage(ctx, string(*c.Image), cr)
+				}
+			}
 			newcontainers = append(newcontainers, c)
 		}
 
@@ -387,6 +396,15 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 		if !removeContainer {
 			operatorutils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &containers[i])
 			operatorutils.UpdateSideCarApply(ctx, cr.Spec.Driver.SideCars, &containers[i], cr, matched)
+			if len(cr.Spec.Driver.SideCars) == 0 {
+				if matched.Version != "" {
+					if img := matched.Images[*containers[i].Name]; img != "" {
+						*c.Image = img
+					}
+				} else if cr.Spec.CustomRegistry != "" {
+					*c.Image = operatorutils.ResolveImage(ctx, string(*c.Image), cr)
+				}
+			}
 			newcontainers = append(newcontainers, c)
 		}
 	}
@@ -431,6 +449,27 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 			}
 		} else if *initcontainers[i].Name == "sdc" {
 			if updatedCr.Spec.CustomRegistry != "" {
+				resolvedImagePath := operatorutils.ResolveImage(ctx, string(*initcontainers[i].Image), cr)
+				initcontainers[i].Image = &resolvedImagePath
+				log.Debugw(fmt.Sprintf("custom registry resolved initcontianer sdc image: %s", *initcontainers[i].Image))
+			}
+		}
+		if *initcontainers[i].Name == "sdc" {
+			// Checking if sdc initcontainer image is present in config map
+			found2 := false
+			for k, v := range matched.Images {
+				if k == "sdc" {
+					image = v
+					found2 = true
+					break
+				}
+			}
+			if found2 {
+				initcontainers[i].Image = &image
+				log.Infow("SDC initcontainer image resolved from ConfigMap",
+					"image", image,
+				)
+			} else if updatedCr.Spec.CustomRegistry != "" {
 				resolvedImagePath := operatorutils.ResolveImage(ctx, string(*initcontainers[i].Image), cr)
 				initcontainers[i].Image = &resolvedImagePath
 				log.Debugw(fmt.Sprintf("custom registry resolved initcontianer sdc image: %s", *initcontainers[i].Image))

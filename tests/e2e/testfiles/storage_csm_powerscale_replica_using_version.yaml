@@ -292,12 +292,6 @@ spec:
           # enabled: Enable/Disable OpenTelemetry Collector
           enabled: false
           # Allowed values: string
-          envs:
-            # image of nginx proxy image
-            # Allowed values: string
-            # Default value: "quay.io/nginx/nginx-unprivileged:1.27"
-            - name: "NGINX_PROXY_IMAGE"
-              value: "quay.io/nginx/nginx-unprivileged:1.27"
         - name: metrics-powerscale
           # enabled: Enable/Disable PowerScale metrics
           enabled: false

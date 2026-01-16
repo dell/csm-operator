@@ -4,23 +4,19 @@ metadata:
   name: vxflexos
   namespace: vxflexos
 spec:
+  version: v1.16.0
   driver:
     csiDriverType: "powerflex"
-    configVersion: v2.16.0
     forceRemoveDriver: true
     node:
       envs:
         - name: X_CSI_SDC_SFTP_REPO_ENABLED
           value: "false"
-    common:
-      image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.16.0
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: false
-      # For Auth 2.0, use v2.2.0 as configVersion
-      configVersion: v2.4.0
       components:
         - name: karavi-authorization-proxy
           envs:

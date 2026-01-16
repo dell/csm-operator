@@ -215,7 +215,10 @@ func UpdateContainerApply(ctx context.Context, toBeApplied []csmv1.ContainerTemp
 	for _, ctr := range toBeApplied {
 		if matched.Version != "" {
 			if img := matched.Images[ctr.Name]; img != "" {
-				*c.Image = img
+				if *c.Name == ctr.Name {
+					*c.Image = img
+					break
+				}
 			}
 		} else if cr.Spec.CustomRegistry != "" {
 			*c.Image = ResolveImage(ctx, string(*c.Image), cr)
@@ -1331,7 +1334,7 @@ func FetchConfigMap(ctx context.Context, ctrlClient client.Client) (corev1.Confi
 	var namespace string
 	for _, cmns := range cmList.Items {
 		if cmns.Name == CSMImages {
-			log.Info(fmt.Sprintf("Using ConfigMap %s/%s to resolve image mappings for specified version ", cmns.Namespace, cmns.Name), "Namespace", cmns.Namespace, "ConfigMapName", cmns.Name)
+			log.Info(fmt.Sprintf("Using ConfigMap %s/%s to resolve image mappings for specified version. ", cmns.Namespace, cmns.Name))
 			namespace = cmns.Namespace
 			found = true
 			break
@@ -1506,7 +1509,7 @@ func GetFinalImage(ctx context.Context, cr csmv1.ContainerStorageModule, matched
 		finalImage = string(component.Image)
 
 	default:
-		finalImage = YamlString
+		finalImage = GetImageField(YamlString)
 	}
 	return finalImage
 }

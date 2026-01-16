@@ -281,8 +281,6 @@ spec:
             # Allowed values: time
             - name: "RETRY_INTERVAL_MAX"
               value: "5m"
-        - name: dell-replication-controller-init
-          # Allowed values: string
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
@@ -300,12 +298,6 @@ spec:
           #  for self-signed certs, leave empty string
           # Allowed values: string
           privateKey: ""
-          envs:
-            # image of nginx proxy image
-            # Allowed values: string
-            # Default value: "quay.io/nginx/nginx-unprivileged:1.27"
-            - name: "NGINX_PROXY_IMAGE"
-              value: "quay.io/nginx/nginx-unprivileged:1.27"
         - name: cert-manager
           # enabled: Enable/Disable cert-manager
           # Allowed values:

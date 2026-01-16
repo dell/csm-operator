@@ -334,6 +334,14 @@ func ReverseProxyInjectDeployment(ctx context.Context, dp v1.DeploymentApplyConf
 	}
 
 	container := *containerPtr
+	// For minimal manifest image override with configmap where component isn't mentioned
+	if len(revProxyModule.Components) == 0 {
+		var synthetic csmv1.ContainerTemplate
+		synthetic = csmv1.ContainerTemplate{
+			Name: ReverseProxyServerComponent,
+		}
+		*container.Image = operatorutils.GetFinalImage(ctx, cr, matched, synthetic, *container.Image)
+	}
 	// update the image
 	for _, side := range revProxyModule.Components {
 		if side.Name == ReverseProxyServerComponent {
