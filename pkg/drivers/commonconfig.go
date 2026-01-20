@@ -332,9 +332,11 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	// Checking if driver image is present in config map
 	found := false
 	var image string
+	var mdmInitContainerImage string
 	for k, v := range matched.Images {
 		if k == string(cr.Spec.Driver.CSIDriverType) {
 			image = v
+			mdmInitContainerImage = v
 			found = true
 			break
 		}
@@ -447,11 +449,15 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 					initcontainers[i].Image = &image
 				}
 			}
-		} else if *initcontainers[i].Name == "sdc" {
-			if updatedCr.Spec.CustomRegistry != "" {
+			if mdmInitContainerImage != "" {
+				initcontainers[i].Image = &mdmInitContainerImage
+				log.Debugw("MDM initcontainer image resolved from ConfigMap",
+					"mdmInitContainerImage", mdmInitContainerImage,
+				)
+			} else if updatedCr.Spec.CustomRegistry != "" {
 				resolvedImagePath := operatorutils.ResolveImage(ctx, string(*initcontainers[i].Image), cr)
 				initcontainers[i].Image = &resolvedImagePath
-				log.Debugw(fmt.Sprintf("custom registry resolved initcontianer sdc image: %s", *initcontainers[i].Image))
+				log.Debugw(fmt.Sprintf("custom registry resolved initcontianer MDM image: %s", *initcontainers[i].Image))
 			}
 		}
 		if *initcontainers[i].Name == "sdc" {
