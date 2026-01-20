@@ -56,6 +56,7 @@ Any time changes made to the operator are being checked into the main branch, sa
           vaultCACertPath: '/config/vault-ca.pem'
       ```
       where "vault" is the name of the vault service running.
+- If scenarios where `customRegistry` is provided in the test CR, make sure the images are   present in the registry path provided. 
 - Dellctl needs to be installed
   - See [here](https://dell.github.io/csm-docs/docs/support/cli/#installation-instructions) for instructions
 - In addition, for drivers that do not use the secret and storageclass creation steps, any required secrets, storageclasses, etc. will need to be created beforehand as well as required namespaces.

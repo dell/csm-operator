@@ -2013,3 +2013,13 @@ func (step *Step) setUpTLSSecretWithSAN(res Resource, namespace string) error {
 
 	return nil
 }
+
+func (step *Step) deleteConfigMap(_ Resource) error {
+	cmd := exec.Command("kubectl", "delete", "cm", "csm-images", "-n", "dell-csm-operator") // #nosec G204
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to delete configmap csm-images: %v", err)
+	}
+
+	return nil
+}

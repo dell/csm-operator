@@ -91,6 +91,7 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Set up Powerflex SFTP CR \[([^"]*)\]$`, step.configurePowerflexSftpInstall)
 	runner.addStep(`^Set up reverse proxy tls secret namespace \[([^"]*)\]`, step.setUpReverseProxy)
 	runner.addStep(`^Set up reverse proxy tls secret with SAN namespace \[([^"]*)\]`, step.setUpTLSSecretWithSAN)
+	runner.addStep(`^Delete ConfigMap$`, step.deleteConfigMap)
 }
 
 func (runner *Runner) addStep(expr string, stepFunc interface{}) {
