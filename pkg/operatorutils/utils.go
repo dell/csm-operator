@@ -1284,6 +1284,15 @@ func GetVersion(ctx context.Context, cr *csmv1.ContainerStorageModule, op Operat
 			driverType = csmv1.PowerScaleName
 		}
 
+		if driverType == "" {
+			for _, m := range cr.Spec.Modules {
+				if m.Name == csmv1.AuthorizationServer {
+					driverType = csmv1.DriverType(csmv1.AuthorizationServer)
+					break
+				}
+			}
+		}
+
 		if csmVersion, ok := support[driverType]; ok {
 			if configVersion, ok := csmVersion[cr.Spec.Version]; ok {
 				return configVersion, nil
@@ -1300,7 +1309,16 @@ func GetVersion(ctx context.Context, cr *csmv1.ContainerStorageModule, op Operat
 		log.Errorf("Unsupported platform %s", driverType)
 		return "", fmt.Errorf("Unsupported platform %s", driverType)
 	}
-	return cr.Spec.Driver.ConfigVersion, nil
+	configVersion := cr.Spec.Driver.ConfigVersion
+	if configVersion == "" {
+		for _, m := range cr.Spec.Modules {
+			if m.Name == csmv1.AuthorizationServer {
+				configVersion = m.ConfigVersion
+				break
+			}
+		}
+	}
+	return configVersion, nil
 }
 
 // ResolveVersionFromConfigMap returns the configmap if it exists
@@ -1405,26 +1423,24 @@ func UpdateUsingConfigMap(csm *csmv1.ContainerStorageModule, cm corev1.ConfigMap
 // ResolveImage returns an image reference combining a custom registry with an
 // existing image path or name. If retainImageRegistryPath is true, the original
 // path segment (e.g., "org/repo/image:tag") is preserved while removing any
-// registry domain from imageFile. If customRegistry is empty, the original
-// imageFile is returned unchanged.
+// registry domain from imageFile. If version or customRegistry is empty,
+// the original imageFile is returned unchanged.
 func ResolveImage(ctx context.Context, originalImageFile string, cr csmv1.ContainerStorageModule) string {
 	version := strings.TrimSpace(cr.Spec.Version)
+	if version == "" {
+		// version is not set - backward compatibility case
+		return originalImageFile
+	}
 	customRegistry := strings.TrimSpace(cr.Spec.CustomRegistry)
+	if customRegistry == "" {
+		// customRegistry is not set - use the original image registry
+		return originalImageFile
+	}
+
 	retainImageRegistryPath := cr.Spec.RetainImageRegistryPath
 	imageFile := strings.TrimSpace(originalImageFile)
 
 	log := logger.GetLogger(ctx)
-
-	// If version is not specified, no override shall be done
-	if version == "" {
-		log.Info("ResolveImage, version not specified, no custom registry override be done")
-		return originalImageFile
-	}
-
-	// Backward compatibility: no override if customRegistry is unset.
-	if customRegistry == "" {
-		return originalImageFile
-	}
 
 	if retainImageRegistryPath {
 		// Retain the repository path (e.g., "dell/container-storage-modules/...").

@@ -101,8 +101,8 @@ func getConfigMap(namespace, configmapName string) *corev1.ConfigMap {
 }
 
 func TestCommonCertManager(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -120,9 +120,9 @@ func TestCommonCertManager(t *testing.T) {
 			}
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
-			return true, true, tmpCR, sourceClient, operatorConfig
+			return true, true, tmpCR, sourceClient, operatorConfig, operatorutils.VersionSpec{}
 		},
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -131,9 +131,9 @@ func TestCommonCertManager(t *testing.T) {
 			tmpCR := customResource
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-			return true, false, tmpCR, sourceClient, operatorConfig
+			return true, false, tmpCR, sourceClient, operatorConfig, operatorutils.VersionSpec{}
 		},
-		"fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+		"fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -144,14 +144,44 @@ func TestCommonCertManager(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return false, false, tmpCR, sourceClient, badOperatorConfig
+			return false, false, tmpCR, sourceClient, badOperatorConfig, operatorutils.VersionSpec{}
+		},
+		"success - creating with custom registry": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_custom_registry.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, false, tmpCR, sourceClient, operatorConfig, operatorutils.VersionSpec{}
+		},
+		"success - creating with version overrides": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			matched := operatorutils.VersionSpec{
+				Version: "v1.14.0",
+				Images: map[string]string{
+					"cert-manager-cainjector": "quay.io/jetstack/cert-manager-cainjector:v1.6.1",
+					"cert-manager-controller": "quay.io/jetstack/cert-manager-controller:v1.6.1",
+					"cert-manager-webhook":    "quay.io/jetstack/cert-manager-webhook:v1.6.1",
+				},
+			}
+			return true, false, tmpCR, sourceClient, operatorConfig, matched
 		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			success, isDeleting, cr, sourceClient, op := tc(t)
+			success, isDeleting, cr, sourceClient, op, matched := tc(t)
 
-			err := CommonCertManager(context.TODO(), isDeleting, op, cr, sourceClient)
+			err := CommonCertManager(context.TODO(), isDeleting, op, cr, sourceClient, matched)
 			if success {
 				assert.NoError(t, err)
 			} else {
@@ -322,7 +352,7 @@ func TestCommonCertManager_CRDsArePreservedOnDelete(t *testing.T) {
 	}
 	src := ctrlClientFake.NewClientBuilder().WithObjects(cmCRD).Build()
 
-	err = CommonCertManager(ctx, true, operatorConfig, cr, src)
+	err = CommonCertManager(ctx, true, operatorConfig, cr, src, operatorutils.VersionSpec{})
 	assert.NoError(t, err)
 
 	got := &apiextv1.CustomResourceDefinition{}

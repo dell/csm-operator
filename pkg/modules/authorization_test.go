@@ -24,9 +24,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -34,6 +36,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	shared "eos2git.cec.lab.emc.com/CSM/csm-operator/tests/sharedutil"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -623,6 +626,19 @@ func TestAuthorizationPreCheck(t *testing.T) {
 			// Expect success: auto-added SKIP_CERTIFICATE_VALIDATION=true -> no cert required
 			return true, auth, tmpCR, client
 		},
+		"fail - invalid csm version": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_auth.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			auth := tmpCR.Spec.Modules[0]
+			tmpCR.Spec.Version = shared.InvalidCSMVersion
+			client := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, auth, tmpCR, client
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -737,6 +753,24 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 			// This will return false because we expect the check "if auth.ConfigVersion == """ to catch it
 			return false, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
+		"fail - invalid csm version": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_custom_registry.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			auth := tmpCR.Spec.Modules[0]
+			auth.ConfigVersion = ""
+			tmpCR.Spec.Version = shared.InvalidCSMVersion
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
+				return ctrlClientFake.NewClientBuilder().WithObjects().Build(), nil
+			}
+
+			return false, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -769,8 +803,8 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 }
 
 func TestAuthorizationServerDeployment(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -793,9 +827,9 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cm).Build()
 
-			return true, true, tmpCR, sourceClient, operatorConfig
+			return true, true, tmpCR, sourceClient, operatorConfig, operatorutils.VersionSpec{}
 		},
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -808,9 +842,9 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return true, false, tmpCR, sourceClient, operatorConfig
+			return true, false, tmpCR, sourceClient, operatorConfig, operatorutils.VersionSpec{}
 		},
-		"success - creating with vault client certificates": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+		"success - creating with vault client certificates": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_vault_cert.yaml")
 			if err != nil {
 				panic(err)
@@ -823,9 +857,9 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return true, false, tmpCR, sourceClient, operatorConfig
+			return true, false, tmpCR, sourceClient, operatorConfig, operatorutils.VersionSpec{}
 		},
-		"success - creating with default redis storage class": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+		"success - creating with default redis storage class": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_no_redis.yaml")
 			if err != nil {
 				panic(err)
@@ -838,9 +872,9 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return true, false, tmpCR, sourceClient, operatorConfig
+			return true, false, tmpCR, sourceClient, operatorConfig, operatorutils.VersionSpec{}
 		},
-		"success - use default redis kubernetes secret": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+		"success - use default redis kubernetes secret": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_v230.yaml")
 			if err != nil {
 				panic(err)
@@ -852,10 +886,10 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return true, false, customResource, sourceClient, operatorConfig
+			return true, false, customResource, sourceClient, operatorConfig, operatorutils.VersionSpec{}
 		},
 
-		"success - use redis secret provider class": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+		"success - use redis secret provider class": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_secret_provider_class.yaml")
 			if err != nil {
 				panic(err)
@@ -867,10 +901,10 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return true, false, customResource, sourceClient, operatorConfig
+			return true, false, customResource, sourceClient, operatorConfig, operatorutils.VersionSpec{}
 		},
 
-		"fail - authorization module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+		"fail - authorization module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
 				panic(err)
@@ -883,9 +917,9 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return false, false, tmpCR, sourceClient, operatorConfig
+			return false, false, tmpCR, sourceClient, operatorConfig, operatorutils.VersionSpec{}
 		},
-		"fail - corrupt vault ca": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+		"fail - corrupt vault ca": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_bad_vault_ca.yaml")
 			if err != nil {
 				panic(err)
@@ -898,9 +932,9 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return false, false, tmpCR, sourceClient, operatorConfig
+			return false, false, tmpCR, sourceClient, operatorConfig, operatorutils.VersionSpec{}
 		},
-		"fail - corrupt vault client cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+		"fail - corrupt vault client cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_bad_vault_cert.yaml")
 			if err != nil {
 				panic(err)
@@ -913,9 +947,9 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return false, false, tmpCR, sourceClient, operatorConfig
+			return false, false, tmpCR, sourceClient, operatorConfig, operatorutils.VersionSpec{}
 		},
-		"fail - corrupt vault client key": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+		"fail - corrupt vault client key": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_bad_vault_key.yaml")
 			if err != nil {
 				panic(err)
@@ -928,14 +962,57 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			}
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return false, false, tmpCR, sourceClient, operatorConfig
+			return false, false, tmpCR, sourceClient, operatorConfig, operatorutils.VersionSpec{}
+		},
+		"success - creating with custom registry": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_custom_registry.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return true, false, tmpCR, sourceClient, operatorConfig, operatorutils.VersionSpec{}
+		},
+		"success - creating with config map": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_custom_registry.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			err = certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			matched := operatorutils.VersionSpec{
+				Version: "v1.14.0",
+				Images: map[string]string{
+					"proxy-service":            "quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.2.0",
+					"tenant-service":           "quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.2.0",
+					"role-service":             "quay.io/dell/container-storage-modules/csm-authorization-role:v2.2.0",
+					"storage-service":          "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.2.0",
+					"opa":                      "docker.io/openpolicyagent/opa:0.70.0",
+					"opa-kube-mgmt":            "docker.io/openpolicyagent/kube-mgmt:8.5.7",
+					"authorization-controller": "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.2.0",
+				},
+			}
+
+			return true, false, tmpCR, sourceClient, operatorConfig, matched
 		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			success, isDeleting, cr, sourceClient, op := tc(t)
+			success, isDeleting, cr, sourceClient, op, matched := tc(t)
 
-			err := AuthorizationServerDeployment(context.TODO(), isDeleting, op, cr, sourceClient)
+			err := AuthorizationServerDeployment(context.TODO(), isDeleting, op, cr, sourceClient, matched)
 			if success {
 				assert.NoError(t, err)
 			} else {
@@ -958,7 +1035,7 @@ func TestAuthorizationOpenTelemetry(t *testing.T) {
 	}
 	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-	err = AuthorizationServerDeployment(context.TODO(), false, operatorConfig, cr, sourceClient)
+	err = AuthorizationServerDeployment(context.TODO(), false, operatorConfig, cr, sourceClient, operatorutils.VersionSpec{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1359,7 +1436,7 @@ func TestAuthorizationStorageServiceVault(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			isDeleting, cr, sourceClient, checkFn := tc(t)
 
-			err := authorizationStorageServiceV2(context.TODO(), isDeleting, cr, sourceClient)
+			err := authorizationStorageServiceV2(context.TODO(), isDeleting, cr, sourceClient, operatorutils.VersionSpec{})
 			checkFn(t, sourceClient, err)
 		})
 	}
@@ -1658,7 +1735,7 @@ func TestAuthorizationStorageServiceSecretProviderClass(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			isDeleting, cr, sourceClient, checkFn := tc(t)
 
-			err := authorizationStorageServiceV2(context.TODO(), isDeleting, cr, sourceClient)
+			err := authorizationStorageServiceV2(context.TODO(), isDeleting, cr, sourceClient, operatorutils.VersionSpec{})
 			checkFn(t, sourceClient, err)
 		})
 	}
@@ -1739,7 +1816,7 @@ func TestAuthorizationStorageServiceSecret(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			isDeleting, cr, sourceClient, checkFn := tc(t)
 
-			err := authorizationStorageServiceV2(context.TODO(), isDeleting, cr, sourceClient)
+			err := authorizationStorageServiceV2(context.TODO(), isDeleting, cr, sourceClient, operatorutils.VersionSpec{})
 			checkFn(t, sourceClient, err)
 		})
 	}
@@ -1791,7 +1868,7 @@ func TestAuthorizationStorageServiceSecretAndSecretProviderClass(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			isDeleting, cr, sourceClient, checkFn := tc(t)
 
-			err := authorizationStorageServiceV2(context.TODO(), isDeleting, cr, sourceClient)
+			err := authorizationStorageServiceV2(context.TODO(), isDeleting, cr, sourceClient, operatorutils.VersionSpec{})
 			checkFn(t, err)
 		})
 	}
@@ -1877,7 +1954,7 @@ func TestAuthorizationTenantServiceSecretProviderClass(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			isDeleting, cr, sourceClient, checkFn := tc(t)
 
-			err := applyDeleteAuthorizationTenantServiceV2(context.TODO(), isDeleting, cr, sourceClient)
+			err := applyDeleteAuthorizationTenantServiceV2(context.TODO(), isDeleting, cr, sourceClient, operatorutils.VersionSpec{})
 			checkFn(t, sourceClient, err)
 		})
 	}
@@ -2989,5 +3066,45 @@ func TestGetAuthApplyCR_ConfigMapNoImageForKey(t *testing.T) {
 	}
 	if *container2.Image != defaultImage {
 		t.Fatalf("expected image to remain %q when no proxy key image provided, got %q", defaultImage, *container2.Image)
+	}
+}
+
+func TestGetDefaultAuthImage(t *testing.T) {
+	tests := []struct {
+		name         string
+		componentImg string
+		defaultImg   string
+		expectedImg  string
+	}{
+		{
+			name:         "both component image and default image specified returns component image",
+			componentImg: "registry.example/component:1.0.0",
+			defaultImg:   "registry.example/default:2.0.0",
+			expectedImg:  "registry.example/component:1.0.0",
+		},
+		{
+			name:         "no component image returns default image",
+			componentImg: "",
+			defaultImg:   "registry.example/default:2.0.0",
+			expectedImg:  "registry.example/default:2.0.0",
+		},
+		{
+			name:         "no images specified return empty string",
+			componentImg: "",
+			defaultImg:   "",
+			expectedImg:  "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := getDefaultAuthImage(
+				tt.componentImg,
+				tt.defaultImg,
+				operatorutils.VersionSpec{Version: "1.6.0", Images: map[string]string{}})
+			if got != tt.expectedImg {
+				t.Fatalf("unexpected image: got %q, want %q", got, tt.expectedImg)
+			}
+		})
 	}
 }

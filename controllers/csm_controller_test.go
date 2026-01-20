@@ -940,6 +940,7 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 func (suite *CSMControllerTestSuite) TestRemoveModule() {
 	r := suite.createReconciler()
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Version = shared.CSMVersion
 	csm.Spec.Modules = getAuthProxyServer()
 	csmBadVersionAuthProxy := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csmBadVersionAuthProxy.Spec.Modules = getAuthProxyServer()
@@ -1162,6 +1163,14 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleError() {
 
 	// error in Authorization
 	csm.Spec.Modules = getAuthModule()
+	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	assert.NotNil(suite.T(), err)
+
+	// error in Authorization Proxy Server
+	csm.Spec.Modules = getAuthProxyServer()
+	csm.Spec.Driver.CSIDriverType = ""
+	csm.Spec.Modules[0].ConfigVersion = ""
+	csm.Spec.Version = shared.CSMVersion
 	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
 	assert.NotNil(suite.T(), err)
 
@@ -2140,13 +2149,13 @@ func (suite *CSMControllerTestSuite) TestReconcileObservabilityError() {
 	badOperatorConfig := operatorutils.OperatorConfig{
 		ConfigDirectory: "../in-valid-path",
 	}
-	err := reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, nil, suite.fakeClient, suite.k8sClient)
+	err := reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, nil, suite.fakeClient, suite.k8sClient, operatorutils.VersionSpec{})
 	assert.NotNil(suite.T(), err)
 
 	for i := range csm.Spec.Modules[0].Components {
 		fmt.Printf("Component name: %s\n", csm.Spec.Modules[0].Components[i].Name)
 		csm.Spec.Modules[0].Components[i].Enabled = &[]bool{false}[0]
-		err = reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, nil, suite.fakeClient, suite.k8sClient)
+		err = reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, nil, suite.fakeClient, suite.k8sClient, operatorutils.VersionSpec{})
 		if i < len(csm.Spec.Modules[0].Components)-1 {
 			assert.NotNil(suite.T(), err)
 		} else {
@@ -2181,7 +2190,7 @@ func (suite *CSMControllerTestSuite) TestReconcileObservabilityErrorBadComponent
 	goodModules := csm.Spec.Modules[0].Components
 	csm.Spec.Modules[0].Components = append(badComponent, csm.Spec.Modules[0].Components...)
 
-	err := reconciler.reconcileObservability(ctx, false, operatorConfig, csm, nil, suite.fakeClient, suite.k8sClient)
+	err := reconciler.reconcileObservability(ctx, false, operatorConfig, csm, nil, suite.fakeClient, suite.k8sClient, operatorutils.VersionSpec{})
 	assert.NotNil(suite.T(), err)
 
 	csm.Spec.Modules[0].Components = goodModules
@@ -2207,7 +2216,7 @@ func (suite *CSMControllerTestSuite) TestReconcileObservabilityErrorBadCert() {
 
 	fmt.Printf("[TestReconcileObservabilityErrorBadCert] module components: %+v\n", csm.Spec.Modules[0].Components)
 
-	err := reconciler.reconcileObservability(ctx, false, operatorConfig, csm, nil, suite.fakeClient, suite.k8sClient)
+	err := reconciler.reconcileObservability(ctx, false, operatorConfig, csm, nil, suite.fakeClient, suite.k8sClient, operatorutils.VersionSpec{})
 	assert.NotNil(suite.T(), err)
 
 	csm.Spec.Modules[0].Components = goodModules
@@ -2221,30 +2230,30 @@ func (suite *CSMControllerTestSuite) TestReconcileAuthorization() {
 		ConfigDirectory: "../in-valid-path",
 	}
 
-	err := reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	err := reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient, operatorutils.VersionSpec{})
 	assert.NotNil(suite.T(), err)
 
 	err = reconciler.reconcileAuthorizationCRDS(ctx, badOperatorConfig, csm, suite.fakeClient)
 	assert.NotNil(suite.T(), err)
 
 	csm.Spec.Modules[0].Components[0].Enabled = &[]bool{false}[0]
-	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient, operatorutils.VersionSpec{})
 	assert.NotNil(suite.T(), err)
 
 	csm.Spec.Modules[0].Components[1].Enabled = &[]bool{false}[0]
-	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient, operatorutils.VersionSpec{})
 	assert.Error(suite.T(), err)
 
 	csm.Spec.Modules[0].Components[2].Enabled = &[]bool{false}[0]
-	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient, operatorutils.VersionSpec{})
 	assert.Nil(suite.T(), err)
 
 	csm.Spec.Modules[0].Components[3].Enabled = &[]bool{false}[0]
-	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient, operatorutils.VersionSpec{})
 	assert.Nil(suite.T(), err)
 
 	csm.Spec.Modules[0] = csmv1.Module{}
-	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient, operatorutils.VersionSpec{})
 	assert.NotNil(suite.T(), err)
 
 	// Restore the status
@@ -2268,7 +2277,7 @@ func (suite *CSMControllerTestSuite) TestReconcileAuthorizationBadCert() {
 
 	fmt.Printf("[TestReconcileAuthorizationBadCert] module components: %+v\n", csm.Spec.Modules[0].Components)
 
-	err := reconciler.reconcileAuthorization(ctx, false, operatorConfig, csm, suite.fakeClient)
+	err := reconciler.reconcileAuthorization(ctx, false, operatorConfig, csm, suite.fakeClient, operatorutils.VersionSpec{})
 	assert.NotNil(suite.T(), err)
 
 	csm.Spec.Modules[0].Components = goodModules

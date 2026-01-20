@@ -376,7 +376,7 @@ func TestObservabilityTopologyController(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
-			err := ObservabilityTopology(ctx, isDeleting, op, cr, sourceClient)
+			err := ObservabilityTopology(ctx, isDeleting, op, cr, sourceClient, operatorutils.VersionSpec{})
 			if success {
 				assert.NoError(t, err)
 			} else {
@@ -788,7 +788,7 @@ func TestOtelCollector(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
-			err := OtelCollector(ctx, isDeleting, op, cr, sourceClient)
+			err := OtelCollector(ctx, isDeleting, op, cr, sourceClient, operatorutils.VersionSpec{})
 			if success {
 				assert.NoError(t, err)
 			} else {
@@ -1868,10 +1868,8 @@ func TestObservabilityTopology_VersionResolveBranches(t *testing.T) {
 	ctx := context.Background()
 
 	// Save & restore seams
-	origResolve := resolveVersionFromConfigMapFn
 	origGetVersion := getVersionFn
 	defer func() {
-		resolveVersionFromConfigMapFn = origResolve
 		getVersionFn = origGetVersion
 	}()
 
@@ -1885,14 +1883,11 @@ func TestObservabilityTopology_VersionResolveBranches(t *testing.T) {
 
 		sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-		// Stub resolver success
-		resolveVersionFromConfigMapFn = func(_ context.Context, _ ctrlClient.Client, _ *csmv1.ContainerStorageModule) (operatorutils.VersionSpec, error) {
-			return operatorutils.VersionSpec{
-				Version: "v2.14.0",
-				Images: map[string]string{
-					ObservabilityTopologyName: "registry.example/karavi-topology:from-matched",
-				},
-			}, nil
+		matched := operatorutils.VersionSpec{
+			Version: "v2.14.0",
+			Images: map[string]string{
+				ObservabilityTopologyName: "registry.example/karavi-topology:from-matched",
+			},
 		}
 
 		// Stub GetVersion → must pass the contains("v2.14") check
@@ -1901,7 +1896,7 @@ func TestObservabilityTopology_VersionResolveBranches(t *testing.T) {
 		}
 
 		// Act
-		err = ObservabilityTopology(ctx, false /* isDeleting */, operatorConfig, customResource, sourceClient)
+		err = ObservabilityTopology(ctx, false /* isDeleting */, operatorConfig, customResource, sourceClient, matched)
 		assert.NoError(t, err, "expected success when version resolves from configmap and GetVersion returns v2.14.x")
 	})
 
@@ -1914,16 +1909,12 @@ func TestObservabilityTopology_VersionResolveBranches(t *testing.T) {
 
 		sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-		resolveVersionFromConfigMapFn = func(_ context.Context, _ ctrlClient.Client, _ *csmv1.ContainerStorageModule) (operatorutils.VersionSpec, error) {
-			return operatorutils.VersionSpec{}, fmt.Errorf("forced resolve error")
-		}
-
 		// Optionally stub GetVersion to something valid—won’t be reached due to early error
 		getVersionFn = func(_ context.Context, _ *csmv1.ContainerStorageModule, _ operatorutils.OperatorConfig) (string, error) {
-			return "v2.14.0", nil
+			return "", fmt.Errorf("forced GetVersion error")
 		}
 
-		err = ObservabilityTopology(ctx, false, operatorConfig, customResource, sourceClient)
+		err = ObservabilityTopology(ctx, false, operatorConfig, customResource, sourceClient, operatorutils.VersionSpec{})
 		assert.Error(t, err, "expected error when version resolution fails")
 	})
 }

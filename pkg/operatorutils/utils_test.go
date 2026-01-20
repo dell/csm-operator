@@ -3417,6 +3417,42 @@ func TestGetVersion(t *testing.T) {
 		}
 	}
 
+	// Helper for creating a CR with an AuthorizationServer module
+	newCSMWithAuthModule := func(specVersion, driverConfigVersion, moduleConfigVersion string, platform csmv1.DriverType) *csmv1.ContainerStorageModule {
+		return &csmv1.ContainerStorageModule{
+			Spec: csmv1.ContainerStorageModuleSpec{
+				Version: specVersion,
+				Driver: csmv1.Driver{
+					CSIDriverType: platform,
+					ConfigVersion: driverConfigVersion,
+					Common: &csmv1.ContainerTemplate{
+						ImagePullPolicy: corev1.PullAlways,
+					},
+				},
+				Modules: []csmv1.Module{
+					{
+						Name:          csmv1.AuthorizationServer,
+						ConfigVersion: moduleConfigVersion,
+					},
+				},
+			},
+		}
+	}
+
+	// Helper for creating a CR with an AuthorizationServer module
+	newCSMWithoutDriver := func(specVersion string) *csmv1.ContainerStorageModule {
+		return &csmv1.ContainerStorageModule{
+			Spec: csmv1.ContainerStorageModuleSpec{
+				Version: specVersion,
+				Modules: []csmv1.Module{
+					{
+						Name: csmv1.AuthorizationServer,
+					},
+				},
+			},
+		}
+	}
+
 	cases := []struct {
 		name        string
 		cr          *csmv1.ContainerStorageModule
@@ -3449,7 +3485,7 @@ func TestGetVersion(t *testing.T) {
 				ConfigDirectory: "invalid/path",
 			},
 			want:        "",
-			expectedErr: "failed to read file invalid/path/common/csm-version-mapping.yaml: open invalid/path/common/csm-version-mapping.yaml: no such file or directory",
+			expectedErr: "failed to read file invalid/path/common/csm-version-mapping.yaml",
 		},
 		{
 			name: "invalid_platform",
@@ -3467,7 +3503,25 @@ func TestGetVersion(t *testing.T) {
 				ConfigDirectory: "../../operatorconfig",
 			},
 			want:        "",
-			expectedErr: "No custom resource configuration is available for CSM version v1.10.0.",
+			expectedErr: "No custom resource configuration is available for CSM version v1.10.0. Supported CSM versions are:",
+		},
+		{
+			name: "config_version_from_module_when_driver_type_empty",
+			cr:   newCSMWithAuthModule("", "", "v2.4.0", ""),
+			op: OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			},
+			want:        "v2.4.0",
+			expectedErr: "",
+		},
+		{
+			name: "config_version_from_module_when_driver_type_empty",
+			cr:   newCSMWithoutDriver("v1.16.0"),
+			op: OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			},
+			want:        "v2.4.0",
+			expectedErr: "",
 		},
 	}
 
@@ -3475,7 +3529,10 @@ func TestGetVersion(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := GetVersion(ctx, tc.cr, tc.op)
 			if err != nil && !strings.Contains(err.Error(), tc.expectedErr) {
-				t.Errorf("GetVersion() returned error = %v but expected error = %v", err, tc.expectedErr)
+				t.Errorf("GetVersion() returned error = %v but expected to contain = %q", err, tc.expectedErr)
+			}
+			if err == nil && tc.expectedErr != "" {
+				t.Errorf("GetVersion() expected error containing %q but got nil", tc.expectedErr)
 			}
 			if got != tc.want {
 				t.Errorf("GetVersion() = %q, want %q", got, tc.want)

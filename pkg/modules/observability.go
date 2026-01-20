@@ -35,10 +35,9 @@ import (
 
 // Test seams (overridden in unit tests)
 var (
-	getObservabilityModuleFn      = getObservabilityModule
-	readConfigFileFn              = readConfigFile
-	resolveVersionFromConfigMapFn = operatorutils.ResolveVersionFromConfigMap
-	getVersionFn                  = operatorutils.GetVersion
+	getObservabilityModuleFn = getObservabilityModule
+	readConfigFileFn         = readConfigFile
+	getVersionFn             = operatorutils.GetVersion
 )
 
 const (
@@ -327,18 +326,8 @@ func ObservabilityPrecheck(ctx context.Context, op operatorutils.OperatorConfig,
 }
 
 // ObservabilityTopology - delete or update topology objectstools
-func ObservabilityTopology(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+func ObservabilityTopology(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, matched operatorutils.VersionSpec) error {
 	log := logger.GetLogger(ctx)
-
-	var matched operatorutils.VersionSpec
-	if cr.Spec.Version != "" {
-		var err error
-		matched, err = resolveVersionFromConfigMapFn(ctx, ctrlClient, &cr)
-		if err != nil {
-			log.Error(err, "Failed to get version from configmap")
-			return err
-		}
-	}
 
 	configVersion, err := getVersionFn(ctx, &cr, op)
 	if err != nil {
@@ -409,12 +398,7 @@ func getTopology(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.
 }
 
 // OtelCollector - delete or update otel collector objects
-func OtelCollector(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
-	log := logger.GetLogger(ctx)
-	matched, err := operatorutils.ResolveVersionFromConfigMap(ctx, ctrlClient, &cr)
-	if err != nil {
-		log.Errorw("image resolution via ConfigMap failed", "err", err, "specVersion", cr.Spec.Version)
-	}
+func OtelCollector(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient client.Client, matched operatorutils.VersionSpec) error {
 	YamlString, err := getOtelCollector(ctx, op, cr, matched)
 	if err != nil {
 		return err

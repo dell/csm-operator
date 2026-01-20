@@ -56,12 +56,8 @@ spec:
               # additional host rules for the proxy-server ingress
               hosts:
                 - authorization-ingress-nginx-controller.authorization.svc.cluster.local
-              # - [application name]-ingress-nginx-controller.[namespace].svc.cluster.local
-
               # additional annotations for the proxy-server ingress
               annotations: {}
-          # openTelemetryCollectorAddress: the OTLP receiving endpoint using gRPC
-          openTelemetryCollectorAddress: ""
         - name: redis
           # Optional Redis secret configuration:
           # If using Secret Store CSI driver, specify the SecretProviderClass for Redis credentials.
@@ -75,54 +71,22 @@ spec:
               redisUsernameKey: ""
               # Key in the secret that stores the Redis password.
               redisPasswordKey: ""
-              # Optional paths to the Conjur secrets that store the Redis username and password
-              # conjur:
-              #  usernamePath: secrets/redis-username
-              #  passwordPath: secrets/redis-password
           redisName: redis-csm
           redisCommander: rediscommander
           sentinel: sentinel
           redisReplicas: 5
 
         - name: config
-          # Optional:
-          # Config secret configuration for JWT signing secret:
-          # If using a Secret Store CSI driver, specify the SecretProviderClass details that holds the config secretObject.
-          # Otherwise leave the fields blank and create the "karavi-config-secret" Kubernetes secret.
           configSecretProviderClass:
             # Name of the SecretProviderClass that holds the config secretObject.
             - secretProviderClassName: ""
-              # Name of the Kubernetes secret (created by the Secret Store CSI driver) that contains the config secret.
+              # The name of the Kubernetes secret created by the CSI driver
               configSecretName: ""
-              # Uncomment this section if using Conjur to store the config secret, otherwise leave commented out.
-              # Path for Conjur secret that stores the config secret.
-              # conjur:
-              #   secretPath: secrets/config-object
 
-        # Comment and uncomment the appropriate sections below to use the desired method.
-        # Storage system credentials can be provided in one of two ways:
-        # 1. Using a SecretProviderClass (for dynamic secrets from external providers)
-        # 2. Using a Kubernetes Secret (for static credentials)
-        # Only one of the two can be specified at a time.
         - name: storage-system-credentials
-          secretProviderClasses:
-            vault:
-              - secret-provider-class-1
-              - secret-provider-class-2
-            # conjur:
-            #   - name: secret-provider-class-3
-            #     paths:
-            #       - usernamePath: secrets/username1
-            #         passwordPath: secrets/password1
-            #       - usernamePath: secrets/username2
-            #         passwordPath: secrets/password2
-            #   - name: secret-provider-class-4
-            #     paths:
-            #       - usernamePath: secrets/username3
-            #         passwordPath: secrets/password3
-          # secrets:
-            #   - secret-1
-            #   - secret-2
+          secrets:
+            - secret-1
+
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -133,4 +97,4 @@ data:
   csm-config-params.yaml: |-
     CONCURRENT_STORAGE_REQUESTS: 10
     LOG_LEVEL: debug
-    STORAGE_CAPACITY_POLL_INTERVAL: 30m
+    STORAGE_CAPACITY_POLL_INTERVAL: 30s
