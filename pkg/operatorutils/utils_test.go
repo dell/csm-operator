@@ -4035,17 +4035,6 @@ func TestResolveImage(t *testing.T) {
 		want              string
 	}{
 		{
-			name:              "version empty => return original",
-			originalImageFile: "quay.io/org/image:tag",
-			cr: csmv1.ContainerStorageModule{
-				Spec: csmv1.ContainerStorageModuleSpec{
-					Version:        "",
-					CustomRegistry: "my.registry.local",
-				},
-			},
-			want: "quay.io/org/image:tag",
-		},
-		{
 			name:              "custom registry empty => return original",
 			originalImageFile: "repo/org/image:tag",
 			cr: csmv1.ContainerStorageModule{

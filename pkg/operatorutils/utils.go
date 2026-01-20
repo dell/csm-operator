@@ -1423,14 +1423,9 @@ func UpdateUsingConfigMap(csm *csmv1.ContainerStorageModule, cm corev1.ConfigMap
 // ResolveImage returns an image reference combining a custom registry with an
 // existing image path or name. If retainImageRegistryPath is true, the original
 // path segment (e.g., "org/repo/image:tag") is preserved while removing any
-// registry domain from imageFile. If version or customRegistry is empty,
+// registry domain from imageFile. If customRegistry is empty,
 // the original imageFile is returned unchanged.
 func ResolveImage(ctx context.Context, originalImageFile string, cr csmv1.ContainerStorageModule) string {
-	version := strings.TrimSpace(cr.Spec.Version)
-	if version == "" {
-		// version is not set - backward compatibility case
-		return originalImageFile
-	}
 	customRegistry := strings.TrimSpace(cr.Spec.CustomRegistry)
 	if customRegistry == "" {
 		// customRegistry is not set - use the original image registry
