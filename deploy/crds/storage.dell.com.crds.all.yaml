@@ -3265,8 +3265,6 @@ spec:
                   rule: '!(has(self.version) && self.version != "" && has(self.driver) && has(self.driver.sideCars) && self.driver.sideCars.exists(sc, has(sc.image) && sc.image != ""))'
                 - message: spec.modules[*].components[*].image is forbidden when spec.version is set
                   rule: '!(has(self.version) && self.version != "" && has(self.modules) && self.modules.exists(m, has(m.components) && m.components.exists(c, has(c.image) && c.image != "")))'
-                - message: spec.modules[*].configVersion is forbidden when spec.version is set
-                  rule: '!(has(self.version) && self.version != "" && has(self.modules) && self.modules.exists(m, has(m.configVersion) && m.configVersion != ""))'
                 - message: spec.customRegistry is forbidden when spec.version is empty
                   rule: '!(has(self.customRegistry) && self.customRegistry != "" && !(has(self.version) && self.version != ""))'
                 - message: spec.retainImageRegistryPath is forbidden unless both spec.version and spec.customRegistry are set

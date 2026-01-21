@@ -723,6 +723,8 @@ func AuthorizationServerPrecheck(ctx context.Context, op operatorutils.OperatorC
 		return err
 	}
 
+	// TODO: Add check for spec.version must be set for CSM 1.16.0 (Authorization 2.4.0) and later
+
 	// Validate the (non-empty) version here
 	if err := checkVersion(string(csmv1.Authorization), authVersion, op.ConfigDirectory); err != nil {
 		return err
@@ -898,22 +900,6 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op oper
 	authModule, err := getAuthorizationModule(cr)
 	if err != nil {
 		return err
-	}
-
-	var authVersion string
-	if authModule.ConfigVersion == "" {
-		authVersion, err = operatorutils.GetVersion(ctx, &cr, op)
-		if err != nil {
-			return err
-		}
-		for i, m := range cr.Spec.Modules {
-			if m.Name == csmv1.AuthorizationServer {
-				cr.Spec.Modules[i].ConfigVersion = authVersion
-				cr.Spec.Version = ""
-				break
-			}
-		}
-		authModule, err = getAuthorizationModule(cr)
 	}
 
 	useLocalStorage, yamlString, err := getAuthorizationLocalProvisioner(ctx, op, cr)

@@ -269,6 +269,17 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 		return ctrl.Result{}, err
 	}
 
+	for i, m := range csm.Spec.Modules {
+		if m.Name == csmv1.AuthorizationServer {
+			authVersion, err := operatorutils.GetVersion(ctx, csm, *operatorConfig)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+			csm.Spec.Modules[i].ConfigVersion = authVersion
+			break
+		}
+	}
+
 	// perform prechecks
 	err = r.PreChecks(ctx, csm, *operatorConfig)
 	if err != nil {
@@ -298,11 +309,6 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 					r.EventRecorder.Event(csm, corev1.EventTypeWarning, csmv1.EventDeleted, fmt.Sprintf("Failed to remove module: %s", err))
 					return ctrl.Result{}, fmt.Errorf("error when deleting module: %v", err)
 				}
-			}
-		}
-		for i, m := range csm.Spec.Modules {
-			if m.ConfigVersion != "" && csm.Spec.Version != "" {
-				csm.Spec.Modules[i].ConfigVersion = ""
 			}
 		}
 		if err := r.removeFinalizer(ctx, csm); err != nil {
@@ -1621,14 +1627,15 @@ func (r *ContainerStorageModuleReconciler) checkUpgrade(ctx context.Context, cr 
 	// If annotation exists, we are doing an upgrade or modify
 	if configVersionExists {
 		if cr.HasModule(csmv1.AuthorizationServer) {
-			if cr.GetModule(csmv1.AuthorizationServer).ConfigVersion != "" {
-				newVersion = cr.GetModule(csmv1.AuthorizationServer).ConfigVersion
-			} else if cr.Spec.Version != "" {
+			// if spec.version is set in the CR (CSM v1.16.0 or later), use that
+			if cr.Spec.Version != "" {
 				ver, err := operatorutils.GetVersion(ctx, cr, operatorConfig)
 				if err != nil {
 					return false, err
 				}
 				newVersion = ver
+			} else if cr.GetModule(csmv1.AuthorizationServer).ConfigVersion != "" {
+				newVersion = cr.GetModule(csmv1.AuthorizationServer).ConfigVersion
 			}
 
 			if strings.HasPrefix(oldVersion, "v1.") && strings.HasPrefix(newVersion, "v2.") ||
