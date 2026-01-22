@@ -463,17 +463,18 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 		if *initcontainers[i].Name == "sdc" {
 			// Checking if sdc initcontainer image is present in config map
 			found2 := false
+			var sdcImage string
 			for k, v := range matched.Images {
 				if k == "sdc" {
-					image = v
+					sdcImage = v
 					found2 = true
 					break
 				}
 			}
 			if found2 {
-				initcontainers[i].Image = &image
+				initcontainers[i].Image = &sdcImage
 				log.Infow("SDC initcontainer image resolved from ConfigMap",
-					"image", image,
+					"image", sdcImage,
 				)
 			} else if updatedCr.Spec.CustomRegistry != "" {
 				resolvedImagePath := operatorutils.ResolveImage(ctx, string(*initcontainers[i].Image), cr)

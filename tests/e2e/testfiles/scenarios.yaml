@@ -2234,7 +2234,7 @@
     - "authorizationproxyserver"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create resource with template [testfiles/authorization-templates/csm-auth-images.yaml] for ['']"
+    - "Create resource with template [testfiles/authorization-templates/csm-images.yaml] for ['']"
     - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [authorization] for [pflex]"
@@ -2266,3 +2266,73 @@
     - "Delete custom resource [1]"
     - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [2]"
+
+- scenario: "Install PowerFlex Driver with Resiliency and observability using configMap"
+  paths:
+    - "testfiles/storage_csm_powerflex_using_version_with_configmap.yaml"
+  tags:
+    - "powerflex"
+    - "resiliency"
+    - "observability"
+  config:
+    enableSftpSDC: false
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create resource with template [testfiles/authorization-templates/csm-images.yaml] for ['']"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Validate [resiliency] module from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is installed"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powerflex] driver from CR [1] is not installed"
+    - "Delete ConfigMap"
+
+- scenario: "Install Powermax with Replication Using Version (ConfigMap Images)"
+  paths:
+    - "testfiles/storage_csm_powermax_using_version_with_configmap.yaml"
+  tags:
+    - "powermax"
+    - "replication"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create resource with template [testfiles/authorization-templates/csm-images.yaml] for ['']"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Set up reverse proxy tls secret namespace [powermax]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
+    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is installed"
+    - "Validate [replication] module from CR [1] is installed"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is not installed"
+    - "Delete ConfigMap"
+
+- scenario: "Install PowerStore Using Version with Resiliency (With CustomRegistry Images)"
+  paths:
+    - "testfiles/storage_csm_powerstore_using_custom_registry.yaml"
+  tags:
+    - "powerstore"
+    - "resiliency"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    # ephemeral.properties must be set up according to the storage class created
+    - "Set up ephemeral volume properties [testfiles/powerstore-templates/ephemeral.properties] for [pstoreEphemeral]"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is not installed"

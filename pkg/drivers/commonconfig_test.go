@@ -292,3 +292,89 @@ func TestIsCSMDREnabled(t *testing.T) {
 		})
 	}
 }
+
+func TestGetNode_SDCImageFromConfigMap(t *testing.T) {
+	ctx := context.Background()
+
+	// Use an existing happy-path PowerFlex CR (ensures SDC init container is present and enabled)
+	cr := csmForPowerFlex(pflexCSMName)
+
+	// Build a VersionSpec with an explicit SDC image in the matched images map.
+	matched := operatorutils.VersionSpec{
+		Images: map[string]string{
+			// driver image mapping may be used elsewhere, keep it reasonable
+			string(csmv1.PowerFlex): "dellemc/csi-powerflex:vtest",
+			// This is the key path under test
+			"sdc": "dellemc/sdc:test-tag",
+		},
+	}
+
+	node, err := GetNode(
+		ctx,
+		cr,
+		config,
+		csmv1.PowerFlex,
+		"node.yaml",
+		ctrlClientFake.NewClientBuilder().Build(),
+		matched,
+	)
+	assert.Nil(t, err)
+
+	// Find the sdc init container and assert the image was picked from matched.Images["sdc"]
+	foundSDC := false
+	for _, ic := range node.DaemonSetApplyConfig.Spec.Template.Spec.InitContainers {
+		if ic.Name != nil && *ic.Name == "sdc" {
+			foundSDC = true
+			if ic.Image == nil {
+				t.Fatalf("sdc init container image is nil")
+			}
+			assert.Equal(t, "dellemc/sdc:test-tag", *ic.Image, "sdc image should be set from matched.Images")
+			break
+		}
+	}
+	assert.True(t, foundSDC, "expected to find sdc init container in PowerFlex node DaemonSet")
+}
+
+func TestGetNode_SDCImageFromCustomRegistry(t *testing.T) {
+	ctx := context.Background()
+
+	// Start from a PowerFlex CR and set a custom registry.
+	cr := csmForPowerFlex(pflexCSMName)
+	cr.Spec.CustomRegistry = "registry.company.io/prod"
+
+	// No sdc entry in matched.Images -> forces the custom registry fallback branch.
+	matched := operatorutils.VersionSpec{
+		Images: map[string]string{
+			// Keep other images minimal/realistic. No "sdc" key on purpose.
+			string(csmv1.PowerFlex): "dellemc/csi-powerflex:vtest",
+		},
+	}
+
+	node, err := GetNode(
+		ctx,
+		cr,
+		config,
+		csmv1.PowerFlex,
+		"node.yaml",
+		ctrlClientFake.NewClientBuilder().Build(),
+		matched,
+	)
+	assert.Nil(t, err)
+
+	// Validate sdc init container image came from operatorutils.ResolveImage(...) (i.e., custom registry applied)
+	foundSDC := false
+	for _, ic := range node.DaemonSetApplyConfig.Spec.Template.Spec.InitContainers {
+		if ic.Name != nil && *ic.Name == "sdc" {
+			foundSDC = true
+			if ic.Image == nil {
+				t.Fatalf("sdc init container image is nil")
+			}
+			// We don't assert exact suffix because ResolveImage composes path from template + registry.
+			// Prefix check is robust and sufficient to prove the fallback path executed.
+			assert.True(t, strings.HasPrefix(*ic.Image, "registry.company.io/prod/"),
+				"expected sdc image to be resolved using custom registry, got %q", *ic.Image)
+			break
+		}
+	}
+	assert.True(t, foundSDC, "expected to find sdc init container in PowerFlex node DaemonSet")
+}
