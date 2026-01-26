@@ -216,6 +216,12 @@ var (
 // +kubebuilder:rbac:groups=objectstorage.k8s.io,resources=buckets,verbs=create;get;update;delete;list;watch
 // +kubebuilder:rbac:groups=objectstorage.k8s.io,resources=buckets/status,verbs=create;get;update;delete;list;watch
 
+// +kubebuilder:rbac:groups="groupsnapshot.storage.k8s.io",resources=volumegroupsnapshotclasses,verbs=get;list;watch
+// +kubebuilder:rbac:groups="groupsnapshot.storage.k8s.io",resources=volumegroupsnapshotcontents,verbs=get;list;watch;patch
+// +kubebuilder:rbac:groups="groupsnapshot.storage.k8s.io",resources=volumegroupsnapshotcontents/status,verbs=patch;update
+// +kubebuilder:rbac:groups="groupsnapshot.storage.k8s.io",resources=volumegroupsnapshots,verbs=get;list;watch;update;patch;create;delete
+// +kubebuilder:rbac:groups="groupsnapshot.storage.k8s.io",resources=volumegroupsnapshots/status,verbs=get;list;watch;update;patch;create;delete
+
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 // TODO(user): Modify the Reconcile function to compare the state specified by
