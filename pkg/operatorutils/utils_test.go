@@ -738,6 +738,9 @@ func TestUpdateSideCarApply(t *testing.T) {
 					Value: emptyValue,
 				},
 			},
+			Args: []string{
+				"--volume-name-prefix=csivol1",
+			},
 		},
 		{
 			Name:            "sidecar2",
@@ -752,6 +755,9 @@ func TestUpdateSideCarApply(t *testing.T) {
 					Name:  "sidecar2-env2",
 					Value: "sidecar2-env2-value",
 				},
+			},
+			Args: []string{
+				"--volume-name-prefix=csivol2",
 			},
 		},
 	}
@@ -779,9 +785,51 @@ func TestUpdateSideCarApply(t *testing.T) {
 		}).WithEnv(&acorev1.EnvVarApplyConfiguration{
 		Name:  &empty,
 		Value: &emptyValue,
-	})
+	}).WithArgs("--volume-name-prefix=csivol1")
 
 	assert.Equal(t, expectedContainer, container)
+
+	// Use spec.version (with ConfigMap existing)
+	UpdateSideCarApply(ctx, sideCars, container, csmv1.ContainerStorageModule{
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Version: "v1.16.0",
+		},
+	}, VersionSpec{
+		Version: "test-version",
+		Images: map[string]string{
+			"sidecar1": "configmap-sidecar1-image",
+		},
+	})
+
+	expectedContainer2 := acorev1.Container().WithName("sidecar1").WithImage("configmap-sidecar1-image").WithImagePullPolicy("sidecar1-image-pull-policy").
+		WithEnv(&acorev1.EnvVarApplyConfiguration{
+			Name:  &sc1env1,
+			Value: &newenv1val,
+		}).WithEnv(&acorev1.EnvVarApplyConfiguration{
+		Name:  &empty,
+		Value: &emptyValue,
+	}).WithArgs("--volume-name-prefix=csivol1")
+
+	assert.Equal(t, expectedContainer2, container)
+
+	// Use spec.version AND spec.customRegistry
+	UpdateSideCarApply(ctx, sideCars, container, csmv1.ContainerStorageModule{
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Version:        "v1.16.0",
+			CustomRegistry: "test-custom-registry",
+		},
+	}, VersionSpec{})
+
+	expectedContainer3 := acorev1.Container().WithName("sidecar1").WithImage("test-custom-registry/configmap-sidecar1-image").WithImagePullPolicy("sidecar1-image-pull-policy").
+		WithEnv(&acorev1.EnvVarApplyConfiguration{
+			Name:  &sc1env1,
+			Value: &newenv1val,
+		}).WithEnv(&acorev1.EnvVarApplyConfiguration{
+		Name:  &empty,
+		Value: &emptyValue,
+	}).WithArgs("--volume-name-prefix=csivol1")
+
+	assert.Equal(t, expectedContainer3, container)
 
 	// repeat the test with the other function that uses the child function
 	// very minor code coverage gain, 0.1%

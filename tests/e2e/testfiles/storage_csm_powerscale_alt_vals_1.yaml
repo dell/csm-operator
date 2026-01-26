@@ -240,11 +240,11 @@ spec:
           effect: "NoSchedule"
     sideCars:
       - name: provisioner
-        args: ["--volume-name-prefix=csivol"]
+        args: ["--volume-name-prefix=alt1"]
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
-        args: ["--monitor-interval=60s"]
+        args: ["--monitor-interval=120s"]
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization

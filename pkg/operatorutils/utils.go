@@ -213,19 +213,21 @@ func UpdateSideCarApply(ctx context.Context, sideCars []csmv1.ContainerTemplate,
 
 func UpdateContainerApply(ctx context.Context, toBeApplied []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule, matched VersionSpec) {
 	for _, ctr := range toBeApplied {
-		if matched.Version != "" {
-			if img := matched.Images[ctr.Name]; img != "" {
-				if *c.Name == ctr.Name {
-					*c.Image = img
-					break
+		if *c.Name == ctr.Name {
+			if matched.Version != "" {
+				if img := matched.Images[ctr.Name]; img != "" {
+					if *c.Name == ctr.Name {
+						*c.Image = img
+					}
+				}
+			} else if cr.Spec.CustomRegistry != "" {
+				*c.Image = ResolveImage(ctx, string(*c.Image), cr)
+			} else {
+				if ctr.Image != "" {
+					*c.Image = string(ctr.Image)
 				}
 			}
-		} else if cr.Spec.CustomRegistry != "" {
-			*c.Image = ResolveImage(ctx, string(*c.Image), cr)
-		} else if *c.Name == ctr.Name {
-			if ctr.Image != "" {
-				*c.Image = string(ctr.Image)
-			}
+
 			if ctr.ImagePullPolicy != "" {
 				*c.ImagePullPolicy = ctr.ImagePullPolicy
 			}
