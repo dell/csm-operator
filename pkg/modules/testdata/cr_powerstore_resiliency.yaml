@@ -6,19 +6,19 @@ metadata:
 spec:
   driver:
     csiDriverType: "powerstore"
-    configVersion: v2.15.1
+    configVersion: v2.16.0
     authSecret: powerstore-creds
     replicas: 1
     common:
-      image: "quay.io/dell/container-storage-modules/csi-powerstore:v2.15.1"
+      image: "quay.io/dell/container-storage-modules/csi-powerstore:v2.16.0"
       imagePullPolicy: IfNotPresent
   modules:
     - name: resiliency
-      configVersion: "v1.13.0"
+      configVersion: "v1.15.0"
       enabled: true
       components:
         - name: podmon-controller
-          image: quay.io/dell/container-storage-modules/podmon:v1.14.0
+          image: quay.io/dell/container-storage-modules/podmon:v1.15.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csisock=unix:/var/run/csi/csi.sock"
@@ -31,7 +31,7 @@ spec:
             - "--driverPodLabelValue=dell-storage"
             - "--ignoreVolumelessPods=false"
         - name: podmon-node
-          image: quay.io/dell/container-storage-modules/podmon:v1.14.0
+          image: quay.io/dell/container-storage-modules/podmon:v1.15.0
           imagePullPolicy: IfNotPresent
           envs:
             # podmonAPIPort: Defines the port to be used within the kubernetes cluster

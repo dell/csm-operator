@@ -18,8 +18,8 @@ import (
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
-	"github.com/dell/csm-operator/tests/shared"
-	"github.com/dell/csm-operator/tests/shared/crclient"
+	shared "github.com/dell/csm-operator/tests/sharedutil"
+	"github.com/dell/csm-operator/tests/sharedutil/crclient"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,16 +27,17 @@ import (
 )
 
 var (
-	powerStoreCSM            = csmForPowerStore("csm")
-	powerStoreCSMBadVersion  = csmForPowerStoreBadVersion()
-	powerStoreCSMBadCertCnt  = csmForPowerStoreBadCertCnt()
-	powerStoreCSMEmptyEnv    = csmForPowerStoreWithEmptyEnv()
-	powerStoreCSMBadSkipCert = csmForPowerStoreBadSkipCert()
-	powerStoreSkipCertFalse  = csmForPowerStoreSkipCertFalse()
-	powerStoreClient         = crclient.NewFakeClientNoInjector(objects)
-	configJSONFileGoodPStore = fmt.Sprintf("%s/driverconfig/%s/config.json", config.ConfigDirectory, csmv1.PowerStore)
-	powerStoreSecret         = shared.MakeSecretWithJSON("csm-config", "driver-test", configJSONFileGoodPStore)
-	fakeSecretPstore         = shared.MakeSecret("fake-secret", "fake-ns", shared.PStoreConfigVersion)
+	powerStoreCSM               = csmForPowerStore("csm")
+	powerStoreCSMBadVersion     = csmForPowerStoreBadVersion()
+	powerStoreInvalidCSMVersion = csmForPowerStoreInvalidVersion()
+	powerStoreCSMBadCertCnt     = csmForPowerStoreBadCertCnt()
+	powerStoreCSMEmptyEnv       = csmForPowerStoreWithEmptyEnv()
+	powerStoreCSMBadSkipCert    = csmForPowerStoreBadSkipCert()
+	powerStoreSkipCertFalse     = csmForPowerStoreSkipCertFalse()
+	powerStoreClient            = crclient.NewFakeClientNoInjector(objects)
+	configJSONFileGoodPStore    = fmt.Sprintf("%s/driverconfig/%s/config.json", config.ConfigDirectory, csmv1.PowerStore)
+	powerStoreSecret            = shared.MakeSecretWithJSON("csm-config", "driver-test", configJSONFileGoodPStore)
+	fakeSecretPstore            = shared.MakeSecret("fake-secret", "fake-ns", shared.PStoreConfigVersion)
 
 	powerStoreTests = []struct {
 		// every single unit test name
@@ -52,6 +53,7 @@ var (
 	}{
 		{"happy path", powerStoreCSM, powerStoreClient, powerStoreSecret, ""},
 		{"bad version", powerStoreCSMBadVersion, powerStoreClient, powerStoreSecret, "not supported"},
+		{"invalid csm version", powerStoreInvalidCSMVersion, powerStoreClient, powerStoreSecret, "No custom resource configuration is available for CSM version v1.10.0"},
 	}
 
 	powerStoreCertsVolumeTests = []struct {
@@ -161,69 +163,6 @@ var (
 			sec:        powerStoreSecret,
 			fileType:   "Node",
 			expected:   "true",
-		},
-		{
-			name: "update Shared NFS values for Node",
-			yamlString: `
-			- name: X_CSI_NFS_EXPORT_DIRECTORY
-		      value: "<X_CSI_NFS_EXPORT_DIRECTORY>"
-		    - name: X_CSI_NFS_CLIENT_PORT
-		      value: "<X_CSI_NFS_CLIENT_PORT>"
-		    - name: X_CSI_NFS_SERVER_PORT
-		      value: "<X_CSI_NFS_SERVER_PORT>"`,
-			csm:      csmForPowerStoreWithSharedNFS("csm"),
-			ct:       powerStoreClient,
-			sec:      powerStoreSecret,
-			fileType: "Node",
-			expected: `
-			- name: X_CSI_NFS_EXPORT_DIRECTORY
-		      value: "/var/lib/dell/myNfsExport"
-		    - name: X_CSI_NFS_CLIENT_PORT
-		      value: "2220"
-		    - name: X_CSI_NFS_SERVER_PORT
-		      value: "2221"`,
-		},
-		{
-			name: "update Shared NFS values for Controller",
-			yamlString: `
-			- name: X_CSI_NFS_EXPORT_DIRECTORY
-			  value: "<X_CSI_NFS_EXPORT_DIRECTORY>"
-			- name: X_CSI_NFS_CLIENT_PORT
-			  value: "<X_CSI_NFS_CLIENT_PORT>"
-			- name: X_CSI_NFS_SERVER_PORT
-			  value: "<X_CSI_NFS_SERVER_PORT>"`,
-			csm:      csmForPowerStoreWithSharedNFS("csm"),
-			ct:       powerStoreClient,
-			sec:      powerStoreSecret,
-			fileType: "Controller",
-			expected: `
-			- name: X_CSI_NFS_EXPORT_DIRECTORY
-			  value: "/var/lib/dell/myNfsExport"
-			- name: X_CSI_NFS_CLIENT_PORT
-			  value: "2220"
-			- name: X_CSI_NFS_SERVER_PORT
-			  value: "2221"`,
-		},
-		{
-			name: "minimal minifest - update Shared NFS values for Node",
-			yamlString: `
-			- name: X_CSI_NFS_EXPORT_DIRECTORY
-              value: "<X_CSI_NFS_EXPORT_DIRECTORY>"
-            - name: X_CSI_NFS_CLIENT_PORT
-              value: "<X_CSI_NFS_CLIENT_PORT>"
-            - name: X_CSI_NFS_SERVER_PORT
-              value: "<X_CSI_NFS_SERVER_PORT>"`,
-			csm:      csmForPowerStore("csm"),
-			ct:       powerStoreClient,
-			sec:      powerStoreSecret,
-			fileType: "Node",
-			expected: `
-			- name: X_CSI_NFS_EXPORT_DIRECTORY
-              value: "/var/lib/dell/nfs"
-            - name: X_CSI_NFS_CLIENT_PORT
-              value: "2050"
-            - name: X_CSI_NFS_SERVER_PORT
-              value: "2049"`,
 		},
 		{
 			name: "update Powerstore API and Podmon connectivity timeout for Node",
@@ -441,6 +380,17 @@ func csmForPowerStoreBadVersion() csmv1.ContainerStorageModule {
 	return res
 }
 
+// makes a csm object with a invalid csm version
+func csmForPowerStoreInvalidVersion() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.PStoreConfigVersion)
+
+	// Add pstore driver version
+	res.Spec.Version = shared.InvalidCSMVersion
+	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
+
+	return res
+}
+
 // makes a csm object
 func csmForPowerStore(customCSMName string) csmv1.ContainerStorageModule {
 	res := shared.MakeCSM(customCSMName, "driver-test", shared.PStoreConfigVersion)
@@ -451,20 +401,6 @@ func csmForPowerStore(customCSMName string) csmv1.ContainerStorageModule {
 	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
 
 	return res
-}
-
-func csmForPowerStoreWithSharedNFS(customCSMName string) csmv1.ContainerStorageModule {
-	cr := csmForPowerStore(customCSMName)
-
-	cr.Spec.Driver.Common.Envs = []corev1.EnvVar{
-		{Name: "X_CSI_NFS_CLIENT_PORT", Value: "2220"},
-		{Name: "X_CSI_NFS_SERVER_PORT", Value: "2221"},
-		{Name: "X_CSI_NFS_EXPORT_DIRECTORY", Value: "/var/lib/dell/myNfsExport"},
-		{Name: "X_CSI_POWERSTORE_API_TIMEOUT", Value: "120s"},
-		{Name: "X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT", Value: "10s"},
-	}
-
-	return cr
 }
 
 func gopowerstoreDebug(debug string) csmv1.ContainerStorageModule {

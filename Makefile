@@ -1,5 +1,10 @@
-include docker.mk
-include overrides.mk
+# Copyright © 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
+#
+# Dell Technologies, Dell and other trademarks are trademarks of Dell Inc.
+# or its subsidiaries. Other trademarks may be trademarks of their respective 
+# owners.
+
+include images.mk
 
 # CHANNELS define the bundle channels used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "candidate,fast,stable")
@@ -57,34 +62,15 @@ help: ## Display this help.
 
 ##@ Development
 
+clean:
+	rm -rf vendor csm-temp-repo csm-common.mk
+	go clean -cache
+
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
-
-#Generate semver.mk
-.PHONY: gen-semver
-gen-semver: generate
-	(cd core; rm -f core_generated.go; go generate)
-	go run core/semver/semver.go -f mk > semver.mk
-
--include semver.mk
-
-ifdef NOTES
-	RELNOTE="-$(NOTES)"
-else
-	RELNOTE=
-endif
-
-# Operator version tagged with build number. For e.g. - v1.8.0.001
-VERSION ?= v$(MAJOR).$(MINOR).$(PATCH)$(RELNOTE)
-
-ifdef VERSION
-  $(info VERSION is: $(VERSION))  # Print the version for debugging
-else
-  $(error VERSION is not defined! Check semver.mk generation.)
-endif
 
 fmt: ## Run go fmt against code.
 	go fmt ./...
@@ -111,58 +97,25 @@ module-unit-test:
 operatorutils-unit-test:
 	go clean -cache && go test -v -coverprofile=c.out github.com/dell/csm-operator/pkg/operatorutils
 
-.PHONY: actions action-help
-actions: ## Run all GitHub Action checks that run on a pull request creation
-	@echo "Running all GitHub Action checks for pull request events..."
-	@act -l | grep -v ^Stage | grep pull_request | grep -v image_security_scan | awk '{print $$2}' | while read WF; do \
-		echo "Running workflow: $${WF}"; \
-		act pull_request --no-cache-server --platform ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest --job "$${WF}"; \
-	done
-
 go-code-tester:
 	curl -o go-code-tester -L https://raw.githubusercontent.com/dell/common-github-actions/main/go-code-tester/entrypoint.sh \
 	&& chmod +x go-code-tester
 
-action-help: ## Echo instructions to run one specific workflow locally
-	@echo "GitHub Workflows can be run locally with the following command:"
-	@echo "act pull_request --no-cache-server --platform ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest --job <jobid>"
-	@echo ""
-	@echo "Where '<jobid>' is a Job ID returned by the command:"
-	@echo "act -l"
-	@echo ""
-	@echo "NOTE: if act is not installed, it can be downloaded from https://github.com/nektos/act"
-
 ##@ Build
+
+# This will be overridden during image build.
+IMAGE_VERSION ?= 0.0.0
+LDFLAGS = "-X main.ManifestSemver=$(IMAGE_VERSION)"
 
 tidy:
 	go mod tidy
 	cd tests/e2e/ && go mod tidy
 
 build: gen-semver fmt vet ## Build manager binary.
-	go build -o bin/manager main.go
+	go build -mod=vendor -ldflags $(LDFLAGS) -o bin/manager main.go
 
 run: generate gen-semver fmt vet static-manifests ## Run a controller from your host.
 	go run ./main.go
-
-podman-build: gen-semver download-csm-common ## Build podman image with the manager.
-	$(eval include csm-common.mk)
-	podman build --pull . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
-
-podman-build-no-cache: gen-semver download-csm-common ## Build podman image with the manager.
-	$(eval include csm-common.mk)
-	podman build --pull --no-cache . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
-
-podman-push: podman-build ## Builds, tags and pushes docker image with the manager.
-	podman tag ${DEFAULT_IMG} ${IMG}
-	podman push ${IMG}
-
-docker-build: gen-semver download-csm-common ## Build docker image with the manager.
-	$(eval include csm-common.mk)
-	docker build --pull . -t ${DEFAULT_IMG} --build-arg BASEIMAGE=$(CSM_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE)
-
-docker-push: docker-build ## Builds, tags and pushes docker image with the manager.
-	docker tag ${DEFAULT_IMG} ${IMG}
-	docker push ${IMG}
 
 ##@ Deployment
 
@@ -239,12 +192,12 @@ bundle: static-manifests gen-semver kustomize ## Generate bundle manifests and m
 .PHONY: bundle-build
 bundle-build: gen-semver download-csm-common ## Build the bundle image.
 	$(eval include csm-common.mk)
-	docker build --pull -f bundle.Dockerfile -t $(BUNDLE_IMG) --build-arg BASEIMAGE=$(CSM_BASEIMAGE) .
+	podman build --pull -f bundle.Dockerfile -t $(BUNDLE_IMG) --build-arg BASEIMAGE=$(CSM_BASEIMAGE) .
 
 
 .PHONY: bundle-push
 bundle-push: gen-semver ## Push the bundle image.
-	$(MAKE) docker-push IMG=$(BUNDLE_IMG)
+	$(MAKE) podman-push IMG=$(BUNDLE_IMG)
 
 .PHONY: opm
 OPM = ./bin/opm
@@ -278,22 +231,17 @@ endif
 # https://github.com/operator-framework/community-operators/blob/7f1438c/docs/packaging-operator.md#updating-your-existing-operator
 .PHONY: catalog-build
 catalog-build: gen-semver opm ## Build a catalog image.
-	$(OPM) index add --container-tool docker --mode semver --tag $(CATALOG_IMG) --bundles $(BUNDLE_IMGS) $(FROM_INDEX_OPT)
+	$(OPM) index add --container-tool podman --mode semver --tag $(CATALOG_IMG) --bundles $(BUNDLE_IMGS) $(FROM_INDEX_OPT)
 
 # Push the catalog image.
 .PHONY: catalog-push
 catalog-push: gen-semver ## Push a catalog image.
-	$(MAKE) docker-push IMG=$(CATALOG_IMG)
+	$(MAKE) podman-push IMG=$(CATALOG_IMG)
 
 # Run linter.
 .PHONY: lint
 lint: build
 	golangci-lint run --fix
-
-# Download common CSM configuration file used for builds
-.PHONY: download-csm-common
-download-csm-common:
-	curl -O -L https://raw.githubusercontent.com/dell/csm/main/config/csm-common.mk
 
 # build catalog image with File based catalog file
 .PHONY: catalog-build-fbc

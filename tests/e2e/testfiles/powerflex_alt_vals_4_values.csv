@@ -2,4 +2,4 @@ parameter name, grep option for paramater value, parameter value,resource to des
 Image,,quay.io/dell/container-storage-modules/csi-vxflexos,csm,1
 Image Pull Policy,,Always,csm,1
 Image Pull Policy,,IfNotPresent,csm,1
-Image,,quay.io/dell/storage/powerflex/sdc:4.5.4,node,1
+Image,,quay.io/dell/storage/powerflex/sdc:5.0,node,1

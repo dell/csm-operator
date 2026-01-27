@@ -9,7 +9,7 @@ spec:
     - name: authorization-proxy-server
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v2.3.0
+      configVersion: v2.4.0
       forceRemoveModule: true
       components:
         # For Kubernetes Container Platform only
@@ -30,12 +30,12 @@ spec:
         - name: proxy-server
           # enable: Enable/Disable csm-authorization proxy server
           enabled: true
-          proxyService: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.0.0
-          tenantService: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.0.0
-          roleService: quay.io/dell/container-storage-modules/csm-authorization-role:v2.0.0
-          storageService: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.0.0
+          proxyService: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.4.0
+          tenantService: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.4.0
+          roleService: quay.io/dell/container-storage-modules/csm-authorization-role:v2.4.0
+          storageService: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.4.0
           opa: openpolicyagent/opa
-          opaKubeMgmt: openpolicyagent/kube-mgmt:0.11
+          opaKubeMgmt: openpolicyagent/kube-mgmt:9.3.0
           # controllerReconcileInterval: interval for the authorization controllers to reconcile with Redis.
           controllerReconcileInterval: 5m
           # certificate: base64-encoded certificate for cert/private-key pair -- add certificate here to use custom certificates
@@ -71,14 +71,13 @@ spec:
               redisUsernameKey: username
               # Key in the secret that stores the Redis password.
               redisPasswordKey: password
-          redis: redis:8.2.0-alpine
+          redis: redis:8.4.0-alpine
           commander: rediscommander/redis-commander:latest
           # by default, csm-authorization will deploy a local (https://kubernetes.io/docs/concepts/storage/storage-classes/#local) volume for redis
           # to use a different storage class for redis, specify the name of the storage class
           # NOTE: the storage class must NOT be a storage class provisioned by a CSI driver using this installation of CSM Authorization
           # Default value: None
           storageclass: ""
-
         - name: config
           # Config secret configuration:
           # Use a SecretProviderClass for the config secret; otherwise, the user must manually create the config secret before installing Authorization.
@@ -88,12 +87,10 @@ spec:
             - secretProviderClassName: secret-provider-class-1
               # The name of the Kubernetes secret created by the CSI driver
               configSecretName: config-secret-name
-
         - name: storage-system-credentials
           secretProviderClasses:
             vault:
               - secret-provider-class-1
-
 ---
 apiVersion: v1
 kind: ConfigMap

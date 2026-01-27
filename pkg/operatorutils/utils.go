@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -39,6 +40,7 @@ import (
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	t1 "k8s.io/apimachinery/pkg/types"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
@@ -46,6 +48,7 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	k8sClient "github.com/dell/csm-operator/k8s"
@@ -129,6 +132,12 @@ type LatestVersion struct {
 	Version string `yaml:"version"`
 }
 
+// VersionSpec defines the version of the driver and its images
+type VersionSpec struct {
+	Version string            `yaml:"version"`
+	Images  map[string]string `yaml:",inline"`
+}
+
 const (
 	// DefaultReleaseName constant
 	DefaultReleaseName = "<DriverDefaultReleaseName>"
@@ -166,7 +175,11 @@ const (
 	DefaultKubeletConfigDir = "/var/lib/kubelet"
 	// ObservabilityNamespace - karavi
 	ObservabilityNamespace = "karavi"
+	// configmap
+	CSMImages = "csm-images"
 )
+
+var configMapPath string
 
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
 func SplitYaml(gaintYAML []byte) ([][]byte, error) {
@@ -194,16 +207,27 @@ func SplitYaml(gaintYAML []byte) ([][]byte, error) {
 }
 
 // UpdateSideCarApply -
-func UpdateSideCarApply(sideCars []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration) {
-	UpdateContainerApply(sideCars, c)
+func UpdateSideCarApply(ctx context.Context, sideCars []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule, matched VersionSpec) {
+	UpdateContainerApply(ctx, sideCars, c, cr, matched)
 }
 
-func UpdateContainerApply(toBeApplied []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration) {
+func UpdateContainerApply(ctx context.Context, toBeApplied []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule, matched VersionSpec) {
 	for _, ctr := range toBeApplied {
 		if *c.Name == ctr.Name {
-			if ctr.Image != "" {
-				*c.Image = string(ctr.Image)
+			if matched.Version != "" {
+				if img := matched.Images[ctr.Name]; img != "" {
+					if *c.Name == ctr.Name {
+						*c.Image = img
+					}
+				}
+			} else if cr.Spec.CustomRegistry != "" {
+				*c.Image = ResolveImage(ctx, string(*c.Image), cr)
+			} else {
+				if ctr.Image != "" {
+					*c.Image = string(ctr.Image)
+				}
 			}
+
 			if ctr.ImagePullPolicy != "" {
 				*c.ImagePullPolicy = ctr.ImagePullPolicy
 			}
@@ -239,8 +263,8 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 }
 
 // UpdateInitContainerApply -
-func UpdateInitContainerApply(initContainers []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration) {
-	UpdateContainerApply(initContainers, c)
+func UpdateInitContainerApply(ctx context.Context, initContainers []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule, matched VersionSpec) {
+	UpdateContainerApply(ctx, initContainers, c, cr, matched)
 }
 
 // ReplaceAllApplyCustomEnvs -
@@ -382,6 +406,13 @@ func GetCTRLObject(CtrlBuf []byte) ([]crclient.Object, error) {
 			return ctrlObjects, err
 		}
 		switch meta.Kind {
+		case "ServiceAccount":
+			var sa corev1.ServiceAccount
+			if err := yamlUnmarshal(raw, &sa); err != nil {
+				return ctrlObjects, err
+			}
+			ctrlObjects = append(ctrlObjects, &sa)
+
 		case "ClusterRole":
 			var cr rbacv1.ClusterRole
 			if err := yamlUnmarshal(raw, &cr); err != nil {
@@ -1231,4 +1262,267 @@ func GetEnvironmentVariable(varName string) (string, error) {
 		return "", errors.New("environment variable is not defined: " + varName)
 	}
 	return value, nil
+}
+
+// GetVersion returns the corresponding config version of the CSM version
+func GetVersion(ctx context.Context, cr *csmv1.ContainerStorageModule, op OperatorConfig) (string, error) {
+	if cr.Spec.Version != "" {
+		log := logger.GetLogger(ctx)
+		file := fmt.Sprintf("%s/common/csm-version-mapping.yaml", op.ConfigDirectory)
+		buf, err := os.ReadFile(filepath.Clean(file))
+		if err != nil {
+			return "", fmt.Errorf("failed to read file %s: %s", file, err.Error())
+		}
+
+		support := map[csmv1.DriverType]map[string]string{}
+		err = yamlUnmarshal(buf, &support)
+		if err != nil {
+			return "", err
+		}
+
+		driverType := cr.Spec.Driver.CSIDriverType
+		if driverType == csmv1.PowerScale {
+			// use powerscale instead of isilon as the folder name is powerscale
+			driverType = csmv1.PowerScaleName
+		}
+
+		if driverType == "" {
+			for _, m := range cr.Spec.Modules {
+				if m.Name == csmv1.AuthorizationServer {
+					driverType = csmv1.DriverType(csmv1.AuthorizationServer)
+					break
+				}
+			}
+		}
+
+		if csmVersion, ok := support[driverType]; ok {
+			if configVersion, ok := csmVersion[cr.Spec.Version]; ok {
+				return configVersion, nil
+			}
+
+			// Collect all the supported CSM versions to include in the error message
+			var keys []string
+			for k := range csmVersion {
+				keys = append(keys, k)
+			}
+			log.Errorf("No custom resource configuration is available for CSM version %s. Supported CSM versions are: [%s]", cr.Spec.Version, strings.Join(keys, ", "))
+			return "", fmt.Errorf("No custom resource configuration is available for CSM version %s. Supported CSM versions are: [%s]", cr.Spec.Version, strings.Join(keys, ", "))
+		}
+		log.Errorf("Unsupported platform %s", driverType)
+		return "", fmt.Errorf("Unsupported platform %s", driverType)
+	}
+	configVersion := cr.Spec.Driver.ConfigVersion
+	if configVersion == "" {
+		for _, m := range cr.Spec.Modules {
+			if m.Name == csmv1.AuthorizationServer {
+				configVersion = m.ConfigVersion
+				break
+			}
+		}
+	}
+	return configVersion, nil
+}
+
+// ResolveVersionFromConfigMap returns the configmap if it exists
+func ResolveVersionFromConfigMap(ctx context.Context, ctrlClient client.Client, cr *csmv1.ContainerStorageModule) (matched VersionSpec, err error) {
+	// Fetch the ConfigMap
+	cm, err := FetchConfigMap(ctx, ctrlClient)
+	if err != nil {
+		return matched, err
+	}
+
+	// Update (resolve) using the ConfigMap contents
+	matched, err = UpdateUsingConfigMap(cr, cm)
+	if err != nil {
+		return matched, err
+	}
+
+	return matched, nil
+}
+
+func FetchConfigMap(ctx context.Context, ctrlClient client.Client) (corev1.ConfigMap, error) {
+	var cm corev1.ConfigMap
+	log := logger.GetLogger(ctx)
+
+	// list all configmaps in all namespaces
+	cmList := &corev1.ConfigMapList{}
+	if err := ctrlClient.List(ctx, cmList); err != nil {
+		return cm, fmt.Errorf("error listing configmaps %v", err)
+	}
+
+	found := false
+	var namespace string
+	for _, cmns := range cmList.Items {
+		if cmns.Name == CSMImages {
+			log.Info(fmt.Sprintf("Using ConfigMap %s/%s to resolve image mappings for specified version. ", cmns.Namespace, cmns.Name))
+			namespace = cmns.Namespace
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		// Preserve previous behavior: return zero value cm and nil error.
+		return cm, nil
+	}
+
+	// Fetch the ConfigMap from its namespace
+	configMapName := types.NamespacedName{
+		Name:      CSMImages,
+		Namespace: namespace,
+	}
+	if err := ctrlClient.Get(ctx, configMapName, &cm); err != nil {
+		log.Error(err, "Failed to fetch ConfigMap", "ConfigMap", CSMImages)
+		return cm, fmt.Errorf("error fetching configmaps %v", err)
+	}
+	return cm, nil
+}
+
+func ValidateConfigMap(version VersionSpec) error {
+	// validate that each key has a value. no key is left empty
+	for key, val := range version.Images {
+		if val == "" {
+			return fmt.Errorf("value for key %q is empty", key)
+		}
+	}
+	return nil
+}
+
+func UpdateUsingConfigMap(csm *csmv1.ContainerStorageModule, cm corev1.ConfigMap) (matched VersionSpec, err error) {
+	if len(cm.Data) == 0 {
+		return matched, nil
+	}
+
+	// Unmarshal the version list under "versions.yaml"
+	var versions []VersionSpec
+	if err = yaml.Unmarshal([]byte(cm.Data["versions.yaml"]), &versions); err != nil {
+		return matched, err
+	}
+
+	// Find a match for the high-level CSM CR version
+	versionFound := false
+	for _, v := range versions {
+		if v.Version == csm.Spec.Version {
+			matched = v
+			versionFound = true
+			break
+		}
+	}
+
+	// If none of the version matches with high level version, raise an error
+	if !versionFound {
+		return matched, fmt.Errorf("version %s not found in versions.yaml", csm.Spec.Version)
+	}
+
+	// Validate the matched version
+	if err = ValidateConfigMap(matched); err != nil {
+		return matched, err
+	}
+
+	return matched, nil
+}
+
+// ResolveImage returns an image reference combining a custom registry with an
+// existing image path or name. If retainImageRegistryPath is true, the original
+// path segment (e.g., "org/repo/image:tag") is preserved while removing any
+// registry domain from imageFile. If customRegistry is empty,
+// the original imageFile is returned unchanged.
+func ResolveImage(ctx context.Context, originalImageFile string, cr csmv1.ContainerStorageModule) string {
+	customRegistry := strings.TrimSpace(cr.Spec.CustomRegistry)
+	if customRegistry == "" {
+		// customRegistry is not set - use the original image registry
+		return originalImageFile
+	}
+
+	retainImageRegistryPath := cr.Spec.RetainImageRegistryPath
+	imageFile := strings.TrimSpace(originalImageFile)
+
+	log := logger.GetLogger(ctx)
+
+	if retainImageRegistryPath {
+		// Retain the repository path (e.g., "dell/container-storage-modules/...").
+		// If the image contains a registry domain (has a dot or "localhost"),
+		// strip the domain and keep only the path segment.
+		parts := strings.SplitN(imageFile, "/", 2)
+		if len(parts) == 2 {
+			isDomain := strings.Contains(parts[0], ".") || parts[0] == "localhost"
+			if isDomain {
+				imageFile = parts[1]
+			}
+		}
+	} else {
+		// Keep only the final image name: e.g., "repo/image:tag" -> "image:tag".
+		if i := strings.LastIndexByte(imageFile, '/'); i != -1 {
+			imageFile = imageFile[i+1:]
+		}
+	}
+
+	resolvedPath := fmt.Sprintf("%s/%s", customRegistry, imageFile)
+	log.Info("ResolveImage, resolved Image path ", resolvedPath)
+
+	return resolvedPath
+}
+
+func ValidateCustomRegistry(ctx context.Context, registry string) error {
+	registry = strings.TrimSpace(registry)
+	log := logger.GetLogger(ctx)
+
+	// Check if custom registry is mentioned in the CR
+	if registry == "" {
+		log.Info("Custom registry is not mentioned in the CR")
+		return nil
+	}
+
+	// Check if URL scheme is valid
+	customRegistryURL := strings.TrimRight(registry, "/")
+	if !strings.HasPrefix(customRegistryURL, "http://") && !strings.HasPrefix(customRegistryURL, "https://") {
+		customRegistryURL = "http://" + customRegistryURL
+	}
+
+	u, err := url.Parse(customRegistryURL)
+	if err == nil && u.Scheme != "" && u.Host != "" {
+		log.Info("ValidateCustomRegistry, custom registry URL scheme is valid")
+	} else {
+		log.Error("ValidateCustomRegistry, Invalid custom registry in the CR file, ", "customRegistry ", registry)
+		return err
+	}
+	return nil
+}
+
+// GetImageField returns the image field from the yaml string
+func GetImageField(YamlString string) string {
+	var image string
+	lines := strings.Split(YamlString, "\n")
+	if len(lines) == 1 {
+		return YamlString
+	}
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+
+		if strings.HasPrefix(line, "image:") {
+			image = strings.TrimSpace(strings.TrimPrefix(line, "image:"))
+		}
+	}
+	return image
+}
+
+// GetFinalImage returns the final image
+func GetFinalImage(ctx context.Context, cr csmv1.ContainerStorageModule, matched VersionSpec, component csmv1.ContainerTemplate, YamlString string) string {
+	var finalImage string
+	switch {
+	case matched.Version != "":
+		if img := matched.Images[component.Name]; img != "" {
+			finalImage = img
+		}
+
+	case cr.Spec.CustomRegistry != "":
+		finalImage = ResolveImage(ctx, GetImageField(YamlString), cr)
+
+	case component.Image != "":
+		finalImage = string(component.Image)
+
+	default:
+		finalImage = GetImageField(YamlString)
+	}
+	return finalImage
 }

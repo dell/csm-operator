@@ -31,7 +31,7 @@ spec:
       #   true: enable storage capacity tracking
       #   false: disable storage capacity tracking
       storageCapacity: true
-    configVersion: v2.15.1
+    configVersion: v2.16.0
     # replica: Define the number of PowerMax controller nodes
     # to deploy to the Kubernetes release
     # Allowed values: n, where n > 0
@@ -204,23 +204,23 @@ spec:
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
-        image: registry.k8s.io/sig-storage/csi-provisioner:v5.3.0
+        image: registry.k8s.io/sig-storage/csi-provisioner:v6.1.0
         args: ["--volume-name-prefix=csivol"]
       - name: attacher
-        image: registry.k8s.io/sig-storage/csi-attacher:v4.9.0
+        image: registry.k8s.io/sig-storage/csi-attacher:v4.10.0
       - name: registrar
-        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.15.0
       - name: resizer
-        image: registry.k8s.io/sig-storage/csi-resizer:v1.14.0
+        image: registry.k8s.io/sig-storage/csi-resizer:v2.0.0
       - name: snapshotter
-        image: registry.k8s.io/sig-storage/csi-snapshotter:v8.3.0
+        image: registry.k8s.io/sig-storage/csi-snapshotter:v8.4.0
       - name: csi-metadata-retriever
-        image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.12.0
+        image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.13.0
       # health monitor is disabled by default, refer to driver documentation before enabling it
       - name: external-health-monitor
         enabled: false
         args: ["--monitor-interval=60s"]
-        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.15.0
+        image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.16.0
         # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
         # Configure only when the storageCapacity is set as "true"
         # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
@@ -229,7 +229,7 @@ spec:
   modules:
     # CSI Powermax Reverseproxy is a mandatory module for Powermax
     - name: csireverseproxy
-      configVersion: v2.14.0
+      configVersion: v2.15.0
       components:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
@@ -257,14 +257,14 @@ spec:
     - name: observability
       # enabled: Enable/Disable observability
       enabled: true
-      configVersion: v1.13.0
+      configVersion: v1.14.0
       components:
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
           enabled: true
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
-          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0
+          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.143.1
           # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
           #  for self-signed certs, leave empty string
           # Allowed values: string
@@ -319,14 +319,14 @@ spec:
               value: "30"
             # POWERMAX_CAPACITY_POLL_FREQUENCY: set polling frequency to get capacity metrics data
             # Allowed values: int
-            # Default value: 10
+            # Default value: 20
             - name: "POWERMAX_CAPACITY_POLL_FREQUENCY"
-              value: "10"
+              value: "20"
             # POWERMAX_PERFORMANCE_POLL_FREQUENCY: set polling frequency to get volume performance data
             # Allowed values: int
-            # Default value: 10
+            # Default value: 20
             - name: "POWERMAX_PERFORMANCE_POLL_FREQUENCY"
-              value: "10"
+              value: "20"
             # PowerMax metrics log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
             # Default value: "INFO"

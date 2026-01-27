@@ -28,7 +28,7 @@ spec:
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
       storageCapacity: false
-    configVersion: v2.15.1
+    configVersion: v2.16.0
     # Controller count
     # resiliency test will fail with 2 replicas.
     replicas: 1
@@ -96,6 +96,10 @@ spec:
         # Default Value:
         - name: X_CSI_POWERSTORE_EXTERNAL_ACCESS
           value:
+        # X_CSI_POWERSTORE_EXCLUSIVE_ACCESS: controls whether only X_CSI_POWERSTORE_EXTERNAL_ACCESS entries are added to the NFS export.
+        # Default Value: "false"
+        - name: X_CSI_POWERSTORE_EXCLUSIVE_ACCESS
+          value: "false"
       # nodeSelector: Define node selection constraints for controller pods.
       # For the pod to be eligible to run on a node, the node must have each
       # of the indicated key-value pairs as labels.
@@ -155,7 +159,7 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v2.3.0
+      configVersion: v2.4.0
       components:
         - name: karavi-authorization-proxy
           image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly

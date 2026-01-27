@@ -1,0 +1,29 @@
+name: karavi-authorization-proxy
+imagePullPolicy: IfNotPresent
+image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.4.0
+env:
+  - name: PROXY_HOST
+    value: ""
+  - name: INSECURE
+    value: "true"
+  - name: PLUGIN_IDENTIFIER
+    value: <DriverPluginIdentifier>
+  - name: ACCESS_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: proxy-authz-tokens
+        key: access
+  - name: REFRESH_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: proxy-authz-tokens
+        key: refresh
+volumeMounts:
+  # This mount is included to allow backward compatibility with an upgrade if the customer doesn't use the driver secret.
+  # It is replaced instead with the driver secret if needed.
+  - name: karavi-authorization-config
+    mountPath: /etc/karavi-authorization/config
+  - name: proxy-server-root-certificate
+    mountPath: /etc/karavi-authorization/root-certificates
+  - name: <DriverConfigParamsVolumeMount>
+    mountPath: /etc/karavi-authorization

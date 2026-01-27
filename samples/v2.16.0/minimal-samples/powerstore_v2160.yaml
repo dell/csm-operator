@@ -1,0 +1,37 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: powerstore
+  namespace: powerstore
+spec:
+  version: v1.16.0
+  driver:
+    csiDriverType: "powerstore"
+    forceRemoveDriver: true
+  modules:
+    # Authorization: enable csm-authorization for RBAC
+    - name: authorization
+      # enable: Enable/Disable csm-authorization
+      enabled: false
+      components:
+        - name: karavi-authorization-proxy
+          envs:
+            # proxyHost: hostname of the csm-authorization server
+            - name: "PROXY_HOST"
+              value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
+    - name: resiliency
+      # enabled: Enable/Disable Resiliency feature
+      enabled: false
+    - name: replication
+      # enabled: Enable/Disable Replication feature
+      enabled: false
+    - name: observability
+      # enabled: Enable/Disable observability
+      enabled: false
+      components:
+        - name: otel-collector
+          enabled: false
+        - name: cert-manager
+          enabled: false
+        - name: metrics-powerstore
+          enabled: false

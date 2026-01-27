@@ -42,7 +42,8 @@ Any time changes made to the operator are being checked into the main branch, sa
   - (if running sanity, powerscale, or modules suites) `isilon`
   - (if running unity suite) `unity`
   - (if running powermax suite) `powermax`
-  - (if running powerstore suite) `powerstore`
+  - (if running powerstore suite) `powerstore`, `test-powerstore`
+  - (if running cosi suite) `dell-cosi`
 - For Authorization V2:
   - The following components must be installed on your cluster:
     - Secrets Store CSI Driver
@@ -55,15 +56,7 @@ Any time changes made to the operator are being checked into the main branch, sa
           vaultCACertPath: '/config/vault-ca.pem'
       ```
       where "vault" is the name of the vault service running.
-
-      If you're using a SecretProviderClass to store the configuration with a JWT signing secret, you'll need to update the path to point to this configuration:
-      ```
-        objects: |
-          - objectName: "config-object"
-            secretPath: "secret/data/REPLACE_CONFIG_PATH"
-            secretKey: "configKey"
-      ```
-      where "REPLACE_CONFIG_PATH" is the path to the configuration secret inside the CSI Secret Store.
+- If scenarios where `customRegistry` is provided in the test CR, make sure the images are   present in the registry path provided. 
 - Dellctl needs to be installed
   - See [here](https://dell.github.io/csm-docs/docs/support/cli/#installation-instructions) for instructions
 - In addition, for drivers that do not use the secret and storageclass creation steps, any required secrets, storageclasses, etc. will need to be created beforehand as well as required namespaces.

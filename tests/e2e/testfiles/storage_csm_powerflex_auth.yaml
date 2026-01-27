@@ -11,7 +11,7 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
-    configVersion: v2.15.1
+    configVersion: v2.16.0
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
@@ -38,12 +38,12 @@ spec:
       # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
-        image: quay.io/dell/storage/powerflex/sdc:4.5.4
+        image: quay.io/dell/storage/powerflex/sdc:5.0
         envs:
           - name: HOST_PID
             value: "1"
           - name: MDM
-            value: "10.x.x.x,10.x.x.x"  # provide MDM value
+            value: "10.x.x.x,10.x.x.x" # provide MDM value
       # health monitor is disabled by default, refer to driver documentation before enabling it
       # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
       - name: csi-external-health-monitor-controller
@@ -119,16 +119,16 @@ spec:
       #   operator: "Exists"
       #   effect: "NoSchedule"
     initContainers:
-      - image: quay.io/dell/storage/powerflex/sdc:4.5.4
+      - image: quay.io/dell/storage/powerflex/sdc:5.0
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
           - name: MDM
-            value: "REPLACE_MDM"  # provide MDM value
+            value: "REPLACE_MDM" # provide MDM value
           - name: REPO_ADDRESS
-            value: "REPLACE_SFTP_REPO_ADDRESS"  # SFTP/private repository address. Format: "protocol://address"
+            value: "REPLACE_SFTP_REPO_ADDRESS" # SFTP/private repository address. Format: "protocol://address"
           - name: REPO_USER
-            value: "REPLACE_SFTP_REPO_USER"  # provide username to authenticate to the SFTP repo
+            value: "REPLACE_SFTP_REPO_USER" # provide username to authenticate to the SFTP repo
           - name: MODULE_SIGCHECK
             value: "0"
   modules:
@@ -136,7 +136,7 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v2.3.0
+      configVersion: v2.4.0
       components:
         - name: karavi-authorization-proxy
           image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly

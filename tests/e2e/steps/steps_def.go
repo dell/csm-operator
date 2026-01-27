@@ -55,10 +55,11 @@ var (
 	operatorNamespace = "dell-csm-operator"
 	quotaLimit        = "100000000"
 	pflexSecretMap    = map[string]string{
-		"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_NAS": "PFLEX_NAS", "REPLACE_SFTP_REPO_ADDRESS": "PFLEX_SFTP_REPO_ADDRESS", "REPLACE_SFTP_REPO_USER": "PFLEX_SFTP_REPO_USER",
+		"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_PROTOCOL": "PFLEX_PROTOCOL", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_NAS": "PFLEX_NAS", "REPLACE_SFTP_REPO_ADDRESS": "PFLEX_SFTP_REPO_ADDRESS", "REPLACE_SFTP_REPO_USER": "PFLEX_SFTP_REPO_USER",
 		"REPLACE_ZONING_USER": "PFLEX_ZONING_USER", "REPLACE_ZONING_PASS": "PFLEX_ZONING_PASS", "REPLACE_ZONING_SYSTEMID": "PFLEX_ZONING_SYSTEMID", "REPLACE_ZONING_ENDPOINT": "PFLEX_ZONING_ENDPOINT", "REPLACE_ZONING_MDM": "PFLEX_ZONING_MDM", "REPLACE_ZONING_POOL": "PFLEX_ZONING_POOL", "REPLACE_ZONING_NAS": "PFLEX_ZONING_NAS",
+		"REPLACE_OIDC_CLIENTID": "PFLEX_OIDC_CLIENTID", "REPLACE_OIDC_CLIENT_SECRET": "PFLEX_OIDC_CLIENT_SECRET", "REPLACE_CIAM_CLIENTID": "PFLEX_CIAM_CLIENTID", "REPLACE_CIAM_CLIENT_SECRET": "PFLEX_CIAM_CLIENT_SECRET", "REPLACE_ISSUER": "PFLEX_ISSUER", "REPLACE_SCOPE": "PFLEX_SCOPE",
 	}
-	pflexAuthSecretMap       = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM"}
+	pflexAuthSecretMap       = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_PROTOCOL": "PFLEX_PROTOCOL"}
 	pscaleSecretMap          = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT", "REPLACE_MULTI_CLUSTERNAME": "PSCALE_MULTI_CLUSTER", "REPLACE_MULTI_USER": "PSCALE_MULTI_USER", "REPLACE_MULTI_PASS": "PSCALE_MULTI_PASS", "REPLACE_MULTI_ENDPOINT": "PSCALE_MULTI_ENDPOINT", "REPLACE_MULTI_PORT": "PSCALE_MULTI_PORT", "REPLACE_MULTI_AUTH_ENDPOINT": "PSCALE_MULTI_AUTH_ENDPOINT", "REPLACE_MULTI_AUTH_PORT": "PSCALE_MULTI_AUTH_PORT"}
 	pscaleAuthSecretMap      = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
 	pscaleAuthSidecarMap     = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_PORT": "PSCALE_PORT"}
@@ -88,19 +89,31 @@ var (
 	pstoreAuthSidecarMap     = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_SYSTEMID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSTORE_AUTH_ENDPOINT"}
 	unitySecretMap           = map[string]string{"REPLACE_USER": "UNITY_USER", "REPLACE_PASS": "UNITY_PASS", "REPLACE_ARRAYID": "UNITY_ARRAYID", "REPLACE_ENDPOINT": "UNITY_ENDPOINT", "REPLACE_POOL": "UNITY_POOL", "REPLACE_NAS": "UNITY_NAS"}
 	unityEphemeralVolumeMap  = map[string]string{"REPLACE_ARRAYID": "UNITY_ARRAYID", "REPLACE_POOL": "UNITY_POOL", "REPLACE_NAS": "UNITY_NAS"}
+
+	cosiSecretMap = map[string]string{"REPLACE_USER": "COSI_USER", "REPLACE_PASS": "COSI_PASS", "REPLACE_NAMESPACE": "COSI_NAMESPACE", "REPLACE_MGMT_ENDPOINT": "COSI_MGMT_ENDPOINT", "REPLACE_S3_ENDPOINT": "COSI_S3_ENDPOINT"}
 )
 
-var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration) error {
+var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration, ctrlClient client.Client) error {
+	authModule := csmv1.Module{}
+	for _, m := range cr.Spec.Modules {
+		if m.Name == csmv1.Authorization {
+			authModule = m
+			break
+		}
+	}
+	authConfigVersion := authModule.ConfigVersion
+
 	err := modules.CheckAnnotationAuth(annotations)
 	if err != nil {
 		return err
 	}
 
-	err = modules.CheckApplyVolumesAuth(vols)
+	err = modules.CheckApplyVolumesAuth(vols, authConfigVersion, string(cr.Spec.Driver.CSIDriverType), cr, ctrlClient)
 	if err != nil {
 		return err
 	}
-	err = modules.CheckApplyContainersAuth(cnt, string(cr.Spec.Driver.CSIDriverType), true)
+
+	err = modules.CheckApplyContainersAuth(cnt, string(cr.Spec.Driver.CSIDriverType), true, authConfigVersion, cr, ctrlClient)
 	if err != nil {
 		return err
 	}
@@ -586,7 +599,7 @@ func (step *Step) validateObservabilityInstalled(cr csmv1.ContainerStorageModule
 		return err
 	}
 	if authorizationEnabled, _ := operatorutils.IsModuleEnabled(context.TODO(), *instance, csmv1.Authorization); authorizationEnabled {
-		if err := correctlyAuthInjected(cr, dpApply.Annotations, dpApply.Spec.Template.Spec.Volumes, dpApply.Spec.Template.Spec.Containers); err != nil {
+		if err := correctlyAuthInjected(cr, dpApply.Annotations, dpApply.Spec.Template.Spec.Volumes, dpApply.Spec.Template.Spec.Containers, step.ctrlClient); err != nil {
 			return fmt.Errorf("failed to check for observability authorization installation in %s: %v", clusterClient.ClusterID, err)
 		}
 	} else {
@@ -694,11 +707,11 @@ func (step *Step) validateAuthorizationInstalled(cr csmv1.ContainerStorageModule
 		return err
 	}
 
-	if err := correctlyAuthInjected(cr, dpApply.Annotations, dpApply.Spec.Template.Spec.Volumes, dpApply.Spec.Template.Spec.Containers); err != nil {
+	if err := correctlyAuthInjected(cr, dpApply.Annotations, dpApply.Spec.Template.Spec.Volumes, dpApply.Spec.Template.Spec.Containers, step.ctrlClient); err != nil {
 		return err
 	}
 
-	return correctlyAuthInjected(cr, dsApply.Annotations, dsApply.Spec.Template.Spec.Volumes, dsApply.Spec.Template.Spec.Containers)
+	return correctlyAuthInjected(cr, dsApply.Annotations, dsApply.Spec.Template.Spec.Volumes, dsApply.Spec.Template.Spec.Containers, step.ctrlClient)
 }
 
 func (step *Step) validateAuthorizationNotInstalled(cr csmv1.ContainerStorageModule) error {
@@ -839,7 +852,16 @@ func (step *Step) setUpSecret(_ Resource, templateFile, name, namespace, crType 
 	return nil
 }
 
-func (step *Step) setUpSecretFromFile(_ Resource, templateFile, name, namespace, crType string) error {
+func (step *Step) setUpSecretFromFile(resource Resource, templateFile, name, namespace, crType string) error {
+	return step.setUpSecretFromTemplateWithFieldName(resource, templateFile, "", name, namespace, crType)
+}
+
+func (step *Step) setUpSecretFromTemplateWithFieldName(_ Resource, templateFile, fieldName, name, namespace, crType string) error {
+	fileString, err := renderTemplate(crType, templateFile)
+	if err != nil {
+		return err
+	}
+
 	// if secret exists - delete it
 	if secretExists(namespace, name) {
 		err := execCommand("kubectl", "delete", "secret", "-n", namespace, name)
@@ -848,23 +870,19 @@ func (step *Step) setUpSecretFromFile(_ Resource, templateFile, name, namespace,
 		}
 	}
 
-	// find which map to use for secret values
-	mapValues, err := determineMap(crType)
+	filePath, err := writeRenderedFile(templateFile, fileString)
 	if err != nil {
 		return err
 	}
 
-	for key := range mapValues {
-		val := os.Getenv(mapValues[key])
-
-		err := replaceInFile(key, val, templateFile)
-		if err != nil {
-			return err
-		}
+	// create new secret
+	var fileArg string
+	if len(fieldName) > 0 {
+		fileArg = "--from-file=" + fieldName + "=" + filePath
+	} else {
+		fileArg = "--from-file=" + filePath
 	}
 
-	// create new secret
-	fileArg := "--from-file=" + templateFile
 	err = execCommand("kubectl", "create", "secret", "generic", "-n", namespace, name, fileArg)
 	if err != nil {
 		return fmt.Errorf("failed to create secret from file %s: %v", templateFile, err)
@@ -1062,6 +1080,8 @@ func determineMap(crType string) (map[string]string, error) {
 		mapValues = unitySecretMap
 	} else if crType == "unityEphemeral" {
 		mapValues = unityEphemeralVolumeMap
+	} else if crType == "cosi" {
+		mapValues = cosiSecretMap
 	} else if crType == "''" {
 		return mapValues, nil
 	} else {
@@ -1989,6 +2009,16 @@ func (step *Step) setUpTLSSecretWithSAN(res Resource, namespace string) error {
 	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to apply csirevproxy-tls-secret: %v", err)
+	}
+
+	return nil
+}
+
+func (step *Step) deleteConfigMap(_ Resource) error {
+	cmd := exec.Command("kubectl", "delete", "cm", "csm-images", "-n", "dell-csm-operator") // #nosec G204
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to delete configmap csm-images: %v", err)
 	}
 
 	return nil

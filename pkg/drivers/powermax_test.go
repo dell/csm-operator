@@ -19,8 +19,8 @@ import (
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
-	"github.com/dell/csm-operator/tests/shared"
-	"github.com/dell/csm-operator/tests/shared/crclient"
+	shared "github.com/dell/csm-operator/tests/sharedutil"
+	"github.com/dell/csm-operator/tests/sharedutil/crclient"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/client-go/applyconfigurations/apps/v1"
@@ -34,6 +34,7 @@ var (
 	powerMaxBadReverseProxySecret = csmWithBadReverseProxySecret()
 	powerMaxCSMNoProxy            = csmForPowerMaxNOProxy()
 	powerMaxCSMBadVersion         = csmForPowerMaxBadVersion()
+	powerMaxInvalidCSMVersion     = csmForPowerMaxInvalidVersion()
 	powermaxDefaultKubeletPath    = getDefaultKubeletPath()
 	powerMaxClient                = crclient.NewFakeClientNoInjector(objects)
 	powerMaxSecret                = shared.MakeSecret("csm-creds", "pmax-test", shared.PmaxConfigVersion)
@@ -57,6 +58,7 @@ var (
 		{"missing secret", powerMaxCSM, powerMaxClient, pMaxfakeSecret, "failed to find secret"},
 		{"bad version", powerMaxCSMBadVersion, powerMaxClient, powerMaxSecret, "not supported"},
 		{"bad latest version", powermaxDefaultKubeletPath, powerMaxClient, powerMaxSecret, ""},
+		{"invalid csm version", powerMaxInvalidCSMVersion, powerMaxClient, powerMaxSecret, "No custom resource configuration is available for CSM version v1.10.0"},
 	}
 )
 
@@ -308,11 +310,92 @@ func csmForPowerMaxBadVersion() csmv1.ContainerStorageModule {
 	return res
 }
 
+// makes a csm object with tolerations
+func csmForPowerMaxInvalidVersion() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "pmax-test", shared.PmaxConfigVersion)
+
+	// Add pmax driver version
+	res.Spec.Version = shared.InvalidCSMVersion
+	res.Spec.Driver.CSIDriverType = csmv1.PowerMax
+
+	return res
+}
+
 func getDefaultKubeletPath() csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "pmax-test", shared.PmaxConfigVersion)
 
 	kubeEnv := corev1.EnvVar{Name: "KUBELET_CONFIG_DIR", Value: "/fake"}
 	res.Spec.Driver.Common.Envs = []corev1.EnvVar{kubeEnv}
+
+	return res
+}
+
+func TestModifyPowermaxCRDynamicSGParameters(t *testing.T) {
+	tests := []struct {
+		name              string
+		fileType          string
+		cr                csmv1.ContainerStorageModule
+		expectedDynamicSG string
+	}{
+		{
+			name:              "Node: dynamic SG enabled with sync interval",
+			fileType:          "Node",
+			cr:                createCSMWithDynamicSGEnvs("true", "120"),
+			expectedDynamicSG: "true",
+		},
+		{
+			name:              "Node: dynamic SG disabled",
+			fileType:          "Node",
+			cr:                createCSMWithDynamicSGEnvs("false", "60"),
+			expectedDynamicSG: "false",
+		},
+		{
+			name:              "Controller: dynamic SG enabled",
+			fileType:          "Controller",
+			cr:                createCSMWithDynamicSGEnvs("true", "90"),
+			expectedDynamicSG: "true",
+		},
+		{
+			name:              "Controller: dynamic SG with default values",
+			fileType:          "Controller",
+			cr:                createCSMWithDynamicSGEnvs("false", ""),
+			expectedDynamicSG: "false",
+		},
+		{
+			name:              "Node: missing dynamic SG envs defaults",
+			fileType:          "Node",
+			cr:                shared.MakeCSM("csm", "pmax-test", shared.PmaxConfigVersion),
+			expectedDynamicSG: "false",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			yamlString := CSIPmaxDynamicSGEnabled
+
+			result := ModifyPowermaxCR(yamlString, tt.cr, tt.fileType)
+
+			assert.Containsf(t, result, tt.expectedDynamicSG, "expected dynamic SG value %q in result", tt.expectedDynamicSG)
+		})
+	}
+}
+
+// Helper function to create CSM with dynamic SG environment variables
+func createCSMWithDynamicSGEnvs(dynamicSGEnabled string, syncInterval string) csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "pmax-test", shared.PmaxConfigVersion)
+
+	envs := []corev1.EnvVar{
+		{Name: "X_CSI_DYNAMIC_SG_ENABLED", Value: dynamicSGEnabled},
+	}
+
+	if syncInterval != "" {
+		envs = append(envs, corev1.EnvVar{Name: "X_CSI_SG_SYNC_INTERVAL", Value: syncInterval})
+	}
+
+	res.Spec.Driver.Common.Envs = envs
+	res.Spec.Driver.AuthSecret = "csm-creds"
+	res.Spec.Driver.ConfigVersion = shared.PmaxConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.PowerMax
 
 	return res
 }

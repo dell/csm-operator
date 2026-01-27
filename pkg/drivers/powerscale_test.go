@@ -18,8 +18,8 @@ import (
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
-	"github.com/dell/csm-operator/tests/shared"
-	"github.com/dell/csm-operator/tests/shared/crclient"
+	shared "github.com/dell/csm-operator/tests/sharedutil"
+	"github.com/dell/csm-operator/tests/sharedutil/crclient"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,14 +27,15 @@ import (
 )
 
 var (
-	powerScaleCSM            = csmForPowerScale()
-	powerScaleCSMEmptyEnv    = csmForPowerScaleWithEmptyEnv()
-	powerScaleCSMBadSkipCert = csmForPowerScaleBadSkipCert()
-	powerScaleCSMBadCertCnt  = csmForPowerScaleBadCertCnt()
-	powerScaleCSMBadVersion  = csmForPowerScaleBadVersion()
-	objects                  = map[shared.StorageKey]runtime.Object{}
-	powerScaleClient         = crclient.NewFakeClientNoInjector(objects)
-	powerScaleSecret         = shared.MakeSecret("csm-creds", "driver-test", shared.ConfigVersion)
+	powerScaleCSM               = csmForPowerScale()
+	powerScaleInvalidCSMVersion = csmForPowerScaleInvalidVersion()
+	powerScaleCSMEmptyEnv       = csmForPowerScaleWithEmptyEnv()
+	powerScaleCSMBadSkipCert    = csmForPowerScaleBadSkipCert()
+	powerScaleCSMBadCertCnt     = csmForPowerScaleBadCertCnt()
+	powerScaleCSMBadVersion     = csmForPowerScaleBadVersion()
+	objects                     = map[shared.StorageKey]runtime.Object{}
+	powerScaleClient            = crclient.NewFakeClientNoInjector(objects)
+	powerScaleSecret            = shared.MakeSecret("csm-creds", "driver-test", shared.ConfigVersion)
 
 	powerScaleTests = []struct {
 		// every single unit test name
@@ -67,6 +68,7 @@ var (
 		{"missing secret", powerScaleCSM, powerScaleClient, powerScaleSecret, "failed to find secret"},
 		{"bad version", powerScaleCSMBadVersion, powerScaleClient, powerScaleSecret, "not supported"},
 		{"missing envs", powerScaleCSMEmptyEnv, powerScaleClient, powerScaleSecret, "failed to find secret"},
+		{"invalid csm version", powerScaleInvalidCSMVersion, powerScaleClient, powerScaleSecret, "No custom resource configuration is available for CSM version v1.10.0"},
 	}
 
 	powerScaleCommonEnvTest = []struct {
@@ -232,6 +234,17 @@ func csmForPowerScaleBadVersion() csmv1.ContainerStorageModule {
 
 	// Add pscale driver version
 	res.Spec.Driver.ConfigVersion = "v0"
+	res.Spec.Driver.CSIDriverType = csmv1.PowerScale
+
+	return res
+}
+
+// makes a csm object with tolerations
+func csmForPowerScaleInvalidVersion() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
+
+	// Add pscale driver version
+	res.Spec.Version = shared.InvalidCSMVersion
 	res.Spec.Driver.CSIDriverType = csmv1.PowerScale
 
 	return res

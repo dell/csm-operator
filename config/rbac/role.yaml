@@ -436,6 +436,18 @@ rules:
       - list
       - watch
   - apiGroups:
+      - dr.storage.dell.com
+    resources:
+      - volumejournals
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
       - gateway.networking.k8s.io
     resources:
       - gateways
@@ -496,6 +508,24 @@ rules:
     resources:
       - ingresses/status
     verbs:
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
+      - objectstorage.k8s.io
+    resources:
+      - bucketaccessclasses
+      - bucketaccessclasses/status
+      - bucketaccesses
+      - bucketaccesses/status
+      - bucketclaims
+      - bucketclaims/status
+      - buckets
+      - buckets/status
+    verbs:
+      - create
+      - delete
       - get
       - list
       - update

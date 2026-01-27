@@ -6,7 +6,7 @@ metadata:
 spec:
   driver:
     csiDriverType: "powerflex"
-    configVersion: v2.15.1
+    configVersion: v2.16.0
     forceRemoveDriver: true
   modules:
     - name: observability
@@ -18,7 +18,7 @@ spec:
           enabled: true
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
-          image: otel/opentelemetry-collector:0.135.0
+          image: otel/opentelemetry-collector:0.143.1
           # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
           #  for self-signed certs, leave empty string
           # Allowed values: string

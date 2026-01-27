@@ -20,10 +20,10 @@
 
 - scenario: "Install Powerstore Driver (Minimal, With Authorization v2)"
   paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_k8s_secret.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerstore_auth.yaml"
-    - "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
     - "authorizationproxyserver"
     - "authorization"
@@ -32,13 +32,11 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [authorization] for [pstore]"
-    # - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [pstoreAuthCRs]"
+    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [pstoreAuthCRs]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powerstore] for CR [1]"
     - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
-    - "Create Secret with template [testfiles/powerstore-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-powerstore] for [pstoreAuthSidecar]"
     - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template-auth.yaml] name [test-powerstore-config] in namespace [test-powerstore] for [pstoreAuth]"
     - "Apply custom resource [3]"
     - "Validate custom resource [3]"
@@ -72,8 +70,7 @@
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powerstore] for CR [1]"
     - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
-    - "Create Secret with template [testfiles/powerstore-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [powerstore] for [pstoreAuthSidecar]"
-    - "Create resource with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] for [pstoreCreds]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template-auth.yaml] name [test-powerstore-config] in namespace [test-powerstore] for [pstoreAuth]"
     - "Apply custom resource [3]"
     - "Validate custom resource [3]"
     - "Validate [powerstore] driver from CR [3] is installed"
@@ -86,29 +83,6 @@
     - "Delete custom resource [1]"
     - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [2]"
-
-- scenario: "Install PowerStore Driver with Shared NFS (Minimal, Standalone)"
-  paths:
-    - "testfiles/minimal-testfiles/storage_csm_powerstore.yaml"
-  tags:
-    - "sharednfs"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Run [Is NFS Server Running]"
-    - "Create StorageClass with template [testfiles/powerstore-templates/storage-class-sharednfs.yaml] for [pstore]"
-    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerstore] driver from CR [1] is installed"
-    - "Validate [powerstore] driver spec from CR [1]"
-    # cleanup
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-    - "Validate [powerstore] driver from CR [1] is not installed"
-  customTest:
-    - name: Is NFS Server Running
-      run:
-        - /bin/bash scripts/verify_nfs.sh
 
 - scenario: "Install PowerStore Driver (Minimal, With Resiliency)"
   paths:
@@ -374,7 +348,6 @@
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powerflex] for CR [1]"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-vxflexos] for [pflexAuthSidecar]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
     - "Apply custom resource [2]"
@@ -409,7 +382,6 @@
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powerflex] for CR [1]"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-vxflexos] for [pflexAuthSidecar]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
     - "Apply custom resource [2]"
@@ -697,7 +669,6 @@
     - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [isilon] for [pscale]"
     - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscaleAuth]"
-    - "Create Secret with template [testfiles/powerscale-templates/karavi-authorization-config.json] name [karavi-authorization-config] in namespace [isilon] for [pscaleAuthSidecar]"
     - "Apply custom resource [2]"
     - "Validate custom resource [2]"
     - "Validate [powerscale] driver from CR [2] is installed"
@@ -732,7 +703,6 @@
     - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [isilon] for [pscale]"
     - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscaleAuth]"
-    - "Create Secret with template [testfiles/powerscale-templates/karavi-authorization-config.json] name [karavi-authorization-config] in namespace [isilon] for [pscaleAuthSidecar]"
     - "Apply custom resource [2]"
     - "Validate custom resource [2]"
     - "Validate [powerscale] driver from CR [2] is installed"
@@ -1248,3 +1218,19 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
+
+- scenario: "Install COSI Driver (Minimal)"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_cosi.yaml"
+  tags:
+    - "cosi"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create Secret from template [testfiles/cosi-templates/cosi-secret.yaml] as field [config.yaml] named [cosi-config] in namespace [cosi] for [cosi]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [cosi] driver from CR [1] is installed"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [cosi] driver from CR [1] is not installed"

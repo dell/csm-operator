@@ -748,6 +748,7 @@ func TestObservabilityStatusCheck(t *testing.T) {
 		Spec: csmv1.ContainerStorageModuleSpec{
 			Driver: csmv1.Driver{
 				CSIDriverType: "powerflex",
+				ConfigVersion: "v2.15.0", // Added to ensure GetVersion has data
 			},
 			Modules: []csmv1.Module{
 				{
@@ -877,8 +878,14 @@ func TestObservabilityStatusCheck(t *testing.T) {
 		K8sClient: fake.NewSimpleClientset(),
 	}
 
+	// Initialize the new OperatorConfig argument
+	opConfig := OperatorConfig{
+		ConfigDirectory: "../../operatorconfig",
+	}
+
 	// test 1: pods are running
-	status, err := observabilityStatusCheck(ctx, &csm1, &fakeReconcile, nil)
+	// Added opConfig to the function call
+	status, err := observabilityStatusCheck(ctx, &csm1, &fakeReconcile, nil, opConfig)
 	assert.Nil(t, err)
 	assert.Equal(t, true, status)
 }
@@ -887,6 +894,11 @@ func TestObservabilityStatusCheckError(t *testing.T) {
 	// Create a fake context.Context
 	ctx := context.Background()
 	ctrlClient := fullFakeClient()
+
+	// Define the operator config required for status checks
+	opConfig := OperatorConfig{
+		ConfigDirectory: "../../operatorconfig",
+	}
 
 	// Create a fake csm of csmv1.ContainerStorageModule
 	csm := csmv1.ContainerStorageModule{
@@ -1018,7 +1030,7 @@ func TestObservabilityStatusCheckError(t *testing.T) {
 		K8sClient: fake.NewSimpleClientset(),
 	}
 
-	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil, opConfig)
 	assert.Nil(t, err)
 
 	recreateDeployment(ctx, t, ctrlClient, &otelDeployment, 1)
@@ -1026,7 +1038,7 @@ func TestObservabilityStatusCheckError(t *testing.T) {
 	err = ctrlClient.Create(ctx, &metricsPowerflexDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
 
-	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil, opConfig)
 	assert.Nil(t, err)
 
 	recreateDeployment(ctx, t, ctrlClient, &metricsPowerflexDeployment, 1)
@@ -1034,7 +1046,7 @@ func TestObservabilityStatusCheckError(t *testing.T) {
 	err = ctrlClient.Create(ctx, &topologyDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
 
-	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil, opConfig)
 	assert.Nil(t, err)
 
 	recreateDeployment(ctx, t, ctrlClient, &topologyDeployment, 1)
@@ -1042,7 +1054,7 @@ func TestObservabilityStatusCheckError(t *testing.T) {
 	err = ctrlClient.Create(ctx, &certManagerDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
 
-	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil, opConfig)
 	assert.Nil(t, err)
 
 	recreateDeployment(ctx, t, ctrlClient, &certManagerDeployment, 1)
@@ -1050,7 +1062,7 @@ func TestObservabilityStatusCheckError(t *testing.T) {
 	err = ctrlClient.Create(ctx, &certManagerCainjectorDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
 
-	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil, opConfig)
 	assert.Nil(t, err)
 
 	recreateDeployment(ctx, t, ctrlClient, &certManagerCainjectorDeployment, 1)
@@ -1058,7 +1070,7 @@ func TestObservabilityStatusCheckError(t *testing.T) {
 	err = ctrlClient.Create(ctx, &certManagerWebhookDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
 
-	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	_, err = observabilityStatusCheck(ctx, &csm, &fakeReconcile, nil, opConfig)
 	assert.Nil(t, err)
 
 	recreateDeployment(ctx, t, ctrlClient, &certManagerWebhookDeployment, 1)
@@ -1288,7 +1300,7 @@ func TestAuthProxyStatusCheck(t *testing.T) {
 	}
 
 	// test 1: pods are running
-	status, err := authProxyStatusCheck(ctx, &csm1, &fakeReconcile, nil)
+	status, err := authProxyStatusCheck(ctx, &csm1, &fakeReconcile, nil, OperatorConfig{})
 	assert.Nil(t, err)
 	assert.Equal(t, true, status)
 }
@@ -1481,7 +1493,7 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 		K8sClient: fake.NewSimpleClientset(),
 	}
 
-	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil, OperatorConfig{})
 	assert.Nil(t, err)
 
 	recreateDeployment(ctx, t, ctrlClient, &nginxDeployment, 1)
@@ -1489,7 +1501,7 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 	err = ctrlClient.Create(ctx, &certManagerDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
 
-	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil, OperatorConfig{})
 	assert.Nil(t, err)
 
 	recreateDeployment(ctx, t, ctrlClient, &certManagerDeployment, 1)
@@ -1497,7 +1509,7 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 	err = ctrlClient.Create(ctx, &certManagerCainjectorDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
 
-	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil, OperatorConfig{})
 	assert.Nil(t, err)
 
 	recreateDeployment(ctx, t, ctrlClient, &certManagerCainjectorDeployment, 1)
@@ -1505,7 +1517,7 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 	err = ctrlClient.Create(ctx, &certManagerWebhookDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
 
-	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil, OperatorConfig{})
 	assert.Nil(t, err)
 
 	recreateDeployment(ctx, t, ctrlClient, &certManagerWebhookDeployment, 1)
@@ -1513,7 +1525,7 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 	err = ctrlClient.Create(ctx, &proxyServerDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
 
-	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil, OperatorConfig{})
 	assert.Nil(t, err)
 
 	recreateDeployment(ctx, t, ctrlClient, &proxyServerDeployment, 1)
@@ -1521,7 +1533,7 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 	err = ctrlClient.Create(ctx, &redisCommanderDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
 
-	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil, OperatorConfig{})
 	assert.Nil(t, err)
 
 	recreateDeployment(ctx, t, ctrlClient, &redisCommanderDeployment, 1)
@@ -1529,7 +1541,7 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 	err = ctrlClient.Create(ctx, &redisPrimaryDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
 
-	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil, OperatorConfig{})
 	assert.Nil(t, err)
 
 	recreateDeployment(ctx, t, ctrlClient, &redisPrimaryDeployment, 1)
@@ -1537,7 +1549,7 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 	err = ctrlClient.Create(ctx, &roleServiceDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
 
-	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil, OperatorConfig{})
 	assert.Nil(t, err)
 
 	recreateDeployment(ctx, t, ctrlClient, &roleServiceDeployment, 1)
@@ -1545,7 +1557,7 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 	err = ctrlClient.Create(ctx, &storageServiceDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
 
-	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil, OperatorConfig{})
 	assert.Nil(t, err)
 
 	recreateDeployment(ctx, t, ctrlClient, &storageServiceDeployment, 1)
@@ -1553,7 +1565,7 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 	err = ctrlClient.Create(ctx, &tenantServiceDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
 
-	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil, OperatorConfig{})
 	assert.Nil(t, err)
 
 	recreateDeployment(ctx, t, ctrlClient, &tenantServiceDeployment, 1)
@@ -1561,7 +1573,7 @@ func TestAuthProxyStatusCheckError(t *testing.T) {
 	err = ctrlClient.Create(ctx, &authorizationControllerDeployment)
 	assert.NoError(t, err, "failed to create client object during test setup")
 
-	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil)
+	_, err = authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil, OperatorConfig{})
 	assert.Nil(t, err)
 
 	recreateDeployment(ctx, t, ctrlClient, &authorizationControllerDeployment, 1)
@@ -1872,7 +1884,7 @@ func TestHandleSuccess(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			requeue := HandleSuccess(test.args.ctx, test.args.instance, test.args.r, test.args.newStatus, test.args.oldStatus)
+			requeue := HandleSuccess(test.args.ctx, test.args.instance, test.args.r, test.args.newStatus, test.args.oldStatus, OperatorConfig{})
 			assert.Equal(t, test.want, requeue)
 		})
 	}
@@ -2024,7 +2036,7 @@ func TestUpdateStatus(t *testing.T) {
 	}
 
 	// UpdateStatus function to be tested.
-	err = UpdateStatus(ctx, instance, r, newStatus)
+	err = UpdateStatus(ctx, instance, r, newStatus, OperatorConfig{})
 
 	assert.Error(t, err)
 	assert.Equal(t, "containerstoragemodules.storage.dell.com \"test\" not found", err.Error())
@@ -2032,6 +2044,106 @@ func TestUpdateStatus(t *testing.T) {
 	// Ensure the update count is incremented
 	r.IncrUpdateCount()
 	assert.Equal(t, int32(1), r.GetUpdateCount())
+}
+
+func TestUpdateStatusSetsLastSuccessfulConfiguration(t *testing.T) {
+	ctx := context.TODO()
+
+	// Define the initial ContainerStorageModule instance
+	instance := &csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "test",
+			Namespace:       "default",
+			UID:             "test-uid",
+			ResourceVersion: "1",
+			Annotations: map[string]string{
+				"storage.dell.com/PreviouslyAppliedConfiguration": `{"driver":"replicas=1"}`,
+			},
+		},
+		Status: csmv1.ContainerStorageModuleStatus{
+			State:            "oldState",
+			ControllerStatus: csmv1.PodStatus{Available: "1", Failed: "0", Desired: "1"},
+			NodeStatus:       csmv1.PodStatus{Available: "1", Failed: "0", Desired: "1"},
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Driver: csmv1.Driver{Replicas: 1},
+		},
+	}
+
+	deployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-controller",
+			Namespace: "default",
+		},
+		Status: appsv1.DeploymentStatus{
+			Replicas:          1,
+			ReadyReplicas:     1,
+			UpdatedReplicas:   1,
+			AvailableReplicas: 1,
+		},
+	}
+
+	daemonset := &appsv1.DaemonSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-node",
+			Namespace: "default",
+		},
+		Status: appsv1.DaemonSetStatus{
+			DesiredNumberScheduled: 0,
+			NumberReady:            0,
+			NumberAvailable:        0,
+			NumberUnavailable:      0,
+		},
+	}
+
+	// Define the new status for the update
+	newStatus := &csmv1.ContainerStorageModuleStatus{
+		State: constants.Succeeded,
+		NodeStatus: csmv1.PodStatus{
+			Available: "1",
+			Failed:    "0",
+			Desired:   "1",
+		},
+		ControllerStatus: csmv1.PodStatus{
+			Available: "1",
+			Failed:    "0",
+			Desired:   "1",
+		},
+	}
+
+	// Register the CRD with the scheme
+	s := runtime.NewScheme()
+	if err := csmv1.AddToScheme(s); err != nil {
+		t.Fatalf("Unable to add csmv1 scheme: %v", err)
+	}
+	err := corev1.AddToScheme(s)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = appsv1.AddToScheme(s)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fakeClient := ctrlClientFake.NewClientBuilder().WithScheme(s).WithObjects(instance, deployment, daemonset).Build()
+
+	// Ensure the instance exists in the fake client
+	foundInstance := &csmv1.ContainerStorageModule{}
+	err = fakeClient.Get(ctx, client.ObjectKey{Name: "test", Namespace: "default"}, foundInstance)
+	if err != nil {
+		t.Fatalf("Failed to get instance from fake client: %v", err)
+	}
+	// Mock the FakeReconcileCSM
+	r := &FakeReconcileCSM{
+		Client:    fakeClient,
+		K8sClient: fake.NewSimpleClientset(),
+	}
+
+	// UpdateStatus function to be tested.
+	err = UpdateStatus(ctx, instance, r, newStatus, OperatorConfig{})
+
+	assert.Error(t, err)
+	assert.Equal(t, `{"driver":"replicas=1"}`, instance.Status.LastSuccessfulConfiguration)
 }
 
 func TestUpdateStatusAuthorizationProxyServer(t *testing.T) {
@@ -2127,7 +2239,7 @@ func TestUpdateStatusAuthorizationProxyServer(t *testing.T) {
 	}
 
 	// UpdateStatus function to be tested.
-	err = UpdateStatus(ctx, instance, r, newStatus)
+	err = UpdateStatus(ctx, instance, r, newStatus, OperatorConfig{})
 
 	assert.Error(t, err)
 	assert.Equal(t, "containerstoragemodules.storage.dell.com \"test\" not found", err.Error())

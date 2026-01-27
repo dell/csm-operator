@@ -9,7 +9,7 @@ spec:
     - name: authorization-proxy-server
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v2.3.0
+      configVersion: v2.4.0
       forceRemoveModule: true
       components:
         # For Kubernetes Container Platform only
@@ -39,7 +39,7 @@ spec:
           storageService: quay.io/dell/container-storage-modules/csm-authorization-storage:nightly
           storageServiceReplicas: 1
           opa: docker.io/openpolicyagent/opa:0.70.0
-          opaKubeMgmt: openpolicyagent/kube-mgmt:8.5.11
+          opaKubeMgmt: openpolicyagent/kube-mgmt:9.3.0
           authorizationController: quay.io/dell/container-storage-modules/csm-authorization-controller:nightly
           authorizationControllerReplicas: 1
           leaderElection: true
@@ -78,7 +78,7 @@ spec:
               redisUsernameKey: username
               # Key in the secret that stores the Redis password.
               redisPasswordKey: password
-          redis: redis:8.2.0-alpine
+          redis: redis:8.4.0-alpine
           commander: rediscommander/redis-commander:latest
           redisName: redis-csm
           redisCommander: redicommander
@@ -89,19 +89,16 @@ spec:
           # NOTE: the storage class must NOT be a storage class provisioned by a CSI driver using this installation of CSM Authorization
           # Default value: None
           storageclass: ""
-
         - name: config
           configSecretProviderClass:
             # Name of the SecretProviderClass that holds the config secretObject.
             - secretProviderClassName: array-creds
               # The name of the Kubernetes secret created by the CSI driver
               configSecretName: config-secret
-
         - name: storage-system-credentials
           secretProviderClasses:
             vault:
               - array-creds
-
 ---
 apiVersion: v1
 kind: ConfigMap

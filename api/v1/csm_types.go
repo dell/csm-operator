@@ -22,15 +22,35 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // ContainerStorageModuleSpec defines the desired state of ContainerStorageModule
+// +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.driver) && has(self.driver.configVersion) && self.driver.configVersion != \"\")",message="spec.version and spec.driver.configVersion cannot both be set"
+// +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.driver) && has(self.driver.common) && has(self.driver.common.image) && self.driver.common.image != \"\")",message="spec.driver.common.image is forbidden when spec.version is set"
+// +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.driver) && has(self.driver.sideCars) && self.driver.sideCars.exists(sc, has(sc.image) && sc.image != \"\"))",message="spec.driver.sideCars[*].image is forbidden when spec.version is set"
+// +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.modules) && self.modules.exists(m, has(m.components) && m.components.exists(c, has(c.image) && c.image != \"\")))",message="spec.modules[*].components[*].image is forbidden when spec.version is set"
+// +kubebuilder:validation:XValidation:rule="!(has(self.customRegistry) && self.customRegistry != \"\" && !(has(self.version) && self.version != \"\"))",message="spec.customRegistry is forbidden when spec.version is empty"
+// +kubebuilder:validation:XValidation:rule="!(has(self.retainImageRegistryPath) && !(has(self.version) && self.version != \"\" && has(self.customRegistry) && self.customRegistry != \"\"))",message="spec.retainImageRegistryPath is forbidden unless both spec.version and spec.customRegistry are set"
+// +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.driver) && has(self.driver.initContainers) && self.driver.initContainers.exists(ic, has(ic.image) && ic.image != \"\"))",message="spec.driver.initContainers[*].image is forbidden when spec.version is set"
+// +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.modules) && self.modules.exists(m, has(m.components) && m.components.exists(c, has(c.envs) && c.envs.exists(e, has(e.name) && e.name == \"NGINX_PROXY_IMAGE\"))))",message="env NGINX_PROXY_IMAGE is forbidden when spec.version is set"
 type ContainerStorageModuleSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	// +kubebuilder:validation:Optional
+	Version string `json:"version,omitempty" yaml:"version,omitempty"`
 
 	// Driver is a CSI Drivers for Dell Technologies
 	Driver Driver `json:"driver,omitempty" yaml:"driver,omitempty"`
 
 	// Modules is list of Container Storage Module modules you want to deploy
+	// +kubebuilder:validation:MaxItems=20
 	Modules []Module `json:"modules,omitempty" yaml:"modules,omitempty"`
+
+	// CustomRegistry is the custom registry for the image
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Custom Registry"
+	CustomRegistry string `json:"customRegistry,omitempty" yaml:"customRegistry,omitempty"`
+
+	// RetainImageRegistryPath is the boolean flag used to retain image registry path
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Retain Image Registry Path"
+	RetainImageRegistryPath bool `json:"retainImageRegistryPath,omitempty" yaml:"retainImageRegistryPath,omitempty"`
 }
 
 // ContainerStorageModuleStatus defines the observed state of ContainerStorageModule
@@ -44,6 +64,10 @@ type ContainerStorageModuleStatus struct {
 	// State is the state of the driver installation
 	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="State",xDescriptors="urn:alm:descriptor:text"
 	State CSMStateType `json:"state,omitempty" yaml:"state"`
+
+	// LastSuccessfulConfiguration is configurations details only when the CSM CR goes into a successful state
+	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="LastSuccessfulConfiguration",xDescriptors="urn:alm:descriptor:text"
+	LastSuccessfulConfiguration string `json:"lastSuccessfulConfiguration,omitempty"`
 }
 
 // +kubebuilder:validation:Optional
@@ -51,6 +75,7 @@ type ContainerStorageModuleStatus struct {
 // +kubebuilder:printcolumn:name="CreationTime",type=date,JSONPath=`.metadata.creationTimestamp`
 // +kubebuilder:printcolumn:name="CSIDriverType",type=string,JSONPath=`.spec.driver.csiDriverType`,description="Type of CSIDriver"
 // +kubebuilder:printcolumn:name="ConfigVersion",type=string,JSONPath=`.spec.driver.configVersion`,description="Version of CSIDriver"
+// +kubebuilder:printcolumn:name="Version",type=string,JSONPath=`.spec.version`,description="CSM Version"
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`,description="State of Installation"
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
@@ -84,6 +109,9 @@ func (cr *ContainerStorageModule) GetCSMStatus() *ContainerStorageModuleStatus {
 
 // GetControllerName - Returns a controller
 func (cr *ContainerStorageModule) GetControllerName() string {
+	if cr.Spec.Driver.CSIDriverType == Cosi {
+		return cr.Name
+	}
 	return fmt.Sprintf("%s-controller", cr.Name)
 }
 
