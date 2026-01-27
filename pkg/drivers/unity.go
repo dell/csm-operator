@@ -36,9 +36,6 @@ const (
 	// UnityConfigParamsVolumeMount - Volume mount
 	UnityConfigParamsVolumeMount = "csi-unity-config-params"
 
-	// CsiLogLevel - Defines the log level
-	CsiLogLevel = "<CSI_LOG_LEVEL>"
-
 	// AllowRWOMultipodAccess - Defines if multiple pod should have access to a volume
 	AllowRWOMultipodAccess = "<X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS>"
 
@@ -54,9 +51,6 @@ const (
 	// AllowedNetworks - list of networks that can be used for NFS traffic
 	AllowedNetworks = "<X_CSI_ALLOWED_NETWORKS>"
 
-	// UnityCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
-	UnityCSMNameSpace string = "<CSM_NAMESPACE>"
-
 	// UnityDebug - will be used to control the GOUNITY_DEBUG variable
 	UnityDebug string = "<GOUNITY_DEBUG>"
 
@@ -70,11 +64,15 @@ func PrecheckUnity(ctx context.Context, cr *csmv1.ContainerStorageModule, operat
 	// Check for secret only
 	config := cr.Name + "-creds"
 
+	version, err := operatorutils.GetVersion(ctx, cr, operatorConfig)
+	if err != nil {
+		return err
+	}
 	// Check if driver version is supported by doing a stat on a config file
-	configFilePath := fmt.Sprintf("%s/driverconfig/unity/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
+	configFilePath := fmt.Sprintf("%s/driverconfig/unity/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, version)
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		log.Errorw("PreCheckUnity failed in version check", "Error", err.Error(), "Namespace", cr.Namespace)
-		return fmt.Errorf("%s %s not supported", csmv1.Unity, cr.Spec.Driver.ConfigVersion)
+		return fmt.Errorf("%s %s not supported", csmv1.Unity, version)
 	}
 
 	skipCertValid := true
@@ -157,7 +155,7 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
 		yamlString = strings.ReplaceAll(yamlString, AllowedNetworks, allowedNetworks)
-		yamlString = strings.ReplaceAll(yamlString, UnityCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, UnityDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, UnityHTTP, showHTTP)
 	case "Controller":
@@ -169,7 +167,7 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
-		yamlString = strings.ReplaceAll(yamlString, UnityCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, UnityDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, UnityHTTP, showHTTP)
 	case "CSIDriverSpec":

@@ -24,8 +24,8 @@ import (
 	"sync"
 	"testing"
 
-	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	csmv1 "github.com/dell/csm-operator/api/v1"
+	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/stretchr/testify/assert"
 	admissionregistration "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -44,6 +44,7 @@ import (
 	confcorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	confmetav1 "k8s.io/client-go/applyconfigurations/meta/v1"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/yaml"
@@ -716,6 +717,7 @@ func TestSetContainerImage(t *testing.T) {
 
 func TestUpdateSideCarApply(t *testing.T) {
 	// Test case: update sidecar with matching name
+	ctx := context.Background()
 	sc1env1 := "sidecar1-env1"
 	oldenv1val := "old-env1-value"
 	newenv1val := "sidecar1-env1-value"
@@ -736,6 +738,9 @@ func TestUpdateSideCarApply(t *testing.T) {
 					Value: emptyValue,
 				},
 			},
+			Args: []string{
+				"--volume-name-prefix=csivol1",
+			},
 		},
 		{
 			Name:            "sidecar2",
@@ -750,6 +755,9 @@ func TestUpdateSideCarApply(t *testing.T) {
 					Name:  "sidecar2-env2",
 					Value: "sidecar2-env2-value",
 				},
+			},
+			Args: []string{
+				"--volume-name-prefix=csivol2",
 			},
 		},
 	}
@@ -768,7 +776,7 @@ func TestUpdateSideCarApply(t *testing.T) {
 	},
 	)
 
-	UpdateSideCarApply(sideCars, container)
+	UpdateSideCarApply(ctx, sideCars, container, csmv1.ContainerStorageModule{}, VersionSpec{})
 
 	expectedContainer := acorev1.Container().WithName("sidecar1").WithImage("sidecar1-image").WithImagePullPolicy("sidecar1-image-pull-policy").
 		WithEnv(&acorev1.EnvVarApplyConfiguration{
@@ -777,13 +785,55 @@ func TestUpdateSideCarApply(t *testing.T) {
 		}).WithEnv(&acorev1.EnvVarApplyConfiguration{
 		Name:  &empty,
 		Value: &emptyValue,
-	})
+	}).WithArgs("--volume-name-prefix=csivol1")
 
 	assert.Equal(t, expectedContainer, container)
 
+	// Use spec.version (with ConfigMap existing)
+	UpdateSideCarApply(ctx, sideCars, container, csmv1.ContainerStorageModule{
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Version: "v1.16.0",
+		},
+	}, VersionSpec{
+		Version: "test-version",
+		Images: map[string]string{
+			"sidecar1": "configmap-sidecar1-image",
+		},
+	})
+
+	expectedContainer2 := acorev1.Container().WithName("sidecar1").WithImage("configmap-sidecar1-image").WithImagePullPolicy("sidecar1-image-pull-policy").
+		WithEnv(&acorev1.EnvVarApplyConfiguration{
+			Name:  &sc1env1,
+			Value: &newenv1val,
+		}).WithEnv(&acorev1.EnvVarApplyConfiguration{
+		Name:  &empty,
+		Value: &emptyValue,
+	}).WithArgs("--volume-name-prefix=csivol1")
+
+	assert.Equal(t, expectedContainer2, container)
+
+	// Use spec.version AND spec.customRegistry
+	UpdateSideCarApply(ctx, sideCars, container, csmv1.ContainerStorageModule{
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Version:        "v1.16.0",
+			CustomRegistry: "test-custom-registry",
+		},
+	}, VersionSpec{})
+
+	expectedContainer3 := acorev1.Container().WithName("sidecar1").WithImage("test-custom-registry/configmap-sidecar1-image").WithImagePullPolicy("sidecar1-image-pull-policy").
+		WithEnv(&acorev1.EnvVarApplyConfiguration{
+			Name:  &sc1env1,
+			Value: &newenv1val,
+		}).WithEnv(&acorev1.EnvVarApplyConfiguration{
+		Name:  &empty,
+		Value: &emptyValue,
+	}).WithArgs("--volume-name-prefix=csivol1")
+
+	assert.Equal(t, expectedContainer3, container)
+
 	// repeat the test with the other function that uses the child function
 	// very minor code coverage gain, 0.1%
-	UpdateInitContainerApply(sideCars, container)
+	UpdateInitContainerApply(ctx, sideCars, container, csmv1.ContainerStorageModule{}, VersionSpec{})
 	assert.Equal(t, expectedContainer, container)
 }
 
@@ -979,6 +1029,32 @@ func TestGetCTRLObject(t *testing.T) {
 	assert.Equal(t, result, expected)
 
 	// Test case: valid input
+	ctrlBuf = []byte(`
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: my-sa
+  namespace: default
+`)
+
+	expected = []crclient.Object{
+		&corev1.ServiceAccount{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "ServiceAccount",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-sa",
+				Namespace: "default",
+			},
+		},
+	}
+
+	result, err = GetCTRLObject(ctrlBuf)
+
+	assert.Nil(t, err)
+	assert.Equal(t, result, expected)
+
 	ctrlBuf = []byte(`
 apiVersion: v1
 kind: Service
@@ -2051,7 +2127,7 @@ roleRef:
   kind: Role
   name: cluster-role
   apiGroup: rbac.authorization.k8s.io
----  
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -2248,7 +2324,7 @@ roleRef:
   kind: Role
   name: my-role
   apiGroup: rbac.authorization.k8s.io
----  
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -3018,12 +3094,14 @@ func TestGetUpgradeInfo(t *testing.T) {
 	ctx := context.Background()
 
 	// Test case: corrupted upgrade path file
-	oldVersion := "v2.1.0"
+	oldVersion := "v2.2.0"
 
 	// Create a malformed upgrade path file
 	tempDir := t.TempDir()
 	configDir := fmt.Sprintf("%s/moduleconfig/authorization/%s", tempDir, oldVersion)
-	err := os.MkdirAll(configDir, 0o644)
+	defer os.RemoveAll(configDir)
+
+	err := os.MkdirAll(configDir, 0o700)
 	assert.NoError(t, err)
 
 	err = os.WriteFile(fmt.Sprintf("%s/upgrade-path.yaml", configDir),
@@ -3272,7 +3350,7 @@ func Test_getUpgradeInfo(t *testing.T) {
 					ConfigDirectory: "../../operatorconfig",
 				},
 				csmCompType: csmv1.Authorization,
-				oldVersion:  "v2.1.0",
+				oldVersion:  "v2.2.0",
 			},
 			want:        "",
 			expectedErr: "mock yamlUnmarshal error",
@@ -3367,5 +3445,782 @@ func TestGetEnvironmentVariable(t *testing.T) {
 	_, err = GetEnvironmentVariable("NON_EXISTENT_VAR")
 	if err == nil {
 		t.Errorf("Expected error, but got nil")
+	}
+}
+
+func TestGetVersion(t *testing.T) {
+	ctx := context.Background()
+	newCSM := func(specVersion, configVersion string, platform csmv1.DriverType) *csmv1.ContainerStorageModule {
+		return &csmv1.ContainerStorageModule{
+			Spec: csmv1.ContainerStorageModuleSpec{
+				Version: specVersion,
+				Driver: csmv1.Driver{
+					CSIDriverType: platform,
+					ConfigVersion: configVersion,
+					Common: &csmv1.ContainerTemplate{
+						ImagePullPolicy: corev1.PullAlways,
+					},
+				},
+			},
+		}
+	}
+
+	// Helper for creating a CR with an AuthorizationServer module
+	newCSMWithAuthModule := func(specVersion, driverConfigVersion, moduleConfigVersion string, platform csmv1.DriverType) *csmv1.ContainerStorageModule {
+		return &csmv1.ContainerStorageModule{
+			Spec: csmv1.ContainerStorageModuleSpec{
+				Version: specVersion,
+				Driver: csmv1.Driver{
+					CSIDriverType: platform,
+					ConfigVersion: driverConfigVersion,
+					Common: &csmv1.ContainerTemplate{
+						ImagePullPolicy: corev1.PullAlways,
+					},
+				},
+				Modules: []csmv1.Module{
+					{
+						Name:          csmv1.AuthorizationServer,
+						ConfigVersion: moduleConfigVersion,
+					},
+				},
+			},
+		}
+	}
+
+	// Helper for creating a CR with an AuthorizationServer module
+	newCSMWithoutDriver := func(specVersion string) *csmv1.ContainerStorageModule {
+		return &csmv1.ContainerStorageModule{
+			Spec: csmv1.ContainerStorageModuleSpec{
+				Version: specVersion,
+				Modules: []csmv1.Module{
+					{
+						Name: csmv1.AuthorizationServer,
+					},
+				},
+			},
+		}
+	}
+
+	cases := []struct {
+		name        string
+		cr          *csmv1.ContainerStorageModule
+		op          OperatorConfig
+		want        string
+		expectedErr string
+	}{
+		{
+			name: "version_present",
+			cr:   newCSM("v1.16.0", "", csmv1.PowerScale),
+			op: OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			},
+			want:        "v2.16.0",
+			expectedErr: "",
+		},
+		{
+			name: "config_version_present",
+			cr:   newCSM("", "v2.16.0", csmv1.PowerStore),
+			op: OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			},
+			want:        "v2.16.0",
+			expectedErr: "",
+		},
+		{
+			name: "invalid_path",
+			cr:   newCSM("v1.16.0", "", csmv1.PowerStore),
+			op: OperatorConfig{
+				ConfigDirectory: "invalid/path",
+			},
+			want:        "",
+			expectedErr: "failed to read file invalid/path/common/csm-version-mapping.yaml",
+		},
+		{
+			name: "invalid_platform",
+			cr:   newCSM("v1.16.0", "", "invalid"),
+			op: OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			},
+			want:        "",
+			expectedErr: "Unsupported platform invalid",
+		},
+		{
+			name: "invalid_version",
+			cr:   newCSM("v1.10.0", "", csmv1.PowerStore),
+			op: OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			},
+			want:        "",
+			expectedErr: "No custom resource configuration is available for CSM version v1.10.0. Supported CSM versions are:",
+		},
+		{
+			name: "config_version_from_module_when_driver_type_empty",
+			cr:   newCSMWithAuthModule("", "", "v2.4.0", ""),
+			op: OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			},
+			want:        "v2.4.0",
+			expectedErr: "",
+		},
+		{
+			name: "config_version_from_module_when_driver_type_empty",
+			cr:   newCSMWithoutDriver("v1.16.0"),
+			op: OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			},
+			want:        "v2.4.0",
+			expectedErr: "",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := GetVersion(ctx, tc.cr, tc.op)
+			if err != nil && !strings.Contains(err.Error(), tc.expectedErr) {
+				t.Errorf("GetVersion() returned error = %v but expected to contain = %q", err, tc.expectedErr)
+			}
+			if err == nil && tc.expectedErr != "" {
+				t.Errorf("GetVersion() expected error containing %q but got nil", tc.expectedErr)
+			}
+			if got != tc.want {
+				t.Errorf("GetVersion() = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+// Tests: ValidateConfigMap
+func TestValidateConfigMap(t *testing.T) {
+	cases := []struct {
+		name        string
+		version     VersionSpec
+		expectedErr string
+	}{
+		{
+			name: "valid_images_all_present",
+			version: VersionSpec{
+				Version: "v1.16.0",
+				Images: map[string]string{
+					"driver":  "repo/driver:1",
+					"sidecar": "repo/sidecar:1",
+				},
+			},
+			expectedErr: "",
+		},
+		{
+			name: "invalid_empty_image_value",
+			version: VersionSpec{
+				Version: "v1.16.0",
+				Images: map[string]string{
+					"driver":  "repo/driver:1",
+					"sidecar": "",
+				},
+			},
+			expectedErr: `value for key "sidecar" is empty`,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateConfigMap(tc.version)
+			if tc.expectedErr == "" && err != nil {
+				t.Fatalf("ValidateConfigMap() unexpected error: %v", err)
+			}
+			if tc.expectedErr != "" {
+				if err == nil || err.Error() != tc.expectedErr {
+					t.Fatalf("ValidateConfigMap() error = %v, want = %v", err, tc.expectedErr)
+				}
+			}
+		})
+	}
+}
+
+func newCSM(specVersion string) *csmv1.ContainerStorageModule {
+	return &csmv1.ContainerStorageModule{
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Version: specVersion,
+			Driver: csmv1.Driver{
+				Common: &csmv1.ContainerTemplate{
+					ImagePullPolicy: corev1.PullAlways,
+				},
+			},
+		},
+	}
+}
+
+// Helper: setup scheme for fake client
+func buildScheme(t *testing.T) *runtime.Scheme {
+	t.Helper()
+	s := runtime.NewScheme()
+	if err := corev1.AddToScheme(s); err != nil {
+		t.Fatalf("failed to add corev1 to scheme: %v", err)
+	}
+	if err := csmv1.AddToScheme(s); err != nil {
+		t.Fatalf("failed to add csmv1 to scheme: %v", err)
+	}
+	return s
+}
+
+// Helper: build fake client with provided objects
+func buildFakeClient(t *testing.T, objs ...client.Object) client.Client {
+	t.Helper()
+	scheme := buildScheme(t)
+	return fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
+}
+
+// Helper: make a ConfigMap named CSMImages in a given namespace
+func makeImagesConfigMap(namespace string, data map[string]string) *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		TypeMeta:   metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{Name: CSMImages, Namespace: namespace},
+		Data:       data,
+	}
+}
+
+// Compose a versions.yaml string given slices of VersionSpec
+func marshalVersionsYAML(t *testing.T, versions []VersionSpec) string {
+	t.Helper()
+	b, err := yaml.Marshal(versions)
+	if err != nil {
+		t.Fatalf("failed to marshal versions: %v", err)
+	}
+	return string(b)
+}
+
+// Tests UpdateUsingConfigMap
+func TestUpdateUsingConfigMap(t *testing.T) {
+	validVersions := []VersionSpec{
+		{
+			Version: "v1.16.0",
+			Images: map[string]string{
+				"driver":  "repo/driver:1",
+				"sidecar": "repo/sidecar:1",
+			},
+		},
+		{
+			Version: "v2.16.0",
+			Images: map[string]string{
+				"driver":  "repo/driver:2",
+				"sidecar": "repo/sidecar:2",
+			},
+		},
+	}
+
+	invalidImages := []VersionSpec{
+		{
+			Version: "v1.16.0",
+			Images: map[string]string{
+				"driver":  "repo/driver:1",
+				"sidecar": "",
+			},
+		},
+	}
+
+	cases := []struct {
+		name        string
+		cr          *csmv1.ContainerStorageModule
+		cm          corev1.ConfigMap
+		want        VersionSpec
+		expectedErr string
+	}{
+		{
+			name: "empty_cm_data_returns_zero_spec",
+			cr:   newCSM("v1.16.0"),
+			cm:   corev1.ConfigMap{Data: map[string]string{}},
+			want: VersionSpec{},
+		},
+		{
+			name: "malformed_yaml_returns_error",
+			cr:   newCSM("v1.16.0"),
+			cm: corev1.ConfigMap{
+				Data: map[string]string{
+					"versions.yaml": "!! not a valid yaml !!",
+				},
+			},
+			want:        VersionSpec{},
+			expectedErr: "yaml: unmarshal errors", // substring check
+		},
+		{
+			name: "version_not_found_in_yaml",
+			cr:   newCSM("v9.99.9"),
+			cm: corev1.ConfigMap{
+				Data: map[string]string{
+					"versions.yaml": marshalVersionsYAML(t, validVersions),
+				},
+			},
+			want:        VersionSpec{},
+			expectedErr: "version v9.99.9 not found in versions.yaml",
+		},
+		{
+			name: "valid_match_returns_version_spec",
+			cr:   newCSM("v2.16.0"),
+			cm: corev1.ConfigMap{
+				Data: map[string]string{
+					"versions.yaml": marshalVersionsYAML(t, validVersions),
+				},
+			},
+			want: VersionSpec{
+				Version: "v2.16.0",
+				Images: map[string]string{
+					"driver":  "repo/driver:2",
+					"sidecar": "repo/sidecar:2",
+				},
+			},
+		},
+		{
+			name: "valid_match_but_empty_image_fails_validation",
+			cr:   newCSM("v1.16.0"),
+			cm: corev1.ConfigMap{
+				Data: map[string]string{
+					"versions.yaml": marshalVersionsYAML(t, invalidImages),
+				},
+			},
+			want: VersionSpec{
+				Version: "v1.16.0",
+				Images: map[string]string{
+					"driver":  "repo/driver:1",
+					"sidecar": "",
+				},
+			},
+			expectedErr: `value for key "sidecar" is empty`,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := UpdateUsingConfigMap(tc.cr, tc.cm)
+			if tc.expectedErr == "" && err != nil {
+				t.Fatalf("UpdateUsingConfigMap() unexpected error: %v", err)
+			}
+			if tc.expectedErr != "" {
+				if err == nil || !contains(err.Error(), tc.expectedErr) {
+					t.Fatalf("UpdateUsingConfigMap() error = %v, want contains = %v", err, tc.expectedErr)
+				}
+			}
+			if !versionSpecEqual(got, tc.want) {
+				t.Fatalf("UpdateUsingConfigMap() = %#v, want %#v", got, tc.want)
+			}
+		})
+	}
+}
+
+// Tests ResolveVersionFromConfigMap
+func TestResolveVersionFromConfigMap(t *testing.T) {
+	valid := []VersionSpec{
+		{
+			Version: "v1.16.0",
+			Images: map[string]string{
+				"driver":  "repo/driver:1",
+				"sidecar": "repo/sidecar:1",
+			},
+		},
+	}
+
+	invalid := []VersionSpec{
+		{
+			Version: "v1.16.0",
+			Images: map[string]string{
+				"driver":  "repo/driver:1",
+				"sidecar": "",
+			},
+		},
+	}
+
+	cases := []struct {
+		name        string
+		clientObjs  []client.Object
+		cr          *csmv1.ContainerStorageModule
+		want        VersionSpec
+		expectedErr string
+	}{
+		{
+			name:       "no_configmap_present_returns_zero_spec_and_no_error",
+			clientObjs: []client.Object{},
+			cr:         newCSM("v1.16.0"),
+			want:       VersionSpec{},
+		},
+		{
+			name: "valid_flow_returns_matched_version",
+			clientObjs: []client.Object{
+				makeImagesConfigMap("csm-ns", map[string]string{
+					"versions.yaml": marshalVersionsYAML(t, valid),
+				}),
+			},
+			cr: newCSM("v1.16.0"),
+			want: VersionSpec{
+				Version: "v1.16.0",
+				Images: map[string]string{
+					"driver":  "repo/driver:1",
+					"sidecar": "repo/sidecar:1",
+				},
+			},
+		},
+		{
+			name: "invalid_images_value_fails_validation",
+			clientObjs: []client.Object{
+				makeImagesConfigMap("csm-ns", map[string]string{
+					"versions.yaml": marshalVersionsYAML(t, invalid),
+				}),
+			},
+			cr: newCSM("v1.16.0"),
+			want: VersionSpec{
+				Version: "v1.16.0",
+				Images: map[string]string{
+					"driver":  "repo/driver:1",
+					"sidecar": "",
+				},
+			},
+			expectedErr: `value for key "sidecar" is empty`,
+		},
+		{
+			name: "version_not_found_in_versions_yaml",
+			clientObjs: []client.Object{
+				makeImagesConfigMap("csm-ns", map[string]string{
+					"versions.yaml": marshalVersionsYAML(t, []VersionSpec{
+						{Version: "v2.0.0", Images: map[string]string{"driver": "x", "sidecar": "y"}},
+					}),
+				}),
+			},
+			cr:          newCSM("v1.16.0"),
+			want:        VersionSpec{},
+			expectedErr: "version v1.16.0 not found in versions.yaml",
+		},
+	}
+
+	ctx := context.Background()
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cl := buildFakeClient(t, tc.clientObjs...)
+			got, err := ResolveVersionFromConfigMap(ctx, cl, tc.cr)
+
+			if tc.expectedErr == "" && err != nil {
+				t.Fatalf("ResolveVersionFromConfigMap() unexpected error: %v", err)
+			}
+			if tc.expectedErr != "" {
+				if err == nil || !contains(err.Error(), tc.expectedErr) {
+					t.Fatalf("ResolveVersionFromConfigMap() error = %v, want contains = %v", err, tc.expectedErr)
+				}
+			}
+			if !versionSpecEqual(got, tc.want) {
+				t.Fatalf("ResolveVersionFromConfigMap() = %#v, want %#v", got, tc.want)
+			}
+		})
+	}
+}
+
+// Helpers: comparisons / contains
+func contains(s, substr string) bool {
+	return substr == "" || (s != "" && (len(substr) == 0 || (len(s) >= len(substr) && (indexOf(s, substr) >= 0))))
+}
+
+func indexOf(s, substr string) int {
+	return index(s, substr)
+}
+
+// Straightforward rune-safe substring search for predictability in tests
+func index(haystack, needle string) int {
+	return len(fmt.Appendf(nil, "%s", haystack[:])) - len(fmt.Appendf(nil, "%s", haystack[len(needle):]))
+}
+
+// Safer comparison for VersionSpec maps
+func versionSpecEqual(a, b VersionSpec) bool {
+	if a.Version != b.Version {
+		return false
+	}
+	if len(a.Images) != len(b.Images) {
+		return false
+	}
+	for k, v := range a.Images {
+		if b.Images[k] != v {
+			return false
+		}
+	}
+	return true
+}
+
+func TestValidateCustomRegistry(t *testing.T) {
+	tests := []struct {
+		name     string
+		registry string
+		want     error
+	}{
+		{"Valid Standard", "quay.io", nil},
+		{"Valid With Port", "localhost:5000", nil},
+		{"Valid With Path", "docker.io/dell", nil},
+		{"Valid IP", "127.0.0.1:5000", nil},
+		{"Invalid structure", "://example", nil},
+	}
+
+	ctx := context.Background()
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ValidateCustomRegistry(ctx, tt.registry); got != tt.want {
+				t.Errorf("ValidateCustomRegistry() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGetImageField(t *testing.T) {
+	tests := []struct {
+		name       string
+		yamlString string
+		want       string
+	}{
+		{
+			name:       "single_line_no_split",
+			yamlString: "quay.io/org/image:tag",
+			want:       "quay.io/org/image:tag",
+		},
+		{
+			name: "multi_line_image_present",
+			yamlString: `
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test
+spec:
+  containers:
+    - name: test
+      image: quay.io/org/image:tag
+`,
+			want: "quay.io/org/image:tag",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := GetImageField(tt.yamlString)
+			if got != tt.want {
+				t.Errorf("GetImageField() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGetFinalImage(t *testing.T) {
+	ctx := context.Background()
+	componentName := "my-component"
+
+	tests := []struct {
+		name       string
+		cr         csmv1.ContainerStorageModule
+		matched    VersionSpec
+		component  csmv1.ContainerTemplate
+		yamlString string
+		want       string
+		useActual  bool
+	}{
+		{
+			name: "matched version with component image present",
+			matched: VersionSpec{
+				Version: "v2.0.0",
+				Images:  map[string]string{componentName: "repo/mapped-image:2.0.0"},
+			},
+			component: csmv1.ContainerTemplate{
+				Name:  componentName,
+				Image: "repo/default-image:latest",
+			},
+			cr:   csmv1.ContainerStorageModule{},
+			want: "repo/mapped-image:2.0.0",
+		},
+		{
+			name: "custom registry present uses ResolveImage(GetImageField(yaml), cr)",
+			matched: VersionSpec{
+				Version: "",
+				Images:  map[string]string{},
+			},
+			component: csmv1.ContainerTemplate{
+				Name:  componentName,
+				Image: "",
+			},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					CustomRegistry: "my.registry.local",
+				},
+			},
+			yamlString: "fake-yaml",
+			useActual:  true,
+		},
+		{
+			name: "component image present when no matched version and no custom registry",
+			matched: VersionSpec{
+				Version: "",
+				Images:  map[string]string{},
+			},
+			component: csmv1.ContainerTemplate{
+				Name:  componentName,
+				Image: "repo/component-image:1.0",
+			},
+			cr:   csmv1.ContainerStorageModule{},
+			want: "repo/component-image:1.0",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.useActual {
+				field := GetImageField(tt.yamlString)
+				tt.want = ResolveImage(ctx, field, tt.cr)
+			}
+
+			got := GetFinalImage(ctx, tt.cr, tt.matched, tt.component, tt.yamlString)
+			if got != tt.want {
+				t.Errorf("GetFinalImage() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestResolveImage(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name              string
+		originalImageFile string
+		cr                csmv1.ContainerStorageModule
+		want              string
+	}{
+		{
+			name:              "custom registry empty => return original",
+			originalImageFile: "repo/org/image:tag",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Version:        "v1.0.0",
+					CustomRegistry: "",
+				},
+			},
+			want: "repo/org/image:tag",
+		},
+		{
+			name:              "retain=true, strip domain if present (dot domain)",
+			originalImageFile: "quay.io/dell/container-storage-modules/plugin:1.2.3",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Version:                 "v1.2.3",
+					CustomRegistry:          "my.registry.local",
+					RetainImageRegistryPath: true,
+				},
+			},
+			want: "my.registry.local/dell/container-storage-modules/plugin:1.2.3",
+		},
+		{
+			name:              "retain=true, strip domain if present (localhost)",
+			originalImageFile: "localhost/dell/csm/node:2.0.0",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Version:                 "v2.0.0",
+					CustomRegistry:          "my.registry.local",
+					RetainImageRegistryPath: true,
+				},
+			},
+			want: "my.registry.local/dell/csm/node:2.0.0",
+		},
+		{
+			name:              "retain=true, first segment not a domain => keep entire path",
+			originalImageFile: "dell/container-storage-modules/controller:latest",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Version:                 "v3.0.0",
+					CustomRegistry:          "internal.registry",
+					RetainImageRegistryPath: true,
+				},
+			},
+			want: "internal.registry/dell/container-storage-modules/controller:latest",
+		},
+		{
+			name:              "retain=false, keep only final image name",
+			originalImageFile: "quay.io/dell/csm/node:1.0.0",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Version:                 "v1.0.0",
+					CustomRegistry:          "mirror.registry",
+					RetainImageRegistryPath: false,
+				},
+			},
+			want: "mirror.registry/node:1.0.0",
+		},
+		{
+			name:              "retain=false, single segment (no slash) remains same segment",
+			originalImageFile: "image:tag",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Version:                 "v1.0.0",
+					CustomRegistry:          "mirror.registry",
+					RetainImageRegistryPath: false,
+				},
+			},
+			want: "mirror.registry/image:tag",
+		},
+		{
+			name:              "inputs with whitespace are trimmed",
+			originalImageFile: "   quay.io/org/image:tag   ",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Version:                 "   v1.0.0   ",
+					CustomRegistry:          "   my.registry.local   ",
+					RetainImageRegistryPath: false,
+				},
+			},
+			want: "my.registry.local/image:tag",
+		},
+		{
+			name:              "retain=true with path containing multiple segments and tag",
+			originalImageFile: "registry.example.com/team/subteam/my-image:9.9",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Version:                 "v9.9.0",
+					CustomRegistry:          "cr.mirror",
+					RetainImageRegistryPath: true,
+				},
+			},
+			want: "cr.mirror/team/subteam/my-image:9.9",
+		},
+		{
+			name:              "retain=false with deeply nested path",
+			originalImageFile: "registry.example.com/team/subteam/my-image:9.9",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Version:                 "v9.9.0",
+					CustomRegistry:          "cr.mirror",
+					RetainImageRegistryPath: false,
+				},
+			},
+			want: "cr.mirror/my-image:9.9",
+		},
+		{
+			name:              "retain=true with no slash (only image:tag) keeps same image in new registry",
+			originalImageFile: "myimage:1.2.3",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Version:                 "v1.2.3",
+					CustomRegistry:          "another.registry",
+					RetainImageRegistryPath: true,
+				},
+			},
+			want: "another.registry/myimage:1.2.3",
+		},
+		{
+			name:              "retain=true, path with first segment containing dash but not domain",
+			originalImageFile: "my-org/myrepo/image:tag",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Version:                 "v1.0.1",
+					CustomRegistry:          "reg.example",
+					RetainImageRegistryPath: true,
+				},
+			},
+			want: "reg.example/my-org/myrepo/image:tag",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ResolveImage(ctx, tt.originalImageFile, tt.cr)
+			if got != tt.want {
+				t.Errorf("ResolveImage() = %q, want %q", got, tt.want)
+			}
+		})
 	}
 }

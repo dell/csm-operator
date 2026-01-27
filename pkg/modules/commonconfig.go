@@ -29,6 +29,8 @@ const (
 	DefaultPluginIdentifier = "<DriverPluginIdentifier>"
 	// DefaultDriverConfigParamsVolumeMount - string placeholder for Driver ConfigParamsVolumeMount
 	DefaultDriverConfigParamsVolumeMount = "<DriverConfigParamsVolumeMount>"
+	// DefaultDriverConfigVolumeMount - string placeholder for Driver ConfigVolumeMount
+	DefaultDriverConfigVolumeMount = "<DriverConfigVolumeMount>"
 	// CertManagerManifest -
 	CertManagerManifest = "cert-manager.yaml"
 	// CertManagerCRDsManifest -
@@ -39,12 +41,34 @@ const (
 	CSMName = "<NAME>"
 	// ComConfigCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	ComConfigCSMNameSpace string = "<CSM_NAMESPACE>"
+
+	// CSMDRCRDsManifest - file name for dr crds
+	CSMDRCRDsManifest = "dr-crds.yaml"
+
+	// CertManagerCaInjector - placeholder for cert-manager ca injector
+	CertManagerCaInjector = "<CERT_MANAGER_CAINJECTOR_IMAGE>"
+
+	// CertManagerController - placeholder for cert-manager controller
+	CertManagerController = "<CERT_MANAGER_CONTROLLER_IMAGE>"
+
+	// CertManagerWebhook - placeholder for cert-manager webhook
+	CertManagerWebhook = "<CERT_MANAGER_WEBHOOK_IMAGE>"
+
+	// CertManagerCaInjectorImage - image for cert-manager ca injector
+	CertManagerCaInjectorImage = "quay.io/jetstack/cert-manager-cainjector:v1.11.0"
+
+	// CertManagerControllerImage - image for cert-manager controller
+	CertManagerControllerImage = "quay.io/jetstack/cert-manager-controller:v1.11.0"
+
+	// CertManagerWebhookImage - image for cert-manager webhook
+	CertManagerWebhookImage = "quay.io/jetstack/cert-manager-webhook:v1.11.0"
 )
 
 // SupportedDriverParam -
 type SupportedDriverParam struct {
 	PluginIdentifier              string
 	DriverConfigParamsVolumeMount string
+	DriverConfigVolumeMount       string
 }
 
 func checkVersion(moduleType, givenVersion, configPath string) error {
@@ -69,13 +93,27 @@ func checkVersion(moduleType, givenVersion, configPath string) error {
 	return nil
 }
 
-func readConfigFile(module csmv1.Module, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, filename string) ([]byte, error) {
-	var err error
+func readConfigFile(ctx context.Context, module csmv1.Module, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, filename string) ([]byte, error) {
 	moduleConfigVersion := module.ConfigVersion
 	if moduleConfigVersion == "" {
-		moduleConfigVersion, err = operatorutils.GetModuleDefaultVersion(cr.Spec.Driver.ConfigVersion, cr.Spec.Driver.CSIDriverType, module.Name, op.ConfigDirectory)
+		version, err := operatorutils.GetVersion(ctx, &cr, op)
 		if err != nil {
 			return nil, err
+		}
+		// Spec.Version is introduced in 1.16.0 (Auth 2.4)
+		// and ConfigVersion needs to populated to support N-2 case
+		authAtLeast22, err := operatorutils.MinVersionCheck("v2.2.0", version)
+		if err != nil {
+			return nil, err
+		}
+		if authAtLeast22 && module.Name == csmv1.AuthorizationServer {
+			moduleConfigVersion = version
+			module.ConfigVersion = version
+		} else {
+			moduleConfigVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, module.Name, op.ConfigDirectory)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -89,21 +127,42 @@ func readConfigFile(module csmv1.Module, cr csmv1.ContainerStorageModule, op ope
 }
 
 // getCertManager - configure cert-manager with the specified namespace before installation
-func getCertManager(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getCertManager(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, matched operatorutils.VersionSpec) (string, error) {
 	YamlString := ""
-
 	certManagerPath := fmt.Sprintf("%s/moduleconfig/common/cert-manager/%s", op.ConfigDirectory, CertManagerManifest)
 	buf, err := os.ReadFile(filepath.Clean(certManagerPath))
 	if err != nil {
 		return YamlString, err
 	}
-
 	YamlString = string(buf)
+
+	if matched.Version != "" {
+		placeholders := map[string]string{
+			"cert-manager-cainjector": CertManagerCaInjector,
+			"cert-manager-controller": CertManagerController,
+			"cert-manager-webhook":    CertManagerWebhook,
+		}
+
+		for key, placeholder := range placeholders {
+			if img := matched.Images[key]; img != "" {
+				YamlString = strings.ReplaceAll(YamlString, placeholder, img)
+			}
+		}
+
+	} else if cr.Spec.CustomRegistry != "" {
+		YamlString = strings.ReplaceAll(YamlString, CertManagerCaInjector, operatorutils.ResolveImage(ctx, CertManagerCaInjectorImage, cr))
+		YamlString = strings.ReplaceAll(YamlString, CertManagerController, operatorutils.ResolveImage(ctx, CertManagerControllerImage, cr))
+		YamlString = strings.ReplaceAll(YamlString, CertManagerWebhook, operatorutils.ResolveImage(ctx, CertManagerWebhookImage, cr))
+	} else {
+		YamlString = strings.ReplaceAll(YamlString, CertManagerCaInjector, CertManagerCaInjectorImage)
+		YamlString = strings.ReplaceAll(YamlString, CertManagerController, CertManagerControllerImage)
+		YamlString = strings.ReplaceAll(YamlString, CertManagerWebhook, CertManagerWebhookImage)
+	}
+
 	certNamespace := cr.Namespace
 	YamlString = strings.ReplaceAll(YamlString, CommonNamespace, certNamespace)
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 	YamlString = strings.ReplaceAll(YamlString, ComConfigCSMNameSpace, cr.Namespace)
-
 	return YamlString, nil
 }
 
@@ -121,8 +180,8 @@ func getCertManagerCRDs(op operatorutils.OperatorConfig) (string, error) {
 }
 
 // CommonCertManager - apply/delete cert-manager objects
-func CommonCertManager(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-	YamlString, err := getCertManager(op, cr)
+func CommonCertManager(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, matched operatorutils.VersionSpec) error {
+	YamlString, err := getCertManager(ctx, op, cr, matched)
 	if err != nil {
 		return err
 	}
@@ -157,6 +216,45 @@ func CommonCertManager(ctx context.Context, isDeleting bool, op operatorutils.Op
 			}
 		} else {
 			if err := operatorutils.ApplyObject(ctx, ctrlObj, ctrlClient); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func getCSMDRCRDs(op operatorutils.OperatorConfig) (string, error) {
+	YamlString := ""
+
+	certManagerPath := fmt.Sprintf("%s/moduleconfig/common/disaster-recovery/%s", op.ConfigDirectory, CSMDRCRDsManifest)
+	buf, err := os.ReadFile(filepath.Clean(certManagerPath))
+	if err != nil {
+		return YamlString, err
+	}
+
+	YamlString = string(buf)
+	return YamlString, nil
+}
+
+func PatchCSMDRCRDs(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, ctrlClient crclient.Client) error {
+	crdYamlString, err := getCSMDRCRDs(op)
+	if err != nil {
+		return err
+	}
+
+	crdObjects, err := operatorutils.GetModuleComponentObj([]byte(crdYamlString))
+	if err != nil {
+		return err
+	}
+
+	for _, crdObj := range crdObjects {
+		if isDeleting {
+			if err := operatorutils.DeleteObject(ctx, crdObj, ctrlClient); err != nil {
+				return err
+			}
+		} else {
+			if err := operatorutils.ApplyObject(ctx, crdObj, ctrlClient); err != nil {
 				return err
 			}
 		}

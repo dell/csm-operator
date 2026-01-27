@@ -6,7 +6,7 @@ metadata:
 spec:
   driver:
     csiDriverType: "powermax"
-    configVersion: v2.15.1
+    configVersion: v2.16.0
     forceRemoveDriver: true
     common:
       envs:
@@ -19,4 +19,4 @@ spec:
   modules:
     - name: authorization
       enabled: true
-      configVersion: v2.3.0
+      configVersion: v2.4.0

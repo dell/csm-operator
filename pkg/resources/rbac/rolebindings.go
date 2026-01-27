@@ -28,7 +28,7 @@ func SyncClusterRoleBindings(ctx context.Context, rb rbacv1.ClusterRoleBinding, 
 	found := &rbacv1.ClusterRoleBinding{}
 	err := client.Get(ctx, types.NamespacedName{Name: rb.Name, Namespace: rb.Namespace}, found)
 	if err != nil && errors.IsNotFound(err) {
-		log.Info("Creating a new ClusterRoleBinding", "Namespace", rb.Namespace, "Name", rb.Name)
+		log.Infow("Creating a new ClusterRoleBinding", "Namespace", rb.Namespace, "Name", rb.Name)
 		err = client.Create(ctx, &rb)
 		if err != nil {
 			return err
@@ -37,7 +37,7 @@ func SyncClusterRoleBindings(ctx context.Context, rb rbacv1.ClusterRoleBinding, 
 		log.Info("Unknown error.", "Error", err.Error())
 		return err
 	} else {
-		log.Info("Updating ClusterRoleBinding", "Name:", rb.Name)
+		log.Infow("Updating ClusterRoleBinding", "Name:", rb.Name)
 		err = client.Update(ctx, &rb)
 		if err != nil {
 			return err

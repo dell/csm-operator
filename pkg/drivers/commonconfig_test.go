@@ -14,17 +14,21 @@ package drivers
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
-	"github.com/dell/csm-operator/tests/shared"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
+	shared "github.com/dell/csm-operator/tests/sharedutil"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 var (
-	csm                  = csmWithTolerations(csmv1.PowerScaleName, shared.ConfigVersion)
+	csm                  = csmWithTolerations(csmv1.PowerScaleName, shared.ConfigVersion, "")
+	csm1                 = csmWithTolerations(csmv1.PowerScaleName, "", shared.InvalidCSMVersion)
 	pFlexCSM             = csmForPowerFlex(pflexCSMName)
 	pStoreCSM            = csmWithPowerstore(csmv1.PowerStore, shared.PStoreConfigVersion)
 	pScaleCSM            = csmWithPowerScale(csmv1.PowerScale, shared.PScaleConfigVersion)
@@ -61,6 +65,7 @@ var (
 		{"pmax happy path", pmaxCSM, csmv1.PowerMax, "node.yaml", ""},
 		{"pmax common env without node section", csmForPowerMax("common-env-override-no-node"), csmv1.PowerMax, "node.yaml", ""},
 		{"config file is invalid", csm, badDriver, "bad.yaml", "unmarshal"},
+		{"config file is invalid", csm1, badDriver, "bad.yaml", "No custom resource configuration is available for CSM version v1.10.0"},
 	}
 )
 
@@ -108,11 +113,13 @@ func TestGetUpgradeInfo(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := GetUpgradeInfo(ctx, config, tt.driverName, tt.csm.Spec.Driver.ConfigVersion)
-			if tt.expectedErr == "" {
-				assert.Nil(t, err)
-			} else {
-				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
+			if tt.csm.Spec.Driver.ConfigVersion != "" {
+				_, err := GetUpgradeInfo(ctx, config, tt.driverName, tt.csm.Spec.Driver.ConfigVersion)
+				if tt.expectedErr == "" {
+					assert.Nil(t, err)
+				} else {
+					assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
+				}
 			}
 		})
 	}
@@ -122,7 +129,7 @@ func TestGetController(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := GetController(ctx, tt.csm, config, tt.driverName)
+			_, err := GetController(ctx, tt.csm, config, tt.driverName, operatorutils.VersionSpec{})
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 			} else {
@@ -132,12 +139,29 @@ func TestGetController(t *testing.T) {
 	}
 }
 
+func TestGetControllerCOSI(t *testing.T) {
+	csm := csmForCosi(csmv1.Cosi, map[string]string{
+		"node-role.kubernetes.io/worker": "true",
+	},
+		[]corev1.Toleration{
+			{Key: "node-role.kubernetes.io/worker", Operator: corev1.TolerationOpExists, Effect: corev1.TaintEffectNoSchedule},
+		},
+		[]corev1.EnvVar{
+			{Name: "COSI_LOG_LEVEL", Value: "info"},
+			{Name: "COSI_LOG_FORMAT", Value: "text"},
+			{Name: "OTEL_COLLECTOR_ADDRESS", Value: "test:1234"},
+		}...)
+	_, err := GetController(context.Background(), csm, config, csmv1.Cosi, operatorutils.VersionSpec{})
+	assert.Nil(t, err)
+}
+
 func TestGetNode(t *testing.T) {
 	ctx := context.Background()
 	foundInitMdm := false
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			node, err := GetNode(ctx, tt.csm, config, tt.driverName, tt.filename, ctrlClientFake.NewClientBuilder().Build())
+			node, err := GetNode(ctx, tt.csm, config, tt.driverName, tt.filename, ctrlClientFake.NewClientBuilder().Build(), operatorutils.VersionSpec{})
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 				initcontainers := node.DaemonSetApplyConfig.Spec.Template.Spec.InitContainers
@@ -175,4 +199,182 @@ func TestGetNode(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestIsCSMDREnabled(t *testing.T) {
+	tests := []struct {
+		name        string
+		cr          csmv1.ContainerStorageModule
+		expected    string
+		expectedErr string
+	}{
+		{
+			name: "X_CSM_DR_ENABLED is true",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{
+									Name:  "X_CSM_DR_ENABLED",
+									Value: "true",
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: "true",
+		},
+		{
+			name: "X_CSM_DR_ENABLED is false",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{
+									Name:  "X_CSM_DR_ENABLED",
+									Value: "false",
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: "false",
+		},
+		{
+			name: "X_CSM_DR_ENABLED is not set",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{},
+						},
+					},
+				},
+			},
+			expected: "true",
+		},
+		{
+			name: "X_CSM_DR_ENABLED is empty",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{
+									Name:  "X_CSM_DR_ENABLED",
+									Value: "",
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: "true",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := IsCSMDREnabled(tt.cr)
+			if tt.expectedErr == "" {
+				if result != tt.expected {
+					t.Errorf("Expected %s, but got %s", tt.expected, result)
+				}
+			} else {
+				if !strings.Contains(result, tt.expectedErr) {
+					t.Errorf("Expected error containing %q, but got %s", tt.expectedErr, result)
+				}
+			}
+		})
+	}
+}
+
+func TestGetNode_SDCImageFromConfigMap(t *testing.T) {
+	ctx := context.Background()
+
+	// Use an existing happy-path PowerFlex CR (ensures SDC init container is present and enabled)
+	cr := csmForPowerFlex(pflexCSMName)
+
+	// Build a VersionSpec with an explicit SDC image in the matched images map.
+	matched := operatorutils.VersionSpec{
+		Images: map[string]string{
+			// driver image mapping may be used elsewhere, keep it reasonable
+			string(csmv1.PowerFlex): "dellemc/csi-powerflex:vtest",
+			// This is the key path under test
+			"sdc": "dellemc/sdc:test-tag",
+		},
+	}
+
+	node, err := GetNode(
+		ctx,
+		cr,
+		config,
+		csmv1.PowerFlex,
+		"node.yaml",
+		ctrlClientFake.NewClientBuilder().Build(),
+		matched,
+	)
+	assert.Nil(t, err)
+
+	// Find the sdc init container and assert the image was picked from matched.Images["sdc"]
+	foundSDC := false
+	for _, ic := range node.DaemonSetApplyConfig.Spec.Template.Spec.InitContainers {
+		if ic.Name != nil && *ic.Name == "sdc" {
+			foundSDC = true
+			if ic.Image == nil {
+				t.Fatalf("sdc init container image is nil")
+			}
+			assert.Equal(t, "dellemc/sdc:test-tag", *ic.Image, "sdc image should be set from matched.Images")
+			break
+		}
+	}
+	assert.True(t, foundSDC, "expected to find sdc init container in PowerFlex node DaemonSet")
+}
+
+func TestGetNode_SDCImageFromCustomRegistry(t *testing.T) {
+	ctx := context.Background()
+
+	// Start from a PowerFlex CR and set a custom registry.
+	cr := csmForPowerFlex(pflexCSMName)
+	cr.Spec.CustomRegistry = "registry.company.io/prod"
+
+	// No sdc entry in matched.Images -> forces the custom registry fallback branch.
+	matched := operatorutils.VersionSpec{
+		Images: map[string]string{
+			// Keep other images minimal/realistic. No "sdc" key on purpose.
+			string(csmv1.PowerFlex): "dellemc/csi-powerflex:vtest",
+		},
+	}
+
+	node, err := GetNode(
+		ctx,
+		cr,
+		config,
+		csmv1.PowerFlex,
+		"node.yaml",
+		ctrlClientFake.NewClientBuilder().Build(),
+		matched,
+	)
+	assert.Nil(t, err)
+
+	// Validate sdc init container image came from operatorutils.ResolveImage(...) (i.e., custom registry applied)
+	foundSDC := false
+	for _, ic := range node.DaemonSetApplyConfig.Spec.Template.Spec.InitContainers {
+		if ic.Name != nil && *ic.Name == "sdc" {
+			foundSDC = true
+			if ic.Image == nil {
+				t.Fatalf("sdc init container image is nil")
+			}
+			// We don't assert exact suffix because ResolveImage composes path from template + registry.
+			// Prefix check is robust and sufficient to prove the fallback path executed.
+			assert.True(t, strings.HasPrefix(*ic.Image, "registry.company.io/prod/"),
+				"expected sdc image to be resolved using custom registry, got %q", *ic.Image)
+			break
+		}
+	}
+	assert.True(t, foundSDC, "expected to find sdc init container in PowerFlex node DaemonSet")
 }

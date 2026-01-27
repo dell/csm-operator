@@ -273,7 +273,7 @@ spec:
   modules:
     # CSI Powermax Reverseproxy is a mandatory module for Powermax
     - name: csireverseproxy
-      configVersion: v2.14.0
+      configVersion: v2.14.1
       components:
         - name: csipowermax-reverseproxy
           # image: Define the container images used for the reverse proxy
@@ -447,14 +447,14 @@ spec:
               value: "30"
             # POWERMAX_CAPACITY_POLL_FREQUENCY: set polling frequency to get capacity metrics data
             # Allowed values: int
-            # Default value: 10
+            # Default value: 20
             - name: "POWERMAX_CAPACITY_POLL_FREQUENCY"
-              value: "10"
+              value: "20"
             # POWERMAX_PERFORMANCE_POLL_FREQUENCY: set polling frequency to get volume performance data
             # Allowed values: int
-            # Default value: 10
+            # Default value: 20
             - name: "POWERMAX_PERFORMANCE_POLL_FREQUENCY"
-              value: "10"
+              value: "20"
             # PowerMax metrics log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
             # Default value: "INFO"

@@ -21,3 +21,5 @@ X_CSI_ISI_VOLUME_PATH_PERMISSIONS,,777,controller,1
 X_CSI_HEALTH_MONITOR_ENABLED,,false,controller,1
 Tolerations,-v,none,controller,1
 X_CSI_MAX_VOLUMES_PER_NODE,,20,node,1
+volume-name-prefix,,alt1$,csm,1
+monitor-interval,,120s$,csm,1

@@ -404,7 +404,7 @@ spec:
             # Allowed values: String
             # Default value: true
             - name: "POWERSTORE_VOLUME_IO_POLL_FREQUENCY"
-              value: "10"
+              value: "20"
             # POWERSTORE_SPACE_POLL_FREQUENCY: set polling frequency to get cluster capacity metrics data
             # Allowed values: int
             # Default value: 300
@@ -430,6 +430,12 @@ spec:
             # Default value: 30
             - name: "POWERSTORE_TOPOLOGY_POLL_FREQUENCY"
               value: "30"
+            # X_CSI_POWERSTORE_API_TIMEOUT: Defines the timeout for PowerStore REST API calls.
+            # Allowed values: Number followed by unit (s,m,h)
+            # Examples: 10s, 1m, 1h
+            # Default value: 120s
+            - name: "X_CSI_POWERSTORE_API_TIMEOUT"
+              value: "120s"
             # PowerStore metrics log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
             # Default value: "INFO"

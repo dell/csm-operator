@@ -101,8 +101,8 @@ func getConfigMap(namespace, configmapName string) *corev1.ConfigMap {
 }
 
 func TestCommonCertManager(t *testing.T) {
-	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
-		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec){
+		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -120,9 +120,9 @@ func TestCommonCertManager(t *testing.T) {
 			}
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(cr).Build()
-			return true, true, tmpCR, sourceClient, operatorConfig
+			return true, true, tmpCR, sourceClient, operatorConfig, operatorutils.VersionSpec{}
 		},
-		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -131,9 +131,9 @@ func TestCommonCertManager(t *testing.T) {
 			tmpCR := customResource
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-			return true, false, tmpCR, sourceClient, operatorConfig
+			return true, false, tmpCR, sourceClient, operatorConfig, operatorutils.VersionSpec{}
 		},
-		"fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+		"fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
 			if err != nil {
 				panic(err)
@@ -144,14 +144,110 @@ func TestCommonCertManager(t *testing.T) {
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
-			return false, false, tmpCR, sourceClient, badOperatorConfig
+			return false, false, tmpCR, sourceClient, badOperatorConfig, operatorutils.VersionSpec{}
+		},
+		"success - creating with custom registry": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy_custom_registry.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, false, tmpCR, sourceClient, operatorConfig, operatorutils.VersionSpec{}
+		},
+		"success - creating with version overrides": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
+			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			matched := operatorutils.VersionSpec{
+				Version: "v1.14.0",
+				Images: map[string]string{
+					"cert-manager-cainjector": "quay.io/jetstack/cert-manager-cainjector:v1.6.1",
+					"cert-manager-controller": "quay.io/jetstack/cert-manager-controller:v1.6.1",
+					"cert-manager-webhook":    "quay.io/jetstack/cert-manager-webhook:v1.6.1",
+				},
+			}
+			return true, false, tmpCR, sourceClient, operatorConfig, matched
 		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			success, isDeleting, cr, sourceClient, op := tc(t)
+			success, isDeleting, cr, sourceClient, op, matched := tc(t)
 
-			err := CommonCertManager(context.TODO(), isDeleting, op, cr, sourceClient)
+			err := CommonCertManager(context.TODO(), isDeleting, op, cr, sourceClient, matched)
+			if success {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
+func TestPatchCSMDRCRDs(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, bool, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, ctrlClient.Client, operatorutils.OperatorConfig) {
+			crd := &apiextv1.CustomResourceDefinition{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "CustomResourceDefinition",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "volumejournals.dr.storage.dell.com",
+				},
+			}
+
+			err := apiextv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(crd).Build()
+			return true, true, sourceClient, operatorConfig
+		},
+		"success - creating": func(*testing.T) (bool, bool, ctrlClient.Client, operatorutils.OperatorConfig) {
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, false, sourceClient, operatorConfig
+		},
+		"fail - invalid directory": func(*testing.T) (bool, bool, ctrlClient.Client, operatorutils.OperatorConfig) {
+			badOperatorConfig.ConfigDirectory = "invalid-dir"
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, sourceClient, badOperatorConfig
+		},
+		"fail - unable to apply crd": func(*testing.T) (bool, bool, ctrlClient.Client, operatorutils.OperatorConfig) {
+			cluster := operatorutils.ClusterConfig{
+				ClusterCTRLClient: customClient{
+					Client: fake.NewClientBuilder().Build(),
+				},
+			}
+
+			return false, false, cluster.ClusterCTRLClient, operatorConfig
+		},
+		"fail - unable to delete crd": func(*testing.T) (bool, bool, ctrlClient.Client, operatorutils.OperatorConfig) {
+			cluster := operatorutils.ClusterConfig{
+				ClusterCTRLClient: customClient{
+					Client: fake.NewClientBuilder().Build(),
+				},
+			}
+
+			return false, true, cluster.ClusterCTRLClient, operatorConfig
+		},
+	}
+
+	ctx := context.TODO()
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			success, isDeleting, sourceClient, op := tc(t)
+
+			err := PatchCSMDRCRDs(ctx, isDeleting, op, sourceClient)
 			if success {
 				assert.NoError(t, err)
 			} else {
@@ -236,4 +332,117 @@ data:
 			}
 		})
 	}
+}
+
+// Asserts CRDs are kept on uninstall (CommonCertManager delete path keeps CRDs).
+func TestCommonCertManager_CRDsArePreservedOnDelete(t *testing.T) {
+	ctx := context.TODO()
+	cr, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cmCRD := &apiextv1.CustomResourceDefinition{
+		TypeMeta:   metav1.TypeMeta{Kind: "CustomResourceDefinition"},
+		ObjectMeta: metav1.ObjectMeta{Name: "certificates.cert-manager.io"},
+	}
+	err = apiextv1.AddToScheme(scheme.Scheme)
+	if err != nil {
+		t.Fatal(err)
+	}
+	src := ctrlClientFake.NewClientBuilder().WithObjects(cmCRD).Build()
+
+	err = CommonCertManager(ctx, true, operatorConfig, cr, src, operatorutils.VersionSpec{})
+	assert.NoError(t, err)
+
+	got := &apiextv1.CustomResourceDefinition{}
+	err = src.Get(ctx, client.ObjectKey{Name: "certificates.cert-manager.io"}, got)
+	assert.NoError(t, err, "CRD must remain present after uninstall")
+}
+
+// Success apply path in applyDeleteObjects.
+func TestApplyDeleteObjects_SuccessApply(t *testing.T) {
+	ctx := context.TODO()
+	cli := fake.NewClientBuilder().Build()
+
+	yml := `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ut-config
+  namespace: default
+data:
+  k: v
+`
+
+	err := applyDeleteObjects(ctx, cli, yml, false)
+	assert.NoError(t, err)
+
+	cm := &corev1.ConfigMap{}
+	err = cli.Get(ctx, client.ObjectKey{Name: "ut-config", Namespace: "default"}, cm)
+	assert.NoError(t, err)
+	assert.Equal(t, "v", cm.Data["k"])
+}
+
+// Success delete path in applyDeleteObjects.
+func TestApplyDeleteObjects_SuccessDelete(t *testing.T) {
+	ctx := context.TODO()
+	cli := fake.NewClientBuilder().Build()
+
+	cm := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{Name: "ut-del", Namespace: "default"},
+		Data:       map[string]string{"k": "v"},
+	}
+	assert.NoError(t, cli.Create(ctx, cm))
+
+	yml := `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ut-del
+  namespace: default
+data:
+  k: v
+`
+
+	err := applyDeleteObjects(ctx, cli, yml, true)
+	assert.NoError(t, err)
+
+	got := &corev1.ConfigMap{}
+	err = cli.Get(ctx, client.ObjectKey{Name: "ut-del", Namespace: "default"}, got)
+	assert.Error(t, err)
+}
+
+// Multi-document YAML path in applyDeleteObjects (apply & delete).
+func TestApplyDeleteObjects_MultiDocYAML(t *testing.T) {
+	ctx := context.TODO()
+	cli := fake.NewClientBuilder().Build()
+
+	yml := `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ut-cm-1
+  namespace: default
+data:
+  k1: v1
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ut-secret-1
+  namespace: default
+type: Opaque
+stringData:
+  s1: v1
+`
+
+	err := applyDeleteObjects(ctx, cli, yml, false)
+	assert.NoError(t, err)
+
+	assert.NoError(t, cli.Get(ctx, client.ObjectKey{Name: "ut-cm-1", Namespace: "default"}, &corev1.ConfigMap{}))
+	assert.NoError(t, cli.Get(ctx, client.ObjectKey{Name: "ut-secret-1", Namespace: "default"}, &corev1.Secret{}))
+
+	err = applyDeleteObjects(ctx, cli, yml, true)
+	assert.NoError(t, err)
+
+	assert.Error(t, cli.Get(ctx, client.ObjectKey{Name: "ut-cm-1", Namespace: "default"}, &corev1.ConfigMap{}))
+	assert.Error(t, cli.Get(ctx, client.ObjectKey{Name: "ut-secret-1", Namespace: "default"}, &corev1.Secret{}))
 }

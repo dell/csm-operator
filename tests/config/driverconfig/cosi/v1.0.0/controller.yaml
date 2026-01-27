@@ -1,0 +1,149 @@
+# Copyright © 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#      http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: <DriverDefaultReleaseName>
+  namespace: <DriverDefaultReleaseNamespace>
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: <DriverDefaultReleaseName>
+rules:
+  - apiGroups:
+      - objectstorage.k8s.io # COSI resources are grouped here
+    resources: # we do not add bucketclasses here, as those are managed by COSI Controller
+      - buckets
+      - bucketclaims
+      - bucketaccesses
+      - bucketaccessclasses
+      - buckets/status
+      - bucketaccesses/status
+      - bucketclaims/status
+      - bucketaccessclasses/status
+    verbs: # CRUD + list/watch
+      - create
+      - get
+      - update
+      - delete
+      - list
+      - watch
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases # lease is created during leader election process by COSI Provisioner Sidecar
+    verbs: # CRUD + list/watch
+      - create
+      - get
+      - update
+      - delete
+      - list
+      - watch
+  - apiGroups:
+      - "" # empty for default API group
+    resources:
+      - events # events are emmited from COSI Provisioner Sidecar
+      - secrets # secrets are created by COSI Provisioner Sidecar as a part of access granting
+    verbs: # CRUD
+      - create
+      - get
+      - update
+      - delete
+  - apiGroups:
+      - security.openshift.io
+    resourceNames:
+      - privileged
+    resources:
+      - securitycontextconstraints
+    verbs:
+      - use
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: <DriverDefaultReleaseName>
+subjects:
+  - kind: ServiceAccount
+    name: <DriverDefaultReleaseName>
+    namespace: <DriverDefaultReleaseNamespace>
+roleRef:
+  kind: ClusterRole
+  name: <DriverDefaultReleaseName>
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: <DriverDefaultReleaseName>
+  namespace: <DriverDefaultReleaseNamespace>
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: <DriverDefaultReleaseName>
+  template:
+    metadata:
+      labels:
+        name: <DriverDefaultReleaseName>
+        csmNamespace: <CSM_NAMESPACE>
+      annotations:
+        kubectl.kubernetes.io/default-container: objectstorage-provisioner
+    spec:
+      serviceAccountName: <DriverDefaultReleaseName>
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: objectstorage-provisioner
+          securityContext:
+            readOnlyRootFilesystem: true
+          image: quay.io/dell/container-storage-modules/cosi:v1.0.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--driver-config-params=/cosi-config-params/driver-config-params.yaml"
+            - "--otel-endpoint=<OTEL_COLLECTOR_ADDRESS>"
+          volumeMounts:
+            - name: cosi-config
+              mountPath: /cosi
+            - name: cosi-socket-dir
+              mountPath: /var/lib/cosi
+            - name: cosi-config-params
+              mountPath: /cosi-config-params
+        - name: objectstorage-provisioner-sidecar
+          securityContext:
+            readOnlyRootFilesystem: true
+          image: gcr.io/k8s-staging-sig-storage/objectstorage-sidecar:release-0.2
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: cosi-socket-dir
+              mountPath: /var/lib/cosi
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: "name"
+                    operator: In
+                    values:
+                      - <DriverDefaultReleaseName>
+              topologyKey: "kubernetes.io/hostname"
+      volumes:
+        - name: cosi-config
+          secret:
+            secretName: <DriverDefaultReleaseName>-config
+        - name: cosi-config-params
+          configMap:
+            name: <DriverDefaultReleaseName>-config-params
+        - name: cosi-socket-dir
+          emptyDir: {}

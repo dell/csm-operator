@@ -6,25 +6,25 @@ metadata:
 spec:
   driver:
     csiDriverType: "powermax"
-    configVersion: v2.15.1
+    configVersion: v2.16.0
     authSecret: test-powermax-creds
     replicas: 1
     common:
-      image: "quay.io/dell/container-storage-modules/csi-powermax:v2.15.1"
+      image: "quay.io/dell/container-storage-modules/csi-powermax:v2.16.0"
       imagePullPolicy: IfNotPresent
   modules:
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
       enabled: true
-      configVersion: v1.13.0
+      configVersion: v1.14.0
       components:
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
           enabled: true
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
-          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0
+          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.143.1
           envs:
             # image of nginx proxy image
             # Allowed values: string
@@ -35,7 +35,7 @@ spec:
           # enabled: Enable/Disable PowerMax metrics
           enabled: true
           # image: Defines PowerMax metrics image. This shouldn't be changed
-          image: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.7.0
+          image: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.9.0
           envs:
             # POWERMAX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerMax
             # Allowed values: int
@@ -64,14 +64,14 @@ spec:
               value: "30"
             # POWERMAX_CAPACITY_POLL_FREQUENCY: set polling frequency to get capacity metrics data
             # Allowed values: int
-            # Default value: 10
+            # Default value: 20
             - name: "POWERMAX_CAPACITY_POLL_FREQUENCY"
-              value: "10"
+              value: "20"
             # POWERMAX_PERFORMANCE_POLL_FREQUENCY: set polling frequency to get volume performance data
             # Allowed values: int
-            # Default value: 10
+            # Default value: 20
             - name: "POWERMAX_PERFORMANCE_POLL_FREQUENCY"
-              value: "10"
+              value: "20"
             # PowerMax metrics log level
             # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
             # Default value: "INFO"
@@ -95,7 +95,7 @@ spec:
       enabled: false
       components:
         - name: karavi-authorization-proxy
-          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v1.12.0
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.4.0
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"

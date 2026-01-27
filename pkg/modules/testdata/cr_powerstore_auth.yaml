@@ -11,17 +11,19 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
-    configVersion: v2.15.0
+    configVersion: v2.16.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
+    common:
+      image: quay.io/dell/container-storage-modules/csi-powerstore:v2.16.0
   modules:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: true
       components:
         - name: karavi-authorization-proxy
-          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.4.0
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"

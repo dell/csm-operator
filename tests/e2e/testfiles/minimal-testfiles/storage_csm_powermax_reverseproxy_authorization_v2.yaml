@@ -6,7 +6,7 @@ metadata:
 spec:
   driver:
     csiDriverType: "powermax"
-    configVersion: v2.15.1
+    configVersion: v2.16.0
     common:
       image: "quay.io/dell/container-storage-modules/csi-powermax:nightly"
       envs:
@@ -21,7 +21,7 @@ spec:
   modules:
     - name: authorization
       enabled: true
-      configVersion: v2.3.0
+      configVersion: v2.4.0
       components:
         - name: karavi-authorization-proxy
           image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly

@@ -93,13 +93,13 @@ func TestGetOperatorConfig(t *testing.T) {
 						Podmon                string `json:"podmon" yaml:"podmon"`
 						CSIRevProxy           string `json:"csiReverseProxy" yaml:"csiReverseProxy"`
 					}{
-						Attacher:              "registry.k8s.io/sig-storage/csi-attacher:v4.9.0",
-						Provisioner:           "registry.k8s.io/sig-storage/csi-provisioner:v5.3.0",
-						Snapshotter:           "registry.k8s.io/sig-storage/csi-snapshotter:v8.3.0",
-						Registrar:             "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0",
-						Resizer:               "registry.k8s.io/sig-storage/csi-resizer:v1.14.0",
-						Externalhealthmonitor: "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.15.0",
-						Sdcmonitor:            "quay.io/dell/storage/powerflex/sdc:4.5.4",
+						Attacher:              "registry.k8s.io/sig-storage/csi-attacher:v4.10.0",
+						Provisioner:           "registry.k8s.io/sig-storage/csi-provisioner:v6.1.0",
+						Snapshotter:           "registry.k8s.io/sig-storage/csi-snapshotter:v8.4.0",
+						Registrar:             "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.15.0",
+						Resizer:               "registry.k8s.io/sig-storage/csi-resizer:v2.0.0",
+						Externalhealthmonitor: "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.16.0",
+						Sdcmonitor:            "quay.io/dell/storage/powerflex/sdc:5.0",
 					},
 				},
 			},
@@ -131,13 +131,13 @@ func TestGetOperatorConfig(t *testing.T) {
 						Podmon                string `json:"podmon" yaml:"podmon"`
 						CSIRevProxy           string `json:"csiReverseProxy" yaml:"csiReverseProxy"`
 					}{
-						Attacher:              "registry.k8s.io/sig-storage/csi-attacher:v4.9.0",
-						Provisioner:           "registry.k8s.io/sig-storage/csi-provisioner:v5.3.0",
-						Snapshotter:           "registry.k8s.io/sig-storage/csi-snapshotter:v8.3.0",
-						Registrar:             "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0",
-						Resizer:               "registry.k8s.io/sig-storage/csi-resizer:v1.14.0",
-						Externalhealthmonitor: "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.15.0",
-						Sdcmonitor:            "quay.io/dell/storage/powerflex/sdc:4.5.4",
+						Attacher:              "registry.k8s.io/sig-storage/csi-attacher:v4.10.0",
+						Provisioner:           "registry.k8s.io/sig-storage/csi-provisioner:v6.1.0",
+						Snapshotter:           "registry.k8s.io/sig-storage/csi-snapshotter:v8.4.0",
+						Registrar:             "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.15.0",
+						Resizer:               "registry.k8s.io/sig-storage/csi-resizer:v2.0.0",
+						Externalhealthmonitor: "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.16.0",
+						Sdcmonitor:            "quay.io/dell/storage/powerflex/sdc:5.0",
 					},
 				},
 			},
