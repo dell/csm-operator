@@ -14,8 +14,10 @@ package operatorutils
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -38,7 +40,7 @@ import (
 
 var dMutex sync.RWMutex
 
-var checkModuleStatus = map[csmv1.ModuleType]func(context.Context, *csmv1.ContainerStorageModule, ReconcileCSM, *csmv1.ContainerStorageModuleStatus) (bool, error){
+var checkModuleStatus = map[csmv1.ModuleType]func(context.Context, *csmv1.ContainerStorageModule, ReconcileCSM, *csmv1.ContainerStorageModuleStatus, OperatorConfig) (bool, error){
 	csmv1.Observability:       observabilityStatusCheck,
 	csmv1.AuthorizationServer: authProxyStatusCheck,
 }
@@ -195,7 +197,7 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 	}, err
 }
 
-func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
+func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus, op OperatorConfig) (bool, error) {
 	log := logger.GetLogger(ctx)
 	running := true
 	var err error
@@ -206,10 +208,10 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 		log.Infof("error from getDeploymentStatus: %s", controllerErr.Error())
 	}
 
-	// Auth proxy has no daemonset. Putting this if/else in here and setting nodeStatusGood to true by
+	// Auth proxy and Cosi driver have no daemonset. Putting this if/else in here and setting nodeStatusGood to true by
 	// default is a little hacky but will be fixed when we refactor the status code in CSM 1.10 or 1.11
 	log.Infof("instance.GetName() is %s", instance.GetName())
-	if instance.GetName() != "" && !isAuthorizationProxyServer(instance) {
+	if instance.GetName() != "" && !isAuthorizationProxyServer(instance) && instance.Spec.Driver.CSIDriverType != csmv1.Cosi {
 		expected, nodeStatus, daemonSetErr := getDaemonSetStatus(ctx, instance, r)
 		newStatus.NodeStatus = nodeStatus
 		if daemonSetErr != nil {
@@ -231,7 +233,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 		for _, module := range instance.Spec.Modules {
 			moduleStatus, exists := checkModuleStatus[module.Name]
 			if exists && module.Enabled {
-				moduleRunning, err := moduleStatus(ctx, instance, r, newStatus)
+				moduleRunning, err := moduleStatus(ctx, instance, r, newStatus, op)
 				if err != nil {
 					log.Infof("status for module err msg [%s]", err.Error())
 				}
@@ -256,6 +258,17 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 
 	log.Infof("setting new status to [%v]", newStatus)
 	SetStatus(ctx, r, instance, newStatus)
+	if isAuthorizationProxyServer(instance) && instance.Status.State == constants.Succeeded {
+		copyCR := instance.DeepCopy()
+		delete(copyCR.Annotations, "kubectl.kubernetes.io/last-applied-configuration")
+		copyCR.ManagedFields = nil
+		copyCR.Status = csmv1.ContainerStorageModuleStatus{}
+		out, err := json.Marshal(copyCR)
+		if err != nil {
+			log.Error(err, "error marshalling CR to annotation")
+		}
+		instance.Status.LastSuccessfulConfiguration = string(out)
+	}
 	return running, err
 }
 
@@ -270,7 +283,7 @@ func SetStatus(ctx context.Context, _ ReconcileCSM, instance *csmv1.ContainerSto
 }
 
 // UpdateStatus of csm
-func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) error {
+func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus, op OperatorConfig) error {
 	dMutex.Lock()
 	defer dMutex.Unlock()
 
@@ -282,7 +295,18 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 	log.Infow("Update State", "Controller",
 		newStatus.ControllerStatus, "Node", newStatus.NodeStatus)
 
-	running, merr := calculateState(ctx, instance, r, newStatus)
+	running, merr := calculateState(ctx, instance, r, newStatus, op)
+
+	// Add last successful configuration into status if deployment is running
+	// and controller has desired replicas to handle the last successful configuration change
+	replicas := instance.Spec.Driver.Replicas
+	if newStatus.ControllerStatus.Desired == strconv.Itoa(int(replicas)) && running {
+		if lastAnnotations := instance.GetAnnotations(); lastAnnotations != nil {
+			if lastApplied := lastAnnotations["storage.dell.com/PreviouslyAppliedConfiguration"]; lastApplied != "" {
+				instance.Status.LastSuccessfulConfiguration = lastApplied
+			}
+		}
+	}
 
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		log := logger.GetLogger(ctx)
@@ -343,7 +367,7 @@ func HandleValidationError(ctx context.Context, instance *csmv1.ContainerStorage
 }
 
 // HandleSuccess for csm
-func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus, oldStatus *csmv1.ContainerStorageModuleStatus) reconcile.Result {
+func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus, oldStatus *csmv1.ContainerStorageModuleStatus, op OperatorConfig) reconcile.Result {
 	dMutex.Lock()
 	defer dMutex.Unlock()
 
@@ -353,7 +377,7 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 
 	// requeue will use reconcile.Result.Requeue field to track if operator should try reconcile again
 	requeue := reconcile.Result{}
-	running, err := calculateState(ctx, instance, r, newStatus)
+	running, err := calculateState(ctx, instance, r, newStatus, op)
 	log.Info("calculateState returns ", "running: ", running)
 	if err != nil {
 		log.Error("HandleSuccess Driver status ", "error: ", err.Error())
@@ -431,7 +455,7 @@ func WaitForNginxController(ctx context.Context, instance csmv1.ContainerStorage
 }
 
 // observabilityStatusCheck - calculate success state for observability module
-func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus) (bool, error) {
+func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus, op OperatorConfig) (bool, error) {
 	log := logger.GetLogger(ctx)
 	topologyEnabled := false
 	otelEnabled := false
@@ -466,7 +490,10 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 	}
 
 	namespace := instance.GetNamespace()
-	configVersion := instance.Spec.Driver.ConfigVersion
+	configVersion, err := GetVersion(ctx, instance, op)
+	if err != nil {
+		return false, err
+	}
 
 	// Override namespace to "karavi" if config version is below v2.15
 	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
@@ -477,7 +504,7 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 		client.InNamespace(namespace),
 	}
 	deploymentList := &appsv1.DeploymentList{}
-	err := r.GetClient().List(ctx, deploymentList, opts...)
+	err = r.GetClient().List(ctx, deploymentList, opts...)
 	if err != nil {
 		return false, err
 	}
@@ -554,7 +581,7 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 }
 
 // authProxyStatusCheck - calculate success state for auth proxy
-func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus) (bool, error) {
+func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus, _ OperatorConfig) (bool, error) {
 	log := logger.GetLogger(ctx)
 	certEnabled := false
 	nginxEnabled := false

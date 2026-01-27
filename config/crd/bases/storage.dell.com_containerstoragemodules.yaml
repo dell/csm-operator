@@ -28,6 +28,10 @@ spec:
           jsonPath: .spec.driver.configVersion
           name: ConfigVersion
           type: string
+        - description: CSM Version
+          jsonPath: .spec.version
+          name: Version
+          type: string
         - description: State of Installation
           jsonPath: .status.state
           name: State
@@ -59,8 +63,12 @@ spec:
             spec:
               description: ContainerStorageModuleSpec defines the desired state of ContainerStorageModule
               properties:
+                customRegistry:
+                  description: CustomRegistry is the custom registry for the image
+                  type: string
                 driver:
                   description: Driver is a CSI Drivers for Dell Technologies
+                  maxProperties: 20
                   properties:
                     authSecret:
                       description:
@@ -153,9 +161,9 @@ spec:
                               in a Container.
                             properties:
                               name:
-                                description:
-                                  Name of the environment variable. Must
-                                  be a C_IDENTIFIER.
+                                description: |-
+                                  Name of the environment variable.
+                                  May consist of any printable ASCII characters except '='.
                                 type: string
                               value:
                                 description: |-
@@ -217,6 +225,44 @@ spec:
                                       - fieldPath
                                     type: object
                                     x-kubernetes-map-type: atomic
+                                  fileKeyRef:
+                                    description: |-
+                                      FileKeyRef selects a key of the env file.
+                                      Requires the EnvFiles feature gate to be enabled.
+                                    properties:
+                                      key:
+                                        description: |-
+                                          The key within the env file. An invalid key will prevent the pod from starting.
+                                          The keys defined within a source may consist of any printable ASCII characters except '='.
+                                          During Alpha stage of the EnvFiles feature gate, the key size is limited to 128 characters.
+                                        type: string
+                                      optional:
+                                        default: false
+                                        description: |-
+                                          Specify whether the file or its key must be defined. If the file or key
+                                          does not exist, then the env var is not published.
+                                          If optional is set to true and the specified key does not exist,
+                                          the environment variable will not be set in the Pod's containers.
+
+                                          If optional is set to false and the specified key does not exist,
+                                          an error will be returned during Pod creation.
+                                        type: boolean
+                                      path:
+                                        description: |-
+                                          The path within the volume from which to select the file.
+                                          Must be relative and may not contain the '..' path or start with '..'.
+                                        type: string
+                                      volumeName:
+                                        description:
+                                          The name of the volume mount containing
+                                          the env file.
+                                        type: string
+                                    required:
+                                      - key
+                                      - path
+                                      - volumeName
+                                    type: object
+                                    x-kubernetes-map-type: atomic
                                   resourceFieldRef:
                                     description: |-
                                       Selects a resource of the container: only resources limits and requests
@@ -275,6 +321,7 @@ spec:
                             required:
                               - name
                             type: object
+                          maxItems: 30
                           type: array
                         hostname:
                           description: Hostname is the authorization proxy server hostname
@@ -524,9 +571,10 @@ spec:
                               operator:
                                 description: |-
                                   Operator represents a key's relationship to the value.
-                                  Valid operators are Exists and Equal. Defaults to Equal.
+                                  Valid operators are Exists, Equal, Lt, and Gt. Defaults to Equal.
                                   Exists is equivalent to wildcard for value, so that a pod can
                                   tolerate all taints of a particular category.
+                                  Lt and Gt perform numeric comparisons (requires feature gate TaintTolerationComparisonOperators).
                                 type: string
                               tolerationSeconds:
                                 description: |-
@@ -675,9 +723,9 @@ spec:
                               in a Container.
                             properties:
                               name:
-                                description:
-                                  Name of the environment variable. Must
-                                  be a C_IDENTIFIER.
+                                description: |-
+                                  Name of the environment variable.
+                                  May consist of any printable ASCII characters except '='.
                                 type: string
                               value:
                                 description: |-
@@ -739,6 +787,44 @@ spec:
                                       - fieldPath
                                     type: object
                                     x-kubernetes-map-type: atomic
+                                  fileKeyRef:
+                                    description: |-
+                                      FileKeyRef selects a key of the env file.
+                                      Requires the EnvFiles feature gate to be enabled.
+                                    properties:
+                                      key:
+                                        description: |-
+                                          The key within the env file. An invalid key will prevent the pod from starting.
+                                          The keys defined within a source may consist of any printable ASCII characters except '='.
+                                          During Alpha stage of the EnvFiles feature gate, the key size is limited to 128 characters.
+                                        type: string
+                                      optional:
+                                        default: false
+                                        description: |-
+                                          Specify whether the file or its key must be defined. If the file or key
+                                          does not exist, then the env var is not published.
+                                          If optional is set to true and the specified key does not exist,
+                                          the environment variable will not be set in the Pod's containers.
+
+                                          If optional is set to false and the specified key does not exist,
+                                          an error will be returned during Pod creation.
+                                        type: boolean
+                                      path:
+                                        description: |-
+                                          The path within the volume from which to select the file.
+                                          Must be relative and may not contain the '..' path or start with '..'.
+                                        type: string
+                                      volumeName:
+                                        description:
+                                          The name of the volume mount containing
+                                          the env file.
+                                        type: string
+                                    required:
+                                      - key
+                                      - path
+                                      - volumeName
+                                    type: object
+                                    x-kubernetes-map-type: atomic
                                   resourceFieldRef:
                                     description: |-
                                       Selects a resource of the container: only resources limits and requests
@@ -797,6 +883,7 @@ spec:
                             required:
                               - name
                             type: object
+                          maxItems: 30
                           type: array
                         hostname:
                           description: Hostname is the authorization proxy server hostname
@@ -1046,9 +1133,10 @@ spec:
                               operator:
                                 description: |-
                                   Operator represents a key's relationship to the value.
-                                  Valid operators are Exists and Equal. Defaults to Equal.
+                                  Valid operators are Exists, Equal, Lt, and Gt. Defaults to Equal.
                                   Exists is equivalent to wildcard for value, so that a pod can
                                   tolerate all taints of a particular category.
+                                  Lt and Gt perform numeric comparisons (requires feature gate TaintTolerationComparisonOperators).
                                 type: string
                               tolerationSeconds:
                                 description: |-
@@ -1215,9 +1303,9 @@ spec:
                                 present in a Container.
                               properties:
                                 name:
-                                  description:
-                                    Name of the environment variable. Must
-                                    be a C_IDENTIFIER.
+                                  description: |-
+                                    Name of the environment variable.
+                                    May consist of any printable ASCII characters except '='.
                                   type: string
                                 value:
                                   description: |-
@@ -1279,6 +1367,44 @@ spec:
                                         - fieldPath
                                       type: object
                                       x-kubernetes-map-type: atomic
+                                    fileKeyRef:
+                                      description: |-
+                                        FileKeyRef selects a key of the env file.
+                                        Requires the EnvFiles feature gate to be enabled.
+                                      properties:
+                                        key:
+                                          description: |-
+                                            The key within the env file. An invalid key will prevent the pod from starting.
+                                            The keys defined within a source may consist of any printable ASCII characters except '='.
+                                            During Alpha stage of the EnvFiles feature gate, the key size is limited to 128 characters.
+                                          type: string
+                                        optional:
+                                          default: false
+                                          description: |-
+                                            Specify whether the file or its key must be defined. If the file or key
+                                            does not exist, then the env var is not published.
+                                            If optional is set to true and the specified key does not exist,
+                                            the environment variable will not be set in the Pod's containers.
+
+                                            If optional is set to false and the specified key does not exist,
+                                            an error will be returned during Pod creation.
+                                          type: boolean
+                                        path:
+                                          description: |-
+                                            The path within the volume from which to select the file.
+                                            Must be relative and may not contain the '..' path or start with '..'.
+                                          type: string
+                                        volumeName:
+                                          description:
+                                            The name of the volume mount
+                                            containing the env file.
+                                          type: string
+                                      required:
+                                        - key
+                                        - path
+                                        - volumeName
+                                      type: object
+                                      x-kubernetes-map-type: atomic
                                     resourceFieldRef:
                                       description: |-
                                         Selects a resource of the container: only resources limits and requests
@@ -1337,6 +1463,7 @@ spec:
                               required:
                                 - name
                               type: object
+                            maxItems: 30
                             type: array
                           hostname:
                             description:
@@ -1588,9 +1715,10 @@ spec:
                                 operator:
                                   description: |-
                                     Operator represents a key's relationship to the value.
-                                    Valid operators are Exists and Equal. Defaults to Equal.
+                                    Valid operators are Exists, Equal, Lt, and Gt. Defaults to Equal.
                                     Exists is equivalent to wildcard for value, so that a pod can
                                     tolerate all taints of a particular category.
+                                    Lt and Gt perform numeric comparisons (requires feature gate TaintTolerationComparisonOperators).
                                   type: string
                                 tolerationSeconds:
                                   description: |-
@@ -1735,9 +1863,9 @@ spec:
                               in a Container.
                             properties:
                               name:
-                                description:
-                                  Name of the environment variable. Must
-                                  be a C_IDENTIFIER.
+                                description: |-
+                                  Name of the environment variable.
+                                  May consist of any printable ASCII characters except '='.
                                 type: string
                               value:
                                 description: |-
@@ -1799,6 +1927,44 @@ spec:
                                       - fieldPath
                                     type: object
                                     x-kubernetes-map-type: atomic
+                                  fileKeyRef:
+                                    description: |-
+                                      FileKeyRef selects a key of the env file.
+                                      Requires the EnvFiles feature gate to be enabled.
+                                    properties:
+                                      key:
+                                        description: |-
+                                          The key within the env file. An invalid key will prevent the pod from starting.
+                                          The keys defined within a source may consist of any printable ASCII characters except '='.
+                                          During Alpha stage of the EnvFiles feature gate, the key size is limited to 128 characters.
+                                        type: string
+                                      optional:
+                                        default: false
+                                        description: |-
+                                          Specify whether the file or its key must be defined. If the file or key
+                                          does not exist, then the env var is not published.
+                                          If optional is set to true and the specified key does not exist,
+                                          the environment variable will not be set in the Pod's containers.
+
+                                          If optional is set to false and the specified key does not exist,
+                                          an error will be returned during Pod creation.
+                                        type: boolean
+                                      path:
+                                        description: |-
+                                          The path within the volume from which to select the file.
+                                          Must be relative and may not contain the '..' path or start with '..'.
+                                        type: string
+                                      volumeName:
+                                        description:
+                                          The name of the volume mount containing
+                                          the env file.
+                                        type: string
+                                    required:
+                                      - key
+                                      - path
+                                      - volumeName
+                                    type: object
+                                    x-kubernetes-map-type: atomic
                                   resourceFieldRef:
                                     description: |-
                                       Selects a resource of the container: only resources limits and requests
@@ -1857,6 +2023,7 @@ spec:
                             required:
                               - name
                             type: object
+                          maxItems: 30
                           type: array
                         hostname:
                           description: Hostname is the authorization proxy server hostname
@@ -2106,9 +2273,10 @@ spec:
                               operator:
                                 description: |-
                                   Operator represents a key's relationship to the value.
-                                  Valid operators are Exists and Equal. Defaults to Equal.
+                                  Valid operators are Exists, Equal, Lt, and Gt. Defaults to Equal.
                                   Exists is equivalent to wildcard for value, so that a pod can
                                   tolerate all taints of a particular category.
+                                  Lt and Gt perform numeric comparisons (requires feature gate TaintTolerationComparisonOperators).
                                 type: string
                               tolerationSeconds:
                                 description: |-
@@ -2259,9 +2427,9 @@ spec:
                                 present in a Container.
                               properties:
                                 name:
-                                  description:
-                                    Name of the environment variable. Must
-                                    be a C_IDENTIFIER.
+                                  description: |-
+                                    Name of the environment variable.
+                                    May consist of any printable ASCII characters except '='.
                                   type: string
                                 value:
                                   description: |-
@@ -2323,6 +2491,44 @@ spec:
                                         - fieldPath
                                       type: object
                                       x-kubernetes-map-type: atomic
+                                    fileKeyRef:
+                                      description: |-
+                                        FileKeyRef selects a key of the env file.
+                                        Requires the EnvFiles feature gate to be enabled.
+                                      properties:
+                                        key:
+                                          description: |-
+                                            The key within the env file. An invalid key will prevent the pod from starting.
+                                            The keys defined within a source may consist of any printable ASCII characters except '='.
+                                            During Alpha stage of the EnvFiles feature gate, the key size is limited to 128 characters.
+                                          type: string
+                                        optional:
+                                          default: false
+                                          description: |-
+                                            Specify whether the file or its key must be defined. If the file or key
+                                            does not exist, then the env var is not published.
+                                            If optional is set to true and the specified key does not exist,
+                                            the environment variable will not be set in the Pod's containers.
+
+                                            If optional is set to false and the specified key does not exist,
+                                            an error will be returned during Pod creation.
+                                          type: boolean
+                                        path:
+                                          description: |-
+                                            The path within the volume from which to select the file.
+                                            Must be relative and may not contain the '..' path or start with '..'.
+                                          type: string
+                                        volumeName:
+                                          description:
+                                            The name of the volume mount
+                                            containing the env file.
+                                          type: string
+                                      required:
+                                        - key
+                                        - path
+                                        - volumeName
+                                      type: object
+                                      x-kubernetes-map-type: atomic
                                     resourceFieldRef:
                                       description: |-
                                         Selects a resource of the container: only resources limits and requests
@@ -2381,6 +2587,7 @@ spec:
                               required:
                                 - name
                               type: object
+                            maxItems: 30
                             type: array
                           hostname:
                             description:
@@ -2632,9 +2839,10 @@ spec:
                                 operator:
                                   description: |-
                                     Operator represents a key's relationship to the value.
-                                    Valid operators are Exists and Equal. Defaults to Equal.
+                                    Valid operators are Exists, Equal, Lt, and Gt. Defaults to Equal.
                                     Exists is equivalent to wildcard for value, so that a pod can
                                     tolerate all taints of a particular category.
+                                    Lt and Gt perform numeric comparisons (requires feature gate TaintTolerationComparisonOperators).
                                   type: string
                                 tolerationSeconds:
                                   description: |-
@@ -2694,6 +2902,7 @@ spec:
                               type: object
                             type: array
                         type: object
+                      maxItems: 20
                       type: array
                     snapshotClass:
                       description: SnapshotClass is the specification for Snapshot Classes
@@ -2722,6 +2931,7 @@ spec:
                     want to deploy
                   items:
                     description: Module defines the desired state of a ContainerStorageModule
+                    maxProperties: 10
                     properties:
                       components:
                         description:
@@ -2812,9 +3022,9 @@ spec:
                                   present in a Container.
                                 properties:
                                   name:
-                                    description:
-                                      Name of the environment variable. Must
-                                      be a C_IDENTIFIER.
+                                    description: |-
+                                      Name of the environment variable.
+                                      May consist of any printable ASCII characters except '='.
                                     type: string
                                   value:
                                     description: |-
@@ -2876,6 +3086,44 @@ spec:
                                           - fieldPath
                                         type: object
                                         x-kubernetes-map-type: atomic
+                                      fileKeyRef:
+                                        description: |-
+                                          FileKeyRef selects a key of the env file.
+                                          Requires the EnvFiles feature gate to be enabled.
+                                        properties:
+                                          key:
+                                            description: |-
+                                              The key within the env file. An invalid key will prevent the pod from starting.
+                                              The keys defined within a source may consist of any printable ASCII characters except '='.
+                                              During Alpha stage of the EnvFiles feature gate, the key size is limited to 128 characters.
+                                            type: string
+                                          optional:
+                                            default: false
+                                            description: |-
+                                              Specify whether the file or its key must be defined. If the file or key
+                                              does not exist, then the env var is not published.
+                                              If optional is set to true and the specified key does not exist,
+                                              the environment variable will not be set in the Pod's containers.
+
+                                              If optional is set to false and the specified key does not exist,
+                                              an error will be returned during Pod creation.
+                                            type: boolean
+                                          path:
+                                            description: |-
+                                              The path within the volume from which to select the file.
+                                              Must be relative and may not contain the '..' path or start with '..'.
+                                            type: string
+                                          volumeName:
+                                            description:
+                                              The name of the volume mount
+                                              containing the env file.
+                                            type: string
+                                        required:
+                                          - key
+                                          - path
+                                          - volumeName
+                                        type: object
+                                        x-kubernetes-map-type: atomic
                                       resourceFieldRef:
                                         description: |-
                                           Selects a resource of the container: only resources limits and requests
@@ -2935,6 +3183,7 @@ spec:
                                 required:
                                   - name
                                 type: object
+                              maxItems: 30
                               type: array
                             hostname:
                               description:
@@ -3191,9 +3440,10 @@ spec:
                                   operator:
                                     description: |-
                                       Operator represents a key's relationship to the value.
-                                      Valid operators are Exists and Equal. Defaults to Equal.
+                                      Valid operators are Exists, Equal, Lt, and Gt. Defaults to Equal.
                                       Exists is equivalent to wildcard for value, so that a pod can
                                       tolerate all taints of a particular category.
+                                      Lt and Gt perform numeric comparisons (requires feature gate TaintTolerationComparisonOperators).
                                     type: string
                                   tolerationSeconds:
                                     description: |-
@@ -3254,6 +3504,7 @@ spec:
                                 type: object
                               type: array
                           type: object
+                        maxItems: 20
                         type: array
                       configVersion:
                         description:
@@ -3357,9 +3608,9 @@ spec:
                                   present in a Container.
                                 properties:
                                   name:
-                                    description:
-                                      Name of the environment variable. Must
-                                      be a C_IDENTIFIER.
+                                    description: |-
+                                      Name of the environment variable.
+                                      May consist of any printable ASCII characters except '='.
                                     type: string
                                   value:
                                     description: |-
@@ -3421,6 +3672,44 @@ spec:
                                           - fieldPath
                                         type: object
                                         x-kubernetes-map-type: atomic
+                                      fileKeyRef:
+                                        description: |-
+                                          FileKeyRef selects a key of the env file.
+                                          Requires the EnvFiles feature gate to be enabled.
+                                        properties:
+                                          key:
+                                            description: |-
+                                              The key within the env file. An invalid key will prevent the pod from starting.
+                                              The keys defined within a source may consist of any printable ASCII characters except '='.
+                                              During Alpha stage of the EnvFiles feature gate, the key size is limited to 128 characters.
+                                            type: string
+                                          optional:
+                                            default: false
+                                            description: |-
+                                              Specify whether the file or its key must be defined. If the file or key
+                                              does not exist, then the env var is not published.
+                                              If optional is set to true and the specified key does not exist,
+                                              the environment variable will not be set in the Pod's containers.
+
+                                              If optional is set to false and the specified key does not exist,
+                                              an error will be returned during Pod creation.
+                                            type: boolean
+                                          path:
+                                            description: |-
+                                              The path within the volume from which to select the file.
+                                              Must be relative and may not contain the '..' path or start with '..'.
+                                            type: string
+                                          volumeName:
+                                            description:
+                                              The name of the volume mount
+                                              containing the env file.
+                                            type: string
+                                        required:
+                                          - key
+                                          - path
+                                          - volumeName
+                                        type: object
+                                        x-kubernetes-map-type: atomic
                                       resourceFieldRef:
                                         description: |-
                                           Selects a resource of the container: only resources limits and requests
@@ -3480,6 +3769,7 @@ spec:
                                 required:
                                   - name
                                 type: object
+                              maxItems: 30
                               type: array
                             hostname:
                               description:
@@ -3736,9 +4026,10 @@ spec:
                                   operator:
                                     description: |-
                                       Operator represents a key's relationship to the value.
-                                      Valid operators are Exists and Equal. Defaults to Equal.
+                                      Valid operators are Exists, Equal, Lt, and Gt. Defaults to Equal.
                                       Exists is equivalent to wildcard for value, so that a pod can
                                       tolerate all taints of a particular category.
+                                      Lt and Gt perform numeric comparisons (requires feature gate TaintTolerationComparisonOperators).
                                     type: string
                                   tolerationSeconds:
                                     description: |-
@@ -3804,8 +4095,66 @@ spec:
                         description: Name is name of ContainerStorageModule modules
                         type: string
                     type: object
+                  maxItems: 20
                   type: array
+                retainImageRegistryPath:
+                  description:
+                    RetainImageRegistryPath is the boolean flag used to retain
+                    image registry path
+                  type: boolean
+                version:
+                  type: string
               type: object
+              x-kubernetes-validations:
+                - message: spec.version and spec.driver.configVersion cannot both be set
+                  rule:
+                    '!(has(self.version) && self.version != "" && has(self.driver)
+                    && has(self.driver.configVersion) && self.driver.configVersion !=
+                    "")'
+                - message:
+                    spec.driver.common.image is forbidden when spec.version is
+                    set
+                  rule:
+                    '!(has(self.version) && self.version != "" && has(self.driver)
+                    && has(self.driver.common) && has(self.driver.common.image) && self.driver.common.image
+                    != "")'
+                - message:
+                    spec.driver.sideCars[*].image is forbidden when spec.version
+                    is set
+                  rule:
+                    '!(has(self.version) && self.version != "" && has(self.driver)
+                    && has(self.driver.sideCars) && self.driver.sideCars.exists(sc, has(sc.image)
+                    && sc.image != ""))'
+                - message:
+                    spec.modules[*].components[*].image is forbidden when spec.version
+                    is set
+                  rule:
+                    '!(has(self.version) && self.version != "" && has(self.modules)
+                    && self.modules.exists(m, has(m.components) && m.components.exists(c,
+                    has(c.image) && c.image != "")))'
+                - message: spec.customRegistry is forbidden when spec.version is empty
+                  rule:
+                    '!(has(self.customRegistry) && self.customRegistry != "" && !(has(self.version)
+                    && self.version != ""))'
+                - message:
+                    spec.retainImageRegistryPath is forbidden unless both spec.version
+                    and spec.customRegistry are set
+                  rule:
+                    '!(has(self.retainImageRegistryPath) && !(has(self.version) &&
+                    self.version != "" && has(self.customRegistry) && self.customRegistry
+                    != ""))'
+                - message:
+                    spec.driver.initContainers[*].image is forbidden when spec.version
+                    is set
+                  rule:
+                    '!(has(self.version) && self.version != "" && has(self.driver)
+                    && has(self.driver.initContainers) && self.driver.initContainers.exists(ic,
+                    has(ic.image) && ic.image != ""))'
+                - message: env NGINX_PROXY_IMAGE is forbidden when spec.version is set
+                  rule:
+                    '!(has(self.version) && self.version != "" && has(self.modules)
+                    && self.modules.exists(m, has(m.components) && m.components.exists(c,
+                    has(c.envs) && c.envs.exists(e, has(e.name) && e.name == "NGINX_PROXY_IMAGE"))))'
             status:
               description:
                 ContainerStorageModuleStatus defines the observed state of
@@ -3824,6 +4173,11 @@ spec:
                       description: Failed is the number of failed pods
                       type: string
                   type: object
+                lastSuccessfulConfiguration:
+                  description:
+                    LastSuccessfulConfiguration is configurations details
+                    only when the CSM CR goes into a successful state
+                  type: string
                 nodeStatus:
                   description: NodeStatus is the status of Controller pods
                   properties:

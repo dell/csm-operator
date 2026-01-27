@@ -2,4 +2,3 @@
 # Ignore build and test binaries.
 bin/
 testbin/
-vendor/

@@ -6,4 +6,4 @@ metadata:
 spec:
   driver:
     csiDriverType: "isilon"
-    configVersion: v2.15.1
+    configVersion: v2.16.0

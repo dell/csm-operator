@@ -133,7 +133,15 @@ func ReverseProxyPrecheck(ctx context.Context, op operatorutils.OperatorConfig, 
 // ReverseProxyServer - apply/delete deployment objects
 func ReverseProxyServer(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	log := logger.GetLogger(ctx)
-	YamlString, err := getReverseProxyDeployment(op, cr)
+	var matched operatorutils.VersionSpec
+	if cr.Spec.Version != "" {
+		var err error
+		matched, err = operatorutils.ResolveVersionFromConfigMap(ctx, ctrlClient, &cr)
+		if err != nil {
+			return err
+		}
+	}
+	YamlString, err := getReverseProxyDeployment(ctx, op, cr, matched)
 	if err != nil {
 		return err
 	}
@@ -149,7 +157,11 @@ func ReverseProxyServer(ctx context.Context, isDeleting bool, op operatorutils.O
 
 			// Mount Credential support is only introduced in CSM v2.14.0. Prior to this version, we will not try to dynamically
 			// add the necessary fields for either approach.
-			secretSupported, err := operatorutils.MinVersionCheck(drivers.PowerMaxMountCredentialMinVersion, cr.Spec.Driver.ConfigVersion)
+			version, err := operatorutils.GetVersion(ctx, &cr, op)
+			if err != nil {
+				return err
+			}
+			secretSupported, err := operatorutils.MinVersionCheck(drivers.PowerMaxMountCredentialMinVersion, version)
 			if err != nil {
 				return err
 			}
@@ -159,7 +171,7 @@ func ReverseProxyServer(ctx context.Context, isDeleting bool, op operatorutils.O
 					secretName := cr.Spec.Driver.AuthSecret
 					deploymentSetReverseProxySecretMounts(dp, secretName)
 				} else {
-					revProxyModule, _, err := getRevproxyApplyCR(cr, op)
+					revProxyModule, _, err := getRevproxyApplyCR(ctx, cr, op)
 					if err != nil {
 						return err
 					}
@@ -187,7 +199,7 @@ func ReverseProxyServer(ctx context.Context, isDeleting bool, op operatorutils.O
 func ReverseProxyStartService(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	log := logger.GetLogger(ctx)
 
-	YamlString, err := getReverseProxyService(op, cr)
+	YamlString, err := getReverseProxyService(ctx, op, cr)
 	if err != nil {
 		return err
 	}
@@ -222,7 +234,7 @@ func getReverseProxyModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error
 }
 
 // getReverseProxyService - gets the reverseproxy service manifest
-func getReverseProxyService(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getReverseProxyService(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
 	yamlString := ""
 	revProxy := cr.GetModule(csmv1.ReverseProxy)
 	// This is necessary for the minimal manifest, where the reverse proxy will not be included in the CSM CR.
@@ -230,7 +242,7 @@ func getReverseProxyService(op operatorutils.OperatorConfig, cr csmv1.ContainerS
 		revProxy.Name = csmv1.ReverseProxy
 	}
 
-	buf, err := readConfigFile(revProxy, cr, op, ReverseProxyService)
+	buf, err := readConfigFile(ctx, revProxy, cr, op, ReverseProxyService)
 	if err != nil {
 		return yamlString, err
 	}
@@ -255,14 +267,26 @@ func getReverseProxyService(op operatorutils.OperatorConfig, cr csmv1.ContainerS
 }
 
 // getReverseProxyDeployment - updates deployment manifest with reverseproxy CRD values
-func getReverseProxyDeployment(op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getReverseProxyDeployment(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, matched operatorutils.VersionSpec) (string, error) {
 	YamlString := ""
 	revProxy, err := getReverseProxyModule(cr)
 	if err != nil {
 		return YamlString, err
 	}
 
-	deploymentPath := fmt.Sprintf("%s/moduleconfig/%s/%s/%s", op.ConfigDirectory, csmv1.ReverseProxy, revProxy.ConfigVersion, ReverseProxyDeployment)
+	revProxyConfigVersion := revProxy.ConfigVersion
+	if revProxyConfigVersion == "" {
+		version, err := operatorutils.GetVersion(ctx, &cr, op)
+		if err != nil {
+			return YamlString, err
+		}
+		revProxyConfigVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, csmv1.ReverseProxy, op.ConfigDirectory)
+		if err != nil {
+			return YamlString, err
+		}
+	}
+
+	deploymentPath := fmt.Sprintf("%s/moduleconfig/%s/%s/%s", op.ConfigDirectory, csmv1.ReverseProxy, revProxyConfigVersion, ReverseProxyDeployment)
 	buf, err := os.ReadFile(filepath.Clean(deploymentPath))
 	if err != nil {
 		return YamlString, err
@@ -277,9 +301,7 @@ func getReverseProxyDeployment(op operatorutils.OperatorConfig, cr csmv1.Contain
 
 	for _, component := range revProxy.Components {
 		if component.Name == ReverseProxyServerComponent {
-			if string(component.Image) != "" {
-				image = string(component.Image)
-			}
+			image = operatorutils.GetFinalImage(ctx, cr, matched, component, image)
 			for _, env := range component.Envs {
 				if env.Name == "X_CSI_REVPROXY_TLS_SECRET" {
 					proxyTLSSecret = env.Value
@@ -305,19 +327,25 @@ func getReverseProxyDeployment(op operatorutils.OperatorConfig, cr csmv1.Contain
 }
 
 // ReverseProxyInjectDeployment injects reverseproxy container as sidecar into controller
-func ReverseProxyInjectDeployment(dp v1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*v1.DeploymentApplyConfiguration, error) {
-	revProxyModule, containerPtr, err := getRevproxyApplyCR(cr, op)
+func ReverseProxyInjectDeployment(ctx context.Context, dp v1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, matched operatorutils.VersionSpec) (*v1.DeploymentApplyConfiguration, error) {
+	revProxyModule, containerPtr, err := getRevproxyApplyCR(ctx, cr, op)
 	if err != nil {
 		return nil, err
 	}
 
 	container := *containerPtr
+	// For minimal manifest image override with configmap where component isn't mentioned
+	if len(revProxyModule.Components) == 0 {
+		var synthetic csmv1.ContainerTemplate
+		synthetic = csmv1.ContainerTemplate{
+			Name: ReverseProxyServerComponent,
+		}
+		*container.Image = operatorutils.GetFinalImage(ctx, cr, matched, synthetic, *container.Image)
+	}
 	// update the image
 	for _, side := range revProxyModule.Components {
 		if side.Name == ReverseProxyServerComponent {
-			if side.Image != "" {
-				*container.Image = string(side.Image)
-			}
+			*container.Image = operatorutils.GetFinalImage(ctx, cr, matched, side, *container.Image)
 		}
 	}
 	dp.Spec.Template.Spec.Containers = append(dp.Spec.Template.Spec.Containers, container)
@@ -333,7 +361,11 @@ func ReverseProxyInjectDeployment(dp v1.DeploymentApplyConfiguration, cr csmv1.C
 	}
 
 	// Dynamic secret/configMap mounting is only supported in v2.14.0 and above
-	secretSupported, err := operatorutils.MinVersionCheck(drivers.PowerMaxMountCredentialMinVersion, cr.Spec.Driver.ConfigVersion)
+	version, err := operatorutils.GetVersion(ctx, &cr, op)
+	if err != nil {
+		return nil, err
+	}
+	secretSupported, err := operatorutils.MinVersionCheck(drivers.PowerMaxMountCredentialMinVersion, version)
 	if err != nil {
 		return nil, err
 	}
@@ -557,7 +589,7 @@ func getRevProxyVolumeComp(revProxyModule csmv1.Module) []acorev1.VolumeApplyCon
 }
 
 // returns revproxy module and container
-func getRevproxyApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
+func getRevproxyApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
 	var err error
 	revProxyModule := cr.GetModule(csmv1.ReverseProxy)
 
@@ -566,7 +598,7 @@ func getRevproxyApplyCR(cr csmv1.ContainerStorageModule, op operatorutils.Operat
 		revProxyModule.Name = csmv1.ReverseProxy
 	}
 
-	buf, err := readConfigFile(revProxyModule, cr, op, ReverseProxySidecar)
+	buf, err := readConfigFile(ctx, revProxyModule, cr, op, ReverseProxySidecar)
 	if err != nil {
 		return nil, nil, err
 	}

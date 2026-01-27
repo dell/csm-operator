@@ -15,6 +15,7 @@ package k8s
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/kubernetes"
@@ -79,6 +80,28 @@ func IsOpenShift(log *zap.SugaredLogger) (bool, error) {
 	openshiftAPIGroup := "security.openshift.io"
 	for i := 0; i < len(serverGroups); i++ {
 		if serverGroups[i].Name == openshiftAPIGroup {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+// IsHarvester - Returns a boolean which indicates if we are running in a Harvester cluster
+func IsHarvester() (bool, error) {
+	k8sClientSet, err := GetClientSetWrapper()
+	if err != nil {
+		return false, err
+	}
+
+	serverGroups, _, err := k8sClientSet.Discovery().ServerGroupsAndResources()
+	if err != nil {
+		return false, err
+	}
+
+	harvesterAPIGroup := "harvesterhci.io"
+	for _, group := range serverGroups {
+		if strings.HasSuffix(group.Name, harvesterAPIGroup) {
 			return true, nil
 		}
 	}

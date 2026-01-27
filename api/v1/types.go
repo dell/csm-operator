@@ -92,6 +92,9 @@ const (
 	// PowerStore - placeholder for constant powerstore
 	PowerStore DriverType = "powerstore"
 
+	// Cosi - placeholder for constant cosi
+	Cosi DriverType = "cosi"
+
 	// Provisioner - placeholder for constant
 	Provisioner = "provisioner"
 	// Attacher - placeholder for constant
@@ -131,6 +134,7 @@ const (
 )
 
 // Module defines the desired state of a ContainerStorageModule
+// +kubebuilder:validation:MaxProperties=10
 type Module struct {
 	// Name is name of ContainerStorageModule modules
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Name"
@@ -146,6 +150,7 @@ type Module struct {
 
 	// Components is the specification for CSM components containers
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ContainerStorageModule components specification"
+	// +kubebuilder:validation:MaxItems=20
 	Components []ContainerTemplate `json:"components,omitempty" yaml:"components,omitempty"`
 
 	// ForceRemoveModule is the boolean flag used to remove authorization proxy server deployment when CR is deleted
@@ -175,6 +180,7 @@ type PodStatus struct {
 
 // Driver of CSIDriver
 // +k8s:openapi-gen=true
+// +kubebuilder:validation:MaxProperties=20
 type Driver struct {
 	// CSIDriverType is the CSI Driver type for Dell Technologies - e.g, powermax, powerflex,...
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="CSI Driver Type"
@@ -211,6 +217,7 @@ type Driver struct {
 
 	// SideCars is the specification for CSI sidecar containers
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="CSI SideCars specification"
+	// +kubebuilder:validation:MaxItems=20
 	SideCars []ContainerTemplate `json:"sideCars,omitempty" yaml:"sideCars"`
 
 	// InitContainers is the specification for Driver InitContainers
@@ -259,6 +266,7 @@ type ContainerTemplate struct {
 
 	// Envs is the set of environment variables for the container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Container Environment vars"
+	// +kubebuilder:validation:MaxItems=30
 	Envs []corev1.EnvVar `json:"envs,omitempty" yaml:"envs"`
 
 	// Tolerations is the list of tolerations for the driver pods

@@ -36,6 +36,9 @@ const (
 	// PowerFlexConfigParamsVolumeMount -
 	PowerFlexConfigParamsVolumeMount = "vxflexos-config-params"
 
+	// PowerFlexConfigVolumeMount -
+	PowerFlexConfigVolumeMount = "vxflexos-config"
+
 	// CsiSdcEnabled - Flag to enable/disable SDC
 	CsiSdcEnabled = "<X_CSI_SDC_ENABLED>"
 
@@ -56,9 +59,6 @@ const (
 
 	// CsiPowerflexExternalAccess -  External Access flag
 	CsiPowerflexExternalAccess = "<X_CSI_POWERFLEX_EXTERNAL_ACCESS>"
-
-	// PowerFlexCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
-	PowerFlexCSMNameSpace string = "<CSM_NAMESPACE>"
 
 	// ScaleioBinPath - name of volume that is mounted by the CSI plugin when not running on OCP
 	ScaleioBinPath = "scaleio-path-bin"
@@ -83,6 +83,8 @@ const (
 
 	// PowerFlexProbeTimeout - will be used to control the X_CSI_PROBE_TIMEOUT variable
 	PowerFlexProbeTimeout string = "<X_CSI_PROBE_TIMEOUT>"
+
+	PowerFlexAuthType string = "<X_CSI_AUTH_TYPE>"
 )
 
 // PrecheckPowerFlex do input validation
@@ -106,15 +108,19 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 		}
 	}
 
+	version, err := operatorutils.GetVersion(ctx, cr, operatorConfig)
+	if err != nil {
+		return err
+	}
 	// Check if driver version is supported by doing a stat on a config file
-	configFilePath := fmt.Sprintf("%s/driverconfig/%s/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, csmv1.PowerFlex, cr.Spec.Driver.ConfigVersion)
+	configFilePath := fmt.Sprintf("%s/driverconfig/%s/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, csmv1.PowerFlex, version)
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		log.Errorw("PreCheckPowerFlex failed in version check", "Error", err.Error())
-		return fmt.Errorf("%s %s not supported", csmv1.PowerFlexName, cr.Spec.Driver.ConfigVersion)
+		return fmt.Errorf("%s %s not supported", csmv1.PowerFlexName, version)
 	}
 
 	// Check if MDM is set in the secret
-	_, err := GetMDMFromSecret(ctx, cr, ct)
+	_, err = GetMDMFromSecret(ctx, cr, ct)
 	if err != nil {
 		return err
 	}
@@ -357,6 +363,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	sftpRepoUser := ""
 	sftpEnabled := ""
 	probeTimeout := "10s"
+	authType := ""
 
 	if cr.Spec.Driver.Common != nil {
 		for _, env := range cr.Spec.Driver.Common.Envs {
@@ -368,6 +375,9 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 			}
 			if env.Name == "X_CSI_PROBE_TIMEOUT" {
 				probeTimeout = env.Value
+			}
+			if env.Name == "X_CSI_AUTH_TYPE" {
+				authType = env.Value
 			}
 		}
 	}
@@ -387,10 +397,11 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerflexExternalAccess, powerflexExternalAccess)
-		yamlString = strings.ReplaceAll(yamlString, PowerFlexCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexShowHTTP, showHTTP)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexProbeTimeout, probeTimeout)
+		yamlString = strings.ReplaceAll(yamlString, PowerFlexAuthType, authType)
 
 	case "Node":
 		if cr.Spec.Driver.Node != nil {
@@ -430,13 +441,14 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, CsiPrefixRenameSdc, renameSdcPrefix)
 		yamlString = strings.ReplaceAll(yamlString, CsiVxflexosMaxVolumesPerNode, maxVolumesPerNode)
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
-		yamlString = strings.ReplaceAll(yamlString, PowerFlexCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexShowHTTP, showHTTP)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexSftpRepoAddress, sftpRepoAddress)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexSftpRepoUser, sftpRepoUser)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexSdcRepoEnabled, sftpEnabled)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexProbeTimeout, probeTimeout)
+		yamlString = strings.ReplaceAll(yamlString, PowerFlexAuthType, authType)
 
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {

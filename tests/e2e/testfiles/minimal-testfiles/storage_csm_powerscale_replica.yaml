@@ -6,13 +6,13 @@ metadata:
 spec:
   driver:
     csiDriverType: "isilon"
-    configVersion: v2.15.1
+    configVersion: v2.16.0
     forceRemoveDriver: true
   modules:
     - name: authorization
       enabled: false
       # For Auth 2.0, use v2.2.0 as configVersion
-      configVersion: v2.2.0
+      configVersion: v2.4.0
     - name: resiliency
       enabled: false
     - name: replication

@@ -9,7 +9,7 @@ spec:
     - name: authorization-proxy-server
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v2.3.0
+      configVersion: v2.4.0
       forceRemoveModule: true
       components:
         # For Kubernetes Container Platform only
@@ -39,7 +39,7 @@ spec:
           storageService: quay.io/dell/container-storage-modules/csm-authorization-storage:nightly
           storageServiceReplicas: 1
           opa: docker.io/openpolicyagent/opa:0.70.0
-          opaKubeMgmt: openpolicyagent/kube-mgmt:8.5.11
+          opaKubeMgmt: openpolicyagent/kube-mgmt:9.3.0
           authorizationController: quay.io/dell/container-storage-modules/csm-authorization-controller:nightly
           authorizationControllerReplicas: 1
           leaderElection: true
@@ -81,13 +81,12 @@ spec:
               conjur:
                 usernamePath: secrets/redis-username
                 passwordPath: secrets/redis-password
-          redis: redis:8.2.0-alpine
+          redis: redis:8.4.0-alpine
           commander: rediscommander/redis-commander:latest
           redisName: redis-csm
           redisCommander: rediscommander
           sentinel: sentinel
           redisReplicas: 5
-
         - name: config
           configSecretProviderClass:
             # Name of the SecretProviderClass that holds the config secretObject.
@@ -97,7 +96,6 @@ spec:
               # Path for Conjur secret that stores the config secret.
               conjur:
                 secretPath: secrets/config-object
-
         - name: storage-system-credentials
           secretProviderClasses:
             conjur:

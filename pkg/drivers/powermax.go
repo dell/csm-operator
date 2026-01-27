@@ -44,28 +44,29 @@ const (
 	// PowerMaxConfigParamsVolumeMount used to identify config param volume mount
 	PowerMaxConfigParamsVolumeMount = "powermax-config-params"
 
-	// CSIPmaxManagedArray and following  used for replacing user values in config files
-	CSIPmaxManagedArray    = "<X_CSI_MANAGED_ARRAY>"
-	CSIPmaxEndpoint        = "<X_CSI_POWERMAX_ENDPOINT>"
-	CSIPmaxDebug           = "<X_CSI_POWERMAX_DEBUG>"
-	CSIPmaxPortGroup       = "<X_CSI_POWERMAX_PORTGROUPS>"
-	CSIPmaxProtocol        = "<X_CSI_TRANSPORT_PROTOCOL>"
-	CSIPmaxNodeTemplate    = "<X_CSI_IG_NODENAME_TEMPLATE>"
-	CSIPmaxModifyHostname  = "<X_CSI_IG_MODIFY_HOSTNAME>"
-	CSIPmaxHealthMonitor   = "<X_CSI_HEALTH_MONITOR_ENABLED>"
-	CSIPmaxTopology        = "<X_CSI_TOPOLOGY_CONTROL_ENABLED>"
-	CSIPmaxVsphere         = "<X_CSI_VSPHERE_ENABLED>"
-	CSIPmaxVspherePG       = "<X_CSI_VSPHERE_PORTGROUP>"
-	CSIPmaxVsphereHostname = "<X_CSI_VSPHERE_HOSTNAME>"
-	CSIPmaxVsphereHost     = "<X_CSI_VCENTER_HOST>"
-	CSIPmaxChap            = "<X_CSI_POWERMAX_ISCSI_ENABLE_CHAP>"
-	ReverseProxyTLSSecret  = "<X_CSI_REVPROXY_TLS_SECRET>" // #nosec G101
+	// PowerMaxConfigVolumeMount -
+	PowerMaxConfigVolumeMount = CSIPowerMaxSecretVolumeName
+
+	// CSIPmaxManagedArray and following used for replacing user values in config files
+	CSIPmaxManagedArray     = "<X_CSI_MANAGED_ARRAY>"
+	CSIPmaxEndpoint         = "<X_CSI_POWERMAX_ENDPOINT>"
+	CSIPmaxDebug            = "<X_CSI_POWERMAX_DEBUG>"
+	CSIPmaxPortGroup        = "<X_CSI_POWERMAX_PORTGROUPS>"
+	CSIPmaxProtocol         = "<X_CSI_TRANSPORT_PROTOCOL>"
+	CSIPmaxNodeTemplate     = "<X_CSI_IG_NODENAME_TEMPLATE>"
+	CSIPmaxModifyHostname   = "<X_CSI_IG_MODIFY_HOSTNAME>"
+	CSIPmaxHealthMonitor    = "<X_CSI_HEALTH_MONITOR_ENABLED>"
+	CSIPmaxTopology         = "<X_CSI_TOPOLOGY_CONTROL_ENABLED>"
+	CSIPmaxVsphere          = "<X_CSI_VSPHERE_ENABLED>"
+	CSIPmaxVspherePG        = "<X_CSI_VSPHERE_PORTGROUP>"
+	CSIPmaxVsphereHostname  = "<X_CSI_VSPHERE_HOSTNAME>"
+	CSIPmaxVsphereHost      = "<X_CSI_VCENTER_HOST>"
+	CSIPmaxChap             = "<X_CSI_POWERMAX_ISCSI_ENABLE_CHAP>"
+	ReverseProxyTLSSecret   = "<X_CSI_REVPROXY_TLS_SECRET>" // #nosec G101
+	CSIPmaxDynamicSGEnabled = "<X_CSI_DYNAMIC_SG_ENABLED>"
 
 	// CsiPmaxMaxVolumesPerNode - Maximum volumes that the controller can schedule on the node
 	CsiPmaxMaxVolumesPerNode = "<X_CSI_MAX_VOLUMES_PER_NODE>"
-
-	// PowerMaxCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
-	PowerMaxCSMNameSpace string = "<CSM_NAMESPACE>"
 
 	CSIPowerMaxUseSecret       string = "X_CSI_REVPROXY_USE_SECRET"      // #nosec G101
 	CSIPowerMaxSecretFilePath  string = "X_CSI_REVPROXY_SECRET_FILEPATH" // #nosec G101
@@ -107,11 +108,15 @@ var (
 func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, ct client.Client) error {
 	log := logger.GetLogger(ctx)
 
+	version, err := operatorutils.GetVersion(ctx, cr, operatorConfig)
+	if err != nil {
+		return err
+	}
 	// Check if driver version is supported by doing a stat on a config file
-	configFilePath := fmt.Sprintf("%s/driverconfig/powermax/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
+	configFilePath := fmt.Sprintf("%s/driverconfig/powermax/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, version)
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		log.Errorw("PreCheckPowerMax failed in version check", "Error", err.Error())
-		return fmt.Errorf("%s %s not supported", csmv1.PowerMax, cr.Spec.Driver.ConfigVersion)
+		return fmt.Errorf("%s %s not supported", csmv1.PowerMax, version)
 	}
 
 	secretName := cr.Name + "-creds"
@@ -127,7 +132,7 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 	}
 
 	found := &corev1.Secret{}
-	err := ct.Get(ctx, types.NamespacedName{Name: secretName, Namespace: cr.GetNamespace()}, found)
+	err = ct.Get(ctx, types.NamespacedName{Name: secretName, Namespace: cr.GetNamespace()}, found)
 	if err != nil {
 		log.Error(err, "Failed query for secret", secretName)
 		if errors.IsNotFound(err) {
@@ -188,6 +193,7 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 	nodeHealthMonitor := "false"
 	storageCapacity := "true"
 	maxVolumesPerNode := ""
+	dynamicSGEnabled := "false"
 
 	// #nosec G101 - False positives
 	switch fileType {
@@ -229,6 +235,9 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 				}
 				if env.Name == "X_CSI_IG_NODENAME_TEMPLATE" {
 					nodeTemplate = env.Value
+				}
+				if env.Name == "X_CSI_DYNAMIC_SG_ENABLED" {
+					dynamicSGEnabled = env.Value
 				}
 			}
 		}
@@ -276,7 +285,8 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxChap, nodeChap)
 		yamlString = strings.ReplaceAll(yamlString, CsiPmaxMaxVolumesPerNode, maxVolumesPerNode)
 		yamlString = strings.ReplaceAll(yamlString, ReverseProxyTLSSecret, proxyTLSSecret)
-		yamlString = strings.ReplaceAll(yamlString, PowerMaxCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxDynamicSGEnabled, dynamicSGEnabled)
 	case "Controller":
 		if cr.Spec.Driver.Common != nil {
 			for _, env := range cr.Spec.Driver.Common.Envs {
@@ -312,6 +322,9 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 				}
 				if env.Name == "X_CSI_IG_NODENAME_TEMPLATE" {
 					nodeTemplate = env.Value
+				}
+				if env.Name == "X_CSI_DYNAMIC_SG_ENABLED" {
+					dynamicSGEnabled = env.Value
 				}
 			}
 		}
@@ -350,7 +363,8 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxVsphereHost, vsphereHost)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxChap, nodeChap)
 		yamlString = strings.ReplaceAll(yamlString, ReverseProxyTLSSecret, proxyTLSSecret)
-		yamlString = strings.ReplaceAll(yamlString, PowerMaxCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxDynamicSGEnabled, dynamicSGEnabled)
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"

@@ -9,7 +9,7 @@ spec:
     - name: authorization-proxy-server
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v2.3.0
+      configVersion: v2.4.0
       forceRemoveModule: true
       components:
         # For Kubernetes Container Platform only
@@ -30,17 +30,17 @@ spec:
         - name: proxy-server
           # enable: Enable/Disable csm-authorization proxy server
           enabled: true
-          proxyService: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.3.0
+          proxyService: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.4.0
           proxyServiceReplicas: 1
-          tenantService: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.3.0
+          tenantService: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.4.0
           tenantServiceReplicas: 1
-          roleService: quay.io/dell/container-storage-modules/csm-authorization-role:v2.3.0
+          roleService: quay.io/dell/container-storage-modules/csm-authorization-role:v2.4.0
           roleServiceReplicas: 1
-          storageService: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.3.0
+          storageService: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.4.0
           storageServiceReplicas: 1
           opa: docker.io/openpolicyagent/opa:0.70.0
-          opaKubeMgmt: docker.io/openpolicyagent/kube-mgmt:8.5.11
-          authorizationController: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.3.0
+          opaKubeMgmt: docker.io/openpolicyagent/kube-mgmt:9.3.0
+          authorizationController: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.4.0
           authorizationControllerReplicas: 1
           leaderElection: true
           # controllerReconcileInterval: interval for the authorization controllers to reconcile with Redis.
@@ -82,16 +82,15 @@ spec:
               # Key in the secret that stores the Redis password.
               redisPasswordKey: ""
               # Optional paths to the Conjur secrets that store the Redis username and password
-              #conjur:
+              # conjur:
               #  usernamePath: secrets/redis-username
               #  passwordPath: secrets/redis-password
-          redis: redis:8.2.0-alpine
+          redis: redis:8.4.0-alpine
           commander: docker.io/rediscommander/redis-commander:latest
           redisName: redis-csm
           redisCommander: rediscommander
           sentinel: sentinel
           redisReplicas: 5
-
         - name: config
           # Optional:
           # Config secret configuration for JWT signing secret:
@@ -106,7 +105,6 @@ spec:
               # Path for Conjur secret that stores the config secret.
               # conjur:
               #   secretPath: secrets/config-object
-
         # Comment and uncomment the appropriate sections below to use the desired method.
         # Storage system credentials can be provided in one of two ways:
         # 1. Using a SecretProviderClass (for dynamic secrets from external providers)
@@ -117,17 +115,17 @@ spec:
             vault:
               - secret-provider-class-1
               - secret-provider-class-2
-            # conjur:
-              # - name: secret-provider-class-3
-              #   paths:
-                  # - usernamePath: secrets/username1
-                  #   passwordPath: secrets/password1
-                  # - usernamePath: secrets/username2
-                  #   passwordPath: secrets/password2
-              # - name: secret-provider-class-4
-                # paths:
-                  # - usernamePath: secrets/username3
-                  #   passwordPath: secrets/password3
+              # conjur:
+              #   - name: secret-provider-class-3
+              #     paths:
+              #       - usernamePath: secrets/username1
+              #         passwordPath: secrets/password1
+              #       - usernamePath: secrets/username2
+              #         passwordPath: secrets/password2
+              #   - name: secret-provider-class-4
+              #     paths:
+              #       - usernamePath: secrets/username3
+              #         passwordPath: secrets/password3
           # secrets:
           #   - secret-1
           #   - secret-2

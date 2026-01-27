@@ -23,26 +23,29 @@ import (
 	"testing"
 	"time"
 
-	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	csmv1 "github.com/dell/csm-operator/api/v1"
-	v1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/logger"
 	"github.com/dell/csm-operator/pkg/modules"
 	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
-	"github.com/dell/csm-operator/tests/shared"
-	"github.com/dell/csm-operator/tests/shared/clientgoclient"
-	"github.com/dell/csm-operator/tests/shared/crclient"
+	shared "github.com/dell/csm-operator/tests/sharedutil"
+	"github.com/dell/csm-operator/tests/sharedutil/clientgoclient"
+	"github.com/dell/csm-operator/tests/sharedutil/crclient"
+	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
+	confmetav1 "k8s.io/client-go/applyconfigurations/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/record"
@@ -135,6 +138,7 @@ var (
 
 	configVersion              = shared.ConfigVersion
 	pFlexConfigVersion         = shared.PFlexConfigVersion
+	cosiConfigVersion          = shared.CosiConfigVersion
 	oldConfigVersion           = shared.OldConfigVersion
 	upgradeConfigVersion       = shared.UpgradeConfigVersion
 	downgradeConfigVersion     = shared.DowngradeConfigVersion
@@ -205,7 +209,7 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 
 func TestRemoveFinalizer(t *testing.T) {
 	r := &ContainerStorageModuleReconciler{}
-	err := r.removeFinalizer(context.Background(), &v1.ContainerStorageModule{})
+	err := r.removeFinalizer(context.Background(), &csmv1.ContainerStorageModule{})
 	assert.Nil(t, err)
 }
 
@@ -255,7 +259,7 @@ func (suite *CSMControllerTestSuite) TestAuthorizationServerPreCheck() {
 }
 
 func (suite *CSMControllerTestSuite) TestResiliencyReconcile() {
-	suite.makeFakeResiliencyCSM(csmName, suite.namespace, true, append(getResiliencyModule(), getResiliencyModule()...), string(v1.PowerStore))
+	suite.makeFakeResiliencyCSM(csmName, suite.namespace, true, append(getResiliencyModule(), getResiliencyModule()...), string(csmv1.PowerStore))
 	suite.runFakeCSMManager("", false)
 	suite.deleteCSM(csmName)
 	suite.runFakeCSMManager("", true)
@@ -293,14 +297,14 @@ func (suite *CSMControllerTestSuite) TestContentWatch() {
 }
 
 func (suite *CSMControllerTestSuite) TestReverseProxyReconcile() {
-	suite.makeFakeRevProxyCSM(csmName, suite.namespace, true, getReverseProxyModule(), string(v1.PowerMax))
+	suite.makeFakeRevProxyCSM(csmName, suite.namespace, true, getReverseProxyModule(), string(csmv1.PowerMax))
 	suite.runFakeCSMManager("", false)
 	suite.deleteCSM(csmName)
 	suite.runFakeCSMManager("", true)
 }
 
 func (suite *CSMControllerTestSuite) TestReverseProxyWithSecretReconcile() {
-	csm := suite.buildFakeRevProxyCSM(csmName, suite.namespace, true, getReverseProxyModuleWithSecret(), string(v1.PowerMax))
+	csm := suite.buildFakeRevProxyCSM(csmName, suite.namespace, true, getReverseProxyModuleWithSecret(), string(csmv1.PowerMax))
 	csm.Spec.Driver.Common.Envs = append(csm.Spec.Driver.Common.Envs, corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"})
 	err := suite.fakeClient.Create(ctx, &csm)
 	assert.Nil(suite.T(), err)
@@ -315,7 +319,7 @@ func (suite *CSMControllerTestSuite) TestReverseProxySidecarReconcile() {
 	deploAsSidecar := corev1.EnvVar{Name: "DeployAsSidecar", Value: "true"}
 	revProxy[0].Components[0].Envs = append(revProxy[0].Components[0].Envs, deploAsSidecar)
 	modules.IsReverseProxySidecar = func() bool { return true }
-	suite.makeFakeRevProxyCSM(csmName, suite.namespace, true, revProxy, string(v1.PowerMax))
+	suite.makeFakeRevProxyCSM(csmName, suite.namespace, true, revProxy, string(csmv1.PowerMax))
 	suite.runFakeCSMManager("", false)
 	suite.deleteCSM(csmName)
 	suite.runFakeCSMManager("", true)
@@ -479,6 +483,30 @@ func (suite *CSMControllerTestSuite) TestPowermaxAnnotation() {
 		panic(err)
 	}
 	sec := shared.MakeSecret(csmName+"-creds", suite.namespace, shared.PmaxConfigVersion)
+	err = suite.fakeClient.Create(ctx, sec)
+	if err != nil {
+		panic(err)
+	}
+
+	reconciler := suite.createReconciler()
+	updateCSMError = true
+	_, err = reconciler.Reconcile(ctx, req)
+	assert.Error(suite.T(), err)
+	updateCSMError = false
+}
+
+func (suite *CSMControllerTestSuite) TestCosiAnnotation() {
+	csm := shared.MakeCSM(csmName, suite.namespace, cosiConfigVersion)
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.CSIDriverType = csmv1.Cosi
+
+	csm.ObjectMeta.Finalizers = []string{CSMFinalizerName}
+
+	err := suite.fakeClient.Create(ctx, &csm)
+	if err != nil {
+		panic(err)
+	}
+	sec := shared.MakeSecret(csmName+"-config", suite.namespace, cosiConfigVersion)
 	err = suite.fakeClient.Create(ctx, sec)
 	if err != nil {
 		panic(err)
@@ -873,6 +901,10 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 	replicationCSM.Spec.Modules = getReplicaModule()
 	replicationCSM.Spec.Driver.CSIDriverType = csmv1.PowerFlex
 
+	cosiCSM := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	cosiCSM.Spec.Driver.CSIDriverType = csmv1.Cosi
+	cosiCSM.Spec.Driver.ConfigVersion = cosiConfigVersion
+
 	syncCSMTests := []struct {
 		name        string
 		csm         csmv1.ContainerStorageModule
@@ -889,6 +921,7 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 		{"replication module happy path", replicationCSM, operatorConfig, ""},
 		{"replication module bad op conf", replicationCSM, badOperatorConfig, "failed to deploy replication"},
 		{"minimal Pflex conf", minimalPowerFlexCSM, operatorConfig, ""},
+		{"cosi happy path", cosiCSM, operatorConfig, ""},
 	}
 
 	for _, tt := range syncCSMTests {
@@ -907,6 +940,7 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 func (suite *CSMControllerTestSuite) TestRemoveModule() {
 	r := suite.createReconciler()
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)
+	csm.Spec.Version = shared.CSMVersion
 	csm.Spec.Modules = getAuthProxyServer()
 	csmBadVersionAuthProxy := shared.MakeCSM(csmName, suite.namespace, configVersion)
 	csmBadVersionAuthProxy.Spec.Modules = getAuthProxyServer()
@@ -1021,7 +1055,7 @@ func (suite *CSMControllerTestSuite) TestOldStandAloneModuleCleanup() {
 			if errorInjector != nil {
 				*errorInjector = true
 			}
-			driverConfig, _ := getDriverConfig(ctx, *csm, operatorConfig, r.Client)
+			driverConfig, _ := getDriverConfig(ctx, *csm, operatorConfig, r.Client, operatorutils.VersionSpec{})
 			err := r.oldStandAloneModuleCleanup(ctx, csm, operatorConfig, driverConfig)
 
 			if expectedErr == "" {
@@ -1129,6 +1163,14 @@ func (suite *CSMControllerTestSuite) TestCsmPreCheckModuleError() {
 
 	// error in Authorization
 	csm.Spec.Modules = getAuthModule()
+	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
+	assert.NotNil(suite.T(), err)
+
+	// error in Authorization Proxy Server
+	csm.Spec.Modules = getAuthProxyServer()
+	csm.Spec.Driver.CSIDriverType = ""
+	csm.Spec.Modules[0].ConfigVersion = ""
+	csm.Spec.Version = shared.CSMVersion
 	err = reconciler.PreChecks(ctx, &csm, badOperatorConfig)
 	assert.NotNil(suite.T(), err)
 
@@ -1943,7 +1985,7 @@ func getAuthProxyServer() []csmv1.Module {
 		{
 			Name:              csmv1.AuthorizationServer,
 			Enabled:           true,
-			ConfigVersion:     "v2.1.0",
+			ConfigVersion:     "v2.2.0",
 			ForceRemoveModule: true,
 			Components: []csmv1.ContainerTemplate{
 				{
@@ -2107,13 +2149,13 @@ func (suite *CSMControllerTestSuite) TestReconcileObservabilityError() {
 	badOperatorConfig := operatorutils.OperatorConfig{
 		ConfigDirectory: "../in-valid-path",
 	}
-	err := reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, nil, suite.fakeClient, suite.k8sClient)
+	err := reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, nil, suite.fakeClient, suite.k8sClient, operatorutils.VersionSpec{})
 	assert.NotNil(suite.T(), err)
 
 	for i := range csm.Spec.Modules[0].Components {
 		fmt.Printf("Component name: %s\n", csm.Spec.Modules[0].Components[i].Name)
 		csm.Spec.Modules[0].Components[i].Enabled = &[]bool{false}[0]
-		err = reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, nil, suite.fakeClient, suite.k8sClient)
+		err = reconciler.reconcileObservability(ctx, false, badOperatorConfig, csm, nil, suite.fakeClient, suite.k8sClient, operatorutils.VersionSpec{})
 		if i < len(csm.Spec.Modules[0].Components)-1 {
 			assert.NotNil(suite.T(), err)
 		} else {
@@ -2148,7 +2190,7 @@ func (suite *CSMControllerTestSuite) TestReconcileObservabilityErrorBadComponent
 	goodModules := csm.Spec.Modules[0].Components
 	csm.Spec.Modules[0].Components = append(badComponent, csm.Spec.Modules[0].Components...)
 
-	err := reconciler.reconcileObservability(ctx, false, operatorConfig, csm, nil, suite.fakeClient, suite.k8sClient)
+	err := reconciler.reconcileObservability(ctx, false, operatorConfig, csm, nil, suite.fakeClient, suite.k8sClient, operatorutils.VersionSpec{})
 	assert.NotNil(suite.T(), err)
 
 	csm.Spec.Modules[0].Components = goodModules
@@ -2174,7 +2216,7 @@ func (suite *CSMControllerTestSuite) TestReconcileObservabilityErrorBadCert() {
 
 	fmt.Printf("[TestReconcileObservabilityErrorBadCert] module components: %+v\n", csm.Spec.Modules[0].Components)
 
-	err := reconciler.reconcileObservability(ctx, false, operatorConfig, csm, nil, suite.fakeClient, suite.k8sClient)
+	err := reconciler.reconcileObservability(ctx, false, operatorConfig, csm, nil, suite.fakeClient, suite.k8sClient, operatorutils.VersionSpec{})
 	assert.NotNil(suite.T(), err)
 
 	csm.Spec.Modules[0].Components = goodModules
@@ -2188,30 +2230,30 @@ func (suite *CSMControllerTestSuite) TestReconcileAuthorization() {
 		ConfigDirectory: "../in-valid-path",
 	}
 
-	err := reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	err := reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient, operatorutils.VersionSpec{})
 	assert.NotNil(suite.T(), err)
 
 	err = reconciler.reconcileAuthorizationCRDS(ctx, badOperatorConfig, csm, suite.fakeClient)
 	assert.NotNil(suite.T(), err)
 
 	csm.Spec.Modules[0].Components[0].Enabled = &[]bool{false}[0]
-	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient, operatorutils.VersionSpec{})
 	assert.NotNil(suite.T(), err)
 
 	csm.Spec.Modules[0].Components[1].Enabled = &[]bool{false}[0]
-	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient, operatorutils.VersionSpec{})
 	assert.Error(suite.T(), err)
 
 	csm.Spec.Modules[0].Components[2].Enabled = &[]bool{false}[0]
-	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient, operatorutils.VersionSpec{})
 	assert.Nil(suite.T(), err)
 
 	csm.Spec.Modules[0].Components[3].Enabled = &[]bool{false}[0]
-	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient, operatorutils.VersionSpec{})
 	assert.Nil(suite.T(), err)
 
-	csm.Spec.Modules[0] = v1.Module{}
-	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient)
+	csm.Spec.Modules[0] = csmv1.Module{}
+	err = reconciler.reconcileAuthorization(ctx, false, badOperatorConfig, csm, suite.fakeClient, operatorutils.VersionSpec{})
 	assert.NotNil(suite.T(), err)
 
 	// Restore the status
@@ -2235,7 +2277,7 @@ func (suite *CSMControllerTestSuite) TestReconcileAuthorizationBadCert() {
 
 	fmt.Printf("[TestReconcileAuthorizationBadCert] module components: %+v\n", csm.Spec.Modules[0].Components)
 
-	err := reconciler.reconcileAuthorization(ctx, false, operatorConfig, csm, suite.fakeClient)
+	err := reconciler.reconcileAuthorization(ctx, false, operatorConfig, csm, suite.fakeClient, operatorutils.VersionSpec{})
 	assert.NotNil(suite.T(), err)
 
 	csm.Spec.Modules[0].Components = goodModules
@@ -2318,7 +2360,7 @@ func (suite *CSMControllerTestSuite) makeFakeResiliencyCSM(name, ns string, with
 
 	csm := shared.MakeCSM(name, ns, configVersion)
 	csm.Spec.Driver.Common.Image = "image"
-	csm.Spec.Driver.CSIDriverType = v1.DriverType(driverType)
+	csm.Spec.Driver.CSIDriverType = csmv1.DriverType(driverType)
 
 	truebool := true
 	sideCarObjEnabledTrue := csmv1.ContainerTemplate{
@@ -2518,7 +2560,7 @@ func (suite *CSMControllerTestSuite) ShouldFail(method string, obj runtime.Objec
 	return nil
 }
 
-func (suite *CSMControllerTestSuite) buildFakeRevProxyCSM(name string, ns string, withFinalizer bool, modules []v1.Module, driverType string) v1.ContainerStorageModule {
+func (suite *CSMControllerTestSuite) buildFakeRevProxyCSM(name string, ns string, withFinalizer bool, modules []csmv1.Module, driverType string) csmv1.ContainerStorageModule {
 	// Create secrets and config map for Reconcile
 	sec := shared.MakeSecret("csirevproxy-tls-secret", ns, configVersion)
 	err := suite.fakeClient.Create(ctx, sec)
@@ -2563,7 +2605,7 @@ func (suite *CSMControllerTestSuite) buildFakeRevProxyCSM(name string, ns string
 	return csm
 }
 
-func (suite *CSMControllerTestSuite) makeFakeRevProxyCSM(name string, ns string, withFinalizer bool, modules []v1.Module, driverType string) {
+func (suite *CSMControllerTestSuite) makeFakeRevProxyCSM(name string, ns string, withFinalizer bool, modules []csmv1.Module, driverType string) {
 	csm := suite.buildFakeRevProxyCSM(name, ns, withFinalizer, modules, driverType)
 
 	err := suite.fakeClient.Create(ctx, &csm)
@@ -2623,6 +2665,7 @@ func (suite *CSMControllerTestSuite) TestReconcileReplicationCRDSReturnError() {
 // customClient is our custom client that we will pass to removeDriverFromCluster
 // this lets us control what Delete/Get/ etc returns from within removeDriverFromCluster
 type customClient struct {
+	failOn string
 	client.Client
 }
 
@@ -2632,6 +2675,11 @@ func (c customClient) Delete(_ context.Context, obj client.Object, _ ...client.D
 	if strings.Contains(obj.GetName(), "failed-deletion") {
 		return fmt.Errorf("failed to delete: %s", obj.GetName())
 	}
+
+	if c.failOn == "delete" {
+		return fmt.Errorf("failed to delete: %s", obj.GetName())
+	}
+
 	return nil
 }
 
@@ -2651,14 +2699,49 @@ func Test_removeDriverFromCluster(t *testing.T) {
 	}
 
 	ctx := context.TODO()
-	type args struct {
-		driverConfig *DriverConfig
-	}
+	appsv1 := "apps/v1"
+	deployment := "Deployment"
+	daemonset := "DaemonSet"
+	csiDeployment := "csi-controller"
+	csiDaemonset := "csi-node"
+	cosiDeployment := "cosi"
+	namespace := "test-ns"
 	tests := []struct {
 		name         string
 		driverConfig *DriverConfig
 		expectedErr  string
 	}{
+		{
+			name: "Successfully delete CSI driver",
+			driverConfig: &DriverConfig{
+				Driver:    &storagev1.CSIDriver{},
+				ConfigMap: &corev1.ConfigMap{},
+				Node: &operatorutils.NodeYAML{
+					DaemonSetApplyConfig: confv1.DaemonSetApplyConfiguration{
+						TypeMetaApplyConfiguration: confmetav1.TypeMetaApplyConfiguration{
+							APIVersion: &appsv1,
+							Kind:       &daemonset,
+						},
+						ObjectMetaApplyConfiguration: &confmetav1.ObjectMetaApplyConfiguration{
+							Name:      &csiDaemonset,
+							Namespace: &namespace,
+						},
+					},
+				},
+				Controller: &operatorutils.ControllerYAML{
+					Deployment: confv1.DeploymentApplyConfiguration{
+						TypeMetaApplyConfiguration: confmetav1.TypeMetaApplyConfiguration{
+							APIVersion: &appsv1,
+							Kind:       &deployment,
+						},
+						ObjectMetaApplyConfiguration: &confmetav1.ObjectMetaApplyConfiguration{
+							Name:      &csiDeployment,
+							Namespace: &namespace,
+						},
+					},
+				},
+			},
+		},
 		{
 			name: "Fail to delete controller service account",
 
@@ -2784,6 +2867,34 @@ func Test_removeDriverFromCluster(t *testing.T) {
 			},
 			expectedErr: "failed to delete",
 		},
+		{
+			name: "Successfully delete COSI driver from cluster",
+			driverConfig: &DriverConfig{
+				Controller: &operatorutils.ControllerYAML{
+					Deployment: confv1.DeploymentApplyConfiguration{
+						TypeMetaApplyConfiguration: confmetav1.TypeMetaApplyConfiguration{
+							APIVersion: &appsv1,
+							Kind:       &deployment,
+						},
+						ObjectMetaApplyConfiguration: &confmetav1.ObjectMetaApplyConfiguration{
+							Name:      &cosiDeployment,
+							Namespace: &namespace,
+						},
+					},
+					Rbac: operatorutils.RbacYAML{
+						ClusterRoleBinding: rbacv1.ClusterRoleBinding{
+							TypeMeta: metav1.TypeMeta{
+								Kind:       "ClusterRoleBinding",
+								APIVersion: "rbac.authorization.k8s.io/v1",
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "test-cosi-cluster-role-binding",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -2797,4 +2908,319 @@ func Test_removeDriverFromCluster(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestApplyCsmDrCrd(t *testing.T) {
+	testCases := []struct {
+		name       string
+		init       func(*testing.T) (csmv1.ContainerStorageModule, client.Client, operatorutils.OperatorConfig)
+		validate   func(client.Client) error
+		wantErr    bool
+		isDeleting bool
+	}{
+		{
+			name: "success - applied for PowerStore CSM v2.16.0",
+			init: func(t *testing.T) (csmv1.ContainerStorageModule, client.Client, operatorutils.OperatorConfig) {
+				csm := shared.MakeCSM(csmName, "powerstore", constants.DisasterRecoveryMinVersion)
+				csm.Spec.Driver.CSIDriverType = csmv1.PowerStore
+
+				err := apiextv1.AddToScheme(scheme.Scheme)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				client := fake.NewClientBuilder().WithObjects().Build()
+
+				return csm, client, operatorConfig
+			},
+			isDeleting: false,
+			validate: func(c client.Client) error {
+				key := client.ObjectKey{
+					Name: "volumejournals.dr.storage.dell.com",
+				}
+				crd := &apiextv1.CustomResourceDefinition{}
+				err := c.Get(t.Context(), key, crd)
+				if err != nil {
+					return nil
+				}
+
+				return nil
+			},
+			wantErr: false,
+		},
+		{
+			name: "success - not applied due to incompatible version",
+			init: func(t *testing.T) (csmv1.ContainerStorageModule, client.Client, operatorutils.OperatorConfig) {
+				csm := shared.MakeCSM(csmName, "powerstore", "v2.15.0")
+				csm.Spec.Driver.CSIDriverType = csmv1.PowerStore
+
+				err := apiextv1.AddToScheme(scheme.Scheme)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				client := fake.NewClientBuilder().WithObjects().Build()
+
+				return csm, client, operatorConfig
+			},
+			isDeleting: false,
+			validate: func(_ client.Client) error {
+				return nil
+			},
+			wantErr: false,
+		},
+		{
+			name: "success - downgrade cleanup",
+			init: func(t *testing.T) (csmv1.ContainerStorageModule, client.Client, operatorutils.OperatorConfig) {
+				csm := shared.MakeCSM(csmName, "powerstore", "v2.15.0")
+				csm.Spec.Driver.CSIDriverType = csmv1.PowerStore
+
+				err := apiextv1.AddToScheme(scheme.Scheme)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				// Add the CRD to mimic that it is currently installed.
+				crd := &apiextv1.CustomResourceDefinition{
+					TypeMeta: metav1.TypeMeta{
+						Kind: "CustomResourceDefinition",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "volumejournals.dr.storage.dell.com",
+					},
+				}
+
+				client := fake.NewClientBuilder().WithObjects(crd).Build()
+
+				return csm, client, operatorConfig
+			},
+			isDeleting: false,
+			validate: func(c client.Client) error {
+				key := client.ObjectKey{
+					Name: "volumejournals.dr.storage.dell.com",
+				}
+				crd := &apiextv1.CustomResourceDefinition{}
+				err := c.Get(t.Context(), key, crd)
+				if err != nil {
+					if k8sErrors.IsNotFound(err) {
+						return nil
+					}
+
+					return err
+				}
+
+				return nil
+			},
+			wantErr: false,
+		},
+		{
+			name: "failed - invalid version check",
+			init: func(t *testing.T) (csmv1.ContainerStorageModule, client.Client, operatorutils.OperatorConfig) {
+				csm := shared.MakeCSM(csmName, "powerstore", "invalid")
+				csm.Spec.Driver.CSIDriverType = csmv1.PowerStore
+
+				err := apiextv1.AddToScheme(scheme.Scheme)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				client := fake.NewClientBuilder().WithObjects().Build()
+
+				return csm, client, operatorConfig
+			},
+			isDeleting: false,
+			validate: func(_ client.Client) error {
+				return nil
+			},
+			wantErr: true,
+		},
+		{
+			name: "failed - unable to apply",
+			init: func(t *testing.T) (csmv1.ContainerStorageModule, client.Client, operatorutils.OperatorConfig) {
+				csm := shared.MakeCSM(csmName, "powerstore", constants.DisasterRecoveryMinVersion)
+				csm.Spec.Driver.CSIDriverType = csmv1.PowerStore
+
+				err := apiextv1.AddToScheme(scheme.Scheme)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				cluster := operatorutils.ClusterConfig{
+					ClusterCTRLClient: customClient{
+						Client: fake.NewClientBuilder().Build(),
+					},
+				}
+
+				return csm, cluster.ClusterCTRLClient, operatorConfig
+			},
+			isDeleting: false,
+			validate: func(_ client.Client) error {
+				return nil
+			},
+			wantErr: true,
+		},
+		{
+			name: "failed - unable to cleanup CSM DR CRD for incompatible version",
+			init: func(t *testing.T) (csmv1.ContainerStorageModule, client.Client, operatorutils.OperatorConfig) {
+				csm := shared.MakeCSM(csmName, "powerstore", "v2.15.0")
+				csm.Spec.Driver.CSIDriverType = csmv1.PowerStore
+
+				err := apiextv1.AddToScheme(scheme.Scheme)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				cluster := operatorutils.ClusterConfig{
+					ClusterCTRLClient: customClient{
+						failOn: "delete",
+						Client: fake.NewClientBuilder().Build(),
+					},
+				}
+
+				return csm, cluster.ClusterCTRLClient, operatorConfig
+			},
+			isDeleting: false,
+			validate: func(_ client.Client) error {
+				return nil
+			},
+			wantErr: true,
+		},
+		{
+			name: "failed - invalid csm version check",
+			init: func(t *testing.T) (csmv1.ContainerStorageModule, client.Client, operatorutils.OperatorConfig) {
+				csm := shared.MakeCSM(csmName, "powerstore", "")
+				csm.Spec.Version = shared.InvalidCSMVersion
+				csm.Spec.Driver.CSIDriverType = csmv1.PowerStore
+
+				err := apiextv1.AddToScheme(scheme.Scheme)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				client := fake.NewClientBuilder().WithObjects().Build()
+
+				return csm, client, operatorConfig
+			},
+			isDeleting: false,
+			validate: func(_ client.Client) error {
+				return nil
+			},
+			wantErr: true,
+		},
+	}
+
+	ctx := context.TODO()
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			csm, client, config := tt.init(t)
+
+			err := applyCSMDRCRD(ctx, csm, tt.isDeleting, config, client)
+			if err != nil && !tt.wantErr {
+				t.Errorf("Test %s did not expect an error but got: %v", tt.name, err)
+			}
+
+			err = tt.validate(client)
+			if err != nil {
+				t.Errorf("Test %s failed to validate: %v", tt.name, err)
+			}
+		})
+	}
+}
+
+func (suite *CSMControllerTestSuite) TestSyncCSMConfigMapMissingNoError() {
+	ctx := context.Background()
+
+	scheme := runtime.NewScheme()
+	require.NoError(suite.T(), corev1.AddToScheme(scheme))
+	require.NoError(suite.T(), rbacv1.AddToScheme(scheme))
+	require.NoError(suite.T(), appsv1.AddToScheme(scheme))
+	require.NoError(suite.T(), storagev1.AddToScheme(scheme))
+	require.NoError(suite.T(), csmv1.AddToScheme(scheme))
+
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		Build()
+
+	_, log := logger.GetNewContextWithLogger("0")
+	reconciler := &ContainerStorageModuleReconciler{
+		Client:               fakeClient,
+		K8sClient:            suite.k8sClient,
+		Scheme:               scheme,
+		Log:                  log,
+		Config:               operatorConfig,
+		EventRecorder:        record.NewFakeRecorder(100),
+		ContentWatchChannels: map[string]chan struct{}{},
+		ContentWatchLock:     sync.Mutex{},
+	}
+
+	csm := shared.MakeCSM(csmName, "test-namespace", configVersion)
+	csm.Spec.Version = "v1.15.0"
+	csm.Spec.Driver.CSIDriverType = "isilon"
+	csm.Spec.Driver.Common.Image = "quay.io/dell/container-storage-modules/isilon:v2.14.0"
+
+	require.NoError(suite.T(), fakeClient.Create(ctx, &csm))
+
+	err := reconciler.SyncCSM(ctx, csm, operatorConfig, reconciler.Client)
+
+	assert.NoError(suite.T(), err)
+}
+
+func (suite *CSMControllerTestSuite) TestSyncCSMConfigMapPresentNoMatchError() {
+	ctx := context.Background()
+
+	scheme := runtime.NewScheme()
+	require.NoError(suite.T(), corev1.AddToScheme(scheme))
+	require.NoError(suite.T(), rbacv1.AddToScheme(scheme))
+	require.NoError(suite.T(), appsv1.AddToScheme(scheme))
+	require.NoError(suite.T(), storagev1.AddToScheme(scheme))
+	require.NoError(suite.T(), csmv1.AddToScheme(scheme))
+
+	versionsYAML := "- version: v1.15.0\n" +
+		"  images:\n" +
+		"    csi-driver: \"registry.example.com/driver:v1.15.0\"\n" +
+		"    sidecar:    \"registry.example.com/sidecar:v1.15.0\"\n" +
+		"- version: v1.15.1\n" +
+		"  images:\n" +
+		"    csi-driver: \"registry.example.com/driver:v1.15.1\"\n" +
+		"    sidecar:    \"registry.example.com/sidecar:v1.15.1\"\n"
+
+	assert.NotContains(suite.T(), versionsYAML, "\t", "YAML must not contain tabs")
+
+	cm := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      operatorutils.CSMImages,
+			Namespace: "test-namespace",
+		},
+		Data: map[string]string{
+			"versions.yaml": versionsYAML,
+		},
+	}
+
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(cm).
+		Build()
+
+	_, log := logger.GetNewContextWithLogger("0")
+	reconciler := &ContainerStorageModuleReconciler{
+		Client:               fakeClient,
+		K8sClient:            suite.k8sClient,
+		Scheme:               scheme,
+		Log:                  log,
+		Config:               operatorConfig,
+		EventRecorder:        record.NewFakeRecorder(100),
+		ContentWatchChannels: map[string]chan struct{}{},
+		ContentWatchLock:     sync.Mutex{},
+	}
+
+	csm := shared.MakeCSM(csmName, "test-namespace", configVersion)
+	csm.Spec.Version = "v1.16.0"
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerScale
+	csm.Spec.Driver.Common.Image = "quay.io/dell/container-storage-modules/isilon:v2.15.0"
+	require.NoError(suite.T(), fakeClient.Create(ctx, &csm))
+
+	err := reconciler.SyncCSM(ctx, csm, operatorConfig, reconciler.Client)
+
+	assert.Error(suite.T(), err, "SyncCSM must return error if CR version not found in versions.yaml")
+	assert.Contains(suite.T(), err.Error(), "version v1.16.0 not found")
 }

@@ -36,7 +36,7 @@ spec:
       # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
-        image: quay.io/dell/storage/powerflex/sdc:4.5.4
+        image: quay.io/dell/storage/powerflex/sdc:5.0
         envs:
           - name: HOST_PID
             value: "1"
@@ -115,7 +115,7 @@ spec:
       #   operator: "Exists"
       #   effect: "NoSchedule"
     initContainers:
-      - image: quay.io/dell/storage/powerflex/sdc:4.5.4
+      - image: quay.io/dell/storage/powerflex/sdc:5.0
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
@@ -164,7 +164,7 @@ spec:
           # enabled: Enable/Disable PowerFlex metrics
           enabled: true
           # image: Defines PowerFlex metrics image. This shouldn't be changed
-          image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.13.1
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.12.0
           envs:
             # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
             # Allowed values: int
