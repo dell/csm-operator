@@ -5,5 +5,6 @@ resources:
   - storage_v1_csm_powerstore.yaml
   - storage_v1_csm_unity.yaml
   - storage_v1_csm_powermax.yaml
+  - storage_v1_csm_cosi.yaml
   - storage_v1_csm_authorization_v2.yaml
 # +kubebuilder:scaffold:manifestskustomizesamples

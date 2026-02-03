@@ -1,7 +1,7 @@
 # Copyright © 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Dell Technologies, Dell and other trademarks are trademarks of Dell Inc.
-# or its subsidiaries. Other trademarks may be trademarks of their respective 
+# or its subsidiaries. Other trademarks may be trademarks of their respective
 # owners.
 
 include overrides.mk
@@ -15,6 +15,12 @@ CATALOG_IMAGE_TAG_BASE_COMMUNITY ?= dell-csm-community-operator-catalog
 
 # Bundle Version is the semantic version(required by operator-sdk)
 BUNDLE_VERSION ?= 1.11.0
+
+# Registry where images will be pushed (use by operator-sdk to set the newName)
+REGISTRY ?= quay.io/dell/container-storage-modules
+
+# Image tag base (use by operator-sdk to set the newName)
+IMAGE_TAG_BASE ?= dell-csm-operator
 
 # Operator Version is the semantic version(required by operator-sdk)
 VERSION ?= v1.11.0
