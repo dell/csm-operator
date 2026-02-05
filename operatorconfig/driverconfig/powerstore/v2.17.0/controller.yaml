@@ -85,6 +85,19 @@ rules:
   - apiGroups: ["dr.storage.dell.com"]
     resources: ["volumejournals"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  # for vgs
+  - apiGroups: ["groupsnapshot.storage.k8s.io"]
+    resources: ["volumegroupsnapshotclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["groupsnapshot.storage.k8s.io"]
+    resources: ["volumegroupsnapshotcontents"]
+    verbs: ["get", "list", "watch", "patch"]
+  - apiGroups: ["groupsnapshot.storage.k8s.io"]
+    resources: ["volumegroupsnapshotcontents/status"]
+    verbs: ["update", "patch"]
+  - apiGroups: ["groupsnapshot.storage.k8s.io"]
+    resources: ["volumegroupsnapshots", "volumegroupsnapshots/status"]
+    verbs: ["get", "list", "watch", "update", "create", "delete"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -259,7 +272,7 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: quay.io/dell/container-storage-modules/csi-powerstore:v2.16.0
+          image: quay.io/dell/container-storage-modules/csi-powerstore:v2.17.0
           imagePullPolicy: IfNotPresent
           command:
             - sh
