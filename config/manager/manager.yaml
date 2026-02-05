@@ -101,7 +101,7 @@ spec:
               name: RELATED_IMAGE_redis-commander
             - value: docker.io/openpolicyagent/opa:0.70.0
               name: RELATED_IMAGE_opa
-            - value: docker.io/openpolicyagent/kube-mgmt:9.3.0
+            - value: docker.io/openpolicyagent/kube-mgmt:9.2.1
               name: RELATED_IMAGE_kube-mgmt
             - value: gcr.io/k8s-staging-sig-storage/objectstorage-sidecar:release-0.2
               name: RELATED_IMAGE_objectstorage-provisioner-sidecar

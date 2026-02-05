@@ -1,4 +1,4 @@
-//  Copyright © 2024 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2024 - 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -830,6 +830,43 @@ func TestUpdateSideCarApply(t *testing.T) {
 	}).WithArgs("--volume-name-prefix=csivol1")
 
 	assert.Equal(t, expectedContainer3, container)
+
+	// Use spec.version with a sidecar not in the CR
+	container2 := acorev1.Container().
+		WithName("sidecarX").
+		WithImage("old-image").
+		WithImagePullPolicy("Always")
+
+	// Matrix contains an entry for "sidecarX"
+	matched := VersionSpec{
+		Version: "vMatrix",
+		Images: map[string]string{
+			"sidecarX": "matrix-sidecarX-image",
+		},
+	}
+
+	UpdateSideCarApply(ctx, sideCars, container2, csmv1.ContainerStorageModule{}, matched)
+
+	expectedContainer4 := acorev1.Container().
+		WithName("sidecarX").
+		WithImage("matrix-sidecarX-image").
+		WithImagePullPolicy("Always") // pull policy unchanged since no template matched
+
+	assert.Equal(t, expectedContainer4, container2, "should apply matrix.Image even when no CR sidecar template matches")
+
+	// Use spec.customRegistry with a sidecar not in the CR
+	UpdateSideCarApply(ctx, sideCars, container2, csmv1.ContainerStorageModule{
+		Spec: csmv1.ContainerStorageModuleSpec{
+			CustomRegistry: "test-custom-registry",
+		},
+	}, VersionSpec{})
+
+	expectedContainer5 := acorev1.Container().
+		WithName("sidecarX").
+		WithImage("test-custom-registry/matrix-sidecarX-image").
+		WithImagePullPolicy("Always") // pull policy unchanged since no template matched
+
+	assert.Equal(t, expectedContainer5, container2, "should apply customRegistry even when no CR sidecar template matches")
 
 	// repeat the test with the other function that uses the child function
 	// very minor code coverage gain, 0.1%

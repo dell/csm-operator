@@ -33,7 +33,7 @@ metadata:
                     "leaderElection": true,
                     "name": "proxy-server",
                     "opa": "docker.io/openpolicyagent/opa:0.70.0",
-                    "opaKubeMgmt": "docker.io/openpolicyagent/kube-mgmt:9.3.0",
+                    "opaKubeMgmt": "docker.io/openpolicyagent/kube-mgmt:9.2.1",
                     "openTelemetryCollectorAddress": "",
                     "privateKey": "",
                     "proxyServerIngress": [
@@ -4512,7 +4512,7 @@ spec:
                       - name: RELATED_IMAGE_opa
                         value: docker.io/openpolicyagent/opa:0.70.0
                       - name: RELATED_IMAGE_kube-mgmt
-                        value: docker.io/openpolicyagent/kube-mgmt:9.3.0
+                        value: docker.io/openpolicyagent/kube-mgmt:9.2.1
                       - name: RELATED_IMAGE_objectstorage-provisioner-sidecar
                         value: gcr.io/k8s-staging-sig-storage/objectstorage-sidecar:release-0.2
                     image: quay.io/dell/container-storage-modules/dell-csm-operator:v1.11.0
@@ -4647,7 +4647,7 @@ spec:
       name: redis-commander
     - image: docker.io/openpolicyagent/opa:0.70.0
       name: opa
-    - image: docker.io/openpolicyagent/kube-mgmt:9.3.0
+    - image: docker.io/openpolicyagent/kube-mgmt:9.2.1
       name: kube-mgmt
     - image: gcr.io/k8s-staging-sig-storage/objectstorage-sidecar:release-0.2
       name: objectstorage-provisioner-sidecar
