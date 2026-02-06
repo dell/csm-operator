@@ -31,7 +31,7 @@ data:
         role-service: quay.io/dell/container-storage-modules/csm-authorization-role:nightly
         storage-service: quay.io/dell/container-storage-modules/csm-authorization-storage:nightly
         opa: docker.io/openpolicyagent/opa:0.70.0
-        opa-kube-mgmt: docker.io/openpolicyagent/kube-mgmt:9.3.0
+        opa-kube-mgmt: docker.io/openpolicyagent/kube-mgmt:9.2.1
         redis: redis:8.4.0-alpine
         commander: docker.io/rediscommander/redis-commander:latest
         attacher: registry.k8s.io/sig-storage/csi-attacher:v4.10.0

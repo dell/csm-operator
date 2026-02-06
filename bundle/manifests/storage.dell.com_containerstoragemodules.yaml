@@ -4132,13 +4132,6 @@ spec:
                     '!(has(self.version) && self.version != "" && has(self.modules)
                     && self.modules.exists(m, has(m.components) && m.components.exists(c,
                     has(c.image) && c.image != "")))'
-                - message:
-                    spec.modules[*].configVersion is forbidden when spec.version
-                    is set
-                  rule:
-                    '!(has(self.version) && self.version != "" && has(self.modules)
-                    && self.modules.exists(m, has(m.configVersion) && m.configVersion
-                    != ""))'
                 - message: spec.customRegistry is forbidden when spec.version is empty
                   rule:
                     '!(has(self.customRegistry) && self.customRegistry != "" && !(has(self.version)

@@ -19,7 +19,7 @@ metadata:
   name: powerstore
   namespace: powerstore
 spec:
-  version: v1.16.0
+  version: v1.16.1
   driver:
     csiDriverType: "powerstore"
     csiDriverSpec:

@@ -1,10 +1,14 @@
 # Copyright © 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Dell Technologies, Dell and other trademarks are trademarks of Dell Inc.
-# or its subsidiaries. Other trademarks may be trademarks of their respective 
+# or its subsidiaries. Other trademarks may be trademarks of their respective
 # owners.
 
 include images.mk
+
+# Defaults for channels used in the bundle
+CHANNELS        ?= stable
+DEFAULT_CHANNEL ?= stable
 
 # CHANNELS define the bundle channels used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "candidate,fast,stable")

@@ -97,7 +97,7 @@ const (
 	CSMFinalizerName = "finalizer.dell.emc.com"
 
 	// CSMVersion -
-	CSMVersion = "v1.16.0"
+	CSMVersion = "v1.16.1"
 
 	// RefreshEnvVar - environment variable name for watcher timed refreshes
 	RefreshEnvVar = "REFRESH_INTERVAL_MINUTES"
@@ -821,7 +821,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 
 	if cr.GetDriverType() == csmv1.PowerMax {
 		if !modules.IsReverseProxySidecar() {
-			log.Infof("DeployAsSidar is false...csi-reverseproxy should be present as deployement\n")
+			log.Infof("DeployAsSidar is false...csi-reverseproxy should be present as deployment\n")
 			log.Infof("adding proxy service name...\n")
 			modules.AddReverseProxyServiceName(&controller.Deployment)
 
