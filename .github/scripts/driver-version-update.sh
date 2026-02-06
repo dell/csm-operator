@@ -1,21 +1,22 @@
 #!/bin/bash
 # yq is prerequisite for this script
-# Step1: Folder creation and deletion and modification ------> Usage for major/minor tag update: bash ./.github/scripts/driver-version-update.sh --driver_update_type "major" --release_type "tag" --powerscale_version "2.16.0" --powermax_version "2.16.0" --powerflex_version "2.16.0" --powerstore_version "2.16.0" --unity_version "2.16.0"
-# TODO: Only for patch update: Usage for patch update: bash ./.github/scripts/driver-version-update.sh --driver_update_type "patch" --release_type "tag" --powerscale_version "2.15.1" --powermax_version "2.15.1" --powerflex_version "2.15.1" --powerstore_version "2.15.1" --unity_version "2.15.1"
+# Simplified driver version update script with configuration-driven approach
+# Usage: bash ./.github/scripts/driver-version-update-simplified.sh --driver_update_type "major" --csm_version "v1.11.0" --powerscale_version "2.16.0" --powermax_version "2.16.0" --powerflex_version "2.16.0" --powerstore_version "2.16.0" --unity_version "2.16.0"
 
 cd "$GITHUB_WORKSPACE"
 
 # Initialize variables with default values
 driver_update_type=""
-release_type=""
+csm_version=""
 powerscale_version=""
 powermax_version=""
 powerflex_version=""
 powerstore_version=""
 unity_version=""
+cosi_version=""
 
 # Set options for the getopt command
-options=$(getopt -o "" -l "driver_update_type:,release_type:,powerscale_version:,powermax_version:,powerflex_version:,powerstore_version:,unity_version:,cosi_version:" -- "$@")
+options=$(getopt -o "" -l "driver_update_type:,csm_version:,powerscale_version:,powermax_version:,powerflex_version:,powerstore_version:,unity_version:,cosi_version:" -- "$@")
 if [ $? -ne 0 ]; then
     echo "Invalid arguments."
     exit 1
@@ -29,8 +30,8 @@ while [ $# -gt 0 ]; do
         driver_update_type="$2"
         shift
         ;;
-    --release_type)
-        release_type="$2"
+    --csm_version)
+        csm_version="$2"
         shift
         ;;
     --powerscale_version)
@@ -62,117 +63,120 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-# For Updating Config Version in bundle/manifests/dell-csm-operator.clusterserviceversion.yaml
-UpdateConfigVersion() {
-    driverImageName=$1
-    update_config_version=$2
-    input_file="bundle/manifests/dell-csm-operator.clusterserviceversion.yaml"
-    search_string1="quay.io/dell/container-storage-modules/$driverImageName:v"
-    nightly_search_string1="quay.io/dell/container-storage-modules/$driverImageName:nightly"
-    search_string2="imagePullPolicy"
-    line_number=0
-    while IFS= read -r line; do
-        line_number=$((line_number + 1))
-        # For COSI check the driver type first and then find the configVersion
-        if [[ "$line" == *"\"csiDriverType\": \"$driverImageName\""* ]]; then
-            line_number=$((line_number + 1))
-            sed -i "$line_number s/.*/              \"configVersion\": \""$update_config_version"\",/" "$input_file"
-            break
-        fi
-        if [[ "$line" == *"$search_string1"* ]]; then
-            IFS= read -r next_line
-            if [[ "$next_line" == *"$search_string2"* ]]; then
-                line_number=$((line_number + 3))
-                sed -i "$line_number s/.*/              \"configVersion\": \""$update_config_version"\",/" "$input_file"
-                break
-            fi
-        fi
-    done <"$input_file"
-    line_number=0
-    while IFS= read -r line; do
-        line_number=$((line_number + 1))
-        # For COSI check the driver type first and then find the configVersion
-        if [[ "$line" == *"\"csiDriverType\": \"$driverImageName\""* ]]; then
-            line_number=$((line_number + 1))
-            sed -i "$line_number s/.*/              \"configVersion\": \""$update_config_version"\",/" "$input_file"
-            break
-        fi
-        if [[ "$line" == *"$nightly_search_string1"* ]]; then
-            IFS= read -r next_line
-            if [[ "$next_line" == *"$search_string2"* ]]; then
-                line_number=$((line_number + 3))
-                sed -i "$line_number s/.*/              \"configVersion\": \""$update_config_version"\",/" "$input_file"
-                break
-            fi
-        fi
-    done <"$input_file"
+# Driver configuration mapping
+declare -A DRIVER_CONFIGS
+DRIVER_CONFIGS=(
+    ["powerflex"]="csi-vxflexos:storage_csm_powerflex:7:driver:mdm-container:cr_powerflex_observability_custom_cert_missing_key cr_powerflex_observability_custom_cert cr_powerflex_observability cr_powerflex_replica cr_powerflex_resiliency:cr_powerflex_observability_custom_cert_missing_key cr_powerflex_observability_custom_cert cr_powerflex_observability:storage_csm_powerflex_auth_n_minus_1 storage_csm_powerflex_downgrade"
+    ["powermax"]="csi-powermax:storage_csm_powermax:3:driver::cr_powermax_observability_use_secret cr_powermax_observability cr_powermax_replica cr_powermax_resiliency cr_powermax_reverseproxy_sidecar cr_powermax_reverseproxy_use_secret cr_powermax_reverseproxy::"
+    ["powerscale"]="csi-isilon:storage_csm_powerscale:2:driver::cr_powerscale_auth_missing_skip_cert_env cr_powerscale_auth_validate_cert cr_powerscale_auth cr_powerscale_observability cr_powerscale_replica cr_powerscale_resiliency cr_powerscale_auth_driver_secret:cr_powerscale_auth_missing_skip_cert_env cr_powerscale_auth_validate_cert cr_powerscale_auth cr_powerscale_observability cr_powerscale_replica cr_powerscale_resiliency:storage_csm_powerscale_observability_val1"
+    ["powerstore"]="csi-powerstore:storage_csm_powerstore:5:driver::cr_powerstore_resiliency cr_powerstore_auth cr_powerstore_observability cr_powerstore_replica:cr_powerstore_resiliency::"
+    ["unity"]="csi-unity:storage_csm_unity:6:driver::::"
+    ["cosi"]="cosi:storage_csm_cosi:8:objectstorage-provisioner::::"
+)
+
+# For Updating Version in bundle/manifests/dell-csm-operator.clusterserviceversion.yaml
+UpdateVersion() {
+    local driverImageName=$1
+    local update_version=$2
+    local input_file="bundle/manifests/dell-csm-operator.clusterserviceversion.yaml"
+    
+    # Update version for regular CSI drivers
+    yq eval -i "(.spec.install.spec.deployments[].spec.template.spec.containers[] | select(.name == \"driver\") | .env[] | select(.name == \"RELATED_IMAGE_$driverImageName\").value) = \"quay.io/dell/container-storage-modules/$driverImageName:$update_version\"" "$input_file"
+    
+    # For COSI drivers, update the version in the CSI driver spec
+    if [[ "$driverImageName" == "cosi" ]]; then
+        yq eval -i "(.spec.customresourcedefinitions.owned[] | select(.name == \"containerstoragemodules.storage.dell.com\").spec.versions[].schema.openAPIV3Schema.properties.spec.properties.driver.properties.csiDriverSpec.properties.csiDriverType.enum[] | select(. == \"cosi\") | $(.)) | load(\"$input_file\" | .spec.customresourcedefinitions.owned[] | select(.name == \"containerstoragemodules.storage.dell.com\").spec.versions[].schema.openAPIV3Schema.properties.spec.properties.driver.properties.csiDriverSpec.properties.version) = \"$update_version\"" "$input_file"
+    else
+        # For regular CSI drivers, update the version in the deployment annotations
+        yq eval -i "(.spec.install.spec.deployments[].spec.template.metadata.annotations.\"storage.dell.com/driver-$driverImageName-version\") = \"$update_version\"" "$input_file"
+    fi
 }
 
 # For Updating Related Images in bundle/manifests/dell-csm-operator.clusterserviceversion.yaml
 UpdateRelatedImages() {
-    driverImageName=$1
-    update_version=$2
-    previous_major_driver_version=$3
-    input_file="bundle/manifests/dell-csm-operator.clusterserviceversion.yaml"
-    nightly_search_string_1=" - image: quay.io/dell/container-storage-modules/$driverImageName:v$previous_major_driver_version"
-    nightly_search_string_2="                  value: quay.io/dell/container-storage-modules/$driverImageName:v$previous_major_driver_version"
-    nightly_search_string_3="                \"image\": \"quay.io/dell/container-storage-modules/$driverImageName:v$previous_major_driver_version"
-    new_line_1="   - image: quay.io/dell/container-storage-modules/$driverImageName:$update_version"
-    new_line_2="                       value: quay.io/dell/container-storage-modules/$driverImageName:$update_version"
-    new_line_3="               \"image\": \"quay.io/dell/container-storage-modules/$driverImageName:$update_version\","
-    line_number=0
-
-    while IFS= read -r line; do
-        line_number=$((line_number + 1))
-        if [[ "$line" == *"$nightly_search_string_1"* ]]; then
-            sed -i "$line_number c\ $new_line_1" "$input_file"
+    local driverImageName=$1
+    local update_version=$2
+    local previous_major_driver_version=$3
+    local input_file="bundle/manifests/dell-csm-operator.clusterserviceversion.yaml"
+    
+    # Extract driver name from image name (e.g., "csi-powerstore" -> "powerstore")
+    local driver_name="${driverImageName#csi-}"
+    
+    # Check if the driver sample files have spec.driver.image before updating related images
+    local sample_file="config/samples/storage_v1_csm_${driver_name}.yaml"
+    if [ -f "$sample_file" ]; then
+        local driver_image_check=$(yq eval '.spec.driver.image' "$sample_file" 2>/dev/null)
+        if [[ "$driver_image_check" == "null" || -z "$driver_image_check" ]]; then
+            echo "⚠️  No spec.driver.image found in $sample_file, skipping related image update for $driver_name"
+            return
         fi
-        if [[ "$line" == *"$nightly_search_string_2"* ]]; then
-            sed -i "$line_number c\ $new_line_2" "$input_file"
-        fi
-        if [[ "$line" == *"$nightly_search_string_3"* ]]; then
-            sed -i "$line_number c\ $new_line_3" "$input_file"
-        fi
-    done <"$input_file"
+    else
+        echo "⚠️  Sample file $sample_file not found, skipping related image update for $driver_name"
+        return
+    fi
+    
+    # Check if the related image entry exists for this driver before updating
+    local existing_image=$(yq eval "(.spec.relatedImages[] | select(.name == \"$driverImageName\").image)" "$input_file" 2>/dev/null)
+    if [[ "$existing_image" != "null" && -n "$existing_image" ]]; then
+        # Update related images in the CSV using yq only if entry exists
+        yq eval -i "(.spec.relatedImages[] | select(.name == \"$driverImageName\").image) = \"quay.io/dell/container-storage-modules/$driverImageName:$update_version\"" "$input_file"
+    else
+        echo "⚠️  No related image entry found for $driverImageName in bundle CSV, skipping update"
+    fi
 }
-
 
 # For Updating Related Images in config/manifests/bases/dell-csm-operator.clusterserviceversion.yaml
 UpdateBaseRelatedImages() {
-    driverImageName=$1
-    update_version=$2
-    previous_major_driver_version=$3
-    input_file="config/manifests/bases/dell-csm-operator.clusterserviceversion.yaml"
-    nightly_search_string_1="  - image: quay.io/dell/container-storage-modules/$driverImageName:v$previous_major_driver_version"
-    new_line_1="   - image: quay.io/dell/container-storage-modules/$driverImageName:$update_version"
-    line_number=0
-    while IFS= read -r line; do
-        line_number=$((line_number + 1))
-        if [[ "$line" == *"$nightly_search_string_1"* ]]; then
-            sed -i "$line_number c\ $new_line_1" "$input_file"
+    local driverImageName=$1
+    local update_version=$2
+    local previous_major_driver_version=$3
+    local input_file="config/manifests/bases/dell-csm-operator.clusterserviceversion.yaml"
+    
+    # Extract driver name from image name (e.g., "csi-powerstore" -> "powerstore")
+    local driver_name="${driverImageName#csi-}"
+    
+    # Check if the driver sample files have spec.driver.image before updating related images
+    local sample_file="config/samples/storage_v1_csm_${driver_name}.yaml"
+    if [ -f "$sample_file" ]; then
+        local driver_image_check=$(yq eval '.spec.driver.image' "$sample_file" 2>/dev/null)
+        if [[ "$driver_image_check" == "null" || -z "$driver_image_check" ]]; then
+            echo "⚠️  No spec.driver.image found in $sample_file, skipping related image update for $driver_name"
+            return
         fi
-    done <"$input_file"
+    else
+        echo "⚠️  Sample file $sample_file not found, skipping related image update for $driver_name"
+        return
+    fi
+    
+    # Check if the related image entry exists for this driver before updating
+    local existing_image=$(yq eval "(.spec.relatedImages[] | select(.name == \"$driverImageName\").image)" "$input_file" 2>/dev/null)
+    if [[ "$existing_image" != "null" && -n "$existing_image" ]]; then
+        # Update related images in the base CSV using yq only if entry exists
+        yq eval -i "(.spec.relatedImages[] | select(.name == \"$driverImageName\").image) = \"quay.io/dell/container-storage-modules/$driverImageName:$update_version\"" "$input_file"
+    else
+        echo "⚠️  No related image entry found for $driverImageName in base CSV, skipping update"
+    fi
 }
 
 # For creating the latest driver sample file in samples folder
 CreateLatestSampleFile() {
-    prefix=$1                     # e.g. "storage_csm_powerflex"
-    driver_sample_file_suffix=$2 # e.g. "2160"
+    local prefix=$1                     # e.g. "storage_csm_powerflex"
+    local driver_sample_file_suffix=$2 # e.g. "2160"
 
-    latest_file=""
-    latest_version=""
+    local latest_file=""
+    local latest_version=""
 
     if [[ "$prefix" == "storage_csm_cosi" ]]; then
-        folder=samples/cosi/v*/
+        local folder=samples/cosi/v*/
     else
-        folder=samples/v*/
+        local folder=samples/v*/
     fi
 
     # Search for files inside versioned folders: samples/v*/[prefix]_v*.yaml
     for file in $(find $folder -type f -name "${prefix}_v*.yaml"); do
-            version_part=$(basename "$file" | grep -oE '[0-9]+')
-            echo "Version_part: $version_part"
-            if [[ $version_part -gt ${latest_version:-0} ]]; then
+        local version_part=$(basename "$file" | grep -oE '[0-9]+')
+        echo "Version_part: $version_part"
+        if [[ $version_part -gt ${latest_version:-0} ]]; then
             latest_version=$version_part
             latest_file=$file
         fi
@@ -187,9 +191,9 @@ CreateLatestSampleFile() {
     ExtractVersionFromSuffix "$driver_sample_file_suffix"
 
     if [[ "$prefix" == "storage_csm_cosi" ]]; then
-        versioned_folder="samples/cosi/v$major.$minor.0"
+        local versioned_folder="samples/cosi/v$major.$minor.0"
     else
-        versioned_folder="samples/v$major.$minor.0"
+        local versioned_folder="samples/v$major.$minor.0"
     fi
     mkdir -p "$versioned_folder"
 
@@ -198,104 +202,193 @@ CreateLatestSampleFile() {
 
 # Get minUpgradePath
 GetMinUpgradePath() {
-    prefix=$1
+    local prefix=$1
+    local search_paths
     if [[ "$prefix" == "storage_csm_cosi" ]]; then
         search_paths="samples/cosi/v*/"
     else
         search_paths="samples/v*/"
     fi
-    files=$(find $search_paths -type f -name "${prefix}_v*.yaml")
+    local files=$(find $search_paths -type f -name "${prefix}_v*.yaml")
 
     if [ -z "$files" ]; then
         echo "0.0.0"
     else
-        oldest_file=$(echo "$files" | sort -V | head -1)
-
-        version_suffix=$(basename "$oldest_file" | grep -oE '_v[0-9]+' | grep -oE '[0-9]+')
+        local oldest_file=$(echo "$files" | sort -V | head -1)
+        local version_suffix=$(basename "$oldest_file" | grep -oE '_v[0-9]+' | grep -oE '[0-9]+')
 
         if [ -z "$version_suffix" ]; then
             echo "0.0.0"
         else
             ExtractVersionFromSuffix "$version_suffix"
-            min_upgrade_path="${major}.${minor}.${patch}"
+            local min_upgrade_path="${major}.${minor}.${patch}"
             echo "$min_upgrade_path"
         fi
     fi
-
 }
 
 # Get latest(n-1) driver version where n is the version we are adding the support for in this release
 GetLatestDriverVersion() {
-    prefix=$1
+    local prefix=$1
+    local search_paths
     if [[ "$prefix" == "storage_csm_cosi" ]]; then
         search_paths="samples/cosi/v*/"
     else
         search_paths="samples/v*/"
     fi
 
-    files=$(find $search_paths -type f -name "${prefix}_v*.yaml")
+    local files=$(find $search_paths -type f -name "${prefix}_v*.yaml")
     if [ -z "$files" ]; then
         echo "0.0.0"
         return
     fi
 
-    latest_file=$(echo "$files" | sort -V | tail -1)
-    version_suffix=$(basename "$latest_file" | sed -E "s/^${prefix}_v([0-9]+)\.yaml$/\1/")
+    local latest_file=$(echo "$files" | sort -V | tail -1)
+    local version_suffix=$(basename "$latest_file" | sed -E "s/^${prefix}_v([0-9]+)\.yaml$/\1/")
 
     # Extract digits from version suffix safely (e.g., 2160 -> 2.16.0)
     ExtractVersionFromSuffix "$version_suffix"
 
-    latest_driver_version="${major}.${minor}.${patch}"
+    local latest_driver_version="${major}.${minor}.${patch}"
     echo "$latest_driver_version"
 } 
 
 GetSecondLatestDriverVersion() {
-    prefix=$1
-    files=$(find samples/v*/ -type f -name "${prefix}_v*.yaml")
+    local prefix=$1
+    local files=$(find samples/v*/ -type f -name "${prefix}_v*.yaml")
     if [ -z "$files" ]; then
         echo "0.0.0"
         return
     fi
 
     # Extract semantic versions from filenames like v2140 → 2.14.0
-    versions=$(echo "$files" | sed -E "s|.*/${prefix}_v([0-9]{1})([0-9]{2})([0-9]{1})\.yaml|\1.\2.\3|" | sort -V)
+    local versions=$(echo "$files" | sed -E "s|.*/${prefix}_v([0-9]{1})([0-9]{2})([0-9]{1})\.yaml|\1.\2.\3|" | sort -V)
 
     # Get unique minor versions (e.g., 2.14, 2.15)
-    minor_versions=$(echo "$versions" | awk -F. '{print $1"."$2}' | sort -V | uniq)
+    local minor_versions=$(echo "$versions" | awk -F. '{print $1"."$2}' | sort -V | uniq)
 
     # Get the second latest minor version
-    prev_minor=$(echo "$minor_versions" | tail -2 | head -1)
+    local prev_minor=$(echo "$minor_versions" | tail -2 | head -1)
 
     # Filter versions matching that minor version and get highest patch
-    highest_patch=$(echo "$versions" | grep "^${prev_minor}\." | sort -V | tail -1)
+    local highest_patch=$(echo "$versions" | grep "^${prev_minor}\." | sort -V | tail -1)
 
     echo "$highest_patch"
 }
 
+# Get n-1 and n-2 versions from operatorconfig/driverconfig directory
+GetDriverVersionsFromConfig() {
+    local driver_name=$1
+    local current_version=$2
+    
+    local config_dir="operatorconfig/driverconfig/$driver_name"
+    if [ ! -d "$config_dir" ]; then
+        echo "0.0.0 0.0.0"
+        return
+    fi
+    
+    # Get all version directories and sort them
+    local all_versions=$(ls -d "$config_dir"/v* 2>/dev/null | sed 's|.*/||' | sort -V)
+    
+    if [ -z "$all_versions" ]; then
+        echo "0.0.0 0.0.0"
+        return
+    fi
+    
+    # Parse current version to get major.minor
+    local current_major=${current_version%%.*}
+    local current_minor_tmp=${current_version#*.}
+    local current_minor=${current_minor_tmp%%.*}
+    
+    # Group versions by minor version and get latest patch for each
+    declare -A latest_patches
+    while IFS= read -r version; do
+        local version_clean=${version#v}
+        local major=${version_clean%%.*}
+        local minor_tmp=${version_clean#*.}
+        local minor=${minor_tmp%%.*}
+        local patch=${minor_tmp##*.}
+        
+        local minor_key="${major}.${minor}"
+        
+        # Keep only the latest patch for each minor version
+        if [[ -z "${latest_patches[$minor_key]}" ]] || [[ "$version_clean" > "${latest_patches[$minor_key]}" ]]; then
+            latest_patches[$minor_key]="$version_clean"
+        fi
+    done <<< "$all_versions"
+    
+    # Get sorted list of minor versions
+    local minor_versions=$(printf '%s\n' "${!latest_patches[@]}" | sort -V)
+    
+    # Find current minor version in the list
+    local current_minor_key="${current_major}.${current_minor}"
+    local minor_array=($minor_versions)
+    local current_index=-1
+    
+    for i in "${!minor_array[@]}"; do
+        if [[ "${minor_array[$i]}" == "$current_minor_key" ]]; then
+            current_index=$i
+            break
+        fi
+    done
+    
+    local n_minus_1="0.0.0"
+    local n_minus_2="0.0.0"
+    
+    # Get n-1 version (latest patch from previous minor version)
+    if [[ $current_index -gt 0 ]]; then
+        local prev_minor_key="${minor_array[$((current_index - 1))]}"
+        n_minus_1="${latest_patches[$prev_minor_key]}"
+    fi
+    
+    # Get n-2 version (latest patch from two minor versions back)
+    if [[ $current_index -gt 1 ]]; then
+        local prev_prev_minor_key="${minor_array[$((current_index - 2))]}"
+        n_minus_2="${latest_patches[$prev_prev_minor_key]}"
+    fi
+    
+    echo "$n_minus_1 $n_minus_2"
+}
 
+# Helper function to get just n-1 version
+GetNMinusOneVersion() {
+    local driver_name=$1
+    local current_version=$2
+    local versions=$(GetDriverVersionsFromConfig "$driver_name" "$current_version")
+    echo "$versions" | awk '{print $1}'
+}
+
+# Helper function to get just n-2 version  
+GetNMinusTwoVersion() {
+    local driver_name=$1
+    local current_version=$2
+    local versions=$(GetDriverVersionsFromConfig "$driver_name" "$current_version")
+    echo "$versions" | awk '{print $2}'
+}
 
 # For creating the latest minimal driver sample file in samples folder
 CreateLatestMinimalSampleFile() {
-    prefix=$1
-    driver_sample_file_suffix=$2
-    destination_folder=$3  # e.g. samples/v2.16.0/minimal-samples
+    local prefix=$1
+    local driver_sample_file_suffix=$2
+    local destination_folder=$3  # e.g. samples/v2.16.0/minimal-samples
 
     # Get list of all minimal-samples folders
+    local search_paths
     if [[ "$prefix" == "cosi" ]]; then
         search_paths="samples/cosi/v*/minimal-samples"
     else
         search_paths="samples/v*/minimal-samples"
     fi
 
-    all_folders=$(ls -d $search_paths 2>/dev/null | grep -vF "$destination_folder" | sort -Vr)
+    local all_folders=$(ls -d $search_paths 2>/dev/null | grep -vF "$destination_folder" | sort -Vr)
 
     if [ -z "$all_folders" ]; then
         echo "❌ No other minimal-sample folders found to copy from"
         exit 1
     fi
 
-    latest_folder=$(echo "$all_folders" | head -1)
-    latest_file=$(find "$latest_folder" -type f -name "${prefix}_v*.yaml" | sort -V | tail -1)
+    local latest_folder=$(echo "$all_folders" | head -1)
+    local latest_file=$(find "$latest_folder" -type f -name "${prefix}_v*.yaml" | sort -V | tail -1)
 
     if [ ! -f "$latest_file" ]; then
         echo "❌ No latest minimal sample found in $latest_folder for $prefix"
@@ -316,1166 +409,8 @@ DeleteIfExists() {
     fi
 }
 
-# For Updating Powerflex Driver Major Version
-UpdateMajorPowerflexDriver() {
-    driver_version_update=$1
-    release_type=$2
-
-    major_version=${driver_version_update%%.*}
-    minor_version_tmp=${driver_version_update#*.}
-    minor_version=${minor_version_tmp%%.*}
-    patch_version=${driver_version_update##*.}
-
-    sample_version_folder="samples/v$major_version.$minor_version.0"
-    mkdir -p "$sample_version_folder/minimal-samples"
-
-    previous_major_driver_version=$(GetLatestDriverVersion "storage_csm_powerflex")
-    driver_sample_file_suffix=$(echo "$driver_version_update" | tr -d '.' | tr -d '\n')
-
-    # Create sample and minimal sample
-    CreateLatestSampleFile "storage_csm_powerflex" "$driver_sample_file_suffix"
-    CreateLatestMinimalSampleFile "powerflex" "$driver_sample_file_suffix" "$sample_version_folder/minimal-samples"
-
-    update_config_version="v$driver_version_update"
-    if [ "$release_type" == "nightly" ]; then
-        new_image_version="quay.io/dell/container-storage-modules/csi-vxflexos:nightly"
-    else
-        new_image_version="quay.io/dell/container-storage-modules/csi-vxflexos:v$driver_version_update"
-    fi
-
-    # Update version and image
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$sample_version_folder/storage_csm_powerflex_v$driver_sample_file_suffix.yaml"
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' "$sample_version_folder/storage_csm_powerflex_v$driver_sample_file_suffix.yaml"
-
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$sample_version_folder/minimal-samples/powerflex_v$driver_sample_file_suffix.yaml"
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' "$sample_version_folder/minimal-samples/powerflex_v$driver_sample_file_suffix.yaml"
-
-    # Copy to config samples
-    cp -v --update "$sample_version_folder/storage_csm_powerflex_v$driver_sample_file_suffix.yaml" config/samples/storage_v1_csm_powerflex.yaml
-
-    # Operator config updates
-    cp -a --update operatorconfig/driverconfig/powerflex/v$previous_major_driver_version/. operatorconfig/driverconfig/powerflex/v$driver_version_update
-
-    yq eval -i 'with(select(.spec.template.spec.containers[5].name == "driver"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' operatorconfig/driverconfig/powerflex/v$driver_version_update/controller.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "driver"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' operatorconfig/driverconfig/powerflex/v$driver_version_update/node.yaml
-    yq eval -i 'with(select(.spec.template.spec.initContainers[0].name == "mdm-container"); .spec.template.spec.initContainers[0].image = "'"$new_image_version"'")' operatorconfig/driverconfig/powerflex/v$driver_version_update/node.yaml
-
-    # Delete N-3 version folder
-    delete_minor_version=$((minor_version - 3))
-    driver_delete_version="$major_version.$delete_minor_version.0"
-    DeleteIfExists "samples/v$driver_delete_version"
-    DeleteIfExists operatorconfig/driverconfig/powerflex/v$driver_delete_version
-
-    # Upgrade path
-    min_upgrade_path=$(GetMinUpgradePath "storage_csm_powerflex")
-    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' operatorconfig/driverconfig/powerflex/v$driver_version_update/upgrade-path.yaml
-
-    # CSV
-    UpdateConfigVersion csi-vxflexos "$update_config_version"
-    UpdateRelatedImages csi-vxflexos "$update_config_version" $previous_major_driver_version
-    UpdateBaseRelatedImages csi-vxflexos "$update_config_version" $previous_major_driver_version
-
-    # Test data
-    for f in cr_powerflex_observability_custom_cert_missing_key cr_powerflex_observability_custom_cert cr_powerflex_observability cr_powerflex_replica cr_powerflex_resiliency; do
-        yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' pkg/modules/testdata/$f.yaml
-    done
-    for f in cr_powerflex_observability_custom_cert_missing_key cr_powerflex_observability_custom_cert cr_powerflex_observability; do
-        yq -i '.spec.driver.common.image = "'"$new_image_version"'"' pkg/modules/testdata/$f.yaml
-    done
-
-    # Test config
-    cp -a --update tests/config/driverconfig/powerflex/v$previous_major_driver_version/. tests/config/driverconfig/powerflex/v$driver_version_update
-    DeleteIfExists tests/config/driverconfig/powerflex/v$driver_delete_version
-
-    yq eval -i 'with(select(.spec.template.spec.containers[5].name == "driver"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' tests/config/driverconfig/powerflex/v$driver_version_update/controller.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "driver"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' tests/config/driverconfig/powerflex/v$driver_version_update/node.yaml
-    yq eval -i 'with(select(.spec.template.spec.initContainers[0].name == "mdm-container"); .spec.template.spec.initContainers[0].image = "'"$new_image_version"'")' tests/config/driverconfig/powerflex/v$driver_version_update/node.yaml
-
-    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' tests/config/driverconfig/powerflex/v$driver_version_update/upgrade-path.yaml
-
-    # E2E testfiles
-    for f in $(find tests/e2e/testfiles -type f -name "storage_csm_powerflex*"); do
-        yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
-    done
-    for f in $(find tests/e2e/testfiles/minimal-testfiles -type f -name "storage_csm_powerflex*"); do
-        yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
-    done
-
-    # Update downgrade/n-1 references
-    previous_driver_config_version="v$previous_major_driver_version"
-    previous_driver_image_version="quay.io/dell/container-storage-modules/csi-vxflexos:v$previous_major_driver_version" 
-
-    second_previous_driver_version=$(GetSecondLatestDriverVersion "storage_csm_powerflex")
-    second_previous_driver_config_version="v$second_previous_driver_version" 
-    second_previous_driver_image_version="quay.io/dell/container-storage-modules/csi-vxflexos:v$second_previous_driver_version" 
-    echo "$previous_driver_config_version and $update_config_version"
-    for f in storage_csm_powerflex_auth_n_minus_1 storage_csm_powerflex_downgrade; do 
-        if [ "$previous_driver_config_version" == "$update_config_version" ]; then
-            yq -i '.spec.driver.configVersion = "'"$second_previous_driver_config_version"'"' tests/e2e/testfiles/$f.yaml
-            yq -i '.spec.driver.common.image = "'"$second_previous_driver_image_version"'"' tests/e2e/testfiles/$f.yaml
-        else
-            yq -i '.spec.driver.configVersion = "'"$previous_driver_config_version"'"' tests/e2e/testfiles/$f.yaml
-            yq -i '.spec.driver.common.image = "'"$previous_driver_image_version"'"' tests/e2e/testfiles/$f.yaml
-        fi
-         
-
-    done
-
-    # Update manager + operator
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[7].value = "'"$new_image_version"'")' config/manager/manager.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[7].value = "'"$new_image_version"'")' deploy/operator.yaml
-}
-
-# For Updating Powerflex Driver Patch Version
-
-UpdatePatchPowerflexDriver() {
-    driver_version_update=$1
-    release_type=$2
-
-    major_version=${driver_version_update%%.*}
-    minor_version_tmp=${driver_version_update#*.}
-    minor_version=${minor_version_tmp%%.*}
-    patch_version=${driver_version_update##*.}
-
-    previous_patch_version=$((patch_version - 1))
-    previous_patch_driver_version="$major_version.$minor_version.$previous_patch_version"
-
-    driver_sample_file_suffix=$(echo "$driver_version_update" | tr -d '.' | tr -d '\n')
-    previous_driver_sample_file_suffix=$(echo "$previous_patch_driver_version" | tr -d '.' | tr -d '\n')
-
-    sample_version_folder="samples/v$major_version.$minor_version.0"
-
-    # Ensure the directory exists
-    mkdir -p "$sample_version_folder/minimal-samples"
-
-    # Copy latest patch file to create new patch version
-    cp -v --update "$sample_version_folder/storage_csm_powerflex_v$previous_driver_sample_file_suffix.yaml" \
-          "$sample_version_folder/storage_csm_powerflex_v$driver_sample_file_suffix.yaml"
-    cp -v --update "$sample_version_folder/minimal-samples/powerflex_v$previous_driver_sample_file_suffix.yaml" \
-          "$sample_version_folder/minimal-samples/powerflex_v$driver_sample_file_suffix.yaml"
-
-    update_config_version="v$driver_version_update"
-    if [ "$release_type" == "nightly" ]; then
-        new_image_version="quay.io/dell/container-storage-modules/csi-vxflexos:nightly"
-    elif [ "$release_type" == "tag" ]; then
-        new_image_version="quay.io/dell/container-storage-modules/csi-vxflexos:v$driver_version_update"
-    fi
-
-    # Update new sample file with configVersion and image
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$sample_version_folder/storage_csm_powerflex_v$driver_sample_file_suffix.yaml"
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' "$sample_version_folder/storage_csm_powerflex_v$driver_sample_file_suffix.yaml"
-
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$sample_version_folder/minimal-samples/powerflex_v$driver_sample_file_suffix.yaml"
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' "$sample_version_folder/minimal-samples/powerflex_v$driver_sample_file_suffix.yaml"
-
-    # Update operator driver config
-    cp -a --update operatorconfig/driverconfig/powerflex/v$previous_patch_driver_version \
-          operatorconfig/driverconfig/powerflex/v$driver_version_update
-
-    yq eval -i 'with(select(.spec.template.spec.containers[5].name == "driver"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' \
-        operatorconfig/driverconfig/powerflex/v$driver_version_update/controller.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "driver"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' \
-        operatorconfig/driverconfig/powerflex/v$driver_version_update/node.yaml
-    yq eval -i 'with(select(.spec.template.spec.initContainers[0].name == "mdm-container"); .spec.template.spec.initContainers[0].image = "'"$new_image_version"'")' \
-        operatorconfig/driverconfig/powerflex/v$driver_version_update/node.yaml
-
-    DeleteIfExists operatorconfig/driverconfig/powerflex/v$previous_patch_driver_version
-
-    min_upgrade_path=$(GetMinUpgradePath "storage_csm_powerflex")
-    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' operatorconfig/driverconfig/powerflex/v$driver_version_update/upgrade-path.yaml
-
-    # Update related images in CSV
-    UpdateConfigVersion csi-vxflexos $update_config_version
-    UpdateRelatedImages csi-vxflexos $update_config_version
-    UpdateBaseRelatedImages csi-vxflexos $update_config_version
-
-    # Update test data files
-    for i in \
-        cr_powerflex_observability_custom_cert_missing_key \
-        cr_powerflex_observability_custom_cert \
-        cr_powerflex_observability \
-        cr_powerflex_replica \
-        cr_powerflex_resiliency
-    do
-        yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' pkg/modules/testdata/$i.yaml
-    done
-
-    for i in \
-        cr_powerflex_observability_custom_cert_missing_key \
-        cr_powerflex_observability_custom_cert \
-        cr_powerflex_observability
-    do
-        yq -i '.spec.driver.common.image = "'"$new_image_version"'"' pkg/modules/testdata/$i.yaml
-    done
-
-    # Test config updates
-    cp -a --update tests/config/driverconfig/powerflex/v$previous_patch_driver_version \
-          tests/config/driverconfig/powerflex/v$driver_version_update
-    DeleteIfExists tests/config/driverconfig/powerflex/v$previous_patch_driver_version
-
-    yq eval -i 'with(select(.spec.template.spec.containers[5].name == "driver"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' \
-        tests/config/driverconfig/powerflex/v$driver_version_update/controller.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "driver"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' \
-        tests/config/driverconfig/powerflex/v$driver_version_update/node.yaml
-    yq eval -i 'with(select(.spec.template.spec.initContainers[0].name == "mdm-container"); .spec.template.spec.initContainers[0].image = "'"$new_image_version"'")' \
-        tests/config/driverconfig/powerflex/v$driver_version_update/node.yaml
-
-    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' tests/config/driverconfig/powerflex/v$driver_version_update/upgrade-path.yaml
-
-    # Update e2e test sample versions
-    testfiles="tests/e2e/testfiles"
-    for f in $(find "$testfiles" -type f -name "storage_csm_powerflex*"); do
-        yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
-    done
-    testfiles="tests/e2e/testfiles/minimal-testfiles"
-    for f in $(find "$testfiles" -type f -name "storage_csm_powerflex*"); do
-        yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
-    done
-
-    second_previous_driver_version=$(GetSecondLatestDriverVersion "storage_csm_powerflex")
-    second_previous_driver_config_version="v$second_previous_driver_version" 
-    second_previous_driver_image_version="quay.io/dell/container-storage-modules/csi-vxflexos:v$second_previous_driver_version" 
-
-    for f in storage_csm_powerflex_auth_n_minus_1 storage_csm_powerflex_downgrade; do 
-            yq -i '.spec.driver.configVersion = "'"$second_previous_driver_config_version"'"' tests/e2e/testfiles/$f.yaml
-            yq -i '.spec.driver.common.image = "'"$second_previous_driver_image_version"'"' tests/e2e/testfiles/$f.yaml
-    done
-
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[7].value = "'"$new_image_version"'")' config/manager/manager.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[7].value = "'"$new_image_version"'")' deploy/operator.yaml
-
-    # Fix formatting (optional)
-    find . -type f \( -name "*.yaml" -o -name "*.yml" \) -exec sed -i 's/" # /"  # /g' {} +
-}
-
-# For Updating Powermax Driver Major Version
-UpdateMajorPowermaxDriver() {
-    driver_version_update=$1
-    release_type=$2
-
-    major_version=${driver_version_update%%.*}
-    minor_version_tmp=${driver_version_update#*.}
-    minor_version=${minor_version_tmp%%.*}
-    patch_version=${driver_version_update##*.}
-
-    previous_major_driver_version=$(GetLatestDriverVersion "storage_csm_powermax")
-    driver_sample_file_suffix=$(echo "$driver_version_update" | tr -d '.' | tr -d '\n')
-    sample_version_folder="samples/v$major_version.$minor_version.0"
-
-    mkdir -p "$sample_version_folder/minimal-samples"
-
-    # Create new sample and minimal sample
-    CreateLatestSampleFile "storage_csm_powermax" "$driver_sample_file_suffix"
-    CreateLatestMinimalSampleFile "powermax" "$driver_sample_file_suffix" "$sample_version_folder/minimal-samples"
-
-    update_config_version="v$driver_version_update"
-    if [ "$release_type" == "nightly" ]; then
-        new_image_version="quay.io/dell/container-storage-modules/csi-powermax:nightly"
-    else
-        new_image_version="quay.io/dell/container-storage-modules/csi-powermax:v$driver_version_update"
-    fi
-
-    # Update samples with new config version and image
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$sample_version_folder/storage_csm_powermax_v$driver_sample_file_suffix.yaml"
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' "$sample_version_folder/storage_csm_powermax_v$driver_sample_file_suffix.yaml"
-
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$sample_version_folder/minimal-samples/powermax_v$driver_sample_file_suffix.yaml"
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' "$sample_version_folder/minimal-samples/powermax_v$driver_sample_file_suffix.yaml"
-
-    cp -v --update "$sample_version_folder/storage_csm_powermax_v$driver_sample_file_suffix.yaml" config/samples/storage_v1_csm_powermax.yaml
-
-    # Operator config updates
-    cp -a --update operatorconfig/driverconfig/powermax/v$previous_major_driver_version/. operatorconfig/driverconfig/powermax/v$driver_version_update
-
-    yq eval -i 'with(select(.spec.template.spec.containers[5].name == "driver"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' operatorconfig/driverconfig/powermax/v$driver_version_update/controller.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "driver"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' operatorconfig/driverconfig/powermax/v$driver_version_update/node.yaml
-
-    # Delete N-3 versioned sample folder and config
-    delete_minor_version=$((minor_version - 3))
-    driver_delete_version="$major_version.$delete_minor_version.0"
-    DeleteIfExists "samples/v$driver_delete_version"
-    DeleteIfExists operatorconfig/driverconfig/powermax/v$driver_delete_version
-
-    # Update minUpgradePath
-    min_upgrade_path=$(GetMinUpgradePath "storage_csm_powermax")
-    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' operatorconfig/driverconfig/powermax/v$driver_version_update/upgrade-path.yaml
-
-    # CSV updates
-    UpdateConfigVersion csi-powermax "$update_config_version"
-    UpdateRelatedImages csi-powermax "$update_config_version" "$previous_major_driver_version"
-    UpdateBaseRelatedImages csi-powermax "$update_config_version" "$previous_major_driver_version"
-
-    # Test data files
-    for i in cr_powermax_observability_use_secret cr_powermax_observability cr_powermax_replica cr_powermax_resiliency cr_powermax_reverseproxy_sidecar cr_powermax_reverseproxy_use_secret cr_powermax_reverseproxy; do
-        yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' pkg/modules/testdata/$i.yaml
-        yq -i '.spec.driver.common.image = "'"$new_image_version"'"' pkg/modules/testdata/$i.yaml
-    done
-
-    # Test config
-    cp -a --update tests/config/driverconfig/powermax/v$previous_major_driver_version/. tests/config/driverconfig/powermax/v$driver_version_update
-    DeleteIfExists tests/config/driverconfig/powermax/v$driver_delete_version
-
-    yq eval -i 'with(select(.spec.template.spec.containers[5].name == "driver"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' tests/config/driverconfig/powermax/v$driver_version_update/controller.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "driver"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' tests/config/driverconfig/powermax/v$driver_version_update/node.yaml
-
-    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' tests/config/driverconfig/powermax/v$driver_version_update/upgrade-path.yaml
-
-    # E2E testfiles (full and minimal)
-    for f in $(find tests/e2e/testfiles -type f -name "storage_csm_powermax*"); do
-        yq eval -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
-    done
-    for f in $(find tests/e2e/testfiles/minimal-testfiles -type f -name "storage_csm_powermax*"); do
-        yq eval -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
-    done
-
-    # Manager & operator yaml updates
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[3].value = "'"$new_image_version"'")' config/manager/manager.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[3].value = "'"$new_image_version"'")' deploy/operator.yaml
-}
-
-# For Updating Powermax Driver Patch Version
-UpdatePatchPowermaxDriver() {
-    driver_version_update=$1
-    release_type=$2
-
-    # Extract version components
-    major_version=${driver_version_update%%.*}
-    minor_tmp=${driver_version_update#*.}
-    minor_version=${minor_tmp%%.*}
-    patch_version=${driver_version_update##*.}
-
-    previous_patch_version=$((patch_version - 1))
-    previous_patch_driver_version="$major_version.$minor_version.$previous_patch_version"
-
-    driver_sample_file_suffix=$(echo "$driver_version_update" | tr -d '.' | tr -d '\n')
-    previous_driver_sample_file_suffix=$(echo "$previous_patch_driver_version" | tr -d '.' | tr -d '\n')
-
-    sample_version_folder="samples/v$major_version.$minor_version.0"
-    mkdir -p "$sample_version_folder/minimal-samples"
-
-    cp -v --update "$sample_version_folder/storage_csm_powermax_v$previous_driver_sample_file_suffix.yaml" \
-          "$sample_version_folder/storage_csm_powermax_v$driver_sample_file_suffix.yaml"
-    cp -v --update "$sample_version_folder/minimal-samples/powermax_v$previous_driver_sample_file_suffix.yaml" \
-          "$sample_version_folder/minimal-samples/powermax_v$driver_sample_file_suffix.yaml"
-
-    update_config_version="v$driver_version_update"
-    if [ "$release_type" == "nightly" ]; then
-        new_image_version="quay.io/dell/container-storage-modules/csi-powermax:nightly"
-    else
-        new_image_version="quay.io/dell/container-storage-modules/csi-powermax:v$driver_version_update"
-    fi
-
-    # Update image + config version in sample files
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' \
-        "$sample_version_folder/storage_csm_powermax_v$driver_sample_file_suffix.yaml"
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' \
-        "$sample_version_folder/storage_csm_powermax_v$driver_sample_file_suffix.yaml"
-
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' \
-        "$sample_version_folder/minimal-samples/powermax_v$driver_sample_file_suffix.yaml"
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' \
-        "$sample_version_folder/minimal-samples/powermax_v$driver_sample_file_suffix.yaml"
-
-    # Operator config updates
-    cp -a --update operatorconfig/driverconfig/powermax/v$previous_patch_driver_version \
-          operatorconfig/driverconfig/powermax/v$driver_version_update
-    DeleteIfExists operatorconfig/driverconfig/powermax/v$previous_patch_driver_version
-
-    yq eval -i 'with(select(.spec.template.spec.containers[5].name == "driver"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' \
-        operatorconfig/driverconfig/powermax/v$driver_version_update/controller.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "driver"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' \
-        operatorconfig/driverconfig/powermax/v$driver_version_update/node.yaml
-
-    min_upgrade_path=$(GetMinUpgradePath "storage_csm_powermax")
-    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' \
-        operatorconfig/driverconfig/powermax/v$driver_version_update/upgrade-path.yaml
-
-    UpdateConfigVersion csi-powermax $update_config_version
-        UpdateRelatedImages csi-powermax $update_config_version
-        UpdateBaseRelatedImages csi-powermax $update_config_version
-
-    # Update testdata YAMLs
-    declare -a configArr=(
-        "cr_powermax_observability_use_secret"
-        "cr_powermax_observability"
-        "cr_powermax_replica"
-        "cr_powermax_resiliency"
-        "cr_powermax_reverseproxy_sidecar"
-        "cr_powermax_reverseproxy_use_secret"
-        "cr_powermax_reverseproxy"
-    )
-    for i in "${configArr[@]}"; do
-        yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' pkg/modules/testdata/$i.yaml
-        yq -i '.spec.driver.common.image = "'"$new_image_version"'"' pkg/modules/testdata/$i.yaml
-    done
-
-    cp -a --update tests/config/driverconfig/powermax/v$previous_patch_driver_version \
-          tests/config/driverconfig/powermax/v$driver_version_update
-    DeleteIfExists tests/config/driverconfig/powermax/v$previous_patch_driver_version
-
-    yq eval -i 'with(select(.spec.template.spec.containers[5].name == "driver"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' \
-        tests/config/driverconfig/powermax/v$driver_version_update/controller.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "driver"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' \
-        tests/config/driverconfig/powermax/v$driver_version_update/node.yaml
-
-    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' \
-        tests/config/driverconfig/powermax/v$driver_version_update/upgrade-path.yaml
-
-    # Update config version in testfiles
-    for i in $(find tests/e2e/testfiles -type f -name "storage_csm_powermax*"); do
-        yq eval -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$i"
-    done
-    for i in $(find tests/e2e/testfiles/minimal-testfiles -type f -name "storage_csm_powermax*"); do
-        yq eval -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$i"
-    done
-
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[3].value = "'"$new_image_version"'")' config/manager/manager.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[3].value = "'"$new_image_version"'")' deploy/operator.yaml
-}
-
-# For Updating Powerscale Driver Major Version
-UpdateMajorPowerscaleDriver() {
-    driver_version_update=$1
-    release_type=$2
-
-    major_version=${driver_version_update%%.*}
-    minor_version_tmp=${driver_version_update#*.}
-    minor_version=${minor_version_tmp%%.*}
-    patch_version=${driver_version_update##*.}
-
-    previous_major_driver_version=$(GetLatestDriverVersion "storage_csm_powerscale")
-    driver_sample_file_suffix=$(echo "$driver_version_update" | tr -d '.' | tr -d '\n')
-    sample_version_folder="samples/v$major_version.$minor_version.0"
-
-    mkdir -p "$sample_version_folder/minimal-samples"
-
-    # Create and move new sample YAMLs
-    CreateLatestSampleFile "storage_csm_powerscale" "$driver_sample_file_suffix"
-    CreateLatestMinimalSampleFile "powerscale" "$driver_sample_file_suffix" "$sample_version_folder/minimal-samples"
-
-
-    update_config_version="v$driver_version_update"
-    if [ "$release_type" == "nightly" ]; then
-        new_image_version="quay.io/dell/container-storage-modules/csi-isilon:nightly"
-    else
-        new_image_version="quay.io/dell/container-storage-modules/csi-isilon:v$driver_version_update"
-    fi
-
-    # Update configVersion and image in sample YAMLs
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$sample_version_folder/storage_csm_powerscale_v$driver_sample_file_suffix.yaml"
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' "$sample_version_folder/storage_csm_powerscale_v$driver_sample_file_suffix.yaml"
-
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$sample_version_folder/minimal-samples/powerscale_v$driver_sample_file_suffix.yaml"
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' "$sample_version_folder/minimal-samples/powerscale_v$driver_sample_file_suffix.yaml"
-
-    cp -v --update "$sample_version_folder/storage_csm_powerscale_v$driver_sample_file_suffix.yaml" config/samples/storage_v1_csm_powerscale.yaml
-
-    # Operator config updates
-    cp -a --update operatorconfig/driverconfig/powerscale/v$previous_major_driver_version/. operatorconfig/driverconfig/powerscale/v$driver_version_update
-
-    yq eval -i 'with(select(.spec.template.spec.containers[6].name == "driver"); .spec.template.spec.containers[6].image = "'"$new_image_version"'")' operatorconfig/driverconfig/powerscale/v$driver_version_update/controller.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "driver"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' operatorconfig/driverconfig/powerscale/v$driver_version_update/node.yaml
-
-    # Delete N-3 versioned sample folder and driver config
-    delete_minor_version=$((minor_version - 3))
-    driver_delete_version="$major_version.$delete_minor_version.0"
-    DeleteIfExists "samples/v$driver_delete_version"
-    DeleteIfExists operatorconfig/driverconfig/powerscale/v$driver_delete_version
-
-    # Update upgrade path
-    min_upgrade_path=$(GetMinUpgradePath "storage_csm_powerscale")
-    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' operatorconfig/driverconfig/powerscale/v$driver_version_update/upgrade-path.yaml
-
-    # CSV updates
-    UpdateConfigVersion csi-isilon "$update_config_version"
-    UpdateRelatedImages csi-isilon "$update_config_version" "$previous_major_driver_version"
-    UpdateBaseRelatedImages csi-isilon "$update_config_version" "$previous_major_driver_version"
-
-    # Testdata
-    for i in cr_powerscale_auth_missing_skip_cert_env cr_powerscale_auth_validate_cert cr_powerscale_auth cr_powerscale_observability cr_powerscale_replica cr_powerscale_resiliency cr_powerscale_auth_driver_secret; do
-        yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' pkg/modules/testdata/$i.yaml
-        yq -i '.spec.driver.common.image = "'"$new_image_version"'"' pkg/modules/testdata/$i.yaml
-    done
-
-    # Test driver config
-    cp -a --update tests/config/driverconfig/powerscale/v$previous_major_driver_version/. tests/config/driverconfig/powerscale/v$driver_version_update
-    DeleteIfExists tests/config/driverconfig/powerscale/v$driver_delete_version
-
-    yq eval -i 'with(select(.spec.template.spec.containers[5].name == "driver"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' tests/config/driverconfig/powerscale/v$driver_version_update/controller.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "driver"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' tests/config/driverconfig/powerscale/v$driver_version_update/node.yaml
-
-    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' tests/config/driverconfig/powerscale/v$driver_version_update/upgrade-path.yaml
-
-    # E2E testfiles
-    for f in $(find tests/e2e/testfiles -type f -name "storage_csm_powerscale*"); do
-        yq eval -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
-    done
-
-    second_previous_driver_version=$(GetSecondLatestDriverVersion "storage_csm_powerscale")
-    second_previous_driver_config_version="v$second_previous_driver_version" 
-    second_previous_driver_image_version="quay.io/dell/container-storage-modules/csi-isilon:v$second_previous_driver_version"
-
-    # n-1 testfiles
-    for f in storage_csm_powerscale_observability_val1; do
-        if [ "$previous_driver_config_version" == "$update_config_version" ]; then
-            yq -i '.spec.driver.configVersion = "'"$second_previous_driver_config_version"'"' tests/e2e/testfiles/$f.yaml
-            yq -i '.spec.driver.common.image = "'"$second_previous_driver_image_version"'"' tests/e2e/testfiles/$f.yaml
-        else
-            yq eval -i '.spec.driver.configVersion = "'"$previous_driver_config_version"'"' tests/e2e/testfiles/$f.yaml
-            yq -i '.spec.driver.common.image = "'"$previous_driver_image_version"'"' tests/e2e/testfiles/$f.yaml
-        fi
-    done
-
-    for f in $(find tests/e2e/testfiles/minimal-testfiles -type f -name "storage_csm_powerscale*"); do
-        yq eval -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
-    done
-
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[2].value = "'"$new_image_version"'")' config/manager/manager.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[2].value = "'"$new_image_version"'")' deploy/operator.yaml
-}
-
-# For Updating Powerscale Driver Patch Version
-UpdatePatchPowerscaleDriver() {
-    driver_version_update=$1
-    release_type=$2
-
-    # Parse version components
-    major_version=${driver_version_update%%.*}
-    minor_tmp=${driver_version_update#*.}
-    minor_version=${minor_tmp%%.*}
-    patch_version=${driver_version_update##*.}
-
-    previous_patch_version=$((patch_version - 1))
-    previous_patch_driver_version="$major_version.$minor_version.$previous_patch_version"
-    driver_sample_file_suffix=$(echo "$driver_version_update" | tr -d '.' | tr -d '\n')
-    previous_driver_sample_file_suffix=$(echo "$previous_patch_driver_version" | tr -d '.' | tr -d '\n')
-
-    sample_version_folder="samples/v$major_version.$minor_version.0"
-    mkdir -p "$sample_version_folder/minimal-samples"
-
-    # Copy previous patch as new patch
-    cp -v --update "$sample_version_folder/storage_csm_powerscale_v$previous_driver_sample_file_suffix.yaml" \
-          "$sample_version_folder/storage_csm_powerscale_v$driver_sample_file_suffix.yaml"
-    cp -v --update "$sample_version_folder/minimal-samples/powerscale_v$previous_driver_sample_file_suffix.yaml" \
-          "$sample_version_folder/minimal-samples/powerscale_v$driver_sample_file_suffix.yaml"
-
-    update_config_version="v$driver_version_update"
-    if [ "$release_type" == "nightly" ]; then
-        new_image_version="quay.io/dell/container-storage-modules/csi-isilon:nightly"
-    else
-        new_image_version="quay.io/dell/container-storage-modules/csi-isilon:v$driver_version_update"
-    fi
-
-    # Patch values in copied files
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' \
-        "$sample_version_folder/storage_csm_powerscale_v$driver_sample_file_suffix.yaml"
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' \
-        "$sample_version_folder/storage_csm_powerscale_v$driver_sample_file_suffix.yaml"
-
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' \
-        "$sample_version_folder/minimal-samples/powerscale_v$driver_sample_file_suffix.yaml"
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' \
-        "$sample_version_folder/minimal-samples/powerscale_v$driver_sample_file_suffix.yaml"
-
-    # Operator config update
-    cp -a --update operatorconfig/driverconfig/powerscale/v$previous_patch_driver_version \
-          operatorconfig/driverconfig/powerscale/v$driver_version_update
-    DeleteIfExists operatorconfig/driverconfig/powerscale/v$previous_patch_driver_version
-
-    yq eval -i 'with(select(.spec.template.spec.containers[6].name == "driver"); .spec.template.spec.containers[6].image = "'"$new_image_version"'")' \
-        operatorconfig/driverconfig/powerscale/v$driver_version_update/controller.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "driver"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' \
-        operatorconfig/driverconfig/powerscale/v$driver_version_update/node.yaml
-
-    min_upgrade_path=$(GetMinUpgradePath "storage_csm_powerscale")
-    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' \
-        operatorconfig/driverconfig/powerscale/v$driver_version_update/upgrade-path.yaml
-
-    # CSV updates
-    UpdateConfigVersion csi-isilon $update_config_version
-        UpdateRelatedImages csi-isilon $update_config_version
-        UpdateBaseRelatedImages csi-isilon $update_config_version
-
-    # Testdata files
-    for i in \
-        cr_powerscale_auth_missing_skip_cert_env \
-        cr_powerscale_auth_validate_cert \
-        cr_powerscale_auth \
-        cr_powerscale_observability \
-        cr_powerscale_replica \
-        cr_powerscale_resiliency
-    do
-        yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' pkg/modules/testdata/$i.yaml
-        yq -i '.spec.driver.common.image = "'"$new_image_version"'"' pkg/modules/testdata/$i.yaml
-    done
-
-    # Tests/config
-    cp -a --update tests/config/driverconfig/powerscale/v$previous_patch_driver_version \
-          tests/config/driverconfig/powerscale/v$driver_version_update
-    DeleteIfExists tests/config/driverconfig/powerscale/v$previous_patch_driver_version
-
-    yq eval -i 'with(select(.spec.template.spec.containers[5].name == "driver"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' \
-        tests/config/driverconfig/powerscale/v$driver_version_update/controller.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "driver"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' \
-        tests/config/driverconfig/powerscale/v$driver_version_update/node.yaml
-
-    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' \
-        tests/config/driverconfig/powerscale/v$driver_version_update/upgrade-path.yaml
-
-    # E2E TestFiles
-    for f in $(find tests/e2e/testfiles -type f -name "storage_csm_powerscale*"); do
-        yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
-    done
-    for f in $(find tests/e2e/testfiles/minimal-testfiles -type f -name "storage_csm_powerscale*"); do
-        yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
-    done
-
-    # Manager image updates
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[2].value = "'"$new_image_version"'")' config/manager/manager.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[2].value = "'"$new_image_version"'")' deploy/operator.yaml
-}
-
-# For Updating Powerstore Driver Major Version
-UpdateMajorPowerstoreDriver() {
-    driver_version_update=$1
-    release_type=$2
-
-    major_version=${driver_version_update%%.*}
-    minor_version_tmp=${driver_version_update#*.}
-    minor_version=${minor_version_tmp%%.*}
-    patch_version=${driver_version_update##*.}
-
-    previous_major_driver_version=$(GetLatestDriverVersion "storage_csm_powerstore")
-    driver_sample_file_suffix=$(echo "$driver_version_update" | tr -d '.' | tr -d '\n')
-    sample_version_folder="samples/v$major_version.$minor_version.0"
-
-    mkdir -p "$sample_version_folder/minimal-samples"
-
-    # Create and move new sample YAMLs
-    CreateLatestSampleFile "storage_csm_powerstore" "$driver_sample_file_suffix"
-    CreateLatestMinimalSampleFile "powerstore" "$driver_sample_file_suffix" "$sample_version_folder/minimal-samples"
-
-    update_config_version="v$driver_version_update"
-    if [ "$release_type" == "nightly" ]; then
-        new_image_version="quay.io/dell/container-storage-modules/csi-powerstore:nightly"
-    else
-        new_image_version="quay.io/dell/container-storage-modules/csi-powerstore:v$driver_version_update"
-    fi
-
-    # Update configVersion and image in sample YAMLs
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$sample_version_folder/storage_csm_powerstore_v$driver_sample_file_suffix.yaml"
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' "$sample_version_folder/storage_csm_powerstore_v$driver_sample_file_suffix.yaml"
-
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$sample_version_folder/minimal-samples/powerstore_v$driver_sample_file_suffix.yaml"
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' "$sample_version_folder/minimal-samples/powerstore_v$driver_sample_file_suffix.yaml"
-
-    cp -v --update "$sample_version_folder/storage_csm_powerstore_v$driver_sample_file_suffix.yaml" config/samples/storage_v1_csm_powerstore.yaml
-
-    # Operator config updates
-    cp -a --update operatorconfig/driverconfig/powerstore/v$previous_major_driver_version/. operatorconfig/driverconfig/powerstore/v$driver_version_update
-
-    yq eval -i 'with(select(.spec.template.spec.containers[5].name == "driver"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' operatorconfig/driverconfig/powerstore/v$driver_version_update/controller.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "driver"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' operatorconfig/driverconfig/powerstore/v$driver_version_update/node.yaml
-
-    # Delete N-3 versioned sample folder and driver config
-    delete_minor_version=$((minor_version - 3))
-    driver_delete_version="$major_version.$delete_minor_version.0"
-    DeleteIfExists "samples/v$driver_delete_version"
-    DeleteIfExists operatorconfig/driverconfig/powerstore/v$driver_delete_version
-
-    # Upgrade path
-    min_upgrade_path=$(GetMinUpgradePath "storage_csm_powerstore")
-    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' operatorconfig/driverconfig/powerstore/v$driver_version_update/upgrade-path.yaml
-
-    # CSVs
-    UpdateConfigVersion csi-powerstore "$update_config_version"
-    UpdateRelatedImages csi-powerstore "$update_config_version" "$previous_major_driver_version"
-    UpdateBaseRelatedImages csi-powerstore "$update_config_version" "$previous_major_driver_version"
-
-    # Testdata
-    for i in cr_powerstore_resiliency cr_powerstore_auth cr_powerstore_observability cr_powerstore_replica; do
-        yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' pkg/modules/testdata/$i.yaml
-        yq -i '.spec.driver.common.image = "'"$new_image_version"'"' pkg/modules/testdata/$i.yaml
-    done
-
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' pkg/modules/testdata/cr_powerstore_resiliency.yaml
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' pkg/modules/testdata/cr_powerstore_resiliency.yaml
-
-    # Test driver config
-    cp -a --update tests/config/driverconfig/powerstore/v$previous_major_driver_version/. tests/config/driverconfig/powerstore/v$driver_version_update
-    DeleteIfExists tests/config/driverconfig/powerstore/v$driver_delete_version
-
-    yq eval -i 'with(select(.spec.template.spec.containers[5].name == "driver"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' tests/config/driverconfig/powerstore/v$driver_version_update/controller.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "driver"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' tests/config/driverconfig/powerstore/v$driver_version_update/node.yaml
-
-    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' tests/config/driverconfig/powerstore/v$driver_version_update/upgrade-path.yaml
-
-    # E2E testfiles
-    for f in $(find tests/e2e/testfiles -type f -name "storage_csm_powerstore*"); do
-        yq eval -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
-    done
-
-    for f in $(find tests/e2e/testfiles/minimal-testfiles -type f -name "storage_csm_powerstore*"); do
-        yq eval -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
-    done
-
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[5].value = "'"$new_image_version"'")' config/manager/manager.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[5].value = "'"$new_image_version"'")' deploy/operator.yaml
-}
-
-# For Updating Powerstore Driver Patch Version
-UpdatePatchPowerstoreDriver() {
-    driver_version_update=$1
-    release_type=$2
-
-    # Extract version components
-    major_version=${driver_version_update%%.*}
-    minor_tmp=${driver_version_update#*.}
-    minor_version=${minor_tmp%%.*}
-    patch_version=${driver_version_update##*.}
-
-    previous_patch_version=$((patch_version - 1))
-    previous_patch_driver_version="$major_version.$minor_version.$previous_patch_version"
-
-    driver_sample_file_suffix=$(echo "$driver_version_update" | tr -d '.' | tr -d '\n')
-    previous_driver_sample_file_suffix=$(echo "$previous_patch_driver_version" | tr -d '.' | tr -d '\n')
-
-    sample_version_folder="samples/v$major_version.$minor_version.0"
-    mkdir -p "$sample_version_folder/minimal-samples"
-
-    # Copy previous patch as new patch
-    cp -v --update "$sample_version_folder/storage_csm_powerstore_v$previous_driver_sample_file_suffix.yaml" \
-          "$sample_version_folder/storage_csm_powerstore_v$driver_sample_file_suffix.yaml"
-    cp -v --update "$sample_version_folder/minimal-samples/powerstore_v$previous_driver_sample_file_suffix.yaml" \
-          "$sample_version_folder/minimal-samples/powerstore_v$driver_sample_file_suffix.yaml"
-
-    update_config_version="v$driver_version_update"
-    if [ "$release_type" == "nightly" ]; then
-        new_image_version="quay.io/dell/container-storage-modules/csi-powerstore:nightly"
-    else
-        new_image_version="quay.io/dell/container-storage-modules/csi-powerstore:v$driver_version_update"
-    fi
-
-    # Update configVersion and image in new sample
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' \
-        "$sample_version_folder/storage_csm_powerstore_v$driver_sample_file_suffix.yaml"
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' \
-        "$sample_version_folder/storage_csm_powerstore_v$driver_sample_file_suffix.yaml"
-
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' \
-        "$sample_version_folder/minimal-samples/powerstore_v$driver_sample_file_suffix.yaml"
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' \
-        "$sample_version_folder/minimal-samples/powerstore_v$driver_sample_file_suffix.yaml"
-
-    # Operator config patch
-    cp -a --update operatorconfig/driverconfig/powerstore/v$previous_patch_driver_version \
-          operatorconfig/driverconfig/powerstore/v$driver_version_update
-    DeleteIfExists operatorconfig/driverconfig/powerstore/v$previous_patch_driver_version
-
-    yq eval -i 'with(select(.spec.template.spec.containers[5].name == "driver"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' \
-        operatorconfig/driverconfig/powerstore/v$driver_version_update/controller.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "driver"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' \
-        operatorconfig/driverconfig/powerstore/v$driver_version_update/node.yaml
-
-    min_upgrade_path=$(GetMinUpgradePath "storage_csm_unity")
-    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' \
-        operatorconfig/driverconfig/powerstore/v$driver_version_update/upgrade-path.yaml
-
-    # CSV and image reference updates
-    UpdateConfigVersion csi-powerstore $update_config_version
-    UpdateRelatedImages csi-powerstore $update_config_version
-    UpdateBaseRelatedImages csi-powerstore $update_config_version
-
-    # Testdata patching
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' pkg/modules/testdata/cr_powerstore_resiliency.yaml
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' pkg/modules/testdata/cr_powerstore_resiliency.yaml
-
-    # Test driver config
-    cp -a --update tests/config/driverconfig/powerstore/v$previous_patch_driver_version \
-          tests/config/driverconfig/powerstore/v$driver_version_update
-    DeleteIfExists tests/config/driverconfig/powerstore/v$previous_patch_driver_version
-
-    yq eval -i 'with(select(.spec.template.spec.containers[5].name == "driver"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' \
-        tests/config/driverconfig/powerstore/v$driver_version_update/controller.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "driver"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' \
-        tests/config/driverconfig/powerstore/v$driver_version_update/node.yaml
-
-    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' \
-        tests/config/driverconfig/powerstore/v$driver_version_update/upgrade-path.yaml
-
-    # e2e test patching
-    for f in $(find tests/e2e/testfiles -type f -name "storage_csm_powerstore*"); do
-        yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
-    done
-    for f in $(find tests/e2e/testfiles/minimal-testfiles -type f -name "storage_csm_powerstore*"); do
-        yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
-    done
-
-    # Manager env image patch
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[5].value = "'"$new_image_version"'")' config/manager/manager.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[5].value = "'"$new_image_version"'")' deploy/operator.yaml
-}
-
-# For Updating Unity Driver Major Version
-UpdateMajorUnityDriver() {
-    driver_version_update=$1
-    release_type=$2
-
-    major_version=${driver_version_update%%.*}
-    minor_version_tmp=${driver_version_update#*.}
-    minor_version=${minor_version_tmp%%.*}
-    patch_version=${driver_version_update##*.}
-
-    previous_major_driver_version=$(GetLatestDriverVersion "storage_csm_unity")
-    driver_sample_file_suffix=$(echo "$driver_version_update" | tr -d '.' | tr -d '\n')
-    sample_version_folder="samples/v$major_version.$minor_version.0"
-
-    mkdir -p "$sample_version_folder/minimal-samples"
-
-    # Create and move sample YAMLs
-    CreateLatestSampleFile "storage_csm_unity" "$driver_sample_file_suffix"
-    CreateLatestMinimalSampleFile "unity" "$driver_sample_file_suffix" "$sample_version_folder/minimal-samples"
-
-    update_config_version="v$driver_version_update"
-    if [ "$release_type" == "nightly" ]; then
-        new_image_version="quay.io/dell/container-storage-modules/csi-unity:nightly"
-    else
-        new_image_version="quay.io/dell/container-storage-modules/csi-unity:v$driver_version_update"
-    fi
-
-    # Update configVersion and image in new sample files
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$sample_version_folder/storage_csm_unity_v$driver_sample_file_suffix.yaml"
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' "$sample_version_folder/storage_csm_unity_v$driver_sample_file_suffix.yaml"
-
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$sample_version_folder/minimal-samples/unity_v$driver_sample_file_suffix.yaml"
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' "$sample_version_folder/minimal-samples/unity_v$driver_sample_file_suffix.yaml"
-
-    cp -v --update "$sample_version_folder/storage_csm_unity_v$driver_sample_file_suffix.yaml" config/samples/storage_v1_csm_unity.yaml
-
-    # Operator config
-    cp -a --update operatorconfig/driverconfig/unity/v$previous_major_driver_version/. operatorconfig/driverconfig/unity/v$driver_version_update
-
-    yq eval -i 'with(select(.spec.template.spec.containers[5].name == "driver"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' operatorconfig/driverconfig/unity/v$driver_version_update/controller.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "driver"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' operatorconfig/driverconfig/unity/v$driver_version_update/node.yaml
-
-    # Delete N-3 versioned folder
-    delete_minor_version=$((minor_version - 3))
-    driver_delete_version="$major_version.$delete_minor_version.0"
-    DeleteIfExists "samples/v$driver_delete_version"
-    DeleteIfExists operatorconfig/driverconfig/unity/v$driver_delete_version
-
-    # Update upgrade path
-    min_upgrade_path=$(GetMinUpgradePath "storage_csm_unity")
-    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' operatorconfig/driverconfig/unity/v$driver_version_update/upgrade-path.yaml
-
-    # CSV and base CSV
-    UpdateConfigVersion csi-unity "$update_config_version"
-    UpdateRelatedImages csi-unity "$update_config_version" "$previous_major_driver_version"
-    UpdateBaseRelatedImages csi-unity "$update_config_version" "$previous_major_driver_version"
-
-    # Test config
-    cp -a --update tests/config/driverconfig/unity/v$previous_major_driver_version/. tests/config/driverconfig/unity/v$driver_version_update
-    DeleteIfExists tests/config/driverconfig/unity/v$driver_delete_version
-
-    yq eval -i 'with(select(.spec.template.spec.containers[5].name == "driver"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' tests/config/driverconfig/unity/v$driver_version_update/controller.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "driver"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' tests/config/driverconfig/unity/v$driver_version_update/node.yaml
-
-    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' tests/config/driverconfig/unity/v$driver_version_update/upgrade-path.yaml
-
-    # Update e2e testfiles
-    for f in $(find tests/e2e/testfiles -type f -name "storage_csm_unity*"); do
-        yq eval -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
-    done
-
-    for f in $(find tests/e2e/testfiles/minimal-testfiles -type f -name "storage_csm_unity*"); do
-        yq eval -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
-    done
-
-    # Manager deployment
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[6].value = "'"$new_image_version"'")' config/manager/manager.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[6].value = "'"$new_image_version"'")' deploy/operator.yaml
-}
-
-# For Updating Unity Driver Patch Version
-UpdatePatchUnityDriver() {
-    driver_version_update=$1
-    release_type=$2
-
-    # Extract version components
-    major_version=${driver_version_update%%.*}
-    minor_tmp=${driver_version_update#*.}
-    minor_version=${minor_tmp%%.*}
-    patch_version=${driver_version_update##*.}
-
-    previous_patch_version=$((patch_version - 1))
-    previous_patch_driver_version="$major_version.$minor_version.$previous_patch_version"
-
-    driver_sample_file_suffix=$(echo "$driver_version_update" | tr -d '.' | tr -d '\n')
-    previous_driver_sample_file_suffix=$(echo "$previous_patch_driver_version" | tr -d '.' | tr -d '\n')
-
-    sample_version_folder="samples/v$major_version.$minor_version.0"
-    mkdir -p "$sample_version_folder/minimal-samples"
-
-    # Copy previous patch as base
-    cp -v --update "$sample_version_folder/storage_csm_unity_v$previous_driver_sample_file_suffix.yaml" \
-          "$sample_version_folder/storage_csm_unity_v$driver_sample_file_suffix.yaml"
-    cp -v --update "$sample_version_folder/minimal-samples/unity_v$previous_driver_sample_file_suffix.yaml" \
-          "$sample_version_folder/minimal-samples/unity_v$driver_sample_file_suffix.yaml"
-
-    update_config_version="v$driver_version_update"
-    if [ "$release_type" == "nightly" ]; then
-        new_image_version="quay.io/dell/container-storage-modules/csi-unity:nightly"
-    else
-        new_image_version="quay.io/dell/container-storage-modules/csi-unity:v$driver_version_update"
-    fi
-
-    # Update configVersion and image
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' \
-        "$sample_version_folder/storage_csm_unity_v$driver_sample_file_suffix.yaml"
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' \
-        "$sample_version_folder/storage_csm_unity_v$driver_sample_file_suffix.yaml"
-
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' \
-        "$sample_version_folder/minimal-samples/unity_v$driver_sample_file_suffix.yaml"
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' \
-        "$sample_version_folder/minimal-samples/unity_v$driver_sample_file_suffix.yaml"
-
-    # Operator config patch update
-    cp -a --update operatorconfig/driverconfig/unity/v$previous_patch_driver_version \
-          operatorconfig/driverconfig/unity/v$driver_version_update
-    DeleteIfExists operatorconfig/driverconfig/unity/v$previous_patch_driver_version
-
-    yq eval -i 'with(select(.spec.template.spec.containers[5].name == "driver"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' \
-        operatorconfig/driverconfig/unity/v$driver_version_update/controller.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "driver"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' \
-        operatorconfig/driverconfig/unity/v$driver_version_update/node.yaml
-
-    min_upgrade_path=$(GetMinUpgradePath "storage_csm_unity")
-    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' \
-        operatorconfig/driverconfig/unity/v$driver_version_update/upgrade-path.yaml
-
-    # CSV and base manifest updates
-    UpdateConfigVersion csi-unity $update_config_version
-    UpdateRelatedImages csi-unity $update_config_version
-    UpdateBaseRelatedImages csi-unity $update_config_version
-
-    # Test driver config update
-    cp -a --update tests/config/driverconfig/unity/v$previous_patch_driver_version \
-          tests/config/driverconfig/unity/v$driver_version_update
-    DeleteIfExists tests/config/driverconfig/unity/v$previous_patch_driver_version
-
-    yq eval -i 'with(select(.spec.template.spec.containers[5].name == "driver"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' \
-        tests/config/driverconfig/unity/v$driver_version_update/controller.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "driver"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' \
-        tests/config/driverconfig/unity/v$driver_version_update/node.yaml
-
-    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' \
-        tests/config/driverconfig/unity/v$driver_version_update/upgrade-path.yaml
-
-    # Update e2e test sample versions
-    for f in $(find tests/e2e/testfiles -type f -name "storage_csm_unity*"); do
-        yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
-    done
-    for f in $(find tests/e2e/testfiles/minimal-testfiles -type f -name "storage_csm_unity*"); do
-        yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
-    done
-
-    # Patch manager.yaml and operator.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[6].value = "'"$new_image_version"'")' config/manager/manager.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[6].value = "'"$new_image_version"'")' deploy/operator.yaml
-} 
-
-# For Updating COSI Driver Major Version
-UpdateMajorCOSIDriver() {
-    driver_version_update=$1
-    release_type=$2
-
-    major_version=${driver_version_update%%.*}
-    minor_version_tmp=${driver_version_update#*.}
-    minor_version=${minor_version_tmp%%.*}
-    patch_version=${driver_version_update##*.}
-
-    previous_major_driver_version=$(GetLatestDriverVersion "storage_csm_cosi")
-    driver_sample_file_suffix=$(echo "$driver_version_update" | tr -d '.' | tr -d '\n')
-    sample_version_folder="samples/cosi/v$major_version.$minor_version.0"
-
-    mkdir -p "$sample_version_folder/minimal-samples"
-
-    # Create and move new sample YAMLs
-    CreateLatestSampleFile "storage_csm_cosi" "$driver_sample_file_suffix"
-    CreateLatestMinimalSampleFile "cosi" "$driver_sample_file_suffix" "$sample_version_folder/minimal-samples"
-
-    update_config_version="v$driver_version_update"
-    if [ "$release_type" == "nightly" ]; then
-        new_image_version="quay.io/dell/container-storage-modules/cosi:nightly"
-    else
-        new_image_version="quay.io/dell/container-storage-modules/cosi:v$driver_version_update"
-    fi
-
-    # Update configVersion and image in sample YAMLs
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$sample_version_folder/storage_csm_cosi_v$driver_sample_file_suffix.yaml"
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' "$sample_version_folder/storage_csm_cosi_v$driver_sample_file_suffix.yaml"
-
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$sample_version_folder/minimal-samples/cosi_v$driver_sample_file_suffix.yaml"
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' "$sample_version_folder/minimal-samples/cosi_v$driver_sample_file_suffix.yaml"
-
-    cp -v --update "$sample_version_folder/storage_csm_cosi_v$driver_sample_file_suffix.yaml" config/samples/storage_v1_csm_cosi.yaml
-
-    # Operator config updates
-    cp -a --update operatorconfig/driverconfig/cosi/v$previous_major_driver_version/. operatorconfig/driverconfig/cosi/v$driver_version_update
-
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "objectstorage-provisioner"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' operatorconfig/driverconfig/cosi/v$driver_version_update/controller.yaml
-
-    # Delete N-3 versioned sample folder and driver config
-    delete_minor_version=$((minor_version - 3))
-    driver_delete_version="$major_version.$delete_minor_version.0"
-    DeleteIfExists "samples/v$driver_delete_version"
-    DeleteIfExists operatorconfig/driverconfig/cosi/v$driver_delete_version
-
-    # Upgrade path
-    min_upgrade_path=$(GetMinUpgradePath "storage_csm_cosi")
-    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' operatorconfig/driverconfig/cosi/v$driver_version_update/upgrade-path.yaml
-
-    # CSVs
-    UpdateConfigVersion cosi "$update_config_version"
-    if [ "$release_type" == "nightly" ]; then
-        UpdateNightlyRelatedImages cosi
-        UpdateNightlyBaseRelatedImages cosi
-    else
-        UpdateRelatedImages cosi "$update_config_version" "$previous_major_driver_version"
-        UpdateBaseRelatedImages cosi "$update_config_version" "$previous_major_driver_version"
-    fi
-
-    # Test driver config
-    cp -a --update tests/config/driverconfig/cosi/v$previous_major_driver_version/. tests/config/driverconfig/cosi/v$driver_version_update
-    DeleteIfExists tests/config/driverconfig/cosi/v$driver_delete_version
-
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "objectstorage-provisioner"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' tests/config/driverconfig/cosi/v$driver_version_update/controller.yaml
-
-    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' tests/config/driverconfig/cosi/v$driver_version_update/upgrade-path.yaml
-
-    # E2E testfiles
-    for f in $(find tests/e2e/testfiles -type f -name "storage_csm_cosi*"); do
-        yq eval -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
-    done
-
-    for f in $(find tests/e2e/testfiles/minimal-testfiles -type f -name "storage_csm_cosi*"); do
-        yq eval -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
-    done
-
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[8].value = "'"$new_image_version"'")' config/manager/manager.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[8].value = "'"$new_image_version"'")' deploy/operator.yaml
-}
-
-# For Updating COSI Driver Patch Version
-UpdatePatchCOSIDriver() {
-    driver_version_update=$1
-    release_type=$2
-
-    # Extract version components
-    major_version=${driver_version_update%%.*}
-    minor_tmp=${driver_version_update#*.}
-    minor_version=${minor_tmp%%.*}
-    patch_version=${driver_version_update##*.}
-
-    previous_patch_version=$((patch_version - 1))
-    previous_patch_driver_version="$major_version.$minor_version.$previous_patch_version"
-
-    driver_sample_file_suffix=$(echo "$driver_version_update" | tr -d '.' | tr -d '\n')
-    previous_driver_sample_file_suffix=$(echo "$previous_patch_driver_version" | tr -d '.' | tr -d '\n')
-
-    sample_version_folder="samples/cosi/v$major_version.$minor_version.0"
-    mkdir -p "$sample_version_folder/minimal-samples"
-
-    # Copy previous patch as new patch
-    cp -v --update "$sample_version_folder/storage_csm_cosi_v$previous_driver_sample_file_suffix.yaml" \
-          "$sample_version_folder/storage_csm_cosi_v$driver_sample_file_suffix.yaml"
-    cp -v --update "$sample_version_folder/minimal-samples/cosi_v$previous_driver_sample_file_suffix.yaml" \
-          "$sample_version_folder/minimal-samples/cosi_v$driver_sample_file_suffix.yaml"
-
-    update_config_version="v$driver_version_update"
-    if [ "$release_type" == "nightly" ]; then
-        new_image_version="quay.io/dell/container-storage-modules/cosi:nightly"
-    else
-        new_image_version="quay.io/dell/container-storage-modules/cosi:v$driver_version_update"
-    fi
-
-    # Update configVersion and image in new sample
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' \
-        "$sample_version_folder/storage_csm_cosi_v$driver_sample_file_suffix.yaml"
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' \
-        "$sample_version_folder/storage_csm_cosi_v$driver_sample_file_suffix.yaml"
-
-    yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' \
-        "$sample_version_folder/minimal-samples/cosi_v$driver_sample_file_suffix.yaml"
-    yq -i '.spec.driver.common.image = "'"$new_image_version"'"' \
-        "$sample_version_folder/minimal-samples/cosi_v$driver_sample_file_suffix.yaml"
-
-    # Operator config patch
-    cp -a --update operatorconfig/driverconfig/cosi/v$previous_patch_driver_version \
-          operatorconfig/driverconfig/cosi/v$driver_version_update
-    DeleteIfExists operatorconfig/driverconfig/cosi/v$previous_patch_driver_version
-
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "objectstorage-provisioner"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' \
-        operatorconfig/driverconfig/cosi/v$driver_version_update/controller.yaml
-
-    min_upgrade_path=$(GetMinUpgradePath "storage_csm_cosi")
-    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' \
-        operatorconfig/driverconfig/cosi/v$driver_version_update/upgrade-path.yaml
-
-    # CSV and image reference updates
-    UpdateConfigVersion cosi $update_config_version
-    if [ "$release_type" == "nightly" ]; then
-        UpdateNightlyRelatedImages cosi
-        UpdateNightlyBaseRelatedImages cosi
-    else
-        UpdateRelatedImages cosi $update_config_version
-        UpdateBaseRelatedImages cosi $update_config_version
-    fi
-
-    # Test driver config
-    cp -a --update tests/config/driverconfig/cosi/v$previous_patch_driver_version \
-          tests/config/driverconfig/cosi/v$driver_version_update
-    DeleteIfExists tests/config/driverconfig/cosi/v$previous_patch_driver_version
-
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "objectstorage-provisioner"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' \
-        tests/config/driverconfig/cosi/v$driver_version_update/controller.yaml
-
-    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' \
-        tests/config/driverconfig/cosi/v$driver_version_update/upgrade-path.yaml
-
-    # e2e test patching
-    for f in $(find tests/e2e/testfiles -type f -name "storage_csm_cosi*"); do
-        yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
-    done
-    for f in $(find tests/e2e/testfiles/minimal-testfiles -type f -name "storage_csm_cosi*"); do
-        yq -i '.spec.driver.configVersion = "'"$update_config_version"'"' "$f"
-    done
-
-    # Manager env image patch
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[8].value = "'"$new_image_version"'")' config/manager/manager.yaml
-    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env[8].value = "'"$new_image_version"'")' deploy/operator.yaml
-}
-
-UpdateBadDriver() {
-    driver_version_update=$1
-    # Extract the values of major_version, minor_version, and patch_version from the input string
-    major_version=${driver_version_update%%.*}
-    minor_version=${driver_version_update#*.}
-    minor_version=${minor_version%%.*}
-    patch_version=${driver_version_update##*.}
-
-    previous_minor_version=$((minor_version - 1))
-    previous_major_driver_version="$major_version.$previous_minor_version.$patch_version"
-
-    cp -a --update tests/config/driverconfig/badDriver/v$previous_major_driver_version/. tests/config/driverconfig/badDriver/v$driver_version_update
-    delete_minor_version=$((minor_version - 3))
-    driver_delete_version="$major_version.$delete_minor_version.$patch_version"
-    DeleteIfExists tests/config/driverconfig/badDriver/v$driver_delete_version
-}
-
 ExtractVersionFromSuffix() {
-    version_suffix=$1
+    local version_suffix=$1
     major=$((10#$(echo "$version_suffix" | cut -c1)))
     if [[ ${#version_suffix} -eq 4 ]]; then
         minor=$((10#$(echo "$version_suffix" | cut -c2-3)))
@@ -1489,40 +424,329 @@ ExtractVersionFromSuffix() {
     fi
 }
 
+# Helper function to check if version field exists in YAML file
+VersionFieldExists() {
+    local file_path=$1
+    local version_check=$(yq eval '.spec.version' "$file_path" 2>/dev/null)
+    if [[ "$version_check" == "null" || -z "$version_check" ]]; then
+        return 1  # version field doesn't exist
+    else
+        return 0  # version field exists
+    fi
+}
+
+# Generic driver update function
+UpdateDriverVersion() {
+    local driver_name=$1
+    local driver_version_update=$2
+    local update_type=$3  # "major" or "patch"
+    local csm_version_override=$4  # CSM version to use for .spec.version
+    
+    # Get n-1 and n-2 versions for proper version determination
+    local version_info=$(GetDriverVersionsFromConfig "$driver_name" "$driver_version_update")
+    local n_minus_1_version=$(echo "$version_info" | awk '{print $1}')
+    local n_minus_2_version=$(echo "$version_info" | awk '{print $2}')
+    
+    echo "📋 Driver: $driver_name, Current: $driver_version_update, n-1: $n_minus_1_version, n-2: $n_minus_2_version"
+    
+    # Parse driver configuration
+    local config_string="${DRIVER_CONFIGS[$driver_name]}"
+    IFS=':' read -ra CONFIG_ARRAY <<< "$config_string"
+    local image_name="${CONFIG_ARRAY[0]}"
+    local sample_prefix="${CONFIG_ARRAY[1]}"
+    local manager_env_index="${CONFIG_ARRAY[2]}"
+    local driver_container_name="${CONFIG_ARRAY[3]}"
+    local init_container_name="${CONFIG_ARRAY[4]}"
+    local testdata_all="${CONFIG_ARRAY[5]}"
+    local testdata_image="${CONFIG_ARRAY[6]}"
+    local n_minus_1_tests="${CONFIG_ARRAY[7]}"
+    
+    # Extract version components
+    local major_version=${driver_version_update%%.*}
+    local minor_version_tmp=${driver_version_update#*.}
+    local minor_version=${minor_version_tmp%%.*}
+    local patch_version=${driver_version_update##*.}
+    
+    local driver_sample_file_suffix=$(echo "$driver_version_update" | tr -d '.' | tr -d '\n')
+    
+    # Determine if we should update version field
+    local update_version_field=false
+    local update_version
+    local config_sample_file="config/samples/storage_v1_csm_${driver_name}.yaml"
+    
+    # Check if version field exists in the config sample file
+    if [ -f "$config_sample_file" ] && VersionFieldExists "$config_sample_file"; then
+        # Version field exists, update it with csm_version_override if provided, otherwise use driver version
+        update_version_field=true
+        if [ -n "$csm_version_override" ]; then
+            update_version="$csm_version_override"
+        else
+            update_version="v$driver_version_update"
+        fi
+    else
+        # Version field doesn't exist, don't update version field
+        update_version_field=false
+    fi
+    
+    # Determine image version
+    local new_image_version="quay.io/dell/container-storage-modules/$image_name:v$driver_version_update"
+    
+    # Determine sample folder path
+    local sample_version_folder
+    if [[ "$driver_name" == "cosi" ]]; then
+        sample_version_folder="samples/cosi/v$major_version.$minor_version.0"
+    else
+        sample_version_folder="samples/v$major_version.$minor_version.0"
+    fi
+    mkdir -p "$sample_version_folder/minimal-samples"
+    
+    if [ "$update_type" == "major" ]; then
+        # Major update logic - use n-1 version as the previous major version
+        local previous_major_driver_version="$n_minus_1_version"
+        
+        # Create sample and minimal sample
+        CreateLatestSampleFile "$sample_prefix" "$driver_sample_file_suffix"
+        CreateLatestMinimalSampleFile "$driver_name" "$driver_sample_file_suffix" "$sample_version_folder/minimal-samples"
+        
+        # Update samples
+        if [ "$update_version_field" = true ]; then
+            # Check each file before updating
+            local sample_file="$sample_version_folder/${sample_prefix}_v${driver_sample_file_suffix}.yaml"
+            if VersionFieldExists "$sample_file"; then
+                yq -i '.spec.version = "'"$update_version"'"' "$sample_file"
+            fi
+            
+            local minimal_sample_file="$sample_version_folder/minimal-samples/${driver_name}_v${driver_sample_file_suffix}.yaml"
+            if VersionFieldExists "$minimal_sample_file"; then
+                yq -i '.spec.version = "'"$update_version"'"' "$minimal_sample_file"
+            fi
+        fi
+        yq -i '.spec.driver.common.image = "'"$new_image_version"'"' "$sample_version_folder/${sample_prefix}_v${driver_sample_file_suffix}.yaml"
+        yq -i '.spec.driver.common.image = "'"$new_image_version"'"' "$sample_version_folder/minimal-samples/${driver_name}_v${driver_sample_file_suffix}.yaml"
+        
+        # Copy to config samples
+        cp -v --update "$sample_version_folder/${sample_prefix}_v${driver_sample_file_suffix}.yaml" "config/samples/storage_v1_csm_${driver_name}.yaml"
+        
+        # Operator config updates
+        cp -a --update "operatorconfig/driverconfig/$driver_name/v$previous_major_driver_version/." "operatorconfig/driverconfig/$driver_name/v$driver_version_update"
+        
+        # Update container images in operator configs
+        if [[ "$driver_name" == "cosi" ]]; then
+            yq eval -i 'with(select(.spec.template.spec.containers[0].name == "'"$driver_container_name"'"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' "operatorconfig/driverconfig/$driver_name/v$driver_version_update/controller.yaml"
+        else
+            yq eval -i 'with(select(.spec.template.spec.containers[5].name == "'"$driver_container_name"'"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' "operatorconfig/driverconfig/$driver_name/v$driver_version_update/controller.yaml"
+            yq eval -i 'with(select(.spec.template.spec.containers[0].name == "'"$driver_container_name"'"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' "operatorconfig/driverconfig/$driver_name/v$driver_version_update/node.yaml"
+            
+            # Update init container if specified
+            if [[ -n "$init_container_name" ]]; then
+                yq eval -i 'with(select(.spec.template.spec.initContainers[0].name == "'"$init_container_name"'"); .spec.template.spec.initContainers[0].image = "'"$new_image_version"'")' "operatorconfig/driverconfig/$driver_name/v$driver_version_update/node.yaml"
+            fi
+        fi
+        
+        # Delete N-3 version folder
+        local delete_minor_version=$((minor_version - 3))
+        local driver_delete_version="$major_version.$delete_minor_version.0"
+        DeleteIfExists "samples/v$driver_delete_version"
+        DeleteIfExists "operatorconfig/driverconfig/$driver_name/v$driver_delete_version"
+        
+    else
+        # Patch update logic
+        local previous_patch_version=$((patch_version - 1))
+        local previous_patch_driver_version="$major_version.$minor_version.$previous_patch_version"
+        local previous_driver_sample_file_suffix=$(echo "$previous_patch_driver_version" | tr -d '.' | tr -d '\n')
+        
+        # Copy previous patch files
+        cp -v --update "$sample_version_folder/${sample_prefix}_v${previous_driver_sample_file_suffix}.yaml" \
+              "$sample_version_folder/${sample_prefix}_v${driver_sample_file_suffix}.yaml"
+        cp -v --update "$sample_version_folder/minimal-samples/${driver_name}_v${previous_driver_sample_file_suffix}.yaml" \
+              "$sample_version_folder/minimal-samples/${driver_name}_v${driver_sample_file_suffix}.yaml"
+        
+        # Update copied files
+        if [ "$update_version_field" = true ]; then
+            # Check each file before updating
+            local sample_file="$sample_version_folder/${sample_prefix}_v${driver_sample_file_suffix}.yaml"
+            if VersionFieldExists "$sample_file"; then
+                yq -i '.spec.version = "'"$update_version"'"' "$sample_file"
+            fi
+            
+            local minimal_sample_file="$sample_version_folder/minimal-samples/${driver_name}_v${driver_sample_file_suffix}.yaml"
+            if VersionFieldExists "$minimal_sample_file"; then
+                yq -i '.spec.version = "'"$update_version"'"' "$minimal_sample_file"
+            fi
+        fi
+        yq -i '.spec.driver.common.image = "'"$new_image_version"'"' "$sample_version_folder/${sample_prefix}_v${driver_sample_file_suffix}.yaml"
+        yq -i '.spec.driver.common.image = "'"$new_image_version"'"' "$sample_version_folder/minimal-samples/${driver_name}_v${driver_sample_file_suffix}.yaml"
+        
+        # Operator config update
+        cp -a --update "operatorconfig/driverconfig/$driver_name/v$previous_patch_driver_version" \
+              "operatorconfig/driverconfig/$driver_name/v$driver_version_update"
+        DeleteIfExists "operatorconfig/driverconfig/$driver_name/v$previous_patch_driver_version"
+        
+        # Update container images
+        if [[ "$driver_name" == "cosi" ]]; then
+            yq eval -i 'with(select(.spec.template.spec.containers[0].name == "'"$driver_container_name"'"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' "operatorconfig/driverconfig/$driver_name/v$driver_version_update/controller.yaml"
+        else
+            yq eval -i 'with(select(.spec.template.spec.containers[5].name == "'"$driver_container_name"'"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' "operatorconfig/driverconfig/$driver_name/v$driver_version_update/controller.yaml"
+            yq eval -i 'with(select(.spec.template.spec.containers[0].name == "'"$driver_container_name"'"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' "operatorconfig/driverconfig/$driver_name/v$driver_version_update/node.yaml"
+            
+            if [[ -n "$init_container_name" ]]; then
+                yq eval -i 'with(select(.spec.template.spec.initContainers[0].name == "'"$init_container_name"'"); .spec.template.spec.initContainers[0].image = "'"$new_image_version"'")' "operatorconfig/driverconfig/$driver_name/v$driver_version_update/node.yaml"
+            fi
+        fi
+    fi
+    
+    # Update upgrade path
+    local min_upgrade_path=$(GetMinUpgradePath "$sample_prefix")
+    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' "operatorconfig/driverconfig/$driver_name/v$driver_version_update/upgrade-path.yaml"
+    
+    # CSV updates
+    UpdateVersion "$image_name" "$update_version"
+    if [ "$update_type" == "major" ]; then
+        local previous_major_driver_version=$(GetLatestDriverVersion "$sample_prefix")
+        UpdateRelatedImages "$image_name" "$update_version" "$previous_major_driver_version"
+        UpdateBaseRelatedImages "$image_name" "$update_version" "$previous_major_driver_version"
+    else
+        UpdateRelatedImages "$image_name" "$update_version"
+        UpdateBaseRelatedImages "$image_name" "$update_version"
+    fi
+    
+    # Update test data files
+    if [[ -n "$testdata_all" ]]; then
+        for i in $testdata_all; do
+            if [ "$update_version_field" = true ]; then
+                local testdata_file="pkg/modules/testdata/$i.yaml"
+                if VersionFieldExists "$testdata_file"; then
+                    yq -i '.spec.version = "'"$update_version"'"' "$testdata_file"
+                fi
+            fi
+        done
+    fi
+    
+    if [[ -n "$testdata_image" ]]; then
+        for i in $testdata_image; do
+            yq -i '.spec.driver.common.image = "'"$new_image_version"'"' "pkg/modules/testdata/$i.yaml"
+        done
+    fi
+    
+    # Test config updates
+    if [ "$update_type" == "major" ]; then
+        local previous_major_driver_version=$(GetLatestDriverVersion "$sample_prefix")
+        cp -a --update "tests/config/driverconfig/$driver_name/v$previous_major_driver_version/." "tests/config/driverconfig/$driver_name/v$driver_version_update"
+        local delete_minor_version=$((minor_version - 3))
+        local driver_delete_version="$major_version.$delete_minor_version.0"
+        DeleteIfExists "tests/config/driverconfig/$driver_name/v$driver_delete_version"
+    else
+        local previous_patch_version=$((patch_version - 1))
+        local previous_patch_driver_version="$major_version.$minor_version.$previous_patch_version"
+        cp -a --update "tests/config/driverconfig/$driver_name/v$previous_patch_driver_version" \
+              "tests/config/driverconfig/$driver_name/v$driver_version_update"
+        DeleteIfExists "tests/config/driverconfig/$driver_name/v$previous_patch_driver_version"
+    fi
+    
+    # Update test config container images
+    if [[ "$driver_name" == "cosi" ]]; then
+        yq eval -i 'with(select(.spec.template.spec.containers[0].name == "'"$driver_container_name"'"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' "tests/config/driverconfig/$driver_name/v$driver_version_update/controller.yaml"
+    else
+        yq eval -i 'with(select(.spec.template.spec.containers[5].name == "'"$driver_container_name"'"); .spec.template.spec.containers[5].image = "'"$new_image_version"'")' "tests/config/driverconfig/$driver_name/v$driver_version_update/controller.yaml"
+        yq eval -i 'with(select(.spec.template.spec.containers[0].name == "'"$driver_container_name"'"); .spec.template.spec.containers[0].image = "'"$new_image_version"'")' "tests/config/driverconfig/$driver_name/v$driver_version_update/node.yaml"
+        
+        if [[ -n "$init_container_name" ]]; then
+            yq eval -i 'with(select(.spec.template.spec.initContainers[0].name == "'"$init_container_name"'"); .spec.template.spec.initContainers[0].image = "'"$new_image_version"'")' "tests/config/driverconfig/$driver_name/v$driver_version_update/node.yaml"
+        fi
+    fi
+    
+    yq -i '.minUpgradePath = "'"v$min_upgrade_path"'"' "tests/config/driverconfig/$driver_name/v$driver_version_update/upgrade-path.yaml"
+    
+    # Update e2e testfiles
+    if [ "$update_version_field" = true ]; then
+        for f in $(find tests/e2e/testfiles -type f -name "${sample_prefix}*"); do
+            if VersionFieldExists "$f"; then
+                yq -i '.spec.version = "'"$update_version"'"' "$f"
+            fi
+        done
+        for f in $(find tests/e2e/testfiles/minimal-testfiles -type f -name "${sample_prefix}*"); do
+            if VersionFieldExists "$f"; then
+                yq -i '.spec.version = "'"$update_version"'"' "$f"
+            fi
+        done
+    fi
+    
+    # Update n-1 test files if specified
+    if [[ -n "$n_minus_1_tests" ]]; then
+        local second_previous_driver_version=$(GetSecondLatestDriverVersion "$sample_prefix")
+        local second_previous_driver_config_version="v$second_previous_driver_version"
+        local second_previous_driver_image_version="quay.io/dell/container-storage-modules/$image_name:v$second_previous_driver_version"
+        
+        for f in $n_minus_1_tests; do
+            if [ "$update_version_field" = true ]; then
+                local n_minus_1_file="tests/e2e/testfiles/$f.yaml"
+                if VersionFieldExists "$n_minus_1_file"; then
+                    yq -i '.spec.version = "'"$second_previous_driver_version"'"' "$n_minus_1_file"
+                fi
+            fi
+            yq -i '.spec.driver.common.image = "'"$second_previous_driver_image_version"'"' "tests/e2e/testfiles/$f.yaml"
+        done
+    fi
+    
+    # Update manager environment
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env['"$manager_env_index"'].value = "'"$new_image_version"'")' config/manager/manager.yaml
+    yq eval -i 'with(select(.spec.template.spec.containers[0].name == "manager"); .spec.template.spec.containers[0].env['"$manager_env_index"'].value = "'"$new_image_version"'")' deploy/operator.yaml
+}
+
+# BadDriver update function
+UpdateBadDriver() {
+    local driver_version=$1
+    
+    if [ -z "$driver_version" -o "$driver_version" == " " ]; then
+        return
+    fi
+    
+    major_version=${driver_version%%.*}
+    minor_version_tmp=${driver_version#*.}
+    minor_version=${minor_version_tmp%%.*}
+    patch_version=${driver_version##*.}
+    previous_minor_version=$((minor_version - 1))
+    previous_major_driver_version="$major_version.$previous_minor_version.$patch_version"
+    cp -a --update "tests/config/driverconfig/badDriver/v$previous_major_driver_version/." "tests/config/driverconfig/badDriver/v$driver_version"
+    delete_minor_version=$((minor_version - 3))
+    driver_delete_version="$major_version.$delete_minor_version.$patch_version"
+    DeleteIfExists "tests/config/driverconfig/badDriver/v$driver_delete_version"
+}
+
 #----------------------------Entry Point------------------------------------------
 
 if [ "$driver_update_type" == "major" ]; then
-    if [ ! -z "$powerscale_version" -a "$powerscale_version" != " " ]; then
-        UpdateMajorPowerflexDriver $powerflex_version $release_type
-        UpdateMajorPowermaxDriver $powermax_version $release_type
-        UpdateMajorPowerscaleDriver $powerscale_version $release_type
-        UpdateMajorPowerstoreDriver $powerstore_version $release_type
-        UpdateMajorUnityDriver $unity_version $release_type
-        UpdateMajorCOSIDriver $cosi_version $release_type
-        UpdateBadDriver $powerscale_version
-    else
-        echo "invalid powerscale_version"
-        exit 1
-    fi
-elif [ "$driver_update_type" == "patch" ]; then
     if [ ! -z "$powerflex_version" -a "$powerflex_version" != " " ]; then
-        UpdatePatchPowerflexDriver $powerflex_version $release_type
+        UpdateDriverVersion "powerflex" "$powerflex_version" "major" "$csm_version"
+        UpdateBadDriver "$powerflex_version"
     fi
     if [ ! -z "$powermax_version" -a "$powermax_version" != " " ]; then
-        UpdatePatchPowermaxDriver $powermax_version $release_type
+        UpdateDriverVersion "powermax" "$powermax_version" "major" "$csm_version"
+        UpdateBadDriver "$powermax_version"
     fi
     if [ ! -z "$powerscale_version" -a "$powerscale_version" != " " ]; then
-        UpdatePatchPowerscaleDriver $powerscale_version $release_type
+        UpdateDriverVersion "powerscale" "$powerscale_version" "major" "$csm_version"
+        UpdateBadDriver "$powerscale_version"
     fi
     if [ ! -z "$powerstore_version" -a "$powerstore_version" != " " ]; then
-        UpdatePatchPowerstoreDriver $powerstore_version $release_type
+        UpdateDriverVersion "powerstore" "$powerstore_version" "major" "$csm_version"
+        UpdateBadDriver "$powerstore_version"
     fi
     if [ ! -z "$unity_version" -a "$unity_version" != " " ]; then
-        UpdatePatchUnityDriver $unity_version $release_type
+        UpdateDriverVersion "unity" "$unity_version" "major" "$csm_version"
+        UpdateBadDriver "$unity_version"
     fi
     if [ ! -z "$cosi_version" -a "$cosi_version" != " " ]; then
-        UpdatePatchCOSIDriver $cosi_version $release_type
+        UpdateDriverVersion "cosi" "$cosi_version" "major" "$csm_version"
+        UpdateBadDriver "$cosi_version"
     fi
+elif [ "$driver_update_type" == "patch" ]; then
+    [ ! -z "$powerflex_version" ] && UpdateDriverVersion "powerflex" "$powerflex_version" "patch" "$csm_version"
+    [ ! -z "$powermax_version" ] && UpdateDriverVersion "powermax" "$powermax_version" "patch" "$csm_version"
+    [ ! -z "$powerscale_version" ] && UpdateDriverVersion "powerscale" "$powerscale_version" "patch" "$csm_version"
+    [ ! -z "$powerstore_version" ] && UpdateDriverVersion "powerstore" "$powerstore_version" "patch" "$csm_version"
+    [ ! -z "$unity_version" ] && UpdateDriverVersion "unity" "$unity_version" "patch" "$csm_version"
+    [ ! -z "$cosi_version" ] && UpdateDriverVersion "cosi" "$cosi_version" "patch" "$csm_version"
 else
     echo "invalid driver_update_type"
     exit 1
