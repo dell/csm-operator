@@ -5,7 +5,7 @@ metadata:
     alm-examples: "[]"
     capabilities: Seamless Upgrades
     categories: Storage
-    containerImage: quay.io/dell/container-storage-modules/dell-csm-operator:v1.11.0
+    containerImage: quay.io/dell/container-storage-modules/dell-csm-operator:v1.11.1
     createdAt: "2022-03-29T11:59:59Z"
     description: Easily install and manage Dell’s CSI Drivers and CSM
     features.operators.openshift.io/disconnected: "true"
@@ -17,7 +17,7 @@ metadata:
     features.operators.openshift.io/token-auth-gcp: "false"
     repository: https://github.com/dell/csm-operator
     support: Dell Technologies
-  name: dell-csm-operator.v1.11.0
+  name: dell-csm-operator.v1.11.1
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -65,9 +65,9 @@ spec:
           - description: Commander is the image tag for the Container
             displayName: Authorization Commander Container Image
             path: driver.common.commander
-          - description:
-              ConfigSecretProviderClass is the SecretProviderClass Object details
-              for config secret Applicable from CSM v1.15 onwards
+          - description: |-
+              ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+              Applicable from CSM v1.15 onwards
             displayName: Config SecretProviderClass details
             path: driver.common.configSecretProviderClass
           - description:
@@ -114,10 +114,9 @@ spec:
           - description: Name is the name of Container
             displayName: Container Name
             path: driver.common.name
-          - description:
-              NodeSelector is a selector which must be true for the pod to
-              fit on a node. Selector which must match a node's labels for the pod to
-              be scheduled on that node.
+          - description: |-
+              NodeSelector is a selector which must be true for the pod to fit on a node.
+              Selector which must match a node's labels for the pod to be scheduled on that node.
             displayName: NodeSelector
             path: driver.common.nodeSelector
           - description: Opa is the image tag for the Container
@@ -172,9 +171,9 @@ spec:
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: driver.common.redisReplicas
-          - description:
-              RedisSecretProviderClass is the SecretProviderClass Object details
-              for redis Applicable from CSM v1.15 onwards
+          - description: |-
+              RedisSecretProviderClass is the SecretProviderClass Object details for redis
+              Applicable from CSM v1.15 onwards
             displayName: Redis SecretProviderClass details
             path: driver.common.redisSecretProviderClass
           - description:
@@ -216,11 +215,10 @@ spec:
               deployment
             displayName: Role Service Replicas
             path: driver.common.roleServiceReplicas
-          - description:
-              SecretProviderClasses is a collection of secret provider classes
-              for retrieving secrets from external providers for storage system credentials
-              Applicable from CSM v1.15 onwards Only one of SecretProviderClasses or Secrets
-              must be specified (mutually exclusive)
+          - description: |-
+              SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
+              Applicable from CSM v1.15 onwards
+              Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
             displayName: Secret Provider Classes
             path: driver.common.secretProviderClasses
           - description: Conjur is the list SecretProviderClass names provided by Conjur
@@ -241,10 +239,10 @@ spec:
           - description: Vault is the list SecretProviderClass names provided by Vault
             displayName: Vault SecretProviderClass Names
             path: driver.common.secretProviderClasses.vault
-          - description:
-              Secrets is a collection of kubernetes secrets for storage system
-              credentials Applicable from CSM v1.15 onwards Only one of SecretProviderClasses
-              or Secrets must be specified (mutually exclusive)
+          - description: |-
+              Secrets is a collection of kubernetes secrets for storage system credentials
+              Applicable from CSM v1.15 onwards
+              Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
             displayName: Secrets
             path: driver.common.secrets
           - description: Sentinel is the name of the sentinel statefulSet
@@ -277,7 +275,9 @@ spec:
           - description: Tolerations is the list of tolerations for the driver pods
             displayName: Tolerations
             path: driver.common.tolerations
-          - description: Vaults are the vault configurations Applicable till CSM v1.14
+          - description: |-
+              Vaults are the vault configurations
+              Applicable till CSM v1.14
             displayName: Vault Configurations
             path: driver.common.vaultConfigurations
           - description: Address is the address for this vault
@@ -339,9 +339,9 @@ spec:
           - description: Commander is the image tag for the Container
             displayName: Authorization Commander Container Image
             path: driver.controller.commander
-          - description:
-              ConfigSecretProviderClass is the SecretProviderClass Object details
-              for config secret Applicable from CSM v1.15 onwards
+          - description: |-
+              ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+              Applicable from CSM v1.15 onwards
             displayName: Config SecretProviderClass details
             path: driver.controller.configSecretProviderClass
           - description:
@@ -388,10 +388,9 @@ spec:
           - description: Name is the name of Container
             displayName: Container Name
             path: driver.controller.name
-          - description:
-              NodeSelector is a selector which must be true for the pod to
-              fit on a node. Selector which must match a node's labels for the pod to
-              be scheduled on that node.
+          - description: |-
+              NodeSelector is a selector which must be true for the pod to fit on a node.
+              Selector which must match a node's labels for the pod to be scheduled on that node.
             displayName: NodeSelector
             path: driver.controller.nodeSelector
           - description: Opa is the image tag for the Container
@@ -446,9 +445,9 @@ spec:
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: driver.controller.redisReplicas
-          - description:
-              RedisSecretProviderClass is the SecretProviderClass Object details
-              for redis Applicable from CSM v1.15 onwards
+          - description: |-
+              RedisSecretProviderClass is the SecretProviderClass Object details for redis
+              Applicable from CSM v1.15 onwards
             displayName: Redis SecretProviderClass details
             path: driver.controller.redisSecretProviderClass
           - description:
@@ -490,11 +489,10 @@ spec:
               deployment
             displayName: Role Service Replicas
             path: driver.controller.roleServiceReplicas
-          - description:
-              SecretProviderClasses is a collection of secret provider classes
-              for retrieving secrets from external providers for storage system credentials
-              Applicable from CSM v1.15 onwards Only one of SecretProviderClasses or Secrets
-              must be specified (mutually exclusive)
+          - description: |-
+              SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
+              Applicable from CSM v1.15 onwards
+              Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
             displayName: Secret Provider Classes
             path: driver.controller.secretProviderClasses
           - description: Conjur is the list SecretProviderClass names provided by Conjur
@@ -515,10 +513,10 @@ spec:
           - description: Vault is the list SecretProviderClass names provided by Vault
             displayName: Vault SecretProviderClass Names
             path: driver.controller.secretProviderClasses.vault
-          - description:
-              Secrets is a collection of kubernetes secrets for storage system
-              credentials Applicable from CSM v1.15 onwards Only one of SecretProviderClasses
-              or Secrets must be specified (mutually exclusive)
+          - description: |-
+              Secrets is a collection of kubernetes secrets for storage system credentials
+              Applicable from CSM v1.15 onwards
+              Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
             displayName: Secrets
             path: driver.controller.secrets
           - description: Sentinel is the name of the sentinel statefulSet
@@ -551,7 +549,9 @@ spec:
           - description: Tolerations is the list of tolerations for the driver pods
             displayName: Tolerations
             path: driver.controller.tolerations
-          - description: Vaults are the vault configurations Applicable till CSM v1.14
+          - description: |-
+              Vaults are the vault configurations
+              Applicable till CSM v1.14
             displayName: Vault Configurations
             path: driver.controller.vaultConfigurations
           - description: Address is the address for this vault
@@ -623,9 +623,9 @@ spec:
           - description: Commander is the image tag for the Container
             displayName: Authorization Commander Container Image
             path: driver.initContainers[0].commander
-          - description:
-              ConfigSecretProviderClass is the SecretProviderClass Object details
-              for config secret Applicable from CSM v1.15 onwards
+          - description: |-
+              ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+              Applicable from CSM v1.15 onwards
             displayName: Config SecretProviderClass details
             path: driver.initContainers[0].configSecretProviderClass
           - description:
@@ -672,10 +672,9 @@ spec:
           - description: Name is the name of Container
             displayName: Container Name
             path: driver.initContainers[0].name
-          - description:
-              NodeSelector is a selector which must be true for the pod to
-              fit on a node. Selector which must match a node's labels for the pod to
-              be scheduled on that node.
+          - description: |-
+              NodeSelector is a selector which must be true for the pod to fit on a node.
+              Selector which must match a node's labels for the pod to be scheduled on that node.
             displayName: NodeSelector
             path: driver.initContainers[0].nodeSelector
           - description: Opa is the image tag for the Container
@@ -730,9 +729,9 @@ spec:
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: driver.initContainers[0].redisReplicas
-          - description:
-              RedisSecretProviderClass is the SecretProviderClass Object details
-              for redis Applicable from CSM v1.15 onwards
+          - description: |-
+              RedisSecretProviderClass is the SecretProviderClass Object details for redis
+              Applicable from CSM v1.15 onwards
             displayName: Redis SecretProviderClass details
             path: driver.initContainers[0].redisSecretProviderClass
           - description:
@@ -774,11 +773,10 @@ spec:
               deployment
             displayName: Role Service Replicas
             path: driver.initContainers[0].roleServiceReplicas
-          - description:
-              SecretProviderClasses is a collection of secret provider classes
-              for retrieving secrets from external providers for storage system credentials
-              Applicable from CSM v1.15 onwards Only one of SecretProviderClasses or Secrets
-              must be specified (mutually exclusive)
+          - description: |-
+              SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
+              Applicable from CSM v1.15 onwards
+              Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
             displayName: Secret Provider Classes
             path: driver.initContainers[0].secretProviderClasses
           - description: Conjur is the list SecretProviderClass names provided by Conjur
@@ -799,10 +797,10 @@ spec:
           - description: Vault is the list SecretProviderClass names provided by Vault
             displayName: Vault SecretProviderClass Names
             path: driver.initContainers[0].secretProviderClasses.vault
-          - description:
-              Secrets is a collection of kubernetes secrets for storage system
-              credentials Applicable from CSM v1.15 onwards Only one of SecretProviderClasses
-              or Secrets must be specified (mutually exclusive)
+          - description: |-
+              Secrets is a collection of kubernetes secrets for storage system credentials
+              Applicable from CSM v1.15 onwards
+              Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
             displayName: Secrets
             path: driver.initContainers[0].secrets
           - description: Sentinel is the name of the sentinel statefulSet
@@ -835,7 +833,9 @@ spec:
           - description: Tolerations is the list of tolerations for the driver pods
             displayName: Tolerations
             path: driver.initContainers[0].tolerations
-          - description: Vaults are the vault configurations Applicable till CSM v1.14
+          - description: |-
+              Vaults are the vault configurations
+              Applicable till CSM v1.14
             displayName: Vault Configurations
             path: driver.initContainers[0].vaultConfigurations
           - description: Address is the address for this vault
@@ -894,9 +894,9 @@ spec:
           - description: Commander is the image tag for the Container
             displayName: Authorization Commander Container Image
             path: driver.node.commander
-          - description:
-              ConfigSecretProviderClass is the SecretProviderClass Object details
-              for config secret Applicable from CSM v1.15 onwards
+          - description: |-
+              ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+              Applicable from CSM v1.15 onwards
             displayName: Config SecretProviderClass details
             path: driver.node.configSecretProviderClass
           - description:
@@ -943,10 +943,9 @@ spec:
           - description: Name is the name of Container
             displayName: Container Name
             path: driver.node.name
-          - description:
-              NodeSelector is a selector which must be true for the pod to
-              fit on a node. Selector which must match a node's labels for the pod to
-              be scheduled on that node.
+          - description: |-
+              NodeSelector is a selector which must be true for the pod to fit on a node.
+              Selector which must match a node's labels for the pod to be scheduled on that node.
             displayName: NodeSelector
             path: driver.node.nodeSelector
           - description: Opa is the image tag for the Container
@@ -1001,9 +1000,9 @@ spec:
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: driver.node.redisReplicas
-          - description:
-              RedisSecretProviderClass is the SecretProviderClass Object details
-              for redis Applicable from CSM v1.15 onwards
+          - description: |-
+              RedisSecretProviderClass is the SecretProviderClass Object details for redis
+              Applicable from CSM v1.15 onwards
             displayName: Redis SecretProviderClass details
             path: driver.node.redisSecretProviderClass
           - description:
@@ -1045,11 +1044,10 @@ spec:
               deployment
             displayName: Role Service Replicas
             path: driver.node.roleServiceReplicas
-          - description:
-              SecretProviderClasses is a collection of secret provider classes
-              for retrieving secrets from external providers for storage system credentials
-              Applicable from CSM v1.15 onwards Only one of SecretProviderClasses or Secrets
-              must be specified (mutually exclusive)
+          - description: |-
+              SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
+              Applicable from CSM v1.15 onwards
+              Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
             displayName: Secret Provider Classes
             path: driver.node.secretProviderClasses
           - description: Conjur is the list SecretProviderClass names provided by Conjur
@@ -1070,10 +1068,10 @@ spec:
           - description: Vault is the list SecretProviderClass names provided by Vault
             displayName: Vault SecretProviderClass Names
             path: driver.node.secretProviderClasses.vault
-          - description:
-              Secrets is a collection of kubernetes secrets for storage system
-              credentials Applicable from CSM v1.15 onwards Only one of SecretProviderClasses
-              or Secrets must be specified (mutually exclusive)
+          - description: |-
+              Secrets is a collection of kubernetes secrets for storage system credentials
+              Applicable from CSM v1.15 onwards
+              Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
             displayName: Secrets
             path: driver.node.secrets
           - description: Sentinel is the name of the sentinel statefulSet
@@ -1106,7 +1104,9 @@ spec:
           - description: Tolerations is the list of tolerations for the driver pods
             displayName: Tolerations
             path: driver.node.tolerations
-          - description: Vaults are the vault configurations Applicable till CSM v1.14
+          - description: |-
+              Vaults are the vault configurations
+              Applicable till CSM v1.14
             displayName: Vault Configurations
             path: driver.node.vaultConfigurations
           - description: Address is the address for this vault
@@ -1168,9 +1168,9 @@ spec:
           - description: Commander is the image tag for the Container
             displayName: Authorization Commander Container Image
             path: driver.sideCars[0].commander
-          - description:
-              ConfigSecretProviderClass is the SecretProviderClass Object details
-              for config secret Applicable from CSM v1.15 onwards
+          - description: |-
+              ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+              Applicable from CSM v1.15 onwards
             displayName: Config SecretProviderClass details
             path: driver.sideCars[0].configSecretProviderClass
           - description:
@@ -1217,10 +1217,9 @@ spec:
           - description: Name is the name of Container
             displayName: Container Name
             path: driver.sideCars[0].name
-          - description:
-              NodeSelector is a selector which must be true for the pod to
-              fit on a node. Selector which must match a node's labels for the pod to
-              be scheduled on that node.
+          - description: |-
+              NodeSelector is a selector which must be true for the pod to fit on a node.
+              Selector which must match a node's labels for the pod to be scheduled on that node.
             displayName: NodeSelector
             path: driver.sideCars[0].nodeSelector
           - description: Opa is the image tag for the Container
@@ -1275,9 +1274,9 @@ spec:
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: driver.sideCars[0].redisReplicas
-          - description:
-              RedisSecretProviderClass is the SecretProviderClass Object details
-              for redis Applicable from CSM v1.15 onwards
+          - description: |-
+              RedisSecretProviderClass is the SecretProviderClass Object details for redis
+              Applicable from CSM v1.15 onwards
             displayName: Redis SecretProviderClass details
             path: driver.sideCars[0].redisSecretProviderClass
           - description:
@@ -1319,11 +1318,10 @@ spec:
               deployment
             displayName: Role Service Replicas
             path: driver.sideCars[0].roleServiceReplicas
-          - description:
-              SecretProviderClasses is a collection of secret provider classes
-              for retrieving secrets from external providers for storage system credentials
-              Applicable from CSM v1.15 onwards Only one of SecretProviderClasses or Secrets
-              must be specified (mutually exclusive)
+          - description: |-
+              SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
+              Applicable from CSM v1.15 onwards
+              Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
             displayName: Secret Provider Classes
             path: driver.sideCars[0].secretProviderClasses
           - description: Conjur is the list SecretProviderClass names provided by Conjur
@@ -1344,10 +1342,10 @@ spec:
           - description: Vault is the list SecretProviderClass names provided by Vault
             displayName: Vault SecretProviderClass Names
             path: driver.sideCars[0].secretProviderClasses.vault
-          - description:
-              Secrets is a collection of kubernetes secrets for storage system
-              credentials Applicable from CSM v1.15 onwards Only one of SecretProviderClasses
-              or Secrets must be specified (mutually exclusive)
+          - description: |-
+              Secrets is a collection of kubernetes secrets for storage system credentials
+              Applicable from CSM v1.15 onwards
+              Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
             displayName: Secrets
             path: driver.sideCars[0].secrets
           - description: Sentinel is the name of the sentinel statefulSet
@@ -1380,7 +1378,9 @@ spec:
           - description: Tolerations is the list of tolerations for the driver pods
             displayName: Tolerations
             path: driver.sideCars[0].tolerations
-          - description: Vaults are the vault configurations Applicable till CSM v1.14
+          - description: |-
+              Vaults are the vault configurations
+              Applicable till CSM v1.14
             displayName: Vault Configurations
             path: driver.sideCars[0].vaultConfigurations
           - description: Address is the address for this vault
@@ -1453,9 +1453,9 @@ spec:
           - description: Commander is the image tag for the Container
             displayName: Authorization Commander Container Image
             path: modules[0].components[0].commander
-          - description:
-              ConfigSecretProviderClass is the SecretProviderClass Object details
-              for config secret Applicable from CSM v1.15 onwards
+          - description: |-
+              ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+              Applicable from CSM v1.15 onwards
             displayName: Config SecretProviderClass details
             path: modules[0].components[0].configSecretProviderClass
           - description:
@@ -1502,10 +1502,9 @@ spec:
           - description: Name is the name of Container
             displayName: Container Name
             path: modules[0].components[0].name
-          - description:
-              NodeSelector is a selector which must be true for the pod to
-              fit on a node. Selector which must match a node's labels for the pod to
-              be scheduled on that node.
+          - description: |-
+              NodeSelector is a selector which must be true for the pod to fit on a node.
+              Selector which must match a node's labels for the pod to be scheduled on that node.
             displayName: NodeSelector
             path: modules[0].components[0].nodeSelector
           - description: Opa is the image tag for the Container
@@ -1560,9 +1559,9 @@ spec:
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: modules[0].components[0].redisReplicas
-          - description:
-              RedisSecretProviderClass is the SecretProviderClass Object details
-              for redis Applicable from CSM v1.15 onwards
+          - description: |-
+              RedisSecretProviderClass is the SecretProviderClass Object details for redis
+              Applicable from CSM v1.15 onwards
             displayName: Redis SecretProviderClass details
             path: modules[0].components[0].redisSecretProviderClass
           - description:
@@ -1604,11 +1603,10 @@ spec:
               deployment
             displayName: Role Service Replicas
             path: modules[0].components[0].roleServiceReplicas
-          - description:
-              SecretProviderClasses is a collection of secret provider classes
-              for retrieving secrets from external providers for storage system credentials
-              Applicable from CSM v1.15 onwards Only one of SecretProviderClasses or Secrets
-              must be specified (mutually exclusive)
+          - description: |-
+              SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
+              Applicable from CSM v1.15 onwards
+              Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
             displayName: Secret Provider Classes
             path: modules[0].components[0].secretProviderClasses
           - description: Conjur is the list SecretProviderClass names provided by Conjur
@@ -1629,10 +1627,10 @@ spec:
           - description: Vault is the list SecretProviderClass names provided by Vault
             displayName: Vault SecretProviderClass Names
             path: modules[0].components[0].secretProviderClasses.vault
-          - description:
-              Secrets is a collection of kubernetes secrets for storage system
-              credentials Applicable from CSM v1.15 onwards Only one of SecretProviderClasses
-              or Secrets must be specified (mutually exclusive)
+          - description: |-
+              Secrets is a collection of kubernetes secrets for storage system credentials
+              Applicable from CSM v1.15 onwards
+              Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
             displayName: Secrets
             path: modules[0].components[0].secrets
           - description: Sentinel is the name of the sentinel statefulSet
@@ -1665,7 +1663,9 @@ spec:
           - description: Tolerations is the list of tolerations for the driver pods
             displayName: Tolerations
             path: modules[0].components[0].tolerations
-          - description: Vaults are the vault configurations Applicable till CSM v1.14
+          - description: |-
+              Vaults are the vault configurations
+              Applicable till CSM v1.14
             displayName: Vault Configurations
             path: modules[0].components[0].vaultConfigurations
           - description: Address is the address for this vault
@@ -1732,9 +1732,9 @@ spec:
           - description: Commander is the image tag for the Container
             displayName: Authorization Commander Container Image
             path: modules[0].initContainer[0].commander
-          - description:
-              ConfigSecretProviderClass is the SecretProviderClass Object details
-              for config secret Applicable from CSM v1.15 onwards
+          - description: |-
+              ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
+              Applicable from CSM v1.15 onwards
             displayName: Config SecretProviderClass details
             path: modules[0].initContainer[0].configSecretProviderClass
           - description:
@@ -1781,10 +1781,9 @@ spec:
           - description: Name is the name of Container
             displayName: Container Name
             path: modules[0].initContainer[0].name
-          - description:
-              NodeSelector is a selector which must be true for the pod to
-              fit on a node. Selector which must match a node's labels for the pod to
-              be scheduled on that node.
+          - description: |-
+              NodeSelector is a selector which must be true for the pod to fit on a node.
+              Selector which must match a node's labels for the pod to be scheduled on that node.
             displayName: NodeSelector
             path: modules[0].initContainer[0].nodeSelector
           - description: Opa is the image tag for the Container
@@ -1839,9 +1838,9 @@ spec:
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: modules[0].initContainer[0].redisReplicas
-          - description:
-              RedisSecretProviderClass is the SecretProviderClass Object details
-              for redis Applicable from CSM v1.15 onwards
+          - description: |-
+              RedisSecretProviderClass is the SecretProviderClass Object details for redis
+              Applicable from CSM v1.15 onwards
             displayName: Redis SecretProviderClass details
             path: modules[0].initContainer[0].redisSecretProviderClass
           - description:
@@ -1883,11 +1882,10 @@ spec:
               deployment
             displayName: Role Service Replicas
             path: modules[0].initContainer[0].roleServiceReplicas
-          - description:
-              SecretProviderClasses is a collection of secret provider classes
-              for retrieving secrets from external providers for storage system credentials
-              Applicable from CSM v1.15 onwards Only one of SecretProviderClasses or Secrets
-              must be specified (mutually exclusive)
+          - description: |-
+              SecretProviderClasses is a collection of secret provider classes for retrieving secrets from external providers for storage system credentials
+              Applicable from CSM v1.15 onwards
+              Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
             displayName: Secret Provider Classes
             path: modules[0].initContainer[0].secretProviderClasses
           - description: Conjur is the list SecretProviderClass names provided by Conjur
@@ -1908,10 +1906,10 @@ spec:
           - description: Vault is the list SecretProviderClass names provided by Vault
             displayName: Vault SecretProviderClass Names
             path: modules[0].initContainer[0].secretProviderClasses.vault
-          - description:
-              Secrets is a collection of kubernetes secrets for storage system
-              credentials Applicable from CSM v1.15 onwards Only one of SecretProviderClasses
-              or Secrets must be specified (mutually exclusive)
+          - description: |-
+              Secrets is a collection of kubernetes secrets for storage system credentials
+              Applicable from CSM v1.15 onwards
+              Only one of SecretProviderClasses or Secrets must be specified (mutually exclusive)
             displayName: Secrets
             path: modules[0].initContainer[0].secrets
           - description: Sentinel is the name of the sentinel statefulSet
@@ -1944,7 +1942,9 @@ spec:
           - description: Tolerations is the list of tolerations for the driver pods
             displayName: Tolerations
             path: modules[0].initContainer[0].tolerations
-          - description: Vaults are the vault configurations Applicable till CSM v1.14
+          - description: |-
+              Vaults are the vault configurations
+              Applicable till CSM v1.14
             displayName: Vault Configurations
             path: modules[0].initContainer[0].vaultConfigurations
           - description: Address is the address for this vault
@@ -1979,7 +1979,8 @@ spec:
           - description: Name is name of ContainerStorageModule modules
             displayName: Name
             path: modules[0].name
-          - description: RetainImageRegistryPath is the boolean flag used to retain image
+          - description:
+              RetainImageRegistryPath is the boolean flag used to retain image
               registry path
             displayName: Retain Image Registry Path
             path: retainImageRegistryPath
@@ -2078,6 +2079,7 @@ spec:
     - Powerscale
     - Powerstore
     - Unity
+    - Cosi
     - Authorization
     - Observability
     - Replication
@@ -2093,7 +2095,7 @@ spec:
     name: Dell Technologies
     url: https://github.com/dell/csm-operator
   relatedImages:
-    - image: quay.io/dell/container-storage-modules/dell-csm-operator:v1.11.0
+    - image: quay.io/dell/container-storage-modules/dell-csm-operator:v1.11.1
       name: dell-csm-operator
     - image: quay.io/dell/container-storage-modules/csi-isilon:v2.16.0
       name: csi-isilon
@@ -2107,6 +2109,8 @@ spec:
       name: csi-unity
     - image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.16.0
       name: csi-vxflexos
+    - image: quay.io/dell/container-storage-modules/cosi:v1.0.0
+      name: cosi
     - image: quay.io/dell/storage/powerflex/sdc:5.0
       name: sdc
     - image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.4.0
@@ -2151,6 +2155,8 @@ spec:
       name: resizer
     - image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.16.0
       name: externalhealthmonitorcontroller
-    - image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.11.0
+    - image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.13.0
       name: metadataretriever
-  version: 1.11.0
+    - image: gcr.io/k8s-staging-sig-storage/objectstorage-sidecar:release-0.2
+      name: objectstorage-provisioner-sidecar
+  version: 1.11.1

@@ -102,7 +102,7 @@ const (
 	// Auth default images
 	DefaultProxyServerImage    = "quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.4.0"
 	DefaultOpaImage            = "docker.io/openpolicyagent/opa:0.70.0"
-	DefaultOpaKubeMgmtImage    = "docker.io/openpolicyagent/kube-mgmt:9.3.0"
+	DefaultOpaKubeMgmtImage    = "docker.io/openpolicyagent/kube-mgmt:9.2.1"
 	DefaultTenantServiceImage  = "quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.4.0"
 	DefaultRoleServiceImage    = "quay.io/dell/container-storage-modules/csm-authorization-role:v2.4.0"
 	DefaultStorageServiceImage = "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.4.0"

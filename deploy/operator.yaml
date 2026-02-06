@@ -903,7 +903,7 @@ spec:
   template:
     metadata:
       annotations:
-        storage.dell.com/CSMVersion: v1.16.0
+        storage.dell.com/CSMVersion: v1.16.1
       labels:
         control-plane: controller-manager
     spec:
@@ -916,7 +916,7 @@ spec:
             - name: REFRESH_INTERVAL_MINUTES
               value: "60"
             - name: RELATED_IMAGE_dell-csm-operator
-              value: quay.io/dell/container-storage-modules/dell-csm-operator:v1.11.0
+              value: quay.io/dell/container-storage-modules/dell-csm-operator:v1.11.1
             - name: RELATED_IMAGE_csi-isilon
               value: quay.io/dell/container-storage-modules/csi-isilon:v2.16.0
             - name: RELATED_IMAGE_csi-powermax
@@ -976,7 +976,7 @@ spec:
             - name: RELATED_IMAGE_externalhealthmonitorcontroller
               value: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.16.0
             - name: RELATED_IMAGE_metadataretriever
-              value: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.11.0
+              value: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.13.0
             - name: RELATED_IMAGE_nginx
               value: quay.io/nginx/nginx-unprivileged:1.27
             - name: RELATED_IMAGE_redis-commander
@@ -984,8 +984,10 @@ spec:
             - name: RELATED_IMAGE_opa
               value: docker.io/openpolicyagent/opa:0.70.0
             - name: RELATED_IMAGE_kube-mgmt
-              value: docker.io/openpolicyagent/kube-mgmt:9.3.0
-          image: quay.io/dell/container-storage-modules/dell-csm-operator:v1.11.0
+              value: docker.io/openpolicyagent/kube-mgmt:9.2.1
+            - name: RELATED_IMAGE_objectstorage-provisioner-sidecar
+              value: gcr.io/k8s-staging-sig-storage/objectstorage-sidecar:release-0.2
+          image: quay.io/dell/container-storage-modules/dell-csm-operator:v1.11.1
           imagePullPolicy: Always
           livenessProbe:
             httpGet:

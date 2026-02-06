@@ -35,7 +35,7 @@ spec:
           roleService: quay.io/dell/container-storage-modules/csm-authorization-role:v2.0.0
           storageService: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.0.0
           opa: openpolicyagent/opa
-          opaKubeMgmt: openpolicyagent/kube-mgmt:9.3.0
+          opaKubeMgmt: openpolicyagent/kube-mgmt:9.2.1
           # controllerReconcileInterval: interval for the authorization controllers to reconcile with Redis.
           controllerReconcileInterval: 5m
           # certificate: base64-encoded certificate for cert/private-key pair -- add certificate here to use custom certificates
