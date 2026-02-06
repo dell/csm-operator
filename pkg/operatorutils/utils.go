@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -212,8 +212,12 @@ func UpdateSideCarApply(ctx context.Context, sideCars []csmv1.ContainerTemplate,
 }
 
 func UpdateContainerApply(ctx context.Context, toBeApplied []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule, matched VersionSpec) {
+	sidecarInSpec := false
+	// Apples to sidecars referenced in the spec
 	for _, ctr := range toBeApplied {
 		if *c.Name == ctr.Name {
+			sidecarInSpec = true
+
 			if matched.Version != "" {
 				if img := matched.Images[ctr.Name]; img != "" {
 					if *c.Name == ctr.Name {
@@ -234,6 +238,18 @@ func UpdateContainerApply(ctx context.Context, toBeApplied []csmv1.ContainerTemp
 			emptyEnv := make([]corev1.EnvVar, 0)
 			c.Env = ReplaceAllApplyCustomEnvs(c.Env, emptyEnv, ctr.Envs)
 			c.Args = ReplaceAllArgs(c.Args, ctr.Args)
+		}
+	}
+
+	// Update all other csi sidecar images that are not referenced in cr.Spec.Driver.SideCars
+	if !sidecarInSpec {
+		if matched.Version != "" {
+			img := matched.Images[*c.Name]
+			if img != "" {
+				*c.Image = img
+			}
+		} else if cr.Spec.CustomRegistry != "" {
+			*c.Image = ResolveImage(ctx, string(*c.Image), cr)
 		}
 	}
 }
