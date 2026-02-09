@@ -27,7 +27,7 @@ data:
         karavi-authorization-proxy: registry.connect.redhat.com/dell-emc/dell-csm-authorization-sidecar@sha256:6ae8703e8e1bb3d1728ab58b2306d7f0adab4d1f3b1f1f0a7467c275590e4e13
         podmon: registry.connect.redhat.com/dell-emc/dell-csm-podmon@sha256:4f910318b4591ced142ee83ae49706f477f29598bd98010bf09905a3b4edfa40
         otel-collector: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector@sha256:7a838b2f7a221459a6593b42483c43e7c2a3f86640136c33a436c071c0a410f4
-        nginx-proxy : quay.io/nginx/nginx-unprivileged@sha256:620c21188bee45c4145dbf1716117994eda3b9426d3d214de37a9468377a15d1
+        nginx-proxy: quay.io/nginx/nginx-unprivileged@sha256:620c21188bee45c4145dbf1716117994eda3b9426d3d214de37a9468377a15d1
         metrics-powermax: registry.connect.redhat.com/dell-emc/dell-csm-metrics-powermax@sha256:4db12d3d888b537012394dc69b440568ee96a5495e508fc25bef92acb2393edd
         metrics-powerstore: registry.connect.redhat.com/dell-emc/dell-csm-metrics-powerstore@sha256:e02dbcb245797cbf6c6ad22803ff3c38f5be5690b18502d00af134a9c15531c9
         metrics-powerflex: registry.connect.redhat.com/dell-emc/dell-csm-metrics-powerflex@sha256:439656d2a594ee43fe95b1dee29daa6efcebc6a71b7f779c4bd88dd37315aac1
