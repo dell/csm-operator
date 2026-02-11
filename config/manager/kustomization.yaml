@@ -1,3 +1,4 @@
+---
 resources:
   - manager.yaml
 generatorOptions:
@@ -11,4 +12,4 @@ kind: Kustomization
 images:
   - name: controller
     newName: quay.io/dell/container-storage-modules/dell-csm-operator
-    newTag: v1.11.1
+    newTag: v1.12.0
