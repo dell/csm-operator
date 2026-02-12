@@ -550,6 +550,7 @@ rules:
       - get
       - list
       - patch
+      - update
       - watch
   - apiGroups:
       - groupsnapshot.storage.k8s.io
@@ -558,19 +559,6 @@ rules:
     verbs:
       - patch
       - update
-  - apiGroups:
-      - groupsnapshot.storage.k8s.io
-    resources:
-      - volumegroupsnapshots
-      - volumegroupsnapshots/status
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
   - apiGroups:
       - monitoring.coreos.com
     resources:
@@ -771,19 +759,6 @@ rules:
       - volumeattachments/status
     verbs:
       - patch
-  - apiGroups:
-      - volumegroup.storage.dell.com
-    resources:
-      - dellcsivolumegroupsnapshots
-      - dellcsivolumegroupsnapshots/status
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole

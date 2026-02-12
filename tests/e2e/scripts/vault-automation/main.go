@@ -600,7 +600,7 @@ func (s *sequence) configureVaultRole() error {
 type credentialConfig struct {
 	Path     string `yaml:"path"`
 	Username string `yaml:"username"`
-	Password string `yaml:"password"`
+	Password string `yaml:"password"` //gosec:disable G117
 }
 
 func (s *sequence) writeVaultSecret() error {
@@ -705,10 +705,10 @@ func (s *sequence) handleEnvConfig() error {
 }
 
 func (s *sequence) putVaultSecret(path, username, password string) error {
-	log.Printf("Writing secret %s in %s", path, s.name)
+	log.Printf("Writing secret %s in %s", path, s.name) //gosec:disable G706 -- this is a test automation tool
 	var b bytes.Buffer
 	vaultCmd := fmt.Sprintf("vault kv put -mount=secret %s password=%s username=%s", path, password, username)
-	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", "sh", "-c", vaultCmd) // #nosec G204 -- this is a test automation tool
+	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", "sh", "-c", vaultCmd) // #nosec G204, G702 -- this is a test automation tool
 	cmd.Stdout = &b
 	cmd.Stderr = &b
 	err := cmd.Run()
@@ -719,10 +719,10 @@ func (s *sequence) putVaultSecret(path, username, password string) error {
 }
 
 func (s *sequence) putVaultConfigSecret(path, config string) error {
-	log.Printf("Writing config secret %s in %s", path, s.name)
+	log.Printf("Writing config secret %s in %s", path, s.name) //gosec:disable G706 -- this is a test automation tool
 	var b bytes.Buffer
 	vaultCmd := fmt.Sprintf("vault kv put -mount=secret %s configKey=\"%s\"", path, config)
-	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", "sh", "-c", vaultCmd) // #nosec G204 -- this is a test automation tool
+	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", "sh", "-c", vaultCmd) // #nosec G204, G702 -- this is a test automation tool
 	cmd.Stdout = &b
 	cmd.Stderr = &b
 	err := cmd.Run()

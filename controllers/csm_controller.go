@@ -141,7 +141,6 @@ var (
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshotcontents/status,verbs=get;list;watch;patch;update
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshots,verbs=get;list;watch;update;patch;create;delete
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshots/status,verbs=get;list;watch;update;patch
-// +kubebuilder:rbac:groups="volumegroup.storage.dell.com",resources=dellcsivolumegroupsnapshots;dellcsivolumegroupsnapshots/status,verbs=create;list;watch;delete;update;get;patch
 // +kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=*
 // +kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions/status,verbs=get;list;patch;watch
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=volumeattachments/status,verbs=patch
@@ -217,10 +216,8 @@ var (
 // +kubebuilder:rbac:groups=objectstorage.k8s.io,resources=buckets/status,verbs=create;get;update;delete;list;watch
 
 // +kubebuilder:rbac:groups="groupsnapshot.storage.k8s.io",resources=volumegroupsnapshotclasses,verbs=get;list;watch
-// +kubebuilder:rbac:groups="groupsnapshot.storage.k8s.io",resources=volumegroupsnapshotcontents,verbs=get;list;watch;patch
-// +kubebuilder:rbac:groups="groupsnapshot.storage.k8s.io",resources=volumegroupsnapshotcontents/status,verbs=patch;update
-// +kubebuilder:rbac:groups="groupsnapshot.storage.k8s.io",resources=volumegroupsnapshots,verbs=get;list;watch;update;patch;create;delete
-// +kubebuilder:rbac:groups="groupsnapshot.storage.k8s.io",resources=volumegroupsnapshots/status,verbs=get;list;watch;update;patch;create;delete
+// +kubebuilder:rbac:groups="groupsnapshot.storage.k8s.io",resources=volumegroupsnapshotcontents,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups="groupsnapshot.storage.k8s.io",resources=volumegroupsnapshotcontents/status,verbs=update;patch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
