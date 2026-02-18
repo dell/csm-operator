@@ -1,6 +1,6 @@
 module eos2git.cec.lab.emc.com/CSM/csm-operator
 
-go 1.25.0
+go 1.26
 
 require (
 	github.com/cert-manager/cert-manager v1.19.3

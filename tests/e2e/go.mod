@@ -1,6 +1,6 @@
 module eos2git.cec.lab.emc.com/CSM/csm-operator/tests/e2e
 
-go 1.25.0
+go 1.26
 
 require (
 	eos2git.cec.lab.emc.com/CSM/csm-operator v1.10.1
