@@ -54,20 +54,20 @@ var (
 	authString        = "karavi-authorization-proxy"
 	operatorNamespace = "dell-csm-operator"
 	quotaLimit        = "100000000"
-	pflexSecretMap    = map[string]string{
+	pflexSecretMap    = map[string]string{ // #nosec G101
 		"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_PROTOCOL": "PFLEX_PROTOCOL", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_NAS": "PFLEX_NAS", "REPLACE_SFTP_REPO_ADDRESS": "PFLEX_SFTP_REPO_ADDRESS", "REPLACE_SFTP_REPO_USER": "PFLEX_SFTP_REPO_USER",
 		"REPLACE_ZONING_USER": "PFLEX_ZONING_USER", "REPLACE_ZONING_PASS": "PFLEX_ZONING_PASS", "REPLACE_ZONING_SYSTEMID": "PFLEX_ZONING_SYSTEMID", "REPLACE_ZONING_ENDPOINT": "PFLEX_ZONING_ENDPOINT", "REPLACE_ZONING_MDM": "PFLEX_ZONING_MDM", "REPLACE_ZONING_POOL": "PFLEX_ZONING_POOL", "REPLACE_ZONING_NAS": "PFLEX_ZONING_NAS",
 		"REPLACE_OIDC_CLIENTID": "PFLEX_OIDC_CLIENTID", "REPLACE_OIDC_CLIENT_SECRET": "PFLEX_OIDC_CLIENT_SECRET", "REPLACE_CIAM_CLIENTID": "PFLEX_CIAM_CLIENTID", "REPLACE_CIAM_CLIENT_SECRET": "PFLEX_CIAM_CLIENT_SECRET", "REPLACE_ISSUER": "PFLEX_ISSUER", "REPLACE_SCOPE": "PFLEX_SCOPE",
 	}
-	pflexAuthSecretMap       = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_PROTOCOL": "PFLEX_PROTOCOL"}
-	pscaleSecretMap          = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT", "REPLACE_MULTI_CLUSTERNAME": "PSCALE_MULTI_CLUSTER", "REPLACE_MULTI_USER": "PSCALE_MULTI_USER", "REPLACE_MULTI_PASS": "PSCALE_MULTI_PASS", "REPLACE_MULTI_ENDPOINT": "PSCALE_MULTI_ENDPOINT", "REPLACE_MULTI_PORT": "PSCALE_MULTI_PORT", "REPLACE_MULTI_AUTH_ENDPOINT": "PSCALE_MULTI_AUTH_ENDPOINT", "REPLACE_MULTI_AUTH_PORT": "PSCALE_MULTI_AUTH_PORT"}
+	pflexAuthSecretMap       = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_PROTOCOL": "PFLEX_PROTOCOL"}                                                                                                                                                                                                                                                                                                                          // #nosec G101
+	pscaleSecretMap          = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT", "REPLACE_MULTI_CLUSTERNAME": "PSCALE_MULTI_CLUSTER", "REPLACE_MULTI_USER": "PSCALE_MULTI_USER", "REPLACE_MULTI_PASS": "PSCALE_MULTI_PASS", "REPLACE_MULTI_ENDPOINT": "PSCALE_MULTI_ENDPOINT", "REPLACE_MULTI_PORT": "PSCALE_MULTI_PORT", "REPLACE_MULTI_AUTH_ENDPOINT": "PSCALE_MULTI_AUTH_ENDPOINT", "REPLACE_MULTI_AUTH_PORT": "PSCALE_MULTI_AUTH_PORT"} // #nosec G101
 	pscaleAuthSecretMap      = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
 	pscaleAuthSidecarMap     = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_PORT": "PSCALE_PORT"}
 	pscaleEphemeralVolumeMap = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT"}
 	pflexEphemeralVolumeMap  = map[string]string{"REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_VOLUME": "PFLEX_VOLUME"}
 	pflexAuthSidecarMap      = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PFLEX_AUTH_ENDPOINT"}
-	pmaxCredMap              = map[string]string{"REPLACE_USER": "PMAX_USER_ENCODED", "REPLACE_PASS": "PMAX_PASS_ENCODED"}
-	pmaxSecretMap            = map[string]string{
+	pmaxCredMap              = map[string]string{"REPLACE_USER": "PMAX_USER_ENCODED", "REPLACE_PASS": "PMAX_PASS_ENCODED"} // #nosec G101
+	pmaxSecretMap            = map[string]string{                                                                          // #nosec G101
 		"REPLACE_USERNAME": "PMAX_USER", "REPLACE_PASSWORD": "PMAX_PASS", "REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_ENDPOINT": "PMAX_ENDPOINT",
 		"REPLACE_ZONING_USERNAME": "PMAX_ZONING_USER", "REPLACE_ZONING_PASSWORD": "PMAX_ZONING_PASS", "REPLACE_ZONING_SYSTEMID": "PMAX_ZONING_SYSTEMID", "REPLACE_ZONING_ENDPOINT": "PMAX_ZONING_ENDPOINT",
 	}
@@ -929,7 +929,7 @@ func (step *Step) generateAndCreateSftpSecrets(_ Resource, privateKeyPath, priva
 		"-o", "StrictHostKeyChecking=accept-new",
 		"-i", privateKeyFile,
 		fmt.Sprintf("%s@%s", repoUser, repoHost),
-	) // #nosec G204
+	) // #nosec G204 G702
 	cmd.Stdin = strings.NewReader("exit\n")
 	cmd.Env = append(os.Environ(), "HOME="+tmpDir)
 	cmd.Stdout = io.Discard
@@ -954,7 +954,7 @@ func (step *Step) generateAndCreateSftpSecrets(_ Resource, privateKeyPath, priva
 	if err := os.WriteFile(privateOut, privateKeyData, 0o600); err != nil {
 		return fmt.Errorf("failed to write private secret file: %v", err)
 	}
-	if err := os.WriteFile(publicOut, []byte(hostPubKey), 0o600); err != nil {
+	if err := os.WriteFile(publicOut, []byte(hostPubKey), 0o600); err != nil { // #nosec G303 G306 G703
 		return fmt.Errorf("failed to write public secret file: %v", err)
 	}
 
@@ -1108,7 +1108,7 @@ func storageClassExists(name string) bool {
 
 func replaceInFile(old, new, templateFile string) error { // TODO delete
 	cmdString := "s|" + old + "|" + new + "|g"
-	cmd := exec.Command("sed", "-i", cmdString, templateFile) // #nosec G204
+	cmd := exec.Command("sed", "-i", cmdString, templateFile) // #nosec G204 G702
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to substitute %s with %s in file %s: %s", old, new, templateFile, err.Error())
@@ -1732,7 +1732,7 @@ func (step *Step) AuthorizationV2Resources(res Resource, storageType, driver, dr
 		"--refresh-token-expiration", "48h",
 		"--tenant", csmTenantName,
 		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
-	) // #nosec G204
+	) // #nosec G204 G702
 	fmt.Println("=== Token ===\n", cmd.String())
 	b, err = cmd.CombinedOutput()
 	if err != nil {
@@ -1742,7 +1742,7 @@ func (step *Step) AuthorizationV2Resources(res Resource, storageType, driver, dr
 	// Apply token to CSI driver host
 	fmt.Println("=== Applying token ===\n ")
 
-	err = os.WriteFile("temp/token.yaml", b, 0o644) // #nosec G303, G306
+	err = os.WriteFile("temp/token.yaml", b, 0o644) // #nosec G303 G306 G703
 	if err != nil {
 		return fmt.Errorf("failed to write tenant token: %v\nErrMessage:\n%s", err, string(b))
 	}
@@ -1750,7 +1750,7 @@ func (step *Step) AuthorizationV2Resources(res Resource, storageType, driver, dr
 	cmd = exec.Command("kubectl", "apply",
 		"-f", "temp/token.yaml",
 		"-n", driverNamespace,
-	) // #nosec G204
+	) // #nosec G204 G702 G703
 	b, err = cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to apply token: %v\nErrMessage:\n%s", err, string(b))

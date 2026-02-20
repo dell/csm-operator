@@ -4,7 +4,7 @@ metadata:
   name: vxflexos
   namespace: vxflexos
 spec:
-  version: v1.16.1
+  version: v1.16.2
   driver:
     csiDriverType: "powerflex"
     forceRemoveDriver: true

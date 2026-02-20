@@ -4,7 +4,7 @@ metadata:
   name: powermax
   namespace: powermax
 spec:
-  version: v1.16.1
+  version: v1.16.2
   driver:
     csiDriverType: "powermax"
     forceRemoveDriver: true
