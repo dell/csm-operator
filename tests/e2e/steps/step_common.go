@@ -509,7 +509,7 @@ func getPortContainerizedAuth(namespace string) (string, error) {
 }
 
 func execCommand(command string, args ...string) error {
-	cmd := exec.Command(command, args...)
+	cmd := exec.Command(command, args...) // #nosec G702
 	if isDebugEnabled() {
 		fmt.Printf("cmd: %s %s\n", command, strings.Join(args, " "))
 		cmd.Stdout = os.Stdout

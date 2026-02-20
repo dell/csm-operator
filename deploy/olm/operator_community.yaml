@@ -5,7 +5,7 @@ metadata:
   namespace: test-csm-operator-olm
 spec:
   sourceType: grpc
-  image: quay.io/dell/container-storage-modules/dell-csm-operator:v1.11.1
+  image: quay.io/dell/container-storage-modules/dell-csm-operator:v1.11.2
 ---
 apiVersion: operators.coreos.com/v1
 kind: OperatorGroup
