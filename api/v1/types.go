@@ -231,7 +231,7 @@ type Driver struct {
 
 	// AuthSecret is the name of the credentials secret for the driver
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Auth Secret"
-	AuthSecret string `json:"authSecret,omitempty" yaml:"authSecret"`
+	AuthSecret string `json:"authSecret,omitempty" yaml:"authSecret"` //gosec:disable G117
 
 	// TLSCertSecret is the name of the TLS Cert secret
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="TLSCert Secret"
@@ -413,7 +413,7 @@ type ContainerTemplate struct {
 
 	// PrivateKey is a private key used for a certificate/private-key pair
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Private key for certificate/private-key pair"
-	PrivateKey string `json:"privateKey,omitempty" yaml:"privateKey,omitempty"`
+	PrivateKey string `json:"privateKey,omitempty" yaml:"privateKey,omitempty"` //gosec:disable G117
 
 	// CertificateAuthority is a certificate authority used to validate a certificate
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Certificate authority for validating a certificate"
@@ -551,7 +551,7 @@ type Vault struct {
 
 	// ClientKey validates is the base64-encoded certificate key for connecting to vault
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Vault CLient Certificate Key"
-	ClientKey string `json:"clientKey,omitempty" yaml:"clientKey,omitempty"`
+	ClientKey string `json:"clientKey,omitempty" yaml:"clientKey,omitempty"` //gosec:disable G117
 
 	// CertificateAuthority is the base64-encoded certificate authority for validaitng the vault certificate
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Vault Certificate Authority"

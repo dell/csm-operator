@@ -1,18 +1,9 @@
+# Copyright © 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
-#
-# Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#      http://www.apache.org/licenses/LICENSE-2.0
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-#
+# Dell Technologies, Dell and other trademarks are trademarks of Dell Inc.
+# or its subsidiaries. Other trademarks may be trademarks of their respective
+# owners.
+
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -32,7 +23,7 @@ rules:
     verbs: ["get", "list", "watch"]
   - apiGroups: [""]
     resources: ["persistentvolumes"]
-    verbs: ["get", "list", "watch", "create", "delete", "patch"]
+    verbs: ["get", "list", "watch", "create", "delete", "patch", "update"]
   - apiGroups: [""]
     resources: ["persistentvolumeclaims"]
     verbs: ["get", "list", "watch", "update"]
@@ -66,6 +57,10 @@ rules:
   - apiGroups: ["storage.k8s.io"]
     resources: ["csinodes"]
     verbs: ["get", "list", "watch"]
+  # Permissions for ReplicationReplicator
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["create", "get", "list", "watch"]
   # below for resizer
   - apiGroups: [""]
     resources: ["persistentvolumeclaims/status"]
@@ -74,6 +69,20 @@ rules:
   - apiGroups: ["storage.k8s.io"]
     resources: ["csistoragecapacities"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  # Permissions for CSMDr
+  - apiGroups: ["dr.storage.dell.com"]
+    resources: ["volumejournals"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  # for vgs
+  - apiGroups: ["groupsnapshot.storage.k8s.io"]
+    resources: ["volumegroupsnapshotclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["groupsnapshot.storage.k8s.io"]
+    resources: ["volumegroupsnapshotcontents"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["groupsnapshot.storage.k8s.io"]
+    resources: ["volumegroupsnapshotcontents/status"]
+    verbs: ["update", "patch"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -107,13 +116,6 @@ rules:
   - apiGroups: ["apps"]
     resources: ["replicasets"]
     verbs: ["get"]
-  # Required for HBNFS
-  - apiGroups: ["discovery.k8s.io"]
-    resources: ["endpointslices"]
-    verbs: ["create", "delete", "get", "list", "watch", "update", "patch"]
-  - apiGroups: [""]
-    resources: ["services"]
-    verbs: ["create", "delete", "get", "list", "watch", "update", "patch"]
 ---
 # RoleBinding for Driver-specific Role
 kind: RoleBinding
@@ -135,6 +137,8 @@ apiVersion: apps/v1
 metadata:
   name: <DriverDefaultReleaseName>-controller
   namespace: <DriverDefaultReleaseNamespace>
+  annotations:
+    com.dell.karavi-authorization-proxy: "true"
 spec:
   selector:
     matchLabels:
@@ -144,6 +148,9 @@ spec:
     metadata:
       labels:
         name: <DriverDefaultReleaseName>-controller
+        csmNamespace: <CSM_NAMESPACE>
+      annotations:
+        kubectl.kubernetes.io/default-container: driver
     spec:
       serviceAccountName: <DriverDefaultReleaseName>-controller
       affinity:
@@ -198,7 +205,7 @@ spec:
             - "--default-fstype=ext4"
             - "--extra-create-metadata"
             - "--feature-gates=Topology=true"
-            - "--enable-capacity=false"
+            - "--enable-capacity=true"
             - "--capacity-ownerref-level=2"
             - "--capacity-poll-interval=5m"
           env:
@@ -223,6 +230,7 @@ spec:
             - "--v=5"
             - "--leader-election"
             - "--snapshot-name-prefix=csisnap"
+            - "--feature-gates=CSIVolumeGroupSnapshot=true"
           env:
             - name: ADDRESS
               value: /var/run/csi/csi.sock
@@ -250,9 +258,13 @@ spec:
             - name: socket-dir
               mountPath: /var/run/csi
         - name: driver
-          image: quay.io/dell/container-storage-modules/csi-powerstore:v2.16.0
+          image: quay.io/dell/container-storage-modules/csi-powerstore:v2.17.0
           imagePullPolicy: IfNotPresent
-          command: ["/csi-powerstore"]
+          command:
+            - sh
+            - -c
+            - |
+              sleep 20 && /csi-powerstore
           args:
             - "--array-config=/powerstore-config/config"
             - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
@@ -261,6 +273,8 @@ spec:
               value:
             - name: CSI_ENDPOINT
               value: /var/run/csi/csi.sock
+            - name: SSL_CERT_DIR
+              value: /certs
             - name: X_CSI_MODE
               value: controller
             - name: X_CSI_DRIVER_NAME
@@ -275,18 +289,30 @@ spec:
               value: /powerstore-config/config
             - name: X_CSI_POWERSTORE_CONFIG_PARAMS_PATH
               value: /powerstore-config-params/driver-config-params.yaml
+            - name: X_CSI_POWERSTORE_API_TIMEOUT
+              value: "<X_CSI_POWERSTORE_API_TIMEOUT>"
+            - name: X_CSI_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: X_CSI_DRIVER_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
             - name: GOPOWERSTORE_DEBUG
-              value: false
+              value: <GOPOWERSTORE_DEBUG>
             - name: CSI_AUTO_ROUND_OFF_FILESYSTEM_SIZE
-              value: false
+              value: "true"
             - name: X_CSI_HEALTH_MONITOR_ENABLED
               value: "<X_CSI_HEALTH_MONITOR_ENABLED>"
             - name: X_CSI_MULTI_NAS_FAILURE_THRESHOLD
               value: "5"
             - name: X_CSI_MULTI_NAS_COOLDOWN_PERIOD
               value: "5m"
-            - name: SSL_CERT_DIR
-              value: /certs
+            - name: X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT
+              value: "<X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT>"
+            - name: X_CSM_DR_ENABLED
+              value: "<X_CSM_DR_ENABLED>"
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
@@ -300,6 +326,12 @@ spec:
       volumes:
         - name: socket-dir
           emptyDir:
+        - name: powerstore-config-params
+          configMap:
+            name: <DriverDefaultReleaseName>-config-params
+        - name: powerstore-config
+          secret:
+            secretName: <DriverDefaultReleaseName>-config
         - name: certs
           projected:
             sources:
@@ -308,9 +340,3 @@ spec:
                   items:
                     - key: cert-0
                       path: cert-0
-        - name: powerstore-config-params
-          configMap:
-            name: <DriverDefaultReleaseName>-config-params
-        - name: powerstore-config
-          secret:
-            secretName: <DriverDefaultReleaseName>-config

@@ -54,7 +54,7 @@ rules:
       - services
       - services/finalizers
     verbs:
-      - "*"
+      - '*'
   - apiGroups:
       - ""
     resourceNames:
@@ -166,9 +166,9 @@ rules:
       - acme.cert-manager.io
       - cert-manager.io
     resources:
-      - "*/*"
+      - '*/*'
     verbs:
-      - "*"
+      - '*'
   - apiGroups:
       - admissionregistration.k8s.io
     resources:
@@ -187,7 +187,7 @@ rules:
     resources:
       - customresourcedefinitions
     verbs:
-      - "*"
+      - '*'
   - apiGroups:
       - apiextensions.k8s.io
     resources:
@@ -260,7 +260,7 @@ rules:
       - certificaterequests
       - certificates
     verbs:
-      - "*"
+      - '*'
   - apiGroups:
       - cert-manager.io
     resources:
@@ -281,7 +281,7 @@ rules:
     resources:
       - clusterissuers
     verbs:
-      - "*"
+      - '*'
   - apiGroups:
       - cert-manager.io
     resources:
@@ -309,7 +309,7 @@ rules:
     resources:
       - issuers
     verbs:
-      - "*"
+      - '*'
   - apiGroups:
       - cert-manager.io
     resourceNames:
@@ -474,6 +474,31 @@ rules:
       - update
       - watch
   - apiGroups:
+      - groupsnapshot.storage.k8s.io
+    resources:
+      - volumegroupsnapshotclasses
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - groupsnapshot.storage.k8s.io
+    resources:
+      - volumegroupsnapshotcontents
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - groupsnapshot.storage.k8s.io
+    resources:
+      - volumegroupsnapshotcontents/status
+    verbs:
+      - patch
+      - update
+  - apiGroups:
       - monitoring.coreos.com
     resources:
       - servicemonitors
@@ -496,7 +521,7 @@ rules:
     resources:
       - ingresses
     verbs:
-      - "*"
+      - '*'
   - apiGroups:
       - networking.k8s.io
     resources:
@@ -673,16 +698,3 @@ rules:
       - volumeattachments/status
     verbs:
       - patch
-  - apiGroups:
-      - volumegroup.storage.dell.com
-    resources:
-      - dellcsivolumegroupsnapshots
-      - dellcsivolumegroupsnapshots/status
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch

@@ -245,7 +245,7 @@ func GetMDMFromSecret(ctx context.Context, cr *csmv1.ContainerStorageModule, ct 
 
 	type StorageArrayConfig struct {
 		Username                  string `json:"username"`
-		Password                  string `json:"password"`
+		Password                  string `json:"password"` //gosec:disable G117
 		SystemID                  string `json:"systemId"`
 		Endpoint                  string `json:"endpoint"`
 		SkipCertificateValidation bool   `json:"skipCertificateValidation,omitempty"`
