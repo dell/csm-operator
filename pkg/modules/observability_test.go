@@ -1757,6 +1757,310 @@ spec:
 	}
 }
 
+func TestAppendObservabilitySecrets_SkipCertTrue_SkipsRootCert(t *testing.T) {
+	ctx := context.Background()
+
+	cr := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "isilon",
+			Namespace: "isilon",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Driver: csmv1.Driver{
+				CSIDriverType: "isilon",
+				AuthSecret:    "isilon-creds",
+			},
+			Modules: []csmv1.Module{
+				{
+					Name:    csmv1.Authorization,
+					Enabled: true,
+					Components: []csmv1.ContainerTemplate{
+						{
+							Name: "karavi-authorization-proxy",
+							Envs: []corev1.EnvVar{{Name: "SKIP_CERTIFICATE_VALIDATION", Value: "true"}},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Seed driver secret + auth secrets, but omit proxy-server-root-certificate.
+	driverSecret := getSecret(cr.Namespace, cr.Spec.Driver.AuthSecret)
+	proxyTokens := getSecret(cr.Namespace, "proxy-authz-tokens")
+	karaviAuthCfg := getSecret(cr.Namespace, "karavi-authorization-config")
+
+	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(driverSecret, proxyTokens, karaviAuthCfg).Build()
+
+	objs, err := appendObservabilitySecrets(ctx, cr, nil, sourceClient, nil)
+	assert.NoError(t, err)
+
+	// driver secret + 2 auth secrets (root cert skipped)
+	assert.Len(t, objs, 3)
+
+	// Validate namespaces/names for created secrets
+	foundDriver := false
+	foundProxy := false
+	foundCfg := false
+	for _, obj := range objs {
+		s, ok := obj.(*corev1.Secret)
+		if !ok {
+			continue
+		}
+		if s.Namespace != operatorutils.ObservabilityNamespace {
+			continue
+		}
+		switch s.Name {
+		case driverSecret.Name:
+			foundDriver = true
+		case "isilon-proxy-authz-tokens":
+			foundProxy = true
+		case "isilon-karavi-authorization-config":
+			foundCfg = true
+		}
+	}
+	assert.True(t, foundDriver)
+	assert.True(t, foundProxy)
+	assert.True(t, foundCfg)
+}
+
+func TestAppendObservabilitySecrets_SkipCertFalse_IncludesRootCert(t *testing.T) {
+	ctx := context.Background()
+
+	cr := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "isilon",
+			Namespace: "isilon",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Driver: csmv1.Driver{
+				CSIDriverType: "isilon",
+				AuthSecret:    "isilon-creds",
+			},
+			Modules: []csmv1.Module{
+				{
+					Name:    csmv1.Authorization,
+					Enabled: true,
+					Components: []csmv1.ContainerTemplate{
+						{
+							Name: "karavi-authorization-proxy",
+							Envs: []corev1.EnvVar{{Name: "SKIP_CERTIFICATE_VALIDATION", Value: "false"}},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	driverSecret := getSecret(cr.Namespace, cr.Spec.Driver.AuthSecret)
+	proxyTokens := getSecret(cr.Namespace, "proxy-authz-tokens")
+	karaviAuthCfg := getSecret(cr.Namespace, "karavi-authorization-config")
+	rootCert := getSecret(cr.Namespace, "proxy-server-root-certificate")
+
+	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(driverSecret, proxyTokens, karaviAuthCfg, rootCert).Build()
+
+	objs, err := appendObservabilitySecrets(ctx, cr, nil, sourceClient, nil)
+	assert.NoError(t, err)
+
+	// driver secret + 3 auth secrets
+	assert.Len(t, objs, 4)
+
+	foundRoot := false
+	for _, obj := range objs {
+		s, ok := obj.(*corev1.Secret)
+		if !ok {
+			continue
+		}
+		if s.Namespace != operatorutils.ObservabilityNamespace {
+			continue
+		}
+		if s.Name == "isilon-proxy-server-root-certificate" {
+			foundRoot = true
+			break
+		}
+	}
+	assert.True(t, foundRoot)
+}
+
+func TestAppendObservabilitySecrets_InvalidSkipCertValue_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	cr := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "isilon",
+			Namespace: "isilon",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Driver: csmv1.Driver{
+				CSIDriverType: "isilon",
+				AuthSecret:    "isilon-creds",
+			},
+			Modules: []csmv1.Module{
+				{
+					Name:    csmv1.Authorization,
+					Enabled: true,
+					Components: []csmv1.ContainerTemplate{
+						{
+							Name: "karavi-authorization-proxy",
+							Envs: []corev1.EnvVar{{Name: "SKIP_CERTIFICATE_VALIDATION", Value: "not-a-bool"}},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	driverSecret := getSecret(cr.Namespace, cr.Spec.Driver.AuthSecret)
+	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(driverSecret).Build()
+
+	_, err := appendObservabilitySecrets(ctx, cr, nil, sourceClient, nil)
+	assert.Error(t, err)
+}
+
+func TestObservabilityTopology_SupportedVersion_AppliesObjects(t *testing.T) {
+	ctx := context.Background()
+
+	// Save & restore seams
+	origGetObs := getObservabilityModuleFn
+	origReadCfg := readConfigFileFn
+	origGetVer := getVersionFn
+	defer func() {
+		getObservabilityModuleFn = origGetObs
+		readConfigFileFn = origReadCfg
+		getVersionFn = origGetVer
+	}()
+
+	getVersionFn = func(_ context.Context, _ *csmv1.ContainerStorageModule, _ operatorutils.OperatorConfig) (string, error) {
+		return "v2.14.0", nil
+	}
+
+	getObservabilityModuleFn = func(_ csmv1.ContainerStorageModule) (csmv1.Module, error) {
+		return csmv1.Module{
+			Name:    csmv1.Observability,
+			Enabled: true,
+			Components: []csmv1.ContainerTemplate{
+				{
+					Name:    ObservabilityTopologyName,
+					Enabled: func() *bool { b := true; return &b }(),
+					Envs:    []corev1.EnvVar{{Name: TopologyLogLevel, Value: "DEBUG"}},
+				},
+			},
+		}, nil
+	}
+
+	readConfigFileFn = func(_ context.Context, _ csmv1.Module, cr csmv1.ContainerStorageModule, _ operatorutils.OperatorConfig, _ string) ([]byte, error) {
+		yaml := fmt.Sprintf(`
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: karavi-topology
+  namespace: %s
+spec:
+  selector:
+    matchLabels:
+      app: karavi-topology
+  template:
+    metadata:
+      labels:
+        app: karavi-topology
+    spec:
+      containers:
+      - name: karavi-topology
+        image: quay.io/dell/container-storage-modules/csm-topology:v1.0.0
+        env:
+        - name: TOPOLOGY_LOG_LEVEL
+          value: %s
+`, cr.Namespace, TopologyLogLevel)
+		return []byte(yaml), nil
+	}
+
+	cr := csmv1.ContainerStorageModule{ObjectMeta: metav1.ObjectMeta{Name: "isilon", Namespace: "isilon"}}
+	client := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+	err := ObservabilityTopology(ctx, false, operatorConfig, cr, client, operatorutils.VersionSpec{})
+	assert.NoError(t, err)
+}
+
+func TestObservabilityTopology_UnsupportedVersion_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	origGetVer := getVersionFn
+	defer func() { getVersionFn = origGetVer }()
+
+	getVersionFn = func(_ context.Context, _ *csmv1.ContainerStorageModule, _ operatorutils.OperatorConfig) (string, error) {
+		return "v2.15.0", nil
+	}
+
+	cr := csmv1.ContainerStorageModule{ObjectMeta: metav1.ObjectMeta{Name: "isilon", Namespace: "isilon"}}
+	client := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+	err := ObservabilityTopology(ctx, false, operatorConfig, cr, client, operatorutils.VersionSpec{})
+	assert.Error(t, err)
+}
+
+func TestObservabilityTopology_SupportedVersion_Deleting_DeletesObjects(t *testing.T) {
+	ctx := context.Background()
+
+	// Save & restore seams
+	origGetObs := getObservabilityModuleFn
+	origReadCfg := readConfigFileFn
+	origGetVer := getVersionFn
+	defer func() {
+		getObservabilityModuleFn = origGetObs
+		readConfigFileFn = origReadCfg
+		getVersionFn = origGetVer
+	}()
+
+	getVersionFn = func(_ context.Context, _ *csmv1.ContainerStorageModule, _ operatorutils.OperatorConfig) (string, error) {
+		return "v2.13.0", nil
+	}
+
+	getObservabilityModuleFn = func(_ csmv1.ContainerStorageModule) (csmv1.Module, error) {
+		return csmv1.Module{
+			Name:    csmv1.Observability,
+			Enabled: true,
+			Components: []csmv1.ContainerTemplate{
+				{
+					Name:    ObservabilityTopologyName,
+					Enabled: func() *bool { b := true; return &b }(),
+					Envs:    []corev1.EnvVar{{Name: TopologyLogLevel, Value: "INFO"}},
+				},
+			},
+		}, nil
+	}
+
+	readConfigFileFn = func(_ context.Context, _ csmv1.Module, cr csmv1.ContainerStorageModule, _ operatorutils.OperatorConfig, _ string) ([]byte, error) {
+		yaml := fmt.Sprintf(`
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: karavi-topology
+  namespace: %s
+spec:
+  selector:
+    matchLabels:
+      app: karavi-topology
+  template:
+    metadata:
+      labels:
+        app: karavi-topology
+    spec:
+      containers:
+      - name: karavi-topology
+        image: quay.io/dell/container-storage-modules/csm-topology:v1.0.0
+`, cr.Namespace)
+		return []byte(yaml), nil
+	}
+
+	cr := csmv1.ContainerStorageModule{ObjectMeta: metav1.ObjectMeta{Name: "isilon", Namespace: "isilon"}}
+	// Seed an existing Deployment so delete path exercises a real delete.
+	existing := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "karavi-topology", Namespace: cr.Namespace}}
+	client := ctrlClientFake.NewClientBuilder().WithObjects(existing).Build()
+
+	err := ObservabilityTopology(ctx, true, operatorConfig, cr, client, operatorutils.VersionSpec{})
+	assert.NoError(t, err)
+}
+
 // Also cover precedence: component.Image should override matched.Images when non-empty
 func TestGetPowerFlexMetricsObject_ComponentImageOverridesMatched(t *testing.T) {
 	ctx := context.Background()
