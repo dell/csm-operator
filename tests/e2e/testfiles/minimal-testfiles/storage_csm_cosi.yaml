@@ -6,5 +6,5 @@ metadata:
 spec:
   driver:
     csiDriverType: "cosi"
-    configVersion: v1.0.0
+    configVersion: v1.1.0
     forceRemoveDriver: true
