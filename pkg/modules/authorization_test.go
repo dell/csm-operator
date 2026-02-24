@@ -2657,14 +2657,14 @@ func TestUpdateRedisGlobalVars(t *testing.T) {
 				"redisPasswordKey":             "ut-password-key",
 				"redisConjurUsernamePath":      "ut-username-path",
 				"redisConjurPasswordPath":      "ut-password-path",
-			},
+			}, // #nosec G101
 		},
 		{
 			name: "conjur present but no values",
 			args: args{
 				component: csmv1.ContainerTemplate{
 					RedisSecretProviderClass: []csmv1.RedisSecretProviderClass{
-						{
+						{ // #nosec G101
 							SecretProviderClassName: "",
 							RedisSecretName:         "",
 							RedisUsernameKey:        "",
@@ -2689,7 +2689,7 @@ func TestUpdateRedisGlobalVars(t *testing.T) {
 			args: args{
 				component: csmv1.ContainerTemplate{
 					RedisSecretProviderClass: []csmv1.RedisSecretProviderClass{
-						{
+						{ // #nosec G101
 							SecretProviderClassName: "",
 							RedisSecretName:         "",
 							RedisUsernameKey:        "",
@@ -2775,7 +2775,7 @@ func TestUpdateConfigGlobalVars(t *testing.T) {
 				"configSecretProviderClassName ": "",
 				"configSecretName":               "karavi-config-secret",
 				"configSecretPath ":              "",
-			},
+			}, // #nosec G101
 		},
 		{
 			name: "class name but no secret name",
@@ -2793,7 +2793,7 @@ func TestUpdateConfigGlobalVars(t *testing.T) {
 				"configSecretProviderClassName ": "",
 				"configSecretName":               "karavi-config-secret",
 				"configSecretPath":               "",
-			},
+			}, // #nosec G101
 		},
 		{
 			name: "all fields present",
@@ -2814,14 +2814,14 @@ func TestUpdateConfigGlobalVars(t *testing.T) {
 				"configSecretProviderClassName ": "ut-provider-class",
 				"configSecretName":               "ut-secret-name",
 				"configSecretPath":               "ut-secret-path",
-			},
+			}, // #nosec G101
 		},
 		{
 			name: "conjur present but no values",
 			args: args{
 				component: csmv1.ContainerTemplate{
 					ConfigSecretProviderClass: []csmv1.ConfigSecretProviderClass{
-						{
+						{ // #nosec G101
 							SecretProviderClassName: "",
 							ConfigSecretName:        "",
 							Conjur: &csmv1.ConjurConfigPath{
@@ -2835,7 +2835,7 @@ func TestUpdateConfigGlobalVars(t *testing.T) {
 				"configSecretProviderClassName ": "",
 				"configSecretName":               "karavi-config-secret",
 				"configSecretPath":               "",
-			},
+			}, // #nosec G101
 		},
 	}
 	for _, tt := range tests {
