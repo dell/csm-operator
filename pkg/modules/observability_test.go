@@ -592,8 +592,11 @@ func TestPowerScaleMetrics(t *testing.T) {
 				panic(err)
 			}
 			tmpCR := customResource
+			// Ensure we exercise the v2.14 secret-copy behavior regardless of fixture drift.
+			tmpCR.Spec.Driver.ConfigVersion = "v2.14.0"
 			// Auth enabled triggers auth injection path and secrets usage
 			auth := &tmpCR.Spec.Modules[1]
+			auth.Name = csmv1.Authorization
 			auth.Enabled = true
 			// No secrets provided in isilon namespace → should fail during appendObservabilitySecrets
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
@@ -622,7 +625,10 @@ func TestPowerScaleMetrics(t *testing.T) {
 			karaviAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
 			proxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
 			tmpCR := customResource
+			// Ensure we exercise the v2.14 secret-copy behavior regardless of fixture drift.
+			tmpCR.Spec.Driver.ConfigVersion = "v2.14.0"
 			auth := &tmpCR.Spec.Modules[1]
+			auth.Name = csmv1.Authorization
 			auth.Enabled = true
 			// set SKIP_CERTIFICATE_VALIDATION to false → requires cert present
 			for i, env := range auth.Components[0].Envs {
@@ -960,6 +966,8 @@ func TestPowerFlexMetrics(t *testing.T) {
 			}
 
 			tmpCR := customResource
+			// Ensure we exercise the v2.14 secret-copy behavior regardless of fixture drift.
+			tmpCR.Spec.Driver.ConfigVersion = "v2.14.0"
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
@@ -1310,6 +1318,8 @@ func TestPowerMaxMetrics(t *testing.T) {
 			}
 
 			tmpCR := customResource
+			// Ensure we exercise the v2.14 secret-copy behavior regardless of fixture drift.
+			tmpCR.Spec.Driver.ConfigVersion = "v2.14.0"
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
@@ -1328,7 +1338,7 @@ func TestPowerMaxMetrics(t *testing.T) {
 			return false, false, tmpCR, sourceClient, operatorConfig
 		},
 		"Fail - skipCertificateValidation is false but no cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powerscale_observability_214.yaml")
+			customResource, err := getCustomResource("./testdata/cr_powermax_observability_214.yaml")
 			if err != nil {
 				panic(err)
 			}
@@ -1338,7 +1348,10 @@ func TestPowerMaxMetrics(t *testing.T) {
 			proxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
 
 			tmpCR := customResource
+			// Ensure we exercise the v2.14 secret-copy behavior regardless of fixture drift.
+			tmpCR.Spec.Driver.ConfigVersion = "v2.14.0"
 			auth := &tmpCR.Spec.Modules[1]
+			auth.Name = csmv1.Authorization
 			auth.Enabled = true
 			// set skipCertificateValidation to false
 			for i, env := range auth.Components[0].Envs {
