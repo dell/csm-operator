@@ -4,7 +4,7 @@ metadata:
   name: authorization
   namespace: authorization
 spec:
-  version: v1.14.0
+  version: v1.17.0
   customRegistry: quay.io
   retainImageRegistryPath: true
   modules:
