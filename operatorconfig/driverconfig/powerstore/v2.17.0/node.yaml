@@ -217,14 +217,23 @@ spec:
         - name: csi-metadata-retriever
           image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.13.0
           imagePullPolicy: IfNotPresent
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--timeout=120s"
+            - "--v=5"
+            - "--leader-election"
+            - "--leader-election-renew-deadline=10s"
+            - "--leader-election-lease-duration=15s"
+            - "--leader-election-retry-period=5s"
+          command: ["/csi-metadata-retriever"]
           env:
             - name: ADDRESS
-              value: /var/run/csi/csi.sock
+              value: /csi/csi_sock
             - name: CSI_RETRIEVER_ENDPOINT
-              value: /var/run/csi/csi_retriever.sock
+              value: /csi/csi_retriever.sock
           volumeMounts:
-            - name: socket-dir
-              mountPath: /var/run/csi
+            - name: driver-path
+              mountPath: /csi
         - name: registrar
           image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.15.0
           imagePullPolicy: IfNotPresent
