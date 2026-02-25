@@ -98,6 +98,11 @@ const (
 
 	// CSMDREnabled - Flag to indicate if CSM-DR is enabled
 	CSMDREnabled string = "<X_CSM_DR_ENABLED>"
+
+	// Possible TODO: Remove these if another driver declares them as constants first
+	CsiFsCheckEnabled = "<X_CSI_FS_CHECK_ENABLED>"
+
+	CsiFsCheckMode = "<X_CSI_FS_CHECK_MODE>"
 )
 
 // PrecheckPowerStore do input validation
@@ -190,6 +195,8 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	authEnabled := ""
 	foundAuthEnv := false
 	enableCSMDR := IsCSMDREnabled(cr)
+	fsckEnabled := "false"
+	fsckMode := "checkOnly"
 
 	authorizationModuleFound := false
 
@@ -249,6 +256,12 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 				}
 				if env.Name == "X_CSI_VOLUME_DISCONNECT_TIMEOUT_SECONDS" {
 					volumeDisconnectTimeoutSeconds = env.Value
+				}
+				if env.Name == "X_CSI_FS_CHECK_ENABLED" {
+					fsckEnabled = env.Value
+				}
+				if env.Name == "X_CSI_FS_CHECK_MODE" {
+					fsckMode = env.Value
 				}
 			}
 		}
@@ -314,6 +327,8 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsServerPort, nfsServerPort)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsExportDirectory, nfsExportDirectory)
 		yamlString = strings.ReplaceAll(yamlString, CSMDREnabled, enableCSMDR)
+		yamlString = strings.ReplaceAll(yamlString, CsiFsCheckEnabled, fsckEnabled)
+		yamlString = strings.ReplaceAll(yamlString, CsiFsCheckMode, fsckMode)
 	case "Controller":
 		if cr.Spec.Driver.Controller != nil {
 			for _, env := range cr.Spec.Driver.Controller.Envs {

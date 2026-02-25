@@ -198,6 +198,15 @@ var (
 		    - name: X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT
 		      value: "10s"`,
 		},
+		{
+			name:       "update X_CSI_FS_CHECK_ENABLED and X_CSI_FS_CHECK_MODE for Node",
+			yamlString: "<X_CSI_FS_CHECK_ENABLED> <X_CSI_FS_CHECK_MODE>",
+			csm:        csmWithFsCheckEnvs("true", "repair"),
+			ct:         powerStoreClient,
+			sec:        powerStoreSecret,
+			fileType:   "Node",
+			expected:   "true repair",
+		},
 	}
 )
 
@@ -450,6 +459,12 @@ func getNilEnvObject() csmv1.ContainerStorageModule {
 func setAuthModuleEnv(value string) csmv1.ContainerStorageModule {
 	cr := csmForPowerStore("csm")
 	cr.Spec.Driver.Node.Envs = append(cr.Spec.Driver.Node.Envs, corev1.EnvVar{Name: "X_CSM_AUTH_ENABLED", Value: value})
+	return cr
+}
+
+func csmWithFsCheckEnvs(enabled, mode string) csmv1.ContainerStorageModule {
+	cr := csmForPowerStore("csm")
+	cr.Spec.Driver.Node.Envs = append(cr.Spec.Driver.Node.Envs, corev1.EnvVar{Name: "X_CSI_FS_CHECK_ENABLED", Value: enabled}, corev1.EnvVar{Name: "X_CSI_FS_CHECK_MODE", Value: mode})
 	return cr
 }
 
