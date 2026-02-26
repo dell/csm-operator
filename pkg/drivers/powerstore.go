@@ -98,6 +98,9 @@ const (
 
 	// CSMDREnabled - Flag to indicate if CSM-DR is enabled
 	CSMDREnabled string = "<X_CSM_DR_ENABLED>"
+
+	// CSMDRBindPort - Bind port for CSM-DR controller initialization
+	CSMDRBindPort string = "<X_CSM_DR_BIND_PORT>"
 )
 
 // PrecheckPowerStore do input validation
@@ -189,7 +192,8 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	debug := "false"
 	authEnabled := ""
 	foundAuthEnv := false
-	enableCSMDR := IsCSMDREnabled(cr)
+	enableCSMDR := GetDriverCommonEnv(cr, "X_CSM_DR_ENABLED", "true")
+	drBindPort := GetDriverCommonEnv(cr, "X_CSM_DR_BIND_PORT", "8082")
 
 	authorizationModuleFound := false
 
@@ -314,6 +318,7 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsServerPort, nfsServerPort)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsExportDirectory, nfsExportDirectory)
 		yamlString = strings.ReplaceAll(yamlString, CSMDREnabled, enableCSMDR)
+		yamlString = strings.ReplaceAll(yamlString, CSMDRBindPort, drBindPort)
 	case "Controller":
 		if cr.Spec.Driver.Controller != nil {
 			for _, env := range cr.Spec.Driver.Controller.Envs {
@@ -343,6 +348,7 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsServerPort, nfsServerPort)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsExportDirectory, nfsExportDirectory)
 		yamlString = strings.ReplaceAll(yamlString, CSMDREnabled, enableCSMDR)
+		yamlString = strings.ReplaceAll(yamlString, CSMDRBindPort, drBindPort)
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"

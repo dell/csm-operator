@@ -279,7 +279,99 @@ func TestIsCSMDREnabled(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := IsCSMDREnabled(tt.cr)
+			result := GetDriverCommonEnv(tt.cr, "X_CSM_DR_ENABLED", "true")
+			if tt.expectedErr == "" {
+				if result != tt.expected {
+					t.Errorf("Expected %s, but got %s", tt.expected, result)
+				}
+			} else {
+				if !strings.Contains(result, tt.expectedErr) {
+					t.Errorf("Expected error containing %q, but got %s", tt.expectedErr, result)
+				}
+			}
+		})
+	}
+}
+
+func TestGetCSMDRBindPort(t *testing.T) {
+	tests := []struct {
+		name        string
+		cr          csmv1.ContainerStorageModule
+		expected    string
+		expectedErr string
+	}{
+		{
+			name: "X_CSM_DR_BIND_PORT is set to custom port",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{
+									Name:  "X_CSM_DR_BIND_PORT",
+									Value: "9000",
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: "9000",
+		},
+		{
+			name: "X_CSM_DR_BIND_PORT is set to port without colon",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{
+									Name:  "X_CSM_DR_BIND_PORT",
+									Value: "8080",
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: "8080",
+		},
+		{
+			name: "X_CSM_DR_BIND_PORT is not set",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{},
+						},
+					},
+				},
+			},
+			expected: "8082",
+		},
+		{
+			name: "X_CSM_DR_BIND_PORT is empty",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{
+									Name:  "X_CSM_DR_BIND_PORT",
+									Value: "",
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: "8082",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := GetDriverCommonEnv(tt.cr, "X_CSM_DR_BIND_PORT", "8082")
 			if tt.expectedErr == "" {
 				if result != tt.expected {
 					t.Errorf("Expected %s, but got %s", tt.expected, result)

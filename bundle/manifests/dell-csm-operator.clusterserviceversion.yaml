@@ -871,6 +871,10 @@ metadata:
                   {
                     "name": "X_CSM_DR_ENABLED",
                     "value": "true"
+                  },
+                  {
+                    "name": "X_CSM_DR_BIND_PORT",
+                    "value": "8082"
                   }
                 ],
                 "imagePullPolicy": "IfNotPresent"
