@@ -166,6 +166,7 @@ spec:
             value: "REPLACE_SFTP_REPO_USER" # provide username to authenticate to the SFTP repo
           - name: MODULE_SIGCHECK
             value: "0"
+    configVersion: v2.17.0
   modules:
     - name: observability
       # enabled: Enable/Disable observability

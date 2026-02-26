@@ -2653,11 +2653,11 @@ func TestGetModuleDefaultVersion(t *testing.T) {
 	}{
 		{
 			name:             "valid version",
-			driverConfig:     "v2.14.0",
+			driverConfig:     "v2.17.0",
 			driverType:       csmv1.PowerScale,
 			moduleType:       csmv1.Observability,
 			path:             "../../operatorconfig",
-			expectedVersion:  "v1.12.0",
+			expectedVersion:  "v1.15.0",
 			expectedErrorMsg: "",
 		},
 		{
@@ -3074,8 +3074,8 @@ func TestIsValidUpgrade(t *testing.T) {
 	}
 
 	// Test case: upgrade is valid
-	oldVersion := "v1.11.0"
-	newVersion := "v1.12.0"
+	oldVersion := "v2.4.0"
+	newVersion := "v2.5.0"
 	expectedIsValid := true
 
 	isValid, err := IsValidUpgrade(ctx, oldVersion, newVersion, csmComponentType, operatorConfig)
@@ -3083,8 +3083,8 @@ func TestIsValidUpgrade(t *testing.T) {
 	assert.Equal(t, isValid, expectedIsValid)
 
 	// Test case: downgrade is valid
-	oldVersion = "v1.12.0"
-	newVersion = "v1.11.0"
+	oldVersion = "v2.5.0"
+	newVersion = "v2.4.0"
 	expectedIsValid = true
 
 	isValid, err = IsValidUpgrade(ctx, oldVersion, newVersion, csmComponentType, operatorConfig)
@@ -3131,7 +3131,7 @@ func TestGetUpgradeInfo(t *testing.T) {
 	ctx := context.Background()
 
 	// Test case: corrupted upgrade path file
-	oldVersion := "v2.2.0"
+	oldVersion := "v2.3.0"
 
 	// Create a malformed upgrade path file
 	tempDir := t.TempDir()
@@ -3387,7 +3387,7 @@ func Test_getUpgradeInfo(t *testing.T) {
 					ConfigDirectory: "../../operatorconfig",
 				},
 				csmCompType: csmv1.Authorization,
-				oldVersion:  "v2.2.0",
+				oldVersion:  "v2.3.0",
 			},
 			want:        "",
 			expectedErr: "mock yamlUnmarshal error",

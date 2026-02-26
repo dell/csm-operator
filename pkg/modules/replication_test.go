@@ -530,6 +530,46 @@ func TestReplicationConfigmap(t *testing.T) {
 	}
 }
 
+func TestDeleteReplicationConfigmap_NotFound_ReturnsNil(t *testing.T) {
+	// Create a fake client with no objects
+	scheme := runtime.NewScheme()
+	_ = corev1.AddToScheme(scheme)
+	fakeClient := ctrlClientFake.NewClientBuilder().WithScheme(scheme).WithObjects().Build()
+
+	// Should not error when ConfigMap is not present
+	err := DeleteReplicationConfigmap(fakeClient)
+	assert.NoError(t, err)
+}
+
+func TestCreateReplicationConfigmap_ConfigMapAlreadyExists_NoError(t *testing.T) {
+	ctx := context.Background()
+
+	// Fake client seeded with the ConfigMap so CreateReplicationConfigmap takes the "already exists" path.
+	scheme := runtime.NewScheme()
+	_ = corev1.AddToScheme(scheme)
+
+	cm := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "dell-replication-controller-config",
+			Namespace: "dell-replication-controller",
+		},
+		Data: map[string]string{"foo": "bar"},
+	}
+
+	fakeClient := ctrlClientFake.NewClientBuilder().WithScheme(scheme).WithObjects(cm).Build()
+
+	// CR with replication module present (needed to locate moduleconfig)
+	cr, err := getCustomResource("./testdata/cr_powermax_replica.yaml")
+	if err != nil {
+		panic(err)
+	}
+	op := operatorutils.OperatorConfig{ConfigDirectory: "../../operatorconfig"}
+
+	objs, err := CreateReplicationConfigmap(ctx, cr, op, fakeClient)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, objs)
+}
+
 func TestGetReplicationCrdDeploy(t *testing.T) {
 	realConfig := operatorutils.OperatorConfig{
 		ConfigDirectory: "../../operatorconfig",

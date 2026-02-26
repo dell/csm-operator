@@ -1934,7 +1934,7 @@ func getReplicaModule() []csmv1.Module {
 		{
 			Name:          csmv1.Replication,
 			Enabled:       true,
-			ConfigVersion: "v1.13.0",
+			ConfigVersion: "v1.15.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: operatorutils.ReplicationSideCarName,
@@ -1949,7 +1949,7 @@ func getResiliencyModule() []csmv1.Module {
 		{
 			Name:          csmv1.Resiliency,
 			Enabled:       true,
-			ConfigVersion: "v1.14.0",
+			ConfigVersion: "v1.16.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: operatorutils.ResiliencySideCarName,
@@ -1964,7 +1964,7 @@ func getAuthModule() []csmv1.Module {
 		{
 			Name:          csmv1.Authorization,
 			Enabled:       true,
-			ConfigVersion: "v2.3.0",
+			ConfigVersion: "v2.5.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name: "karavi-authorization-proxy",
@@ -2022,7 +2022,7 @@ func getAuthProxyServerOCP() []csmv1.Module {
 		{
 			Name:              csmv1.AuthorizationServer,
 			Enabled:           true,
-			ConfigVersion:     "v2.3.0",
+			ConfigVersion:     "v2.5.0",
 			ForceRemoveModule: true,
 			Components: []csmv1.ContainerTemplate{
 				{
@@ -2065,7 +2065,7 @@ func getReverseProxyModule() []csmv1.Module {
 		{
 			Name:          csmv1.ReverseProxy,
 			Enabled:       true,
-			ConfigVersion: "v2.13.0",
+			ConfigVersion: "v2.16.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name:    string(csmv1.ReverseProxyServer),
@@ -2096,7 +2096,7 @@ func getReverseProxyModuleWithSecret() []csmv1.Module {
 		{
 			Name:          csmv1.ReverseProxy,
 			Enabled:       true,
-			ConfigVersion: "v2.13.0",
+			ConfigVersion: "v2.16.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name:    string(csmv1.ReverseProxyServer),

@@ -239,6 +239,39 @@ func TestReverseProxyPrecheck(t *testing.T) {
 	}
 }
 
+func TestGetRevproxyApplyCR_MinimalManifest_ModuleNameDefaulted(t *testing.T) {
+	ctx := context.Background()
+
+	cr, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	// Simulate minimal manifest: no reverseproxy module present in the CR.
+	cr.Spec.Modules = []csmv1.Module{}
+
+	mod, container, err := getRevproxyApplyCR(ctx, cr, operatorConfig)
+	assert.NoError(t, err)
+	assert.NotNil(t, mod)
+	assert.NotNil(t, container)
+	assert.Equal(t, csmv1.ReverseProxy, mod.Name)
+}
+
+func TestGetRevproxyApplyCR_InvalidConfigDir_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	cr, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	badOp := operatorConfig
+	badOp.ConfigDirectory = "./testdata/dir-does-not-exist"
+
+	_, _, err = getRevproxyApplyCR(ctx, cr, badOp)
+	assert.Error(t, err)
+}
+
 func TestReverseProxyServer(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
 		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
