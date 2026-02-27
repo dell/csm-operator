@@ -200,6 +200,8 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	nfsClientPort := "unused"
 	nfsServerPort := "unused"
 	nfsExportDirectory := "/var/lib/dell/nfs"
+	fsckEnabled := "false"
+	fsckMode := "checkOnly"
 
 	for _, mod := range cr.Spec.Modules {
 		if mod.Name == csmv1.Authorization {
@@ -218,6 +220,12 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 			}
 			if env.Name == "X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT" && env.Value != "" {
 				podmonArrayConnectivityTimeout = env.Value
+			}
+			if env.Name == "X_CSI_FS_CHECK_ENABLED" {
+				fsckEnabled = env.Value
+			}
+			if env.Name == "X_CSI_FS_CHECK_MODE" {
+				fsckMode = env.Value
 			}
 		}
 	}
@@ -319,6 +327,8 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsExportDirectory, nfsExportDirectory)
 		yamlString = strings.ReplaceAll(yamlString, CSMDREnabled, enableCSMDR)
 		yamlString = strings.ReplaceAll(yamlString, CSMDRBindPort, drBindPort)
+		yamlString = strings.ReplaceAll(yamlString, CsiFsCheckEnabled, fsckEnabled)
+		yamlString = strings.ReplaceAll(yamlString, CsiFsCheckMode, fsckMode)
 	case "Controller":
 		if cr.Spec.Driver.Controller != nil {
 			for _, env := range cr.Spec.Driver.Controller.Envs {
