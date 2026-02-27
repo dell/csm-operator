@@ -198,6 +198,42 @@ var (
 		    - name: X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT
 		      value: "10s"`,
 		},
+		{
+			name:       "Node: fsck enabled and mode substituted from Common.Envs",
+			yamlString: "FS_CHECK_ENABLED=<X_CSI_FS_CHECK_ENABLED> FS_CHECK_MODE=<X_CSI_FS_CHECK_MODE>",
+			csm:        csmForPowerstoreFsck("true", "checkAndRepair"),
+			ct:         powerStoreClient,
+			sec:        powerStoreSecret,
+			fileType:   "Node",
+			expected:   "FS_CHECK_ENABLED=true FS_CHECK_MODE=checkAndRepair",
+		},
+		{
+			name:       "Node: fsck default values when Common.Envs has no fsck entries",
+			yamlString: "FS_CHECK_ENABLED=<X_CSI_FS_CHECK_ENABLED> FS_CHECK_MODE=<X_CSI_FS_CHECK_MODE>",
+			csm:        csmForPowerStore("csm"),
+			ct:         powerStoreClient,
+			sec:        powerStoreSecret,
+			fileType:   "Node",
+			expected:   "FS_CHECK_ENABLED=false FS_CHECK_MODE=checkOnly",
+		},
+		{
+			name:       "Node: fsck disabled with checkOnly mode",
+			yamlString: "FS_CHECK_ENABLED=<X_CSI_FS_CHECK_ENABLED> FS_CHECK_MODE=<X_CSI_FS_CHECK_MODE>",
+			csm:        csmForPowerstoreFsck("false", "checkOnly"),
+			ct:         powerStoreClient,
+			sec:        powerStoreSecret,
+			fileType:   "Node",
+			expected:   "FS_CHECK_ENABLED=false FS_CHECK_MODE=checkOnly",
+		},
+		{
+			name:       "Controller: fsck placeholders are not substituted",
+			yamlString: "FS_CHECK_ENABLED=<X_CSI_FS_CHECK_ENABLED> FS_CHECK_MODE=<X_CSI_FS_CHECK_MODE>",
+			csm:        csmForPowerstoreFsck("true", "checkAndRepair"),
+			ct:         powerStoreClient,
+			sec:        powerStoreSecret,
+			fileType:   "Controller",
+			expected:   "FS_CHECK_ENABLED=<X_CSI_FS_CHECK_ENABLED> FS_CHECK_MODE=<X_CSI_FS_CHECK_MODE>",
+		},
 	}
 )
 
@@ -450,6 +486,15 @@ func getNilEnvObject() csmv1.ContainerStorageModule {
 func setAuthModuleEnv(value string) csmv1.ContainerStorageModule {
 	cr := csmForPowerStore("csm")
 	cr.Spec.Driver.Node.Envs = append(cr.Spec.Driver.Node.Envs, corev1.EnvVar{Name: "X_CSM_AUTH_ENABLED", Value: value})
+	return cr
+}
+
+func csmForPowerstoreFsck(enabled, mode string) csmv1.ContainerStorageModule {
+	cr := csmForPowerStore("csm")
+	cr.Spec.Driver.Common.Envs = append(cr.Spec.Driver.Common.Envs,
+		corev1.EnvVar{Name: "X_CSI_FS_CHECK_ENABLED", Value: enabled},
+		corev1.EnvVar{Name: "X_CSI_FS_CHECK_MODE", Value: mode},
+	)
 	return cr
 }
 
