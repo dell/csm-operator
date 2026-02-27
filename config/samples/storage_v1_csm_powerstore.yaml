@@ -19,7 +19,7 @@ metadata:
   name: powerstore
   namespace: powerstore
 spec:
-  version: v1.16.1
+  version: v1.17.0
   driver:
     csiDriverType: "powerstore"
     csiDriverSpec:
@@ -95,6 +95,11 @@ spec:
         # Default value: true
         - name: "X_CSM_DR_ENABLED"
           value: "true"
+        # X_CSM_DR_BIND_PORT: Bind port for CSM-DR controller initialization.
+        # Allowed values: valid port number (e.g., "8082")
+        # Default value: "8082"
+        - name: "X_CSM_DR_BIND_PORT"
+          value: "8082"
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner

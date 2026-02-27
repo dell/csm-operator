@@ -97,7 +97,7 @@ const (
 	CSMFinalizerName = "finalizer.dell.emc.com"
 
 	// CSMVersion -
-	CSMVersion = "v1.16.1"
+	CSMVersion = "v1.17.0"
 
 	// RefreshEnvVar - environment variable name for watcher timed refreshes
 	RefreshEnvVar = "REFRESH_INTERVAL_MINUTES"
@@ -1047,7 +1047,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		return err
 	}
 
-	enableCSMDR := drivers.IsCSMDREnabled(cr)
+	enableCSMDR := drivers.GetDriverCommonEnv(cr, "X_CSM_DR_ENABLED", "true")
 	log.Infow(fmt.Sprintf("Is CSM DR enabled: %s", enableCSMDR))
 	// Create/Update CSM DR CRD for PowerStore
 	if cr.GetDriverType() == csmv1.PowerStore && enableCSMDR == "true" {

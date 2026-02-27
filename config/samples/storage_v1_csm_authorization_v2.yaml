@@ -4,7 +4,7 @@ metadata:
   name: authorization
   namespace: authorization
 spec:
-  version: v1.16.1
+  version: v1.17.0
   modules:
     # Authorization: enable csm-authorization proxy server for RBAC
     - name: authorization-proxy-server
@@ -120,8 +120,8 @@ spec:
             #       - usernamePath: secrets/username3
             #         passwordPath: secrets/password3
           # secrets:
-            #   - secret-1
-            #   - secret-2
+          #   - secret-1
+          #   - secret-2
 ---
 apiVersion: v1
 kind: ConfigMap

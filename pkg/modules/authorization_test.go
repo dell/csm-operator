@@ -965,12 +965,22 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			return false, false, tmpCR, sourceClient, operatorConfig, operatorutils.VersionSpec{}
 		},
 		"success - creating with custom registry": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
+			secrets := []string{"secret-1", "secret-2"}
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_custom_registry.yaml")
 			if err != nil {
 				panic(err)
 			}
 
 			tmpCR := customResource
+			for i := range tmpCR.Spec.Modules {
+				if tmpCR.Spec.Modules[i].Name == csmv1.AuthorizationServer {
+					tmpCR.Spec.Modules[i].Components = append(tmpCR.Spec.Modules[i].Components, csmv1.ContainerTemplate{
+						Name:    AuthStorageSystemCredentialsComponent,
+						Secrets: secrets,
+					})
+					break
+				}
+			}
 			err = certmanagerv1.AddToScheme(scheme.Scheme)
 			if err != nil {
 				panic(err)
@@ -980,12 +990,22 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			return true, false, tmpCR, sourceClient, operatorConfig, operatorutils.VersionSpec{}
 		},
 		"success - creating with config map": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
+			secrets := []string{"secret-1", "secret-2"}
 			customResource, err := getCustomResource("./testdata/cr_auth_proxy_custom_registry.yaml")
 			if err != nil {
 				panic(err)
 			}
 
 			tmpCR := customResource
+			for i := range tmpCR.Spec.Modules {
+				if tmpCR.Spec.Modules[i].Name == csmv1.AuthorizationServer {
+					tmpCR.Spec.Modules[i].Components = append(tmpCR.Spec.Modules[i].Components, csmv1.ContainerTemplate{
+						Name:    AuthStorageSystemCredentialsComponent,
+						Secrets: secrets,
+					})
+					break
+				}
+			}
 			err = certmanagerv1.AddToScheme(scheme.Scheme)
 			if err != nil {
 				panic(err)
@@ -993,15 +1013,15 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			matched := operatorutils.VersionSpec{
-				Version: "v1.14.0",
+				Version: "v1.17.0",
 				Images: map[string]string{
-					"proxy-service":            "quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.2.0",
-					"tenant-service":           "quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.2.0",
-					"role-service":             "quay.io/dell/container-storage-modules/csm-authorization-role:v2.2.0",
-					"storage-service":          "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.2.0",
+					"proxy-service":            "quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.5.0",
+					"tenant-service":           "quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.5.0",
+					"role-service":             "quay.io/dell/container-storage-modules/csm-authorization-role:v2.5.0",
+					"storage-service":          "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.5.0",
 					"opa":                      "docker.io/openpolicyagent/opa:0.70.0",
-					"opa-kube-mgmt":            "docker.io/openpolicyagent/kube-mgmt:8.5.7",
-					"authorization-controller": "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.2.0",
+					"opa-kube-mgmt":            "docker.io/openpolicyagent/kube-mgmt:9.2.1",
+					"authorization-controller": "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.5.0",
 				},
 			}
 
@@ -2657,14 +2677,14 @@ func TestUpdateRedisGlobalVars(t *testing.T) {
 				"redisPasswordKey":             "ut-password-key",
 				"redisConjurUsernamePath":      "ut-username-path",
 				"redisConjurPasswordPath":      "ut-password-path",
-			},
+			}, // #nosec G101
 		},
 		{
 			name: "conjur present but no values",
 			args: args{
 				component: csmv1.ContainerTemplate{
 					RedisSecretProviderClass: []csmv1.RedisSecretProviderClass{
-						{
+						{ // #nosec G101
 							SecretProviderClassName: "",
 							RedisSecretName:         "",
 							RedisUsernameKey:        "",
@@ -2689,7 +2709,7 @@ func TestUpdateRedisGlobalVars(t *testing.T) {
 			args: args{
 				component: csmv1.ContainerTemplate{
 					RedisSecretProviderClass: []csmv1.RedisSecretProviderClass{
-						{
+						{ // #nosec G101
 							SecretProviderClassName: "",
 							RedisSecretName:         "",
 							RedisUsernameKey:        "",
@@ -2775,7 +2795,7 @@ func TestUpdateConfigGlobalVars(t *testing.T) {
 				"configSecretProviderClassName ": "",
 				"configSecretName":               "karavi-config-secret",
 				"configSecretPath ":              "",
-			},
+			}, // #nosec G101
 		},
 		{
 			name: "class name but no secret name",
@@ -2793,7 +2813,7 @@ func TestUpdateConfigGlobalVars(t *testing.T) {
 				"configSecretProviderClassName ": "",
 				"configSecretName":               "karavi-config-secret",
 				"configSecretPath":               "",
-			},
+			}, // #nosec G101
 		},
 		{
 			name: "all fields present",
@@ -2814,14 +2834,14 @@ func TestUpdateConfigGlobalVars(t *testing.T) {
 				"configSecretProviderClassName ": "ut-provider-class",
 				"configSecretName":               "ut-secret-name",
 				"configSecretPath":               "ut-secret-path",
-			},
+			}, // #nosec G101
 		},
 		{
 			name: "conjur present but no values",
 			args: args{
 				component: csmv1.ContainerTemplate{
 					ConfigSecretProviderClass: []csmv1.ConfigSecretProviderClass{
-						{
+						{ // #nosec G101
 							SecretProviderClassName: "",
 							ConfigSecretName:        "",
 							Conjur: &csmv1.ConjurConfigPath{
@@ -2835,7 +2855,7 @@ func TestUpdateConfigGlobalVars(t *testing.T) {
 				"configSecretProviderClassName ": "",
 				"configSecretName":               "karavi-config-secret",
 				"configSecretPath":               "",
-			},
+			}, // #nosec G101
 		},
 	}
 	for _, tt := range tests {

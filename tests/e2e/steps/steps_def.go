@@ -54,7 +54,7 @@ var (
 	authString        = "karavi-authorization-proxy"
 	operatorNamespace = "dell-csm-operator"
 	quotaLimit        = "100000000"
-	pflexSecretMap    = map[string]string{
+	pflexSecretMap    = map[string]string{ // #nosec G101
 		"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_PROTOCOL": "PFLEX_PROTOCOL", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_NAS": "PFLEX_NAS", "REPLACE_SFTP_REPO_ADDRESS": "PFLEX_SFTP_REPO_ADDRESS", "REPLACE_SFTP_REPO_USER": "PFLEX_SFTP_REPO_USER",
 		"REPLACE_ZONING_USER": "PFLEX_ZONING_USER", "REPLACE_ZONING_PASS": "PFLEX_ZONING_PASS", "REPLACE_ZONING_SYSTEMID": "PFLEX_ZONING_SYSTEMID", "REPLACE_ZONING_ENDPOINT": "PFLEX_ZONING_ENDPOINT", "REPLACE_ZONING_MDM": "PFLEX_ZONING_MDM", "REPLACE_ZONING_POOL": "PFLEX_ZONING_POOL", "REPLACE_ZONING_NAS": "PFLEX_ZONING_NAS",
 		"REPLACE_OIDC_CLIENTID": "PFLEX_OIDC_CLIENTID", "REPLACE_OIDC_CLIENT_SECRET": "PFLEX_OIDC_CLIENT_SECRET", "REPLACE_CIAM_CLIENTID": "PFLEX_CIAM_CLIENTID", "REPLACE_CIAM_CLIENT_SECRET": "PFLEX_CIAM_CLIENT_SECRET", "REPLACE_ISSUER": "PFLEX_ISSUER", "REPLACE_SCOPE": "PFLEX_SCOPE",
@@ -918,7 +918,7 @@ func (step *Step) generateAndCreateSftpSecrets(_ Resource, privateKeyPath, priva
 	if err != nil {
 		return fmt.Errorf("failed to read private key: %v", err)
 	}
-	if err := os.WriteFile(privateKeyFile, privateKeyData, 0o600); err != nil {
+	if err := os.WriteFile(privateKeyFile, privateKeyData, 0o600); err != nil { //gosec:disable G703 -- this is a test automation tool
 		return fmt.Errorf("failed to write private key to temp dir: %v", err)
 	}
 
@@ -951,7 +951,7 @@ func (step *Step) generateAndCreateSftpSecrets(_ Resource, privateKeyPath, priva
 	// Write key files to disk for secret creation
 	privateOut := filepath.Join(tmpDir, "sftp-secret-private.crt")
 	publicOut := filepath.Join(tmpDir, "sftp-secret-public.crt")
-	if err := os.WriteFile(privateOut, privateKeyData, 0o600); err != nil {
+	if err := os.WriteFile(privateOut, privateKeyData, 0o600); err != nil { //gosec:disable G703 -- this is a test automation tool
 		return fmt.Errorf("failed to write private secret file: %v", err)
 	}
 	if err := os.WriteFile(publicOut, []byte(hostPubKey), 0o600); err != nil { //gosec:disable G703 -- this is a test automation tool

@@ -28,7 +28,7 @@ spec:
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
       storageCapacity: false
-    configVersion: v2.16.0
+    configVersion: v2.17.0
     # Controller count
     # resiliency test will fail with 2 replicas.
     replicas: 1
@@ -159,7 +159,7 @@ spec:
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: true
-      configVersion: v2.4.0
+      configVersion: v2.5.0
       components:
         - name: karavi-authorization-proxy
           image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-sidecar:nightly
