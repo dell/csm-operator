@@ -1,0 +1,75 @@
+# Black Duck CVE Analysis — Trigger Workflow
+#
+# COPY THIS FILE into your repo's .github/workflows/ to enable BD CVE analysis.
+#
+# This workflow triggers AFTER the CSM Common Workflows complete (which runs
+# the Black Duck scans). It calls the reusable bd_cve_analysis_base.yaml
+# to fetch CVE data from Black Duck and post a summary as a PR comment.
+#
+#  Required Org Secrets (already available in CSM org):
+#    DELL_BLACKDUCK_TOKEN_RW  — Black Duck API token
+#
+#  Required Org Variables:
+#    DELL_BLACKDUCK_DRP_URL   — Black Duck server hostname (no scheme)
+#
+
+name: BD CVE Analysis
+
+on:
+  # Trigger after CSM Common Workflows completes (which runs BD scans)
+  workflow_run:
+    workflows: ["CSM Common Workflows"]
+    types: [completed]
+
+jobs:
+  resolve-pr:
+    # Only run if the triggering workflow succeeded and was for a PR
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      pr_number: ${{ steps.get_pr.outputs.pr_number }}
+    steps:
+      - name: Get PR number from triggering workflow
+        id: get_pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // workflow_run provides pull_requests array
+            const prs = context.payload.workflow_run.pull_requests;
+            if (prs && prs.length > 0) {
+              const prNum = prs[0].number;
+              core.setOutput('pr_number', prNum.toString());
+              console.log(`✅ Found PR #${prNum}`);
+            } else {
+              // Fallback: search for PR by head SHA
+              const headSha = context.payload.workflow_run.head_sha;
+              const { data: pulls } = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                sort: 'updated',
+                direction: 'desc',
+                per_page: 10
+              });
+              const match = pulls.find(p => p.head.sha === headSha);
+              if (match) {
+                core.setOutput('pr_number', match.number.toString());
+                console.log(`✅ Found PR #${match.number} via SHA lookup`);
+              } else {
+                core.setFailed(`❌ Could not determine PR number for SHA ${headSha}`);
+              }
+            }
+
+  call-bd-cve-analysis:
+    needs: resolve-pr
+    if: needs.resolve-pr.outputs.pr_number != ''
+    uses: evgeny-uglov/bd-cve-analyzer/.github/workflows/bd_cve_analysis_base.yaml@main
+    secrets: inherit
+    with:
+      pr_number: ${{ fromJSON(needs.resolve-pr.outputs.pr_number) }}
+      # Uncomment to pin a specific version:
+      # bd_cve_analyzer_version: "0.1.0"
+      # Uncomment to use a different runner:
+      # runs_on: "isg-ocp-x86-small"
