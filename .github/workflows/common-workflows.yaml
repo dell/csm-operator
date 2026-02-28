@@ -35,7 +35,7 @@ jobs:
 
   common:
     name: Quality Checks
-    uses: CSM/actions/.github/workflows/csm-common.yml@main
+    uses: CSM/actions/.github/workflows/csm-common.yml@usr/evgeny/bd-cve-analyzer-action
     with:
       images: |
         dell-csm-operator
