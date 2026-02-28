@@ -65,7 +65,7 @@ jobs:
   call-bd-cve-analysis:
     needs: resolve-pr
     if: needs.resolve-pr.outputs.pr_number != ''
-    uses: evgeny-uglov/bd-cve-analyzer/.github/workflows/bd_cve_analysis_base.yaml@main
+    uses: evgeny-uglov/bd_cve_analyzer/.github/workflows/bd_cve_analysis_base.yaml@main
     secrets: inherit
     with:
       pr_number: ${{ fromJSON(needs.resolve-pr.outputs.pr_number) }}
