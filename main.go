@@ -65,9 +65,9 @@ const (
 	// Operatorconfig subfolder for deployment files
 	Operatorconfig = "operatorconfig"
 	// K8sMinimumSupportedVersion is the minimum supported version for k8s
-	K8sMinimumSupportedVersion = "1.32"
+	K8sMinimumSupportedVersion = "1.33"
 	// K8sMaximumSupportedVersion is the maximum supported version for k8s
-	K8sMaximumSupportedVersion = "1.34"
+	K8sMaximumSupportedVersion = "1.35"
 )
 
 var (
@@ -112,7 +112,7 @@ var (
 	}
 
 	getK8sMinimumSupportedVersion = func() string {
-		return K8sMaximumSupportedVersion
+		return K8sMinimumSupportedVersion
 	}
 
 	getK8sMaximumSupportedVersion = func() string {
