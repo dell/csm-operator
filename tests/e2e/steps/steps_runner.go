@@ -67,6 +67,8 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Enable \[([^"]*)\] module from CR \[(\d+)\]$`, step.enableModule)
 	runner.addStep(`^Disable \[([^"]*)\] module from CR \[(\d+)\]$`, step.disableModule)
 
+	runner.addStep(`^(Enable|Disable) healthmonitor from CR \[(\d+)\]$`, step.configureHealthMonitor)
+
 	runner.addStep(`^Set \[([^"]*)\] node label$`, step.setNodeLabel)
 	runner.addStep(`^Remove \[([^"]*)\] node label$`, step.removeNodeLabel)
 
