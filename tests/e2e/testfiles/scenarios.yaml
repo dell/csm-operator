@@ -131,6 +131,28 @@
     - "Delete custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is not installed"
 
+- scenario: "Install PowerScale Driver with HealthMonitor"
+  paths:
+    - "testfiles/storage_csm_powerscale.yaml"
+  tags:
+    - "powerscale"
+    - "sanity"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Enable healthmonitor from CR [1]"
+    - "Validate custom resource [1]"
+    - "Set up ephemeral volume properties [testfiles/powerscale-templates/ephemeral.properties] for [pscaleEphemeral]"
+    # cleanup
+    - "Disable healthmonitor from CR [1]"
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is not installed"
+
 - scenario: "Install PowerScale Driver with first alternate sample file"
   paths:
     - "testfiles/storage_csm_powerscale_alt_vals_1.yaml"
@@ -357,6 +379,32 @@
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Set up ephemeral volume properties [testfiles/powerflex-templates/ephemeral.properties] for [pflexEphemeral]"
     # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powerflex] driver from CR [1] is not installed"
+
+- scenario: "Install PowerFlex Driver with HealthMonitor"
+  paths:
+    - "testfiles/storage_csm_powerflex.yaml"
+  tags:
+    - "powerflex"
+    - "sanity"
+  config:
+    enableSftpSDC: false
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerflex] driver from CR [1] is installed"
+    - "Enable healthmonitor from CR [1]"
+    - "Validate custom resource [1]"
+    - "Set up ephemeral volume properties [testfiles/powerflex-templates/ephemeral.properties] for [pflexEphemeral]"
+    # cleanup
+    - "Disable healthmonitor from CR [1]"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is not installed"
@@ -1141,6 +1189,29 @@
     - "Delete custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is not installed"
 
+- scenario: "Install PowerStore Driver with HealthMonitor"
+  paths:
+    - "testfiles/storage_csm_powerstore.yaml"
+  tags:
+    - "powerstore"
+    - "sanity"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Enable healthmonitor from CR [1]"
+    - "Validate custom resource [1]"
+    # ephemeral.properties must be set up according to the storage class created
+    - "Set up ephemeral volume properties [testfiles/powerstore-templates/ephemeral.properties] for [pstoreEphemeral]"
+    # cleanup
+    - "Disable healthmonitor from CR [1]"
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is not installed"
+
 - scenario: "Install Powerstore Driver (With Authorization v2)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
@@ -1325,6 +1396,29 @@
     - "Delete custom resource [1]"
     - "Validate [unity] driver from CR [1] is not installed"
 
+- scenario: "Install Unity Driver with HealthMonitor"
+  paths:
+    - "testfiles/storage_csm_unity.yaml"
+  tags:
+    - "unity"
+    - "sanity"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create StorageClass with template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
+    - "Create Secret with template [testfiles/unity-templates/unity-secret-template.yaml] name [unity-creds] in namespace [unity] for [unity]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [unity] driver from CR [1] is installed"
+    - "Enable healthmonitor from CR [1]"
+    - "Validate custom resource [1]"
+    # ephemeral.properties must be set up according to the storage class created
+    - "Set up ephemeral volume properties [testfiles/unity-templates/ephemeral.properties] for [unityEphemeral]"
+    # cleanup
+    - "Disable healthmonitor from CR [1]"
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [unity] driver from CR [1] is not installed"
+
 - scenario: "Install Unity Driver With Additional Arg"
   paths:
     - "testfiles/storage_csm_unity_extra_arg.yaml"
@@ -1358,6 +1452,29 @@
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is not installed"
+
+- scenario: "Install PowerMax Driver with HealthMonitor"
+  paths:
+    - "testfiles/storage_csm_powermax_secret.yaml"
+  tags:
+    - "powermax"
+    - "sanity"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Set up reverse proxy tls secret namespace [powermax]"
+    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-config] in namespace [powermax] for [pmaxUseSecret]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
+    - "Create resource with template [testfiles/storage_csm_powermax_secret.yaml] for [pmaxArrayConfig]"
+    - "Validate custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is installed"
+    - "Enable healthmonitor from CR [1]"
+    - "Validate custom resource [1]"
+    # cleanup
+    - "Disable healthmonitor from CR [1]"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
