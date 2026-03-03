@@ -188,10 +188,6 @@ spec:
               value: "<X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT>"
             - name: CSI_RETRIEVER_ENDPOINT
               value: /var/run/csi/csi_retriever.sock
-            - name: X_CSI_FS_CHECK_ENABLED
-              value: "<X_CSI_FS_CHECK_ENABLED>"
-            - name: X_CSI_FS_CHECK_MODE
-              value: "<X_CSI_FS_CHECK_MODE>"
           ports:
             - containerPort: 2050
           volumeMounts:
@@ -227,15 +223,6 @@ spec:
             - name: nfs-powerstore
               mountPath: <X_CSI_NFS_EXPORT_DIRECTORY>
               mountPropagation: "Bidirectional"
-        - name: csi-metadata-retriever
-          image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.13.0
-          imagePullPolicy: IfNotPresent
-          env:
-            - name: CSI_RETRIEVER_ENDPOINT
-              value: /var/run/csi/csi_retriever.sock
-          volumeMounts:
-            - name: socket-dir
-              mountPath: /var/run/csi
         - name: registrar
           image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0
           imagePullPolicy: IfNotPresent
@@ -322,8 +309,6 @@ spec:
           hostPath:
             path: <X_CSI_NFS_EXPORT_DIRECTORY>
             type: DirectoryOrCreate
-        - name: socket-dir
-          emptyDir: {}
         - name: certs
           projected:
             sources:
