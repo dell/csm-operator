@@ -41,6 +41,7 @@ import (
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
+	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	"sigs.k8s.io/yaml"
 )
 
@@ -55,6 +56,8 @@ const (
 	AuthCertManagerManifest = "cert-manager.yaml"
 	// AuthNginxIngressManifest -
 	AuthNginxIngressManifest = "nginx-ingress-controller.yaml"
+	// AuthNginxGatewayFabricManifest -
+	AuthNginxGatewayFabricManifest = "nginx-gateway-fabric.yaml"
 	// AuthPolicyManifest -
 	AuthPolicyManifest = "policies.yaml"
 	// AuthLocalProvisionerManifest -
@@ -114,6 +117,12 @@ const (
 	AuthProxyHost = "<AUTHORIZATION_HOSTNAME>"
 	// AuthProxyIngressHost -
 	AuthProxyIngressHost = "<PROXY_INGRESS_HOST>"
+
+	// Gateway API annotation keys (stored under ProxyServerIngress.Annotations)
+	AuthGatewayNameAnnotation        = "storage.dell.com/gateway-name"
+	AuthGatewayNamespaceAnnotation   = "storage.dell.com/gateway-namespace"
+	AuthGatewaySectionNameAnnotation = "storage.dell.com/gateway-section-name"
+	AuthGatewayPortAnnotation        = "storage.dell.com/gateway-port"
 
 	// AuthVaultAddress -
 	AuthVaultAddress = "<AUTHORIZATION_VAULT_ADDRESS>"
@@ -175,6 +184,11 @@ const (
 
 	// Karavi authorization config secret name		// removed in 2.4.0, but still supporting backward compatibility
 	KaraviAuthorizationConfigSecret = "karavi-authorization-config"
+
+	defaultAuthGatewayName     = "authorization-gateway"
+	defaultAuthGatewayListener = "https"
+	defaultAuthGatewayPort     = 443
+	defaultAuthHTTPRouteName   = "proxy-server"
 )
 
 var (
@@ -287,6 +301,161 @@ NAME_LOOP:
 			}
 		}
 		return fmt.Errorf("missing the following volume %s", volName)
+	}
+
+	return nil
+}
+
+// AuthorizationGateway - apply/delete Gateway API Gateway for authorization proxy server
+func AuthorizationGateway(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	gateway, err := createGateway(cr)
+	if err != nil {
+		return fmt.Errorf("creating gateway: %v", err)
+	}
+
+	gatewayBytes, err := json.Marshal(gateway)
+	if err != nil {
+		return fmt.Errorf("marshaling gateway: %v", err)
+	}
+
+	gatewayYaml, err := yaml.JSONToYAML(gatewayBytes)
+	if err != nil {
+		return fmt.Errorf("converting gateway json to yaml: %v", err)
+	}
+
+	if err := applyDeleteObjects(ctx, ctrlClient, string(gatewayYaml), isDeleting); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func createGateway(cr csmv1.ContainerStorageModule) (*gatewayv1.Gateway, error) {
+	_, _, _, port, err := getGatewayConfig(cr)
+	if err != nil {
+		return nil, err
+	}
+
+	secret := gatewayv1.SecretObjectReference{
+		Name: gatewayv1.ObjectName("karavi-selfsigned-tls"),
+		Kind: ptrTo(gatewayv1.Kind("Secret")),
+	}
+	for _, component := range cr.Spec.Modules {
+		if component.Name != csmv1.AuthorizationServer {
+			continue
+		}
+		for _, c := range component.Components {
+			if c.Name != AuthProxyServerComponent {
+				continue
+			}
+			if c.Certificate != "" && c.PrivateKey != "" {
+				secret.Name = gatewayv1.ObjectName("user-provided-tls")
+			}
+			break
+		}
+		break
+	}
+
+	listenerName := gatewayv1.SectionName(defaultAuthGatewayListener)
+	protocol := gatewayv1.HTTPSProtocolType
+	mode := gatewayv1.TLSModeTerminate
+	p := gatewayv1.PortNumber(port)
+	from := gatewayv1.NamespacesFromSame
+
+	gateway := &gatewayv1.Gateway{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Gateway",
+			APIVersion: gatewayv1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      defaultAuthGatewayName,
+			Namespace: cr.Namespace,
+		},
+		Spec: gatewayv1.GatewaySpec{
+			GatewayClassName: gatewayv1.ObjectName("nginx"),
+			Listeners: []gatewayv1.Listener{
+				{
+					Name:     listenerName,
+					Protocol: protocol,
+					Port:     p,
+					TLS: &gatewayv1.ListenerTLSConfig{
+						Mode: &mode,
+						CertificateRefs: []gatewayv1.SecretObjectReference{
+							secret,
+						},
+					},
+					AllowedRoutes: &gatewayv1.AllowedRoutes{
+						Namespaces: &gatewayv1.RouteNamespaces{
+							From: &from,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	return gateway, nil
+}
+
+func ptrTo[T any](v T) *T {
+	return &v
+}
+
+// NginxGatewayFabric - apply/delete nginx gateway fabric controller objects
+func NginxGatewayFabric(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	YamlString, err := getNginxGatewayFabric(ctx, op, cr)
+	if err != nil {
+		return err
+	}
+
+	if err := applyDeleteObjects(ctx, ctrlClient, YamlString, isDeleting); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getNginxGatewayFabric(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	YamlString := ""
+
+	auth, err := getAuthorizationModule(cr)
+	if err != nil {
+		return YamlString, err
+	}
+
+	buf, err := readConfigFile(ctx, auth, cr, op, AuthNginxGatewayFabricManifest)
+	if err != nil {
+		return YamlString, err
+	}
+
+	YamlString = string(buf)
+	authNamespace := cr.Namespace
+	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
+	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+	YamlString = strings.ReplaceAll(YamlString, AuthCSMNameSpace, cr.Namespace)
+
+	return YamlString, nil
+}
+
+// AuthorizationHTTPRoute - apply/delete Gateway API HTTPRoute for authorization proxy server
+func AuthorizationHTTPRoute(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	route, err := createHTTPRoute(cr)
+	if err != nil {
+		return fmt.Errorf("creating httproute: %v", err)
+	}
+
+	routeBytes, err := json.Marshal(route)
+	if err != nil {
+		return fmt.Errorf("marshaling httproute: %v", err)
+	}
+
+	routeYaml, err := yaml.JSONToYAML(routeBytes)
+	if err != nil {
+		return fmt.Errorf("converting httproute json to yaml: %v", err)
+	}
+
+	if err := applyDeleteObjects(ctx, ctrlClient, string(routeYaml), isDeleting); err != nil {
+		return err
 	}
 
 	return nil
@@ -2241,6 +2410,130 @@ func createIngress(isOpenShift bool, cr csmv1.ContainerStorageModule) (*networki
 	}
 
 	return &ingress, nil
+}
+
+func getGatewayConfig(cr csmv1.ContainerStorageModule) (gatewayName, gatewayNamespace, sectionName string, port int32, err error) {
+	authModule, err := getAuthorizationModule(cr)
+	if err != nil {
+		return "", "", "", 0, err
+	}
+
+	gatewayName = defaultAuthGatewayName
+	gatewayNamespace = cr.Namespace
+	sectionName = defaultAuthGatewayListener
+	port = defaultAuthGatewayPort
+
+	for _, component := range authModule.Components {
+		if component.Name != AuthProxyServerComponent {
+			continue
+		}
+		for _, ingress := range component.ProxyServerIngress {
+			if ingress.Annotations == nil {
+				continue
+			}
+			if v := ingress.Annotations[AuthGatewayNameAnnotation]; v != "" {
+				gatewayName = v
+			}
+			if v := ingress.Annotations[AuthGatewayNamespaceAnnotation]; v != "" {
+				gatewayNamespace = v
+			}
+			if v := ingress.Annotations[AuthGatewaySectionNameAnnotation]; v != "" {
+				sectionName = v
+			}
+			if v := ingress.Annotations[AuthGatewayPortAnnotation]; v != "" {
+				p, perr := strconv.ParseInt(v, 10, 32)
+				if perr != nil {
+					return "", "", "", 0, fmt.Errorf("invalid %s: %s", AuthGatewayPortAnnotation, v)
+				}
+				port = int32(p)
+			}
+			break
+		}
+		break
+	}
+
+	return gatewayName, gatewayNamespace, sectionName, port, nil
+}
+
+func createHTTPRoute(cr csmv1.ContainerStorageModule) (*gatewayv1.HTTPRoute, error) {
+	hosts, err := getHosts(cr)
+	if err != nil {
+		return nil, err
+	}
+
+	gatewayName, gatewayNamespace, sectionName, port, err := getGatewayConfig(cr)
+	if err != nil {
+		return nil, err
+	}
+
+	backendName := gatewayv1.ObjectName("proxy-server")
+	backendPort := gatewayv1.PortNumber(8080)
+	pathMatchType := gatewayv1.PathMatchPathPrefix
+	pathValue := "/"
+	gatewayNS := gatewayv1.Namespace(gatewayNamespace)
+	gatewayPort := gatewayv1.PortNumber(port)
+
+	parentRef := gatewayv1.ParentReference{
+		Name:      gatewayv1.ObjectName(gatewayName),
+		Namespace: &gatewayNS,
+		Port:      &gatewayPort,
+	}
+	if sectionName != "" {
+		sec := gatewayv1.SectionName(sectionName)
+		parentRef.SectionName = &sec
+	}
+
+	route := &gatewayv1.HTTPRoute{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "HTTPRoute",
+			APIVersion: gatewayv1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      defaultAuthHTTPRouteName,
+			Namespace: cr.Namespace,
+		},
+		Spec: gatewayv1.HTTPRouteSpec{
+			CommonRouteSpec: gatewayv1.CommonRouteSpec{
+				ParentRefs: []gatewayv1.ParentReference{parentRef},
+			},
+			Hostnames: hostsToGatewayHostnames(hosts),
+			Rules: []gatewayv1.HTTPRouteRule{
+				{
+					Matches: []gatewayv1.HTTPRouteMatch{
+						{
+							Path: &gatewayv1.HTTPPathMatch{
+								Type:  &pathMatchType,
+								Value: &pathValue,
+							},
+						},
+					},
+					BackendRefs: []gatewayv1.HTTPBackendRef{
+						{
+							BackendRef: gatewayv1.BackendRef{
+								BackendObjectReference: gatewayv1.BackendObjectReference{
+									Name: backendName,
+									Port: &backendPort,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	return route, nil
+}
+
+func hostsToGatewayHostnames(hosts []string) []gatewayv1.Hostname {
+	res := make([]gatewayv1.Hostname, 0, len(hosts))
+	for _, h := range hosts {
+		if h == "" {
+			continue
+		}
+		res = append(res, gatewayv1.Hostname(h))
+	}
+	return res
 }
 
 func getAnnotations(isOpenShift bool, cr csmv1.ContainerStorageModule) (map[string]string, error) {

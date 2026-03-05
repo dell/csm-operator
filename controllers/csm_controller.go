@@ -177,7 +177,7 @@ var (
 // +kubebuilder:rbac:groups="networking.k8s.io",resources=ingressclasses,verbs=create;get;list;watch;update;delete
 // +kubebuilder:rbac:groups="networking.k8s.io",resources=ingresses/status,verbs=update;get;list;watch
 // +kubebuilder:rbac:groups="gateway.networking.k8s.io",resources=httproutes,verbs=get;list;watch;create;delete;update
-// +kubebuilder:rbac:groups="gateway.networking.k8s.io",resources=httproutes;gateways,verbs=get;list;watch
+// +kubebuilder:rbac:groups="gateway.networking.k8s.io",resources=gateways,verbs=get;list;watch;create;delete;update
 // +kubebuilder:rbac:groups="gateway.networking.k8s.io",resources=gateways/finalizers;httproutes/finalizers,verbs=update
 // +kubebuilder:rbac:groups="route.openshift.io",resources=routes/custom-host,verbs=create
 // +kubebuilder:rbac:groups="admissionregistration.k8s.io",resources=validatingwebhookconfigurations;mutatingwebhookconfigurations,verbs=create;get;list;watch;update;delete;patch
@@ -1176,25 +1176,29 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 		}
 	}
 
+	proxyEnabled := operatorutils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthProxyServerComponent)
+
 	if r.Config.IsOpenShift {
 		log.Infow("Using OpenShift default ingress controller")
-		if operatorutils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
-			log.Warnw("openshift environment, skipping deployment of nginx ingress controller")
-		}
-	} else {
-		if operatorutils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
-			log.Infow("Reconcile authorization NGINX Ingress Controller")
-			if err := modules.NginxIngressController(ctx, isDeleting, op, cr, ctrlClient); err != nil {
-				return fmt.Errorf("unable to reconcile nginx ingress controller for authorization: %v", err)
+		// Keep existing Ingress behavior for OpenShift.
+		if proxyEnabled {
+			log.Infow("Reconcile authorization Ingresses")
+			if err := modules.AuthorizationIngress(ctx, isDeleting, r.Config.IsOpenShift, cr, r, ctrlClient); err != nil {
+				return fmt.Errorf("unable to reconcile authorization ingress rules: %v", err)
 			}
 		}
-	}
-
-	// Authorization Ingress rules
-	if operatorutils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthProxyServerComponent) {
-		log.Infow("Reconcile authorization Ingresses")
-		if err := modules.AuthorizationIngress(ctx, isDeleting, r.Config.IsOpenShift, cr, r, ctrlClient); err != nil {
-			return fmt.Errorf("unable to reconcile authorization ingress rules: %v", err)
+	} else {
+		if err := modules.NginxGatewayFabric(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+			return fmt.Errorf("unable to reconcile nginx gateway fabric for authorization: %v", err)
+		}
+		if proxyEnabled {
+			log.Infow("Reconcile authorization Gateway API resources")
+			if err := modules.AuthorizationGateway(ctx, isDeleting, cr, ctrlClient); err != nil {
+				return fmt.Errorf("unable to reconcile authorization gateway: %v", err)
+			}
+			if err := modules.AuthorizationHTTPRoute(ctx, isDeleting, cr, ctrlClient); err != nil {
+				return fmt.Errorf("unable to reconcile authorization httproute: %v", err)
+			}
 		}
 	}
 
