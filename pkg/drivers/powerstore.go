@@ -200,8 +200,8 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	nfsClientPort := "unused"
 	nfsServerPort := "unused"
 	nfsExportDirectory := "/var/lib/dell/nfs"
-	fsckEnabled := "false"
-	fsckMode := "checkOnly"
+	fsckEnabled := GetDriverCommonEnv(cr, "X_CSI_FS_CHECK_ENABLED", "false")
+	fsckMode := GetDriverCommonEnv(cr, "X_CSI_FS_CHECK_MODE", "checkOnly")
 
 	for _, mod := range cr.Spec.Modules {
 		if mod.Name == csmv1.Authorization {
@@ -220,12 +220,6 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 			}
 			if env.Name == "X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT" && env.Value != "" {
 				podmonArrayConnectivityTimeout = env.Value
-			}
-			if env.Name == "X_CSI_FS_CHECK_ENABLED" {
-				fsckEnabled = env.Value
-			}
-			if env.Name == "X_CSI_FS_CHECK_MODE" {
-				fsckMode = env.Value
 			}
 		}
 	}
