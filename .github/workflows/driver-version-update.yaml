@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2025 DELL Inc. or its subsidiaries.
+# Copyright 2025-2026 DELL Inc. or its subsidiaries.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,21 +20,22 @@ on:  # yamllint disable-line rule:truthy
   workflow_call:
   workflow_dispatch:
     inputs:
-      csm-version:
+      csm_version:
         description: 'CSM program version, ex: v1.15.0, v1.16.0, ...'
         required: true
-      update-option:
-        description: 'Select the update flag, ex. "nightly" or "tag"'
+      increment_type:
+        description: 'Increment type, ex: major, minor, patch'
         required: true
-        type: choice
-        options:
-          - nightly
-          - tag
+      previous_patch_version:
+        description: 'Previous patch version, ex: 1.16.1'
+        required: false
+
 jobs:
   version-update:
     uses: CSM/actions/.github/workflows/operator-driver-version-update.yaml@main
     name: CSM Operator Driver Version Update
     with:
-      csm-version: ${{ inputs.csm-version }}
-      update-option: ${{ inputs.update-option}}
+      csm_version: ${{ inputs.csm_version }}
+      increment_type: ${{ inputs.increment_type || 'minor' }}
+      previous_patch_version: ${{ inputs.previous_patch_version }}
     secrets: inherit

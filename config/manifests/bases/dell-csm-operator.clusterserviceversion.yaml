@@ -2099,7 +2099,7 @@ spec:
       name: dell-csm-operator
     - image: quay.io/dell/container-storage-modules/csi-isilon:v2.17.0
       name: csi-isilon
-    - image: quay.io/dell/container-storage-modules/csi-powermax:v2.16.1
+    - image: quay.io/dell/container-storage-modules/csi-powermax:v2.17.0
       name: csi-powermax
     - image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.16.0
       name: csipowermax-reverseproxy
