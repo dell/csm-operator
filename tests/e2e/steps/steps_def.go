@@ -1306,6 +1306,57 @@ func (step *Step) disableModule(res Resource, module string, crNumStr string) er
 	return step.ctrlClient.Update(context.TODO(), found)
 }
 
+func (step *Step) configureHealthMonitor(res Resource, action string, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+	found := new(csmv1.ContainerStorageModule)
+	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+		Namespace: cr.Namespace,
+		Name:      cr.Name,
+	}, found,
+	); err != nil {
+		return err
+	}
+
+	// Determine the enabled state based on action
+	enabled := strings.ToLower(action) == "enable"
+	fmt.Println("Setting health monitor to: ", enabled)
+
+	// Configure external-health-monitor sidecar
+	for i, sideCar := range found.Spec.Driver.SideCars {
+		if strings.Contains(sideCar.Name, "external-health-monitor") {
+			found.Spec.Driver.SideCars[i].Enabled = pointer.Bool(enabled)
+			break
+		}
+	}
+
+	// Set X_CSI_HEALTH_MONITOR_ENABLED for both controller and node
+	healthMonitorValue := "false"
+	if enabled {
+		healthMonitorValue = "true"
+	}
+
+	if found.Spec.Driver.Controller != nil {
+		for i, env := range found.Spec.Driver.Controller.Envs {
+			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
+				found.Spec.Driver.Controller.Envs[i].Value = healthMonitorValue
+				break
+			}
+		}
+	}
+
+	if found.Spec.Driver.Node != nil {
+		for i, env := range found.Spec.Driver.Node.Envs {
+			if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
+				found.Spec.Driver.Node.Envs[i].Value = healthMonitorValue
+				break
+			}
+		}
+	}
+
+	return step.ctrlClient.Update(context.TODO(), found)
+}
+
 func (step *Step) enableForceRemoveDriver(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)

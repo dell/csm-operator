@@ -81,10 +81,8 @@ sed -i "s/dell-csm-operator:.*/dell-csm-operator:${operator_version}/g" deploy/o
 sed -i "s/CSMVersion: .*/CSMVersion: ${csm_version}/g" deploy/operator.yaml
 echo "operator.yaml updated"
 
-sed -i "s/VERSION ?=.*/VERSION ?= ${operator_version}/g" docker.mk
-sed -i "s/BUNDLE_VERSION ?=.*/BUNDLE_VERSION ?= ${op_version_wv}/g" docker.mk
-sed -i "s/example.com\/operator-catalog:.*/example.com\/operator-catalog:${operator_version})./g" docker.mk
-echo "docker.mk updated"
+sed -i "s/VERSION ?=.*/VERSION ?= ${operator_version}/g" images.mk
+sed -i "s/BUNDLE_VERSION ?=.*/BUNDLE_VERSION ?= ${op_version_wv}/g" images.mk
 
 file="dell-csm-operator.clusterserviceversion.yaml"
 for i_dir in {'bundle/manifests/','config/manifests/bases/'}; do

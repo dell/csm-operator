@@ -82,6 +82,16 @@ rules:
   - apiGroups: [""]
     resources: ["namespaces"]
     verbs: ["create", "get", "list", "watch"]
+  # for vgs
+  - apiGroups: ["groupsnapshot.storage.k8s.io"]
+    resources: ["volumegroupsnapshotclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["groupsnapshot.storage.k8s.io"]
+    resources: ["volumegroupsnapshotcontents"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["groupsnapshot.storage.k8s.io"]
+    resources: ["volumegroupsnapshotcontents/status"]
+    verbs: ["update", "patch"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -252,6 +262,7 @@ spec:
             - "--snapshot-name-prefix=pmsn"
             - "--leader-election"
             - "--snapshot-name-uuid-length=10"
+            - "--feature-gates=CSIVolumeGroupSnapshot=true"
           env:
             - name: ADDRESS
               value: /var/run/csi/csi.sock

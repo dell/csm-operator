@@ -66,6 +66,18 @@ spec:
         # Allowed values: OIDC, "" empty
         - name: X_CSI_AUTH_TYPE
           value: ""
+        # X_CSI_FS_CHECK_ENABLED: Enable/disable file system check feature.
+        # Allowed values:
+        #    true: enable FSCK Check before mounting a volume.
+        #    false: disable FSCK Check while mounting a volume.
+        # Default value: false
+        - name: X_CSI_FS_CHECK_ENABLED
+          value: "false"
+        # X_CSI_FS_CHECK_MODE: Controls if automatic repair should be done when repairable errors are found.
+        # Allowed values: checkOnly, checkAndRepair
+        # Default value: checkOnly
+        - name: X_CSI_FS_CHECK_MODE
+          value: "checkOnly"
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
