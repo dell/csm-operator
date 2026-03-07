@@ -369,20 +369,28 @@ func (step *Step) deleteCustomResource(res Resource, crNumStr string) error {
 func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
-	time.Sleep(20 * time.Second)
-	found := new(csmv1.ContainerStorageModule)
-	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
-		Namespace: cr.Namespace,
-		Name:      cr.Name,
-	}, found)
-	if err != nil {
-		return err
-	}
-	if found.Status.State != constants.Succeeded {
-		return fmt.Errorf("expected custom resource status to be %s. Got: %s", constants.Succeeded, found.Status.State)
-	}
+	deadline := time.Now().Add(5 * time.Minute)
 
-	return nil
+	for {
+		found := new(csmv1.ContainerStorageModule)
+		err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+			Namespace: cr.Namespace,
+			Name:      cr.Name,
+		}, found)
+		if err != nil {
+			return err
+		}
+
+		if found.Status.State == constants.Succeeded {
+			return nil
+		}
+
+		if time.Now().After(deadline) {
+			return fmt.Errorf("expected custom resource status to be %s. Got: %s", constants.Succeeded, found.Status.State)
+		}
+
+		time.Sleep(10 * time.Second)
+	}
 }
 
 func (step *Step) validateContainerArg(res Resource, crNumStr string, arg string, container string) error {
