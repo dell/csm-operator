@@ -230,7 +230,7 @@ spec:
             - "--timeout=120s"
             - "--v=5"
             - "--leader-election=true"
-            - "--feature-gates=CSIVolumeGroupSnapshot=true"
+            - "--feature-gates=CSIVolumeGroupSnapshot=false"
           env:
             - name: ADDRESS
               value: /var/run/csi/csi.sock

@@ -83,7 +83,7 @@ spec:
       - name: provisioner
         args: ["--volume-name-prefix=csivol"]
       - name: snapshotter
-        args: ["--feature-gates=CSIVolumeGroupSnapshot=true"]
+        args: ["--feature-gates=CSIVolumeGroupSnapshot=false"]
         # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
