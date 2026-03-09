@@ -52,6 +52,16 @@ rules:
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshots/status", "volumesnapshotcontents/status"]
     verbs: ["get", "list", "watch", "update", "patch"]
+  # for vgs
+  - apiGroups: ["groupsnapshot.storage.k8s.io"]
+    resources: ["volumegroupsnapshotclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["groupsnapshot.storage.k8s.io"]
+    resources: ["volumegroupsnapshotcontents"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["groupsnapshot.storage.k8s.io"]
+    resources: ["volumegroupsnapshotcontents/status"]
+    verbs: ["update", "patch"]
   - apiGroups: ["apiextensions.k8s.io"]
     resources: ["customresourcedefinitions"]
     verbs: ["create", "list", "watch", "delete"]
@@ -220,6 +230,7 @@ spec:
             - "--timeout=120s"
             - "--v=5"
             - "--leader-election=true"
+            - "--feature-gates=CSIVolumeGroupSnapshot=true"
           env:
             - name: ADDRESS
               value: /var/run/csi/csi.sock

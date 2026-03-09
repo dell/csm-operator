@@ -82,6 +82,8 @@ spec:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
         args: ["--volume-name-prefix=csivol"]
+      - name: snapshotter
+        args: ["--feature-gates=CSIVolumeGroupSnapshot=true"]
         # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
