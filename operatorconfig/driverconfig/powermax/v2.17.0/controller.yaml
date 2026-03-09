@@ -262,7 +262,7 @@ spec:
             - "--snapshot-name-prefix=pmsn"
             - "--leader-election"
             - "--snapshot-name-uuid-length=10"
-            - "--feature-gates=CSIVolumeGroupSnapshot=true"
+            - "--feature-gates=CSIVolumeGroupSnapshot=false"
           env:
             - name: ADDRESS
               value: /var/run/csi/csi.sock
