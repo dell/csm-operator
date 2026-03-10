@@ -638,7 +638,7 @@ LoadDriverDescriptor() {
         dd_init_container_name=""
         dd_configmap_image_key="isilon"
         dd_downgrade_files=""
-        dd_testdata_files="pkg/modules/testdata/cr_powerscale_auth_missing_skip_cert_env.yaml pkg/modules/testdata/cr_powerscale_auth_validate_cert.yaml pkg/modules/testdata/cr_powerscale_auth.yaml pkg/modules/testdata/cr_powerscale_observability.yaml pkg/modules/testdata/cr_powerscale_replica.yaml pkg/modules/testdata/cr_powerscale_resiliency.yaml pkg/modules/testdata/cr_powerscale_auth_driver_secret.yaml"
+        dd_testdata_files="pkg/modules/testdata/cr_powerscale_observability.yaml pkg/modules/testdata/cr_powerscale_replica.yaml pkg/modules/testdata/cr_powerscale_resiliency.yaml"
         dd_e2e_name_prefix="storage_csm_powerscale"
         ;;
     powerstore)
@@ -655,7 +655,7 @@ LoadDriverDescriptor() {
         dd_init_container_name=""
         dd_configmap_image_key="powerstore"
         dd_downgrade_files=""
-        dd_testdata_files="pkg/modules/testdata/cr_powerstore_resiliency.yaml pkg/modules/testdata/cr_powerstore_auth.yaml pkg/modules/testdata/cr_powerstore_observability.yaml pkg/modules/testdata/cr_powerstore_replica.yaml"
+        dd_testdata_files="pkg/modules/testdata/cr_powerstore_resiliency.yaml pkg/modules/testdata/cr_powerstore_observability.yaml pkg/modules/testdata/cr_powerstore_replica.yaml"
         dd_e2e_name_prefix="storage_csm_powerstore"
         ;;
     unity)

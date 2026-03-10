@@ -156,7 +156,6 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-    configVersion: v2.17.0
   modules:
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature

@@ -259,11 +259,6 @@ spec:
               service deployment
             displayName: Storage Service Replicas
             path: driver.common.storageServiceReplicas
-          - description:
-              RedisStorageClass is the authorization proxy server redis storage
-              class for persistence
-            displayName: Authorization Proxy Server Redis storage class
-            path: driver.common.storageclass
           - description: TenantService is the image tag for the Container
             displayName: Authorization Tenant Service Container Image
             path: driver.common.tenantService
@@ -533,11 +528,6 @@ spec:
               service deployment
             displayName: Storage Service Replicas
             path: driver.controller.storageServiceReplicas
-          - description:
-              RedisStorageClass is the authorization proxy server redis storage
-              class for persistence
-            displayName: Authorization Proxy Server Redis storage class
-            path: driver.controller.storageclass
           - description: TenantService is the image tag for the Container
             displayName: Authorization Tenant Service Container Image
             path: driver.controller.tenantService
@@ -817,11 +807,6 @@ spec:
               service deployment
             displayName: Storage Service Replicas
             path: driver.initContainers[0].storageServiceReplicas
-          - description:
-              RedisStorageClass is the authorization proxy server redis storage
-              class for persistence
-            displayName: Authorization Proxy Server Redis storage class
-            path: driver.initContainers[0].storageclass
           - description: TenantService is the image tag for the Container
             displayName: Authorization Tenant Service Container Image
             path: driver.initContainers[0].tenantService
@@ -1088,11 +1073,6 @@ spec:
               service deployment
             displayName: Storage Service Replicas
             path: driver.node.storageServiceReplicas
-          - description:
-              RedisStorageClass is the authorization proxy server redis storage
-              class for persistence
-            displayName: Authorization Proxy Server Redis storage class
-            path: driver.node.storageclass
           - description: TenantService is the image tag for the Container
             displayName: Authorization Tenant Service Container Image
             path: driver.node.tenantService
@@ -1362,11 +1342,6 @@ spec:
               service deployment
             displayName: Storage Service Replicas
             path: driver.sideCars[0].storageServiceReplicas
-          - description:
-              RedisStorageClass is the authorization proxy server redis storage
-              class for persistence
-            displayName: Authorization Proxy Server Redis storage class
-            path: driver.sideCars[0].storageclass
           - description: TenantService is the image tag for the Container
             displayName: Authorization Tenant Service Container Image
             path: driver.sideCars[0].tenantService
@@ -1647,11 +1622,6 @@ spec:
               service deployment
             displayName: Storage Service Replicas
             path: modules[0].components[0].storageServiceReplicas
-          - description:
-              RedisStorageClass is the authorization proxy server redis storage
-              class for persistence
-            displayName: Authorization Proxy Server Redis storage class
-            path: modules[0].components[0].storageclass
           - description: TenantService is the image tag for the Container
             displayName: Authorization Tenant Service Container Image
             path: modules[0].components[0].tenantService
@@ -1926,11 +1896,6 @@ spec:
               service deployment
             displayName: Storage Service Replicas
             path: modules[0].initContainer[0].storageServiceReplicas
-          - description:
-              RedisStorageClass is the authorization proxy server redis storage
-              class for persistence
-            displayName: Authorization Proxy Server Redis storage class
-            path: modules[0].initContainer[0].storageclass
           - description: TenantService is the image tag for the Container
             displayName: Authorization Tenant Service Container Image
             path: modules[0].initContainer[0].tenantService

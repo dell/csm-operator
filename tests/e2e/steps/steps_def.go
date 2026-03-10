@@ -1591,25 +1591,6 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	if err != nil {
 		return fmt.Errorf("failed to create storage secret: %v\nErrMessage:\n%s", err, string(b))
 	}
-
-	cmd = exec.Command("kubectl", "get", "sc", "local-storage") // #nosec G204
-	err = cmd.Run()
-	if err == nil {
-		cmd = exec.Command("kubectl", "delete", "-f", "testfiles/authorization-templates/storage_csm_authorization_local_storage.yaml") // #nosec G204
-		b, err := cmd.CombinedOutput()
-		if err != nil {
-			return fmt.Errorf("failed to delete local storage: %v\nErrMessage:\n%s", err, string(b))
-		}
-	}
-
-	cmd = exec.Command("kubectl", "create",
-		"-f", "testfiles/authorization-templates/storage_csm_authorization_local_storage.yaml",
-	) // #nosec G204
-	b, err = cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to create local storage for redis: %v\nErrMessage:\n%s", err, string(b))
-	}
-
 	return nil
 }
 

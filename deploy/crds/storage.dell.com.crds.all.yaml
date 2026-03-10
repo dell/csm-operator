@@ -433,9 +433,6 @@ spec:
                         storageServiceReplicas:
                           description: StorageServiceReplicas is the number of replicas for storage service deployment
                           type: integer
-                        storageclass:
-                          description: RedisStorageClass is the authorization proxy server redis storage class for persistence
-                          type: string
                         tenantService:
                           description: TenantService is the image tag for the Container
                           type: string
@@ -879,9 +876,6 @@ spec:
                         storageServiceReplicas:
                           description: StorageServiceReplicas is the number of replicas for storage service deployment
                           type: integer
-                        storageclass:
-                          description: RedisStorageClass is the authorization proxy server redis storage class for persistence
-                          type: string
                         tenantService:
                           description: TenantService is the image tag for the Container
                           type: string
@@ -1341,9 +1335,6 @@ spec:
                           storageServiceReplicas:
                             description: StorageServiceReplicas is the number of replicas for storage service deployment
                             type: integer
-                          storageclass:
-                            description: RedisStorageClass is the authorization proxy server redis storage class for persistence
-                            type: string
                           tenantService:
                             description: TenantService is the image tag for the Container
                             type: string
@@ -1785,9 +1776,6 @@ spec:
                         storageServiceReplicas:
                           description: StorageServiceReplicas is the number of replicas for storage service deployment
                           type: integer
-                        storageclass:
-                          description: RedisStorageClass is the authorization proxy server redis storage class for persistence
-                          type: string
                         tenantService:
                           description: TenantService is the image tag for the Container
                           type: string
@@ -2235,9 +2223,6 @@ spec:
                           storageServiceReplicas:
                             description: StorageServiceReplicas is the number of replicas for storage service deployment
                             type: integer
-                          storageclass:
-                            description: RedisStorageClass is the authorization proxy server redis storage class for persistence
-                            type: string
                           tenantService:
                             description: TenantService is the image tag for the Container
                             type: string
@@ -2707,9 +2692,6 @@ spec:
                             storageServiceReplicas:
                               description: StorageServiceReplicas is the number of replicas for storage service deployment
                               type: integer
-                            storageclass:
-                              description: RedisStorageClass is the authorization proxy server redis storage class for persistence
-                              type: string
                             tenantService:
                               description: TenantService is the image tag for the Container
                               type: string
@@ -3163,9 +3145,6 @@ spec:
                             storageServiceReplicas:
                               description: StorageServiceReplicas is the number of replicas for storage service deployment
                               type: integer
-                            storageclass:
-                              description: RedisStorageClass is the authorization proxy server redis storage class for persistence
-                              type: string
                             tenantService:
                               description: TenantService is the image tag for the Container
                               type: string
