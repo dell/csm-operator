@@ -96,8 +96,8 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Delete ConfigMap$`, step.deleteConfigMap)
 
 	// Environment variables management steps
-	runner.addStep(`^Validate \[(node|controller)\] \[([^"]*)\] env \[([^"]*)\] has value \[([^"]*)\] in driver for resource \[(\d+)\]$`, step.validateEnvInDriverPod)
-	runner.addStep(`^Validate \[(common|node|controller)\] env \[([^"]*)\] has value \[([^"]*)\] in CSM CR for resource \[(\d+)\]$`, step.validateEnvInCSMCR)
+	runner.addStep(`^Validate \[(node|controller)\] \[([^"]*)\] env \[([^"]*)\] is \[([^"]*)\] in driver for resource \[(\d+)\]$`, step.validateEnvInDriverPod)
+	runner.addStep(`^Validate \[(common|node|controller)\] env \[([^"]*)\] is \[([^"]*)\] in CSM CR for resource \[(\d+)\]$`, step.validateEnvInCSMCR)
 	runner.addStep(`^Set \[(common|node|controller)\] env \[([^"]*)\] to \[([^"]*)\] in resource \[(\d+)\]$`, step.setEnvInSpec)
 }
 
