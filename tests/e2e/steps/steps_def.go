@@ -367,53 +367,23 @@ func (step *Step) deleteCustomResource(res Resource, crNumStr string) error {
 }
 
 func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) error {
-    crNum, _ := strconv.Atoi(crNumStr)
-    cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+	time.Sleep(20 * time.Second)
+	found := new(csmv1.ContainerStorageModule)
+	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+		Namespace: cr.Namespace,
+		Name:      cr.Name,
+	}, found)
+	if err != nil {
+		return err
+	}
+	if found.Status.State != constants.Succeeded {
+		return fmt.Errorf("expected custom resource status to be %s. Got: %s", constants.Succeeded, found.Status.State)
+	}
 
-    key := client.ObjectKey{
-        Namespace: cr.Namespace,
-        Name:      cr.Name,
-    }
-
-    // Poll settings (tweak if needed)
-    const (
-        pollInterval = 5 * time.Second
-        pollTimeout  = 5 * time.Minute
-    )
-
-    ctx, cancel := context.WithTimeout(context.Background(), pollTimeout)
-    defer cancel()
-
-    var lastState string
-    ticker := time.NewTicker(pollInterval)
-    defer ticker.Stop()
-
-    for {
-        select {
-        case <-ctx.Done():
-            if lastState == "" {
-                lastState = "<unknown>"
-            }
-            return fmt.Errorf(
-                "expected custom resource status to be %s. Got: %s (timed out after %s)",
-                constants.Succeeded, lastState, pollTimeout,
-            )
-        case <-ticker.C:
-            found := new(csmv1.ContainerStorageModule)
-            if err := step.ctrlClient.Get(ctx, key, found); err != nil {
-                // Retry on transient get errors until timeout
-                continue
-            }
-
-            lastState = found.Status.State
-            if lastState == constants.Succeeded {
-                return nil
-            }
-        }
-    }
+	return nil
 }
-
-
 
 func (step *Step) validateContainerArg(res Resource, crNumStr string, arg string, container string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
@@ -442,10 +412,42 @@ func (step *Step) validateContainerArg(res Resource, crNumStr string, arg string
 	return fmt.Errorf("unknown error validating container arg")
 }
 
-func (step *Step) validateDriverInstalled(res Resource, driverName string, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
-	time.Sleep(20 * time.Second)
-	return checkAllRunningPods(context.TODO(), res.CustomResource[crNum-1].(csmv1.ContainerStorageModule).Namespace, step.clientSet)
+func (step *Step) validateDriverNotInstalled(res Resource, driverName string, crNumStr string) error {
+    crNum, _ := strconv.Atoi(crNumStr)
+    ns := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule).Namespace
+
+    timeout := time.Minute * 5
+    interval := time.Second * 5
+
+    end := time.Now().Add(timeout)
+
+    for time.Now().Before(end) {
+        pods, _ := checkNoRunningPods(context.TODO(), ns, step.clientSet)
+
+        // If helper returns nil → no running pods → we're done
+        if pods == nil {
+            return nil
+        }
+
+        // Ignore pods that are already terminating (normal during uninstall)
+        stillRunning := []string{}
+        for _, p := range pods {
+            if p.DeletionTimestamp == nil {
+                stillRunning = append(stillRunning, p.Name)
+            }
+        }
+
+        if len(stillRunning) == 0 {
+            // Only terminating pods left → keep waiting
+            time.Sleep(interval)
+            continue
+        }
+
+        // Pods still alive → wait more
+        time.Sleep(interval)
+    }
+
+    return fmt.Errorf("timeout waiting for driver pods to be deleted")
 }
 
 func (step *Step) validateMinimalCSMDriverSpec(res Resource, driverName string, crNumStr string) error {
