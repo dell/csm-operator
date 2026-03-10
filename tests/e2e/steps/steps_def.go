@@ -367,23 +367,52 @@ func (step *Step) deleteCustomResource(res Resource, crNumStr string) error {
 }
 
 func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
-	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
-	time.Sleep(60 * time.Second)
-	found := new(csmv1.ContainerStorageModule)
-	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
-		Namespace: cr.Namespace,
-		Name:      cr.Name,
-	}, found)
-	if err != nil {
-		return err
-	}
-	if found.Status.State != constants.Succeeded {
-		return fmt.Errorf("expected custom resource status to be %s. Got: %s", constants.Succeeded, found.Status.State)
-	}
+    crNum, _ := strconv.Atoi(crNumStr)
+    cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 
-	return nil
+    key := client.ObjectKey{
+        Namespace: cr.Namespace,
+        Name:      cr.Name,
+    }
+
+    // Poll settings (tweak if needed)
+    const (
+        pollInterval = 5 * time.Second
+        pollTimeout  = 5 * time.Minute
+    )
+
+    ctx, cancel := context.WithTimeout(context.Background(), pollTimeout)
+    defer cancel()
+
+    var lastState string
+    ticker := time.NewTicker(pollInterval)
+    defer ticker.Stop()
+
+    for {
+        select {
+        case <-ctx.Done():
+            if lastState == "" {
+                lastState = "<unknown>"
+            }
+            return fmt.Errorf(
+                "expected custom resource status to be %s. Got: %s (timed out after %s)",
+                constants.Succeeded, lastState, pollTimeout,
+            )
+        case <-ticker.C:
+            found := new(csmv1.ContainerStorageModule)
+            if err := step.ctrlClient.Get(ctx, key, found); err != nil {
+                // Retry on transient get errors until timeout
+                continue
+            }
+
+            lastState = found.Status.State
+            if lastState == constants.Succeeded {
+                return nil
+            }
+        }
+    }
 }
+
 
 
 func (step *Step) validateContainerArg(res Resource, crNumStr string, arg string, container string) error {
