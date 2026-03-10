@@ -123,7 +123,7 @@ spec:
           - "--monitor-interval=60s"
           - "--http-endpoint=:8080"
       - name: snapshotter
-        args: ["--feature-gates=CSIVolumeGroupSnapshot=true"]
+        args: ["--feature-gates=CSIVolumeGroupSnapshot=false"]
     # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
     # Configure only when the storageCapacity is set as "true"
     # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
