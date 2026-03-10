@@ -188,7 +188,7 @@ update_observability_tag_only() {
          "$f"
       fi
    }
-   
+
    retag_obs_version_dir() {
       local dir="$1"
       cd "$dir" || { echo "❌ Cannot cd to $dir"; return 1; }
@@ -205,7 +205,7 @@ update_observability_tag_only() {
       done
    }
 
-   
+
    # -----------------------------
    # Bundle CSV updates (modular, tag-only)
    # -----------------------------
@@ -242,7 +242,7 @@ update_observability_tag_only() {
       fi
    }
 
-   
+
    update_obs_bundle_manifest_config_version() {
    # Define the file you’re editing
       local input_file="$GITHUB_WORKSPACE/bundle/manifests/dell-csm-operator.clusterserviceversion.yaml"
@@ -328,7 +328,7 @@ update_observability_tag_only() {
    update_metrics_tag_in_file "$GITHUB_WORKSPACE/config/manager/manager.yaml"
    update_metrics_tag_in_file "$GITHUB_WORKSPACE/config/manifests/bases/dell-csm-operator.clusterserviceversion.yaml"
    update_metrics_tag_in_file "$GITHUB_WORKSPACE/deploy/operator.yaml"
-   
+
    # Bundle/manifests CSV (images + configVersion)
    update_obs_bundle_manifest_images
    update_obs_bundle_manifest_config_version
@@ -342,7 +342,7 @@ update_observability_tag_only() {
       "$GITHUB_WORKSPACE/config/samples/storage_v1_csm_powerstore.yaml"
    )
    for f in "${samples_cfg_files[@]}"; do
-      update_config_version_yq "$f" "observability" "$obs_ver" 
+      update_config_version_yq "$f" "observability" "$obs_ver"
       update_metrics_tag_in_file "$f"
    done
 
@@ -354,21 +354,21 @@ update_observability_tag_only() {
       "$GITHUB_WORKSPACE/samples/$CSI_POWERMAX/storage_csm_powerstore_${pstore_driver_ver}.yaml"
    )
    for f in "${driver_sample_files[@]}"; do
-      update_config_version_yq "$f" "observability" "$obs_ver" 
+      update_config_version_yq "$f" "observability" "$obs_ver"
       update_metrics_tag_in_file "$f"
    done
 
    # Testfiles
    shopt -s nullglob
    for f in "$GITHUB_WORKSPACE/tests/e2e/testfiles"/storage_csm*; do
-      update_config_version_yq "$f" "observability" "$obs_ver" 
+      update_config_version_yq "$f" "observability" "$obs_ver"
       update_metrics_tag_in_file "$f"
    done
    shopt -u nullglob
 
       shopt -s nullglob
    for f in "$GITHUB_WORKSPACE/tests/e2e/testfiles/minimal-testfiles"/storage_csm*; do
-      update_config_version_yq "$f" "observability" "$obs_ver" 
+      update_config_version_yq "$f" "observability" "$obs_ver"
       update_metrics_tag_in_file "$f"
    done
    shopt -u nullglob
@@ -386,8 +386,8 @@ update_observability_tag_only() {
             ;;
       esac
 
-      update_config_version_yq "$f" "observability" "$obs_ver" 
-      update_metrics_tag_in_file "$f" 
+      update_config_version_yq "$f" "observability" "$obs_ver"
+      update_metrics_tag_in_file "$f"
    done
 
    echo "✅ Observability Module config -> ${obs_ver} updated successfully (tag-only, folder checked even when present)."
@@ -430,7 +430,7 @@ update_resiliency_tag_only() {
       # Replace any podmon occurrence and its optional tag with :$res_ver
       sed -E -i "s|(quay\.io/dell/container-storage-modules/podmon)(:[^[:space:]\",]+)?|\1:${res_ver}|g" "$f"
       }
-         
+
       # Positional update of "configVersion" near podmon block
       update_podmon_bundle_manifest_config_version() {
       local input_file="$1"     # path to file to modify
@@ -562,7 +562,7 @@ update_resiliency_tag_only() {
    update_and_validate_files "$CONFIG_BASES_CSV"
 
    # ----------------------
-   # Update config/samples 
+   # Update config/samples
    # ----------------------
    samples_cfg_files=(
       "$CONFIG_SAMPLES_DIR/storage_v1_csm_powerflex.yaml"
@@ -571,7 +571,7 @@ update_resiliency_tag_only() {
       "$CONFIG_SAMPLES_DIR/storage_v1_csm_powerstore.yaml"
    )
    for f in "${samples_cfg_files[@]}"; do
-      update_config_version_yq "$f" "resiliency" "$res_ver" 
+      update_config_version_yq "$f" "resiliency" "$res_ver"
       update_podmon_tag_in_file "$f"
    done
    # -----------------------------
@@ -580,7 +580,7 @@ update_resiliency_tag_only() {
    update_and_validate_files "$DEPLOY_OPERATOR_FILE"
 
    # -----------------------------
-   # Update pkg/modules/testdata 
+   # Update pkg/modules/testdata
    # -----------------------------
    pkg_testdata_files=(
       "$PKG_TESTDATA_DIR/cr_powerflex_resiliency.yaml"
@@ -589,12 +589,12 @@ update_resiliency_tag_only() {
       "$PKG_TESTDATA_DIR/cr_powerstore_resiliency.yaml"
    )
    for f in "${pkg_testdata_files[@]}"; do
-      update_config_version_yq "$f" "resiliency" "$res_ver" 
+      update_config_version_yq "$f" "resiliency" "$res_ver"
       update_podmon_tag_in_file "$f"
    done
 
    # ------------------------------------------------------
-   # Update samples/<CSI_POWERMAX> Also apply configVersion 
+   # Update samples/<CSI_POWERMAX> Also apply configVersion
    # ------------------------------------------------------
    driver_sample_files=(
       "$SAMPLES_DIR/storage_csm_powerflex_${pflex_driver_ver}.yaml"
@@ -603,18 +603,18 @@ update_resiliency_tag_only() {
       "$SAMPLES_DIR/storage_csm_powerstore_${pstore_driver_ver}.yaml"
    )
    for f in "${driver_sample_files[@]}"; do
-      update_config_version_yq "$f" "resiliency" "$res_ver" 
+      update_config_version_yq "$f" "resiliency" "$res_ver"
       update_podmon_tag_in_file "$f"
    done
 
    # --------------------------
-   # Update tests/e2e/testfiles 
+   # Update tests/e2e/testfiles
    # --------------------------
    shopt -s nullglob
    e2e_files=( "$TESTFILES_DIR"/storage_csm* )
    shopt -u nullglob
    for f in "${e2e_files[@]}"; do
-      update_config_version_yq "$f" "resiliency" "$res_ver" 
+      update_config_version_yq "$f" "resiliency" "$res_ver"
       update_podmon_tag_in_file "$f"
    done
 
@@ -783,7 +783,7 @@ update_replication_tag_only() {
       "$GITHUB_WORKSPACE/config/samples/storage_v1_csm_powerstore.yaml"
    )
    for f in "${samples_cfg_files[@]}"; do
-      update_config_version_yq "$f" "replication" "$rep_ver" 
+      update_config_version_yq "$f" "replication" "$rep_ver"
       update_repl_tags_in_file "$f"
    done
 
@@ -800,7 +800,7 @@ update_replication_tag_only() {
       "$GITHUB_WORKSPACE/samples/$CSI_POWERMAX/storage_csm_powerstore_${pstore_driver_ver}.yaml"
    )
    for f in "${driver_sample_files[@]}"; do
-      update_config_version_yq "$f" "replication" "$rep_ver" 
+      update_config_version_yq "$f" "replication" "$rep_ver"
       update_repl_tags_in_file "$f"
    done
 
@@ -863,7 +863,7 @@ update_reverseproxy_tag_only() {
       fi
    }
 
-   
+
    update_revproxy_tags_in_file() {
       local f="$1"
       [[ -f "$f" ]] || { echo "↷ Skip missing: $f"; return 0; }
@@ -887,7 +887,7 @@ update_reverseproxy_tag_only() {
       "$csv"
    }
 
-   
+
 # Positional update of "configVersion" near csipowermax-reverseproxy block
    update_reverseproxy_bundle_manifest_config_version() {
       local input_file="$1"        # path to file to modify
@@ -979,7 +979,7 @@ update_reverseproxy_tag_only() {
 
    # samples config (storage_v1_csm_powermax.yaml): configVersion + tags
    samples_cfg="$GITHUB_WORKSPACE/config/samples/storage_v1_csm_powermax.yaml"
-   update_config_version_yq "$samples_cfg" "csireverseproxy" "$revproxy_ver" 
+   update_config_version_yq "$samples_cfg" "csireverseproxy" "$revproxy_ver"
    update_revproxy_tags_in_file "$samples_cfg"
 
    # deploy/operator.yaml
@@ -988,27 +988,27 @@ update_reverseproxy_tag_only() {
    # pkg/modules/testdata (cr_powermax_*)
    shopt -s nullglob
    for f in "$GITHUB_WORKSPACE/pkg/modules/testdata"/cr_powermax_*; do
-      update_config_version_yq "$f" "csireverseproxy" "$revproxy_ver" 
+      update_config_version_yq "$f" "csireverseproxy" "$revproxy_ver"
       update_revproxy_tags_in_file "$f"
    done
    shopt -u nullglob
 
    # detailed samples for the specific PowerMax driver version
    driver_sample="$GITHUB_WORKSPACE/samples/$CSI_POWERMAX/storage_csm_powermax_${pmax_driver_ver}.yaml"
-   update_config_version_yq "$driver_sample" "csireverseproxy" "$revproxy_ver" 
+   update_config_version_yq "$driver_sample" "csireverseproxy" "$revproxy_ver"
    update_revproxy_tags_in_file "$driver_sample"     # tag-only (no nightly anywhere)
 
    # e2e testfiles (PowerMax)
    shopt -s nullglob
    for f in "$GITHUB_WORKSPACE/tests/e2e/testfiles"/storage_csm_powermax*; do
-      update_config_version_yq "$f" "csireverseproxy" "$revproxy_ver" 
+      update_config_version_yq "$f" "csireverseproxy" "$revproxy_ver"
       update_revproxy_tags_in_file "$f"
    done
    shopt -u nullglob
 
       shopt -s nullglob
    for f in "$GITHUB_WORKSPACE/tests/e2e/testfiles/minimal-testfiles"/storage_csm_powermax*; do
-      update_config_version_yq "$f" "csireverseproxy" "$revproxy_ver" 
+      update_config_version_yq "$f" "csireverseproxy" "$revproxy_ver"
       update_revproxy_tags_in_file "$f"
    done
    shopt -u nullglob
@@ -1127,7 +1127,7 @@ update_authorization_v2_tag_only() {
       "$csv"
    }
 
-   
+
 # Deletes n-${offset} version dir and updates files by replacing n-${offset} -> n-$(offset-1)
 # - Version directories must be named like v2.1.0, v2.2.0 and sortable by `sort -V`.
 # - Protects directories if they match protect_dir_1 or protect_dir_2.
@@ -1335,14 +1335,14 @@ update_authorization_v2_tag_only() {
 
    # config/samples — authorization v2 sample
    local samples_auth_v2="$GITHUB_WORKSPACE/config/samples/storage_v1_csm_authorization_v2.yaml"
-   update_config_version_yq "$samples_auth_v2" "authorization-proxy-server" "$auth_v2"   
+   update_config_version_yq "$samples_auth_v2" "authorization-proxy-server" "$auth_v2"
    update_auth_images_in_file "$samples_auth_v2"
 
    for f in "$GITHUB_WORKSPACE/config/samples/storage_v1_csm_powermax.yaml" \
             "$GITHUB_WORKSPACE/config/samples/storage_v1_csm_powerscale.yaml" \
             "$GITHUB_WORKSPACE/config/samples/storage_v1_csm_powerflex.yaml" \
             "$GITHUB_WORKSPACE/config/samples/storage_v1_csm_powerstore.yaml"; do
-      update_config_version_yq "$f" "authorization" "$auth_v2" 
+      update_config_version_yq "$f" "authorization" "$auth_v2"
       update_auth_images_in_file "$f"
    done
 
@@ -1373,7 +1373,7 @@ update_authorization_v2_tag_only() {
          ;;
    esac
 
-   update_config_version_yq "$f" "authorization-proxy-server" "$auth_v2" 
+   update_config_version_yq "$f" "authorization-proxy-server" "$auth_v2"
    update_auth_images_in_file "$f"
    done
 
@@ -1407,12 +1407,11 @@ update_authorization_v2_tag_only() {
 
    # tests/e2e/testfiles/authorization-templates
    for f in "$GITHUB_WORKSPACE/tests/e2e/testfiles/authorization-templates"/storage_csm_authorization_v2_proxy_server_conjur.yaml \
-            "$GITHUB_WORKSPACE/tests/e2e/testfiles/authorization-templates"/storage_csm_authorization_v2_proxy_server_default_redis.yaml\
             "$GITHUB_WORKSPACE/tests/e2e/testfiles/authorization-templates"/storage_csm_authorization_v2_proxy_server_secret.yaml \
             "$GITHUB_WORKSPACE/tests/e2e/testfiles/authorization-templates"/storage_csm_authorization_v2_proxy_server_vault.yaml \
             "$GITHUB_WORKSPACE/tests/e2e/testfiles/authorization-templates"/storage_csm_authorization_v2_proxy_server.yaml; do
       [[ -f "$f" ]] || { echo "↷ Skip missing: $f"; continue; }
-      update_config_version_yq "$f" "authorization-proxy-server" "$auth_v2" 
+      update_config_version_yq "$f" "authorization-proxy-server" "$auth_v2"
       update_auth_images_in_file "$f"
    done
 
@@ -1422,8 +1421,8 @@ update_authorization_v2_tag_only() {
       shopt -s nullglob
       for f in "$mt_dir"/*; do
       # ---- Default logic for all other files ----
-         update_config_version_yq "$f" "authorization" "$auth_v2" 
-         update_auth_images_in_file "$f" 
+         update_config_version_yq "$f" "authorization" "$auth_v2"
+         update_auth_images_in_file "$f"
       done
       shopt -u nullglob
    fi
@@ -1459,7 +1458,7 @@ update_authorization_v2_tag_only() {
    # --- Prune n-PRUNE_OFFSET, protecting source & target ---
    delete_n_minus_offset_dir "$AUTH_ROOT" "$PRUNE_OFFSET" "$dir_to_copy" "$auth_v2"
 
-   echo "✅ Authorization v2 Module -> ${auth_v2} updated successfully (no recreate if exists"  
+   echo "✅ Authorization v2 Module -> ${auth_v2} updated successfully (no recreate if exists"
    echo "✅ Authorization v2 Module -> ${auth_v2} updated successfully (no recreate if exists; pruned n-${PRUNE_OFFSET} safely)."
 }
 

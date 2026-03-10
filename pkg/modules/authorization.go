@@ -57,39 +57,17 @@ const (
 	AuthNginxIngressManifest = "nginx-ingress-controller.yaml"
 	// AuthPolicyManifest -
 	AuthPolicyManifest = "policies.yaml"
-	// AuthLocalProvisionerManifest -
-	AuthLocalProvisionerManifest = "local-provisioner.yaml"
 	// AuthCustomCert - custom certificate file
 	AuthCustomCert = "custom-cert.yaml"
 
 	// AuthNamespace -
 	AuthNamespace = "<NAMESPACE>"
-	// AuthServerImage -
-	AuthServerImage = "<AUTHORIZATION_PROXY_SERVER_IMAGE>"
-	// AuthProxyServiceReplicas -
-	AuthProxyServiceReplicas = "<AUTHORIZATION_PROXY_SERVICE_REPLICAS>"
-	// AuthOpaImage -
-	AuthOpaImage = "<AUTHORIZATION_OPA_IMAGE>"
-	// AuthOpaKubeMgmtImage -
-	AuthOpaKubeMgmtImage = "<AUTHORIZATION_OPA_KUBEMGMT_IMAGE>"
-	// AuthTenantServiceImage -
-	AuthTenantServiceImage = "<AUTHORIZATION_TENANT_SERVICE_IMAGE>"
-	// AuthTenantServiceReplicas -
-	AuthTenantServiceReplicas = "<AUTHORIZATION_TENANT_SERVICE_REPLICAS>"
+
+	// Below are variables used in the deployment.yaml file
 	// AuthRoleServiceImage -
 	AuthRoleServiceImage = "<AUTHORIZATION_ROLE_SERVICE_IMAGE>"
 	// AuthRoleServiceReplicas -
 	AuthRoleServiceReplicas = "<AUTHORIZATION_ROLE_SERVICE_REPLICAS>"
-	// AuthStorageServiceImage -
-	AuthStorageServiceImage = "<AUTHORIZATION_STORAGE_SERVICE_IMAGE>"
-	// AuthStorageServiceReplicas -
-	AuthStorageServiceReplicas = "<AUTHORIZATION_STORAGE_SERVICE_REPLICAS>"
-	// AuthRedisImage -
-	AuthRedisImage = "<AUTHORIZATION_REDIS_IMAGE>"
-	// AuthRedisCommanderImage -
-	AuthRedisCommanderImage = "<AUTHORIZATION_REDIS_COMMANDER_IMAGE>"
-	// AuthRedisStorageClass -
-	AuthRedisStorageClass = "<REDIS_STORAGE_CLASS>"
 	// AuthControllerImage -
 	AuthControllerImage = "<AUTHORIZATION_CONTROLLER_IMAGE>"
 	// AuthControllerReplicas -
@@ -100,40 +78,22 @@ const (
 	AuthControllerReconcileInterval = "<AUTHORIZATION_CONTROLLER_RECONCILE_INTERVAL>"
 
 	// Auth default images
-	DefaultProxyServerImage    = "quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.4.0"
+	DefaultProxyServerImage    = "quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.5.0"
 	DefaultOpaImage            = "docker.io/openpolicyagent/opa:0.70.0"
 	DefaultOpaKubeMgmtImage    = "docker.io/openpolicyagent/kube-mgmt:9.2.1"
-	DefaultTenantServiceImage  = "quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.4.0"
-	DefaultRoleServiceImage    = "quay.io/dell/container-storage-modules/csm-authorization-role:v2.4.0"
-	DefaultStorageServiceImage = "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.4.0"
+	DefaultTenantServiceImage  = "quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.5.0"
+	DefaultRoleServiceImage    = "quay.io/dell/container-storage-modules/csm-authorization-role:v2.5.0"
+	DefaultStorageServiceImage = "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.5.0"
 	DefaultRedisImage          = "redis:8.4.0-alpine"
 	DefaultRedisCommanderImage = "rediscommander/redis-commander:latest"
-	DefaultControllerImage     = "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.4.0"
+	DefaultControllerImage     = "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.5.0"
 
-	// AuthProxyHost -
-	AuthProxyHost = "<AUTHORIZATION_HOSTNAME>"
-	// AuthProxyIngressHost -
-	AuthProxyIngressHost = "<PROXY_INGRESS_HOST>"
-
-	// AuthVaultAddress -
-	AuthVaultAddress = "<AUTHORIZATION_VAULT_ADDRESS>"
-	// AuthVaultRole -
-	AuthVaultRole = "<AUTHORIZATION_VAULT_ROLE>"
-	// AuthSkipCertificateValidation -
-	AuthSkipCertificateValidation = "<AUTHORIZATION_SKIP_CERTIFICATE_VALIDATION>"
-	// AuthKvEnginePath -
-	AuthKvEnginePath = "<AUTHORIZATION_KV_ENGINE_PATH>"
 	// AuthRedisName -
 	AuthRedisName = "<AUTHORIZATION_REDIS_NAME>"
 	// AuthRedisCommander -
 	AuthRedisCommander = "<AUTHORIZATION_REDIS_COMMANDER>"
 	// AuthRedisSentinel -
 	AuthRedisSentinel = "<AUTHORIZATION_REDIS_SENTINEL>"
-	// AuthRedisSentinelValues -
-	AuthRedisSentinelValues = "<AUTHORIZATION_REDIS_SENTINEL_VALUES>"
-	// AuthRedisReplicas -
-	AuthRedisReplicas = "<AUTHORIZATION_REDIS_REPLICAS>"
-
 	// AuthCert - for tls secret
 	AuthCert = "<BASE64_CERTIFICATE>"
 	// AuthPrivateKey - for tls secret
@@ -152,6 +112,7 @@ const (
 	// AuthConfigSecretComponent - config secret component
 	AuthConfigSecretComponent = "config"
 	// AuthVaultComponent - vault component
+	// Removed in v2.3.0 but kept for backwards compatibility
 	AuthVaultComponent = "vault"
 	// AuthStorageSystemCredentialsComponent - storage-system-credentials component
 	AuthStorageSystemCredentialsComponent = "storage-system-credentials"
@@ -164,21 +125,18 @@ const (
 	// defaultConfigSecretName - the default secret name used for the "config-volume" volume
 	defaultConfigSecretName = "karavi-config-secret" // #nosec G101 -- This is a false positive
 
-	// AuthLocalStorageClass -
-	AuthLocalStorageClass = "csm-authorization-local-storage"
-
 	// AuthCrds - name of authorization crd manifest yaml
 	AuthCrds = "authorization-crds.yaml"
 
 	// AuthCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	AuthCSMNameSpace string = "<CSM_NAMESPACE>"
 
-	// Karavi authorization config secret name		// removed in 2.4.0, but still supporting backward compatibility
+	// Karavi authorization config secret name
+	// removed in 2.4.0, but still supporting backward compatibility
 	KaraviAuthorizationConfigSecret = "karavi-authorization-config"
 )
 
 var (
-	redisStorageClass             string
 	redisSecretProviderClassName  string
 	redisSecretName               string
 	redisUsernameKey              string
@@ -761,13 +719,8 @@ func AuthorizationServerPrecheck(ctx context.Context, op operatorutils.OperatorC
 }
 
 // getAuthorizationServerDeployment - apply dynamic values to the deployment manifest before installation
-func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, matched operatorutils.VersionSpec) (string, error) {
+func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, auth csmv1.Module, matched operatorutils.VersionSpec) (string, error) {
 	YamlString := ""
-	auth, err := getAuthorizationModule(cr)
-	if err != nil {
-		return YamlString, err
-	}
-
 	buf, err := readConfigFile(ctx, auth, cr, op, AuthDeploymentManifest)
 	if err != nil {
 		return YamlString, err
@@ -779,22 +732,10 @@ func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.Oper
 	for _, component := range auth.Components {
 		// proxy-server component
 		if component.Name == AuthProxyServerComponent {
-
-			// default Auth components from cr - Remove when 220 support is dropped
-			proxyServerImage := getDefaultAuthImage(component.ProxyService, DefaultProxyServerImage, matched)
-			opaImage := getDefaultAuthImage(component.Opa, DefaultOpaImage, matched)
-			opaKubeMgmtImage := getDefaultAuthImage(component.OpaKubeMgmt, DefaultOpaKubeMgmtImage, matched)
-			tenantServiceImage := getDefaultAuthImage(component.TenantService, DefaultTenantServiceImage, matched)
 			roleServiceImage := getDefaultAuthImage(component.RoleService, DefaultRoleServiceImage, matched)
-			storageServiceImage := getDefaultAuthImage(component.StorageService, DefaultStorageServiceImage, matched)
 			controllerImage := getDefaultAuthImage(component.AuthorizationController, DefaultControllerImage, matched)
 			authProxyImages := map[string]*string{
-				"proxy-service":            &proxyServerImage,
-				"tenant-service":           &tenantServiceImage,
 				"role-service":             &roleServiceImage,
-				"storage-service":          &storageServiceImage,
-				"opa":                      &opaImage,
-				"opa-kube-mgmt":            &opaKubeMgmtImage,
 				"authorization-controller": &controllerImage,
 			}
 
@@ -802,16 +743,8 @@ func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.Oper
 				*authProxyImages[key] = getImageForKey(ctx, key, *authProxyImages[key], cr, matched)
 			}
 
-			YamlString = strings.ReplaceAll(YamlString, AuthServerImage, *authProxyImages["proxy-service"])
-			YamlString = strings.ReplaceAll(YamlString, AuthProxyServiceReplicas, strconv.Itoa(component.ProxyServiceReplicas))
-			YamlString = strings.ReplaceAll(YamlString, AuthOpaImage, *authProxyImages["opa"])
-			YamlString = strings.ReplaceAll(YamlString, AuthOpaKubeMgmtImage, *authProxyImages["opa-kube-mgmt"])
-			YamlString = strings.ReplaceAll(YamlString, AuthTenantServiceImage, *authProxyImages["tenant-service"])
-			YamlString = strings.ReplaceAll(YamlString, AuthTenantServiceReplicas, strconv.Itoa(component.TenantServiceReplicas))
 			YamlString = strings.ReplaceAll(YamlString, AuthRoleServiceImage, *authProxyImages["role-service"])
 			YamlString = strings.ReplaceAll(YamlString, AuthRoleServiceReplicas, strconv.Itoa(component.RoleServiceReplicas))
-			YamlString = strings.ReplaceAll(YamlString, AuthStorageServiceImage, *authProxyImages["storage-service"])
-			YamlString = strings.ReplaceAll(YamlString, AuthStorageServiceReplicas, strconv.Itoa(component.StorageServiceReplicas))
 			YamlString = strings.ReplaceAll(YamlString, AuthControllerImage, *authProxyImages["authorization-controller"])
 			YamlString = strings.ReplaceAll(YamlString, AuthControllerReplicas, strconv.Itoa(component.AuthorizationControllerReplicas))
 			YamlString = strings.ReplaceAll(YamlString, AuthLeaderElectionEnabled, strconv.FormatBool(component.LeaderElection))
@@ -822,32 +755,10 @@ func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.Oper
 
 		// redis component
 		if component.Name == AuthRedisComponent {
-			// default redis component from cr - Remove when 220 support is dropped
-			redisImage := getDefaultAuthImage(component.Redis, DefaultRedisImage, matched)
-			redisCommanderImage := getDefaultAuthImage(component.Commander, DefaultRedisCommanderImage, matched)
-			redisImage = getImageForKey(ctx, "redis", redisImage, cr, matched)
-			redisCommanderImage = getImageForKey(ctx, "commander", redisCommanderImage, cr, matched)
-
-			YamlString = strings.ReplaceAll(YamlString, AuthRedisImage, redisImage)
-			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommanderImage, redisCommanderImage)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisName, component.RedisName)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommander, component.RedisCommander)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisSentinel, component.Sentinel)
-			YamlString = strings.ReplaceAll(YamlString, AuthRedisReplicas, strconv.Itoa(component.RedisReplicas))
 			YamlString = strings.ReplaceAll(YamlString, AuthCSMNameSpace, cr.Namespace)
-
-			var sentinelValues []string
-			for i := 0; i < component.RedisReplicas; i++ {
-				sentinelValues = append(sentinelValues, fmt.Sprintf("sentinel-%d.sentinel.%s.svc.cluster.local:5000", i, authNamespace))
-			}
-			sentinels := strings.Join(sentinelValues, ", ")
-			YamlString = strings.ReplaceAll(YamlString, AuthRedisSentinelValues, sentinels)
-
-			if component.RedisStorageClass == "" {
-				redisStorageClass = AuthLocalStorageClass
-			} else {
-				redisStorageClass = component.RedisStorageClass
-			}
 
 			// create redis kubernetes secret
 			for _, config := range component.RedisSecretProviderClass {
@@ -865,32 +776,10 @@ func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.Oper
 	}
 
 	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
-	YamlString = strings.ReplaceAll(YamlString, AuthRedisStorageClass, redisStorageClass)
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 	YamlString = strings.ReplaceAll(YamlString, AuthCSMNameSpace, cr.Namespace)
 
 	return YamlString, nil
-}
-
-// getAuthorizationLocalProvisioner for redis
-func getAuthorizationLocalProvisioner(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (bool, string, error) {
-	auth, err := getAuthorizationModule(cr)
-	if err != nil {
-		return false, "", err
-	}
-
-	for _, component := range auth.Components {
-		if component.Name == AuthRedisComponent {
-			if component.RedisStorageClass == "" {
-				buf, err := readConfigFile(ctx, auth, cr, op, AuthLocalProvisionerManifest)
-				if err != nil {
-					return false, "", err
-				}
-				return true, string(buf), nil
-			}
-		}
-	}
-	return false, "", nil
 }
 
 // AuthorizationServerDeployment - apply/delete deployment objects
@@ -902,19 +791,7 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op oper
 		return err
 	}
 
-	useLocalStorage, yamlString, err := getAuthorizationLocalProvisioner(ctx, op, cr)
-	if err != nil {
-		return err
-	}
-
-	if useLocalStorage {
-		err = applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
-		if err != nil {
-			return err
-		}
-	}
-
-	YamlString, err := getAuthorizationServerDeployment(ctx, op, cr, matched)
+	YamlString, err := getAuthorizationServerDeployment(ctx, op, cr, authModule, matched)
 	if err != nil {
 		return err
 	}
@@ -932,33 +809,33 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op oper
 	}
 
 	if ok {
-		err = applyDeleteAuthorizationRedisStatefulsetV2(ctx, isDeleting, cr, ctrlClient, matched)
+		err = applyDeleteAuthorizationRedisStatefulsetV2(ctx, isDeleting, cr, ctrlClient, authModule, matched)
 		if err != nil {
 			return err
 		}
 
-		err = applyDeleteAuthorizationRediscommanderDeploymentV2(ctx, isDeleting, cr, ctrlClient, matched)
+		err = applyDeleteAuthorizationRediscommanderDeploymentV2(ctx, isDeleting, cr, ctrlClient, authModule, matched)
 		if err != nil {
 			return err
 		}
 
-		err = applyDeleteAuthorizationSentinelStatefulsetV2(ctx, isDeleting, cr, ctrlClient, matched)
+		err = applyDeleteAuthorizationSentinelStatefulsetV2(ctx, isDeleting, cr, ctrlClient, authModule, matched)
 		if err != nil {
 			return err
 		}
 
-		err = applyDeleteAuthorizationProxyServerV2(ctx, isDeleting, cr, ctrlClient, matched)
+		err = applyDeleteAuthorizationProxyServerV2(ctx, isDeleting, cr, ctrlClient, authModule, matched)
 		if err != nil {
 			return err
 		}
 
-		err = applyDeleteAuthorizationTenantServiceV2(ctx, isDeleting, cr, ctrlClient, matched)
+		err = applyDeleteAuthorizationTenantServiceV2(ctx, isDeleting, cr, ctrlClient, authModule, matched)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = authorizationStorageServiceV2(ctx, isDeleting, cr, ctrlClient, matched)
+	err = authorizationStorageServiceV2(ctx, isDeleting, cr, ctrlClient, authModule, matched)
 	if err != nil {
 		return err
 	}
@@ -966,32 +843,18 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op oper
 	return nil
 }
 
-func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, matched operatorutils.VersionSpec) error {
+func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, authModule csmv1.Module, matched operatorutils.VersionSpec) error {
 	log := logger.GetLogger(ctx)
-	authModule, err := getAuthorizationModule(cr)
-	if err != nil {
-		return err
-	}
-
 	// SecretProviderClasses and K8s secret for storage credentials is supported from config v2.3.0 (CSM 1.15) onwards
 	storageCreds, err := operatorutils.MinVersionCheck("v2.3.0", authModule.ConfigVersion)
 	if err != nil {
 		return err
 	}
 
-	// Vault is supported only till config v2.2.0 (CSM 1.14)
-	if !storageCreds {
-		err = applyDeleteVaultCertificates(ctx, isDeleting, cr, ctrlClient)
-		if err != nil {
-			return fmt.Errorf("applying/deleting vault certificates: %w", err)
-		}
-	}
-
 	replicas := 0
 	sentinelName := ""
 	redisReplicas := 0
 	image := ""
-	vaults := []csmv1.Vault{}
 	var secretProviderClasses *csmv1.StorageSystemSecretProviderClasses
 	var secrets []string
 	leaderElection := true
@@ -1009,8 +872,6 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 			sentinelName = component.Sentinel
 			redisReplicas = component.RedisReplicas
 			updateRedisGlobalVars(component)
-		case AuthVaultComponent:
-			vaults = component.Vaults
 		case AuthStorageSystemCredentialsComponent:
 			secretProviderClasses = component.SecretProviderClasses
 			secrets = component.Secrets
@@ -1063,11 +924,6 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 			updateConjurAnnotations(deployment.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
 			mountSPCVolume(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
 		}
-	} else {
-		log.Info("Using Vault for storage system credentials")
-		// Vault is supported only till config v2.2.0 (CSM 1.14)
-		// set vault volumes
-		mountVaultVolumes(vaults, &deployment)
 	}
 
 	// set redis envs
@@ -1095,14 +951,6 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		}
 	}
 
-	// Vault is supported only till config v2.2.0 (CSM 1.14)
-	var vaultArgs []string
-	if !storageCreds {
-		for _, vault := range vaults {
-			vaultArgs = append(vaultArgs, fmt.Sprintf("--vault=%s,%s,%s,%t", vault.Identifier, vault.Address, vault.Role, vault.SkipCertificateValidation))
-		}
-	}
-
 	// set arguments
 	args := []string{
 		"--redis-sentinel=$(SENTINELS)",
@@ -1118,7 +966,6 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 	if v2Version {
 		args = append(args, fmt.Sprintf("--collector-address=%s", otelCollector))
 	}
-	args = append(args, vaultArgs...)
 
 	for i, c := range deployment.Spec.Template.Spec.Containers {
 		if c.Name == "storage-service" {
@@ -1222,61 +1069,6 @@ func removeVaultFromStorageService(ctx context.Context, cr csmv1.ContainerStorag
 	}
 
 	return nil
-}
-
-func mountVaultVolumes(vaults []csmv1.Vault, deployment *appsv1.Deployment) {
-	for _, vault := range vaults {
-		volume := corev1.Volume{
-			Name: fmt.Sprintf("vault-client-certificate-%s", vault.Identifier),
-			VolumeSource: corev1.VolumeSource{
-				Projected: &corev1.ProjectedVolumeSource{
-					Sources: []corev1.VolumeProjection{{}},
-				},
-			},
-		}
-
-		if vault.CertificateAuthority != "" {
-			volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{
-				Secret: &corev1.SecretProjection{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: fmt.Sprintf("vault-certificate-authority-%s", vault.Identifier),
-					},
-				},
-			})
-		}
-
-		if vault.ClientCertificate != "" && vault.ClientKey != "" {
-			volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{
-				Secret: &corev1.SecretProjection{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: fmt.Sprintf("vault-client-certificate-%s", vault.Identifier),
-					},
-				},
-			})
-		} else {
-			volume.VolumeSource.Projected.Sources = append(volume.VolumeSource.Projected.Sources, corev1.VolumeProjection{
-				Secret: &corev1.SecretProjection{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: fmt.Sprintf("storage-service-selfsigned-tls-%s", vault.Identifier),
-					},
-				},
-			})
-		}
-
-		deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volume)
-	}
-
-	for i, c := range deployment.Spec.Template.Spec.Containers {
-		if c.Name == "storage-service" {
-			for _, vault := range vaults {
-				deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts, corev1.VolumeMount{
-					Name:      fmt.Sprintf("vault-client-certificate-%s", vault.Identifier),
-					MountPath: fmt.Sprintf("/etc/vault/%s", vault.Identifier),
-				})
-			}
-			break
-		}
-	}
 }
 
 func mountSecretVolumes(secrets []string, deployment *appsv1.Deployment) {
@@ -1399,12 +1191,7 @@ func configureConjurSecretProvider(secretProviderClasses *csmv1.StorageSystemSec
 	}
 }
 
-func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, matched operatorutils.VersionSpec) error {
-	authModule, err := getAuthorizationModule(cr)
-	if err != nil {
-		return err
-	}
-
+func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, authModule csmv1.Module, matched operatorutils.VersionSpec) error {
 	replicas := 0
 	redisReplicas := 0
 	sentinelName := ""
@@ -1459,12 +1246,7 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 	return nil
 }
 
-func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, matched operatorutils.VersionSpec) error {
-	authModule, err := getAuthorizationModule(cr)
-	if err != nil {
-		return err
-	}
-
+func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, authModule csmv1.Module, matched operatorutils.VersionSpec) error {
 	replicas := 0
 	redisReplicas := 0
 	image := ""
@@ -1513,12 +1295,7 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 	return nil
 }
 
-func applyDeleteAuthorizationRedisStatefulsetV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, matched operatorutils.VersionSpec) error {
-	authModule, err := getAuthorizationModule(cr)
-	if err != nil {
-		return err
-	}
-
+func applyDeleteAuthorizationRedisStatefulsetV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, authModule csmv1.Module, matched operatorutils.VersionSpec) error {
 	redisName := ""
 	image := ""
 	redisReplicas := 0
@@ -1562,12 +1339,7 @@ func applyDeleteAuthorizationRedisStatefulsetV2(ctx context.Context, isDeleting 
 	return nil
 }
 
-func applyDeleteAuthorizationRediscommanderDeploymentV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, matched operatorutils.VersionSpec) error {
-	authModule, err := getAuthorizationModule(cr)
-	if err != nil {
-		return err
-	}
-
+func applyDeleteAuthorizationRediscommanderDeploymentV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, authModule csmv1.Module, matched operatorutils.VersionSpec) error {
 	rediscommanderName := ""
 	sentinelName := ""
 	image := ""
@@ -1612,12 +1384,7 @@ func applyDeleteAuthorizationRediscommanderDeploymentV2(ctx context.Context, isD
 	return nil
 }
 
-func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, matched operatorutils.VersionSpec) error {
-	authModule, err := getAuthorizationModule(cr)
-	if err != nil {
-		return err
-	}
-
+func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, authModule csmv1.Module, matched operatorutils.VersionSpec) error {
 	sentinelName := ""
 	redisName := ""
 	image := ""
@@ -2076,14 +1843,8 @@ func InstallWithCerts(ctx context.Context, isDeleting bool, op operatorutils.Ope
 }
 
 // getAuthCrdDeploy - apply and deploy authorization crd manifest
-func getAuthCrdDeploy(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+func getAuthCrdDeploy(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, auth csmv1.Module) (string, error) {
 	yamlString := ""
-
-	auth, err := getAuthorizationModule(cr)
-	if err != nil {
-		return yamlString, err
-	}
-
 	buf, err := readConfigFile(ctx, auth, cr, op, AuthCrds)
 	if err != nil {
 		return yamlString, err
@@ -2111,7 +1872,7 @@ func AuthCrdDeploy(ctx context.Context, op operatorutils.OperatorConfig, cr csmv
 		return err
 	}
 
-	yamlString, err := getAuthCrdDeploy(ctx, op, cr)
+	yamlString, err := getAuthCrdDeploy(ctx, op, cr, auth)
 	if err != nil {
 		return err
 	}

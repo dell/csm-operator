@@ -2,7 +2,7 @@
 
 - scenario: "Install Authorization CRDs for V2"
   paths:
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
   tags:
     - "authorizationproxyserver"
   steps:
@@ -16,7 +16,7 @@
 - scenario: "Install Authorization Proxy Server V2 (Conjur)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_conjur.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template_conjur.yaml"
   tags:
     - "authorizationproxyserver"
@@ -36,7 +36,7 @@
 - scenario: "Install Authorization Proxy Server V2"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
     - "authorizationproxyserver"
@@ -56,7 +56,7 @@
 - scenario: "Install Authorization Proxy Server V2 (With Kubernetes Secret)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_k8s_secret.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
   tags:
     - "authorizationproxyserver"
@@ -72,45 +72,6 @@
     - "Delete custom resource [1]"
     - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [2]"
-
-- scenario: "Install Authorization Proxy Server V2 With Default Redis Storage Class"
-  paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_default_redis.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
-    - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
-  tags:
-    - "authorizationproxyserver"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Install Authorization CRDs [2]"
-    - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [pflexAuthCRs]"
-    - "Apply custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is installed"
-    - "Configure authorization-proxy-server with template [3] for [powerflex] for CR [1]"
-    - "Delete Authorization CRs for [powerflex]"
-    - "Delete custom resource [1]"
-    - "Delete Authorization CRDs [2]"
-    - "Validate [authorization] module pods from CR [1] is not installed"
-
-- scenario: "Install Authorization Proxy Server V2 With Vault for 2.2.0 config"
-  paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_vault.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.2.0/authorization-crds.yaml"
-    - "testfiles/authorization-templates/storage_csm_authorization_v2_template_vault.yaml"
-  tags:
-    - "authorizationproxyserver"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Install Authorization CRDs [2]"
-    - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Apply custom resource [1]"
-    - "Validate [authorization-proxy-server] module from CR [1] is installed"
-    - "Configure authorization-proxy-server with template [3] for [powerflex] for CR [1]"
-    - "Delete Authorization CRs for [powerflex]"
-    - "Delete custom resource [1]"
-    - "Delete Authorization CRDs [2]"
-    - "Validate [authorization] module pods from CR [1] is not installed"
 
 - scenario: "Install PowerScale Driver(Standalone)"
   paths:
@@ -588,7 +549,7 @@
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_auth.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
     - "authorization"
@@ -626,7 +587,7 @@
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/storage_csm_powerscale_auth.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
     - "authorization"
@@ -659,7 +620,7 @@
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_k8s_secret.yaml"
     - "testfiles/storage_csm_powerscale_auth.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
   tags:
     - "authorization"
@@ -694,7 +655,7 @@
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
     - "authorizationproxyserver"
@@ -730,7 +691,7 @@
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/storage_csm_powerscale_observability_auth.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
     - "authorizationproxyserver"
@@ -777,7 +738,7 @@
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_auth_n_minus_1.yaml"
     - "testfiles/storage_csm_powerflex_auth.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
     - "authorization"
@@ -994,7 +955,7 @@
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/storage_csm_powerflex_observability_auth.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
     - "authorizationproxyserver"
@@ -1248,7 +1209,7 @@
 - scenario: "Install Powerstore Driver (With Authorization v2)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/storage_csm_powerstore_auth.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
@@ -1829,7 +1790,7 @@
 - scenario: "Install Powermax Driver (With Authorization v2)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/storage_csm_powermax_authorization.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
@@ -1866,7 +1827,7 @@
 - scenario: "Install Powermax Driver without powermax-array-config.yaml (With Authorization v2)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/storage_csm_powermax_authorization.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
@@ -1902,7 +1863,7 @@
 - scenario: "Install Powermax Driver with Mount Credentials and Authorization v2"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/storage_csm_powermax_secret_auth_v2.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
@@ -1938,7 +1899,7 @@
 - scenario: "Install Powermax Driver without powermax-array-config.yaml with Mount Credentials and Authorization v2"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/storage_csm_powermax_secret_auth_v2.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
@@ -1974,7 +1935,7 @@
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/storage_csm_powermax_observability_authorization.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
     - "authorizationproxyserver"
@@ -2015,7 +1976,7 @@
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/storage_csm_powermax_observability_authorization.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
     - "authorizationproxyserver"
