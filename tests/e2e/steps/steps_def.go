@@ -493,12 +493,6 @@ func (step *Step) validateMinimalCSMDriverSpec(res Resource, driverName string, 
 	return nil
 }
 
-func (step *Step) validateDriverNotInstalled(res Resource, driverName string, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
-	time.Sleep(20 * time.Second)
-	return checkNoRunningPods(context.TODO(), res.CustomResource[crNum-1].(csmv1.ContainerStorageModule).Namespace, step.clientSet)
-}
-
 func (step *Step) setNodeLabel(res Resource, label string) error {
 	if label == "control-plane" {
 		_ = setNodeLabel(label, "node-role.kubernetes.io/control-plane", "")
