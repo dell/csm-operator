@@ -54,6 +54,10 @@ const (
 
 	// CsiLogFormat - Defines the log format for cosi
 	CosiLogFormat = "COSI_LOG_FORMAT"
+
+	// Pre-mount file system check/repair feature configuration
+	CsiFsCheckEnabled = "<X_CSI_FS_CHECK_ENABLED>"
+	CsiFsCheckMode    = "<X_CSI_FS_CHECK_MODE>"
 )
 
 // GetController get controller yaml

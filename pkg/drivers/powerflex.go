@@ -60,12 +60,6 @@ const (
 	// CsiPowerflexExternalAccess -  External Access flag
 	CsiPowerflexExternalAccess = "<X_CSI_POWERFLEX_EXTERNAL_ACCESS>"
 
-	// CsiFsCheckEnabled -  Enable/Disable fs check
-	CsiFsCheckEnabled = "<X_CSI_FS_CHECK_ENABLED>"
-
-	// CsiFsCheckMode -  Enable/Disable fs check mode
-	CsiFsCheckMode = "<X_CSI_FS_CHECK_MODE>"
-
 	// ScaleioBinPath - name of volume that is mounted by the CSI plugin when not running on OCP
 	ScaleioBinPath = "scaleio-path-bin"
 
