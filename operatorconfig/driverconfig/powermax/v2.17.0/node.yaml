@@ -85,10 +85,6 @@ metadata:
   name: <DriverDefaultReleaseName>-node
   namespace: <DriverDefaultReleaseNamespace>
 spec:
-  updateStrategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
   selector:
     matchLabels:
       app: <DriverDefaultReleaseName>-node
@@ -101,9 +97,6 @@ spec:
         kubectl.kubernetes.io/default-container: driver
     spec:
   updateStrategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
       serviceAccount: <DriverDefaultReleaseName>-node
       # nodeSelector:
       # tolerations:
