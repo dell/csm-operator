@@ -78,6 +78,10 @@ metadata:
   annotations:
     com.dell.karavi-authorization-proxy: "true"
 spec:
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: <DriverDefaultReleaseName>-node
@@ -90,6 +94,10 @@ spec:
       annotations:
         kubectl.kubernetes.io/default-container: driver
     spec:
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
       serviceAccount: <DriverDefaultReleaseName>-node
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
