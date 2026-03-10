@@ -96,7 +96,6 @@ spec:
       annotations:
         kubectl.kubernetes.io/default-container: driver
     spec:
-  updateStrategy:
       serviceAccount: <DriverDefaultReleaseName>-node
       # nodeSelector:
       # tolerations:
