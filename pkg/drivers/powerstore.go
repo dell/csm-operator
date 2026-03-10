@@ -200,8 +200,9 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	nfsClientPort := "unused"
 	nfsServerPort := "unused"
 	nfsExportDirectory := "/var/lib/dell/nfs"
-	fsckEnabled := GetDriverCommonEnv(cr, "X_CSI_FS_CHECK_ENABLED", "false")
-	fsckMode := GetDriverCommonEnv(cr, "X_CSI_FS_CHECK_MODE", "checkOnly")
+
+	fsckEnabled := GetDriverCommonEnv(cr, CsiFsCheckEnabled, "false")
+	fsckMode := GetDriverCommonEnv(cr, CsiFsCheckMode, "checkOnly")
 
 	for _, mod := range cr.Spec.Modules {
 		if mod.Name == csmv1.Authorization {
@@ -321,8 +322,10 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsExportDirectory, nfsExportDirectory)
 		yamlString = strings.ReplaceAll(yamlString, CSMDREnabled, enableCSMDR)
 		yamlString = strings.ReplaceAll(yamlString, CSMDRBindPort, drBindPort)
-		yamlString = strings.ReplaceAll(yamlString, CsiFsCheckEnabled, fsckEnabled)
-		yamlString = strings.ReplaceAll(yamlString, CsiFsCheckMode, fsckMode)
+
+		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckEnabled, fsckEnabled)
+		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckMode, fsckMode)
+
 	case "Controller":
 		if cr.Spec.Driver.Controller != nil {
 			for _, env := range cr.Spec.Driver.Controller.Envs {
