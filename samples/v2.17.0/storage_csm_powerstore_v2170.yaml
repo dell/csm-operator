@@ -100,6 +100,18 @@ spec:
         # Default value: "8082"
         - name: "X_CSM_DR_BIND_PORT"
           value: "8082"
+        # X_CSI_FS_CHECK_ENABLED: Enable/Disable automatic file system check before mount.
+        # Allowed values:
+        #   true: enable file system check
+        #   false: disable file system check
+        # Default value: false
+        - name: X_CSI_FS_CHECK_ENABLED
+          value: "false"
+        # X_CSI_FS_CHECK_MODE: Controls the file system check mode.
+        # Allowed values: "checkOnly", "checkAndRepair"
+        # Default value: "checkOnly"
+        - name: X_CSI_FS_CHECK_MODE
+          value: "checkOnly"
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner

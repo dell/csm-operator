@@ -135,8 +135,12 @@ function runTests() {
 
 function getMasterNodeIP() {
   export CLUSTER_IP=$(grep server ~/.kube/config | awk '{print $2}' | sed -E "s|https?://([^:/]+).*|\1|")
-  if [[ $IS_OPENSHIFT == "true" ]]; then
-    export CLUSTER_IP=$(nslookup $CLUSTER_IP | awk '/^Address: / { print $2 }')
+  if [ "$IS_OPENSHIFT" == "true" ]; then
+    if which nslookup &> /dev/null; then
+      export CLUSTER_IP=$(nslookup $CLUSTER_IP | awk '/^Address: / { print $2 }')
+    else
+      echo "nslookup not found, won't resolve cluster IP"
+    fi
   fi
   echo "Cluster IP: $CLUSTER_IP"
 }

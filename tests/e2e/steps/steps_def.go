@@ -2055,3 +2055,187 @@ func (step *Step) deleteConfigMap(_ Resource) error {
 
 	return nil
 }
+
+// validateEnvInDriverPod validates environment variables in the generated DaemonSet/Deployment
+func (step *Step) validateEnvInDriverPod(res Resource, podType, containerName, envName, expectedValue, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	var envVars []corev1.EnvVar
+
+	if podType == "node" {
+		// Get DaemonSet using clientSet
+		daemonSet, err := step.clientSet.AppsV1().DaemonSets(cr.Namespace).Get(context.TODO(), cr.Name+"-node", metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to get driver DaemonSet: %v", err)
+		}
+		// Find the specified container
+		for _, container := range daemonSet.Spec.Template.Spec.Containers {
+			if container.Name == containerName {
+				envVars = container.Env
+				break
+			}
+		}
+	} else if podType == "controller" {
+		// Get Deployment using clientSet
+		deployment, err := step.clientSet.AppsV1().Deployments(cr.Namespace).Get(context.TODO(), cr.Name+"-controller", metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to get driver Deployment: %v", err)
+		}
+		// Find the specified container
+		for _, container := range deployment.Spec.Template.Spec.Containers {
+			if container.Name == containerName {
+				envVars = container.Env
+				break
+			}
+		}
+	} else {
+		return fmt.Errorf("invalid podType: %s (must be 'node' or 'controller')", podType)
+	}
+
+	// Check if container was found
+	if len(envVars) == 0 {
+		return fmt.Errorf("container '%s' not found in %s pod", containerName, podType)
+	}
+
+	// Find the environment variable
+	var foundValue string
+	found := false
+	for _, env := range envVars {
+		if env.Name == envName {
+			foundValue = env.Value
+			found = true
+			break
+		}
+	}
+
+	// Handle default values
+	if !found && expectedValue != "" {
+		return fmt.Errorf("environment variable %s not found in %s pod", envName, podType)
+	} else if found && foundValue != expectedValue {
+		return fmt.Errorf("environment variable %s has value [%s] but expected [%s] in %s pod", envName, foundValue, expectedValue, podType)
+	}
+
+	return nil
+}
+
+// validateEnvInCSMCR validates environment variables in the CSM CustomResource in the cluster
+func (step *Step) validateEnvInCSMCR(res Resource, section, envName, expectedValue, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	// Get the CSM CR from the cluster
+	csm := &csmv1.ContainerStorageModule{}
+	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+		Namespace: cr.Namespace,
+		Name:      cr.Name,
+	}, csm); err != nil {
+		return fmt.Errorf("failed to get CSM CR %s/%s from cluster: %v", cr.Namespace, cr.Name, err)
+	}
+
+	var envVars []corev1.EnvVar
+
+	// Navigate to the specified section
+	switch section {
+	case "common":
+		if csm.Spec.Driver.Common.Envs != nil {
+			envVars = csm.Spec.Driver.Common.Envs
+		}
+	case "node":
+		if csm.Spec.Driver.Node.Envs != nil {
+			envVars = csm.Spec.Driver.Node.Envs
+		}
+	case "controller":
+		if csm.Spec.Driver.Controller.Envs != nil {
+			envVars = csm.Spec.Driver.Controller.Envs
+		}
+	default:
+		return fmt.Errorf("unsupported section: %s", section)
+	}
+
+	// Find the environment variable
+	var foundValue string
+	found := false
+	for _, env := range envVars {
+		if env.Name == envName {
+			foundValue = env.Value
+			found = true
+			break
+		}
+	}
+
+	if !found && expectedValue != "" {
+		return fmt.Errorf("environment variable %s not found in CSM CR %s section", envName, section)
+	} else if found && foundValue != expectedValue {
+		return fmt.Errorf("environment variable %s has value [%s] but expected [%s] in CSM CR %s section", envName, foundValue, expectedValue, section)
+	}
+
+	return nil
+}
+
+// setEnvInSpec modifies environment variables in a CR file and writes to temp directory
+func (step *Step) setEnvInSpec(res Resource, section, envName, envValue, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	crFilePath := res.Scenario.Paths[crNum-1]
+
+	// Read the original CR file
+	crBuff, err := os.ReadFile(crFilePath) // #nosec G304
+	if err != nil {
+		return fmt.Errorf("failed to read CR file %s: %v", crFilePath, err)
+	}
+
+	// Unmarshal into CSM struct
+	customResource := csmv1.ContainerStorageModule{}
+	err = yaml.Unmarshal(crBuff, &customResource)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal CSM custom resource: %v", err)
+	}
+
+	// Get the appropriate envs slice based on section
+	var envs *[]corev1.EnvVar
+	switch section {
+	case "common":
+		envs = &customResource.Spec.Driver.Common.Envs
+	case "node":
+		envs = &customResource.Spec.Driver.Node.Envs
+	case "controller":
+		envs = &customResource.Spec.Driver.Controller.Envs
+	default:
+		return fmt.Errorf("unsupported env section: %s", section)
+	}
+
+	// Find and update the env var, or add it if not found
+	found := false
+	for i, env := range *envs {
+		if env.Name == envName {
+			(*envs)[i].Value = envValue
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		// Add new env var
+		newEnv := corev1.EnvVar{
+			Name:  envName,
+			Value: envValue,
+		}
+		*envs = append(*envs, newEnv)
+	}
+
+	// Write to temporary file
+	modifiedYAML, err := yaml.Marshal(customResource)
+	if err != nil {
+		return fmt.Errorf("failed to marshal modified YAML: %v", err)
+	}
+
+	tempPath, err := writeRenderedFile(crFilePath, string(modifiedYAML))
+	if err != nil {
+		return fmt.Errorf("failed to write temp file: %v", err)
+	}
+
+	// Update the scenario path to use the temp file
+	res.Scenario.Paths[crNum-1] = tempPath
+
+	return nil
+}

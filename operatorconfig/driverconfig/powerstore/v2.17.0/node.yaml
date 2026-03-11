@@ -38,6 +38,9 @@ rules:
   - apiGroups: ["dr.storage.dell.com"]
     resources: ["volumejournals"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "update", "patch"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -175,6 +178,10 @@ spec:
               value: "<X_CSM_DR_ENABLED>"
             - name: X_CSM_DR_BIND_PORT
               value: "<X_CSM_DR_BIND_PORT>"
+            - name: X_CSI_FS_CHECK_ENABLED
+              value: <X_CSI_FS_CHECK_ENABLED>
+            - name: X_CSI_FS_CHECK_MODE
+              value: <X_CSI_FS_CHECK_MODE>
           ports:
             - containerPort: 2050
           volumeMounts:

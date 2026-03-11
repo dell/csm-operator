@@ -94,6 +94,11 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Set up reverse proxy tls secret namespace \[([^"]*)\]`, step.setUpReverseProxy)
 	runner.addStep(`^Set up reverse proxy tls secret with SAN namespace \[([^"]*)\]`, step.setUpTLSSecretWithSAN)
 	runner.addStep(`^Delete ConfigMap$`, step.deleteConfigMap)
+
+	// Environment variables management steps
+	runner.addStep(`^Validate \[(node|controller)\] \[([^"]*)\] env \[([^"]*)\] is \[([^"]*)\] in driver for resource \[(\d+)\]$`, step.validateEnvInDriverPod)
+	runner.addStep(`^Validate \[(common|node|controller)\] env \[([^"]*)\] is \[([^"]*)\] in CSM CR for resource \[(\d+)\]$`, step.validateEnvInCSMCR)
+	runner.addStep(`^Set \[(common|node|controller)\] env \[([^"]*)\] to \[([^"]*)\] in resource \[(\d+)\]$`, step.setEnvInSpec)
 }
 
 func (runner *Runner) addStep(expr string, stepFunc interface{}) {

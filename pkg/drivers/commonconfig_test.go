@@ -470,3 +470,63 @@ func TestGetNode_SDCImageFromCustomRegistry(t *testing.T) {
 	}
 	assert.True(t, foundSDC, "expected to find sdc init container in PowerFlex node DaemonSet")
 }
+
+func TestSubstituteEnvVar(t *testing.T) {
+	tests := []struct {
+		name       string
+		yamlString string
+		varName    string
+		value      string
+		expected   string
+	}{
+		{
+			name:       "Single-variable text substitution",
+			yamlString: "TEST_PARAM_A=<TEST_PARAM_A>",
+			varName:    "TEST_PARAM_A",
+			value:      "false",
+			expected:   "TEST_PARAM_A=false",
+		},
+		{
+			name:       "Mutli-variable text substitution",
+			yamlString: "TEST_PARAM_A=<TEST_PARAM_A> TEST_PARAM_B='<TEST_PARAM_B>'",
+			varName:    "TEST_PARAM_B",
+			value:      "true",
+			expected:   "TEST_PARAM_A=<TEST_PARAM_A> TEST_PARAM_B='true'",
+		},
+		{
+			name:       "No-variable text substitution",
+			yamlString: "TEST_PARAM_A=false TEST_PARAM_B=true",
+			varName:    "TEST_PARAM_B",
+			value:      "false",
+			expected:   "TEST_PARAM_A=false TEST_PARAM_B=true",
+		},
+		{
+			name:       "Empty yaml string",
+			yamlString: "",
+			varName:    "TEST_PARAM_A",
+			value:      "val",
+			expected:   "",
+		},
+		{
+			name:       "Empty variable name",
+			yamlString: "TEST_PARAM_A=<TEST_PARAM_A>",
+			varName:    "",
+			value:      "val",
+			expected:   "TEST_PARAM_A=<TEST_PARAM_A>",
+		},
+		{
+			name:       "Empty value",
+			yamlString: "TEST_PARAM_A=<TEST_PARAM_A>",
+			varName:    "TEST_PARAM_A",
+			value:      "",
+			expected:   "TEST_PARAM_A=",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := SubstituteEnvVar(tt.yamlString, tt.varName, tt.value)
+			assert.Equal(t, tt.expected, result, "SubstituteEnvVar should correctly substitute placeholders")
+		})
+	}
+}
