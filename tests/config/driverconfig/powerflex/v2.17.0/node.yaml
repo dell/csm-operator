@@ -333,11 +333,6 @@ spec:
           hostPath:
             path: /etc/nvme
             type: DirectoryOrCreate
-        # will be removed if installing on OpenShift
-        - name: scaleio-path-bin
-          hostPath:
-            path: /bin/emc/scaleio/
-            type: DirectoryOrCreate
         - name: scaleio-path-opt
           hostPath:
             path: /opt/emc/scaleio/sdc/bin
