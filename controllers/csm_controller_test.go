@@ -916,6 +916,7 @@ func (suite *CSMControllerTestSuite) TestSyncCSM() {
 		{"getDriverConfig bad op config", csm, badOperatorConfig, ""},
 		{"getDriverConfig error", csmBadType, badOperatorConfig, "no such file or directory"},
 		{"success: deployAsSidecar with secret", reverseProxyWithSecret, operatorConfig, ""},
+		{"powerflex on openshift - delete mount", powerflexCSM, operatorConfig, ""},
 		{"resiliency module happy path", resiliencyCSM, operatorConfig, ""},
 		{"replication module happy path", replicationCSM, operatorConfig, ""},
 		{"replication module bad op conf", replicationCSM, badOperatorConfig, "failed to deploy replication"},

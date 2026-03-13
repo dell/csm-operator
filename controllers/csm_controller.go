@@ -24,6 +24,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/k8s"
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/drivers"
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/modules"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -852,7 +853,18 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		modules.UpdatePowerMaxConfigMap(configMap, cr)
 	}
 
+	isHarvester, err := k8s.IsHarvester()
+	if err != nil {
+		return fmt.Errorf("failed to detect harvester cluster: %v", err)
+	}
+
 	if cr.GetDriverType() == csmv1.PowerFlex {
+		// if driver is powerflex and installing on openshift, we must remove the root host path, since it is read only
+		// Mount is removed in CSM 1.17 but kept for backwards compatibility
+		// Remove this code when CSM 1.16 is no longer supported
+		if r.Config.IsOpenShift || isHarvester {
+			_ = drivers.RemoveVolume(&node.DaemonSetApplyConfig, drivers.ScaleioBinPath)
+		}
 		if (cr.Spec.Driver.Node != nil) && cr.Spec.Driver.Node.Envs != nil {
 			for _, env := range cr.Spec.Driver.Node.Envs {
 				if env.Name == "X_CSI_SDC_SFTP_REPO_ENABLED" {
