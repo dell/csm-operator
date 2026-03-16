@@ -40,7 +40,7 @@ const (
 	UnityConfigVersion         string = "v2.17.0"
 	PScaleConfigVersion        string = "v2.17.0"
 	PmaxConfigVersion          string = "v2.17.0"
-	AuthServerConfigVersion    string = "v2.2.0"
+	AuthServerConfigVersion    string = "v2.5.0"
 	CosiConfigVersion          string = "v1.1.0"
 	InvalidCSMVersion          string = "v1.10.0"
 	CSMVersion                 string = "v1.17.0"

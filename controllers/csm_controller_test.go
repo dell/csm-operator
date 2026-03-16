@@ -1985,7 +1985,7 @@ func getAuthProxyServer() []csmv1.Module {
 		{
 			Name:              csmv1.AuthorizationServer,
 			Enabled:           true,
-			ConfigVersion:     "v2.2.0",
+			ConfigVersion:     shared.AuthServerConfigVersion,
 			ForceRemoveModule: true,
 			Components: []csmv1.ContainerTemplate{
 				{
@@ -2009,8 +2009,13 @@ func getAuthProxyServer() []csmv1.Module {
 					Enabled: &[]bool{true}[0],
 				},
 				{
-					Name:              "redis",
-					RedisStorageClass: "test-storage",
+					Name: "redis",
+				},
+				{
+					Name: "storage-system-credentials",
+					SecretProviderClasses: &csmv1.StorageSystemSecretProviderClasses{
+						Vaults: []string{"secret-provider-class-1", "secret-provider-class-2"},
+					},
 				},
 			},
 		},
@@ -2022,7 +2027,7 @@ func getAuthProxyServerOCP() []csmv1.Module {
 		{
 			Name:              csmv1.AuthorizationServer,
 			Enabled:           true,
-			ConfigVersion:     "v2.5.0",
+			ConfigVersion:     shared.AuthServerConfigVersion,
 			ForceRemoveModule: true,
 			Components: []csmv1.ContainerTemplate{
 				{
@@ -2046,8 +2051,7 @@ func getAuthProxyServerOCP() []csmv1.Module {
 					Enabled: &[]bool{false}[0],
 				},
 				{
-					Name:              "redis",
-					RedisStorageClass: "test-storage",
+					Name: "redis",
 				},
 				{
 					Name: "storage-system-credentials",

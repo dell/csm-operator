@@ -5,6 +5,44 @@ metadata:
   namespace: dell-csm-operator
 data:
   versions.yaml: |
+    - version: v1.17.0
+      images:
+        powerstore: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-powerstore:nightly
+        powerflex: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-vxflexos:nightly
+        isilon: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-isilon:nightly
+        powermax: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-powermax:nightly
+        karavi-authorization-proxy: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-sidecar:nightly
+        podmon: csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:nightly
+        otel-collector: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.143.1
+        nginx-proxy : quay.io/nginx/nginx-unprivileged:1.27
+        metrics-powermax: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-metrics-powermax:nightly
+        metrics-powerstore: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-metrics-powerstore:nightly
+        metrics-powerflex: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-metrics-powerflex:nightly
+        metrics-powerscale: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-metrics-powerscale:nightly
+        dell-csi-replicator: csm.artifactory.cec.lab.emc.com/csm-users/cicd/dell-csi-replicator:nightly
+        dell-replication-controller-manager: csm.artifactory.cec.lab.emc.com/csm-users/cicd/dell-replication-controller:nightly
+        csipowermax-reverseproxy: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csipowermax-reverseproxy:nightly
+        cert-manager-cainjector: quay.io/jetstack/cert-manager-cainjector:v1.11.0
+        cert-manager-controller: quay.io/jetstack/cert-manager-controller:v1.11.0
+        cert-manager-webhook: quay.io/jetstack/cert-manager-webhook:v1.11.0
+        authorization-controller: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-controller:nightly
+        proxy-service: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-proxy:nightly
+        tenant-service: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-tenant:nightly
+        role-service: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-role:nightly
+        storage-service: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-storage:nightly
+        opa: docker.io/openpolicyagent/opa:0.70.0
+        opa-kube-mgmt: docker.io/openpolicyagent/kube-mgmt:9.2.1
+        redis: redis:8.4.0-alpine
+        commander: docker.io/rediscommander/redis-commander:latest
+        attacher: registry.k8s.io/sig-storage/csi-attacher:v4.10.0
+        provisioner: registry.k8s.io/sig-storage/csi-provisioner:v6.1.0
+        snapshotter: registry.k8s.io/sig-storage/csi-snapshotter:v8.4.0
+        registrar: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.15.0
+        resizer: registry.k8s.io/sig-storage/csi-resizer:v2.0.0
+        external-health-monitor: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.16.0
+        csi-metadata-retriever: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.13.0
+        sdc: quay.io/dell/storage/powerflex/sdc:5.0
+        sdc-monitor: quay.io/dell/storage/powerflex/sdc:5.0
     - version: v1.16.0
       images:
         powerstore: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-powerstore:nightly
@@ -43,3 +81,41 @@ data:
         csi-metadata-retriever: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.13.0
         sdc: quay.io/dell/storage/powerflex/sdc:5.0
         sdc-monitor: quay.io/dell/storage/powerflex/sdc:5.0
+    - version: v1.15.0
+      images:
+        powerstore: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-powerstore:nightly
+        powerflex: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-vxflexos:nightly
+        isilon: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-isilon:nightly
+        powermax: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-powermax:nightly
+        karavi-authorization-proxy: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-sidecar:nightly
+        podmon: csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:nightly
+        otel-collector: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.134.1
+        nginx-proxy : quay.io/nginx/nginx-unprivileged:1.27
+        metrics-powermax: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-metrics-powermax:nightly
+        metrics-powerstore: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-metrics-powerstore:nightly
+        metrics-powerflex: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-metrics-powerflex:nightly
+        metrics-powerscale: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-metrics-powerscale:nightly
+        dell-csi-replicator: csm.artifactory.cec.lab.emc.com/csm-users/cicd/dell-csi-replicator:nightly
+        dell-replication-controller-manager: csm.artifactory.cec.lab.emc.com/csm-users/cicd/dell-replication-controller:nightly
+        csipowermax-reverseproxy: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csipowermax-reverseproxy:nightly
+        cert-manager-cainjector: quay.io/jetstack/cert-manager-cainjector:v1.11.0
+        cert-manager-controller: quay.io/jetstack/cert-manager-controller:v1.11.0
+        cert-manager-webhook: quay.io/jetstack/cert-manager-webhook:v1.11.0
+        authorization-controller: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-controller:nightly
+        proxy-service: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-proxy:nightly
+        tenant-service: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-tenant:nightly
+        role-service: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-role:nightly
+        storage-service: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-storage:nightly
+        opa: docker.io/openpolicyagent/opa:0.70.0
+        opa-kube-mgmt: docker.io/openpolicyagent/kube-mgmt:8.5.11
+        redis: redis:8.2.0-alpine
+        commander: docker.io/rediscommander/redis-commander:latest
+        attacher: registry.k8s.io/sig-storage/csi-attacher:v4.9.0
+        provisioner: registry.k8s.io/sig-storage/csi-provisioner:v5.3.0
+        snapshotter: registry.k8s.io/sig-storage/csi-snapshotter:v8.3.0
+        registrar: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0
+        resizer: registry.k8s.io/sig-storage/csi-resizer:v1.14.0
+        external-health-monitor: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.15.0
+        csi-metadata-retriever: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.12.0
+        sdc: quay.io/dell/storage/powerflex/sdc:4.5.4
+        sdc-monitor: quay.io/dell/storage/powerflex/sdc:4.5.4

@@ -281,7 +281,10 @@ EOF
   fi
 
   if [[ -n "$CONFIG_OBJECT" ]]; then
-    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/config-object -v $CONFIG_OBJECT
+    # CONFIG_OBJECT is often provided as a single-line env var with literal '\n' escapes.
+    # Convert it into real newlines before storing in Conjur so it can be mounted as valid YAML.
+    printf '%b' "$CONFIG_OBJECT" > conjur-csm-authorization/config-object.yaml
+    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/config-object -v "$(cat conjur-csm-authorization/config-object.yaml)"
   fi
 fi
 

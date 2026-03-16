@@ -54,7 +54,19 @@ const (
 
 	// CsiLogFormat - Defines the log format for cosi
 	CosiLogFormat = "COSI_LOG_FORMAT"
+
+	// Pre-mount file system check/repair feature configuration
+	CsiFsCheckEnabled = "X_CSI_FS_CHECK_ENABLED"
+	CsiFsCheckMode    = "X_CSI_FS_CHECK_MODE"
 )
+
+func EnvToPlaceholder(envName string) string {
+	return "<" + envName + ">"
+}
+
+func SubstituteEnvVar(yamlString, varName, value string) string {
+	return strings.ReplaceAll(yamlString, EnvToPlaceholder(varName), value)
+}
 
 // GetController get controller yaml
 func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, driverName csmv1.DriverType, matched operatorutils.VersionSpec) (*operatorutils.ControllerYAML, error) {

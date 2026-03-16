@@ -1049,6 +1049,45 @@ func TestReplaceAllArgs(t *testing.T) {
 
 	result = ReplaceAllArgs(defaultArgs, crArgs)
 	assert.Equal(t, expected, result)
+
+	// Test case: feature gate override
+	defaultArgs = []string{
+		"--csi-address=$(ADDRESS)",
+		"--timeout=120s",
+		"--v=5",
+		"--leader-election=true",
+		"--feature-gates=CSIVolumeGroupSnapshot=true",
+	}
+	crArgs = []string{"--feature-gates=CSIVolumeGroupSnapshot=false"}
+	expected = []string{
+		"--csi-address=$(ADDRESS)",
+		"--timeout=120s",
+		"--v=5",
+		"--leader-election=true",
+		"--feature-gates=CSIVolumeGroupSnapshot=false",
+	}
+
+	result = ReplaceAllArgs(defaultArgs, crArgs)
+	assert.Equal(t, expected, result)
+
+	// Test case: feature gate added when not in defaults
+	defaultArgs = []string{
+		"--csi-address=$(ADDRESS)",
+		"--timeout=120s",
+		"--v=5",
+		"--leader-election=true",
+	}
+	crArgs = []string{"--feature-gates=CSIVolumeGroupSnapshot=true"}
+	expected = []string{
+		"--csi-address=$(ADDRESS)",
+		"--timeout=120s",
+		"--v=5",
+		"--leader-election=true",
+		"--feature-gates=CSIVolumeGroupSnapshot=true",
+	}
+
+	result = ReplaceAllArgs(defaultArgs, crArgs)
+	assert.Equal(t, expected, result)
 }
 
 // TODO: Cover more object types:

@@ -21,7 +21,7 @@
 - scenario: "Install Powerstore Driver (Minimal, With Authorization v2)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerstore_auth.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
@@ -54,7 +54,7 @@
 - scenario: "Install Powerstore Driver (Minimal, With Authorization v2 and Kubernetes Secret)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_k8s_secret.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerstore_auth.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
   tags:
@@ -333,7 +333,7 @@
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_k8s_secret.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerflex_auth.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
   tags:
     - "authorization"
@@ -367,7 +367,7 @@
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerflex_auth.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
     - "authorization"
@@ -652,7 +652,7 @@
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_k8s_secret.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerscale_auth2.0.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
   tags:
     - "authorization"
@@ -686,7 +686,7 @@
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerscale_auth2.0.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
     - "authorization"
@@ -980,7 +980,7 @@
 - scenario: "Install Powermax Driver (Minimal, With Authorization v2)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powermax_reverseproxy_authorization_v2.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
@@ -1016,7 +1016,7 @@
 - scenario: "Install Powermax Driver (Minimal, With Authorization v2 and Kubernetes Secret)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_k8s_secret.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powermax_reverseproxy_authorization_v2.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
   tags:
@@ -1052,7 +1052,7 @@
 - scenario: "Install Powermax Driver without powermax-array-config.yaml (Minimal, With Authorization v2)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.3.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powermax_reverseproxy_authorization_v2.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:

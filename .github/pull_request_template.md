@@ -32,5 +32,20 @@ List the JIRA issues impacted by this PR:
 # How Has This Been Tested?
 Please describe the tests that you ran to verify your changes. Please also list any relevant details for your test configuration
 
+- [ ] E2E tests were run
+  - [ ] **PowerFlex** (`./run-e2e-test.sh --pflex`)
+  - [ ] **PowerScale** (`./run-e2e-test.sh --pscale`)
+  - [ ] **PowerStore** (`./run-e2e-test.sh --pstore`)
+  - [ ] **PowerMax** (`./run-e2e-test.sh --pmax`)
+  - [ ] **Unity** (`./run-e2e-test.sh --unity`)
+  - [ ] **COSI** (`./run-e2e-test.sh --cosi`)
+  - [ ] **Sanity** (`./run-e2e-test.sh --sanity`)
+  - [ ] **No modules** (`./run-e2e-test.sh --no-modules`)
+  - [ ] **Authorization** (`./run-e2e-test.sh --auth`)
+  - [ ] **Authorization Proxy Server** (`./run-e2e-test.sh --auth-proxy`)
+  - [ ] **Replication** (`./run-e2e-test.sh --replication`)
+  - [ ] **Observability** (`./run-e2e-test.sh --obs`)
+  - [ ] **Resiliency** (`./run-e2e-test.sh --resiliency`)
+  - [ ] **Zoning (PowerFlex zoning)** (`./run-e2e-test.sh --zoning`)
 - [ ] Test A
 - [ ] Test B

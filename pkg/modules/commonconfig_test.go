@@ -103,11 +103,7 @@ func getConfigMap(namespace, configmapName string) *corev1.ConfigMap {
 func TestCommonCertManager(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec){
 		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
-			if err != nil {
-				panic(err)
-			}
-
+			customResource := CsmAuthorizationCR()
 			tmpCR := customResource
 
 			cr := &appsv1.Deployment{
@@ -123,23 +119,21 @@ func TestCommonCertManager(t *testing.T) {
 			return true, true, tmpCR, sourceClient, operatorConfig, operatorutils.VersionSpec{}
 		},
 		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
-			if err != nil {
-				panic(err)
-			}
-
+			customResource := CsmAuthorizationCR()
 			tmpCR := customResource
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, false, tmpCR, sourceClient, operatorConfig, operatorutils.VersionSpec{}
 		},
-		"fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
-			if err != nil {
-				panic(err)
-			}
-
+		"authorization module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
+			customResource := CsmAuthorizationCR()
 			tmpCR := customResource
+			// Remove authorization
+			for i := range tmpCR.Spec.Modules {
+				if tmpCR.Spec.Modules[i].Name == csmv1.AuthorizationServer {
+					tmpCR.Spec.Modules = nil
+				}
+			}
 			badOperatorConfig.ConfigDirectory = "invalid-dir"
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
@@ -147,22 +141,17 @@ func TestCommonCertManager(t *testing.T) {
 			return false, false, tmpCR, sourceClient, badOperatorConfig, operatorutils.VersionSpec{}
 		},
 		"success - creating with custom registry": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy_custom_registry.yaml")
-			if err != nil {
-				panic(err)
-			}
-
+			customResource := CsmAuthorizationCR()
 			tmpCR := customResource
+			// add custom registry
+			tmpCR.Spec.CustomRegistry = "quay.io"
+			tmpCR.Spec.RetainImageRegistryPath = trueBool
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, false, tmpCR, sourceClient, operatorConfig, operatorutils.VersionSpec{}
 		},
 		"success - creating with version overrides": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
-			customResource, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
-			if err != nil {
-				panic(err)
-			}
-
+			customResource := CsmAuthorizationCR()
 			tmpCR := customResource
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
@@ -337,16 +326,12 @@ data:
 // Asserts CRDs are kept on uninstall (CommonCertManager delete path keeps CRDs).
 func TestCommonCertManager_CRDsArePreservedOnDelete(t *testing.T) {
 	ctx := context.TODO()
-	cr, err := getCustomResource("./testdata/cr_auth_proxy.yaml")
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	cr := CsmAuthorizationCR()
 	cmCRD := &apiextv1.CustomResourceDefinition{
 		TypeMeta:   metav1.TypeMeta{Kind: "CustomResourceDefinition"},
 		ObjectMeta: metav1.ObjectMeta{Name: "certificates.cert-manager.io"},
 	}
-	err = apiextv1.AddToScheme(scheme.Scheme)
+	err := apiextv1.AddToScheme(scheme.Scheme)
 	if err != nil {
 		t.Fatal(err)
 	}

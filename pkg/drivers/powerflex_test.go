@@ -746,7 +746,7 @@ func TestRemoveVolume(t *testing.T) {
 }
 
 func TestRemoveInitVolume(t *testing.T) {
-	volumeName := ScaleioBinPath
+	volumeName := SftpKeys
 	differentVolumeName := "different-volume-name"
 	containerName := "driver"
 	tests := []struct {

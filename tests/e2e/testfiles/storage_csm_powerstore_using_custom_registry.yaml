@@ -20,7 +20,7 @@ metadata:
   name: powerstore
   namespace: powerstore
 spec:
-  version: v1.16.0
+  version: v1.16.1
   customRegistry: "csm.artifactory.cec.lab.emc.com/csm-users/cicd"
   driver:
     csiDriverType: "powerstore"
@@ -156,7 +156,6 @@ spec:
       # - key: "node-role.kubernetes.io/control-plane"
       #   operator: "Exists"
       #   effect: "NoSchedule"
-    configVersion: v2.17.0
   modules:
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature

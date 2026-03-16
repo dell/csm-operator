@@ -163,10 +163,6 @@ spec:
             - name: csi-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/kubernetes.io/csi
               mountPropagation: "Bidirectional"
-            # will be removed if installing on OpenShift
-            - name: scaleio-path-bin
-              mountPath: /bin/emc/scaleio/
-              readOnly: true
             - name: scaleio-path-opt
               mountPath: /opt/emc/scaleio/sdc/bin
               readOnly: true
@@ -376,11 +372,6 @@ spec:
         - name: hostnqn
           hostPath:
             path: /etc/nvme
-            type: DirectoryOrCreate
-        # will be removed if installing on OpenShift
-        - name: scaleio-path-bin
-          hostPath:
-            path: /bin/emc/scaleio/
             type: DirectoryOrCreate
         - name: scaleio-path-opt
           hostPath:

@@ -858,8 +858,10 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		return fmt.Errorf("failed to detect harvester cluster: %v", err)
 	}
 
-	// if driver is powerflex and installing on openshift, we must remove the root host path, since it is read only
 	if cr.GetDriverType() == csmv1.PowerFlex {
+		// if driver is powerflex and installing on openshift, we must remove the root host path, since it is read only
+		// Mount is removed in CSM 1.17 but kept for backwards compatibility
+		// Remove this code when CSM 1.16 is no longer supported
 		if r.Config.IsOpenShift || isHarvester {
 			_ = drivers.RemoveVolume(&node.DaemonSetApplyConfig, drivers.ScaleioBinPath)
 		}

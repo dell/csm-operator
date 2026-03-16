@@ -60,12 +60,6 @@ const (
 	// CsiPowerflexExternalAccess -  External Access flag
 	CsiPowerflexExternalAccess = "<X_CSI_POWERFLEX_EXTERNAL_ACCESS>"
 
-	// CsiFsCheckEnabled -  Enable/Disable fs check
-	CsiFsCheckEnabled = "<X_CSI_FS_CHECK_ENABLED>"
-
-	// CsiFsCheckMode -  Enable/Disable fs check mode
-	CsiFsCheckMode = "<X_CSI_FS_CHECK_MODE>"
-
 	// ScaleioBinPath - name of volume that is mounted by the CSI plugin when not running on OCP
 	ScaleioBinPath = "scaleio-path-bin"
 
@@ -354,8 +348,6 @@ func IsIpv4Regex(ipAddress string) bool {
 // ModifyPowerflexCR - Set environment variables provided in CR
 func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileType string) string {
 	sdcEnabled := "true"
-	fsckEnabled := "false"
-	fsckMode := "checkOnly"
 	approveSdcEnabled := ""
 	renameSdcEnabled := ""
 	renameSdcPrefix := ""
@@ -387,14 +379,11 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 			if env.Name == "X_CSI_AUTH_TYPE" {
 				authType = env.Value
 			}
-			if env.Name == "X_CSI_FS_CHECK_ENABLED" {
-				fsckEnabled = env.Value
-			}
-			if env.Name == "X_CSI_FS_CHECK_MODE" {
-				fsckMode = env.Value
-			}
 		}
 	}
+
+	fsckEnabled := GetDriverCommonEnv(cr, CsiFsCheckEnabled, "false")
+	fsckMode := GetDriverCommonEnv(cr, CsiFsCheckMode, "checkOnly")
 
 	// nolint:gosec
 	switch fileType {
@@ -463,8 +452,9 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexSdcRepoEnabled, sftpEnabled)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexProbeTimeout, probeTimeout)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexAuthType, authType)
-		yamlString = strings.ReplaceAll(yamlString, CsiFsCheckEnabled, fsckEnabled)
-		yamlString = strings.ReplaceAll(yamlString, CsiFsCheckMode, fsckMode)
+
+		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckEnabled, fsckEnabled)
+		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckMode, fsckMode)
 
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
