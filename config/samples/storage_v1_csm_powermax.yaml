@@ -19,7 +19,7 @@ metadata:
   namespace: powermax
 spec:
   # Add fields here
-  version: v1.16.2
+  version: v1.16.3
   driver:
     csiDriverType: "powermax"
     csiDriverSpec:

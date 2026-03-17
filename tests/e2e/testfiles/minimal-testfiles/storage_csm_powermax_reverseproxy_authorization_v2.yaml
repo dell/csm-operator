@@ -6,7 +6,7 @@ metadata:
 spec:
   driver:
     csiDriverType: "powermax"
-    configVersion: v2.16.0
+    configVersion: v2.16.2
     common:
       image: "csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-powermax:nightly"
       envs:
