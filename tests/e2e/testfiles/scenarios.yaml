@@ -1427,7 +1427,7 @@
 
 - scenario: "Install Unity Driver with HealthMonitor"
   paths:
-    - "testfiles/storage_csm_unity.yaml"
+    - "testfiles/storage_csm_unity_sidecar.yaml"
   tags:
     - "unity"
     - "sanity"
