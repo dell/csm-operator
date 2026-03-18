@@ -282,7 +282,7 @@ spec:
             - name: "RETRY_INTERVAL_MAX"
               value: "5m"
         - name: dell-replication-controller-init
-          # Allowed values: string
+        # Allowed values: string
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
