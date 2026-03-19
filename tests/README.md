@@ -34,16 +34,7 @@ Any time changes made to the operator are being checked into the main branch, sa
 
 - A supported environment where the Dell Container Storage Modules Operator is installed
 - Fill in the environment variables in `array-info.env` ([more info below](#run)).
-- The following namespaces need to be created beforehand:
-  - `dell`
-  - `authorization`
-  - `proxy-ns`
-  - (if running sanity, powerflex, or modules suites) `test-vxflexos`
-  - (if running sanity, powerscale, or modules suites) `isilon`
-  - (if running unity suite) `unity`
-  - (if running powermax suite) `powermax`
-  - (if running powerstore suite) `powerstore`, `test-powerstore`
-  - (if running cosi suite) `dell-cosi`
+- The required namespaces are automatically created (and any existing ones deleted) by `run-e2e-test.sh` before tests run. By default they are also cleaned up after tests complete; pass `--no-cleanup-ns` to keep them.
 - For Authorization V2:
   - The following components must be installed on your cluster:
     - Secrets Store CSI Driver
