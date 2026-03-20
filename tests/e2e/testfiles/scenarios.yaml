@@ -202,12 +202,13 @@
 
 - scenario: "Install PowerScale Driver(With Replication)"
   paths:
-    - "testfiles/storage_csm_powerscale_replica.yaml"
+    - "testfiles/storage_csm_powerscale.yaml"
   tags:
     - "powerscale"
     - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Modify CR [1] enable module [replication]"
     - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
@@ -263,11 +264,12 @@
 
 - scenario: "Install PowerScale Driver(With Observability)"
   paths:
-    - "testfiles/storage_csm_powerscale_observability.yaml"
+    - "testfiles/storage_csm_powerscale.yaml"
   tags:
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Modify CR [1] enable module [observability]"
     - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
@@ -542,13 +544,17 @@
 
 - scenario: "Install PowerFlex Driver with health monitor"
   paths:
-    - "testfiles/storage_csm_powerflex_health_monitor.yaml"
+    - "testfiles/storage_csm_powerflex.yaml"
   tags:
     - "powerflex"
   config:
     enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Modify CR [1] set name to [powerflex]"
+    - "Modify CR [1] set namespace to [dell]"
+    - "Modify CR [1] set env [X_CSI_HEALTH_MONITOR_ENABLED] to [true] in [controller]"
+    - "Modify CR [1] set env [X_CSI_HEALTH_MONITOR_ENABLED] to [true] in [node]"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
     - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [dell] for [pflex]"
@@ -844,7 +850,7 @@
 
 - scenario: "Install PowerFlex Driver (With Observability)"
   paths:
-    - "testfiles/storage_csm_powerflex_observability.yaml"
+    - "testfiles/storage_csm_powerflex.yaml"
   tags:
     - "observability"
     - "powerflex"
@@ -852,6 +858,7 @@
     enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Modify CR [1] enable module [observability]"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
@@ -937,7 +944,7 @@
 
 - scenario: "Install Powerflex Driver (With Replication)"
   paths:
-    - "testfiles/storage_csm_powerflex_replica.yaml"
+    - "testfiles/storage_csm_powerflex.yaml"
   tags:
     - "powerflex"
     - "replication"
@@ -946,6 +953,7 @@
     enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Modify CR [1] enable module [replication]"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
@@ -1042,7 +1050,7 @@
 
 - scenario: "Install PowerFlex Driver(With Resiliency)"
   paths:
-    - "testfiles/storage_csm_powerflex_resiliency.yaml"
+    - "testfiles/storage_csm_powerflex.yaml"
   tags:
     - "powerflex"
     - "resiliency"
@@ -1051,6 +1059,7 @@
     enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Modify CR [1] enable module [resiliency]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
@@ -1092,12 +1101,13 @@
 
 - scenario: "Install PowerScale Driver(With Resiliency)"
   paths:
-    - "testfiles/storage_csm_powerscale_resiliency.yaml"
+    - "testfiles/storage_csm_powerscale.yaml"
   tags:
     - "powerscale"
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Modify CR [1] enable module [resiliency]"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -1276,12 +1286,13 @@
 
 - scenario: "Install PowerStore Driver(With Resiliency)"
   paths:
-    - "testfiles/storage_csm_powerstore_resiliency.yaml"
+    - "testfiles/storage_csm_powerstore.yaml"
   tags:
     - "powerstore"
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Modify CR [1] enable module [resiliency]"
     - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
     - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
     - "Apply custom resource [1]"
@@ -1320,12 +1331,13 @@
 
 - scenario: "Install PowerStore Driver(With Replication)"
   paths:
-    - "testfiles/storage_csm_powerstore_replication.yaml"
+    - "testfiles/storage_csm_powerstore.yaml"
   tags:
     - "powerstore"
     - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Modify CR [1] enable module [replication]"
     - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
     - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
     - "Apply custom resource [1]"
@@ -1364,12 +1376,13 @@
 
 - scenario: "Install PowerStore Driver(With Observability)"
   paths:
-    - "testfiles/storage_csm_powerstore_observability.yaml"
+    - "testfiles/storage_csm_powerstore.yaml"
   tags:
     - "powerstore"
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Modify CR [1] enable module [observability]"
     - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
     - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-creds] in namespace [powerstore] for [pstore]"
     - "Apply custom resource [1]"
@@ -1781,12 +1794,13 @@
 
 - scenario: "Install PowerMax Driver(With Observability)"
   paths:
-    - "testfiles/storage_csm_powermax_observability.yaml"
+    - "testfiles/storage_csm_powermax.yaml"
   tags:
     - "powermax"
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Modify CR [1] enable module [observability]"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up reverse proxy tls secret namespace [powermax]"
     - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
@@ -2097,12 +2111,13 @@
 
 - scenario: "Install Powermax Driver(With Resiliency), Disable Resiliency module"
   paths:
-    - "testfiles/storage_csm_powermax_resiliency.yaml"
+    - "testfiles/storage_csm_powermax.yaml"
   tags:
     - "powermax"
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Modify CR [1] enable module [resiliency]"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up reverse proxy tls secret namespace [powermax]"
     - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
@@ -2257,12 +2272,13 @@
 
 - scenario: "Install PowerScale Driver(Standalone) Using Version"
   paths:
-    - "testfiles/storage_csm_powerscale_using_version.yaml"
+    - "testfiles/storage_csm_powerscale.yaml"
   tags:
     - "powerscale"
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Modify CR [1] set version to [v1.15.0]"
     - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
@@ -2277,12 +2293,13 @@
 
 - scenario: "Install PowerStore Driver(Standalone) Using Version"
   paths:
-    - "testfiles/storage_csm_powerstore_using_version.yaml"
+    - "testfiles/storage_csm_powerstore.yaml"
   tags:
     - "powerstore"
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Modify CR [1] set version to [v1.15.0]"
     - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
     - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
     - "Apply custom resource [1]"
@@ -2297,12 +2314,14 @@
 
 - scenario: "Install PowerScale Driver(With Resiliency) Using Version"
   paths:
-    - "testfiles/storage_csm_powerscale_resiliency_using_version.yaml"
+    - "testfiles/storage_csm_powerscale.yaml"
   tags:
     - "powerscale"
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Modify CR [1] set version to [v1.15.0]"
+    - "Modify CR [1] enable module [resiliency]"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -2315,12 +2334,14 @@
 
 - scenario: "Install PowerScale Driver(With Replication) Using Version"
   paths:
-    - "testfiles/storage_csm_powerscale_replica_using_version.yaml"
+    - "testfiles/storage_csm_powerscale.yaml"
   tags:
     - "powerscale"
     - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Modify CR [1] set version to [v1.15.0]"
+    - "Modify CR [1] enable module [replication]"
     - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
@@ -2334,12 +2355,14 @@
 
 - scenario: "Install PowerScale Driver(With Observability) Using Version"
   paths:
-    - "testfiles/storage_csm_powerscale_observability_using_version.yaml"
+    - "testfiles/storage_csm_powerscale.yaml"
   tags:
     - "powerscale"
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Modify CR [1] set version to [v1.15.0]"
+    - "Modify CR [1] enable module [observability]"
     - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
     - "Apply custom resource [1]"
@@ -2415,7 +2438,7 @@
 
 - scenario: "Install PowerFlex Driver with Resiliency and observability using configMap"
   paths:
-    - "testfiles/storage_csm_powerflex_using_version_with_configmap.yaml"
+    - "testfiles/storage_csm_powerflex.yaml"
   tags:
     - "powerflex"
     - "resiliency"
@@ -2424,6 +2447,9 @@
     enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Modify CR [1] set version to [v1.16.0]"
+    - "Modify CR [1] enable module [resiliency]"
+    - "Modify CR [1] enable module [observability]"
     - "Create resource with template [testfiles/authorization-templates/csm-images.yaml] for ['']"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
     - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
@@ -2441,12 +2467,14 @@
 
 - scenario: "Install Powermax with Replication Using Version (ConfigMap Images)"
   paths:
-    - "testfiles/storage_csm_powermax_using_version_with_configmap.yaml"
+    - "testfiles/storage_csm_powermax.yaml"
   tags:
     - "powermax"
     - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Modify CR [1] set version to [v1.16.0]"
+    - "Modify CR [1] enable module [replication]"
     - "Create resource with template [testfiles/authorization-templates/csm-images.yaml] for ['']"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
     - "Set up reverse proxy tls secret namespace [powermax]"
@@ -2465,12 +2493,15 @@
 
 - scenario: "Install PowerStore Using Version with Resiliency (With CustomRegistry Images)"
   paths:
-    - "testfiles/storage_csm_powerstore_using_custom_registry.yaml"
+    - "testfiles/storage_csm_powerstore.yaml"
   tags:
     - "powerstore"
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Modify CR [1] set version to [v1.16.0]"
+    - "Modify CR [1] set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/cicd]"
+    - "Modify CR [1] enable module [resiliency]"
     - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
     - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
     - "Apply custom resource [1]"

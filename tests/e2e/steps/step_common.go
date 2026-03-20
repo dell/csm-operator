@@ -101,7 +101,8 @@ func checkAllRunningPods(ctx context.Context, namespace string, k8sClient kubern
 	return nil
 }
 
-func checkObservabilityRunningPods(ctx context.Context, namespace string, k8sClient kubernetes.Interface) error {
+// checkNamedPodsRunning checks that pods matching any of the given name patterns are running.
+func checkNamedPodsRunning(ctx context.Context, namespace string, k8sClient kubernetes.Interface, patterns []string) error {
 	notReadyMessage := ""
 	allReady := true
 
@@ -113,44 +114,14 @@ func checkObservabilityRunningPods(ctx context.Context, namespace string, k8sCli
 		return fmt.Errorf("no pod was found in %s", namespace)
 	}
 	for _, pod := range pods {
-		if strings.Contains(pod.Name, "topology") {
-			if pod.Status.Phase == corev1.PodRunning {
-				for _, cntStat := range pod.Status.ContainerStatuses {
-					if cntStat.State.Running == nil {
-						allReady = false
-						notReadyMessage += fmt.Sprintf("\nThe container(%s) in pod(%s) is %s", cntStat.Name, pod.Name, cntStat.State)
-						break
-					}
+		for _, pattern := range patterns {
+			if strings.Contains(pod.Name, pattern) {
+				errMsg, ready := arePodsRunning(pod)
+				if !ready {
+					allReady = false
 				}
-			} else {
-				allReady = false
-				notReadyMessage += fmt.Sprintf("\nThe pod(%s) is %s", pod.Name, pod.Status.Phase)
-			}
-		} else if strings.Contains(pod.Name, "metrics") {
-			if pod.Status.Phase == corev1.PodRunning {
-				for _, cntStat := range pod.Status.ContainerStatuses {
-					if cntStat.State.Running == nil {
-						allReady = false
-						notReadyMessage += fmt.Sprintf("\nThe container(%s) in pod(%s) is %s", cntStat.Name, pod.Name, cntStat.State)
-						break
-					}
-				}
-			} else {
-				allReady = false
-				notReadyMessage += fmt.Sprintf("\nThe pod(%s) is %s", pod.Name, pod.Status.Phase)
-			}
-		} else if strings.Contains(pod.Name, "otel") {
-			if pod.Status.Phase == corev1.PodRunning {
-				for _, cntStat := range pod.Status.ContainerStatuses {
-					if cntStat.State.Running == nil {
-						allReady = false
-						notReadyMessage += fmt.Sprintf("\nThe container(%s) in pod(%s) is %s", cntStat.Name, pod.Name, cntStat.State)
-						break
-					}
-				}
-			} else {
-				allReady = false
-				notReadyMessage += fmt.Sprintf("\nThe pod(%s) is %s", pod.Name, pod.Status.Phase)
+				notReadyMessage += errMsg
+				break
 			}
 		}
 	}
@@ -161,25 +132,36 @@ func checkObservabilityRunningPods(ctx context.Context, namespace string, k8sCli
 	return nil
 }
 
-func checkObservabilityNoRunningPods(ctx context.Context, namespace string, k8sClient kubernetes.Interface) error {
+// checkNamedPodsNotRunning checks that no pods matching the given name patterns exist.
+func checkNamedPodsNotRunning(ctx context.Context, namespace string, k8sClient kubernetes.Interface, patterns []string) error {
 	pods, err := fpod.GetPodsInNamespace(ctx, k8sClient, namespace, map[string]string{})
 	if err != nil {
 		return err
 	}
 
 	podsFound := ""
-	n := 0
 	for _, pod := range pods {
-		if strings.Contains(pod.Name, "topology") {
-			podsFound += (pod.Name + ",")
-			n++
+		for _, pattern := range patterns {
+			if strings.Contains(pod.Name, pattern) {
+				podsFound += (pod.Name + ",")
+				break
+			}
 		}
 	}
-	if n != 0 {
+	if podsFound != "" {
 		return fmt.Errorf("found the following pods: %s", podsFound)
 	}
 
 	return nil
+}
+
+func checkObservabilityRunningPods(ctx context.Context, namespace string, k8sClient kubernetes.Interface) error {
+	observabilityPodPatterns := []string{"topology", "metrics", "otel"}
+	return checkNamedPodsRunning(ctx, namespace, k8sClient, observabilityPodPatterns)
+}
+
+func checkObservabilityNoRunningPods(ctx context.Context, namespace string, k8sClient kubernetes.Interface) error {
+	return checkNamedPodsNotRunning(ctx, namespace, k8sClient, []string{"topology"})
 }
 
 func checkNoRunningPods(ctx context.Context, namespace string, k8sClient kubernetes.Interface) error {
@@ -290,59 +272,14 @@ func getApplyObservabilityDeployment(namespace string, driverType csmv1.DriverTy
 	return dpApply, nil
 }
 
+var authProxyServerPodPatterns = []string{
+	"cert-manager", "ingress-nginx-controller", "proxy-server",
+	"redis-commander", "redis", "role-service", "storage-service",
+	"tenant-service", "sentinel",
+}
+
 func checkAuthorizationProxyServerPods(ctx context.Context, namespace string, k8sClient kubernetes.Interface) error {
-	notReadyMessage := ""
-	allReady := true
-
-	pods, err := fpod.GetPodsInNamespace(ctx, k8sClient, namespace, map[string]string{})
-	if err != nil {
-		return err
-	}
-	if len(pods) == 0 {
-		return fmt.Errorf("no pod was found in %s", namespace)
-	}
-	for _, pod := range pods {
-		errMsg := ""
-		if strings.Contains(pod.Name, "cert-manager") {
-			errMsg, allReady = arePodsRunning(pod)
-			notReadyMessage += errMsg
-		} else if strings.Contains(pod.Name, "cert-manager-cainjector") {
-			errMsg, allReady = arePodsRunning(pod)
-			notReadyMessage += errMsg
-		} else if strings.Contains(pod.Name, "cert-manager-webhook") {
-			errMsg, allReady = arePodsRunning(pod)
-			notReadyMessage += errMsg
-		} else if strings.Contains(pod.Name, "ingress-nginx-controller") {
-			errMsg, allReady = arePodsRunning(pod)
-			notReadyMessage += errMsg
-		} else if strings.Contains(pod.Name, "proxy-server") {
-			errMsg, allReady = arePodsRunning(pod)
-			notReadyMessage += errMsg
-		} else if strings.Contains(pod.Name, "redis-commander") {
-			errMsg, allReady = arePodsRunning(pod)
-			notReadyMessage += errMsg
-		} else if strings.Contains(pod.Name, "redis") {
-			errMsg, allReady = arePodsRunning(pod)
-			notReadyMessage += errMsg
-		} else if strings.Contains(pod.Name, "role-service") {
-			errMsg, allReady = arePodsRunning(pod)
-			notReadyMessage += errMsg
-		} else if strings.Contains(pod.Name, "storage-service") {
-			errMsg, allReady = arePodsRunning(pod)
-			notReadyMessage += errMsg
-		} else if strings.Contains(pod.Name, "tenant-service") {
-			errMsg, allReady = arePodsRunning(pod)
-			notReadyMessage += errMsg
-		} else if strings.Contains(pod.Name, "sentinel") {
-			errMsg, allReady = arePodsRunning(pod)
-			notReadyMessage += errMsg
-		}
-	}
-
-	if !allReady {
-		return fmt.Errorf("%s", notReadyMessage)
-	}
-	return nil
+	return checkNamedPodsRunning(ctx, namespace, k8sClient, authProxyServerPodPatterns)
 }
 
 func arePodsRunning(pod *corev1.Pod) (string, bool) {
@@ -428,54 +365,7 @@ func setNodeLabel(testName, labelName, labelValue string) error {
 }
 
 func checkAuthorizationProxyServerNoRunningPods(ctx context.Context, namespace string, k8sClient kubernetes.Interface) error {
-	pods, err := fpod.GetPodsInNamespace(ctx, k8sClient, namespace, map[string]string{})
-	if err != nil {
-		return err
-	}
-
-	podsFound := ""
-	n := 0
-	for _, pod := range pods {
-		if strings.Contains(pod.Name, "cert-manager") {
-			podsFound += (pod.Name + ",")
-			n++
-		} else if strings.Contains(pod.Name, "cert-manager-cainjector") {
-			podsFound += (pod.Name + ",")
-			n++
-		} else if strings.Contains(pod.Name, "cert-manager-webhook") {
-			podsFound += (pod.Name + ",")
-			n++
-		} else if strings.Contains(pod.Name, "ingress-nginx-controller") {
-			podsFound += (pod.Name + ",")
-			n++
-		} else if strings.Contains(pod.Name, "proxy-server") {
-			podsFound += (pod.Name + ",")
-			n++
-		} else if strings.Contains(pod.Name, "redis-commander") {
-			podsFound += (pod.Name + ",")
-			n++
-		} else if strings.Contains(pod.Name, "redis") {
-			podsFound += (pod.Name + ",")
-			n++
-		} else if strings.Contains(pod.Name, "role-service") {
-			podsFound += (pod.Name + ",")
-			n++
-		} else if strings.Contains(pod.Name, "storage-service") {
-			podsFound += (pod.Name + ",")
-			n++
-		} else if strings.Contains(pod.Name, "tenant-service") {
-			podsFound += (pod.Name + ",")
-			n++
-		} else if strings.Contains(pod.Name, "sentinel") {
-			podsFound += (pod.Name + ",")
-			n++
-		}
-	}
-	if n != 0 {
-		return fmt.Errorf("found the following pods: %s", podsFound)
-	}
-
-	return nil
+	return checkNamedPodsNotRunning(ctx, namespace, k8sClient, authProxyServerPodPatterns)
 }
 
 func getPortContainerizedAuth(namespace string) (string, error) {

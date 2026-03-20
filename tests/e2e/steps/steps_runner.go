@@ -99,6 +99,20 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Validate \[(node|controller)\] \[([^"]*)\] env \[([^"]*)\] is \[([^"]*)\] in driver for resource \[(\d+)\]$`, step.validateEnvInDriverPod)
 	runner.addStep(`^Validate \[(common|node|controller)\] env \[([^"]*)\] is \[([^"]*)\] in CSM CR for resource \[(\d+)\]$`, step.validateEnvInCSMCR)
 	runner.addStep(`^Set \[(common|node|controller)\] env \[([^"]*)\] to \[([^"]*)\] in resource \[(\d+)\]$`, step.setEnvInSpec)
+	// Modify CR steps -- pre-apply in-memory modifications
+	runner.addStep(`^Modify CR \[(\d+)\] enable module \[([^"]*)\]$`, step.modifyCREnableModule)
+	runner.addStep(`^Modify CR \[(\d+)\] disable module \[([^"]*)\]$`, step.modifyCRDisableModule)
+	runner.addStep(`^Modify CR \[(\d+)\] set namespace to \[([^"]*)\]$`, step.modifyCRSetNamespace)
+	runner.addStep(`^Modify CR \[(\d+)\] set name to \[([^"]*)\]$`, step.modifyCRSetName)
+	runner.addStep(`^Modify CR \[(\d+)\] set env \[([^"]*)\] to \[([^"]*)\] in \[([^"]*)\]$`, step.modifyCRSetEnv)
+	runner.addStep(`^Modify CR \[(\d+)\] set fsGroupPolicy to \[([^"]*)\]$`, step.modifyCRSetFSGroupPolicy)
+	runner.addStep(`^Modify CR \[(\d+)\] set replicas to \[([^"]*)\]$`, step.modifyCRSetReplicas)
+	runner.addStep(`^Modify CR \[(\d+)\] set imagePullPolicy to \[([^"]*)\]$`, step.modifyCRSetImagePullPolicy)
+	runner.addStep(`^Modify CR \[(\d+)\] set configVersion to \[([^"]*)\]$`, step.modifyCRSetConfigVersion)
+	runner.addStep(`^Modify CR \[(\d+)\] set storageCapacity to \[([^"]*)\]$`, step.modifyCRSetStorageCapacity)
+	runner.addStep(`^Modify CR \[(\d+)\] add controller toleration \[([^"]*)\]$`, step.modifyCRAddControllerToleration)
+	runner.addStep(`^Modify CR \[(\d+)\] set version to \[([^"]*)\]$`, step.modifyCRSetVersion)
+	runner.addStep(`^Modify CR \[(\d+)\] set customRegistry to \[([^"]*)\]$`, step.modifyCRSetCustomRegistry)
 }
 
 func (runner *Runner) addStep(expr string, stepFunc interface{}) {

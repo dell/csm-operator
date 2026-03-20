@@ -2046,6 +2046,278 @@ func (step *Step) setUpTLSSecretWithSAN(res Resource, namespace string) error {
 	return nil
 }
 
+// writeCRToTemp marshals a ContainerStorageModule CR and writes it to the temp
+// directory so that applyCustomResource will pick up the modified version
+// instead of reading the original file.
+func writeCRToTemp(cr csmv1.ContainerStorageModule, originalPath string) error {
+	crBuf, err := yaml.Marshal(cr)
+	if err != nil {
+		return fmt.Errorf("failed to marshal modified CR: %v", err)
+	}
+	_, err = writeRenderedFile(originalPath, string(crBuf))
+	if err != nil {
+		return fmt.Errorf("failed to write modified CR to temp: %v", err)
+	}
+	return nil
+}
+
+// modifyCREnableModule enables a module by name on the in-memory CR and writes it to temp.
+// Step syntax: Modify CR [1] enable module [observability]
+func (step *Step) modifyCREnableModule(res Resource, crNumStr string, module string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	found := false
+	for i, m := range cr.Spec.Modules {
+		if m.Name == csmv1.ModuleType(module) {
+			cr.Spec.Modules[i].Enabled = true
+			if m.Name == csmv1.Observability {
+				for j := range m.Components {
+					cr.Spec.Modules[i].Components[j].Enabled = pointer.Bool(true)
+				}
+			}
+			found = true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("module %s not found in CR [%d]", module, crNum)
+	}
+
+	res.CustomResource[crNum-1] = cr
+	return writeCRToTemp(cr, res.Scenario.Paths[crNum-1])
+}
+
+// modifyCRDisableModule disables a module by name on the in-memory CR and writes it to temp.
+// Step syntax: Modify CR [1] disable module [observability]
+func (step *Step) modifyCRDisableModule(res Resource, crNumStr string, module string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	found := false
+	for i, m := range cr.Spec.Modules {
+		if m.Name == csmv1.ModuleType(module) {
+			cr.Spec.Modules[i].Enabled = false
+			if m.Name == csmv1.Observability {
+				for j := range m.Components {
+					cr.Spec.Modules[i].Components[j].Enabled = pointer.Bool(false)
+				}
+			}
+			found = true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("module %s not found in CR [%d]", module, crNum)
+	}
+
+	res.CustomResource[crNum-1] = cr
+	return writeCRToTemp(cr, res.Scenario.Paths[crNum-1])
+}
+
+// modifyCRSetNamespace changes the namespace of the CR and writes it to temp.
+// Step syntax: Modify CR [1] set namespace to [dell]
+func (step *Step) modifyCRSetNamespace(res Resource, crNumStr string, namespace string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	cr.Namespace = namespace
+	res.CustomResource[crNum-1] = cr
+	return writeCRToTemp(cr, res.Scenario.Paths[crNum-1])
+}
+
+// modifyCRSetName changes the name of the CR and writes it to temp.
+// Step syntax: Modify CR [1] set name to [powerflex]
+func (step *Step) modifyCRSetName(res Resource, crNumStr string, name string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	cr.Name = name
+	res.CustomResource[crNum-1] = cr
+	return writeCRToTemp(cr, res.Scenario.Paths[crNum-1])
+}
+
+// modifyCRSetEnv sets an environment variable in the common, controller, or node section.
+// Step syntax: Modify CR [1] set env [X_CSI_DEBUG] to [false] in [common]
+func (step *Step) modifyCRSetEnv(res Resource, crNumStr string, envName string, envValue string, section string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	switch section {
+	case "common":
+		found := false
+		for i, env := range cr.Spec.Driver.Common.Envs {
+			if env.Name == envName {
+				cr.Spec.Driver.Common.Envs[i].Value = envValue
+				found = true
+				break
+			}
+		}
+		if !found {
+			cr.Spec.Driver.Common.Envs = append(cr.Spec.Driver.Common.Envs, corev1.EnvVar{Name: envName, Value: envValue})
+		}
+	case "controller":
+		if cr.Spec.Driver.Controller == nil {
+			return fmt.Errorf("controller section is nil in CR [%d]", crNum)
+		}
+		found := false
+		for i, env := range cr.Spec.Driver.Controller.Envs {
+			if env.Name == envName {
+				cr.Spec.Driver.Controller.Envs[i].Value = envValue
+				found = true
+				break
+			}
+		}
+		if !found {
+			cr.Spec.Driver.Controller.Envs = append(cr.Spec.Driver.Controller.Envs, corev1.EnvVar{Name: envName, Value: envValue})
+		}
+	case "node":
+		if cr.Spec.Driver.Node == nil {
+			return fmt.Errorf("node section is nil in CR [%d]", crNum)
+		}
+		found := false
+		for i, env := range cr.Spec.Driver.Node.Envs {
+			if env.Name == envName {
+				cr.Spec.Driver.Node.Envs[i].Value = envValue
+				found = true
+				break
+			}
+		}
+		if !found {
+			cr.Spec.Driver.Node.Envs = append(cr.Spec.Driver.Node.Envs, corev1.EnvVar{Name: envName, Value: envValue})
+		}
+	default:
+		return fmt.Errorf("unknown section %s for env modification", section)
+	}
+
+	res.CustomResource[crNum-1] = cr
+	return writeCRToTemp(cr, res.Scenario.Paths[crNum-1])
+}
+
+// modifyCRSetFSGroupPolicy sets the FSGroupPolicy in the CR.
+// Step syntax: Modify CR [1] set fsGroupPolicy to [ReadWriteOnceWithFSType]
+func (step *Step) modifyCRSetFSGroupPolicy(res Resource, crNumStr string, policy string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	if cr.Spec.Driver.CSIDriverSpec == nil {
+		cr.Spec.Driver.CSIDriverSpec = &csmv1.CSIDriverSpec{}
+	}
+	cr.Spec.Driver.CSIDriverSpec.FSGroupPolicy = policy
+	res.CustomResource[crNum-1] = cr
+	return writeCRToTemp(cr, res.Scenario.Paths[crNum-1])
+}
+
+// modifyCRSetReplicas sets the replicas count in the CR.
+// Step syntax: Modify CR [1] set replicas to [1]
+func (step *Step) modifyCRSetReplicas(res Resource, crNumStr string, replicasStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	replicas, err := strconv.Atoi(replicasStr)
+	if err != nil {
+		return fmt.Errorf("invalid replicas value %s: %v", replicasStr, err)
+	}
+	r := int32(replicas)
+	cr.Spec.Driver.Replicas = r
+	res.CustomResource[crNum-1] = cr
+	return writeCRToTemp(cr, res.Scenario.Paths[crNum-1])
+}
+
+// modifyCRSetImagePullPolicy sets the imagePullPolicy on the common section.
+// Step syntax: Modify CR [1] set imagePullPolicy to [IfNotPresent]
+func (step *Step) modifyCRSetImagePullPolicy(res Resource, crNumStr string, policy string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	cr.Spec.Driver.Common.ImagePullPolicy = corev1.PullPolicy(policy)
+	res.CustomResource[crNum-1] = cr
+	return writeCRToTemp(cr, res.Scenario.Paths[crNum-1])
+}
+
+// modifyCRSetConfigVersion sets the configVersion in the CR.
+// Step syntax: Modify CR [1] set configVersion to [v2.16.0]
+func (step *Step) modifyCRSetConfigVersion(res Resource, crNumStr string, version string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	cr.Spec.Driver.ConfigVersion = version
+	res.CustomResource[crNum-1] = cr
+	return writeCRToTemp(cr, res.Scenario.Paths[crNum-1])
+}
+
+// modifyCRSetVersion sets the spec.version field and clears configVersion and images
+// to use the operator's version resolution. This replaces the "using_version" sample files.
+// Step syntax: Modify CR [1] set version to [v1.15.0]
+func (step *Step) modifyCRSetVersion(res Resource, crNumStr string, version string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	cr.Spec.Version = version
+	cr.Spec.Driver.ConfigVersion = ""
+	cr.Spec.Driver.Common.Image = ""
+	for i := range cr.Spec.Driver.SideCars {
+		cr.Spec.Driver.SideCars[i].Image = ""
+	}
+	for i := range cr.Spec.Driver.InitContainers {
+		cr.Spec.Driver.InitContainers[i].Image = ""
+	}
+	for i := range cr.Spec.Modules {
+		for j := range cr.Spec.Modules[i].Components {
+			cr.Spec.Modules[i].Components[j].Image = ""
+		}
+	}
+
+	res.CustomResource[crNum-1] = cr
+	return writeCRToTemp(cr, res.Scenario.Paths[crNum-1])
+}
+
+// modifyCRSetCustomRegistry sets the spec.customRegistry field.
+// Step syntax: Modify CR [1] set customRegistry to [my.registry.io]
+func (step *Step) modifyCRSetCustomRegistry(res Resource, crNumStr string, registry string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	cr.Spec.CustomRegistry = registry
+	res.CustomResource[crNum-1] = cr
+	return writeCRToTemp(cr, res.Scenario.Paths[crNum-1])
+}
+
+// modifyCRSetStorageCapacity sets the storageCapacity field in the CSIDriverSpec.
+// Step syntax: Modify CR [1] set storageCapacity to [true]
+func (step *Step) modifyCRSetStorageCapacity(res Resource, crNumStr string, value string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	if cr.Spec.Driver.CSIDriverSpec == nil {
+		cr.Spec.Driver.CSIDriverSpec = &csmv1.CSIDriverSpec{}
+	}
+	boolVal := value == "true"
+	cr.Spec.Driver.CSIDriverSpec.StorageCapacity = boolVal
+	res.CustomResource[crNum-1] = cr
+	return writeCRToTemp(cr, res.Scenario.Paths[crNum-1])
+}
+
+// modifyCRSetTolerations adds controller tolerations to the CR.
+// Step syntax: Modify CR [1] add controller toleration [node-role.kubernetes.io/control-plane]
+func (step *Step) modifyCRAddControllerToleration(res Resource, crNumStr string, key string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	if cr.Spec.Driver.Controller == nil {
+		return fmt.Errorf("controller section is nil in CR [%d]", crNum)
+	}
+
+	toleration := corev1.Toleration{
+		Key:      key,
+		Operator: corev1.TolerationOpExists,
+		Effect:   corev1.TaintEffectNoSchedule,
+	}
+	cr.Spec.Driver.Controller.Tolerations = append(cr.Spec.Driver.Controller.Tolerations, toleration)
+	res.CustomResource[crNum-1] = cr
+	return writeCRToTemp(cr, res.Scenario.Paths[crNum-1])
+}
+
 func (step *Step) deleteConfigMap(_ Resource) error {
 	cmd := exec.Command("kubectl", "delete", "cm", "csm-images", "-n", "dell-csm-operator") // #nosec G204
 	err := cmd.Run()
