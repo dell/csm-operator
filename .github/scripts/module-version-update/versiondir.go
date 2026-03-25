@@ -86,7 +86,7 @@ func DiscoverVersionedDirs(root string) ([]VersionedDir, error) {
 		return nil
 	})
 
-	// Sort deepest-first for correct nested matching in IsInOlderVersionDir.
+	// Sort deepest-first for correct nested matching in IsInNonTargetVersionDir.
 	sort.Slice(result, func(i, j int) bool {
 		return strings.Count(result[i].Path, string(os.PathSeparator)) >
 			strings.Count(result[j].Path, string(os.PathSeparator))
@@ -95,22 +95,27 @@ func DiscoverVersionedDirs(root string) ([]VersionedDir, error) {
 	return result, err
 }
 
-// IsInOlderVersionDir checks whether filePath resides inside an N-1 or N-2
-// (i.e., non-latest) version subdirectory of any discovered VersionedDir.
-// Files in the latest (N) directory or outside versioned directories return false.
-func IsInOlderVersionDir(filePath string, vDirs []VersionedDir) bool {
+// IsInNonTargetVersionDir checks whether filePath resides inside a versioned
+// directory but NOT in the version subdirectory that should be updated.
+//
+// targetVersions maps versioned directory names to the specific version that
+// should receive updates. For versioned directories not present in the map,
+// the latest (N) is used as the default target.
+func IsInNonTargetVersionDir(filePath string, vDirs []VersionedDir, targetVersions map[string]string) bool {
 	for _, vd := range vDirs {
 		rel, err := filepath.Rel(vd.Path, filePath)
 		if err != nil || strings.HasPrefix(rel, "..") {
 			continue
 		}
-		// The first path component under the versioned root tells us
-		// which version subdir the file is in (if any).
 		parts := strings.SplitN(filepath.ToSlash(rel), "/", 2)
 		if !IsSemver(parts[0]) {
-			continue // file is in a non-version subdir (e.g., common/)
+			continue
 		}
-		return parts[0] != vd.Latest()
+		target, ok := targetVersions[vd.Name]
+		if !ok {
+			target = vd.Latest()
+		}
+		return parts[0] != target
 	}
 	return false
 }
@@ -125,12 +130,9 @@ func FindVersionedDir(dirs []VersionedDir, name string) *VersionedDir {
 	return nil
 }
 
-// maxVersionsToKeep is the number of version directories retained after rotation (N, N-1, N-2).
-const maxVersionsToKeep = 3
-
 // RotateVersionDir ensures that targetVersion exists as a subdirectory of vd.
-// If it doesn't exist, it is created by copying the current latest. Then the
-// oldest directories are pruned to keep at most maxVersionsToKeep.
+// If it doesn't exist, it is created by copying the current latest and the
+// single oldest version directory is removed.
 func RotateVersionDir(vd *VersionedDir, targetVersion string) error {
 	targetPath := filepath.Join(vd.Path, targetVersion)
 
@@ -150,16 +152,14 @@ func RotateVersionDir(vd *VersionedDir, targetVersion string) error {
 	vd.Versions = append(vd.Versions, targetVersion)
 	SortSemvers(vd.Versions)
 
-	// Prune oldest directories beyond the retention limit.
-	for len(vd.Versions) > maxVersionsToKeep {
-		oldest := vd.Versions[0]
-		oldestPath := filepath.Join(vd.Path, oldest)
-		fmt.Printf("  pruning %s/%s\n", vd.Name, oldest)
-		if err := os.RemoveAll(oldestPath); err != nil {
-			return fmt.Errorf("removing %s: %w", oldest, err)
-		}
-		vd.Versions = vd.Versions[1:]
+	// Remove only the single oldest directory.
+	oldest := vd.Versions[0]
+	oldestPath := filepath.Join(vd.Path, oldest)
+	fmt.Printf("  pruning %s/%s\n", vd.Name, oldest)
+	if err := os.RemoveAll(oldestPath); err != nil {
+		return fmt.Errorf("removing %s: %w", oldest, err)
 	}
+	vd.Versions = vd.Versions[1:]
 
 	return nil
 }

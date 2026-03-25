@@ -76,6 +76,13 @@ func Run(repoRoot string, input *Input, dryRun bool) (Stats, error) {
 	}
 
 	// Phase 3: walk the tree and update files.
+	// Build the target-version map so the walk only updates files inside the
+	// correct version subdirectory (the target), not the latest (N).
+	targetVersions := make(map[string]string, len(input.VersionDirs))
+	for name, ver := range input.VersionDirs {
+		targetVersions[name] = ver
+	}
+
 	fmt.Println("Scanning files...")
 	err = filepath.WalkDir(repoRoot, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -96,7 +103,7 @@ func Run(repoRoot string, input *Input, dryRun bool) (Stats, error) {
 			stats.Pinned++
 			return nil
 		}
-		if IsInOlderVersionDir(path, vDirs) {
+		if IsInNonTargetVersionDir(path, vDirs, targetVersions) {
 			return nil
 		}
 
