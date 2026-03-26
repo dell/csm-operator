@@ -1,3 +1,4 @@
+# csm-version-pin: this file tests against intentionally old versions
 apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
