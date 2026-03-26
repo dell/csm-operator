@@ -122,6 +122,10 @@ spec:
     matchLabels:
       app: <DriverDefaultReleaseName>-controller
   replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
   template:
     metadata:
       labels:
