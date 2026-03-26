@@ -107,6 +107,24 @@ spec:
           args:
             - "--array-config=/vxflexos-config/config"
             - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - "/bin/bash"
+                  - "-c"
+                  - |
+                    # Remove FSTRIM cron job and wrapper script
+                    CRON_MARKER="# CSI PowerFlex FSTRIM"
+                    WRAPPER_SCRIPT="/usr/local/bin/csi-powerflex-fstrim-wrapper.sh"
+                    
+                    # Remove cron entry
+                    crontab -l 2>/dev/null | grep -v "$CRON_MARKER" | crontab - || true
+                    
+                    # Remove wrapper script
+                    rm -f "$WRAPPER_SCRIPT" || true
+                    
+                    echo "FSTRIM cron cleanup completed"
           env:
             - name: CSI_ENDPOINT
               value: unix://<KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com/csi_sock
@@ -218,6 +236,11 @@ spec:
             - name: certs
               mountPath: /certs
               readOnly: true
+            # FSTRIM cron cleanup mounts
+            - name: host-usr-local-bin
+              mountPath: /usr/local/bin
+            - name: host-var-spool-cron
+              mountPath: /var/spool/cron
         - name: registrar
           image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.15.0
           imagePullPolicy: IfNotPresent
@@ -442,3 +465,11 @@ spec:
                   items:
                     - key: cert-0
                       path: cert-0
+        - name: host-usr-local-bin
+          hostPath:
+            path: /usr/local/bin
+            type: DirectoryOrCreate
+        - name: host-var-spool-cron
+          hostPath:
+            path: /var/spool/cron
+            type: DirectoryOrCreate
