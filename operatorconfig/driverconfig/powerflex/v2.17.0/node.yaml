@@ -153,6 +153,18 @@ spec:
               value: <X_CSI_FS_CHECK_ENABLED>
             - name: X_CSI_FS_CHECK_MODE
               value: <X_CSI_FS_CHECK_MODE>
+            - name: X_CSI_POWERFLEX_FSTRIM_ENABLED
+              value: <X_CSI_POWERFLEX_FSTRIM_ENABLED>
+            - name: X_CSI_POWERFLEX_FSTRIM_SCHEDULE
+              value: <X_CSI_POWERFLEX_FSTRIM_SCHEDULE>
+            - name: X_CSI_POWERFLEX_FSTRIM_DRY_RUN
+              value: <X_CSI_POWERFLEX_FSTRIM_DRY_RUN>
+            - name: X_CSI_POWERFLEX_FSTRIM_MIN_AGE
+              value: <X_CSI_POWERFLEX_FSTRIM_MIN_AGE>
+            - name: X_CSI_POWERFLEX_FSTRIM_BLACKOUT_HOURS
+              value: <X_CSI_POWERFLEX_FSTRIM_BLACKOUT_HOURS>
+            - name: X_CSI_POWERFLEX_FSTRIM_LOG_FILE
+              value: <X_CSI_POWERFLEX_FSTRIM_LOG_FILE>
           volumeMounts:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com

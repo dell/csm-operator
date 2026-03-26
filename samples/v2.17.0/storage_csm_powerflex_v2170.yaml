@@ -187,6 +187,37 @@ spec:
         # X_CSI_SDC_SFTP_REPO_ENABLED: Enable/Disable SDC SFTP repository
         - name: X_CSI_SDC_SFTP_REPO_ENABLED
           value: "false"
+        # X_CSI_POWERFLEX_FSTRIM_ENABLED: Enable/Disable periodic FSTRIM on mounted PowerFlex volumes
+        # Allowed values:
+        #   true: enable FSTRIM space reclamation
+        #   false: disable FSTRIM space reclamation
+        # Default value: "false"
+        - name: X_CSI_POWERFLEX_FSTRIM_ENABLED
+          value: "false"
+        # X_CSI_POWERFLEX_FSTRIM_SCHEDULE: Cron expression for FSTRIM execution schedule
+        # Allowed values: valid 5-field cron expression
+        # Default value: "0 2 * * 0" (Sunday at 2 AM)
+        - name: X_CSI_POWERFLEX_FSTRIM_SCHEDULE
+          value: "0 2 * * 0"
+        # X_CSI_POWERFLEX_FSTRIM_DRY_RUN: Enable dry-run mode (log actions without executing)
+        # Allowed values: true, false
+        # Default value: "false"
+        - name: X_CSI_POWERFLEX_FSTRIM_DRY_RUN
+          value: "false"
+        # X_CSI_POWERFLEX_FSTRIM_MIN_AGE: Minimum mount age before FSTRIM is eligible
+        # Allowed values: valid Go duration (e.g., "24h", "12h")
+        # Default value: "24h"
+        - name: X_CSI_POWERFLEX_FSTRIM_MIN_AGE
+          value: "24h"
+        # X_CSI_POWERFLEX_FSTRIM_BLACKOUT_HOURS: Hours (0-23) during which FSTRIM should not run
+        # Allowed values: comma-separated integers 0-23, or empty string
+        # Default value: "" (no blackout)
+        - name: X_CSI_POWERFLEX_FSTRIM_BLACKOUT_HOURS
+          value: ""
+        # X_CSI_POWERFLEX_FSTRIM_LOG_FILE: Path for FSTRIM operation log file
+        # Default value: "/var/log/csi-powerflex-fstrim.log"
+        - name: X_CSI_POWERFLEX_FSTRIM_LOG_FILE
+          value: "/var/log/csi-powerflex-fstrim.log"
       # "node.nodeSelector" defines what nodes would be selected for pods of node daemonset
       # Leave as blank to use all nodes
       # Allowed values: map of key-value pairs
