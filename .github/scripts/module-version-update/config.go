@@ -43,13 +43,33 @@ type Input struct {
 
 	// VersionDirs maps directory names (matched by basename, not full path)
 	// to their target version. If the target version directory does not
-	// already exist, it is created by copying the current latest. Directories
-	// beyond the 3 most recent (N, N-1, N-2) are pruned.
-	//
-	// Example:
-	//   resiliency: v1.17.0
-	//   authorization: v2.6.0
+	// already exist, it is created by copying the current latest and the
+	// oldest version directory is removed.
 	VersionDirs map[string]string `yaml:"versionDirs"`
+
+	// NMinus1 defines per-module overrides for files annotated with
+	// "# csm-version-n-minus-1: <module>". These files receive the N-1
+	// configVersion and image tags for the annotated modules instead of
+	// the current versions.
+	NMinus1 map[string]NMinus1Override `yaml:"nMinus1"`
+
+	// VersionValues defines driver entries to add/update in the
+	// version-values.yaml file. Each driver specifies its version and
+	// which module configVersions to include in the entry.
+	VersionValues map[string]VersionValuesEntry `yaml:"versionValues"`
+}
+
+// NMinus1Override specifies the N-1 configVersion and image tags for a module.
+type NMinus1Override struct {
+	ConfigVersion string            `yaml:"configVersion"`
+	Images        map[string]string `yaml:"images"`
+}
+
+// VersionValuesEntry specifies a driver version and its associated modules
+// for the version-values.yaml compatibility matrix.
+type VersionValuesEntry struct {
+	DriverVersion string   `yaml:"driverVersion"`
+	Modules       []string `yaml:"modules"`
 }
 
 // LoadInput reads and parses the input YAML file.

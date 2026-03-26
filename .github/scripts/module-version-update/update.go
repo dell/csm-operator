@@ -117,6 +117,17 @@ func Run(repoRoot string, input *Input, dryRun bool) (Stats, error) {
 		return nil
 	})
 
+	// Phase 4: update version-values.yaml if configured.
+	if len(input.VersionValues) > 0 {
+		changed, vvErr := updateVersionValuesInRepo(repoRoot, input, dryRun)
+		if vvErr != nil {
+			return stats, fmt.Errorf("updating version-values.yaml: %w", vvErr)
+		}
+		if changed {
+			stats.Updated++
+		}
+	}
+
 	return stats, err
 }
 
@@ -128,15 +139,31 @@ func updateFile(path string, input *Input, dryRun bool) (bool, error) {
 		return false, err
 	}
 
+	// Build effective maps, applying N-1 overrides for annotated files.
+	images := input.Images
+	configVersions := input.ConfigVersions
+	if nm1Modules := readNMinus1Annotations(path); len(nm1Modules) > 0 {
+		images = cloneMap(input.Images)
+		configVersions = cloneMap(input.ConfigVersions)
+		for _, mod := range nm1Modules {
+			if ov, ok := input.NMinus1[mod]; ok {
+				configVersions[mod] = ov.ConfigVersion
+				for img, tag := range ov.Images {
+					images[img] = tag
+				}
+			}
+		}
+	}
+
 	result := string(content)
 
 	// Apply image tag updates.
-	for image, tag := range input.Images {
+	for image, tag := range images {
 		result = replaceImageTag(result, image, tag)
 	}
 
 	// Apply configVersion updates.
-	for module, version := range input.ConfigVersions {
+	for module, version := range configVersions {
 		result = updateConfigVersionForModule(result, module, version)
 	}
 
@@ -218,6 +245,11 @@ func tryReplaceConfigVersion(line, newVersion string) (string, bool) {
 	if !strings.Contains(line, "configVersion") {
 		return line, false
 	}
+	// Skip commented-out configVersion lines.
+	trimmed := strings.TrimSpace(line)
+	if strings.HasPrefix(trimmed, "#") || strings.HasPrefix(trimmed, "//") {
+		return line, false
+	}
 	// Try JSON-style first: "configVersion": "v1.2.3"
 	if jsonConfigVersionRe.MatchString(line) {
 		return jsonConfigVersionRe.ReplaceAllString(line, `${1}"`+newVersion+`"`), true
@@ -258,4 +290,47 @@ func hasVersionPin(path string) bool {
 		}
 	}
 	return false
+}
+
+// ---------------------------------------------------------------------------
+// N-1 version annotations
+// ---------------------------------------------------------------------------
+
+const nMinus1Marker = "csm-version-n-minus-1:"
+
+// readNMinus1Annotations scans the first 10 lines of a file for
+// "# csm-version-n-minus-1: <module>" annotations and returns the module names.
+func readNMinus1Annotations(path string) []string {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil
+	}
+	defer f.Close()
+
+	var modules []string
+	scanner := bufio.NewScanner(f)
+	for i := 0; i < 10 && scanner.Scan(); i++ {
+		line := scanner.Text()
+		idx := strings.Index(line, nMinus1Marker)
+		if idx == -1 {
+			continue
+		}
+		rest := strings.TrimSpace(line[idx+len(nMinus1Marker):])
+		for _, m := range strings.Split(rest, ",") {
+			m = strings.TrimSpace(m)
+			if m != "" {
+				modules = append(modules, m)
+			}
+		}
+	}
+	return modules
+}
+
+// cloneMap returns a shallow copy of a string map.
+func cloneMap(m map[string]string) map[string]string {
+	c := make(map[string]string, len(m))
+	for k, v := range m {
+		c[k] = v
+	}
+	return c
 }
