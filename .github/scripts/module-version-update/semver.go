@@ -15,6 +15,7 @@
 package main
 
 import (
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -72,4 +73,23 @@ func SortSemvers(versions []string) {
 		}
 		return a.Less(b)
 	})
+}
+
+
+// SemverNMinusOne decrements the minor version of a semver string.
+// For example, "v2.4.0" -> "v2.3.0". If minor is already 0, the original
+// version is returned unchanged.
+func SemverNMinusOne(ver string) (string, error) {
+	sv, ok := ParseSemver(ver)
+	if !ok {
+		return ver, fmt.Errorf("not a valid semver: %s", ver)
+	}
+	prefix := ""
+	if len(ver) > 0 && ver[0] == 'v' {
+		prefix = "v"
+	}
+	if sv.Minor > 0 {
+		sv.Minor--
+	}
+	return fmt.Sprintf("%s%d.%d.%d", prefix, sv.Major, sv.Minor, sv.Patch), nil
 }

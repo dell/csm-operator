@@ -131,8 +131,12 @@ func FindVersionedDir(dirs []VersionedDir, name string) *VersionedDir {
 }
 
 // RotateVersionDir ensures that targetVersion exists as a subdirectory of vd.
-// If it doesn't exist, it is created by copying the current latest and the
-// single oldest version directory is removed.
+// If it doesn't exist, it is created by copying the current latest.
+//
+// Pruning only happens when the new version introduces a new major or minor
+// (not a patch bump). When pruning, all directories sharing the oldest
+// major.minor are removed. For example, given [v2.14.0, v2.14.1, v2.15.0,
+// v2.15.1, v2.16.0] and a new v2.17.0, both v2.14.0 and v2.14.1 are removed.
 func RotateVersionDir(vd *VersionedDir, targetVersion string) error {
 	targetPath := filepath.Join(vd.Path, targetVersion)
 
@@ -152,14 +156,36 @@ func RotateVersionDir(vd *VersionedDir, targetVersion string) error {
 	vd.Versions = append(vd.Versions, targetVersion)
 	SortSemvers(vd.Versions)
 
-	// Remove only the single oldest directory.
-	oldest := vd.Versions[0]
-	oldestPath := filepath.Join(vd.Path, oldest)
-	fmt.Printf("  pruning %s/%s\n", vd.Name, oldest)
-	if err := os.RemoveAll(oldestPath); err != nil {
-		return fmt.Errorf("removing %s: %w", oldest, err)
+	// Only prune when the new version is a major or minor bump.
+	targetSV, targetOK := ParseSemver(targetVersion)
+	latestSV, latestOK := ParseSemver(latest)
+	if !targetOK || !latestOK {
+		return nil
 	}
-	vd.Versions = vd.Versions[1:]
+	if targetSV.Major == latestSV.Major && targetSV.Minor == latestSV.Minor {
+		fmt.Printf("  patch bump only (%s -> %s), skipping prune\n", latest, targetVersion)
+		return nil
+	}
+
+	// Find the oldest major.minor group and remove all directories in it.
+	oldestSV, ok := ParseSemver(vd.Versions[0])
+	if !ok {
+		return nil
+	}
+	var remaining []string
+	for _, v := range vd.Versions {
+		sv, ok := ParseSemver(v)
+		if ok && sv.Major == oldestSV.Major && sv.Minor == oldestSV.Minor {
+			dirPath := filepath.Join(vd.Path, v)
+			fmt.Printf("  pruning %s/%s\n", vd.Name, v)
+			if err := os.RemoveAll(dirPath); err != nil {
+				return fmt.Errorf("removing %s: %w", v, err)
+			}
+		} else {
+			remaining = append(remaining, v)
+		}
+	}
+	vd.Versions = remaining
 
 	return nil
 }
@@ -174,7 +200,7 @@ func copyDir(src, dst string) error {
 		target := filepath.Join(dst, rel)
 
 		if d.IsDir() {
-			return os.MkdirAll(target, 0755)
+			return os.MkdirAll(target, 0o755)
 		}
 
 		info, err := d.Info()

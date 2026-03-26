@@ -28,7 +28,7 @@ import (
 const versionValuesFilename = "version-values.yaml"
 
 // updateVersionValuesInRepo finds version-values.yaml by walking the tree and
-// updates it with driver-module version entries from the input.
+// updates it with driver version entries from the input.
 func updateVersionValuesInRepo(repoRoot string, input *Input, dryRun bool) (bool, error) {
 	var found string
 	_ = filepath.WalkDir(repoRoot, func(path string, d fs.DirEntry, err error) error {
@@ -53,6 +53,15 @@ func updateVersionValuesInRepo(repoRoot string, input *Input, dryRun bool) (bool
 
 // updateVersionValuesFile reads version-values.yaml as a yaml.Node tree,
 // adds or updates driver version entries, and writes it back.
+//
+// For each driver in input.VersionValues (driver name → driver version):
+//   - If the driver version entry already exists, update its module values
+//     using input.ConfigVersions.
+//   - If it doesn't exist, copy the structure from the latest existing entry,
+//     update the module values, and append it.
+//
+// The tool learns which modules each driver supports from the existing file
+// structure rather than from the input configuration.
 func updateVersionValuesFile(path string, input *Input, dryRun bool) (bool, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -72,48 +81,30 @@ func updateVersionValuesFile(path string, input *Input, dryRun bool) (bool, erro
 	}
 
 	changed := false
-	for driver, entry := range input.VersionValues {
+	for driver, driverVersion := range input.VersionValues {
 		driverNode := findNodeValue(root, driver)
 		if driverNode == nil || driverNode.Kind != yaml.MappingNode {
 			continue
 		}
 
-		// Build desired module versions for this driver.
-		desired := make(map[string]string)
-		for _, mod := range entry.Modules {
-			if ver, ok := input.ConfigVersions[mod]; ok {
-				desired[mod] = ver
-			}
-		}
-		if len(desired) == 0 {
-			continue
-		}
-
-		verNode := findNodeValue(driverNode, entry.DriverVersion)
+		verNode := findNodeValue(driverNode, driverVersion)
 		if verNode != nil && verNode.Kind == yaml.MappingNode {
-			// Update existing entry.
-			for mod, ver := range desired {
-				modValNode := findNodeValue(verNode, mod)
-				if modValNode != nil {
-					if modValNode.Value != ver {
-						modValNode.Value = ver
-						changed = true
-					}
-				} else {
-					verNode.Content = append(verNode.Content,
-						&yaml.Node{Kind: yaml.ScalarNode, Value: mod},
-						&yaml.Node{Kind: yaml.ScalarNode, Value: ver},
-					)
-					changed = true
-				}
+			// Entry exists — update module versions from configVersions.
+			if updateMappingValues(verNode, input.ConfigVersions) {
+				changed = true
 			}
 		} else {
-			// Create new driver version entry.
+			// Entry doesn't exist — copy structure from the latest entry.
+			latestNode := lastMappingValue(driverNode)
+			if latestNode == nil {
+				continue
+			}
 			newMapping := &yaml.Node{Kind: yaml.MappingNode}
-			for _, mod := range entry.Modules {
-				ver, ok := desired[mod]
-				if !ok {
-					continue
+			for i := 0; i < len(latestNode.Content)-1; i += 2 {
+				mod := latestNode.Content[i].Value
+				ver := latestNode.Content[i+1].Value
+				if newVer, ok := input.ConfigVersions[mod]; ok {
+					ver = newVer
 				}
 				newMapping.Content = append(newMapping.Content,
 					&yaml.Node{Kind: yaml.ScalarNode, Value: mod},
@@ -121,7 +112,7 @@ func updateVersionValuesFile(path string, input *Input, dryRun bool) (bool, erro
 				)
 			}
 			driverNode.Content = append(driverNode.Content,
-				&yaml.Node{Kind: yaml.ScalarNode, Value: entry.DriverVersion},
+				&yaml.Node{Kind: yaml.ScalarNode, Value: driverVersion},
 				newMapping,
 			)
 			changed = true
@@ -144,9 +135,8 @@ func updateVersionValuesFile(path string, input *Input, dryRun bool) (bool, erro
 	}
 	enc.Close()
 
-	// yaml.Encoder may add a trailing "...\n"; strip it for consistency.
+	// Strip trailing "...\n" that yaml.Encoder may add.
 	out := bytes.TrimSuffix(buf.Bytes(), []byte("...\n"))
-	// Ensure file ends with a single newline.
 	out = append(bytes.TrimRight(out, "\n"), '\n')
 
 	info, _ := os.Stat(path)
@@ -168,4 +158,30 @@ func findNodeValue(mapping *yaml.Node, key string) *yaml.Node {
 		}
 	}
 	return nil
+}
+
+// lastMappingValue returns the value node of the last key-value pair in a
+// mapping. Used to find the "latest" driver version entry to copy from.
+func lastMappingValue(mapping *yaml.Node) *yaml.Node {
+	if mapping.Kind != yaml.MappingNode || len(mapping.Content) < 2 {
+		return nil
+	}
+	return mapping.Content[len(mapping.Content)-1]
+}
+
+// updateMappingValues updates values in a YAML mapping node using the provided
+// map. Only keys that exist in both the mapping and the values map are updated.
+// Returns true if any value was changed.
+func updateMappingValues(mapping *yaml.Node, values map[string]string) bool {
+	changed := false
+	for i := 0; i < len(mapping.Content)-1; i += 2 {
+		key := mapping.Content[i].Value
+		if newVal, ok := values[key]; ok {
+			if mapping.Content[i+1].Value != newVal {
+				mapping.Content[i+1].Value = newVal
+				changed = true
+			}
+		}
+	}
+	return changed
 }

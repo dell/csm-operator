@@ -21,69 +21,191 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Input is the declarative specification of what to update. It is loaded
-// from a YAML file passed via --input.
+// ---------------------------------------------------------------------------
+// csm-versions.yaml schema
+// ---------------------------------------------------------------------------
+
+// CSMVersions is the top-level structure of csm-versions.yaml.
+type CSMVersions struct {
+	CSM          CSMSection              `yaml:"csm"`
+	Dependencies map[string]ProductEntry `yaml:"dependencies"`
+	CSI          CSISection              `yaml:"csi"`
+}
+
+// CSMSection holds drivers, modules, and tools under the "csm" key.
+type CSMSection struct {
+	Version         string                  `yaml:"version"`
+	DefaultRegistry string                  `yaml:"defaultRegistry"`
+	Tools           map[string]ProductEntry `yaml:"tools"`
+	Drivers         map[string]ProductEntry `yaml:"drivers"`
+	Modules         map[string]ProductEntry `yaml:"modules"`
+}
+
+// ProductEntry is a versioned product with optional images and aliases.
+// Used for tools, drivers, modules, dependencies, and sidecars.
+// Aliases lists additional operator configVersion names that should receive
+// the same version (e.g. "authorization-proxy-server" for "authorization").
+type ProductEntry struct {
+	Version string       `yaml:"version"`
+	Images  []ImageEntry `yaml:"images"`
+	Aliases []string     `yaml:"aliases,omitempty"`
+}
+
+// ImageEntry describes a container image. Registry overrides the parent
+// defaultRegistry; Tag overrides the parent version.
+type ImageEntry struct {
+	Name     string `yaml:"name"`
+	Registry string `yaml:"registry,omitempty"`
+	Tag      string `yaml:"tag,omitempty"`
+}
+
+
+
+// CSISection holds sidecar images under the "csi" key.
+type CSISection struct {
+	Version         string                  `yaml:"version"`
+	DefaultRegistry string                  `yaml:"defaultRegistry"`
+	Sidecars        map[string]ProductEntry `yaml:"sidecars"`
+}
+
+// ---------------------------------------------------------------------------
+// Internal representation used by the update engine
+// ---------------------------------------------------------------------------
+
+// Input is the flat representation consumed by Run().
 type Input struct {
-	// Images maps fully-qualified image references to their target tags.
-	// Every file in the repo tree containing a matching image:tag string
-	// will be updated (unless pinned or in an older version directory).
-	//
-	// Example:
-	//   quay.io/dell/container-storage-modules/podmon: v1.17.0
-	Images map[string]string `yaml:"images"`
-
-	// ConfigVersions maps YAML module names to their target configVersion.
-	// The tool finds "name: <module>" fields and updates the nearest
-	// "configVersion" field to the specified version.
-	//
-	// Example:
-	//   observability: v1.16.0
-	//   resiliency: v1.17.0
-	ConfigVersions map[string]string `yaml:"configVersions"`
-
-	// VersionDirs maps directory names (matched by basename, not full path)
-	// to their target version. If the target version directory does not
-	// already exist, it is created by copying the current latest and the
-	// oldest version directory is removed.
-	VersionDirs map[string]string `yaml:"versionDirs"`
-
-	// NMinus1 defines per-module overrides for files annotated with
-	// "# csm-version-n-minus-1: <module>". These files receive the N-1
-	// configVersion and image tags for the annotated modules instead of
-	// the current versions.
-	NMinus1 map[string]NMinus1Override `yaml:"nMinus1"`
-
-	// VersionValues defines driver entries to add/update in the
-	// version-values.yaml file. Each driver specifies its version and
-	// which module configVersions to include in the entry.
-	VersionValues map[string]VersionValuesEntry `yaml:"versionValues"`
+	Images         map[string]string
+	ConfigVersions map[string]string
+	VersionDirs    map[string]string
+	NMinus1        map[string]NMinus1Override
+	// VersionValues maps driver names to their target version for
+	// version-values.yaml. The tool reads the existing file to learn
+	// which modules each driver supports.
+	VersionValues map[string]string
 }
 
 // NMinus1Override specifies the N-1 configVersion and image tags for a module.
 type NMinus1Override struct {
-	ConfigVersion string            `yaml:"configVersion"`
-	Images        map[string]string `yaml:"images"`
+	ConfigVersion string
+	Images        map[string]string
 }
 
-// VersionValuesEntry specifies a driver version and its associated modules
-// for the version-values.yaml compatibility matrix.
-type VersionValuesEntry struct {
-	DriverVersion string   `yaml:"driverVersion"`
-	Modules       []string `yaml:"modules"`
-}
+// ---------------------------------------------------------------------------
+// Loading and transformation
+// ---------------------------------------------------------------------------
 
-// LoadInput reads and parses the input YAML file.
+// LoadInput reads csm-versions.yaml and transforms it into a flat Input.
 func LoadInput(path string) (*Input, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("reading %s: %w", path, err)
 	}
-	var input Input
-	if err := yaml.Unmarshal(data, &input); err != nil {
+
+	var versions CSMVersions
+	if err := yaml.Unmarshal(data, &versions); err != nil {
 		return nil, fmt.Errorf("parsing %s: %w", path, err)
 	}
-	if len(input.Images) == 0 && len(input.ConfigVersions) == 0 {
-		return nil, fmt.Errorf("input file %s specifies no images or configVersions", path)
+
+	input, err := versions.ToInput()
+	if err != nil {
+		return nil, fmt.Errorf("transforming %s: %w", path, err)
 	}
-	return &input, nil
+
+	if len(input.Images) == 0 {
+		return nil, fmt.Errorf("input file %s produced no images", path)
+	}
+	return input, nil
+}
+
+// ToInput transforms the hierarchical CSMVersions into a flat Input.
+func (cv *CSMVersions) ToInput() (*Input, error) {
+	input := &Input{
+		Images:         make(map[string]string),
+		ConfigVersions: make(map[string]string),
+		VersionDirs:    make(map[string]string),
+		NMinus1:        make(map[string]NMinus1Override),
+		VersionValues:  make(map[string]string),
+	}
+
+	csmReg := cv.CSM.DefaultRegistry
+
+	// --- Modules ---
+	// The YAML key is the operator configVersion name and version dir name.
+	for name, mod := range cv.CSM.Modules {
+		addImages(input.Images, mod.Images, csmReg, mod.Version)
+
+		input.ConfigVersions[name] = mod.Version
+		input.VersionDirs[name] = mod.Version
+
+		for _, alias := range mod.Aliases {
+			input.ConfigVersions[alias] = mod.Version
+		}
+
+		// Auto-compute N-1 overrides for every module.
+		nm1Ver, err := SemverNMinusOne(mod.Version)
+		if err == nil && nm1Ver != mod.Version {
+			nm1Images := make(map[string]string)
+			for _, img := range mod.Images {
+				reg := img.Registry
+				if reg == "" {
+					reg = csmReg
+				}
+				nm1Images[reg+"/"+img.Name] = nm1Ver
+			}
+			input.NMinus1[name] = NMinus1Override{
+				ConfigVersion: nm1Ver,
+				Images:        nm1Images,
+			}
+			for _, alias := range mod.Aliases {
+				input.NMinus1[alias] = NMinus1Override{
+					ConfigVersion: nm1Ver,
+					Images:        nm1Images,
+				}
+			}
+		}
+	}
+
+	// --- Tools ---
+	for _, tool := range cv.CSM.Tools {
+		addImages(input.Images, tool.Images, csmReg, tool.Version)
+	}
+
+	// --- Drivers ---
+	// The YAML key is the driver name in version-values.yaml.
+	for name, driver := range cv.CSM.Drivers {
+		addImages(input.Images, driver.Images, csmReg, driver.Version)
+		input.VersionValues[name] = driver.Version
+	}
+
+	// --- Dependencies ---
+	for _, dep := range cv.Dependencies {
+		addImages(input.Images, dep.Images, csmReg, dep.Version)
+	}
+
+	// --- CSI Sidecars ---
+	csiReg := cv.CSI.DefaultRegistry
+	for _, sidecar := range cv.CSI.Sidecars {
+		addImages(input.Images, sidecar.Images, csiReg, sidecar.Version)
+	}
+
+	return input, nil
+}
+
+// addImages resolves each ImageEntry to a fully-qualified image reference
+// and adds it to the images map.
+func addImages(images map[string]string, entries []ImageEntry, defaultRegistry, defaultTag string) {
+	for _, img := range entries {
+		reg := img.Registry
+		if reg == "" {
+			reg = defaultRegistry
+		}
+		tag := img.Tag
+		if tag == "" {
+			tag = defaultTag
+		}
+		if reg == "" || img.Name == "" || tag == "" {
+			continue
+		}
+		images[reg+"/"+img.Name] = tag
+	}
 }
