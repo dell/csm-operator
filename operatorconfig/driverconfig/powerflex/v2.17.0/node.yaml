@@ -294,63 +294,7 @@ spec:
             privileged: true
           image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.17.0
           imagePullPolicy: IfNotPresent
-          command: ["/bin/bash", "-c"]
-          args:
-            - |
-              #!/bin/bash
-              set -euo pipefail
-              
-              # Check if FSTRIM is enabled
-              if [ "${X_CSI_POWERFLEX_FSTRIM_ENABLED:-false}" != "true" ]; then
-                echo "FSTRIM is disabled, skipping cron setup"
-                exit 0
-              fi
-              
-              echo "Setting up FSTRIM cron job..."
-              
-              # Configuration
-              CRON_MARKER="# CSI PowerFlex FSTRIM"
-              WRAPPER_SCRIPT_PATH="/usr/local/bin/csi-powerflex-fstrim-wrapper.sh"
-              DRIVER_BINARY_PATH="${DRIVER_BINARY_PATH:-/csi-powerflex}"
-              LOG_FILE="${X_CSI_POWERFLEX_FSTRIM_LOG_FILE:-/var/log/csi-powerflex-fstrim.log}"
-              SCHEDULE="${X_CSI_POWERFLEX_FSTRIM_SCHEDULE:-0 2 * * 0}"
-              
-              # Create wrapper script
-              cat > "$WRAPPER_SCRIPT_PATH" <<'EOF'
-              #!/bin/bash
-              set -euo pipefail
-              
-              DRIVER_BINARY="${DRIVER_BINARY_PATH:-/csi-powerflex}"
-              LOG_FILE="${X_CSI_POWERFLEX_FSTRIM_LOG_FILE:-/var/log/csi-powerflex-fstrim.log}"
-              
-              LOG_DIR=$(dirname "$LOG_FILE")
-              mkdir -p "$LOG_DIR"
-              
-              echo "========================================" >> "$LOG_FILE"
-              echo "FSTRIM execution started at $(date)" >> "$LOG_FILE"
-              echo "========================================" >> "$LOG_FILE"
-              
-              if "$DRIVER_BINARY" fstrim-run >> "$LOG_FILE" 2>&1; then
-                  echo "FSTRIM execution completed successfully at $(date)" >> "$LOG_FILE"
-                  exit 0
-              else
-                  EXIT_CODE=$?
-                  echo "FSTRIM execution failed with exit code $EXIT_CODE at $(date)" >> "$LOG_FILE"
-                  exit $EXIT_CODE
-              fi
-              EOF
-              
-              chmod +x "$WRAPPER_SCRIPT_PATH"
-              echo "Wrapper script created at $WRAPPER_SCRIPT_PATH"
-              
-              # Remove existing FSTRIM cron entries
-              crontab -l 2>/dev/null | grep -v "$CRON_MARKER" | crontab - || true
-              
-              # Add new cron entry
-              (crontab -l 2>/dev/null || true; echo "$SCHEDULE $WRAPPER_SCRIPT_PATH $CRON_MARKER") | crontab -
-              
-              echo "FSTRIM cron job installed successfully with schedule: $SCHEDULE"
-              crontab -l | grep "$CRON_MARKER"
+          command: ["/bin/bash", "/scripts/setup-fstrim-cron.sh", "install"]
           env:
             - name: X_CSI_POWERFLEX_FSTRIM_ENABLED
               value: <X_CSI_POWERFLEX_FSTRIM_ENABLED>
@@ -365,6 +309,8 @@ spec:
               mountPath: /usr/local/bin
             - name: host-var-spool-cron
               mountPath: /var/spool/cron
+            - name: fstrim-scripts
+              mountPath: /scripts
         - name: mdm-container
           image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.17.0
           imagePullPolicy: IfNotPresent
@@ -549,3 +495,7 @@ spec:
           hostPath:
             path: /var/spool/cron
             type: DirectoryOrCreate
+        - name: fstrim-scripts
+          configMap:
+            name: <DriverDefaultReleaseName>-fstrim-scripts
+            defaultMode: 0755

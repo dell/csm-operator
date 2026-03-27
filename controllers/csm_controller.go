@@ -1044,6 +1044,16 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		return err
 	}
 
+	// Create/Update FSTRIM scripts ConfigMap if FSTRIM is enabled
+	if cr.GetDriverType() == csmv1.PowerFlex {
+		fstrimEnabled := drivers.GetDriverEnv(cr, "node", "X_CSI_POWERFLEX_FSTRIM_ENABLED", "false")
+		if fstrimEnabled == "true" {
+			if err = r.createFSTRIMScriptsConfigMap(ctx, cr, clusterClient.ClusterCTRLClient); err != nil {
+				return fmt.Errorf("creating FSTRIM scripts ConfigMap: %v", err)
+			}
+		}
+	}
+
 	// Create/Update Deployment
 	if err = deployment.SyncDeployment(ctx, controller.Deployment, clusterClient.ClusterK8sClient, cr.Name); err != nil {
 		return err
@@ -1748,11 +1758,4 @@ func applyCSMDRCRD(ctx context.Context, cr csmv1.ContainerStorageModule, isDelet
 		}
 		return nil
 	}
-
-	log.Infoln("Applying the CSM Disaster Recovery (DR) CRDs")
-	if err := modules.PatchCSMDRCRDs(ctx, isDeleting, op, ctrlClient); err != nil {
-		return fmt.Errorf("unable to patch the common CSM Disaster Recovery (DR) Controller: %v", err)
-	}
-
-	return nil
 }
