@@ -29,7 +29,7 @@ on:  # yamllint disable-line rule:truthy
         type: string
 jobs:
   version-update:
-    uses: CSM/actions/.github/workflows/operator-module-version-update.yaml@main
+    uses: CSM/actions/.github/workflows/operator-module-version-update.yaml@usr/luke_lau/gh-action-modules-refactor
     name: CSM Operator Module Version Update
     with:
       csm-version: ${{ inputs.csm-version }}
