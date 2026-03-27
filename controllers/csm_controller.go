@@ -1748,4 +1748,11 @@ func applyCSMDRCRD(ctx context.Context, cr csmv1.ContainerStorageModule, isDelet
 		}
 		return nil
 	}
+
+	log.Infoln("Applying the CSM Disaster Recovery (DR) CRDs")
+	if err := modules.PatchCSMDRCRDs(ctx, isDeleting, op, ctrlClient); err != nil {
+		return fmt.Errorf("unable to patch the common CSM Disaster Recovery (DR) Controller: %v", err)
+	}
+
+	return nil
 }
