@@ -1,4 +1,4 @@
-# Copyright © 2022-2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2022-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,8 +34,23 @@ export ZONING=false
 
 export INSTALL_VAULT=false
 export INSTALL_CONJUR=false
+export CLEANUP_NS=true
 
 export PROXY_HOST="csm-authorization.com"
+
+# Namespaces required by e2e tests (see tests/README.md - Prerequisites).
+E2E_NAMESPACES=(
+  dell
+  authorization
+  proxy-ns
+  test-vxflexos
+  isilon
+  unity
+  powermax
+  powerstore
+  test-powerstore
+  dell-cosi
+)
 
 set -o errexit
 set -o nounset
@@ -145,6 +160,44 @@ function getMasterNodeIP() {
   echo "Cluster IP: $CLUSTER_IP"
 }
 
+function setupNamespaces() {
+  echo "Setting up clean e2e test namespaces..."
+  for ns in "${E2E_NAMESPACES[@]}"; do
+    if kubectl get namespace "$ns" &>/dev/null; then
+      echo "Deleting existing namespace: $ns"
+      kubectl delete namespace "$ns" --wait=true
+    fi
+    echo "Creating namespace: $ns"
+    kubectl create namespace "$ns"
+  done
+  echo "All e2e test namespaces created successfully."
+}
+
+function cleanupNamespaces() {
+  echo "Cleaning up e2e test namespaces..."
+  for ns in "${E2E_NAMESPACES[@]}"; do
+    if kubectl get namespace "$ns" &>/dev/null; then
+      echo "Deleting namespace: $ns"
+      kubectl delete namespace "$ns" --wait=true
+    fi
+  done
+  echo "Namespace cleanup complete."
+}
+
+function onExit() {
+  local exit_code=$?
+  if [[ ${#E2E_NAMESPACES[@]} -eq 0 ]]; then
+    exit $exit_code
+  fi
+  if [[ $CLEANUP_NS == "true" ]]; then
+    cleanupNamespaces
+  else
+    echo "Skipping namespace cleanup (--no-cleanup-ns specified)."
+  fi
+  exit $exit_code
+}
+trap onExit EXIT
+
 function usage() {
   echo
   echo "Help for $PROG"
@@ -178,6 +231,7 @@ function usage() {
   echo "  --install-vault                              use to install authorization vault instance with secrets for authorization tests"
   echo "  --install-conjur                             use to install authorization conjur instance with secrets for authorization tests"
   echo "  --add-tag=<scenario tag>                     use to specify scenarios to run by one of their tags"
+  echo "  --no-cleanup-ns                              skip namespace deletion at the end of the test run"
   echo
 
   exit 0
@@ -257,6 +311,9 @@ while getopts ":hcv-:" optchar; do
     minimal)
       export E2E_SCENARIOS_FILE=testfiles/minimal-testfiles/scenarios.yaml
       ;;
+    no-cleanup-ns)
+      export CLEANUP_NS=false
+      ;;
     *)
       echo "Unknown option -${OPTARG}"
       echo "For help, run $PROG -h"
@@ -295,6 +352,7 @@ getMasterNodeIP
 
 getArrayInfo
 checkForScenariosFile
+setupNamespaces
 if [[ $INSTALL_VAULT == "true" ]]; then
   vaultSetupAutomation
 fi
