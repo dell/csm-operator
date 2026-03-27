@@ -30,6 +30,7 @@ func main() {
 	repoRoot := flag.String("repo", "", "Repository root (default: $GITHUB_WORKSPACE or cwd)")
 	inputFile := flag.String("input", "", "Input YAML file with image/module versions (required)")
 	dryRun := flag.Bool("dry-run", false, "Print what would change without writing files")
+	scopeFlag := flag.String("scope", "all", `Scope of updates: "drivers", "modules", "sidecars", or "all"`)
 	flag.Parse()
 
 	if *repoRoot == "" {
@@ -43,8 +44,11 @@ func main() {
 		flag.Usage()
 		log.Fatal("--input is required")
 	}
+	if !IsValidScope(*scopeFlag) {
+		log.Fatalf("invalid --scope value %q: must be one of: drivers, modules, sidecars, all", *scopeFlag)
+	}
 
-	input, err := LoadInput(*inputFile)
+	input, err := LoadInput(*inputFile, Scope(*scopeFlag))
 	if err != nil {
 		log.Fatalf("loading input: %v", err)
 	}

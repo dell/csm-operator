@@ -4,7 +4,14 @@
 #   go run .github/scripts/module-version-update/ \
 #     --repo . \
 #     --input .github/scripts/module-version-update/example-input.yaml \
+#     --scope all \
 #     --dry-run
+#
+# --scope controls which sections are processed:
+#   "drivers"  - only driver images and version-values entries
+#   "modules"  - modules, tools, and third-party dependencies
+#   "sidecars" - only CSI sidecar images
+#   "all"      - drivers, modules, and sidecars (default)
 
 # Images maps fully-qualified container image references to their target tags.
 # The tool walks every file in the repo tree and replaces <image>:<old-tag>

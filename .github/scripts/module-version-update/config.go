@@ -69,6 +69,33 @@ type CSISection struct {
 }
 
 // ---------------------------------------------------------------------------
+// Scope
+// ---------------------------------------------------------------------------
+
+// Scope controls which sections of the input file are processed.
+type Scope string
+
+const (
+	// ScopeAll processes drivers, modules, tools, dependencies, and CSI sidecars.
+	ScopeAll Scope = "all"
+	// ScopeDrivers processes only driver images and version-values entries.
+	ScopeDrivers Scope = "drivers"
+	// ScopeModules processes modules, tools, and third-party dependencies.
+	ScopeModules Scope = "modules"
+	// ScopeSidecars processes only CSI sidecar images.
+	ScopeSidecars Scope = "sidecars"
+)
+
+// IsValidScope returns true if s is a recognized scope value.
+func IsValidScope(s string) bool {
+	switch Scope(s) {
+	case ScopeAll, ScopeDrivers, ScopeModules, ScopeSidecars:
+		return true
+	}
+	return false
+}
+
+// ---------------------------------------------------------------------------
 // Internal representation used by the update engine
 // ---------------------------------------------------------------------------
 
@@ -95,7 +122,8 @@ type NMinus1Override struct {
 // ---------------------------------------------------------------------------
 
 // LoadInput reads csm-versions.yaml and transforms it into a flat Input.
-func LoadInput(path string) (*Input, error) {
+// The scope parameter controls which sections are included in the output.
+func LoadInput(path string, scope Scope) (*Input, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("reading %s: %w", path, err)
@@ -106,19 +134,24 @@ func LoadInput(path string) (*Input, error) {
 		return nil, fmt.Errorf("parsing %s: %w", path, err)
 	}
 
-	input, err := versions.ToInput()
+	input, err := versions.ToInput(scope)
 	if err != nil {
 		return nil, fmt.Errorf("transforming %s: %w", path, err)
 	}
 
-	if len(input.Images) == 0 {
-		return nil, fmt.Errorf("input file %s produced no images", path)
+	if len(input.Images) == 0 && len(input.ConfigVersions) == 0 && len(input.VersionValues) == 0 {
+		return nil, fmt.Errorf("input file %s produced no updates for scope %q", path, scope)
 	}
 	return input, nil
 }
 
 // ToInput transforms the hierarchical CSMVersions into a flat Input.
-func (cv *CSMVersions) ToInput() (*Input, error) {
+// The scope parameter controls which sections are included:
+//   - ScopeDrivers: only driver images and version-values entries
+//   - ScopeModules: modules, tools, and third-party dependencies
+//   - ScopeSidecars: only CSI sidecar images
+//   - ScopeAll: everything (drivers + modules + sidecars)
+func (cv *CSMVersions) ToInput(scope Scope) (*Input, error) {
 	input := &Input{
 		Images:         make(map[string]string),
 		ConfigVersions: make(map[string]string),
@@ -129,63 +162,69 @@ func (cv *CSMVersions) ToInput() (*Input, error) {
 
 	csmReg := cv.CSM.DefaultRegistry
 
-	// --- Modules ---
-	// The YAML key is the operator configVersion name and version dir name.
-	for name, mod := range cv.CSM.Modules {
-		addImages(input.Images, mod.Images, csmReg, mod.Version)
+	if scope == ScopeAll || scope == ScopeModules {
+		// --- Modules ---
+		// The YAML key is the operator configVersion name and version dir name.
+		for name, mod := range cv.CSM.Modules {
+			addImages(input.Images, mod.Images, csmReg, mod.Version)
 
-		input.ConfigVersions[name] = mod.Version
-		input.VersionDirs[name] = mod.Version
+			input.ConfigVersions[name] = mod.Version
+			input.VersionDirs[name] = mod.Version
 
-		for _, alias := range mod.Aliases {
-			input.ConfigVersions[alias] = mod.Version
-		}
-
-		// Auto-compute N-1 overrides for every module.
-		nm1Ver, err := SemverNMinusOne(mod.Version)
-		if err == nil && nm1Ver != mod.Version {
-			nm1Images := make(map[string]string)
-			for _, img := range mod.Images {
-				reg := img.Registry
-				if reg == "" {
-					reg = csmReg
-				}
-				nm1Images[reg+"/"+img.Name] = nm1Ver
-			}
-			input.NMinus1[name] = NMinus1Override{
-				ConfigVersion: nm1Ver,
-				Images:        nm1Images,
-			}
 			for _, alias := range mod.Aliases {
-				input.NMinus1[alias] = NMinus1Override{
+				input.ConfigVersions[alias] = mod.Version
+			}
+
+			// Auto-compute N-1 overrides for every module.
+			nm1Ver, err := SemverNMinusOne(mod.Version)
+			if err == nil && nm1Ver != mod.Version {
+				nm1Images := make(map[string]string)
+				for _, img := range mod.Images {
+					reg := img.Registry
+					if reg == "" {
+						reg = csmReg
+					}
+					nm1Images[reg+"/"+img.Name] = nm1Ver
+				}
+				input.NMinus1[name] = NMinus1Override{
 					ConfigVersion: nm1Ver,
 					Images:        nm1Images,
 				}
+				for _, alias := range mod.Aliases {
+					input.NMinus1[alias] = NMinus1Override{
+						ConfigVersion: nm1Ver,
+						Images:        nm1Images,
+					}
+				}
 			}
+		}
+
+		// --- Tools ---
+		for _, tool := range cv.CSM.Tools {
+			addImages(input.Images, tool.Images, csmReg, tool.Version)
+		}
+
+		// --- Dependencies ---
+		for _, dep := range cv.Dependencies {
+			addImages(input.Images, dep.Images, csmReg, dep.Version)
 		}
 	}
 
-	// --- Tools ---
-	for _, tool := range cv.CSM.Tools {
-		addImages(input.Images, tool.Images, csmReg, tool.Version)
+	if scope == ScopeAll || scope == ScopeSidecars {
+		// --- CSI Sidecars ---
+		csiReg := cv.CSI.DefaultRegistry
+		for _, sidecar := range cv.CSI.Sidecars {
+			addImages(input.Images, sidecar.Images, csiReg, sidecar.Version)
+		}
 	}
 
-	// --- Drivers ---
-	// The YAML key is the driver name in version-values.yaml.
-	for name, driver := range cv.CSM.Drivers {
-		addImages(input.Images, driver.Images, csmReg, driver.Version)
-		input.VersionValues[name] = driver.Version
-	}
-
-	// --- Dependencies ---
-	for _, dep := range cv.Dependencies {
-		addImages(input.Images, dep.Images, csmReg, dep.Version)
-	}
-
-	// --- CSI Sidecars ---
-	csiReg := cv.CSI.DefaultRegistry
-	for _, sidecar := range cv.CSI.Sidecars {
-		addImages(input.Images, sidecar.Images, csiReg, sidecar.Version)
+	if scope == ScopeAll || scope == ScopeDrivers {
+		// --- Drivers ---
+		// The YAML key is the driver name in version-values.yaml.
+		for name, driver := range cv.CSM.Drivers {
+			addImages(input.Images, driver.Images, csmReg, driver.Version)
+			input.VersionValues[name] = driver.Version
+		}
 	}
 
 	return input, nil
