@@ -107,24 +107,6 @@ spec:
           args:
             - "--array-config=/vxflexos-config/config"
             - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
-          lifecycle:
-            preStop:
-              exec:
-                command:
-                  - "/bin/bash"
-                  - "-c"
-                  - |
-                    # Remove FSTRIM cron job and wrapper script
-                    CRON_MARKER="# CSI PowerFlex FSTRIM"
-                    WRAPPER_SCRIPT="/usr/local/bin/csi-powerflex-fstrim-wrapper.sh"
-                    
-                    # Remove cron entry
-                    crontab -l 2>/dev/null | grep -v "$CRON_MARKER" | crontab - || true
-                    
-                    # Remove wrapper script
-                    rm -f "$WRAPPER_SCRIPT" || true
-                    
-                    echo "FSTRIM cron cleanup completed"
           env:
             - name: CSI_ENDPOINT
               value: unix://<KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com/csi_sock
@@ -289,28 +271,6 @@ spec:
             - name: host-opt-emc-path
               mountPath: /host_opt_emc_path
       initContainers:
-        - name: fstrim-cron-setup
-          securityContext:
-            privileged: true
-          image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.17.0
-          imagePullPolicy: IfNotPresent
-          command: ["/bin/bash", "/scripts/setup-fstrim-cron.sh", "install"]
-          env:
-            - name: X_CSI_POWERFLEX_FSTRIM_ENABLED
-              value: <X_CSI_POWERFLEX_FSTRIM_ENABLED>
-            - name: X_CSI_POWERFLEX_FSTRIM_SCHEDULE
-              value: <X_CSI_POWERFLEX_FSTRIM_SCHEDULE>
-            - name: X_CSI_POWERFLEX_FSTRIM_LOG_FILE
-              value: <X_CSI_POWERFLEX_FSTRIM_LOG_FILE>
-            - name: DRIVER_BINARY_PATH
-              value: "/csi-powerflex"
-          volumeMounts:
-            - name: host-usr-local-bin
-              mountPath: /usr/local/bin
-            - name: host-var-spool-cron
-              mountPath: /var/spool/cron
-            - name: fstrim-scripts
-              mountPath: /scripts
         - name: mdm-container
           image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.17.0
           imagePullPolicy: IfNotPresent
@@ -495,7 +455,3 @@ spec:
           hostPath:
             path: /var/spool/cron
             type: DirectoryOrCreate
-        - name: fstrim-scripts
-          configMap:
-            name: <DriverDefaultReleaseName>-fstrim-scripts
-            defaultMode: 0755

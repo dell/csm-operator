@@ -1044,16 +1044,6 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		return err
 	}
 
-	// Create/Update FSTRIM scripts ConfigMap if FSTRIM is enabled
-	if cr.GetDriverType() == csmv1.PowerFlex {
-		fstrimEnabled := drivers.GetDriverEnv(cr, "node", "X_CSI_POWERFLEX_FSTRIM_ENABLED", "false")
-		if fstrimEnabled == "true" {
-			if err = r.createFSTRIMScriptsConfigMap(ctx, cr, clusterClient.ClusterCTRLClient); err != nil {
-				return fmt.Errorf("creating FSTRIM scripts ConfigMap: %v", err)
-			}
-		}
-	}
-
 	// Create/Update Deployment
 	if err = deployment.SyncDeployment(ctx, controller.Deployment, clusterClient.ClusterK8sClient, cr.Name); err != nil {
 		return err
