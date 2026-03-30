@@ -257,6 +257,15 @@ spec:
             # Default value: false
             - name: "DISABLE_PVC_REMAP"
               value: "false"
+            # ENABLE_KUBEVIRT_PVC_REMAP: Enable KubeVirt PVC remapping functionality
+            # When enabled, the replication controller will handle DataVolume dependencies
+            # during PVC remap for KubeVirt-backed PVCs.
+            # Allowed values:
+            #   true: enable KubeVirt PVC remap handling
+            #   false: disable KubeVirt PVC remap handling
+            # Default value: false
+            - name: "ENABLE_KUBEVIRT_PVC_REMAP"
+              value: "false"
             # REPLICATION_ALLOW_PVC_CREATION_ON_TARGET: It Creates PVC on target cluster using replicated PV.
             # Allowed values:
             #   true: It creates a PVC on target cluster against replicated PV

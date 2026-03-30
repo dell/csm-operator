@@ -271,6 +271,7 @@ spec:
       containers:
         - args:
             - --disable-pvc-remap=<DISABLE_PVC_REMAP>
+            - --enable-kubevirt-pvc-remap=<ENABLE_KUBEVIRT_PVC_REMAP>
             - --allow-pvc-creation-on-target=<REPLICATION_ALLOW_PVC_CREATION_ON_TARGET>
             - --enable-leader-election
             - --prefix=replication.storage.dell.com

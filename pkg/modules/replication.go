@@ -64,6 +64,8 @@ const (
 	ReplicationCSMNameSpace = "<CSM_NAMESPACE>"
 	// DefaultPVCRemapState - default state of Disable PVC remap argument
 	DefaultDisablePVCRemapState = "<DISABLE_PVC_REMAP>"
+	// DefaultEnableKubevirtPVCRemapState - default state of Enable KubeVirt PVC remap argument
+	DefaultEnableKubevirtPVCRemapState = "<ENABLE_KUBEVIRT_PVC_REMAP>"
 	// AllowPvcCreationOnTarget -
 	AllowPvcCreationOnTarget = "<REPLICATION_ALLOW_PVC_CREATION_ON_TARGET>"
 )
@@ -384,6 +386,7 @@ func getReplicaController(ctx context.Context, op operatorutils.OperatorConfig, 
 	replicaImage := ""
 	replicaInitImage := ""
 	disablePVCRemapState := "false"
+	enableKubevirtPVCRemapState := "false"
 	allowPVCCreationOnTarget := "false"
 
 	// For minimal manifest when components aren't mentioned
@@ -409,6 +412,8 @@ func getReplicaController(ctx context.Context, op operatorutils.OperatorConfig, 
 					retryMax = env.Value
 				} else if strings.Contains(DefaultDisablePVCRemapState, env.Name) && env.Value != "" {
 					disablePVCRemapState = env.Value
+				} else if strings.Contains(DefaultEnableKubevirtPVCRemapState, env.Name) && env.Value != "" {
+					enableKubevirtPVCRemapState = env.Value
 				} else if strings.Contains(AllowPvcCreationOnTarget, env.Name) && env.Value != "" {
 					allowPVCCreationOnTarget = env.Value
 				}
@@ -427,6 +432,7 @@ func getReplicaController(ctx context.Context, op operatorutils.OperatorConfig, 
 	YamlString = strings.ReplaceAll(YamlString, DefaultRetryMin, retryMin)
 	YamlString = strings.ReplaceAll(YamlString, ReplicationCSMNameSpace, cr.Namespace)
 	YamlString = strings.ReplaceAll(YamlString, DefaultDisablePVCRemapState, disablePVCRemapState)
+	YamlString = strings.ReplaceAll(YamlString, DefaultEnableKubevirtPVCRemapState, enableKubevirtPVCRemapState)
 	YamlString = strings.ReplaceAll(YamlString, AllowPvcCreationOnTarget, allowPVCCreationOnTarget)
 
 	ctrlObjects, err := operatorutils.GetModuleComponentObj([]byte(YamlString))
