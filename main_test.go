@@ -33,6 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/events"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -46,6 +47,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/conversion"
 	"sigs.k8s.io/yaml"
 )
 
@@ -1177,6 +1179,10 @@ func (m *mockManager) GetControllerOptions() config.Controller {
 	return config.Controller{}
 }
 
+func (m *mockManager) GetConverterRegistry() conversion.Registry {
+	return nil
+}
+
 type mockCluster struct{}
 
 func (m *mockCluster) GetHTTPClient() *http.Client {
@@ -1204,6 +1210,10 @@ func (m *mockCluster) GetFieldIndexer() client.FieldIndexer {
 }
 
 func (m *mockCluster) GetEventRecorderFor(_ string) record.EventRecorder {
+	return nil
+}
+
+func (m *mockCluster) GetEventRecorder(_ string) events.EventRecorder {
 	return nil
 }
 
