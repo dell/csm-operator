@@ -46,7 +46,7 @@ type subResourceClient struct {
 }
 
 // ensure subResourceClient implements client.SubResourceClient.
-// var _ client.SubResourceClient = &subResourceClient{}
+var _ client.SubResourceClient = &subResourceClient{}
 
 // NewFakeClient creates a new client
 func NewFakeClient(objectMap map[shared.StorageKey]runtime.Object, errorInjector shared.ErrorInjector) *Client {
@@ -345,6 +345,11 @@ func (sc *subResourceClient) Patch(_ context.Context, _ client.Object, _ client.
 
 // Get out of here
 func (sc *subResourceClient) Get(_ context.Context, _ client.Object, _ client.Object, _ ...client.SubResourceGetOption) error {
+	panic("not implemented")
+}
+
+// Apply implements client.SubResourceClient
+func (sc *subResourceClient) Apply(_ context.Context, _ runtime.ApplyConfiguration, _ ...client.SubResourceApplyOption) error {
 	panic("not implemented")
 }
 

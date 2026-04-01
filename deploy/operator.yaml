@@ -976,17 +976,17 @@ spec:
             - name: RELATED_IMAGE_kube-rbac-proxy
               value: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
             - name: RELATED_IMAGE_attacher
-              value: registry.k8s.io/sig-storage/csi-attacher:v4.10.0
+              value: registry.k8s.io/sig-storage/csi-attacher:v4.11.0
             - name: RELATED_IMAGE_provisioner
-              value: registry.k8s.io/sig-storage/csi-provisioner:v6.1.0
+              value: registry.k8s.io/sig-storage/csi-provisioner:v6.2.0
             - name: RELATED_IMAGE_snapshotter
-              value: registry.k8s.io/sig-storage/csi-snapshotter:v8.4.0
+              value: registry.k8s.io/sig-storage/csi-snapshotter:v8.5.0
             - name: RELATED_IMAGE_registrar
-              value: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.15.0
+              value: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0
             - name: RELATED_IMAGE_resizer
-              value: registry.k8s.io/sig-storage/csi-resizer:v2.0.0
+              value: registry.k8s.io/sig-storage/csi-resizer:v2.1.0
             - name: RELATED_IMAGE_externalhealthmonitorcontroller
-              value: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.16.0
+              value: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.17.0
             - name: RELATED_IMAGE_metadataretriever
               value: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.13.0
             - name: RELATED_IMAGE_nginx

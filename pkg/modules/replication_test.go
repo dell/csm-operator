@@ -875,3 +875,111 @@ func TestGetReplicaController_SyntheticManagerImageOverride(t *testing.T) {
 	want := "registry.example/replication-manager:override"
 	assert.Equal(t, want, got, "synthetic ReplicationControllerManager image should be overridden by matched.Images")
 }
+
+func TestGetReplicaController_EnableKubevirtPVCRemap_True(t *testing.T) {
+	ctx := context.Background()
+
+	// Load PowerStore replica CR which includes ENABLE_KUBEVIRT_PVC_REMAP
+	cr, err := getCustomResource("./testdata/cr_powerstore_replica.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	// Set ENABLE_KUBEVIRT_PVC_REMAP to "true" in the CR envs
+	replica := cr.Spec.Modules[0]
+	for i, component := range replica.Components {
+		if component.Name == operatorutils.ReplicationControllerManager {
+			for j, env := range component.Envs {
+				if env.Name == "ENABLE_KUBEVIRT_PVC_REMAP" {
+					replica.Components[i].Envs[j].Value = "true"
+				}
+			}
+		}
+	}
+	cr.Spec.Modules[0] = replica
+
+	// Use real operatorconfig directory (v1.15.0 has the placeholder)
+	op := operatorutils.OperatorConfig{
+		ConfigDirectory: "../../operatorconfig",
+	}
+	matched := operatorutils.VersionSpec{}
+
+	ctrlObjects, err := getReplicaController(ctx, op, cr, matched)
+	assert.NoError(t, err, "getReplicaController should not error")
+
+	var dep *appsv1.Deployment
+	for _, obj := range ctrlObjects {
+		if d, ok := obj.(*appsv1.Deployment); ok {
+			dep = d
+			break
+		}
+	}
+	if dep == nil {
+		t.Fatalf("expected a Deployment in ctrlObjects, got none")
+	}
+
+	// Verify deployment args contain --enable-kubevirt-pvc-remap=true
+	foundArg := false
+	for _, arg := range dep.Spec.Template.Spec.Containers[0].Args {
+		if arg == "--enable-kubevirt-pvc-remap=true" {
+			foundArg = true
+			break
+		}
+	}
+	assert.True(t, foundArg, "deployment args should contain --enable-kubevirt-pvc-remap=true when env is set to true")
+}
+
+func TestGetReplicaController_EnableKubevirtPVCRemap_BackwardCompat(t *testing.T) {
+	ctx := context.Background()
+
+	// Load PowerStore replica CR and REMOVE the ENABLE_KUBEVIRT_PVC_REMAP env var
+	// to simulate an older CR that does not include the new env var.
+	cr, err := getCustomResource("./testdata/cr_powerstore_replica.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	replica := cr.Spec.Modules[0]
+	for i, component := range replica.Components {
+		if component.Name == operatorutils.ReplicationControllerManager {
+			filtered := make([]corev1.EnvVar, 0, len(component.Envs))
+			for _, env := range component.Envs {
+				if env.Name != "ENABLE_KUBEVIRT_PVC_REMAP" {
+					filtered = append(filtered, env)
+				}
+			}
+			replica.Components[i].Envs = filtered
+		}
+	}
+	cr.Spec.Modules[0] = replica
+
+	// Use real operatorconfig directory (v1.15.0 has the placeholder)
+	op := operatorutils.OperatorConfig{
+		ConfigDirectory: "../../operatorconfig",
+	}
+	matched := operatorutils.VersionSpec{}
+
+	ctrlObjects, err := getReplicaController(ctx, op, cr, matched)
+	assert.NoError(t, err, "getReplicaController should not error for backward-compatible CR without ENABLE_KUBEVIRT_PVC_REMAP")
+
+	var dep *appsv1.Deployment
+	for _, obj := range ctrlObjects {
+		if d, ok := obj.(*appsv1.Deployment); ok {
+			dep = d
+			break
+		}
+	}
+	if dep == nil {
+		t.Fatalf("expected a Deployment in ctrlObjects, got none")
+	}
+
+	// Verify deployment args default to --enable-kubevirt-pvc-remap=false
+	foundArg := false
+	for _, arg := range dep.Spec.Template.Spec.Containers[0].Args {
+		if arg == "--enable-kubevirt-pvc-remap=false" {
+			foundArg = true
+			break
+		}
+	}
+	assert.True(t, foundArg, "deployment args should default to --enable-kubevirt-pvc-remap=false when env var is absent (backward compatibility)")
+}

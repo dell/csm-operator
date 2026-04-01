@@ -33,6 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/events"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -46,6 +47,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/conversion"
 	"sigs.k8s.io/yaml"
 )
 
@@ -94,12 +96,12 @@ func TestGetOperatorConfig(t *testing.T) {
 						Podmon                string `json:"podmon" yaml:"podmon"`
 						CSIRevProxy           string `json:"csiReverseProxy" yaml:"csiReverseProxy"`
 					}{
-						Attacher:              "registry.k8s.io/sig-storage/csi-attacher:v4.10.0",
-						Provisioner:           "registry.k8s.io/sig-storage/csi-provisioner:v6.1.0",
-						Snapshotter:           "registry.k8s.io/sig-storage/csi-snapshotter:v8.4.0",
-						Registrar:             "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.15.0",
-						Resizer:               "registry.k8s.io/sig-storage/csi-resizer:v2.0.0",
-						Externalhealthmonitor: "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.16.0",
+						Attacher:              "registry.k8s.io/sig-storage/csi-attacher:v4.11.0",
+						Provisioner:           "registry.k8s.io/sig-storage/csi-provisioner:v6.2.0",
+						Snapshotter:           "registry.k8s.io/sig-storage/csi-snapshotter:v8.5.0",
+						Registrar:             "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0",
+						Resizer:               "registry.k8s.io/sig-storage/csi-resizer:v2.1.0",
+						Externalhealthmonitor: "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.17.0",
 						Sdcmonitor:            "quay.io/dell/storage/powerflex/sdc:5.0",
 					},
 				},
@@ -132,12 +134,12 @@ func TestGetOperatorConfig(t *testing.T) {
 						Podmon                string `json:"podmon" yaml:"podmon"`
 						CSIRevProxy           string `json:"csiReverseProxy" yaml:"csiReverseProxy"`
 					}{
-						Attacher:              "registry.k8s.io/sig-storage/csi-attacher:v4.10.0",
-						Provisioner:           "registry.k8s.io/sig-storage/csi-provisioner:v6.1.0",
-						Snapshotter:           "registry.k8s.io/sig-storage/csi-snapshotter:v8.4.0",
-						Registrar:             "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.15.0",
-						Resizer:               "registry.k8s.io/sig-storage/csi-resizer:v2.0.0",
-						Externalhealthmonitor: "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.16.0",
+						Attacher:              "registry.k8s.io/sig-storage/csi-attacher:v4.11.0",
+						Provisioner:           "registry.k8s.io/sig-storage/csi-provisioner:v6.2.0",
+						Snapshotter:           "registry.k8s.io/sig-storage/csi-snapshotter:v8.5.0",
+						Registrar:             "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0",
+						Resizer:               "registry.k8s.io/sig-storage/csi-resizer:v2.1.0",
+						Externalhealthmonitor: "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.17.0",
 						Sdcmonitor:            "quay.io/dell/storage/powerflex/sdc:5.0",
 					},
 				},
@@ -1177,6 +1179,10 @@ func (m *mockManager) GetControllerOptions() config.Controller {
 	return config.Controller{}
 }
 
+func (m *mockManager) GetConverterRegistry() conversion.Registry {
+	return nil
+}
+
 type mockCluster struct{}
 
 func (m *mockCluster) GetHTTPClient() *http.Client {
@@ -1204,6 +1210,10 @@ func (m *mockCluster) GetFieldIndexer() client.FieldIndexer {
 }
 
 func (m *mockCluster) GetEventRecorderFor(_ string) record.EventRecorder {
+	return nil
+}
+
+func (m *mockCluster) GetEventRecorder(_ string) events.EventRecorder {
 	return nil
 }
 

@@ -27,6 +27,10 @@ endif
 ifneq ($(origin DEFAULT_CHANNEL), undefined)
 BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
 endif
+
+# OpenShift versions supported by this operator. Open ended, supports from v4.14 onwards.
+OPENSHIFT_VERSIONS ?= v4.14
+
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 
@@ -112,8 +116,8 @@ IMAGE_VERSION ?= 0.0.0
 LDFLAGS = "-X main.ManifestSemver=$(IMAGE_VERSION)"
 
 tidy:
-	go mod tidy
-	cd tests/e2e/ && go mod tidy
+	GOPRIVATE=eos2git.cec.lab.emc.com go mod tidy
+	GOPRIVATE=eos2git.cec.lab.emc.com cd tests/e2e/ && go mod tidy
 
 build: gen-semver fmt vet ## Build manager binary.
 	go build -mod=vendor -ldflags $(LDFLAGS) -o bin/manager main.go
@@ -155,7 +159,7 @@ $(LOCALBIN):
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 
 ## Tool Versions
-CONTROLLER_TOOLS_VERSION ?= v0.18.0
+CONTROLLER_TOOLS_VERSION ?= latest
 
 .PHONY: controller-gen
 controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary. If wrong version is installed, it will be overwritten.
@@ -186,18 +190,54 @@ rm -rf $$TMP_DIR ;\
 }
 endef
 
-.PHONY: bundle
-bundle: static-manifests gen-semver kustomize ## Generate bundle manifests and metadata, then validate generated files. Set --use-image-digests=true to use SHA ID of image instead of image tag.
+# Format the entire repository using the consistent way.
+.PHONY: yamlfmt
+yamlfmt: download-yamlfmt
+	@find . -name "*.yaml" -o -name "*.yml" | xargs yamlfmt -conf yamlfmt.merged
+
+.PHONY: _bundle
+_bundle: tidy static-manifests gen-semver kustomize ## Generate bundle manifests and metadata, then validate generated files. Set --use-image-digests=true to use SHA ID of image instead of image tag.
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(BUNDLE_VERSION) $(BUNDLE_METADATA_OPTS) --use-image-digests=false
+	@echo "Restoring bundle annotations and Dockerfile..."
+	@yq eval '.annotations."com.redhat.openshift.versions" = "$(OPENSHIFT_VERSIONS)"' -i bundle/metadata/annotations.yaml
+	@sed -i '1s/^.*$$/ARG BASEIMAGE\n\nFROM $$BASEIMAGE as final/' bundle.Dockerfile
+	@sed -i '/^LABEL operators\.operatorframework\.io\.test\.config\.v1=tests\/scorecard\//a\
+LABEL com.redhat.openshift.versions="$(OPENSHIFT_VERSIONS)"\
+LABEL com.redhat.delivery.backport=false\
+LABEL com.redhat.delivery.operator.bundle=true' bundle.Dockerfile
 	operator-sdk bundle validate ./bundle --select-optional suite=operatorframework
+
+.PHONY: bundle
+bundle: download-yamlfmt _bundle
+	@echo "Formatting modified YAML files..."
+
+	@git diff --name-only | grep -E '\.ya?ml$$' | xargs -r yamlfmt -conf yamlfmt.merged || echo "No modified YAML files to format"
+	@rm -f yamlfmt.merged yamlfmt
+	@echo "Bundle formatting complete."
+
+download-yamlfmt:
+	@if [ ! -f ./yamlfmt.remote ]; then \
+		echo "Downloading yamlfmt config from CSM actions..."; \
+		git clone --depth 1 git@eos2git.cec.lab.emc.com:CSM/actions.git temp-repo; \
+		cp temp-repo/.github/configs/yamlfmt/.yamlfmt ./yamlfmt.remote; \
+		rm -rf temp-repo; \
+	fi
+	@if [ -f .yamlfmt ]; then \
+		echo "Merging with local .yamlfmt..."; \
+		cat .yamlfmt > yamlfmt.merged; \
+		echo "" >> yamlfmt.merged; \
+		cat ./yamlfmt.remote >> yamlfmt.merged; \
+	else \
+		echo "Using remote yamlfmt config only..."; \
+		cp ./yamlfmt.remote yamlfmt.merged; \
+	fi
 
 .PHONY: bundle-build
 bundle-build: gen-semver download-csm-common ## Build the bundle image.
 	$(eval include csm-common.mk)
 	podman build --pull -f bundle.Dockerfile -t $(BUNDLE_IMG) --build-arg BASEIMAGE=$(CSM_BASEIMAGE) .
-
 
 .PHONY: bundle-push
 bundle-push: gen-semver ## Push the bundle image.

@@ -33,6 +33,15 @@ on:  # yamllint disable-line rule:truthy
         options:
           - quay
           - csm
+      scope:
+        description: "Scope of the release. 'all' runs everything, 'tag' only cuts the release/tag, 'image' only pushes to quay/artifactory."
+        required: false
+        type: choice
+        default: "all"
+        options:
+          - all
+          - tag
+          - image
   repository_dispatch:
     types: [auto-release-workflow]
 
@@ -45,4 +54,5 @@ jobs:
       version: ${{ github.event.inputs.version || '' }}
       images: 'dell-csm-operator'
       artifactory: ${{ github.event.inputs.artifactory || 'quay' }}
+      scope: ${{ github.event.inputs.scope || 'all' }}
     secrets: inherit
