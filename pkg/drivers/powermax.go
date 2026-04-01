@@ -194,6 +194,8 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 	storageCapacity := "true"
 	maxVolumesPerNode := ""
 	dynamicSGEnabled := "false"
+	fsckEnabled := GetDriverCommonEnv(cr, CsiFsCheckEnabled, "false")
+	fsckMode := GetDriverCommonEnv(cr, CsiFsCheckMode, "checkOnly")
 
 	// #nosec G101 - False positives
 	switch fileType {
@@ -287,6 +289,9 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		yamlString = strings.ReplaceAll(yamlString, ReverseProxyTLSSecret, proxyTLSSecret)
 		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxDynamicSGEnabled, dynamicSGEnabled)
+
+		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckEnabled, fsckEnabled)
+		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckMode, fsckMode)
 	case "Controller":
 		if cr.Spec.Driver.Common != nil {
 			for _, env := range cr.Spec.Driver.Common.Envs {

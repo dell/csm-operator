@@ -156,6 +156,20 @@ spec:
         # Default value: "false"
         - name: "X_CSI_DYNAMIC_SG_ENABLED"
           value: "false"
+        # X_CSI_FS_CHECK_ENABLED: Enable/Disable file system check on volumes before mounting
+        # Allowed values:
+        #   "true"  - Enable file system check
+        #   "false" - Disable file system check
+        # Default value: "false"
+        - name: "X_CSI_FS_CHECK_ENABLED"
+          value: "false"
+        # X_CSI_FS_CHECK_MODE: Controls the file system check mode
+        # Allowed values:
+        #   "checkOnly"      - Check filesystem only, do not attempt repair
+        #   "checkAndRepair" - Check filesystem and attempt repair if errors found
+        # Default value: "checkOnly"
+        - name: "X_CSI_FS_CHECK_MODE"
+          value: "checkOnly"
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin- volume usage, volume condition

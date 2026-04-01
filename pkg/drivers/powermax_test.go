@@ -399,3 +399,76 @@ func createCSMWithDynamicSGEnvs(dynamicSGEnabled string, syncInterval string) cs
 
 	return res
 }
+
+func TestModifyPowermaxCRFsckParameters(t *testing.T) {
+	tests := []struct {
+		name         string
+		fileType     string
+		cr           csmv1.ContainerStorageModule
+		expectedFsck map[string]string
+	}{
+		{
+			name:     "Node: fsck enabled and mode substituted from Common.Envs",
+			fileType: "Node",
+			cr:       createCSMWithFsckEnvs("true", "checkAndRepair"),
+			expectedFsck: map[string]string{
+				"X_CSI_FS_CHECK_ENABLED": "true",
+				"X_CSI_FS_CHECK_MODE":    "checkAndRepair",
+			},
+		},
+		{
+			name:     "Node: fsck default values when Common.Envs has no fsck entries",
+			fileType: "Node",
+			cr:       shared.MakeCSM("csm", "pmax-test", shared.PmaxConfigVersion),
+			expectedFsck: map[string]string{
+				"X_CSI_FS_CHECK_ENABLED": "false",
+				"X_CSI_FS_CHECK_MODE":    "checkOnly",
+			},
+		},
+		{
+			name:     "Node: fsck disabled with checkOnly mode",
+			fileType: "Node",
+			cr:       createCSMWithFsckEnvs("false", "checkOnly"),
+			expectedFsck: map[string]string{
+				"X_CSI_FS_CHECK_ENABLED": "false",
+				"X_CSI_FS_CHECK_MODE":    "checkOnly",
+			},
+		},
+		{
+			name:     "Controller: fsck placeholders are not substituted",
+			fileType: "Controller",
+			cr:       createCSMWithFsckEnvs("true", "checkAndRepair"),
+			expectedFsck: map[string]string{
+				"X_CSI_FS_CHECK_ENABLED": "<X_CSI_FS_CHECK_ENABLED>",
+				"X_CSI_FS_CHECK_MODE":    "<X_CSI_FS_CHECK_MODE>",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			yamlString := "X_CSI_FS_CHECK_ENABLED=<X_CSI_FS_CHECK_ENABLED> X_CSI_FS_CHECK_MODE=<X_CSI_FS_CHECK_MODE>"
+
+			result := ModifyPowermaxCR(yamlString, tt.cr, tt.fileType)
+
+			for key, expectedValue := range tt.expectedFsck {
+				assert.Containsf(t, result, expectedValue, "expected %s value %q in result", key, expectedValue)
+			}
+		})
+	}
+}
+
+// Helper function to create CSM with fsck environment variables
+func createCSMWithFsckEnvs(fsckEnabled string, fsckMode string) csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "pmax-test", shared.PmaxConfigVersion)
+
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{
+		{Name: "X_CSI_FS_CHECK_ENABLED", Value: fsckEnabled},
+		{Name: "X_CSI_FS_CHECK_MODE", Value: fsckMode},
+	}
+	res.Spec.Driver.AuthSecret = "csm-creds"
+	res.Spec.Driver.ConfigVersion = shared.PmaxConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.PowerMax
+
+	return res
+}
