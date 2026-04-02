@@ -1,0 +1,6 @@
+exclude:
+  - "catalog/csm-operator/catalog.yaml"
+  - ".github/**"
+  - ".dell/**"
+
+match_type: doublestar
