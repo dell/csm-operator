@@ -41,3 +41,8 @@ jobs:
         dell-csm-operator
       build-images-cmd: "make images"
     secrets: inherit
+
+  verify-bundle:
+    name: Verify CSM Operator bundle
+    uses: CSM/actions/.github/workflows/verify-operator-bundle.yaml@main
+    secrets: inherit
