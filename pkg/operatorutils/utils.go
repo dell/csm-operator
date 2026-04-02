@@ -44,6 +44,7 @@ import (
 	t1 "k8s.io/apimachinery/pkg/types"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
+	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	"sigs.k8s.io/yaml"
 
 	"k8s.io/client-go/kubernetes"
@@ -52,6 +53,7 @@ import (
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	k8sClient "eos2git.cec.lab.emc.com/CSM/csm-operator/k8s"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // wrapper for UT to allow more coverage when testing
@@ -674,6 +676,34 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			}
 
 			ctrlObjects = append(ctrlObjects, &ss)
+
+		case "GatewayClass":
+			var gc gatewayv1.GatewayClass
+			if err := yamlUnmarshal(raw, &gc); err != nil {
+				return ctrlObjects, err
+			}
+			ctrlObjects = append(ctrlObjects, &gc)
+
+		case "Gateway":
+			var gw gatewayv1.Gateway
+			if err := yamlUnmarshal(raw, &gw); err != nil {
+				return ctrlObjects, err
+			}
+			ctrlObjects = append(ctrlObjects, &gw)
+
+		case "HTTPRoute":
+			var hr gatewayv1.HTTPRoute
+			if err := yamlUnmarshal(raw, &hr); err != nil {
+				return ctrlObjects, err
+			}
+			ctrlObjects = append(ctrlObjects, &hr)
+
+		case "NginxGateway", "NginxProxy":
+			var obj unstructured.Unstructured
+			if err := yamlUnmarshal(raw, &obj.Object); err != nil {
+				return ctrlObjects, err
+			}
+			ctrlObjects = append(ctrlObjects, &obj)
 		}
 
 	}

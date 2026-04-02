@@ -1,0 +1,504 @@
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/instance: <NAMESPACE>
+    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/part-of: nginx-gateway-fabric
+    app.kubernetes.io/version: 2.4.2
+  name: <NAMESPACE>-nginx-gateway
+  namespace: <NAMESPACE>
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/instance: <NAMESPACE>
+    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/part-of: nginx-gateway-fabric
+    app.kubernetes.io/version: 2.4.2
+  name: <NAMESPACE>-nginx-gateway
+rules:
+  - apiGroups:
+      - ''
+    resources:
+      - namespaces
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - authentication.k8s.io
+    resources:
+      - tokenreviews
+    verbs:
+      - create
+  - apiGroups:
+      - ''
+    resources:
+      - services
+      - secrets
+      - configmaps
+      - serviceaccounts
+    verbs:
+      - create
+      - update
+      - delete
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ''
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+      - daemonsets
+    verbs:
+      - create
+      - update
+      - delete
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - apps
+    resources:
+      - replicasets
+    verbs:
+      - get
+      - list
+  - apiGroups:
+      - autoscaling
+    resources:
+      - horizontalpodautoscalers
+    verbs:
+      - create
+      - update
+      - delete
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ''
+    resources:
+      - nodes
+    verbs:
+      - list
+  - apiGroups:
+      - ''
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
+  - apiGroups:
+      - discovery.k8s.io
+    resources:
+      - endpointslices
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - gateway.networking.k8s.io
+    resources:
+      - gateways
+      - gatewayclasses
+      - httproutes
+      - referencegrants
+      - grpcroutes
+      - backendtlspolicies
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - gateway.networking.k8s.io
+    resources:
+      - gateways/status
+      - gatewayclasses/status
+      - httproutes/status
+      - grpcroutes/status
+      - backendtlspolicies/status
+    verbs:
+      - update
+  - apiGroups:
+      - gateway.nginx.org
+    resources:
+      - nginxgateways
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - gateway.nginx.org
+    resources:
+      - nginxproxies
+      - clientsettingspolicies
+      - observabilitypolicies
+      - upstreamsettingspolicies
+      - authenticationfilters
+      - proxysettingspolicies
+      - ratelimitpolicies
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - gateway.nginx.org
+    resources:
+      - nginxgateways/status
+      - clientsettingspolicies/status
+      - observabilitypolicies/status
+      - upstreamsettingspolicies/status
+      - authenticationfilters/status
+      - proxysettingspolicies/status
+      - ratelimitpolicies/status
+    verbs:
+      - update
+  - apiGroups:
+      - apiextensions.k8s.io
+    resources:
+      - customresourcedefinitions
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - create
+      - get
+      - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/instance: <NAMESPACE>
+    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/part-of: nginx-gateway-fabric
+    app.kubernetes.io/version: 2.4.2
+  name: <NAMESPACE>-nginx-gateway
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: <NAMESPACE>-nginx-gateway
+subjects:
+  - kind: ServiceAccount
+    name: <NAMESPACE>-nginx-gateway
+    namespace: <NAMESPACE>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/instance: <NAMESPACE>
+    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/part-of: nginx-gateway-fabric
+    app.kubernetes.io/version: 2.4.2
+  name: <NAMESPACE>-nginx-gateway
+  namespace: <NAMESPACE>
+spec:
+  ports:
+    - name: agent-grpc
+      port: 443
+      protocol: TCP
+      targetPort: 8443
+  selector:
+    app.kubernetes.io/instance: <NAMESPACE>
+    app.kubernetes.io/name: nginx-gateway
+  type: ClusterIP
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: <NAMESPACE>-nginx-gateway-agent-selfsigned
+  namespace: <NAMESPACE>
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: <NAMESPACE>-nginx-gateway-agent-tls
+  namespace: <NAMESPACE>
+spec:
+  secretName: <NAMESPACE>-nginx-gateway-agent-tls
+  duration: 2160h # 90d
+  renewBefore: 360h # 15d
+  subject:
+    organizations:
+      - Dell CSM
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: 2048
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+    - client auth
+  dnsNames:
+    - <NAMESPACE>-nginx-gateway.<NAMESPACE>.svc
+    - <NAMESPACE>-nginx-gateway.<NAMESPACE>.svc.cluster.local
+  issuerRef:
+    name: <NAMESPACE>-nginx-gateway-agent-selfsigned
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: <NAMESPACE>
+    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/part-of: nginx-gateway-fabric
+    app.kubernetes.io/version: 2.4.2
+  name: <NAMESPACE>-nginx-gateway-fabric
+  namespace: <NAMESPACE>
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: <NAMESPACE>
+      app.kubernetes.io/name: nginx-gateway
+  template:
+    metadata:
+      labels:
+        csm: <NAME>
+        app.kubernetes.io/instance: <NAMESPACE>
+        app.kubernetes.io/name: nginx-gateway
+        csmNamespace: <CSM_NAMESPACE>
+    spec:
+      containers:
+        - name: nginx-gateway
+          image: ghcr.io/nginx/nginx-gateway-fabric:2.4.2
+          imagePullPolicy: IfNotPresent
+          args:
+            - controller
+            - --gateway-ctlr-name=gateway.nginx.org/nginx-gateway-controller
+            - --gatewayclass=nginx
+            - --config=<NAMESPACE>-nginx-gateway-config
+            - --service=<NAMESPACE>-nginx-gateway
+            - --agent-tls-secret=<NAMESPACE>-nginx-gateway-agent-tls
+            - --metrics-port=9113
+            - --health-port=8081
+            - --leader-election-lock-name=<NAMESPACE>-nginx-gateway-leader-election
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
+            - name: INSTANCE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['app.kubernetes.io/instance']
+            - name: IMAGE_NAME
+              value: ghcr.io/nginx/nginx-gateway-fabric:2.4.2
+          ports:
+            - containerPort: 8443
+              name: agent-grpc
+            - containerPort: 9113
+              name: metrics
+            - containerPort: 8081
+              name: health
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /readyz
+              port: health
+              scheme: HTTP
+            initialDelaySeconds: 3
+            periodSeconds: 1
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              add:
+                - KILL
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - mountPath: /etc/nginx/conf.d
+              name: nginx-conf
+            - mountPath: /etc/nginx/stream-conf.d
+              name: nginx-stream-conf
+            - mountPath: /etc/nginx/module-includes
+              name: module-includes
+            - mountPath: /etc/nginx/secrets
+              name: nginx-secrets
+            - mountPath: /var/run/nginx
+              name: nginx-run
+            - mountPath: /etc/nginx/includes
+              name: nginx-includes
+            - mountPath: /tmp
+              name: tmp
+            - mountPath: /var/run/secrets/ngf
+              name: nginx-agent-tls
+              readOnly: true
+      nodeSelector:
+        kubernetes.io/os: linux
+      securityContext:
+        fsGroup: 1001
+        runAsNonRoot: true
+      shareProcessNamespace: true
+      serviceAccountName: <NAMESPACE>-nginx-gateway
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - emptyDir: {}
+          name: nginx-conf
+        - emptyDir: {}
+          name: nginx-stream-conf
+        - emptyDir: {}
+          name: module-includes
+        - emptyDir: {}
+          name: nginx-secrets
+        - emptyDir: {}
+          name: nginx-run
+        - emptyDir: {}
+          name: nginx-cache
+        - emptyDir: {}
+          name: nginx-includes
+        - emptyDir: {}
+          name: tmp
+        - name: nginx-agent-tls
+          secret:
+            secretName: <NAMESPACE>-nginx-gateway-agent-tls
+            items:
+              - key: tls.crt
+                path: ca.crt
+              - key: tls.crt
+                path: tls.crt
+              - key: tls.key
+                path: tls.key
+---
+apiVersion: gateway.nginx.org/v1alpha1
+kind: NginxGateway
+metadata:
+  labels:
+    app.kubernetes.io/instance: <NAMESPACE>
+    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/part-of: nginx-gateway-fabric
+    app.kubernetes.io/version: 2.4.2
+  name: <NAMESPACE>-nginx-gateway-config
+  namespace: <NAMESPACE>
+spec:
+  logging:
+    level: info
+---
+apiVersion: gateway.nginx.org/v1alpha2
+kind: NginxProxy
+metadata:
+  labels:
+    app.kubernetes.io/instance: <NAMESPACE>
+    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/part-of: nginx-gateway-fabric
+    app.kubernetes.io/version: 2.4.2
+  name: <NAMESPACE>-nginx-gateway-proxy-config
+  namespace: <NAMESPACE>
+spec:
+  kubernetes:
+    deployment:
+      replicas: 1
+      container:
+        image:
+          repository: ghcr.io/nginx/nginx-gateway-fabric/nginx
+          tag: "2.4.2"
+          pullPolicy: IfNotPresent
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  labels:
+    app.kubernetes.io/instance: <NAMESPACE>
+    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/part-of: nginx-gateway-fabric
+    app.kubernetes.io/version: 2.4.2
+  name: nginx
+spec:
+  controllerName: gateway.nginx.org/nginx-gateway-controller
+  parametersRef:
+    group: gateway.nginx.org
+    kind: NginxProxy
+    name: <NAMESPACE>-nginx-gateway-proxy-config
+    namespace: <NAMESPACE>
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  labels:
+    app.kubernetes.io/instance: <NAMESPACE>
+    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/part-of: nginx-gateway-fabric
+    app.kubernetes.io/version: 2.4.2
+  name: <NAMESPACE>-gateway
+  namespace: <NAMESPACE>
+spec:
+  gatewayClassName: nginx
+  listeners:
+    - name: https
+      port: 443
+      protocol: HTTPS
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: karavi-selfsigned-tls
+      allowedRoutes:
+        namespaces:
+          from: Same
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  labels:
+    app.kubernetes.io/instance: <NAMESPACE>
+    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/part-of: nginx-gateway-fabric
+    app.kubernetes.io/version: 2.4.2
+  name: <NAMESPACE>-gateway
+  namespace: <NAMESPACE>
+spec:
+  parentRefs:
+    - name: <NAMESPACE>-gateway
+      namespace: <NAMESPACE>
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: proxy-server
+          port: 8080
