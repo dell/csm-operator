@@ -2248,3 +2248,248 @@ func TestUpdateStatusAuthorizationProxyServer(t *testing.T) {
 	r.IncrUpdateCount()
 	assert.Equal(t, int32(1), r.GetUpdateCount())
 }
+
+// TestWaitForGatewayController tests the WaitForGatewayController function
+func TestWaitForGatewayController(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name          string
+		deployment    *appsv1.Deployment
+		instance      csmv1.ContainerStorageModule
+		expectError   bool
+		errorContains string
+		description   string
+	}{
+		{
+			name: "Gateway controller ready",
+			deployment: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-auth-nginx-gateway-fabric",
+					Namespace: "test-auth",
+				},
+				Spec: appsv1.DeploymentSpec{
+					Replicas: func() *int32 { r := int32(1); return &r }(),
+				},
+				Status: appsv1.DeploymentStatus{
+					ReadyReplicas: 1,
+				},
+			},
+			instance: csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test",
+					Namespace: "test-auth",
+				},
+			},
+			expectError: false,
+			description: "Should succeed when gateway controller is ready",
+		},
+		{
+			name: "Gateway controller not ready",
+			deployment: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-auth-nginx-gateway-fabric",
+					Namespace: "test-auth",
+				},
+				Spec: appsv1.DeploymentSpec{
+					Replicas: func() *int32 { r := int32(2); return &r }(),
+				},
+				Status: appsv1.DeploymentStatus{
+					ReadyReplicas: 1,
+				},
+			},
+			instance: csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test",
+					Namespace: "test-auth",
+				},
+			},
+			expectError:   true,
+			errorContains: "context deadline exceeded",
+			description:   "Should timeout when gateway controller is not ready",
+		},
+		{
+			name:       "Gateway controller deployment not found",
+			deployment: nil,
+			instance: csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test",
+					Namespace: "test-auth",
+				},
+			},
+			expectError:   true,
+			errorContains: "not found",
+			description:   "Should error when gateway controller deployment doesn't exist",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := runtime.NewScheme()
+			if err := csmv1.AddToScheme(s); err != nil {
+				t.Fatalf("Unable to add csmv1 scheme: %v", err)
+			}
+			if err := appsv1.AddToScheme(s); err != nil {
+				t.Fatalf("Unable to add appsv1 scheme: %v", err)
+			}
+
+			var fakeClient client.Client
+			if tt.deployment != nil {
+				fakeClient = ctrlClientFake.NewClientBuilder().WithScheme(s).WithObjects(tt.deployment).Build()
+			} else {
+				fakeClient = ctrlClientFake.NewClientBuilder().WithScheme(s).Build()
+			}
+
+			r := &FakeReconcileCSM{
+				Client:    fakeClient,
+				K8sClient: fake.NewSimpleClientset(),
+			}
+
+			err := WaitForGatewayController(ctx, tt.instance, r, 2*time.Second)
+
+			if tt.expectError {
+				assert.Error(t, err, tt.description)
+				if tt.errorContains != "" {
+					assert.Contains(t, err.Error(), tt.errorContains, tt.description)
+				}
+			} else {
+				assert.NoError(t, err, tt.description)
+			}
+		})
+	}
+}
+
+// TestGetGatewayControllerStatus tests the getGatewayControllerStatus function
+func TestGetGatewayControllerStatus(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name        string
+		deployment  *appsv1.Deployment
+		instance    csmv1.ContainerStorageModule
+		expectReady bool
+		expectError bool
+		description string
+	}{
+		{
+			name: "Gateway controller ready - all replicas ready",
+			deployment: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-auth-nginx-gateway-fabric",
+					Namespace: "test-auth",
+				},
+				Spec: appsv1.DeploymentSpec{
+					Replicas: func() *int32 { r := int32(2); return &r }(),
+				},
+				Status: appsv1.DeploymentStatus{
+					ReadyReplicas: 2,
+				},
+			},
+			instance: csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test",
+					Namespace: "test-auth",
+				},
+			},
+			expectReady: true,
+			expectError: false,
+			description: "Should return ready when all replicas are ready",
+		},
+		{
+			name: "Gateway controller not ready - partial replicas",
+			deployment: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-auth-nginx-gateway-fabric",
+					Namespace: "test-auth",
+				},
+				Spec: appsv1.DeploymentSpec{
+					Replicas: func() *int32 { r := int32(3); return &r }(),
+				},
+				Status: appsv1.DeploymentStatus{
+					ReadyReplicas: 1,
+				},
+			},
+			instance: csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test",
+					Namespace: "test-auth",
+				},
+			},
+			expectReady: false,
+			expectError: false,
+			description: "Should return not ready when some replicas are not ready",
+		},
+		{
+			name: "Gateway controller ready - single replica",
+			deployment: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-auth-nginx-gateway-fabric",
+					Namespace: "test-auth",
+				},
+				Spec: appsv1.DeploymentSpec{
+					Replicas: func() *int32 { r := int32(1); return &r }(),
+				},
+				Status: appsv1.DeploymentStatus{
+					ReadyReplicas: 1,
+				},
+			},
+			instance: csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test",
+					Namespace: "test-auth",
+				},
+			},
+			expectReady: true,
+			expectError: false,
+			description: "Should return ready for single replica deployment",
+		},
+		{
+			name:       "Gateway controller deployment not found",
+			deployment: nil,
+			instance: csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test",
+					Namespace: "test-auth",
+				},
+			},
+			expectReady: false,
+			expectError: true,
+			description: "Should error when deployment doesn't exist",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := runtime.NewScheme()
+			if err := csmv1.AddToScheme(s); err != nil {
+				t.Fatalf("Unable to add csmv1 scheme: %v", err)
+			}
+			if err := appsv1.AddToScheme(s); err != nil {
+				t.Fatalf("Unable to add appsv1 scheme: %v", err)
+			}
+
+			var fakeClient client.Client
+			if tt.deployment != nil {
+				fakeClient = ctrlClientFake.NewClientBuilder().WithScheme(s).WithObjects(tt.deployment).Build()
+			} else {
+				fakeClient = ctrlClientFake.NewClientBuilder().WithScheme(s).Build()
+			}
+
+			r := &FakeReconcileCSM{
+				Client:    fakeClient,
+				K8sClient: fake.NewSimpleClientset(),
+			}
+
+			conditionFunc := getGatewayControllerStatus(ctx, tt.instance, r)
+			ready, err := conditionFunc(ctx)
+
+			if tt.expectError {
+				assert.Error(t, err, tt.description)
+			} else {
+				assert.NoError(t, err, tt.description)
+			}
+
+			assert.Equal(t, tt.expectReady, ready, tt.description)
+		})
+	}
+}

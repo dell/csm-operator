@@ -454,6 +454,35 @@ func WaitForNginxController(ctx context.Context, instance csmv1.ContainerStorage
 	return wait.PollUntilContextTimeout(ctx, time.Second, timeout, true, getNginxControllerStatus(ctx, instance, r))
 }
 
+func getGatewayControllerStatus(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM) wait.ConditionWithContextFunc {
+	return func(context.Context) (bool, error) {
+		deployment := &appsv1.Deployment{}
+		name := instance.GetNamespace() + "-nginx-gateway-fabric"
+
+		err := r.GetClient().Get(ctx, t1.NamespacedName{
+			Name:      name,
+			Namespace: instance.GetNamespace(),
+		}, deployment)
+		if err != nil {
+			return false, err
+		}
+
+		if deployment.Spec.Replicas != nil && deployment.Status.ReadyReplicas == *deployment.Spec.Replicas {
+			return true, nil
+		}
+
+		return false, nil
+	}
+}
+
+// WaitForGatewayController - polls Gateway API controller deployment status
+func WaitForGatewayController(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM, timeout time.Duration) error {
+	log := logger.GetLogger(ctx)
+	log.Infow("Polling status of Gateway API controller")
+
+	return wait.PollUntilContextTimeout(ctx, time.Second, timeout, true, getGatewayControllerStatus(ctx, instance, r))
+}
+
 // observabilityStatusCheck - calculate success state for observability module
 func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus, op OperatorConfig) (bool, error) {
 	log := logger.GetLogger(ctx)
@@ -585,12 +614,32 @@ func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageM
 	log := logger.GetLogger(ctx)
 	certEnabled := false
 	nginxEnabled := false
+	gatewayEnabled := false
+
+	// Check if authorization module version is v2.5.0 or later (Gateway API)
+	var useGatewayAPI bool
+	for _, m := range instance.Spec.Modules {
+		if m.Name == csmv1.AuthorizationServer {
+			var err error
+			useGatewayAPI, err = MinVersionCheck("v2.5.0", m.ConfigVersion)
+			if err != nil {
+				log.Errorw("error checking authorization version", "error", err)
+			}
+			break
+		}
+	}
 
 	for _, m := range instance.Spec.Modules {
 		if m.Name == csmv1.AuthorizationServer {
 			for _, c := range m.Components {
 				if c.Name == "ingress-nginx" && *c.Enabled {
 					nginxEnabled = true
+				}
+				// Check for either the new gateway component name (v2.5.0+) or the legacy
+				// nginx name (upgrade compat: users migrating from v2.4.0 may still have
+				// name: nginx in their CR; the version gate ensures gateway is used).
+				if (c.Name == "nginx-gateway" || c.Name == "nginx") && *c.Enabled && useGatewayAPI {
+					gatewayEnabled = true
 				}
 				if c.Name == "cert-manager" && *c.Enabled {
 					certEnabled = true
@@ -619,6 +668,13 @@ func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageM
 		switch deployment.Name {
 		case fmt.Sprintf("%s-ingress-nginx-controller", authNamespace):
 			if nginxEnabled {
+				if !checkFn(&deployment) {
+					log.Infof("%s component not running in auth proxy deployment", deployment.Name)
+					return false, nil
+				}
+			}
+		case fmt.Sprintf("%s-nginx-gateway-controller", authNamespace):
+			if gatewayEnabled {
 				if !checkFn(&deployment) {
 					log.Infof("%s component not running in auth proxy deployment", deployment.Name)
 					return false, nil

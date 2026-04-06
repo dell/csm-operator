@@ -27,13 +27,16 @@ import (
 	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
@@ -46,6 +49,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
+	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
 var (
@@ -1864,8 +1868,15 @@ func TestAuthorizationIngress(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			isOpenShift = true
 			success, isDeleting, cr, sourceClient := tc(t)
+			// Reset isOpenShift to true by default unless test case sets it
+			if name != "fail - NGINX ingress creation failure" {
+				isOpenShift = true
+			}
+
+			// Register Gateway API scheme for tests
+			_ = gatewayv1.AddToScheme(scheme.Scheme)
+
 			fakeReconcile := operatorutils.FakeReconcileCSM{
 				Client:    sourceClient,
 				K8sClient: fake.NewSimpleClientset(),
@@ -1935,10 +1946,98 @@ func TestInstallPolicies(t *testing.T) {
 	}
 }
 
+func TestNginxIngressControllerCleanup(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - cleanup existing nginx ingress controller": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			tmpCR := CsmAuthorizationCR()
+			// Use v2.5.0 for upgrade scenario tests
+			for i := range tmpCR.Spec.Modules {
+				if tmpCR.Spec.Modules[i].Name == csmv1.AuthorizationServer {
+					tmpCR.Spec.Modules[i].ConfigVersion = "v2.5.0"
+				}
+			}
+
+			// Create existing nginx ingress controller deployment that should be cleaned up
+			deployment := &appsv1.Deployment{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Deployment",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      tmpCR.Namespace + "-ingress-nginx-controller",
+					Namespace: tmpCR.Namespace,
+				},
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(deployment).Build()
+			return true, tmpCR, sourceClient, operatorConfig
+		},
+		"success - cleanup when nginx ingress controller doesn't exist": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			tmpCR := CsmAuthorizationCR()
+			// Use v2.5.0 for upgrade scenario tests
+			for i := range tmpCR.Spec.Modules {
+				if tmpCR.Spec.Modules[i].Name == csmv1.AuthorizationServer {
+					tmpCR.Spec.Modules[i].ConfigVersion = "v2.5.0"
+				}
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, tmpCR, sourceClient, operatorConfig
+		},
+		"authorization module not found": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			customResource := CsmAuthorizationCR()
+			tmpCR := customResource
+			// Remove authorization
+			for i := range tmpCR.Spec.Modules {
+				if tmpCR.Spec.Modules[i].Name == csmv1.AuthorizationServer {
+					tmpCR.Spec.Modules = nil
+				}
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, tmpCR, sourceClient, operatorConfig // Cleanup succeeds even when module not found
+		},
+		"success - cleanup with file read error": func(*testing.T) (bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			tmpCR := CsmAuthorizationCR()
+			// Use v2.5.0 for upgrade scenario tests
+			for i := range tmpCR.Spec.Modules {
+				if tmpCR.Spec.Modules[i].Name == csmv1.AuthorizationServer {
+					tmpCR.Spec.Modules[i].ConfigVersion = "v2.5.0"
+				}
+			}
+
+			// Create operator config with invalid directory to trigger file read error
+			invalidOp := operatorutils.OperatorConfig{
+				ConfigDirectory: "/invalid/directory",
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, tmpCR, sourceClient, invalidOp
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			success, cr, sourceClient, op := test(t)
+			err := NginxIngressControllerCleanup(context.TODO(), op, cr, sourceClient)
+			if success {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
 func TestNginxIngressController(t *testing.T) {
 	tests := map[string]func(t *testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig){
 		"success - deleting": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			tmpCR := CsmAuthorizationCR()
+			// Use v2.4.0 for nginx ingress controller tests (v2.5.0+ uses Gateway API)
+			for i := range tmpCR.Spec.Modules {
+				if tmpCR.Spec.Modules[i].Name == csmv1.AuthorizationServer {
+					tmpCR.Spec.Modules[i].ConfigVersion = "v2.4.0"
+				}
+			}
 
 			cr := &networking.IngressClass{
 				TypeMeta: metav1.TypeMeta{
@@ -1954,6 +2053,12 @@ func TestNginxIngressController(t *testing.T) {
 		},
 		"success - creating": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			tmpCR := CsmAuthorizationCR()
+			// Use v2.4.0 for nginx ingress controller tests (v2.5.0+ uses Gateway API)
+			for i := range tmpCR.Spec.Modules {
+				if tmpCR.Spec.Modules[i].Name == csmv1.AuthorizationServer {
+					tmpCR.Spec.Modules[i].ConfigVersion = "v2.4.0"
+				}
+			}
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, false, tmpCR, sourceClient, operatorConfig
@@ -1977,6 +2082,9 @@ func TestNginxIngressController(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			success, isDeleting, cr, sourceClient, op := tc(t)
+
+			// Register Gateway API scheme for tests
+			_ = gatewayv1.AddToScheme(scheme.Scheme)
 
 			err := NginxIngressController(context.TODO(), isDeleting, op, cr, sourceClient)
 			if success {
@@ -3244,4 +3352,289 @@ func csmPowerScaleWithAuthCR() csmv1.ContainerStorageModule {
 		}},
 	}}
 	return res
+}
+
+// TestGetGatewayController tests the getGatewayController function for Gateway API support
+func TestGetGatewayController(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name        string
+		cr          csmv1.ContainerStorageModule
+		expectError bool
+		description string
+	}{
+		{
+			name:        "Valid Authorization Module with Gateway API",
+			cr:          createAuthCRWithGatewayAPI(),
+			expectError: false,
+			description: "Should successfully generate Gateway API controller YAML",
+		},
+		{
+			name:        "Missing Authorization Module",
+			cr:          createCRWithoutAuthModule(),
+			expectError: true,
+			description: "Should fail when authorization module is not present",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			op := operatorutils.OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			}
+
+			yamlString, err := getGatewayController(ctx, op, tt.cr)
+
+			if tt.expectError {
+				assert.Error(t, err, tt.description)
+				assert.Empty(t, yamlString)
+			} else {
+				assert.NoError(t, err, tt.description)
+				assert.NotEmpty(t, yamlString)
+				// Verify namespace replacement occurred
+				assert.Contains(t, yamlString, tt.cr.Namespace)
+			}
+		})
+	}
+}
+
+// TestAuthorizationHTTPRoute tests the authorizationHTTPRoute function
+func TestAuthorizationHTTPRoute(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name        string
+		cr          csmv1.ContainerStorageModule
+		isDeleting  bool
+		expectError bool
+		description string
+	}{
+		{
+			name:        "Delete HTTPRoute",
+			cr:          createAuthCRWithGatewayAPI(),
+			isDeleting:  true,
+			expectError: false,
+			description: "Should successfully delete HTTPRoute",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Register Gateway API scheme
+			s := scheme.Scheme
+			_ = gatewayv1.AddToScheme(s)
+
+			fakeClient := ctrlClientFake.NewClientBuilder().WithScheme(s).Build()
+
+			r := &operatorutils.FakeReconcileCSM{
+				Client:    fakeClient,
+				K8sClient: fake.NewSimpleClientset(),
+			}
+
+			err := authorizationHTTPRoute(ctx, tt.isDeleting, tt.cr, r, fakeClient)
+
+			if tt.expectError {
+				assert.Error(t, err, tt.description)
+			} else {
+				assert.NoError(t, err, tt.description)
+			}
+		})
+	}
+}
+
+// TestAuthorizationIngressWithGatewayAPI tests the AuthorizationIngress function with Gateway API routing
+func TestAuthorizationIngressWithGatewayAPI(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name        string
+		cr          csmv1.ContainerStorageModule
+		isDeleting  bool
+		isOpenShift bool
+		expectError bool
+		description string
+	}{
+		{
+			name:        "Gateway API Version - Delete HTTPRoute",
+			cr:          createAuthCRWithGatewayAPI(),
+			isDeleting:  true,
+			isOpenShift: false,
+			expectError: false,
+			description: "Should successfully delete HTTPRoute for v2.5.0+ (no error when object doesn't exist)",
+		},
+		{
+			name:        "Legacy Version - Should use Ingress",
+			cr:          createAuthCRWithLegacyVersion(),
+			isDeleting:  false,
+			isOpenShift: false,
+			expectError: true,
+			description: "Should route to Ingress creation for v2.4.0 and below (fails without real resources)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Register Gateway API scheme
+			s := scheme.Scheme
+			_ = gatewayv1.AddToScheme(s)
+
+			fakeClient := ctrlClientFake.NewClientBuilder().WithScheme(s).Build()
+
+			r := &operatorutils.FakeReconcileCSM{
+				Client:    fakeClient,
+				K8sClient: fake.NewSimpleClientset(),
+			}
+
+			err := AuthorizationIngress(ctx, tt.isDeleting, tt.isOpenShift, tt.cr, r, fakeClient)
+
+			if tt.expectError {
+				assert.Error(t, err, tt.description)
+			} else {
+				assert.NoError(t, err, tt.description)
+			}
+		})
+	}
+}
+
+// TestCreateHTTPRoute tests HTTPRoute creation for Gateway API
+func TestCreateHTTPRoute(t *testing.T) {
+	tests := []struct {
+		name        string
+		cr          csmv1.ContainerStorageModule
+		expectError bool
+		description string
+	}{
+		{
+			name:        "Valid HTTPRoute Creation",
+			cr:          createAuthCRWithGatewayAPI(),
+			expectError: false,
+			description: "Should successfully create HTTPRoute object",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			route, err := createHTTPRoute(tt.cr)
+
+			if tt.expectError {
+				assert.Error(t, err, tt.description)
+				assert.Nil(t, route)
+			} else {
+				assert.NoError(t, err, tt.description)
+				assert.NotNil(t, route)
+				assert.Equal(t, tt.cr.Namespace, route.Namespace)
+				assert.Contains(t, route.Name, "proxy-server")
+			}
+		})
+	}
+}
+
+// Helper functions for Gateway API tests
+
+func createAuthCRWithGatewayAPI() csmv1.ContainerStorageModule {
+	return csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "auth-gateway",
+			Namespace: "authorization",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Driver: csmv1.Driver{
+				CSIDriverType: csmv1.PowerStore,
+				ConfigVersion: "v2.17.0",
+			},
+			Modules: []csmv1.Module{
+				{
+					Name:              csmv1.AuthorizationServer,
+					Enabled:           true,
+					ConfigVersion:     "v2.5.0",
+					ForceRemoveModule: false,
+					Components: []csmv1.ContainerTemplate{
+						{
+							Name:  "proxy-server",
+							Image: "dellemc/csm-authorization-proxy:v2.5.0",
+							Envs: []corev1.EnvVar{
+								{Name: "PROXY_HOST", Value: "authorization-gateway-nginx.authorization.svc.cluster.local"},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func createAuthCRWithLegacyVersion() csmv1.ContainerStorageModule {
+	cr := createAuthCRWithGatewayAPI()
+	cr.Spec.Modules[0].ConfigVersion = "v2.4.0"
+	return cr
+}
+
+func createCRWithoutAuthModule() csmv1.ContainerStorageModule {
+	return csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "no-auth",
+			Namespace: "test",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Driver: csmv1.Driver{
+				CSIDriverType: csmv1.PowerStore,
+				ConfigVersion: "v2.17.0",
+			},
+			Modules: []csmv1.Module{},
+		},
+	}
+}
+
+func TestGatewayController(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		description string
+		isDeleting  bool
+		cr          csmv1.ContainerStorageModule
+		expectError bool
+	}{
+		{
+			description: "Gateway API controller creation",
+			isDeleting:  false,
+			cr:          createAuthCRWithGatewayAPI(),
+			expectError: false,
+		},
+		{
+			description: "Gateway API controller deletion",
+			isDeleting:  true,
+			cr:          createAuthCRWithGatewayAPI(),
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.description, func(t *testing.T) {
+			// Create a fake client with Gateway API scheme
+			scheme := runtime.NewScheme()
+			require.NoError(t, corev1.AddToScheme(scheme))
+			require.NoError(t, rbacv1.AddToScheme(scheme))
+			require.NoError(t, appsv1.AddToScheme(scheme))
+			require.NoError(t, csmv1.AddToScheme(scheme))
+			require.NoError(t, gatewayv1.AddToScheme(scheme))
+			require.NoError(t, certmanagerv1.AddToScheme(scheme))
+
+			fakeClient := ctrlClientFake.NewClientBuilder().WithScheme(scheme).Build()
+
+			// Create operator config
+			operatorConfig := operatorutils.OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			}
+
+			// Test GatewayController function
+			err := GatewayController(ctx, tt.isDeleting, operatorConfig, tt.cr, fakeClient)
+
+			if tt.expectError {
+				assert.Error(t, err, tt.description)
+			} else {
+				assert.NoError(t, err, tt.description)
+			}
+		})
+	}
 }

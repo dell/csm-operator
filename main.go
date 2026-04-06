@@ -56,6 +56,7 @@ import (
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
+	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -84,6 +85,8 @@ func init() {
 	utilruntime.Must(apiextv1.AddToScheme(scheme))
 
 	utilruntime.Must(certmanagerv1.AddToScheme(scheme))
+
+	utilruntime.Must(gatewayv1.Install(scheme))
 
 	//+kubebuilder:scaffold:scheme
 }
