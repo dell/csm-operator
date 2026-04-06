@@ -456,6 +456,15 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckEnabled, fsckEnabled)
 		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckMode, fsckMode)
 
+		spaceReclaimEnabled := GetDriverCommonEnv(cr, CsiSpaceReclaimEnabled, "false")
+		spaceReclaimSchedule := GetDriverCommonEnv(cr, CsiSpaceReclaimSchedule, "0 2 * * 0")
+		spaceReclaimMaxConcurrent := GetDriverCommonEnv(cr, CsiSpaceReclaimMaxConcurrent, "2")
+		spaceReclaimTimeout := GetDriverCommonEnv(cr, CsiSpaceReclaimTimeout, "3600")
+		yamlString = SubstituteEnvVar(yamlString, CsiSpaceReclaimEnabled, spaceReclaimEnabled)
+		yamlString = SubstituteEnvVar(yamlString, CsiSpaceReclaimSchedule, spaceReclaimSchedule)
+		yamlString = SubstituteEnvVar(yamlString, CsiSpaceReclaimMaxConcurrent, spaceReclaimMaxConcurrent)
+		yamlString = SubstituteEnvVar(yamlString, CsiSpaceReclaimTimeout, spaceReclaimTimeout)
+
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"
