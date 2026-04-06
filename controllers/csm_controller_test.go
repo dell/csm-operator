@@ -49,12 +49,14 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
 var (
@@ -197,6 +199,10 @@ func (suite *CSMControllerTestSuite) SetupTest() {
 	if err != nil {
 		panic(err)
 	}
+	err = gatewayv1.AddToScheme(scheme.Scheme)
+	if err != nil {
+		panic(err)
+	}
 
 	objects := map[shared.StorageKey]runtime.Object{}
 	suite.fakeClient = crclient.NewFakeClient(objects, suite)
@@ -246,14 +252,40 @@ func (suite *CSMControllerTestSuite) TestAuthorizationServerPreCheck() {
 		panic(err)
 	}
 	defer func() {
-		err := suite.fakeClient.Delete(context.Background(), secret)
-		if err != nil {
-			panic(err)
-		}
+		_ = suite.fakeClient.Delete(context.Background(), secret)
 	}()
 
 	suite.makeFakeAuthServerCSMWithoutPreRequisite(csmName, suite.namespace)
 	suite.runFakeAuthCSMManager("context deadline exceeded", false, false)
+	suite.deleteCSM(csmName)
+	suite.runFakeAuthCSMManager("", true, false)
+}
+
+func (suite *CSMControllerTestSuite) TestAuthorizationServerWithGateway() {
+	// Create Gateway API controller deployment
+	replicas := int32(1)
+	gatewayDeployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      suite.namespace + "-nginx-gateway-fabric",
+			Namespace: suite.namespace,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &replicas,
+		},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 1,
+		},
+	}
+	err := suite.fakeClient.Create(context.Background(), gatewayDeployment)
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		_ = suite.fakeClient.Delete(context.Background(), gatewayDeployment)
+	}()
+
+	suite.makeFakeAuthServerCSM(csmName, suite.namespace, getAuthProxyServer())
+	suite.runFakeAuthCSMManager("", false, false)
 	suite.deleteCSM(csmName)
 	suite.runFakeAuthCSMManager("", true, false)
 }
@@ -2047,8 +2079,8 @@ func getAuthProxyServerOCP() []csmv1.Module {
 					Enabled: &[]bool{true}[0],
 				},
 				{
-					Name:    "nginx",
-					Enabled: &[]bool{false}[0],
+					Name:    "nginx-gateway",
+					Enabled: &[]bool{true}[0],
 				},
 				{
 					Name: "redis",
@@ -3227,4 +3259,39 @@ func (suite *CSMControllerTestSuite) TestSyncCSMConfigMapPresentNoMatchError() {
 
 	assert.Error(suite.T(), err, "SyncCSM must return error if CR version not found in versions.yaml")
 	assert.Contains(suite.T(), err.Error(), "version v1.16.0 not found")
+}
+
+func TestSetupWithManager(t *testing.T) {
+	scheme := runtime.NewScheme()
+	require.NoError(t, corev1.AddToScheme(scheme))
+	require.NoError(t, rbacv1.AddToScheme(scheme))
+	require.NoError(t, appsv1.AddToScheme(scheme))
+	require.NoError(t, storagev1.AddToScheme(scheme))
+	require.NoError(t, csmv1.AddToScheme(scheme))
+
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		Build()
+
+	_, log := logger.GetNewContextWithLogger("0")
+	reconciler := &ContainerStorageModuleReconciler{
+		Client:               fakeClient,
+		K8sClient:            nil,
+		Scheme:               scheme,
+		Log:                  log,
+		Config:               operatorutils.OperatorConfig{},
+		EventRecorder:        record.NewFakeRecorder(100),
+		ContentWatchChannels: map[string]chan struct{}{},
+		ContentWatchLock:     sync.Mutex{},
+	}
+
+	// Create a fake manager
+	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+		Scheme: scheme,
+	})
+	require.NoError(t, err)
+
+	// Test SetupWithManager
+	err = reconciler.SetupWithManager(mgr, workqueue.DefaultTypedControllerRateLimiter[reconcile.Request](), 1)
+	require.NoError(t, err, "SetupWithManager should not return error")
 }

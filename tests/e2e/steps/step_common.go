@@ -480,29 +480,43 @@ func checkAuthorizationProxyServerNoRunningPods(ctx context.Context, namespace s
 
 func getPortContainerizedAuth(namespace string) (string, error) {
 	port := ""
-	service := namespace + "-ingress-nginx-controller"
 	var err error
 	var b []byte
 
 	isOpenShift := os.Getenv("IS_OPENSHIFT")
 	if isOpenShift == "true" {
-		service = "router-internal-default"
+		service := "router-internal-default"
 		b, err = exec.Command(
 			"kubectl", "get",
 			"service", service,
 			"-n", "openshift-ingress",
 			"-o", `jsonpath="{.spec.ports[1].port}"`,
 		).CombinedOutput() // #nosec G204
+		if err != nil {
+			return "", fmt.Errorf("failed to get %s port in namespace: %s: %s", service, "openshift-ingress", b)
+		}
 	} else {
+		// Try v2.5.0+ Gateway API service name first
+		service := namespace + "-gateway-nginx"
 		b, err = exec.Command(
 			"kubectl", "get",
 			"service", service,
 			"-n", namespace,
-			"-o", `jsonpath="{.spec.ports[1].nodePort}"`,
+			"-o", `jsonpath="{.spec.ports[0].nodePort}"`,
 		).CombinedOutput() // #nosec G204
-	}
-	if err != nil {
-		return "", fmt.Errorf("failed to get %s port in namespace: %s: %s", service, namespace, b)
+		// If v2.5.0+ service name fails, try v2.4.0 ingress-nginx-controller
+		if err != nil {
+			service = namespace + "-ingress-nginx-controller"
+			b, err = exec.Command(
+				"kubectl", "get",
+				"service", service,
+				"-n", namespace,
+				"-o", `jsonpath="{.spec.ports[1].nodePort}"`,
+			).CombinedOutput() // #nosec G204
+			if err != nil {
+				return "", fmt.Errorf("failed to get gateway service port in namespace: %s (tried %s-gateway-nginx and %s-ingress-nginx-controller): %s", namespace, namespace, namespace, b)
+			}
+		}
 	}
 	port = strings.Replace(string(b), `"`, "", -1)
 	return port, nil

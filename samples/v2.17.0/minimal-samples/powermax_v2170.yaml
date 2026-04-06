@@ -28,7 +28,7 @@ spec:
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
-              value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
+              value: "authorization-gateway-nginx.authorization.svc.cluster.local"
     - name: resiliency
       enabled: false
     - name: replication

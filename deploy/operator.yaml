@@ -305,6 +305,17 @@ rules:
     verbs:
       - create
   - apiGroups:
+      - autoscaling
+    resources:
+      - horizontalpodautoscalers
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
       - batch
     resources:
       - jobs
@@ -510,7 +521,9 @@ rules:
   - apiGroups:
       - gateway.networking.k8s.io
     resources:
-      - gateways
+      - backendtlspolicies
+      - grpcroutes
+      - referencegrants
     verbs:
       - get
       - list
@@ -518,14 +531,57 @@ rules:
   - apiGroups:
       - gateway.networking.k8s.io
     resources:
+      - backendtlspolicies/status
+      - gatewayclasses/status
       - gateways/finalizers
+      - gateways/status
+      - grpcroutes/status
       - httproutes/finalizers
+      - httproutes/status
     verbs:
       - update
   - apiGroups:
       - gateway.networking.k8s.io
     resources:
+      - gatewayclasses
+      - gateways
       - httproutes
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
+      - gateway.nginx.org
+    resources:
+      - authenticationfilters
+      - clientsettingspolicies
+      - observabilitypolicies
+      - proxysettingspolicies
+      - ratelimitpolicies
+      - upstreamsettingspolicies
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - gateway.nginx.org
+    resources:
+      - authenticationfilters/status
+      - clientsettingspolicies/status
+      - nginxgateways/status
+      - observabilitypolicies/status
+      - proxysettingspolicies/status
+      - ratelimitpolicies/status
+      - upstreamsettingspolicies/status
+    verbs:
+      - update
+  - apiGroups:
+      - gateway.nginx.org
+    resources:
+      - nginxgateways
+      - nginxproxies
     verbs:
       - create
       - delete

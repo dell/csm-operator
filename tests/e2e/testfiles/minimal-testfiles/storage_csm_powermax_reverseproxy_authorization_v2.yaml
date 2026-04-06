@@ -27,6 +27,6 @@ spec:
           image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-sidecar:nightly
           envs:
             - name: "PROXY_HOST"
-              value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
+              value: "authorization-gateway-nginx.authorization.svc.cluster.local"
             - name: "SKIP_CERTIFICATE_VALIDATION"
               value: "true"

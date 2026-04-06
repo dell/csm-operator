@@ -177,8 +177,17 @@ var (
 // +kubebuilder:rbac:groups="networking.k8s.io",resources=ingressclasses,verbs=create;get;list;watch;update;delete
 // +kubebuilder:rbac:groups="networking.k8s.io",resources=ingresses/status,verbs=update;get;list;watch
 // +kubebuilder:rbac:groups="gateway.networking.k8s.io",resources=httproutes,verbs=get;list;watch;create;delete;update
-// +kubebuilder:rbac:groups="gateway.networking.k8s.io",resources=httproutes;gateways,verbs=get;list;watch
+// +kubebuilder:rbac:groups="gateway.networking.k8s.io",resources=gateways,verbs=create;delete;get;list;update;watch
 // +kubebuilder:rbac:groups="gateway.networking.k8s.io",resources=gateways/finalizers;httproutes/finalizers,verbs=update
+// Gateway API controller RBAC - the operator must hold these permissions to create the nginx-gateway-fabric ClusterRole
+// +kubebuilder:rbac:groups="autoscaling",resources=horizontalpodautoscalers,verbs=create;update;delete;get;list;watch
+// +kubebuilder:rbac:groups="gateway.networking.k8s.io",resources=gatewayclasses,verbs=create;delete;get;list;update;watch
+// +kubebuilder:rbac:groups="gateway.networking.k8s.io",resources=grpcroutes;backendtlspolicies;referencegrants,verbs=get;list;watch
+// +kubebuilder:rbac:groups="gateway.networking.k8s.io",resources=gateways/status;gatewayclasses/status;httproutes/status;grpcroutes/status;backendtlspolicies/status,verbs=update
+// +kubebuilder:rbac:groups="gateway.nginx.org",resources=nginxgateways,verbs=create;delete;get;list;update;watch
+// +kubebuilder:rbac:groups="gateway.nginx.org",resources=nginxproxies,verbs=create;delete;get;list;update;watch
+// +kubebuilder:rbac:groups="gateway.nginx.org",resources=clientsettingspolicies;observabilitypolicies;upstreamsettingspolicies;authenticationfilters;proxysettingspolicies;ratelimitpolicies,verbs=list;watch
+// +kubebuilder:rbac:groups="gateway.nginx.org",resources=nginxgateways/status;clientsettingspolicies/status;observabilitypolicies/status;upstreamsettingspolicies/status;authenticationfilters/status;proxysettingspolicies/status;ratelimitpolicies/status,verbs=update
 // +kubebuilder:rbac:groups="route.openshift.io",resources=routes/custom-host,verbs=create
 // +kubebuilder:rbac:groups="admissionregistration.k8s.io",resources=validatingwebhookconfigurations;mutatingwebhookconfigurations,verbs=create;get;list;watch;update;delete;patch
 // +kubebuilder:rbac:groups="apiregistration.k8s.io",resources=apiservices,verbs=get;list;watch;update
@@ -1178,13 +1187,48 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 		}
 	}
 
+	// gatewayComponentEnabled: new v2.5.0+ installs use component name "nginx-gateway".
+	// nginxComponentEnabled: v2.4.0 and below use component name "nginx".
+	// Both are checked for the gateway path to handle upgrade from v2.4.0 to v2.5.0
+	// where the CR component name may still be "nginx".
+	gatewayComponentEnabled := operatorutils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthGatewayComponent)
+	nginxComponentEnabled := operatorutils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent)
+
+	// Check if authorization module version is v2.5.0 or later (Gateway API)
+	var isV25OrLater bool
+	for _, m := range cr.Spec.Modules {
+		if m.Name == csmv1.AuthorizationServer {
+			var err error
+			isV25OrLater, err = operatorutils.MinVersionCheck("v2.5.0", m.ConfigVersion)
+			if err != nil {
+				log.Errorw("error checking authorization version", "error", err)
+			}
+			break
+		}
+	}
+
 	if r.Config.IsOpenShift {
 		log.Infow("Using OpenShift default ingress controller")
-		if operatorutils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
-			log.Warnw("openshift environment, skipping deployment of nginx ingress controller")
+		if nginxComponentEnabled || gatewayComponentEnabled {
+			log.Warnw("openshift environment, skipping deployment of nginx/gateway ingress controller")
 		}
 	} else {
-		if operatorutils.IsModuleComponentEnabled(ctx, cr, csmv1.AuthorizationServer, modules.AuthNginxIngressComponent) {
+		if isV25OrLater && (gatewayComponentEnabled || nginxComponentEnabled) {
+			log.Infow("Reconcile authorization Gateway API Controller")
+
+			// When upgrading from v2.4.0 to v2.5.0, explicitly delete old NGINX Ingress Controller
+			// before deploying Gateway API controller
+			if !isDeleting {
+				log.Infow("Cleaning up old NGINX Ingress Controller before Gateway API deployment")
+				if err := modules.NginxIngressControllerCleanup(ctx, op, cr, ctrlClient); err != nil {
+					log.Warnw("Failed to cleanup old NGINX Ingress Controller (may not exist)", "error", err)
+				}
+			}
+
+			if err := modules.GatewayController(ctx, isDeleting, op, cr, ctrlClient); err != nil {
+				return fmt.Errorf("unable to reconcile gateway API controller for authorization: %v", err)
+			}
+		} else if nginxComponentEnabled {
 			log.Infow("Reconcile authorization NGINX Ingress Controller")
 			if err := modules.NginxIngressController(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 				return fmt.Errorf("unable to reconcile nginx ingress controller for authorization: %v", err)

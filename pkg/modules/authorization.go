@@ -41,6 +41,7 @@ import (
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
+	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	"sigs.k8s.io/yaml"
 )
 
@@ -55,6 +56,8 @@ const (
 	AuthCertManagerManifest = "cert-manager.yaml"
 	// AuthNginxIngressManifest -
 	AuthNginxIngressManifest = "nginx-ingress-controller.yaml"
+	// AuthGatewayManifest - gateway API controller manifest for authorization module (v2.5.0+)
+	AuthGatewayManifest = "gateway-api-controller.yaml"
 	// AuthPolicyManifest -
 	AuthPolicyManifest = "policies.yaml"
 	// AuthCustomCert - custom certificate file
@@ -103,8 +106,10 @@ const (
 	AuthProxyServerComponent = "proxy-server"
 	// AuthSidecarComponent - karavi-authorization-proxy component
 	AuthSidecarComponent = "karavi-authorization-proxy"
-	// AuthNginxIngressComponent - nginx component
+	// AuthNginxIngressComponent - nginx ingress component (v2.4.0 and below)
 	AuthNginxIngressComponent = "nginx"
+	// AuthGatewayComponent - Gateway API controller component name (v2.5.0+)
+	AuthGatewayComponent = "nginx-gateway"
 	// AuthCertManagerComponent - cert-manager component
 	AuthCertManagerComponent = "cert-manager"
 	// AuthRedisComponent - redis component
@@ -1633,8 +1638,23 @@ loop:
 	return nil
 }
 
-// AuthorizationIngress - apply/delete ingress objects
+// AuthorizationIngress - apply/delete ingress or HTTPRoute objects depending on the module version.
+// For v2.5.0 and later, creates an HTTPRoute (Gateway API). For v2.4.0 and below, creates an Ingress.
 func AuthorizationIngress(ctx context.Context, isDeleting, isOpenShift bool, cr csmv1.ContainerStorageModule, r operatorutils.ReconcileCSM, ctrlClient crclient.Client) error {
+	auth, err := getAuthorizationModule(cr)
+	if err != nil {
+		return err
+	}
+
+	isV25OrLater, err := operatorutils.MinVersionCheck("v2.5.0", auth.ConfigVersion)
+	if err != nil {
+		return fmt.Errorf("error checking authorization version: %v", err)
+	}
+
+	if isV25OrLater && !isOpenShift {
+		return authorizationHTTPRoute(ctx, isDeleting, cr, r, ctrlClient)
+	}
+
 	ingress, err := createIngress(isOpenShift, cr)
 	if err != nil {
 		return fmt.Errorf("creating ingress: %v", err)
@@ -1661,6 +1681,96 @@ func AuthorizationIngress(ctx context.Context, isDeleting, isOpenShift bool, cr 
 	err = applyDeleteObjects(ctx, ctrlClient, string(ingressYaml), isDeleting)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// authorizationHTTPRoute - apply/delete Gateway API HTTPRoute for authorization proxy server (v2.5.0+)
+func authorizationHTTPRoute(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, r operatorutils.ReconcileCSM, ctrlClient crclient.Client) error {
+	route, err := createHTTPRoute(cr)
+	if err != nil {
+		return fmt.Errorf("creating HTTPRoute: %v", err)
+	}
+
+	routeBytes, err := json.Marshal(route)
+	if err != nil {
+		return fmt.Errorf("marshaling HTTPRoute: %v", err)
+	}
+
+	routeYaml, err := yaml.JSONToYAML(routeBytes)
+	if err != nil {
+		return fmt.Errorf("converting HTTPRoute to YAML: %v", err)
+	}
+
+	// Wait for Gateway API controller to be ready before creating HTTPRoutes
+	if !isDeleting {
+		if err := operatorutils.WaitForGatewayController(ctx, cr, r, time.Duration(10)*time.Second); err != nil {
+			return fmt.Errorf("Gateway API controller is not ready: %v", err)
+		}
+	}
+
+	return applyDeleteObjects(ctx, ctrlClient, string(routeYaml), isDeleting)
+}
+
+// getGatewayController - configure Gateway API controller yaml with the namespace before installation (v2.5.0+)
+func getGatewayController(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
+	YamlString := ""
+
+	auth, err := getAuthorizationModule(cr)
+	if err != nil {
+		return YamlString, err
+	}
+
+	buf, err := readConfigFile(ctx, auth, cr, op, AuthGatewayManifest)
+	if err != nil {
+		return YamlString, err
+	}
+
+	YamlString = string(buf)
+	authNamespace := cr.Namespace
+	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
+	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
+	YamlString = strings.ReplaceAll(YamlString, AuthCSMNameSpace, cr.Namespace)
+
+	return YamlString, nil
+}
+
+// GatewayController - apply/delete Gateway API controller objects (v2.5.0+)
+func GatewayController(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	YamlString, err := getGatewayController(ctx, op, cr)
+	if err != nil {
+		return err
+	}
+
+	err = applyDeleteObjects(ctx, ctrlClient, YamlString, isDeleting)
+	if err != nil {
+		return err
+	}
+
+	// Clean up data plane resources created by the nginx-gateway-fabric controller.
+	// These are not part of the operator manifest but are spawned by the controller
+	// when it processes the Gateway resource. On deletion the controller deployment
+	// is removed first, so it can no longer clean up its own child resources.
+	if isDeleting {
+		ns := cr.GetNamespace()
+		dataPlane := ns + "-gateway-nginx"
+
+		deploy := &appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{Name: dataPlane, Namespace: ns},
+		}
+		deploy.SetGroupVersionKind(appsv1.SchemeGroupVersion.WithKind("Deployment"))
+		if err := operatorutils.DeleteObject(ctx, deploy, ctrlClient); err != nil {
+			return fmt.Errorf("deleting gateway data plane deployment: %w", err)
+		}
+
+		svc := &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{Name: dataPlane, Namespace: ns},
+		}
+		svc.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Service"))
+		if err := operatorutils.DeleteObject(ctx, svc, ctrlClient); err != nil {
+			return fmt.Errorf("deleting gateway data plane service: %w", err)
+		}
 	}
 
 	return nil
@@ -1701,6 +1811,39 @@ func NginxIngressController(ctx context.Context, isDeleting bool, op operatoruti
 		return err
 	}
 
+	return nil
+}
+
+// NginxIngressControllerCleanup - delete old NGINX ingress controller objects during upgrade to Gateway API
+func NginxIngressControllerCleanup(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	// For v2.5.0+ upgrades, we need to use older version NGINX config to clean up old resources
+	// Support n-2 upgrades: try v2.4.0, v2.3.0, v2.2.0
+	previousVersions := []string{"v2.4.0", "v2.3.0", "v2.2.0"}
+
+	_, err := getAuthorizationModule(cr)
+	if err != nil {
+		// If authorization module not found, nothing to cleanup
+		return nil
+	}
+
+	// Try each previous version until we find one with NGINX config
+	for _, version := range previousVersions {
+		tempCR := cr.DeepCopy()
+		for i := range tempCR.Spec.Modules {
+			if tempCR.Spec.Modules[i].Name == csmv1.AuthorizationServer {
+				tempCR.Spec.Modules[i].ConfigVersion = version
+				break
+			}
+		}
+
+		YamlString, err := getNginxIngressController(ctx, op, *tempCR)
+		if err == nil {
+			// Found NGINX config, delete the resources
+			return applyDeleteObjects(ctx, ctrlClient, YamlString, true)
+		}
+	}
+
+	// No NGINX config found in any previous version, nothing to cleanup
 	return nil
 }
 
@@ -2002,6 +2145,81 @@ func createIngress(isOpenShift bool, cr csmv1.ContainerStorageModule) (*networki
 	}
 
 	return &ingress, nil
+}
+
+// createHTTPRoute builds a Gateway API HTTPRoute for the proxy-server (v2.5.0+)
+func createHTTPRoute(cr csmv1.ContainerStorageModule) (*gatewayv1.HTTPRoute, error) {
+	authModule, err := getAuthorizationModule(cr)
+	if err != nil {
+		return nil, err
+	}
+
+	var hosts []gatewayv1.Hostname
+	gatewayName := cr.Namespace + "-gateway"
+	gwNamespace := gatewayv1.Namespace(cr.Namespace)
+
+	for _, component := range authModule.Components {
+		if component.Name == AuthProxyServerComponent {
+			if component.Hostname != "" {
+				hosts = append(hosts, gatewayv1.Hostname(component.Hostname))
+			}
+			for _, proxyIngress := range component.ProxyServerIngress {
+				for _, host := range proxyIngress.Hosts {
+					hosts = append(hosts, gatewayv1.Hostname(host))
+				}
+			}
+		}
+	}
+
+	pathType := gatewayv1.PathMatchPathPrefix
+	pathValue := "/"
+	port := gatewayv1.PortNumber(8080)
+
+	httpRoute := &gatewayv1.HTTPRoute{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "gateway.networking.k8s.io/v1",
+			Kind:       "HTTPRoute",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "proxy-server",
+			Namespace: cr.Namespace,
+		},
+		Spec: gatewayv1.HTTPRouteSpec{
+			CommonRouteSpec: gatewayv1.CommonRouteSpec{
+				ParentRefs: []gatewayv1.ParentReference{
+					{
+						Name:      gatewayv1.ObjectName(gatewayName),
+						Namespace: &gwNamespace,
+					},
+				},
+			},
+			Hostnames: hosts,
+			Rules: []gatewayv1.HTTPRouteRule{
+				{
+					Matches: []gatewayv1.HTTPRouteMatch{
+						{
+							Path: &gatewayv1.HTTPPathMatch{
+								Type:  &pathType,
+								Value: &pathValue,
+							},
+						},
+					},
+					BackendRefs: []gatewayv1.HTTPBackendRef{
+						{
+							BackendRef: gatewayv1.BackendRef{
+								BackendObjectReference: gatewayv1.BackendObjectReference{
+									Name: "proxy-server",
+									Port: &port,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	return httpRoute, nil
 }
 
 func getAnnotations(isOpenShift bool, cr csmv1.ContainerStorageModule) (map[string]string, error) {
