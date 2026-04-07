@@ -3638,3 +3638,178 @@ func TestGatewayController(t *testing.T) {
 		})
 	}
 }
+
+func TestPatchGatewayAPICRDs(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, bool, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, ctrlClient.Client, operatorutils.OperatorConfig) {
+			crd := &apiextv1.CustomResourceDefinition{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "CustomResourceDefinition",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "gatewayclasses.gateway.networking.k8s.io",
+				},
+			}
+
+			err := apiextv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(crd).Build()
+			return true, true, sourceClient, operatorConfig
+		},
+		"success - creating": func(*testing.T) (bool, bool, ctrlClient.Client, operatorutils.OperatorConfig) {
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, false, sourceClient, operatorConfig
+		},
+		"fail - invalid directory": func(*testing.T) (bool, bool, ctrlClient.Client, operatorutils.OperatorConfig) {
+			badOp := operatorutils.OperatorConfig{ConfigDirectory: "invalid-dir"}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return false, false, sourceClient, badOp
+		},
+		"fail - unable to apply crd": func(*testing.T) (bool, bool, ctrlClient.Client, operatorutils.OperatorConfig) {
+			cluster := operatorutils.ClusterConfig{
+				ClusterCTRLClient: customClient{
+					Client: ctrlClientFake.NewClientBuilder().Build(),
+				},
+			}
+			return false, false, cluster.ClusterCTRLClient, operatorConfig
+		},
+	}
+
+	cr := authCRForCRDTests()
+	ctx := context.TODO()
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			success, isDeleting, sourceClient, op := tc(t)
+
+			err := PatchGatewayAPICRDs(ctx, isDeleting, op, cr, sourceClient)
+			if success {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
+func TestPatchNginxGatewayFabricCRDs(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, bool, ctrlClient.Client, operatorutils.OperatorConfig){
+		"success - deleting": func(*testing.T) (bool, bool, ctrlClient.Client, operatorutils.OperatorConfig) {
+			crd := &apiextv1.CustomResourceDefinition{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "CustomResourceDefinition",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nginxgateways.gateway.nginx.org",
+				},
+			}
+
+			err := apiextv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(crd).Build()
+			return true, true, sourceClient, operatorConfig
+		},
+		"success - creating": func(*testing.T) (bool, bool, ctrlClient.Client, operatorutils.OperatorConfig) {
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return true, false, sourceClient, operatorConfig
+		},
+		"fail - invalid directory": func(*testing.T) (bool, bool, ctrlClient.Client, operatorutils.OperatorConfig) {
+			badOp := operatorutils.OperatorConfig{ConfigDirectory: "invalid-dir"}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return false, false, sourceClient, badOp
+		},
+		"fail - unable to apply crd": func(*testing.T) (bool, bool, ctrlClient.Client, operatorutils.OperatorConfig) {
+			cluster := operatorutils.ClusterConfig{
+				ClusterCTRLClient: customClient{
+					Client: ctrlClientFake.NewClientBuilder().Build(),
+				},
+			}
+			return false, false, cluster.ClusterCTRLClient, operatorConfig
+		},
+	}
+
+	cr := authCRForCRDTests()
+	ctx := context.TODO()
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			success, isDeleting, sourceClient, op := tc(t)
+
+			err := PatchNginxGatewayFabricCRDs(ctx, isDeleting, op, cr, sourceClient)
+			if success {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
+// Asserts Gateway API CRDs are removed on uninstall.
+func TestPatchGatewayAPICRDs_CRDsAreDeletedOnUninstall(t *testing.T) {
+	ctx := context.TODO()
+	gwCRD := &apiextv1.CustomResourceDefinition{
+		TypeMeta:   metav1.TypeMeta{Kind: "CustomResourceDefinition"},
+		ObjectMeta: metav1.ObjectMeta{Name: "gatewayclasses.gateway.networking.k8s.io"},
+	}
+	err := apiextv1.AddToScheme(scheme.Scheme)
+	if err != nil {
+		t.Fatal(err)
+	}
+	src := ctrlClientFake.NewClientBuilder().WithObjects(gwCRD).Build()
+
+	cr := authCRForCRDTests()
+	err = PatchGatewayAPICRDs(ctx, true, operatorConfig, cr, src)
+	assert.NoError(t, err)
+
+	got := &apiextv1.CustomResourceDefinition{}
+	err = src.Get(ctx, client.ObjectKey{Name: "gatewayclasses.gateway.networking.k8s.io"}, got)
+	assert.Error(t, err, "Gateway API CRD must be removed after uninstall")
+}
+
+// Asserts NGINX Gateway Fabric CRDs are removed on uninstall.
+func TestPatchNginxGatewayFabricCRDs_CRDsAreDeletedOnUninstall(t *testing.T) {
+	ctx := context.TODO()
+	ngfCRD := &apiextv1.CustomResourceDefinition{
+		TypeMeta:   metav1.TypeMeta{Kind: "CustomResourceDefinition"},
+		ObjectMeta: metav1.ObjectMeta{Name: "nginxgateways.gateway.nginx.org"},
+	}
+	err := apiextv1.AddToScheme(scheme.Scheme)
+	if err != nil {
+		t.Fatal(err)
+	}
+	src := ctrlClientFake.NewClientBuilder().WithObjects(ngfCRD).Build()
+
+	cr := authCRForCRDTests()
+	err = PatchNginxGatewayFabricCRDs(ctx, true, operatorConfig, cr, src)
+	assert.NoError(t, err)
+
+	got := &apiextv1.CustomResourceDefinition{}
+	err = src.Get(ctx, client.ObjectKey{Name: "nginxgateways.gateway.nginx.org"}, got)
+	assert.Error(t, err, "NGINX Gateway Fabric CRD must be removed after uninstall")
+}
+
+// authCRForCRDTests returns a minimal ContainerStorageModule CR with the
+// authorization module configured so that readConfigFile can resolve the
+// version-specific path for CRD manifests.
+func authCRForCRDTests() csmv1.ContainerStorageModule {
+	return csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-auth",
+			Namespace: "test-ns",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Modules: []csmv1.Module{
+				{
+					Name:          csmv1.AuthorizationServer,
+					Enabled:       true,
+					ConfigVersion: shared.AuthServerConfigVersion,
+				},
+			},
+		},
+	}
+}
