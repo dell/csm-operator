@@ -187,6 +187,10 @@ spec:
               value: /app/tls
             - name: X_CSI_DYNAMIC_SG_ENABLED
               value: "<X_CSI_DYNAMIC_SG_ENABLED>"
+            - name: X_CSI_FS_CHECK_ENABLED
+              value: <X_CSI_FS_CHECK_ENABLED>
+            - name: X_CSI_FS_CHECK_MODE
+              value: <X_CSI_FS_CHECK_MODE>
           volumeMounts:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/powermax.emc.dell.com

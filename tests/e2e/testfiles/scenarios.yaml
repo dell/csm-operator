@@ -1491,6 +1491,43 @@
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
 
+- scenario: "Install PowerMax Driver (FS Check)"
+  paths:
+    - "testfiles/storage_csm_powermax.yaml"
+  tags:
+    - "powermax"
+    - "fscheck"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
+    - "Set up reverse proxy tls secret namespace [powermax]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
+    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is installed"
+    # Validate initial defaults
+    - "Validate [common] env [X_CSI_FS_CHECK_ENABLED] is [] in CSM CR for resource [1]"
+    - "Validate [common] env [X_CSI_FS_CHECK_MODE] is [] in CSM CR for resource [1]"
+    - "Validate [node] [driver] env [X_CSI_FS_CHECK_ENABLED] is [false] in driver for resource [1]"
+    - "Validate [node] [driver] env [X_CSI_FS_CHECK_MODE] is [checkOnly] in driver for resource [1]"
+    # Patch CSM CR to enable FS check
+    - "Set [common] env [X_CSI_FS_CHECK_ENABLED] to [true] in resource [1]"
+    - "Set [common] env [X_CSI_FS_CHECK_MODE] to [checkAndRepair] in resource [1]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    # Wait for driver to be redeployed and validate new values
+    - "Validate [powermax] driver from CR [1] is installed"
+    - "Validate [common] env [X_CSI_FS_CHECK_ENABLED] is [true] in CSM CR for resource [1]"
+    - "Validate [common] env [X_CSI_FS_CHECK_MODE] is [checkAndRepair] in CSM CR for resource [1]"
+    - "Validate [node] [driver] env [X_CSI_FS_CHECK_ENABLED] is [true] in driver for resource [1]"
+    - "Validate [node] [driver] env [X_CSI_FS_CHECK_MODE] is [checkAndRepair] in driver for resource [1]"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is not installed"
+
 - scenario: "Install PowerMax Driver with HealthMonitor"
   paths:
     - "testfiles/storage_csm_powermax_secret.yaml"

@@ -536,6 +536,14 @@ metadata:
                   {
                     "name": "X_CSI_DYNAMIC_SG_ENABLED",
                     "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_FS_CHECK_ENABLED",
+                    "value": "false"
+                  },
+                  {
+                    "name": "X_CSI_FS_CHECK_MODE",
+                    "value": "checkOnly"
                   }
                 ],
                 "imagePullPolicy": "IfNotPresent"
