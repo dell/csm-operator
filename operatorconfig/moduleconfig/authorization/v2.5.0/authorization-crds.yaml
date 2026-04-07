@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.18.0
+    controller-gen.kubebuilder.io/version: v0.20.1
   name: csmroles.csm-authorization.storage.dell.com
 spec:
   group: csm-authorization.storage.dell.com
@@ -36,7 +36,7 @@ spec:
             metadata:
               type: object
             spec:
-              description: CSMRoleSpec defines the desired state of CSMRole
+              description: spec defines the desired state of CSMRole
               properties:
                 pool:
                   description: |-
@@ -59,15 +59,15 @@ spec:
                   type: string
               type: object
             status:
-              description: CSMRoleStatus defines the observed state of CSMRole
+              description: status defines the observed state of CSMRole
               properties:
                 conditions:
-                  description: |-
-                    INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-                    Important: Run "make" to regenerate code after modifying this file
-                    Role.status.conditions.type are: "Available", "NotAvailable", and "UnKnown"
+                  description:
+                    'Role.status.conditions.type are: "Available", "NotAvailable",
+                    and "UnKnown"'
                   items:
-                    description: Condition contains details for one aspect of the current
+                    description:
+                      Condition contains details for one aspect of the current
                       state of this API Resource.
                     properties:
                       lastTransitionTime:
@@ -122,6 +122,8 @@ spec:
                     type: object
                   type: array
               type: object
+          required:
+            - spec
           type: object
       served: true
       storage: true
@@ -132,7 +134,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.18.0
+    controller-gen.kubebuilder.io/version: v0.20.1
   name: csmtenants.csm-authorization.storage.dell.com
 spec:
   group: csm-authorization.storage.dell.com
@@ -166,7 +168,7 @@ spec:
             metadata:
               type: object
             spec:
-              description: CSMTenantSpec defines the desired state of CSMTenant
+              description: spec defines the desired state of CSMTenant
               properties:
                 approveSdc:
                   description: |-
@@ -184,7 +186,8 @@ spec:
                     Comma separated list
                   type: string
                 volumePrefix:
-                  description: VolumePrefix is the prefix added for each new volume
+                  description:
+                    VolumePrefix is the prefix added for each new volume
                     provisioned by the tenant
                   maxLength: 3
                   minLength: 1
@@ -194,14 +197,15 @@ spec:
                 - revoke
               type: object
             status:
-              description: CSMTenantStatus defines the observed state of CSMTenant
+              description: status defines the observed state of CSMTenant
               properties:
                 conditions:
-                  description: |-
-                    INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-                    Important: Run "make" to regenerate code after modifying this file
+                  description:
+                    'Tenant.status.conditions.type are: "Available", "NotAvailable",
+                    and "UnKnown"'
                   items:
-                    description: Condition contains details for one aspect of the current
+                    description:
+                      Condition contains details for one aspect of the current
                       state of this API Resource.
                     properties:
                       lastTransitionTime:
@@ -256,6 +260,8 @@ spec:
                     type: object
                   type: array
               type: object
+          required:
+            - spec
           type: object
       served: true
       storage: true
@@ -266,7 +272,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.18.0
+    controller-gen.kubebuilder.io/version: v0.20.1
   name: storages.csm-authorization.storage.dell.com
 spec:
   group: csm-authorization.storage.dell.com
@@ -300,7 +306,7 @@ spec:
             metadata:
               type: object
             spec:
-              description: StorageSpec defines the desired state of Storage
+              description: spec defines the desired state of Storage
               properties:
                 endpoint:
                   description: |-
@@ -317,11 +323,13 @@ spec:
                     Needed only for PowerScale
                   type: string
                 pollInterval:
-                  description: PollInterval is the polling frequency to test the storage
+                  description:
+                    PollInterval is the polling frequency to test the storage
                     connectivity
                   type: string
                 skipCertificateValidation:
-                  description: SkipCertificateValidation is the flag to skip certificate
+                  description:
+                    SkipCertificateValidation is the flag to skip certificate
                     validation
                   type: boolean
                 storageSystemCredentials:
@@ -350,21 +358,24 @@ spec:
                     Please contact the storage administrator for more details on how to obtain it.
                   type: string
                 type:
-                  description: 'Type is the storage array type, Example: powerflex,
-                    powermax, powerscale, powerstore'
+                  description:
+                    "Type is the storage array type, Example: powerflex,
+                    powermax, powerscale, powerstore"
                   type: string
               required:
                 - skipCertificateValidation
                 - storageSystemCredentials
               type: object
             status:
-              description: StorageStatus defines the observed state of Storage
+              description: status defines the observed state of Storage
               properties:
                 conditions:
-                  description: 'Storage.status.conditions.type are: "Available", "NotAvailable",
+                  description:
+                    'Storage.status.conditions.type are: "Available", "NotAvailable",
                     and "UnKnown"'
                   items:
-                    description: Condition contains details for one aspect of the current
+                    description:
+                      Condition contains details for one aspect of the current
                       state of this API Resource.
                     properties:
                       lastTransitionTime:
@@ -419,6 +430,8 @@ spec:
                     type: object
                   type: array
               type: object
+          required:
+            - spec
           type: object
       served: true
       storage: true
