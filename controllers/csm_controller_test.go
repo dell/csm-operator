@@ -2082,8 +2082,8 @@ func getAuthProxyServerOCP() []csmv1.Module {
 					Enabled: &[]bool{true}[0],
 				},
 				{
-					Name:    "nginx-gateway",
-					Enabled: &[]bool{true}[0],
+					Name:    "nginx-gateway-fabric",
+					Enabled: &[]bool{false}[0],
 				},
 				{
 					Name: "redis",

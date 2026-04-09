@@ -638,7 +638,7 @@ func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageM
 				// Check for either the new gateway component name (v2.5.0+) or the legacy
 				// nginx name (upgrade compat: users migrating from v2.4.0 may still have
 				// name: nginx in their CR; the version gate ensures gateway is used).
-				if (c.Name == "nginx-gateway" || c.Name == "nginx") && *c.Enabled && useGatewayAPI {
+				if (c.Name == "nginx-gateway-fabric" || c.Name == "nginx") && *c.Enabled && useGatewayAPI {
 					gatewayEnabled = true
 				}
 				if c.Name == "cert-manager" && *c.Enabled {

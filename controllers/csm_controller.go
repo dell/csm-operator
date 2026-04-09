@@ -1187,7 +1187,7 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 		}
 	}
 
-	// gatewayComponentEnabled: new v2.5.0+ installs use component name "nginx-gateway".
+	// gatewayComponentEnabled: v2.5.0+ installs use component name "nginx-gateway-fabric".
 	// nginxComponentEnabled: v2.4.0 and below use component name "nginx".
 	// Both are checked for the gateway path to handle upgrade from v2.4.0 to v2.5.0
 	// where the CR component name may still be "nginx".

@@ -119,6 +119,12 @@ function checkForGinkgo() {
     echo "go mod vendor or go get ginkgo error"
     exit 1
   fi
+  # Install the Ginkgo v2 CLI matching the library version to ensure
+  # verbose output (By() step annotations) is streamed correctly.
+  if ! go install github.com/onsi/ginkgo/v2/ginkgo; then
+    echo "Failed to install ginkgo v2 CLI"
+    exit 1
+  fi
 }
 
 function runTests() {

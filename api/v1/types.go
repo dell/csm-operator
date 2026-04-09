@@ -354,6 +354,10 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server ingress configuration"
 	ProxyServerIngress []ProxyServerIngress `json:"proxyServerIngress,omitempty" yaml:"proxyServerIngress,omitempty"`
 
+	// Gateway is the gateway configuration for the authorization proxy-server (v2.5.0+)
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Gateway configuration"
+	Gateway *ProxyServerGateway `json:"gateway,omitempty" yaml:"gateway,omitempty"`
+
 	// Vaults are the vault configurations
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Vault Configurations"
 	// Applicable till CSM v1.14
@@ -439,6 +443,21 @@ type ProxyServerIngress struct {
 
 	// Annotations is an unstructured key value map that stores additional annotations for the ingress
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Annotations"
+	Annotations map[string]string `json:"annotations,omitempty" yaml:"annotations,omitempty"`
+}
+
+// ProxyServerGateway is the gateway configuration for the authorization proxy-server (v2.5.0+)
+type ProxyServerGateway struct {
+	// GatewayClassName is the name of the GatewayClass for the proxy-server Gateway resource
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Gateway Class Name"
+	GatewayClassName string `json:"gatewayClassName,omitempty" yaml:"gatewayClassName,omitempty"`
+
+	// Hosts is the additional hostnames for the proxy-server HTTPRoute
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Gateway Hosts"
+	Hosts []string `json:"hosts,omitempty" yaml:"hosts,omitempty"`
+
+	// Annotations is an unstructured key value map that stores additional annotations for the proxy-server HTTPRoute
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Gateway Annotations"
 	Annotations map[string]string `json:"annotations,omitempty" yaml:"annotations,omitempty"`
 }
 

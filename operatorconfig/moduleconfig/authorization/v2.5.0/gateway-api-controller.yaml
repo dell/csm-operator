@@ -4,10 +4,10 @@ kind: ServiceAccount
 metadata:
   labels:
     app.kubernetes.io/instance: <NAMESPACE>
-    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/name: nginx-gateway-fabric
     app.kubernetes.io/part-of: nginx-gateway-fabric
     app.kubernetes.io/version: 2.4.2
-  name: <NAMESPACE>-nginx-gateway
+  name: <NAMESPACE>-nginx-gateway-fabric
   namespace: <NAMESPACE>
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -15,10 +15,10 @@ kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/instance: <NAMESPACE>
-    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/name: nginx-gateway-fabric
     app.kubernetes.io/part-of: nginx-gateway-fabric
     app.kubernetes.io/version: 2.4.2
-  name: <NAMESPACE>-nginx-gateway
+  name: <NAMESPACE>-nginx-gateway-fabric
 rules:
   - apiGroups:
       - ''
@@ -184,17 +184,17 @@ kind: ClusterRoleBinding
 metadata:
   labels:
     app.kubernetes.io/instance: <NAMESPACE>
-    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/name: nginx-gateway-fabric
     app.kubernetes.io/part-of: nginx-gateway-fabric
     app.kubernetes.io/version: 2.4.2
-  name: <NAMESPACE>-nginx-gateway
+  name: <NAMESPACE>-nginx-gateway-fabric
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: <NAMESPACE>-nginx-gateway
+  name: <NAMESPACE>-nginx-gateway-fabric
 subjects:
   - kind: ServiceAccount
-    name: <NAMESPACE>-nginx-gateway
+    name: <NAMESPACE>-nginx-gateway-fabric
     namespace: <NAMESPACE>
 ---
 apiVersion: v1
@@ -202,10 +202,10 @@ kind: Service
 metadata:
   labels:
     app.kubernetes.io/instance: <NAMESPACE>
-    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/name: nginx-gateway-fabric
     app.kubernetes.io/part-of: nginx-gateway-fabric
     app.kubernetes.io/version: 2.4.2
-  name: <NAMESPACE>-nginx-gateway
+  name: <NAMESPACE>-nginx-gateway-fabric
   namespace: <NAMESPACE>
 spec:
   ports:
@@ -215,13 +215,13 @@ spec:
       targetPort: 8443
   selector:
     app.kubernetes.io/instance: <NAMESPACE>
-    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/name: nginx-gateway-fabric
   type: ClusterIP
 ---
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
-  name: <NAMESPACE>-nginx-gateway-agent-selfsigned
+  name: <NAMESPACE>-nginx-gateway-fabric-agent-selfsigned
   namespace: <NAMESPACE>
 spec:
   selfSigned: {}
@@ -229,10 +229,10 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: <NAMESPACE>-nginx-gateway-agent-tls
+  name: <NAMESPACE>-nginx-gateway-fabric-agent-tls
   namespace: <NAMESPACE>
 spec:
-  secretName: <NAMESPACE>-nginx-gateway-agent-tls
+  secretName: <NAMESPACE>-nginx-gateway-fabric-agent-tls
   duration: 2160h # 90d
   renewBefore: 360h # 15d
   subject:
@@ -248,10 +248,10 @@ spec:
     - server auth
     - client auth
   dnsNames:
-    - <NAMESPACE>-nginx-gateway.<NAMESPACE>.svc
-    - <NAMESPACE>-nginx-gateway.<NAMESPACE>.svc.cluster.local
+    - <NAMESPACE>-nginx-gateway-fabric.<NAMESPACE>.svc
+    - <NAMESPACE>-nginx-gateway-fabric.<NAMESPACE>.svc.cluster.local
   issuerRef:
-    name: <NAMESPACE>-nginx-gateway-agent-selfsigned
+    name: <NAMESPACE>-nginx-gateway-fabric-agent-selfsigned
     kind: Issuer
     group: cert-manager.io
 ---
@@ -261,7 +261,7 @@ metadata:
   labels:
     app.kubernetes.io/component: controller
     app.kubernetes.io/instance: <NAMESPACE>
-    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/name: nginx-gateway-fabric
     app.kubernetes.io/part-of: nginx-gateway-fabric
     app.kubernetes.io/version: 2.4.2
   name: <NAMESPACE>-nginx-gateway-fabric
@@ -271,29 +271,29 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/instance: <NAMESPACE>
-      app.kubernetes.io/name: nginx-gateway
+      app.kubernetes.io/name: nginx-gateway-fabric
   template:
     metadata:
       labels:
         csm: <NAME>
         app.kubernetes.io/instance: <NAMESPACE>
-        app.kubernetes.io/name: nginx-gateway
+        app.kubernetes.io/name: nginx-gateway-fabric
         csmNamespace: <CSM_NAMESPACE>
     spec:
       containers:
-        - name: nginx-gateway
+        - name: nginx-gateway-fabric
           image: ghcr.io/nginx/nginx-gateway-fabric:2.4.2
           imagePullPolicy: IfNotPresent
           args:
             - controller
             - --gateway-ctlr-name=gateway.nginx.org/nginx-gateway-controller
             - --gatewayclass=nginx
-            - --config=<NAMESPACE>-nginx-gateway-config
-            - --service=<NAMESPACE>-nginx-gateway
-            - --agent-tls-secret=<NAMESPACE>-nginx-gateway-agent-tls
+            - --config=<NAMESPACE>-nginx-gateway-fabric-config
+            - --service=<NAMESPACE>-nginx-gateway-fabric
+            - --agent-tls-secret=<NAMESPACE>-nginx-gateway-fabric-agent-tls
             - --metrics-port=9113
             - --health-port=8081
-            - --leader-election-lock-name=<NAMESPACE>-nginx-gateway-leader-election
+            - --leader-election-lock-name=<NAMESPACE>-nginx-gateway-fabric-leader-election
           env:
             - name: POD_IP
               valueFrom:
@@ -374,7 +374,7 @@ spec:
         fsGroup: 1001
         runAsNonRoot: true
       shareProcessNamespace: true
-      serviceAccountName: <NAMESPACE>-nginx-gateway
+      serviceAccountName: <NAMESPACE>-nginx-gateway-fabric
       terminationGracePeriodSeconds: 30
       volumes:
         - emptyDir: {}
@@ -395,7 +395,7 @@ spec:
           name: tmp
         - name: nginx-agent-tls
           secret:
-            secretName: <NAMESPACE>-nginx-gateway-agent-tls
+            secretName: <NAMESPACE>-nginx-gateway-fabric-agent-tls
             items:
               - key: tls.crt
                 path: ca.crt
@@ -409,10 +409,10 @@ kind: NginxGateway
 metadata:
   labels:
     app.kubernetes.io/instance: <NAMESPACE>
-    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/name: nginx-gateway-fabric
     app.kubernetes.io/part-of: nginx-gateway-fabric
     app.kubernetes.io/version: 2.4.2
-  name: <NAMESPACE>-nginx-gateway-config
+  name: <NAMESPACE>-nginx-gateway-fabric-config
   namespace: <NAMESPACE>
 spec:
   logging:
@@ -423,10 +423,10 @@ kind: NginxProxy
 metadata:
   labels:
     app.kubernetes.io/instance: <NAMESPACE>
-    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/name: nginx-gateway-fabric
     app.kubernetes.io/part-of: nginx-gateway-fabric
     app.kubernetes.io/version: 2.4.2
-  name: <NAMESPACE>-nginx-gateway-proxy-config
+  name: <NAMESPACE>-nginx-gateway-fabric-proxy-config
   namespace: <NAMESPACE>
 spec:
   kubernetes:
@@ -443,7 +443,7 @@ kind: GatewayClass
 metadata:
   labels:
     app.kubernetes.io/instance: <NAMESPACE>
-    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/name: nginx-gateway-fabric
     app.kubernetes.io/part-of: nginx-gateway-fabric
     app.kubernetes.io/version: 2.4.2
   name: nginx
@@ -452,7 +452,7 @@ spec:
   parametersRef:
     group: gateway.nginx.org
     kind: NginxProxy
-    name: <NAMESPACE>-nginx-gateway-proxy-config
+    name: <NAMESPACE>-nginx-gateway-fabric-proxy-config
     namespace: <NAMESPACE>
 ---
 apiVersion: gateway.networking.k8s.io/v1
@@ -460,7 +460,7 @@ kind: Gateway
 metadata:
   labels:
     app.kubernetes.io/instance: <NAMESPACE>
-    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/name: nginx-gateway-fabric
     app.kubernetes.io/part-of: nginx-gateway-fabric
     app.kubernetes.io/version: 2.4.2
   name: <NAMESPACE>-gateway
@@ -485,7 +485,7 @@ kind: HTTPRoute
 metadata:
   labels:
     app.kubernetes.io/instance: <NAMESPACE>
-    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/name: nginx-gateway-fabric
     app.kubernetes.io/part-of: nginx-gateway-fabric
     app.kubernetes.io/version: 2.4.2
   name: <NAMESPACE>-gateway

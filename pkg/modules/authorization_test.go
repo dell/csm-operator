@@ -883,6 +883,103 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 
 			return false, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
 		},
+		"fail - nginx-gateway-fabric enabled with proxyServerIngress on v2.5.0+": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			tmpCR := CsmAuthorizationCR()
+			// Replace nginx component with nginx-gateway-fabric (enabled)
+			for i, c := range tmpCR.Spec.Modules[0].Components {
+				if c.Name == AuthNginxIngressComponent {
+					tmpCR.Spec.Modules[0].Components[i].Name = AuthGatewayComponent
+					tmpCR.Spec.Modules[0].Components[i].Enabled = &trueBool
+				}
+			}
+			// proxy-server still has proxyServerIngress set (from CsmAuthorizationCR), which is invalid
+			auth := tmpCR.Spec.Modules[0]
+
+			karaviConfig := getSecret(tmpCR.Namespace, "karavi-config-secret")
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig).Build()
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
+				return ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig).Build(), nil
+			}
+
+			return false, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+		"fail - gateway field set on pre-v2.5.0": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			tmpCR := CsmAuthorizationCR()
+			// Set version to v2.4.0 (pre-gateway)
+			tmpCR.Spec.Modules[0].ConfigVersion = "v2.4.0"
+			tmpCR.Spec.Version = ""
+			tmpCR.Spec.Driver.ConfigVersion = "v2.4.0"
+			// Add gateway field to proxy-server component (invalid for v2.4.0)
+			for i, c := range tmpCR.Spec.Modules[0].Components {
+				if c.Name == AuthProxyServerComponent {
+					tmpCR.Spec.Modules[0].Components[i].Gateway = &csmv1.ProxyServerGateway{
+						GatewayClassName: "nginx",
+						Hosts:            []string{"example.com"},
+					}
+				}
+			}
+			auth := tmpCR.Spec.Modules[0]
+
+			karaviConfig := getSecret(tmpCR.Namespace, "karavi-config-secret")
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig).Build()
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
+				return ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig).Build(), nil
+			}
+
+			return false, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+		"success - nginx-gateway-fabric enabled with gateway field on v2.5.0+": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			tmpCR := CsmAuthorizationCR()
+			// Replace nginx component with nginx-gateway-fabric (enabled)
+			for i, c := range tmpCR.Spec.Modules[0].Components {
+				if c.Name == AuthNginxIngressComponent {
+					tmpCR.Spec.Modules[0].Components[i].Name = AuthGatewayComponent
+					tmpCR.Spec.Modules[0].Components[i].Enabled = &trueBool
+				}
+			}
+			// Replace proxyServerIngress with gateway on proxy-server component
+			for i, c := range tmpCR.Spec.Modules[0].Components {
+				if c.Name == AuthProxyServerComponent {
+					tmpCR.Spec.Modules[0].Components[i].ProxyServerIngress = nil
+					tmpCR.Spec.Modules[0].Components[i].Gateway = &csmv1.ProxyServerGateway{
+						GatewayClassName: "nginx",
+						Hosts:            []string{"example.com"},
+					}
+				}
+			}
+			auth := tmpCR.Spec.Modules[0]
+
+			karaviConfig := getSecret(tmpCR.Namespace, "karavi-config-secret")
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig).Build()
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
+				return ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig).Build(), nil
+			}
+
+			return true, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+		"fail - nginx-gateway-fabric enabled on pre-v2.5.0": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			tmpCR := CsmAuthorizationCR()
+			// Set version to v2.4.0 (pre-gateway)
+			tmpCR.Spec.Modules[0].ConfigVersion = "v2.4.0"
+			tmpCR.Spec.Version = ""
+			tmpCR.Spec.Driver.ConfigVersion = "v2.4.0"
+			// Replace nginx component with nginx-gateway-fabric (invalid for v2.4.0)
+			for i, c := range tmpCR.Spec.Modules[0].Components {
+				if c.Name == AuthNginxIngressComponent {
+					tmpCR.Spec.Modules[0].Components[i].Name = AuthGatewayComponent
+					tmpCR.Spec.Modules[0].Components[i].Enabled = &trueBool
+				}
+			}
+			auth := tmpCR.Spec.Modules[0]
+
+			karaviConfig := getSecret(tmpCR.Namespace, "karavi-config-secret")
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig).Build()
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
+				return ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig).Build(), nil
+			}
+
+			return false, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -3359,16 +3456,18 @@ func TestGetGatewayController(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name        string
-		cr          csmv1.ContainerStorageModule
-		expectError bool
-		description string
+		name              string
+		cr                csmv1.ContainerStorageModule
+		expectError       bool
+		description       string
+		expectedClassName string
 	}{
 		{
-			name:        "Valid Authorization Module with Gateway API",
-			cr:          createAuthCRWithGatewayAPI(),
-			expectError: false,
-			description: "Should successfully generate Gateway API controller YAML",
+			name:              "Valid Authorization Module with Gateway API",
+			cr:                createAuthCRWithGatewayAPI(),
+			expectError:       false,
+			description:       "Should successfully generate Gateway API controller YAML",
+			expectedClassName: "nginx",
 		},
 		{
 			name:        "Missing Authorization Module",
@@ -3394,6 +3493,8 @@ func TestGetGatewayController(t *testing.T) {
 				assert.NotEmpty(t, yamlString)
 				// Verify namespace replacement occurred
 				assert.Contains(t, yamlString, tt.cr.Namespace)
+				// Verify gateway class name substitution
+				assert.Contains(t, yamlString, "gatewayClassName: "+tt.expectedClassName)
 			}
 		})
 	}
@@ -3499,17 +3600,33 @@ func TestAuthorizationIngressWithGatewayAPI(t *testing.T) {
 
 // TestCreateHTTPRoute tests HTTPRoute creation for Gateway API
 func TestCreateHTTPRoute(t *testing.T) {
+	crWithGatewayHosts := createAuthCRWithGatewayAPI()
+	crWithGatewayHosts.Spec.Modules[0].Components[0].Hostname = "csm-authorization.com"
+	crWithGatewayHosts.Spec.Modules[0].Components[0].Gateway = &csmv1.ProxyServerGateway{
+		GatewayClassName: "nginx",
+		Hosts:            []string{"gateway-host.example.com"},
+	}
+
 	tests := []struct {
 		name        string
 		cr          csmv1.ContainerStorageModule
 		expectError bool
 		description string
+		expectHosts int
 	}{
 		{
 			name:        "Valid HTTPRoute Creation",
 			cr:          createAuthCRWithGatewayAPI(),
 			expectError: false,
 			description: "Should successfully create HTTPRoute object",
+			expectHosts: 0,
+		},
+		{
+			name:        "HTTPRoute with Gateway Hosts",
+			cr:          crWithGatewayHosts,
+			expectError: false,
+			description: "Should include hosts from gateway config",
+			expectHosts: 2,
 		},
 	}
 
@@ -3525,6 +3642,9 @@ func TestCreateHTTPRoute(t *testing.T) {
 				assert.NotNil(t, route)
 				assert.Equal(t, tt.cr.Namespace, route.Namespace)
 				assert.Contains(t, route.Name, "proxy-server")
+				if tt.expectHosts > 0 {
+					assert.Len(t, route.Spec.Hostnames, tt.expectHosts)
+				}
 			}
 		})
 	}
@@ -3555,6 +3675,10 @@ func createAuthCRWithGatewayAPI() csmv1.ContainerStorageModule {
 							Image: "dellemc/csm-authorization-proxy:v2.5.0",
 							Envs: []corev1.EnvVar{
 								{Name: "PROXY_HOST", Value: "authorization-gateway-nginx.authorization.svc.cluster.local"},
+							},
+							Gateway: &csmv1.ProxyServerGateway{
+								GatewayClassName: "nginx",
+								Hosts:            []string{},
 							},
 						},
 					},

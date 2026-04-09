@@ -113,7 +113,7 @@ const (
 	// AuthNginxIngressComponent - nginx ingress component (v2.4.0 and below)
 	AuthNginxIngressComponent = "nginx"
 	// AuthGatewayComponent - Gateway API controller component name (v2.5.0+)
-	AuthGatewayComponent = "nginx-gateway"
+	AuthGatewayComponent = "nginx-gateway-fabric"
 	// AuthCertManagerComponent - cert-manager component
 	AuthCertManagerComponent = "cert-manager"
 	// AuthRedisComponent - redis component
@@ -695,6 +695,40 @@ func AuthorizationServerPrecheck(ctx context.Context, op operatorutils.OperatorC
 	// Validate the (non-empty) version here
 	if err := checkVersion(string(csmv1.Authorization), authVersion, op.ConfigDirectory); err != nil {
 		return err
+	}
+
+	// Validate gateway vs proxyServerIngress usage based on version and nginx-gateway-fabric component
+	isV25OrLater, err := operatorutils.MinVersionCheck("v2.5.0", authVersion)
+	if err != nil {
+		return fmt.Errorf("error checking authorization version: %v", err)
+	}
+
+	nginxGatewayEnabled := false
+	for _, component := range auth.Components {
+		if component.Name == AuthGatewayComponent && component.Enabled != nil && *component.Enabled {
+			nginxGatewayEnabled = true
+			break
+		}
+	}
+
+	// nginx-gateway-fabric component requires v2.5.0+
+	if !isV25OrLater && nginxGatewayEnabled {
+		return fmt.Errorf("nginx-gateway-fabric component is not supported with authorization v2.4.0 and below; use nginx component instead")
+	}
+
+	for _, component := range auth.Components {
+		if component.Name == AuthProxyServerComponent {
+			if isV25OrLater && nginxGatewayEnabled {
+				if len(component.ProxyServerIngress) > 0 {
+					return fmt.Errorf("proxyServerIngress is not supported when nginx-gateway-fabric is enabled (v2.5.0+); use the gateway field instead")
+				}
+			}
+			if !isV25OrLater && !nginxGatewayEnabled {
+				if component.Gateway != nil {
+					return fmt.Errorf("gateway field is not supported with authorization v2.4.0 and below; use proxyServerIngress instead")
+				}
+			}
+		}
 	}
 
 	configComponentFound := false
@@ -2209,6 +2243,7 @@ func createHTTPRoute(cr csmv1.ContainerStorageModule) (*gatewayv1.HTTPRoute, err
 	var hosts []gatewayv1.Hostname
 	gatewayName := cr.Namespace + "-gateway"
 	gwNamespace := gatewayv1.Namespace(cr.Namespace)
+	annotations := make(map[string]string)
 
 	for _, component := range authModule.Components {
 		if component.Name == AuthProxyServerComponent {
@@ -2218,6 +2253,17 @@ func createHTTPRoute(cr csmv1.ContainerStorageModule) (*gatewayv1.HTTPRoute, err
 			for _, proxyIngress := range component.ProxyServerIngress {
 				for _, host := range proxyIngress.Hosts {
 					hosts = append(hosts, gatewayv1.Hostname(host))
+				}
+				for k, v := range proxyIngress.Annotations {
+					annotations[k] = v
+				}
+			}
+			if component.Gateway != nil {
+				for _, host := range component.Gateway.Hosts {
+					hosts = append(hosts, gatewayv1.Hostname(host))
+				}
+				for k, v := range component.Gateway.Annotations {
+					annotations[k] = v
 				}
 			}
 		}
@@ -2233,8 +2279,9 @@ func createHTTPRoute(cr csmv1.ContainerStorageModule) (*gatewayv1.HTTPRoute, err
 			Kind:       "HTTPRoute",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "proxy-server",
-			Namespace: cr.Namespace,
+			Name:        "proxy-server",
+			Namespace:   cr.Namespace,
+			Annotations: annotations,
 		},
 		Spec: gatewayv1.HTTPRouteSpec{
 			CommonRouteSpec: gatewayv1.CommonRouteSpec{

@@ -90,6 +90,21 @@ spec:
           - description: Envs is the set of environment variables for the container
             displayName: Container Environment vars
             path: driver.common.envs
+          - description: Gateway is the gateway configuration for the authorization
+              proxy-server (v2.5.0+)
+            displayName: Authorization Proxy Server Gateway configuration
+            path: driver.common.gateway
+          - description: Annotations is an unstructured key value map that stores
+              additional annotations for the proxy-server HTTPRoute
+            displayName: Authorization Proxy Server Gateway Annotations
+            path: driver.common.gateway.annotations
+          - description: GatewayClassName is the name of the GatewayClass for the
+              proxy-server Gateway resource
+            displayName: Authorization Proxy Server Gateway Class Name
+            path: driver.common.gateway.gatewayClassName
+          - description: Hosts is the additional hostnames for the proxy-server HTTPRoute
+            displayName: Authorization Proxy Server Gateway Hosts
+            path: driver.common.gateway.hosts
           - description: Hostname is the authorization proxy server hostname
             displayName: Authorization Proxy Server Hostname
             path: driver.common.hostname
@@ -339,6 +354,21 @@ spec:
           - description: Envs is the set of environment variables for the container
             displayName: Container Environment vars
             path: driver.controller.envs
+          - description: Gateway is the gateway configuration for the authorization
+              proxy-server (v2.5.0+)
+            displayName: Authorization Proxy Server Gateway configuration
+            path: driver.controller.gateway
+          - description: Annotations is an unstructured key value map that stores
+              additional annotations for the proxy-server HTTPRoute
+            displayName: Authorization Proxy Server Gateway Annotations
+            path: driver.controller.gateway.annotations
+          - description: GatewayClassName is the name of the GatewayClass for the
+              proxy-server Gateway resource
+            displayName: Authorization Proxy Server Gateway Class Name
+            path: driver.controller.gateway.gatewayClassName
+          - description: Hosts is the additional hostnames for the proxy-server HTTPRoute
+            displayName: Authorization Proxy Server Gateway Hosts
+            path: driver.controller.gateway.hosts
           - description: Hostname is the authorization proxy server hostname
             displayName: Authorization Proxy Server Hostname
             path: driver.controller.hostname
@@ -596,6 +626,21 @@ spec:
           - description: Envs is the set of environment variables for the container
             displayName: Container Environment vars
             path: driver.initContainers[0].envs
+          - description: Gateway is the gateway configuration for the authorization
+              proxy-server (v2.5.0+)
+            displayName: Authorization Proxy Server Gateway configuration
+            path: driver.initContainers[0].gateway
+          - description: Annotations is an unstructured key value map that stores
+              additional annotations for the proxy-server HTTPRoute
+            displayName: Authorization Proxy Server Gateway Annotations
+            path: driver.initContainers[0].gateway.annotations
+          - description: GatewayClassName is the name of the GatewayClass for the
+              proxy-server Gateway resource
+            displayName: Authorization Proxy Server Gateway Class Name
+            path: driver.initContainers[0].gateway.gatewayClassName
+          - description: Hosts is the additional hostnames for the proxy-server HTTPRoute
+            displayName: Authorization Proxy Server Gateway Hosts
+            path: driver.initContainers[0].gateway.hosts
           - description: Hostname is the authorization proxy server hostname
             displayName: Authorization Proxy Server Hostname
             path: driver.initContainers[0].hostname
@@ -842,6 +887,21 @@ spec:
           - description: Envs is the set of environment variables for the container
             displayName: Container Environment vars
             path: driver.node.envs
+          - description: Gateway is the gateway configuration for the authorization
+              proxy-server (v2.5.0+)
+            displayName: Authorization Proxy Server Gateway configuration
+            path: driver.node.gateway
+          - description: Annotations is an unstructured key value map that stores
+              additional annotations for the proxy-server HTTPRoute
+            displayName: Authorization Proxy Server Gateway Annotations
+            path: driver.node.gateway.annotations
+          - description: GatewayClassName is the name of the GatewayClass for the
+              proxy-server Gateway resource
+            displayName: Authorization Proxy Server Gateway Class Name
+            path: driver.node.gateway.gatewayClassName
+          - description: Hosts is the additional hostnames for the proxy-server HTTPRoute
+            displayName: Authorization Proxy Server Gateway Hosts
+            path: driver.node.gateway.hosts
           - description: Hostname is the authorization proxy server hostname
             displayName: Authorization Proxy Server Hostname
             path: driver.node.hostname
@@ -1091,6 +1151,21 @@ spec:
           - description: Envs is the set of environment variables for the container
             displayName: Container Environment vars
             path: driver.sideCars[0].envs
+          - description: Gateway is the gateway configuration for the authorization
+              proxy-server (v2.5.0+)
+            displayName: Authorization Proxy Server Gateway configuration
+            path: driver.sideCars[0].gateway
+          - description: Annotations is an unstructured key value map that stores
+              additional annotations for the proxy-server HTTPRoute
+            displayName: Authorization Proxy Server Gateway Annotations
+            path: driver.sideCars[0].gateway.annotations
+          - description: GatewayClassName is the name of the GatewayClass for the
+              proxy-server Gateway resource
+            displayName: Authorization Proxy Server Gateway Class Name
+            path: driver.sideCars[0].gateway.gatewayClassName
+          - description: Hosts is the additional hostnames for the proxy-server HTTPRoute
+            displayName: Authorization Proxy Server Gateway Hosts
+            path: driver.sideCars[0].gateway.hosts
           - description: Hostname is the authorization proxy server hostname
             displayName: Authorization Proxy Server Hostname
             path: driver.sideCars[0].hostname
@@ -1350,6 +1425,21 @@ spec:
           - description: Envs is the set of environment variables for the container
             displayName: Container Environment vars
             path: modules[0].components[0].envs
+          - description: Gateway is the gateway configuration for the authorization
+              proxy-server (v2.5.0+)
+            displayName: Authorization Proxy Server Gateway configuration
+            path: modules[0].components[0].gateway
+          - description: Annotations is an unstructured key value map that stores
+              additional annotations for the proxy-server HTTPRoute
+            displayName: Authorization Proxy Server Gateway Annotations
+            path: modules[0].components[0].gateway.annotations
+          - description: GatewayClassName is the name of the GatewayClass for the
+              proxy-server Gateway resource
+            displayName: Authorization Proxy Server Gateway Class Name
+            path: modules[0].components[0].gateway.gatewayClassName
+          - description: Hosts is the additional hostnames for the proxy-server HTTPRoute
+            displayName: Authorization Proxy Server Gateway Hosts
+            path: modules[0].components[0].gateway.hosts
           - description: Hostname is the authorization proxy server hostname
             displayName: Authorization Proxy Server Hostname
             path: modules[0].components[0].hostname
@@ -1603,6 +1693,21 @@ spec:
           - description: Envs is the set of environment variables for the container
             displayName: Container Environment vars
             path: modules[0].initContainer[0].envs
+          - description: Gateway is the gateway configuration for the authorization
+              proxy-server (v2.5.0+)
+            displayName: Authorization Proxy Server Gateway configuration
+            path: modules[0].initContainer[0].gateway
+          - description: Annotations is an unstructured key value map that stores
+              additional annotations for the proxy-server HTTPRoute
+            displayName: Authorization Proxy Server Gateway Annotations
+            path: modules[0].initContainer[0].gateway.annotations
+          - description: GatewayClassName is the name of the GatewayClass for the
+              proxy-server Gateway resource
+            displayName: Authorization Proxy Server Gateway Class Name
+            path: modules[0].initContainer[0].gateway.gatewayClassName
+          - description: Hosts is the additional hostnames for the proxy-server HTTPRoute
+            displayName: Authorization Proxy Server Gateway Hosts
+            path: modules[0].initContainer[0].gateway.hosts
           - description: Hostname is the authorization proxy server hostname
             displayName: Authorization Proxy Server Hostname
             path: modules[0].initContainer[0].hostname

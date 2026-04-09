@@ -298,6 +298,28 @@ spec:
                             type: object
                           maxItems: 30
                           type: array
+                        gateway:
+                          description: Gateway is the gateway configuration for the
+                            authorization proxy-server (v2.5.0+)
+                          properties:
+                            annotations:
+                              additionalProperties:
+                                type: string
+                              description: Annotations is an unstructured key value
+                                map that stores additional annotations for the proxy-server
+                                HTTPRoute
+                              type: object
+                            gatewayClassName:
+                              description: GatewayClassName is the name of the GatewayClass
+                                for the proxy-server Gateway resource
+                              type: string
+                            hosts:
+                              description: Hosts is the additional hostnames for the
+                                proxy-server HTTPRoute
+                              items:
+                                type: string
+                              type: array
+                          type: object
                         hostname:
                           description: Hostname is the authorization proxy server
                             hostname
@@ -800,6 +822,28 @@ spec:
                             type: object
                           maxItems: 30
                           type: array
+                        gateway:
+                          description: Gateway is the gateway configuration for the
+                            authorization proxy-server (v2.5.0+)
+                          properties:
+                            annotations:
+                              additionalProperties:
+                                type: string
+                              description: Annotations is an unstructured key value
+                                map that stores additional annotations for the proxy-server
+                                HTTPRoute
+                              type: object
+                            gatewayClassName:
+                              description: GatewayClassName is the name of the GatewayClass
+                                for the proxy-server Gateway resource
+                              type: string
+                            hosts:
+                              description: Hosts is the additional hostnames for the
+                                proxy-server HTTPRoute
+                              items:
+                                type: string
+                              type: array
+                          type: object
                         hostname:
                           description: Hostname is the authorization proxy server
                             hostname
@@ -1322,6 +1366,28 @@ spec:
                               type: object
                             maxItems: 30
                             type: array
+                          gateway:
+                            description: Gateway is the gateway configuration for
+                              the authorization proxy-server (v2.5.0+)
+                            properties:
+                              annotations:
+                                additionalProperties:
+                                  type: string
+                                description: Annotations is an unstructured key value
+                                  map that stores additional annotations for the proxy-server
+                                  HTTPRoute
+                                type: object
+                              gatewayClassName:
+                                description: GatewayClassName is the name of the GatewayClass
+                                  for the proxy-server Gateway resource
+                                type: string
+                              hosts:
+                                description: Hosts is the additional hostnames for
+                                  the proxy-server HTTPRoute
+                                items:
+                                  type: string
+                                type: array
+                            type: object
                           hostname:
                             description: Hostname is the authorization proxy server
                               hostname
@@ -1825,6 +1891,28 @@ spec:
                             type: object
                           maxItems: 30
                           type: array
+                        gateway:
+                          description: Gateway is the gateway configuration for the
+                            authorization proxy-server (v2.5.0+)
+                          properties:
+                            annotations:
+                              additionalProperties:
+                                type: string
+                              description: Annotations is an unstructured key value
+                                map that stores additional annotations for the proxy-server
+                                HTTPRoute
+                              type: object
+                            gatewayClassName:
+                              description: GatewayClassName is the name of the GatewayClass
+                                for the proxy-server Gateway resource
+                              type: string
+                            hosts:
+                              description: Hosts is the additional hostnames for the
+                                proxy-server HTTPRoute
+                              items:
+                                type: string
+                              type: array
+                          type: object
                         hostname:
                           description: Hostname is the authorization proxy server
                             hostname
@@ -2332,6 +2420,28 @@ spec:
                               type: object
                             maxItems: 30
                             type: array
+                          gateway:
+                            description: Gateway is the gateway configuration for
+                              the authorization proxy-server (v2.5.0+)
+                            properties:
+                              annotations:
+                                additionalProperties:
+                                  type: string
+                                description: Annotations is an unstructured key value
+                                  map that stores additional annotations for the proxy-server
+                                  HTTPRoute
+                                type: object
+                              gatewayClassName:
+                                description: GatewayClassName is the name of the GatewayClass
+                                  for the proxy-server Gateway resource
+                                type: string
+                              hosts:
+                                description: Hosts is the additional hostnames for
+                                  the proxy-server HTTPRoute
+                                items:
+                                  type: string
+                                type: array
+                            type: object
                           hostname:
                             description: Hostname is the authorization proxy server
                               hostname
@@ -2873,6 +2983,28 @@ spec:
                                 type: object
                               maxItems: 30
                               type: array
+                            gateway:
+                              description: Gateway is the gateway configuration for
+                                the authorization proxy-server (v2.5.0+)
+                              properties:
+                                annotations:
+                                  additionalProperties:
+                                    type: string
+                                  description: Annotations is an unstructured key
+                                    value map that stores additional annotations for
+                                    the proxy-server HTTPRoute
+                                  type: object
+                                gatewayClassName:
+                                  description: GatewayClassName is the name of the
+                                    GatewayClass for the proxy-server Gateway resource
+                                  type: string
+                                hosts:
+                                  description: Hosts is the additional hostnames for
+                                    the proxy-server HTTPRoute
+                                  items:
+                                    type: string
+                                  type: array
+                              type: object
                             hostname:
                               description: Hostname is the authorization proxy server
                                 hostname
@@ -3403,6 +3535,28 @@ spec:
                                 type: object
                               maxItems: 30
                               type: array
+                            gateway:
+                              description: Gateway is the gateway configuration for
+                                the authorization proxy-server (v2.5.0+)
+                              properties:
+                                annotations:
+                                  additionalProperties:
+                                    type: string
+                                  description: Annotations is an unstructured key
+                                    value map that stores additional annotations for
+                                    the proxy-server HTTPRoute
+                                  type: object
+                                gatewayClassName:
+                                  description: GatewayClassName is the name of the
+                                    GatewayClass for the proxy-server Gateway resource
+                                  type: string
+                                hosts:
+                                  description: Hosts is the additional hostnames for
+                                    the proxy-server HTTPRoute
+                                  items:
+                                    type: string
+                                  type: array
+                              type: object
                             hostname:
                               description: Hostname is the authorization proxy server
                                 hostname
