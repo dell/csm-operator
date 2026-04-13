@@ -57,7 +57,7 @@ jobs:
           bash ./.github/scripts/csm-update-ocp-examples.sh $OCP_VERSION $DRIVER_VERSION $COSI_VERSION
 
       - name: Generate GitHub App Token
-        uses: actions/create-github-app-token@v3.0.0
+        uses: actions/create-github-app-token@v3.1.1
         id: generate-token
         with:
           app-id: ${{ vars.CSM_RELEASE_APP_ID }}
