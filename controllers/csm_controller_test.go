@@ -2322,49 +2322,6 @@ func (suite *CSMControllerTestSuite) TestReconcileAuthorizationBadCert() {
 	csm.Spec.Modules[0].Components = goodModules
 }
 
-func (suite *CSMControllerTestSuite) TestReconcileAuthorizationGatewayCRDs() {
-	csm := shared.MakeCSM(csmName, suite.namespace, shared.AuthServerConfigVersion)
-	csm.Spec.Modules = getAuthProxyServer()
-	reconciler := suite.createReconciler()
-
-	// Disable cert-manager and proxy-server so the reconciler reaches the gateway CRD path
-	for i, c := range csm.Spec.Modules[0].Components {
-		if c.Name == modules.AuthCertManagerComponent || c.Name == modules.AuthProxyServerComponent {
-			csm.Spec.Modules[0].Components[i].Enabled = &[]bool{false}[0]
-		}
-	}
-
-	// With valid operatorConfig, the gateway CRDs should be applied successfully.
-	// GatewayController itself may fail because the fake client doesn't have all
-	// required objects, but the CRD installation step should succeed.
-	_ = reconciler.reconcileAuthorization(ctx, false, operatorConfig, csm, suite.fakeClient, operatorutils.VersionSpec{})
-
-	// Verify Gateway API CRDs were created
-	gwCRD := &apiextv1.CustomResourceDefinition{}
-	err := suite.fakeClient.Get(ctx, client.ObjectKey{Name: "gatewayclasses.gateway.networking.k8s.io"}, gwCRD)
-	assert.NoError(suite.T(), err, "Gateway API CRD gatewayclasses should be created")
-
-	err = suite.fakeClient.Get(ctx, client.ObjectKey{Name: "httproutes.gateway.networking.k8s.io"}, gwCRD)
-	assert.NoError(suite.T(), err, "Gateway API CRD httproutes should be created")
-
-	// Verify NGINX Gateway Fabric CRDs were created
-	ngfCRD := &apiextv1.CustomResourceDefinition{}
-	err = suite.fakeClient.Get(ctx, client.ObjectKey{Name: "nginxgateways.gateway.nginx.org"}, ngfCRD)
-	assert.NoError(suite.T(), err, "NGINX Gateway Fabric CRD nginxgateways should be created")
-
-	err = suite.fakeClient.Get(ctx, client.ObjectKey{Name: "nginxproxies.gateway.nginx.org"}, ngfCRD)
-	assert.NoError(suite.T(), err, "NGINX Gateway Fabric CRD nginxproxies should be created")
-
-	// Verify CRDs are deleted on uninstall
-	_ = reconciler.reconcileAuthorization(ctx, true, operatorConfig, csm, suite.fakeClient, operatorutils.VersionSpec{})
-
-	err = suite.fakeClient.Get(ctx, client.ObjectKey{Name: "gatewayclasses.gateway.networking.k8s.io"}, gwCRD)
-	assert.Error(suite.T(), err, "Gateway API CRD must be removed after uninstall")
-
-	err = suite.fakeClient.Get(ctx, client.ObjectKey{Name: "nginxgateways.gateway.nginx.org"}, ngfCRD)
-	assert.Error(suite.T(), err, "NGINX Gateway Fabric CRD must be removed after uninstall")
-}
-
 func (suite *CSMControllerTestSuite) TestReconcileAuthorizationNginxIngress() {
 	csm := shared.MakeCSM(csmName, suite.namespace, shared.AuthServerConfigVersion)
 	csm.Spec.Modules = getAuthProxyServer()
@@ -3541,34 +3498,6 @@ func (suite *CSMControllerTestSuite) TestReconcileObservabilityTopologyError() {
 	assert.NotNil(suite.T(), err)
 }
 
-// TestReconcileAuthorizationGatewayAndNginxErrors covers lines 1225-1240
-func (suite *CSMControllerTestSuite) TestReconcileAuthorizationGatewayAndNginxErrors() {
-	csm := shared.MakeCSM(csmName, suite.namespace, shared.AuthServerConfigVersion)
-	csm.Spec.Modules = getAuthProxyServer()
-	reconciler := suite.createReconciler()
-
-	// Disable cert-manager and proxy-server to reach Gateway CRD path
-	for i, c := range csm.Spec.Modules[0].Components {
-		if c.Name == modules.AuthCertManagerComponent || c.Name == modules.AuthProxyServerComponent {
-			csm.Spec.Modules[0].Components[i].Enabled = &[]bool{false}[0]
-		}
-	}
-
-	// Inject error on CRD creation/update for Gateway API CRDs
-	apiFailFunc = func(_ string, obj runtime.Object) error {
-		if crd, ok := obj.(*apiextv1.CustomResourceDefinition); ok {
-			if strings.Contains(crd.Name, "gateway") {
-				return fmt.Errorf("gateway CRD error")
-			}
-		}
-		return nil
-	}
-
-	err := reconciler.reconcileAuthorization(ctx, false, operatorConfig, csm, suite.fakeClient, operatorutils.VersionSpec{})
-	assert.NotNil(suite.T(), err)
-	apiFailFunc = nil
-}
-
 // TestGetDriverConfigNodeError covers line 1323-1325
 func (suite *CSMControllerTestSuite) TestGetDriverConfigNodeError() {
 	// Create a CSM with a valid CSIDriver but invalid node config
@@ -4151,46 +4080,6 @@ func (suite *CSMControllerTestSuite) TestSyncCSMAuthInjectionDaemonsetError() {
 	err = r.SyncCSM(ctx, csm, tmpOpConfig, suite.fakeClient)
 	assert.NotNil(suite.T(), err)
 	assert.Contains(suite.T(), err.Error(), "auth")
-}
-
-// TestReconcileAuthorizationGatewayNginxCRDError covers lines 1225-1227
-func (suite *CSMControllerTestSuite) TestReconcileAuthorizationGatewayNginxCRDError() {
-	csm := shared.MakeCSM(csmName, suite.namespace, shared.AuthServerConfigVersion)
-	csm.Spec.Modules = getAuthProxyServer()
-	reconciler := suite.createReconciler()
-
-	// Set to v2.5.0 for Gateway API path
-	for i := range csm.Spec.Modules {
-		if csm.Spec.Modules[i].Name == csmv1.AuthorizationServer {
-			csm.Spec.Modules[i].ConfigVersion = "v2.5.0"
-		}
-	}
-
-	// Disable cert-manager and proxy-server
-	for i, c := range csm.Spec.Modules[0].Components {
-		if c.Name == modules.AuthCertManagerComponent || c.Name == modules.AuthProxyServerComponent {
-			csm.Spec.Modules[0].Components[i].Enabled = &[]bool{false}[0]
-		}
-	}
-
-	// Use a temp config with nginx-gateway-fabric-crds.yaml removed
-	tmpDir, err := os.MkdirTemp("", "opconfig-gw-*")
-	assert.Nil(suite.T(), err)
-	defer os.RemoveAll(tmpDir)
-
-	err = exec.Command("cp", "-r", "../operatorconfig/.", tmpDir).Run()
-	assert.Nil(suite.T(), err)
-
-	// Remove the nginx gateway fabric CRDs file
-	nginxCRDFile := filepath.Join(tmpDir, "moduleconfig/authorization/v2.5.0/nginx-gateway-fabric-crds.yaml")
-	if _, err := os.Stat(nginxCRDFile); err == nil {
-		os.Remove(nginxCRDFile)
-	}
-
-	tmpOpConfig := operatorutils.OperatorConfig{ConfigDirectory: tmpDir}
-	err = reconciler.reconcileAuthorization(ctx, false, tmpOpConfig, csm, suite.fakeClient, operatorutils.VersionSpec{})
-	assert.NotNil(suite.T(), err)
-	assert.Contains(suite.T(), err.Error(), "NGINX Gateway Fabric CRDs")
 }
 
 // TestReconcileAuthorizationGatewayControllerError covers lines 1238-1240

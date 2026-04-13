@@ -359,6 +359,16 @@ getMasterNodeIP
 getArrayInfo
 checkForScenariosFile
 setupNamespaces
+
+# Install Gateway API and NGINX Gateway Fabric CRDs (prerequisite for auth v2.5.0+)
+# Installed unconditionally as multiple test suites (--pflex, --auth-proxy, etc.) may deploy auth
+if [ "$IS_OPENSHIFT" != "true" ]; then
+  echo "Installing Gateway API CRDs..."
+  kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
+  echo "Installing NGINX Gateway Fabric CRDs..."
+  kubectl apply --server-side -f https://raw.githubusercontent.com/nginx/nginx-gateway-fabric/v2.4.2/deploy/crds.yaml
+fi
+
 if [[ $INSTALL_VAULT == "true" ]]; then
   vaultSetupAutomation
 fi

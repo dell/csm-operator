@@ -1216,16 +1216,6 @@ func (r *ContainerStorageModuleReconciler) reconcileAuthorization(ctx context.Co
 		if isV25OrLater && (gatewayComponentEnabled || nginxComponentEnabled) {
 			log.Infow("Reconcile authorization Gateway API Controller")
 
-			// Install Gateway API and NGINX Gateway Fabric CRDs before deploying the gateway controller
-			log.Infow("Reconcile Gateway API CRDs")
-			if err := modules.PatchGatewayAPICRDs(ctx, isDeleting, op, cr, ctrlClient); err != nil {
-				return fmt.Errorf("unable to reconcile Gateway API CRDs: %v", err)
-			}
-			log.Infow("Reconcile NGINX Gateway Fabric CRDs")
-			if err := modules.PatchNginxGatewayFabricCRDs(ctx, isDeleting, op, cr, ctrlClient); err != nil {
-				return fmt.Errorf("unable to reconcile NGINX Gateway Fabric CRDs: %v", err)
-			}
-
 			// When upgrading from v2.4.0 to v2.5.0, explicitly delete old NGINX Ingress Controller
 			// before deploying Gateway API controller
 			if !isDeleting {

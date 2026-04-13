@@ -58,10 +58,6 @@ const (
 	AuthNginxIngressManifest = "nginx-ingress-controller.yaml"
 	// AuthGatewayManifest - gateway API controller manifest for authorization module (v2.5.0+)
 	AuthGatewayManifest = "gateway-api-controller.yaml"
-	// GatewayAPICRDsManifest - file name for Gateway API CRDs
-	GatewayAPICRDsManifest = "gateway-api-crds.yaml"
-	// NginxGatewayFabricCRDsManifest - file name for NGINX Gateway Fabric CRDs
-	NginxGatewayFabricCRDsManifest = "nginx-gateway-fabric-crds.yaml"
 	// AuthPolicyManifest -
 	AuthPolicyManifest = "policies.yaml"
 	// AuthCustomCert - custom certificate file
@@ -1835,54 +1831,6 @@ func getNginxIngressController(ctx context.Context, op operatorutils.OperatorCon
 	YamlString = strings.ReplaceAll(YamlString, AuthCSMNameSpace, cr.Namespace)
 
 	return YamlString, nil
-}
-
-func getGatewayAPICRDs(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
-	auth, err := getAuthorizationModule(cr)
-	if err != nil {
-		return "", err
-	}
-
-	buf, err := readConfigFile(ctx, auth, cr, op, GatewayAPICRDsManifest)
-	if err != nil {
-		return "", err
-	}
-
-	return string(buf), nil
-}
-
-func getNginxGatewayFabricCRDs(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule) (string, error) {
-	auth, err := getAuthorizationModule(cr)
-	if err != nil {
-		return "", err
-	}
-
-	buf, err := readConfigFile(ctx, auth, cr, op, NginxGatewayFabricCRDsManifest)
-	if err != nil {
-		return "", err
-	}
-
-	return string(buf), nil
-}
-
-// PatchGatewayAPICRDs - apply/delete Gateway API CRDs (gateway.networking.k8s.io)
-func PatchGatewayAPICRDs(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-	crdYamlString, err := getGatewayAPICRDs(ctx, op, cr)
-	if err != nil {
-		return err
-	}
-
-	return applyDeleteObjects(ctx, ctrlClient, crdYamlString, isDeleting)
-}
-
-// PatchNginxGatewayFabricCRDs - apply/delete NGINX Gateway Fabric CRDs (gateway.nginx.org)
-func PatchNginxGatewayFabricCRDs(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
-	crdYamlString, err := getNginxGatewayFabricCRDs(ctx, op, cr)
-	if err != nil {
-		return err
-	}
-
-	return applyDeleteObjects(ctx, ctrlClient, crdYamlString, isDeleting)
 }
 
 // NginxIngressController - apply/delete nginx ingress controller objects
