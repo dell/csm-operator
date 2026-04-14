@@ -4,9 +4,7 @@ metadata:
   name: unity
   namespace: unity
 spec:
+  version: v1.17.0
   driver:
     csiDriverType: "unity"
-    configVersion: v2.17.0
     forceRemoveDriver: true
-    common:
-      image: quay.io/dell/container-storage-modules/csi-unity:v2.17.0

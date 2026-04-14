@@ -4,6 +4,7 @@
 *.dll
 *.so
 *.dylib
+*.pem
 bin
 testbin/*
 vendor/
@@ -29,6 +30,7 @@ __debug_bin*
 
 # This file contains environment-specific information and should not be committed
 tests/e2e/array-info.env
+tests/e2e/array-info.yaml
 
 # Ignore workspace file
 *code-workspace

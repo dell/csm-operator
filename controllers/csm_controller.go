@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -311,6 +311,13 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 				log.Errorw("remove driver", "error", err.Error())
 				return ctrl.Result{}, fmt.Errorf("error when deleting driver: %v", err)
 			}
+		} else {
+			// When forceRemoveDriver is false, remove ownerReferences from the
+			// controller deployment so that Kubernetes garbage collection does
+			// not delete it when the CSM CR is removed.
+			if err := r.removeDeploymentOwnerRef(ctx, csm); err != nil {
+				log.Infow("Could not remove ownerReference from deployment", "error", err.Error())
+			}
 		}
 
 		// check for force cleanup on standalone module
@@ -463,13 +470,14 @@ func (r *ContainerStorageModuleReconciler) handleDeploymentUpdate(oldObj interfa
 
 		newStatus := csm.GetCSMStatus()
 
-		// Updating controller status manually as controller runtime API is not updating csm object with latest data
-		// TODO: Can remove this once the controller runtime repo has a fix for updating the object passed
-		newStatus.ControllerStatus.Available = strconv.Itoa(int(available))
-		newStatus.ControllerStatus.Desired = strconv.Itoa(int(desired))
-		newStatus.ControllerStatus.Failed = strconv.Itoa(int(numberUnavailable))
+		// Pass deployment status from the event object directly to avoid stale informer cache reads
+		deploymentStatus := csmv1.PodStatus{
+			Available: strconv.Itoa(int(available)),
+			Desired:   strconv.Itoa(int(desired)),
+			Failed:    strconv.Itoa(int(numberUnavailable)),
+		}
 
-		err = operatorutils.UpdateStatus(ctx, csm, r, newStatus, r.Config)
+		err = operatorutils.UpdateStatus(ctx, csm, r, newStatus, r.Config, deploymentStatus)
 		if err != nil {
 			log.Debugw("deployment status ", "pods", err.Error())
 		} else {
@@ -1157,7 +1165,22 @@ func (r *ContainerStorageModuleReconciler) reconcileObservability(ctx context.Co
 		}
 	}
 
-	// We are doing this separately after creating other components because the certificates rely on cert-manager being up
+	// We are doing this separately after creating other components because
+	// the certificates rely on cert-manager being up.  When cert-manager is
+	// enabled we must wait for the webhook deployment to become ready;
+	// otherwise the API server rejects Certificate/Issuer creation because
+	// the webhook (failurePolicy: Fail) is unreachable.
+	if !isDeleting && operatorutils.IsModuleComponentEnabled(ctx, cr, csmv1.Observability, modules.ObservabilityCertManagerComponent) {
+		webhookDep := &appsv1.Deployment{}
+		depKey := t1.NamespacedName{Name: "cert-manager-webhook", Namespace: cr.Namespace}
+		if err := ctrlClient.Get(ctx, depKey, webhookDep); err != nil {
+			return fmt.Errorf("cert-manager-webhook deployment not found, will retry: %v", err)
+		}
+		if webhookDep.Status.ReadyReplicas < 1 {
+			return fmt.Errorf("cert-manager-webhook is not ready yet (ready=%d), will retry", webhookDep.Status.ReadyReplicas)
+		}
+	}
+
 	if err := modules.IssuerCertServiceObs(ctx, isDeleting, op, cr, ctrlClient); err != nil {
 		return fmt.Errorf("unable to deploy Certificate & Issuer for Observability: %v", err)
 	}
@@ -1445,6 +1468,42 @@ func removeDriverFromCluster(ctx context.Context, cluster operatorutils.ClusterC
 	}
 
 	return nil
+}
+
+// removeDeploymentOwnerRef removes the ownerReference from the controller
+// deployment so that Kubernetes garbage collection does not delete the
+// deployment when the CSM CR is removed (forceRemoveDriver=false).
+func (r *ContainerStorageModuleReconciler) removeDeploymentOwnerRef(ctx context.Context, csm *csmv1.ContainerStorageModule) error {
+	log := logger.GetLogger(ctx)
+	deployName := csm.GetControllerName()
+	ns := csm.GetNamespace()
+
+	deploy := &appsv1.Deployment{}
+	err := r.GetClient().Get(ctx, t1.NamespacedName{Name: deployName, Namespace: ns}, deploy)
+	if err != nil {
+		return err
+	}
+
+	// Remove ownerReferences that point to this CSM CR
+	filtered := make([]metav1.OwnerReference, 0, len(deploy.OwnerReferences))
+	for _, ref := range deploy.OwnerReferences {
+		if ref.UID != csm.GetUID() {
+			filtered = append(filtered, ref)
+		}
+	}
+	if len(filtered) == len(deploy.OwnerReferences) {
+		return nil // nothing to remove
+	}
+	// Set to nil (not empty slice) so that PreChecks skips the ownerRef
+	// validation on re-apply. An empty non-nil slice would cause PreChecks
+	// to enter the check block but find no matching owner, returning an error.
+	if len(filtered) == 0 {
+		deploy.OwnerReferences = nil
+	} else {
+		deploy.OwnerReferences = filtered
+	}
+	log.Infow("Removing ownerReference from deployment to prevent GC", "deployment", deployName)
+	return r.GetClient().Update(ctx, deploy)
 }
 
 func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, instance csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig) error {

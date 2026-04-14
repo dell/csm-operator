@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: csm-images
+  namespace: dell-csm-operator
+data:
+  versions.yaml: |
+    - version: v9.9.9
+      images:
+        podmon: csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:nightly

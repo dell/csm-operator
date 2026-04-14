@@ -1,6 +1,6 @@
 #
 #
-# Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2023-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
   name: powerstore
-  namespace: powerstore
+  namespace: ${E2E_NS_POWERSTORE}
 spec:
   version: v1.16.1
   customRegistry: "csm.artifactory.cec.lab.emc.com/csm-users/cicd"

@@ -2,7 +2,7 @@ apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
   name: powerflex
-  namespace: dell
+  namespace: ${E2E_NS_POWERFLEX}
 spec:
   driver:
     csiDriverType: "powerflex"

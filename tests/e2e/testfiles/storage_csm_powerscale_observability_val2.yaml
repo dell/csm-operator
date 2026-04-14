@@ -2,7 +2,7 @@ apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
   name: isilon
-  namespace: isilon
+  namespace: ${E2E_NS_POWERSCALE}
 spec:
   driver:
     csiDriverType: "isilon"
@@ -234,7 +234,7 @@ spec:
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
-              value: "authorization-ingress-nginx-controller.authorization.svc.cluster.local"
+              value: "${E2E_NS_AUTH}-ingress-nginx-controller.${E2E_NS_AUTH}.svc.cluster.local"
             # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
             - name: "SKIP_CERTIFICATE_VALIDATION"
               value: "true"

@@ -1,4 +1,4 @@
-// Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+// Copyright © 2022-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,15 +32,20 @@ func PrecheckCosi(ctx context.Context, cr *csmv1.ContainerStorageModule, operato
 	log := logger.GetLogger(ctx)
 	secretName := cr.Name + "-config"
 
+	version, err := operatorutils.GetVersion(ctx, cr, operatorConfig)
+	if err != nil {
+		return err
+	}
+
 	// Check if driver version is supported by doing a stat on a config file
-	configFilePath := fmt.Sprintf("%s/driverconfig/%s/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, csmv1.Cosi, cr.Spec.Driver.ConfigVersion)
+	configFilePath := fmt.Sprintf("%s/driverconfig/%s/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, csmv1.Cosi, version)
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		log.Errorw("PreCheckCOSI failed in version check", "Error", err.Error())
-		return fmt.Errorf("%s %s not supported", csmv1.Cosi, cr.Spec.Driver.ConfigVersion)
+		return fmt.Errorf("%s %s not supported", csmv1.Cosi, version)
 	}
 
 	log.Debugw("preCheck", "secret", secretName, "Namespace", cr.Namespace)
-	_, err := operatorutils.GetSecret(ctx, secretName, cr.GetNamespace(), ct)
+	_, err = operatorutils.GetSecret(ctx, secretName, cr.GetNamespace(), ct)
 	if err != nil {
 		return fmt.Errorf("reading secret [%s] error [%s]", secretName, err)
 	}

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Dell Inc., or its subsidiaries. All Rights Reserved.
+// Copyright (c) 2025-2026 Dell Inc., or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -440,14 +440,18 @@ func getOtelCollector(ctx context.Context, op operatorutils.OperatorConfig, cr c
 	YamlString = string(buf)
 
 	nginxProxyImage := "quay.io/nginx/nginx-unprivileged:1.27"
+	nginxProxyImageFromConfigMap := false
 	if matched.Version != "" {
 		if img := matched.Images["nginx-proxy"]; img != "" {
 			nginxProxyImage = img
+			nginxProxyImageFromConfigMap = true
 		}
-	} else if cr.Spec.CustomRegistry != "" {
+	}
+	if !nginxProxyImageFromConfigMap && cr.Spec.CustomRegistry != "" {
 		nginxProxyImage = operatorutils.ResolveImage(ctx, nginxProxyImage, cr)
 	}
 	otelCollectorImage := "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.143.1"
+	otelCollectorImageFromConfigMap := false
 	configVersion, err := operatorutils.GetVersion(ctx, &cr, op)
 	if err != nil {
 		return "", err
@@ -463,23 +467,27 @@ func getOtelCollector(ctx context.Context, op operatorutils.OperatorConfig, cr c
 			if matched.Version != "" {
 				if img := matched.Images[component.Name]; img != "" {
 					otelCollectorImage = img
+					otelCollectorImageFromConfigMap = true
 				}
-			} else if cr.Spec.CustomRegistry != "" {
+			}
+			if !otelCollectorImageFromConfigMap && cr.Spec.CustomRegistry != "" {
 				otelCollectorImage = operatorutils.ResolveImage(ctx, otelCollectorImage, cr)
-			} else if component.Image != "" {
+			} else if !otelCollectorImageFromConfigMap && component.Image != "" {
 				otelCollectorImage = string(component.Image)
 			}
 
 			for _, env := range component.Envs {
 				if strings.Contains(NginxProxyImage, env.Name) {
+					nginxProxyImage = env.Value
+					nginxProxyImageFromConfigMap = false
 					if matched.Version != "" {
 						if img := matched.Images["nginx-proxy"]; img != "" {
 							nginxProxyImage = img
+							nginxProxyImageFromConfigMap = true
 						}
-					} else if cr.Spec.CustomRegistry != "" {
-						nginxProxyImage = operatorutils.ResolveImage(ctx, env.Value, cr)
-					} else {
-						nginxProxyImage = env.Value
+					}
+					if !nginxProxyImageFromConfigMap && cr.Spec.CustomRegistry != "" {
+						nginxProxyImage = operatorutils.ResolveImage(ctx, nginxProxyImage, cr)
 					}
 				}
 			}

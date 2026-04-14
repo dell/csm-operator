@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -197,15 +197,25 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 	}, err
 }
 
-func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus, op OperatorConfig) (bool, error) {
+func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus, op OperatorConfig, deploymentStatusOverride ...csmv1.PodStatus) (bool, error) {
 	log := logger.GetLogger(ctx)
 	running := true
 	var err error
 	nodeStatusGood := true
 	newStatus.State = constants.Succeeded
-	controllerStatus, controllerErr := getDeploymentStatus(ctx, instance, r)
-	if controllerErr != nil {
-		log.Infof("error from getDeploymentStatus: %s", controllerErr.Error())
+
+	var controllerStatus csmv1.PodStatus
+	if len(deploymentStatusOverride) > 0 {
+		// Use the deployment status from the informer event to avoid stale cache reads
+		controllerStatus = deploymentStatusOverride[0]
+		log.Infof("using deployment status override: desired=%s, available=%s, failed=%s",
+			controllerStatus.Desired, controllerStatus.Available, controllerStatus.Failed)
+	} else {
+		var controllerErr error
+		controllerStatus, controllerErr = getDeploymentStatus(ctx, instance, r)
+		if controllerErr != nil {
+			log.Infof("error from getDeploymentStatus: %s", controllerErr.Error())
+		}
 	}
 
 	// Auth proxy and Cosi driver have no daemonset. Putting this if/else in here and setting nodeStatusGood to true by
@@ -283,7 +293,7 @@ func SetStatus(ctx context.Context, _ ReconcileCSM, instance *csmv1.ContainerSto
 }
 
 // UpdateStatus of csm
-func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus, op OperatorConfig) error {
+func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus, op OperatorConfig, deploymentStatusOverride ...csmv1.PodStatus) error {
 	dMutex.Lock()
 	defer dMutex.Unlock()
 
@@ -295,7 +305,7 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 	log.Infow("Update State", "Controller",
 		newStatus.ControllerStatus, "Node", newStatus.NodeStatus)
 
-	running, merr := calculateState(ctx, instance, r, newStatus, op)
+	running, merr := calculateState(ctx, instance, r, newStatus, op, deploymentStatusOverride...)
 
 	// Add last successful configuration into status if deployment is running
 	// and controller has desired replicas to handle the last successful configuration change

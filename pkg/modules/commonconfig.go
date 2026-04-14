@@ -1,4 +1,4 @@
-//  Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2022-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -136,27 +136,30 @@ func getCertManager(ctx context.Context, op operatorutils.OperatorConfig, cr csm
 	}
 	YamlString = string(buf)
 
-	if matched.Version != "" {
-		placeholders := map[string]string{
-			"cert-manager-cainjector": CertManagerCaInjector,
-			"cert-manager-controller": CertManagerController,
-			"cert-manager-webhook":    CertManagerWebhook,
+	// Resolve each cert-manager image independently so that a sparse
+	// ConfigMap (defining only some keys) still falls through to
+	// Custom Registry or defaults for the missing keys.
+	certManagerImages := []struct {
+		key         string
+		placeholder string
+		defaultImg  string
+	}{
+		{"cert-manager-cainjector", CertManagerCaInjector, CertManagerCaInjectorImage},
+		{"cert-manager-controller", CertManagerController, CertManagerControllerImage},
+		{"cert-manager-webhook", CertManagerWebhook, CertManagerWebhookImage},
+	}
+	for _, img := range certManagerImages {
+		resolved := ""
+		if matched.Version != "" {
+			resolved = matched.Images[img.key]
 		}
-
-		for key, placeholder := range placeholders {
-			if img := matched.Images[key]; img != "" {
-				YamlString = strings.ReplaceAll(YamlString, placeholder, img)
-			}
+		if resolved == "" && cr.Spec.CustomRegistry != "" {
+			resolved = operatorutils.ResolveImage(ctx, img.defaultImg, cr)
 		}
-
-	} else if cr.Spec.CustomRegistry != "" {
-		YamlString = strings.ReplaceAll(YamlString, CertManagerCaInjector, operatorutils.ResolveImage(ctx, CertManagerCaInjectorImage, cr))
-		YamlString = strings.ReplaceAll(YamlString, CertManagerController, operatorutils.ResolveImage(ctx, CertManagerControllerImage, cr))
-		YamlString = strings.ReplaceAll(YamlString, CertManagerWebhook, operatorutils.ResolveImage(ctx, CertManagerWebhookImage, cr))
-	} else {
-		YamlString = strings.ReplaceAll(YamlString, CertManagerCaInjector, CertManagerCaInjectorImage)
-		YamlString = strings.ReplaceAll(YamlString, CertManagerController, CertManagerControllerImage)
-		YamlString = strings.ReplaceAll(YamlString, CertManagerWebhook, CertManagerWebhookImage)
+		if resolved == "" {
+			resolved = img.defaultImg
+		}
+		YamlString = strings.ReplaceAll(YamlString, img.placeholder, resolved)
 	}
 
 	certNamespace := cr.Namespace

@@ -111,7 +111,7 @@ End-to-end tests are in `tests/e2e/` with a separate Go module. They use Ginkgo 
 
 E2E tests require a running Kubernetes cluster with storage arrays configured. To run them:
 
-1. Copy `tests/e2e/array-info.env.sample` to `tests/e2e/array-info.env` and fill in your array credentials.
+1. Copy `tests/e2e/array-info.yaml.sample` to `tests/e2e/array-info.yaml` and fill in your array credentials.
 2. Run the test script with a suite flag:
 ```
 cd tests/e2e && ./run-e2e-test.sh --sanity

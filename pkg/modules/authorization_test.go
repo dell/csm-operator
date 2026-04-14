@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2025 Dell Inc., or its subsidiaries. All Rights Reserved.
+// Copyright (c) 2022-2026 Dell Inc., or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1570,7 +1570,10 @@ func TestAuthorizationStorageServiceSecretProviderClass(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			isDeleting, cr, auth, sourceClient, checkFn := tc(t)
 
-			err := authorizationStorageServiceV2(context.TODO(), isDeleting, cr, sourceClient, auth, operatorutils.VersionSpec{})
+			operatorConfig := operatorutils.OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			}
+			err := authorizationStorageServiceV2(context.TODO(), isDeleting, cr, sourceClient, auth, operatorutils.VersionSpec{}, operatorConfig)
 			checkFn(t, sourceClient, err)
 		})
 	}
@@ -1662,7 +1665,10 @@ func TestAuthorizationStorageServiceSecret(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			isDeleting, cr, auth, sourceClient, checkFn := tc(t)
 
-			err := authorizationStorageServiceV2(context.TODO(), isDeleting, cr, sourceClient, auth, operatorutils.VersionSpec{})
+			operatorConfig := operatorutils.OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			}
+			err := authorizationStorageServiceV2(context.TODO(), isDeleting, cr, sourceClient, auth, operatorutils.VersionSpec{}, operatorConfig)
 			checkFn(t, sourceClient, err)
 		})
 	}
@@ -1733,7 +1739,10 @@ func TestAuthorizationStorageServiceSecretAndSecretProviderClass(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			isDeleting, cr, auth, sourceClient, checkFn := tc(t)
 
-			err := authorizationStorageServiceV2(context.TODO(), isDeleting, cr, sourceClient, auth, operatorutils.VersionSpec{})
+			operatorConfig := operatorutils.OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			}
+			err := authorizationStorageServiceV2(context.TODO(), isDeleting, cr, sourceClient, auth, operatorutils.VersionSpec{}, operatorConfig)
 			checkFn(t, err)
 		})
 	}
@@ -1817,7 +1826,10 @@ func TestAuthorizationTenantServiceSecretProviderClass(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			isDeleting, cr, auth, sourceClient, checkFn := tc(t)
 
-			err := applyDeleteAuthorizationTenantServiceV2(context.TODO(), isDeleting, cr, sourceClient, auth, operatorutils.VersionSpec{})
+			operatorConfig := operatorutils.OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			}
+			err := applyDeleteAuthorizationTenantServiceV2(context.TODO(), isDeleting, cr, sourceClient, auth, operatorutils.VersionSpec{}, operatorConfig)
 			checkFn(t, sourceClient, err)
 		})
 	}
@@ -3128,7 +3140,7 @@ func TestGetAuthApplyCR(t *testing.T) {
 		defer func() { resolveVersionFromConfigMapAuth = orig }()
 
 		// Act
-		authModule, container, err := getAuthApplyCR(ctx, cr, operatorConfig, client)
+		authModule, container, _, err := getAuthApplyCR(ctx, cr, operatorConfig, client)
 		if err != nil {
 			t.Fatalf("getAuthApplyCR returned error: %v", err)
 		}
@@ -3164,7 +3176,7 @@ func TestGetAuthApplyCR(t *testing.T) {
 		}
 		defer func() { resolveVersionFromConfigMapAuth = orig }()
 
-		authModule, container, err := getAuthApplyCR(ctx, cr, operatorConfig, client)
+		authModule, container, _, err := getAuthApplyCR(ctx, cr, operatorConfig, client)
 		if err != nil {
 			t.Fatalf("getAuthApplyCR returned error: %v", err)
 		}
@@ -3189,7 +3201,7 @@ func TestGetAuthApplyCR(t *testing.T) {
 			}, nil
 		}
 
-		_, container2, err := getAuthApplyCR(ctx, cr, operatorConfig, client)
+		_, container2, _, err := getAuthApplyCR(ctx, cr, operatorConfig, client)
 		if err != nil {
 			t.Fatalf("getAuthApplyCR returned error on second call: %v", err)
 		}
@@ -3210,7 +3222,7 @@ func TestGetAuthApplyCR(t *testing.T) {
 		cr.Spec.Modules[0].ConfigVersion = shared.AuthServerConfigVersion
 
 		client := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-		authModule, container, err := getAuthApplyCR(ctx, cr, operatorConfig, client)
+		authModule, container, _, err := getAuthApplyCR(ctx, cr, operatorConfig, client)
 		if err != nil {
 			t.Fatalf("getAuthApplyCR returned error: %v", err)
 		}
@@ -3249,7 +3261,7 @@ func TestGetAuthApplyCR(t *testing.T) {
 		}
 
 		client := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-		authModule, _, err := getAuthApplyCR(ctx, cr, operatorConfig, client)
+		authModule, _, _, err := getAuthApplyCR(ctx, cr, operatorConfig, client)
 		if err != nil {
 			t.Fatalf("getAuthApplyCR returned error: %v", err)
 		}
@@ -3267,6 +3279,83 @@ func TestGetAuthApplyCR(t *testing.T) {
 			t.Fatalf("expected exactly one SKIP_CERTIFICATE_VALIDATION env var to be present, got %d", count)
 		}
 	})
+}
+
+// TestGetAuthApplyCR_SparseConfigMapWithCustomRegistry verifies that when a
+// ConfigMap has a matching version but lacks the karavi-authorization-proxy
+// key, Custom Registry is used as fallback instead of leaving the template
+// image unresolved.
+func TestGetAuthApplyCR_SparseConfigMapWithCustomRegistry(t *testing.T) {
+	ctx := context.Background()
+
+	cr := csmPowerScaleWithAuthCR()
+	cr.Spec.Version = shared.CSMVersion
+	cr.Spec.CustomRegistry = "my-registry.example.com"
+	cr.Spec.Modules[0].ConfigVersion = shared.AuthServerConfigVersion
+
+	client := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+	// Override resolver to return a matching version but WITHOUT the proxy key.
+	orig := resolveVersionFromConfigMapAuth
+	resolveVersionFromConfigMapAuth = func(_ context.Context, _ ctrlClient.Client, _ *csmv1.ContainerStorageModule) (operatorutils.VersionSpec, error) {
+		return operatorutils.VersionSpec{
+			Version: shared.CSMVersion,
+			Images:  map[string]string{"some-other-key": "registry.example/other:tag"},
+		}, nil
+	}
+	defer func() { resolveVersionFromConfigMapAuth = orig }()
+
+	_, container, _, err := getAuthApplyCR(ctx, cr, operatorConfig, client)
+	if err != nil {
+		t.Fatalf("getAuthApplyCR returned error: %v", err)
+	}
+	if container == nil || container.Image == nil {
+		t.Fatalf("expected container with non-nil image")
+	}
+
+	// The image should contain the custom registry prefix because the
+	// ConfigMap did not have the proxy key.
+	if !strings.Contains(*container.Image, "my-registry.example.com/") {
+		t.Fatalf("expected image to use custom registry, got %q", *container.Image)
+	}
+}
+
+// TestGetAuthApplyCR_ConfigMapWinsOverCustomRegistry verifies that when the
+// ConfigMap provides an image for karavi-authorization-proxy AND Custom
+// Registry is also set, the ConfigMap image is used and NOT overwritten by
+// the custom-registry rewrite.
+func TestGetAuthApplyCR_ConfigMapWinsOverCustomRegistry(t *testing.T) {
+	ctx := context.Background()
+
+	cr := csmPowerScaleWithAuthCR()
+	cr.Spec.Version = shared.CSMVersion
+	cr.Spec.CustomRegistry = "my-registry.example.com"
+	cr.Spec.Modules[0].ConfigVersion = shared.AuthServerConfigVersion
+
+	client := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+	configMapImage := "configmap-registry.example.com/karavi-authorization-proxy:v99.0"
+	orig := resolveVersionFromConfigMapAuth
+	resolveVersionFromConfigMapAuth = func(_ context.Context, _ ctrlClient.Client, _ *csmv1.ContainerStorageModule) (operatorutils.VersionSpec, error) {
+		return operatorutils.VersionSpec{
+			Version: shared.CSMVersion,
+			Images:  map[string]string{"karavi-authorization-proxy": configMapImage},
+		}, nil
+	}
+	defer func() { resolveVersionFromConfigMapAuth = orig }()
+
+	_, container, _, err := getAuthApplyCR(ctx, cr, operatorConfig, client)
+	if err != nil {
+		t.Fatalf("getAuthApplyCR returned error: %v", err)
+	}
+	if container == nil || container.Image == nil {
+		t.Fatalf("expected container with non-nil image")
+	}
+
+	// The image must be the one from the ConfigMap, not rewritten with custom registry.
+	if *container.Image != configMapImage {
+		t.Fatalf("expected ConfigMap image %q to win over custom registry, got %q", configMapImage, *container.Image)
+	}
 }
 
 func TestGetDefaultAuthImage(t *testing.T) {
@@ -3304,6 +3393,100 @@ func TestGetDefaultAuthImage(t *testing.T) {
 				operatorutils.VersionSpec{Version: "1.6.0", Images: map[string]string{}})
 			if got != tt.expectedImg {
 				t.Fatalf("unexpected image: got %q, want %q", got, tt.expectedImg)
+			}
+		})
+	}
+}
+
+func TestGetVersionSpecificDefaultImages(t *testing.T) {
+	tests := []struct {
+		name                   string
+		configVersion          string
+		configDirectory        string
+		expectedProxyService   string
+		expectedTenantService  string
+		expectedRoleService    string
+		expectedStorageService string
+		expectedController     string
+		expectError            bool
+	}{
+		{
+			name:                   "v2.5.0 returns images with v2.5.0 tag",
+			configVersion:          "v2.5.0",
+			expectedProxyService:   "quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.5.0",
+			expectedTenantService:  "quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.5.0",
+			expectedRoleService:    "quay.io/dell/container-storage-modules/csm-authorization-role:v2.5.0",
+			expectedStorageService: "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.5.0",
+			expectedController:     "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.5.0",
+		},
+		{
+			name:                   "v2.4.0 returns images with v2.4.0 tag",
+			configVersion:          "v2.4.0",
+			expectedProxyService:   "quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.4.0",
+			expectedTenantService:  "quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.4.0",
+			expectedRoleService:    "quay.io/dell/container-storage-modules/csm-authorization-role:v2.4.0",
+			expectedStorageService: "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.4.0",
+			expectedController:     "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.4.0",
+		},
+		{
+			name:                   "v2.3.0 returns images with v2.3.0 tag",
+			configVersion:          "v2.3.0",
+			expectedProxyService:   "quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.3.0",
+			expectedTenantService:  "quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.3.0",
+			expectedRoleService:    "quay.io/dell/container-storage-modules/csm-authorization-role:v2.3.0",
+			expectedStorageService: "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.3.0",
+			expectedController:     "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.3.0",
+		},
+		{
+			name:                   "empty version defaults to v2.5.0",
+			configVersion:          "",
+			expectedProxyService:   "quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.5.0",
+			expectedTenantService:  "quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.5.0",
+			expectedRoleService:    "quay.io/dell/container-storage-modules/csm-authorization-role:v2.5.0",
+			expectedStorageService: "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.5.0",
+			expectedController:     "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.5.0",
+		},
+		{
+			name:            "invalid config directory returns error",
+			configVersion:   "",
+			configDirectory: "/invalid/path",
+			expectError:     true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			configDir := "../../operatorconfig"
+			if tt.configDirectory != "" {
+				configDir = tt.configDirectory
+			}
+			images, err := getVersionSpecificDefaultImages(tt.configVersion, configDir)
+
+			if tt.expectError {
+				if err == nil {
+					t.Fatalf("expected error but got none")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if images["proxy-service"] != tt.expectedProxyService {
+				t.Errorf("proxy-service: got %q, want %q", images["proxy-service"], tt.expectedProxyService)
+			}
+			if images["tenant-service"] != tt.expectedTenantService {
+				t.Errorf("tenant-service: got %q, want %q", images["tenant-service"], tt.expectedTenantService)
+			}
+			if images["role-service"] != tt.expectedRoleService {
+				t.Errorf("role-service: got %q, want %q", images["role-service"], tt.expectedRoleService)
+			}
+			if images["storage-service"] != tt.expectedStorageService {
+				t.Errorf("storage-service: got %q, want %q", images["storage-service"], tt.expectedStorageService)
+			}
+			if images["authorization-controller"] != tt.expectedController {
+				t.Errorf("authorization-controller: got %q, want %q", images["authorization-controller"], tt.expectedController)
 			}
 		})
 	}
@@ -3762,5 +3945,127 @@ func TestGatewayController(t *testing.T) {
 				assert.NoError(t, err, tt.description)
 			}
 		})
+	}
+}
+
+func TestGetImageForKey_Precedence(t *testing.T) {
+	ctx := context.Background()
+	key := "role-service"
+	defaultImage := "quay.io/dell/role-service:v1.0"
+
+	tests := []struct {
+		name       string
+		matched    operatorutils.VersionSpec
+		cr         csmv1.ContainerStorageModule
+		wantExact  string // if non-empty, expect exact match
+		wantPrefix string // if non-empty, expect HasPrefix
+	}{
+		{
+			name: "configmap_only",
+			matched: operatorutils.VersionSpec{
+				Version: "v1.0",
+				Images:  map[string]string{key: "configmap-reg.example/role-service:from-cm"},
+			},
+			cr:        csmv1.ContainerStorageModule{},
+			wantExact: "configmap-reg.example/role-service:from-cm",
+		},
+		{
+			name:    "custom_registry_only",
+			matched: operatorutils.VersionSpec{},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					CustomRegistry: "my-registry.example.com",
+				},
+			},
+			wantPrefix: "my-registry.example.com/",
+		},
+		{
+			name: "both_configmap_and_custom_registry",
+			matched: operatorutils.VersionSpec{
+				Version: "v1.0",
+				Images:  map[string]string{key: "configmap-reg.example/role-service:from-cm"},
+			},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					CustomRegistry: "my-registry.example.com",
+				},
+			},
+			wantExact: "configmap-reg.example/role-service:from-cm",
+		},
+		{
+			name: "sparse_configmap_with_custom_registry",
+			matched: operatorutils.VersionSpec{
+				Version: "v1.0",
+				Images:  map[string]string{"some-other-key": "other:image"},
+			},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					CustomRegistry: "my-registry.example.com",
+				},
+			},
+			wantPrefix: "my-registry.example.com/",
+		},
+		{
+			name:      "neither_configmap_nor_registry",
+			matched:   operatorutils.VersionSpec{},
+			cr:        csmv1.ContainerStorageModule{},
+			wantExact: defaultImage,
+		},
+		{
+			name: "empty_version_skips_configmap",
+			matched: operatorutils.VersionSpec{
+				Version: "",
+				Images:  map[string]string{key: "should-not-apply:v1"},
+			},
+			cr:        csmv1.ContainerStorageModule{},
+			wantExact: defaultImage,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := getImageForKey(ctx, key, defaultImage, tt.cr, tt.matched)
+			if tt.wantExact != "" {
+				if got != tt.wantExact {
+					t.Fatalf("expected %q, got %q", tt.wantExact, got)
+				}
+			} else if tt.wantPrefix != "" {
+				if !strings.HasPrefix(got, tt.wantPrefix) {
+					t.Fatalf("expected prefix %q, got %q", tt.wantPrefix, got)
+				}
+			}
+		})
+	}
+}
+
+func TestGetAuthApplyCR_EmptyVersionSkipsConfigMap(t *testing.T) {
+	ctx := context.Background()
+
+	cr := csmPowerScaleWithAuthCR()
+	cr.Spec.Version = shared.CSMVersion
+	cr.Spec.Modules[0].ConfigVersion = shared.AuthServerConfigVersion
+
+	client := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+	orig := resolveVersionFromConfigMapAuth
+	resolveVersionFromConfigMapAuth = func(_ context.Context, _ ctrlClient.Client, _ *csmv1.ContainerStorageModule) (operatorutils.VersionSpec, error) {
+		return operatorutils.VersionSpec{
+			Version: "", // empty - should skip ConfigMap
+			Images:  map[string]string{"karavi-authorization-proxy": "should-not-apply:v1"},
+		}, nil
+	}
+	defer func() { resolveVersionFromConfigMapAuth = orig }()
+
+	_, container, _, err := getAuthApplyCR(ctx, cr, operatorConfig, client)
+	if err != nil {
+		t.Fatalf("getAuthApplyCR returned error: %v", err)
+	}
+	if container == nil || container.Image == nil {
+		t.Fatalf("expected container with non-nil image")
+	}
+
+	// The ConfigMap image should NOT be applied because Version is empty.
+	if *container.Image == "should-not-apply:v1" {
+		t.Fatalf("empty version should skip ConfigMap images, but ConfigMap image was applied")
 	}
 }

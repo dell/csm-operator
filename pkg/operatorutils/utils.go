@@ -222,17 +222,17 @@ func UpdateContainerApply(ctx context.Context, toBeApplied []csmv1.ContainerTemp
 
 			if matched.Version != "" {
 				if img := matched.Images[ctr.Name]; img != "" {
-					if *c.Name == ctr.Name {
-						*c.Image = img
-					}
-				}
-			} else if cr.Spec.CustomRegistry != "" {
-				*c.Image = ResolveImage(ctx, string(*c.Image), cr)
-			} else {
-				if ctr.Image != "" {
-					*c.Image = string(ctr.Image)
+					*c.Image = img
+					goto applySidecarPolicy
 				}
 			}
+			if cr.Spec.CustomRegistry != "" {
+				*c.Image = ResolveImage(ctx, string(*c.Image), cr)
+			} else if ctr.Image != "" {
+				*c.Image = string(ctr.Image)
+			}
+
+		applySidecarPolicy:
 
 			if ctr.ImagePullPolicy != "" {
 				*c.ImagePullPolicy = ctr.ImagePullPolicy
@@ -246,11 +246,12 @@ func UpdateContainerApply(ctx context.Context, toBeApplied []csmv1.ContainerTemp
 	// Update all other csi sidecar images that are not referenced in cr.Spec.Driver.SideCars
 	if !sidecarInSpec {
 		if matched.Version != "" {
-			img := matched.Images[*c.Name]
-			if img != "" {
+			if img := matched.Images[*c.Name]; img != "" {
 				*c.Image = img
+				return
 			}
-		} else if cr.Spec.CustomRegistry != "" {
+		}
+		if cr.Spec.CustomRegistry != "" {
 			*c.Image = ResolveImage(ctx, string(*c.Image), cr)
 		}
 	}
@@ -850,7 +851,7 @@ func ApplyObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.C
 			}
 		}
 		err = ctrlClient.Update(ctx, obj)
-		if err != nil && k8serror.IsForbidden(err) || k8serror.IsInvalid(err) {
+		if err != nil && (k8serror.IsForbidden(err) || k8serror.IsInvalid(err)) {
 			log.Warnw("Object update failed", "Warning", err.Error())
 		} else if err != nil {
 			return err
@@ -1378,7 +1379,7 @@ func ResolveVersionFromConfigMap(ctx context.Context, ctrlClient client.Client, 
 	}
 
 	// Update (resolve) using the ConfigMap contents
-	matched, err = UpdateUsingConfigMap(cr, cm)
+	matched, err = UpdateUsingConfigMap(ctx, cr, cm)
 	if err != nil {
 		return matched, err
 	}
@@ -1434,14 +1435,19 @@ func ValidateConfigMap(version VersionSpec) error {
 	return nil
 }
 
-func UpdateUsingConfigMap(csm *csmv1.ContainerStorageModule, cm corev1.ConfigMap) (matched VersionSpec, err error) {
+func UpdateUsingConfigMap(ctx context.Context, csm *csmv1.ContainerStorageModule, cm corev1.ConfigMap) (matched VersionSpec, err error) {
 	if len(cm.Data) == 0 {
+		return matched, nil
+	}
+
+	versionsYAML := strings.TrimSpace(cm.Data["versions.yaml"])
+	if versionsYAML == "" {
 		return matched, nil
 	}
 
 	// Unmarshal the version list under "versions.yaml"
 	var versions []VersionSpec
-	if err = yaml.Unmarshal([]byte(cm.Data["versions.yaml"]), &versions); err != nil {
+	if err = yaml.Unmarshal([]byte(versionsYAML), &versions); err != nil {
 		return matched, err
 	}
 
@@ -1455,9 +1461,11 @@ func UpdateUsingConfigMap(csm *csmv1.ContainerStorageModule, cm corev1.ConfigMap
 		}
 	}
 
-	// If none of the version matches with high level version, raise an error
 	if !versionFound {
-		return matched, fmt.Errorf("version %s not found in versions.yaml", csm.Spec.Version)
+		log := logger.GetLogger(ctx)
+		log.Infow("Version not found in ConfigMap versions.yaml, falling back to default image resolution",
+			"version", csm.Spec.Version)
+		return VersionSpec{}, nil
 	}
 
 	// Validate the matched version
@@ -1555,20 +1563,17 @@ func GetImageField(YamlString string) string {
 // GetFinalImage returns the final image
 func GetFinalImage(ctx context.Context, cr csmv1.ContainerStorageModule, matched VersionSpec, component csmv1.ContainerTemplate, YamlString string) string {
 	var finalImage string
-	switch {
-	case matched.Version != "":
+	if matched.Version != "" {
 		if img := matched.Images[component.Name]; img != "" {
-			finalImage = img
+			return img
 		}
-
-	case cr.Spec.CustomRegistry != "":
-		finalImage = ResolveImage(ctx, GetImageField(YamlString), cr)
-
-	case component.Image != "":
-		finalImage = string(component.Image)
-
-	default:
-		finalImage = GetImageField(YamlString)
 	}
+	if cr.Spec.CustomRegistry != "" {
+		return ResolveImage(ctx, GetImageField(YamlString), cr)
+	}
+	if component.Image != "" {
+		return string(component.Image)
+	}
+	finalImage = GetImageField(YamlString)
 	return finalImage
 }

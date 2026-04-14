@@ -1,4 +1,4 @@
-// Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+// Copyright © 2023-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -704,7 +704,8 @@ func TestModifyPodmon_SkipsMatchedWhenVersionEmpty(t *testing.T) {
 	}
 }
 
-// Case 3: component overrides should take precedence over matched.Images (for both Image and ImagePullPolicy)
+// Case 3: ConfigMap (matched.Images) takes precedence over component image;
+// component.ImagePullPolicy still applies because it is independent of image resolution.
 func TestModifyPodmon_ComponentOverridesImageAndPullPolicy(t *testing.T) {
 	name := "podmon"
 	originalImage := "registry.example/podmon:old"
@@ -731,12 +732,12 @@ func TestModifyPodmon_ComponentOverridesImageAndPullPolicy(t *testing.T) {
 
 	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{})
 
-	// Image should be component override (not matched)
+	// Image should be from ConfigMap (matched.Images takes precedence over component override)
 	if container.Image == nil {
 		t.Fatalf("container.Image should not be nil after modifyPodmon")
 	}
 	if *container.Image != matchedImage {
-		t.Fatalf("expected image %q from component override, got %q", matchedImage, *container.Image)
+		t.Fatalf("expected image %q from ConfigMap, got %q", matchedImage, *container.Image)
 	}
 
 	// Pull policy should be component override
@@ -783,6 +784,126 @@ func TestModifyPodmon_ReplacesEnvAndArgs(t *testing.T) {
 	// Assert args replacement (now exact match)
 	if len(container.Args) != 2 || container.Args[0] != "--enable" || container.Args[1] != "--level=debug" {
 		t.Fatalf("expected args [--enable --level=debug], got %v", container.Args)
+	}
+}
+
+func TestModifyPodmon_CustomRegistryOnly(t *testing.T) {
+	name := "podmon"
+	originalImage := "quay.io/dell/podmon:v1.0"
+	ctx := context.Background()
+
+	matched := operatorutils.VersionSpec{} // empty - no ConfigMap
+
+	component := csmv1.ContainerTemplate{}
+
+	cr := csmv1.ContainerStorageModule{
+		Spec: csmv1.ContainerStorageModuleSpec{
+			CustomRegistry: "my-registry.example.com",
+		},
+	}
+
+	container := acorev1.Container().
+		WithName(name).
+		WithImage(originalImage)
+
+	modifyPodmon(ctx, component, container, matched, cr)
+
+	if container.Image == nil {
+		t.Fatalf("container.Image should not be nil")
+	}
+	if !strings.Contains(*container.Image, "my-registry.example.com/") {
+		t.Fatalf("expected custom registry prefix, got %q", *container.Image)
+	}
+}
+
+func TestModifyPodmon_SparseConfigMapWithCustomRegistry(t *testing.T) {
+	name := "podmon"
+	originalImage := "quay.io/dell/podmon:v1.0"
+	ctx := context.Background()
+
+	matched := operatorutils.VersionSpec{
+		Version: "v1.0",
+		Images:  map[string]string{"some-other-key": "other:image"},
+	}
+
+	component := csmv1.ContainerTemplate{}
+
+	cr := csmv1.ContainerStorageModule{
+		Spec: csmv1.ContainerStorageModuleSpec{
+			CustomRegistry: "my-registry.example.com",
+		},
+	}
+
+	container := acorev1.Container().
+		WithName(name).
+		WithImage(originalImage)
+
+	modifyPodmon(ctx, component, container, matched, cr)
+
+	if container.Image == nil {
+		t.Fatalf("container.Image should not be nil")
+	}
+	if !strings.Contains(*container.Image, "my-registry.example.com/") {
+		t.Fatalf("expected custom registry prefix, got %q", *container.Image)
+	}
+}
+
+func TestModifyPodmon_ComponentImageNoConfigMapNoRegistry(t *testing.T) {
+	name := "podmon"
+	originalImage := "quay.io/dell/podmon:v1.0"
+	componentImage := "registry.example/podmon:component-override"
+	ctx := context.Background()
+
+	matched := operatorutils.VersionSpec{}
+
+	component := csmv1.ContainerTemplate{
+		Image: csmv1.ImageType(componentImage),
+	}
+
+	container := acorev1.Container().
+		WithName(name).
+		WithImage(originalImage)
+
+	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{})
+
+	if container.Image == nil {
+		t.Fatalf("container.Image should not be nil")
+	}
+	if *container.Image != componentImage {
+		t.Fatalf("expected component image %q, got %q", componentImage, *container.Image)
+	}
+}
+
+func TestModifyPodmon_ConfigMapWinsOverCustomRegistry(t *testing.T) {
+	name := "podmon"
+	originalImage := "quay.io/dell/podmon:v1.0"
+	configMapImage := "configmap-registry.example.com/podmon:from-cm"
+	ctx := context.Background()
+
+	matched := operatorutils.VersionSpec{
+		Version: "v1.0",
+		Images:  map[string]string{name: configMapImage},
+	}
+
+	component := csmv1.ContainerTemplate{}
+
+	cr := csmv1.ContainerStorageModule{
+		Spec: csmv1.ContainerStorageModuleSpec{
+			CustomRegistry: "my-registry.example.com",
+		},
+	}
+
+	container := acorev1.Container().
+		WithName(name).
+		WithImage(originalImage)
+
+	modifyPodmon(ctx, component, container, matched, cr)
+
+	if container.Image == nil {
+		t.Fatalf("container.Image should not be nil")
+	}
+	if *container.Image != configMapImage {
+		t.Fatalf("expected ConfigMap image %q to win over custom registry, got %q", configMapImage, *container.Image)
 	}
 }
 

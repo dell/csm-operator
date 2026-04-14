@@ -1,4 +1,4 @@
-# Copyright © 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2025-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ chmod 777 conjur-csm-authorization
 
 printf "=== Adding $CONTROL_NODE $CONJUR_HOST to /etc/hosts ===\n\n"
 
-grep "$CONTROL_NODE $CONJUR_HOST" /etc/hosts || echo "$CONTROL_NODE $CONJUR_HOST" >> /etc/hosts
+grep "$CONTROL_NODE $CONJUR_HOST" /etc/hosts || echo "$CONTROL_NODE $CONJUR_HOST" | sudo tee -a /etc/hosts > /dev/null
 
 printf "=== Initializing Conjur at https://$CONJUR_HOST:$CONJUR_PORT ===\n\n"
 
@@ -255,24 +255,24 @@ EOF
 
   $CONTAINER_RUNTIME run --rm -it -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 policy load -b root -f /home/cli/secrets.yaml
 
-  if [[ -n "$PFLEX_USER" && -n "$PFLEX_PASS" ]]; then
-    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerflex-username -v $PFLEX_USER
-    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerflex-password -v $PFLEX_PASS
+  if [[ -n "$POWERFLEX_USER" && -n "$POWERFLEX_PASS" ]]; then
+    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerflex-username -v $POWERFLEX_USER
+    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerflex-password -v $POWERFLEX_PASS
   fi
 
-  if [[ -n "$PMAX_USER" && -n "$PMAX_PASS" ]]; then
-    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powermax-username -v $PMAX_USER
-    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powermax-password -v $PMAX_PASS
+  if [[ -n "$POWERMAX_USER" && -n "$POWERMAX_PASS" ]]; then
+    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powermax-username -v $POWERMAX_USER
+    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powermax-password -v $POWERMAX_PASS
   fi
 
-  if [[ -n "$PSCALE_USER" && -n "$PSCALE_PASS" ]]; then
-    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerscale-username -v $PSCALE_USER
-    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerscale-password -v $PSCALE_PASS
+  if [[ -n "$POWERSCALE_USER" && -n "$POWERSCALE_PASS" ]]; then
+    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerscale-username -v $POWERSCALE_USER
+    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerscale-password -v $POWERSCALE_PASS
   fi
 
-  if [[ -n "$PSTORE_USER" && -n "$PSTORE_PASS" ]]; then
-    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerstore-username -v $PSTORE_USER
-    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerstore-password -v $PSTORE_PASS
+  if [[ -n "$POWERSTORE_USER" && -n "$POWERSTORE_PASS" ]]; then
+    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerstore-username -v $POWERSTORE_USER
+    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerstore-password -v $POWERSTORE_PASS
   fi
 
   if [[ -n "$REDIS_USER" && -n "$REDIS_PASS" ]]; then
@@ -280,10 +280,10 @@ EOF
     $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/redis-password -v $REDIS_PASS
   fi
 
-  if [[ -n "$CONFIG_OBJECT" ]]; then
-    # CONFIG_OBJECT is often provided as a single-line env var with literal '\n' escapes.
+  if [[ -n "$JWT_SIGNING_SECRET" ]]; then
+    # JWT_SIGNING_SECRET is often provided as a single-line env var with literal '\n' escapes.
     # Convert it into real newlines before storing in Conjur so it can be mounted as valid YAML.
-    printf '%b' "$CONFIG_OBJECT" > conjur-csm-authorization/config-object.yaml
+    printf '%b' "$JWT_SIGNING_SECRET" > conjur-csm-authorization/config-object.yaml
     $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/config-object -v "$(cat conjur-csm-authorization/config-object.yaml)"
   fi
 fi

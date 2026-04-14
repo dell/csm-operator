@@ -2,7 +2,7 @@ apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
   name: powerscale
-  namespace: dell
+  namespace: ${E2E_NS_OPERATOR}
 spec:
   driver:
     csiDriverType: "isilon"

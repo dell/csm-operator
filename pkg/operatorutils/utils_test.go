@@ -3817,15 +3817,17 @@ func TestUpdateUsingConfigMap(t *testing.T) {
 			expectedErr: "yaml: unmarshal errors", // substring check
 		},
 		{
-			name: "version_not_found_in_yaml",
-			cr:   newCSM("v9.99.9"),
-			cm: corev1.ConfigMap{
-				Data: map[string]string{
-					"versions.yaml": marshalVersionsYAML(t, validVersions),
-				},
+			name: "no_matching_version_returns_empty_spec",
+			cr: &csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{Version: "v9.99.9"},
 			},
+			cm: corev1.ConfigMap{Data: map[string]string{
+				"versions.yaml": marshalVersionsYAML(t, []VersionSpec{
+					{Version: "v1.16.0", Images: map[string]string{"driver": "repo/driver:1", "sidecar": "repo/sidecar:1"}},
+				}),
+			}},
 			want:        VersionSpec{},
-			expectedErr: "version v9.99.9 not found in versions.yaml",
+			expectedErr: "",
 		},
 		{
 			name: "valid_match_returns_version_spec",
@@ -3864,7 +3866,7 @@ func TestUpdateUsingConfigMap(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := UpdateUsingConfigMap(tc.cr, tc.cm)
+			got, err := UpdateUsingConfigMap(context.Background(), tc.cr, tc.cm)
 			if tc.expectedErr == "" && err != nil {
 				t.Fatalf("UpdateUsingConfigMap() unexpected error: %v", err)
 			}
@@ -3959,7 +3961,7 @@ func TestResolveVersionFromConfigMap(t *testing.T) {
 			},
 			cr:          newCSM("v1.16.0"),
 			want:        VersionSpec{},
-			expectedErr: "version v1.16.0 not found in versions.yaml",
+			expectedErr: "",
 		},
 	}
 
@@ -4132,6 +4134,74 @@ func TestGetFinalImage(t *testing.T) {
 			cr:   csmv1.ContainerStorageModule{},
 			want: "repo/component-image:1.0",
 		},
+		{
+			name: "both configmap and custom registry - configmap wins",
+			matched: VersionSpec{
+				Version: "v2.0.0",
+				Images:  map[string]string{componentName: "repo/mapped-image:2.0.0"},
+			},
+			component: csmv1.ContainerTemplate{
+				Name:  componentName,
+				Image: "repo/default-image:latest",
+			},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					CustomRegistry: "my.registry.local",
+				},
+			},
+			yamlString: "image: repo/default:v1",
+			want:       "repo/mapped-image:2.0.0",
+		},
+		{
+			name: "sparse configmap with custom registry falls through to custom registry",
+			matched: VersionSpec{
+				Version: "v2.0.0",
+				Images:  map[string]string{"other-component": "repo/other:2.0.0"},
+			},
+			component: csmv1.ContainerTemplate{
+				Name:  componentName,
+				Image: "repo/default-image:latest",
+			},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					CustomRegistry: "my.registry.local",
+				},
+			},
+			yamlString: "image: repo/default:v1",
+			useActual:  true,
+		},
+		{
+			name: "empty matched version falls through to custom registry",
+			matched: VersionSpec{
+				Version: "",
+				Images:  map[string]string{componentName: "repo/mapped-image:2.0.0"},
+			},
+			component: csmv1.ContainerTemplate{
+				Name:  componentName,
+				Image: "repo/default-image:latest",
+			},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					CustomRegistry: "my.registry.local",
+				},
+			},
+			yamlString: "image: repo/default:v1",
+			useActual:  true,
+		},
+		{
+			name: "yaml default when no matched no registry no component",
+			matched: VersionSpec{
+				Version: "",
+				Images:  map[string]string{},
+			},
+			component: csmv1.ContainerTemplate{
+				Name:  componentName,
+				Image: "",
+			},
+			cr:         csmv1.ContainerStorageModule{},
+			yamlString: "name: test\nkind: Pod",
+			want:       "",
+		},
 	}
 
 	for _, tt := range tests {
@@ -4141,6 +4211,348 @@ func TestGetFinalImage(t *testing.T) {
 				tt.want = ResolveImage(ctx, field, tt.cr)
 			}
 
+			got := GetFinalImage(ctx, tt.cr, tt.matched, tt.component, tt.yamlString)
+			if got != tt.want {
+				t.Errorf("GetFinalImage() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUpdateContainerApply_ImagePrecedence(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name          string
+		containerName string
+		defaultImage  string
+		toBeApplied   []csmv1.ContainerTemplate
+		cr            csmv1.ContainerStorageModule
+		matched       VersionSpec
+		wantExact     string // if non-empty, assert exact match
+		wantPrefix    string // if non-empty, assert strings.HasPrefix
+		wantContains  string // if non-empty, assert strings.Contains
+	}{
+		// ---- "In Spec" branch: container name matches a sidecar in toBeApplied ----
+		{
+			name:          "in_spec_configmap_wins_over_custom_registry",
+			containerName: "my-sidecar",
+			defaultImage:  "default/image:v1",
+			toBeApplied: []csmv1.ContainerTemplate{
+				{
+					Name:            "my-sidecar",
+					Image:           "repo/component-image:1.0",
+					ImagePullPolicy: corev1.PullAlways,
+					Envs:            []corev1.EnvVar{{Name: "FOO", Value: "bar"}},
+					Args:            []string{"--verbose"},
+				},
+			},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					CustomRegistry: "my.registry.local",
+				},
+			},
+			matched: VersionSpec{
+				Version: "v1.0",
+				Images:  map[string]string{"my-sidecar": "repo/configmap-image:1.0"},
+			},
+			wantExact: "repo/configmap-image:1.0",
+		},
+		{
+			name:          "in_spec_custom_registry_fallback",
+			containerName: "my-sidecar",
+			defaultImage:  "quay.io/org/image:v1",
+			toBeApplied: []csmv1.ContainerTemplate{
+				{
+					Name:  "my-sidecar",
+					Image: "repo/component-image:1.0",
+				},
+			},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					CustomRegistry: "my.registry.local",
+				},
+			},
+			matched: VersionSpec{
+				Version: "",
+				Images:  map[string]string{},
+			},
+			wantPrefix: "my.registry.local/",
+		},
+		{
+			name:          "in_spec_component_image_fallback",
+			containerName: "my-sidecar",
+			defaultImage:  "default/image:v1",
+			toBeApplied: []csmv1.ContainerTemplate{
+				{
+					Name:  "my-sidecar",
+					Image: "repo/component-image:1.0",
+				},
+			},
+			cr: csmv1.ContainerStorageModule{},
+			matched: VersionSpec{
+				Version: "",
+				Images:  map[string]string{},
+			},
+			wantExact: "repo/component-image:1.0",
+		},
+		{
+			name:          "in_spec_neither",
+			containerName: "my-sidecar",
+			defaultImage:  "default/image:v1",
+			toBeApplied: []csmv1.ContainerTemplate{
+				{
+					Name:  "my-sidecar",
+					Image: "",
+				},
+			},
+			cr: csmv1.ContainerStorageModule{},
+			matched: VersionSpec{
+				Version: "",
+				Images:  map[string]string{},
+			},
+			wantExact: "default/image:v1",
+		},
+		// ---- "Not In Spec" branch: container name NOT in toBeApplied ----
+		{
+			name:          "not_in_spec_configmap",
+			containerName: "my-sidecar",
+			defaultImage:  "default/image:v1",
+			toBeApplied:   []csmv1.ContainerTemplate{},
+			cr:            csmv1.ContainerStorageModule{},
+			matched: VersionSpec{
+				Version: "v2.0",
+				Images:  map[string]string{"my-sidecar": "repo/configmap-image:2.0"},
+			},
+			wantExact: "repo/configmap-image:2.0",
+		},
+		{
+			name:          "not_in_spec_custom_registry",
+			containerName: "my-sidecar",
+			defaultImage:  "quay.io/org/image:v1",
+			toBeApplied:   []csmv1.ContainerTemplate{},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					CustomRegistry: "my.registry.local",
+				},
+			},
+			matched: VersionSpec{
+				Version: "",
+				Images:  map[string]string{},
+			},
+			wantPrefix: "my.registry.local/",
+		},
+		{
+			name:          "not_in_spec_neither",
+			containerName: "my-sidecar",
+			defaultImage:  "default/image:v1",
+			toBeApplied:   []csmv1.ContainerTemplate{},
+			cr:            csmv1.ContainerStorageModule{},
+			matched: VersionSpec{
+				Version: "",
+				Images:  map[string]string{},
+			},
+			wantExact: "default/image:v1",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := acorev1.Container().WithName(tt.containerName).WithImage(tt.defaultImage).WithImagePullPolicy(corev1.PullIfNotPresent)
+			UpdateContainerApply(ctx, tt.toBeApplied, c, tt.cr, tt.matched)
+
+			got := ""
+			if c.Image != nil {
+				got = string(*c.Image)
+			}
+
+			if tt.wantExact != "" {
+				if got != tt.wantExact {
+					t.Errorf("UpdateContainerApply() image = %q, wantExact %q", got, tt.wantExact)
+				}
+			}
+			if tt.wantPrefix != "" {
+				if !strings.HasPrefix(got, tt.wantPrefix) {
+					t.Errorf("UpdateContainerApply() image = %q, wantPrefix %q", got, tt.wantPrefix)
+				}
+			}
+			if tt.wantContains != "" {
+				if !strings.Contains(got, tt.wantContains) {
+					t.Errorf("UpdateContainerApply() image = %q, wantContains %q", got, tt.wantContains)
+				}
+			}
+		})
+	}
+}
+
+func TestUpdateContainerApply_RetainImageRegistryPath(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name          string
+		containerName string
+		defaultImage  string
+		toBeApplied   []csmv1.ContainerTemplate
+		cr            csmv1.ContainerStorageModule
+		matched       VersionSpec
+		wantExact     string
+	}{
+		{
+			name:          "in_spec_retain_true_strips_domain_keeps_path",
+			containerName: "my-sidecar",
+			defaultImage:  "quay.io/dell/container-storage-modules/plugin:1.2.3",
+			toBeApplied: []csmv1.ContainerTemplate{
+				{Name: "my-sidecar", Image: "repo/component-image:1.0"},
+			},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					CustomRegistry:          "my-registry.example.com",
+					RetainImageRegistryPath: true,
+				},
+			},
+			matched:   VersionSpec{},
+			wantExact: "my-registry.example.com/dell/container-storage-modules/plugin:1.2.3",
+		},
+		{
+			name:          "in_spec_retain_false_keeps_only_image_name",
+			containerName: "my-sidecar",
+			defaultImage:  "quay.io/dell/container-storage-modules/plugin:1.2.3",
+			toBeApplied: []csmv1.ContainerTemplate{
+				{Name: "my-sidecar", Image: "repo/component-image:1.0"},
+			},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					CustomRegistry:          "my-registry.example.com",
+					RetainImageRegistryPath: false,
+				},
+			},
+			matched:   VersionSpec{},
+			wantExact: "my-registry.example.com/plugin:1.2.3",
+		},
+		{
+			name:          "not_in_spec_retain_true_strips_domain_keeps_path",
+			containerName: "my-sidecar",
+			defaultImage:  "registry.k8s.io/sig-storage/csi-provisioner:v6.1.0",
+			toBeApplied:   []csmv1.ContainerTemplate{},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					CustomRegistry:          "my-registry.example.com",
+					RetainImageRegistryPath: true,
+				},
+			},
+			matched:   VersionSpec{},
+			wantExact: "my-registry.example.com/sig-storage/csi-provisioner:v6.1.0",
+		},
+		{
+			name:          "not_in_spec_retain_false_keeps_only_image_name",
+			containerName: "my-sidecar",
+			defaultImage:  "registry.k8s.io/sig-storage/csi-provisioner:v6.1.0",
+			toBeApplied:   []csmv1.ContainerTemplate{},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					CustomRegistry:          "my-registry.example.com",
+					RetainImageRegistryPath: false,
+				},
+			},
+			matched:   VersionSpec{},
+			wantExact: "my-registry.example.com/csi-provisioner:v6.1.0",
+		},
+		{
+			name:          "configmap_wins_over_retain_path",
+			containerName: "my-sidecar",
+			defaultImage:  "quay.io/dell/container-storage-modules/plugin:1.2.3",
+			toBeApplied: []csmv1.ContainerTemplate{
+				{Name: "my-sidecar", Image: "repo/component-image:1.0"},
+			},
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					CustomRegistry:          "my-registry.example.com",
+					RetainImageRegistryPath: true,
+				},
+			},
+			matched: VersionSpec{
+				Version: "v1.0",
+				Images:  map[string]string{"my-sidecar": "configmap-registry/image:from-cm"},
+			},
+			wantExact: "configmap-registry/image:from-cm",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := acorev1.Container().WithName(tt.containerName).WithImage(tt.defaultImage).WithImagePullPolicy(corev1.PullIfNotPresent)
+			UpdateContainerApply(ctx, tt.toBeApplied, c, tt.cr, tt.matched)
+
+			got := ""
+			if c.Image != nil {
+				got = string(*c.Image)
+			}
+
+			if got != tt.wantExact {
+				t.Errorf("UpdateContainerApply() image = %q, want %q", got, tt.wantExact)
+			}
+		})
+	}
+}
+
+func TestGetFinalImage_RetainImageRegistryPath(t *testing.T) {
+	ctx := context.Background()
+	componentName := "my-component"
+
+	tests := []struct {
+		name       string
+		cr         csmv1.ContainerStorageModule
+		matched    VersionSpec
+		component  csmv1.ContainerTemplate
+		yamlString string
+		want       string
+	}{
+		{
+			name: "retain_true_custom_registry_strips_domain_keeps_path",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					CustomRegistry:          "my-registry.example.com",
+					RetainImageRegistryPath: true,
+				},
+			},
+			matched:    VersionSpec{},
+			component:  csmv1.ContainerTemplate{Name: componentName},
+			yamlString: "image: quay.io/dell/container-storage-modules/plugin:1.2.3",
+			want:       "my-registry.example.com/dell/container-storage-modules/plugin:1.2.3",
+		},
+		{
+			name: "retain_false_custom_registry_keeps_only_image_name",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					CustomRegistry:          "my-registry.example.com",
+					RetainImageRegistryPath: false,
+				},
+			},
+			matched:    VersionSpec{},
+			component:  csmv1.ContainerTemplate{Name: componentName},
+			yamlString: "image: quay.io/dell/container-storage-modules/plugin:1.2.3",
+			want:       "my-registry.example.com/plugin:1.2.3",
+		},
+		{
+			name: "configmap_wins_over_retain_path",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					CustomRegistry:          "my-registry.example.com",
+					RetainImageRegistryPath: true,
+				},
+			},
+			matched: VersionSpec{
+				Version: "v2.0.0",
+				Images:  map[string]string{componentName: "configmap-registry/image:from-cm"},
+			},
+			component:  csmv1.ContainerTemplate{Name: componentName},
+			yamlString: "image: quay.io/dell/container-storage-modules/plugin:1.2.3",
+			want:       "configmap-registry/image:from-cm",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 			got := GetFinalImage(ctx, tt.cr, tt.matched, tt.component, tt.yamlString)
 			if got != tt.want {
 				t.Errorf("GetFinalImage() = %q, want %q", got, tt.want)

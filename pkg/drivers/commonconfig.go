@@ -31,6 +31,16 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+func recordMatchedContainerImage(matched *operatorutils.VersionSpec, containerName, image string) {
+	if matched == nil || containerName == "" || image == "" {
+		return
+	}
+	if matched.Images == nil {
+		matched.Images = make(map[string]string)
+	}
+	matched.Images[containerName] = image
+}
+
 var defaultVolumeConfigName = map[csmv1.DriverType]string{
 	csmv1.PowerScaleName: "isilon-configs",
 }
@@ -140,14 +150,32 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 		controllerYAML.Deployment.Spec.Template.Spec.NodeSelector = cr.Spec.Driver.Controller.NodeSelector
 	}
 
-	// Checking if driver image is present in config map
-	found := false
-	var image string
-	for k, v := range matched.Images {
-		if k == string(cr.Spec.Driver.CSIDriverType) {
-			image = v
-			found = true
-			break
+	// Driver container image override priority (highest wins):
+	//
+	//   1. ConfigMap version match (spec.version) -- image resolved from the
+	//      csm-images ConfigMap via VersionSpec.Images[driverType]. This is
+	//      the "managed versioning" path where the operator picks images
+	//      automatically based on the requested version.
+	//
+	//   2. Custom registry (spec.customRegistry) -- the template image path
+	//      is re-rooted under the user-supplied registry prefix. Only valid
+	//      when spec.version is set (CEL validation enforces this).
+	//
+	//   3. Explicit image (spec.driver.common.image) -- the user provides a
+	//      fully-qualified image in the CR. This is the configVersion path
+	//      where the user manages image references directly. configVersion
+	//      is deprecated in favor of spec.version; this path remains for
+	//      backward compatibility.
+	//
+	//   4. Template default -- if none of the above apply, the image baked
+	//      into the operatorconfig YAML template is used as-is.
+	//
+	// Sidecar containers follow a similar chain via UpdateSideCarApply and
+	// are intentionally skipped here to avoid double-resolution.
+	matchedDriverImage := ""
+	if matched.Version != "" {
+		if img := matched.Images[string(cr.Spec.Driver.CSIDriverType)]; img != "" {
+			matchedDriverImage = img
 		}
 	}
 
@@ -155,13 +183,21 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	newcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
 	for i, c := range containers {
 		if c.Name != nil && (string(*c.Name) == "driver" || string(*c.Name) == "objectstorage-provisioner") {
-			if found {
-				c.Image = &image
+			if matchedDriverImage != "" {
+				// Priority 1: ConfigMap version match
+				img := matchedDriverImage
+				c.Image = &img
+				recordMatchedContainerImage(&matched, string(*c.Name), matchedDriverImage)
+				log.Infow("Matched container image override", "container", string(*c.Name), "image", matchedDriverImage)
+				// Clear after use so it isn't applied to a second container
+				matchedDriverImage = ""
 			} else if cr.Spec.CustomRegistry != "" {
+				// Priority 2: Custom registry prefix
 				resolvedImagePath := operatorutils.ResolveImage(ctx, string(*c.Image), cr)
 				c.Image = &resolvedImagePath
 			} else {
-				// Check if Common is not nil before accessing Envs
+				// Priority 3: Explicit image from CR spec (falls through to
+				// priority 4 / template default if Common.Image is empty)
 				if cr.Spec.Driver.Common != nil {
 					if cr.Spec.Driver.Common.Image != "" {
 						image := string(cr.Spec.Driver.Common.Image)
@@ -208,7 +244,13 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 		}
 		if !removeContainer {
 			operatorutils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &c)
-			operatorutils.UpdateSideCarApply(ctx, cr.Spec.Driver.SideCars, &c, cr, matched)
+			// Skip UpdateSideCarApply for the driver container — its image was
+			// already resolved above (ConfigMap / CustomRegistry / Default).
+			// Running it again would double-resolve the image, which corrupts
+			// the path when retainImageRegistryPath is true.
+			if string(*c.Name) != "driver" && string(*c.Name) != "objectstorage-provisioner" {
+				operatorutils.UpdateSideCarApply(ctx, cr.Spec.Driver.SideCars, &c, cr, matched)
+			}
 			newcontainers = append(newcontainers, c)
 		}
 
@@ -332,7 +374,8 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 		nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.NodeSelector = cr.Spec.Driver.Node.NodeSelector
 	}
 
-	// Checking if driver image is present in config map
+	// Driver container image override -- same priority as GetController:
+	// 1. ConfigMap version match, 2. CustomRegistry, 3. Common.Image, 4. Template default.
 	found := false
 	var image string
 	var mdmInitContainerImage string
@@ -350,11 +393,15 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	for i, c := range containers {
 		if c.Name != nil && string(*c.Name) == "driver" {
 			if found {
+				// Priority 1: ConfigMap version match
 				c.Image = &image
+				recordMatchedContainerImage(&matched, string(*c.Name), image)
 			} else if cr.Spec.CustomRegistry != "" {
+				// Priority 2: Custom registry prefix
 				resolvedImagePath := operatorutils.ResolveImage(ctx, string(*c.Image), cr)
 				c.Image = &resolvedImagePath
 			} else {
+				// Priority 3: Explicit image from CR spec
 				if cr.Spec.Driver.Common != nil {
 					// With minimal, this will override the node image if the driver image is overridden.
 					if cr.Spec.Driver.Common.Image != "" {
@@ -400,7 +447,13 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 		}
 		if !removeContainer {
 			operatorutils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &containers[i])
-			operatorutils.UpdateSideCarApply(ctx, cr.Spec.Driver.SideCars, &containers[i], cr, matched)
+			// Skip UpdateSideCarApply for the driver container — its image was
+			// already resolved above (ConfigMap / CustomRegistry / Default).
+			// Running it again would double-resolve the image, which corrupts
+			// the path when retainImageRegistryPath is true.
+			if string(*c.Name) != "driver" && string(*c.Name) != "objectstorage-provisioner" {
+				operatorutils.UpdateSideCarApply(ctx, cr.Spec.Driver.SideCars, &containers[i], cr, matched)
+			}
 			newcontainers = append(newcontainers, c)
 		}
 	}
@@ -445,6 +498,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 			}
 			if mdmInitContainerImage != "" {
 				initcontainers[i].Image = &mdmInitContainerImage
+				recordMatchedContainerImage(&matched, string(*initcontainers[i].Name), mdmInitContainerImage)
 				log.Debugw("MDM initcontainer image resolved from ConfigMap",
 					"mdmInitContainerImage", mdmInitContainerImage,
 				)
@@ -467,6 +521,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 			}
 			if found2 {
 				initcontainers[i].Image = &sdcImage
+				recordMatchedContainerImage(&matched, string(*initcontainers[i].Name), sdcImage)
 				log.Infow("SDC initcontainer image resolved from ConfigMap",
 					"image", sdcImage,
 				)

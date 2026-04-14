@@ -2,7 +2,7 @@ apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
   name: cosi
-  namespace: dell-cosi
+  namespace: ${E2E_NS_COSI}
 spec:
   driver:
     csiDriverType: "cosi"

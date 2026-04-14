@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -80,16 +80,15 @@ const (
 	// AuthControllerReconcileInterval -
 	AuthControllerReconcileInterval = "<AUTHORIZATION_CONTROLLER_RECONCILE_INTERVAL>"
 
-	// Auth default images
-	DefaultProxyServerImage    = "quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.5.0"
+	DefaultProxyServerImage    = "quay.io/dell/container-storage-modules/csm-authorization-proxy"
 	DefaultOpaImage            = "docker.io/openpolicyagent/opa:0.70.0"
 	DefaultOpaKubeMgmtImage    = "docker.io/openpolicyagent/kube-mgmt:9.2.1"
-	DefaultTenantServiceImage  = "quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.5.0"
-	DefaultRoleServiceImage    = "quay.io/dell/container-storage-modules/csm-authorization-role:v2.5.0"
-	DefaultStorageServiceImage = "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.5.0"
+	DefaultTenantServiceImage  = "quay.io/dell/container-storage-modules/csm-authorization-tenant"
+	DefaultRoleServiceImage    = "quay.io/dell/container-storage-modules/csm-authorization-role"
+	DefaultStorageServiceImage = "quay.io/dell/container-storage-modules/csm-authorization-storage"
 	DefaultRedisImage          = "redis:8.4.0-alpine"
 	DefaultRedisCommanderImage = "rediscommander/redis-commander:latest"
-	DefaultControllerImage     = "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.5.0"
+	DefaultControllerImage     = "quay.io/dell/container-storage-modules/csm-authorization-controller"
 
 	// AuthRedisName -
 	AuthRedisName = "<AUTHORIZATION_REDIS_NAME>"
@@ -314,7 +313,7 @@ func CheckApplyContainersAuth(containers []acorev1.ContainerApplyConfiguration, 
 	return errors.New("karavi-authorization-proxy container was not injected into driver")
 }
 
-func getAuthApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, ctrlClient crclient.Client) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, error) {
+func getAuthApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, ctrlClient crclient.Client) (*csmv1.Module, *acorev1.ContainerApplyConfiguration, operatorutils.VersionSpec, error) {
 	log := logger.GetLogger(ctx)
 	var err error
 	authModule := csmv1.Module{}
@@ -325,22 +324,23 @@ func getAuthApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op ope
 		}
 	}
 
+	emptySpec := operatorutils.VersionSpec{}
 	authConfigVersion := authModule.ConfigVersion
 	if authConfigVersion == "" {
 		version, err := operatorutils.GetVersion(ctx, &cr, op)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, emptySpec, err
 		}
 		authConfigVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, emptySpec, err
 		}
 	}
 
 	configMapPath := fmt.Sprintf("%s/moduleconfig/authorization/%s/container.yaml", op.ConfigDirectory, authConfigVersion)
 	buf, err := os.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, emptySpec, err
 	}
 
 	YamlString := operatorutils.ModifyCommonCR(string(buf), cr)
@@ -351,7 +351,7 @@ func getAuthApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op ope
 	var container acorev1.ContainerApplyConfiguration
 	err = yaml.Unmarshal([]byte(YamlString), &container)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, emptySpec, err
 	}
 
 	for i, component := range authModule.Components {
@@ -401,7 +401,7 @@ func getAuthApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op ope
 	// Karavi authorization config is not required in config v2.4.0 and later (CSM 1.16) due to driver secret
 	driverSecretVersion, err := operatorutils.MinVersionCheck("v2.4.0", authConfigVersion)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, emptySpec, err
 	}
 	if driverSecretVersion {
 		// Do not try to make the karavi-authorization-config volume available if the customer is using the driver secret.
@@ -438,22 +438,24 @@ func getAuthApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op ope
 	if err != nil {
 		log.Errorw("Image resolution via ConfigMap csm-images failed", "err", err, "specVersion", cr.Spec.Version)
 	}
+	// Resolve image using the standard precedence: ConfigMap → Custom Registry → default.
+	// An independent flag ensures that a sparse ConfigMap (matching version
+	// but missing the proxy key) still falls through to Custom Registry.
+	matchedImageApplied := false
 	if matched.Version != "" {
 		proxyKey := "karavi-authorization-proxy"
 		if img := matched.Images[proxyKey]; img != "" {
 			container.Image = &img
+			matchedImageApplied = true
 			log.Infow("Overriding container image from ConfigMap csm-images", "key", proxyKey, "image", img, "specVersion", matched.Version)
-		} else {
-			log.Infow("No image found for key", "key", proxyKey, "specVersion", matched.Version)
-		}
-	} else {
-		if cr.Spec.CustomRegistry != "" {
-			img := operatorutils.ResolveImage(ctx, *container.Image, cr)
-			container.Image = &img
 		}
 	}
+	if !matchedImageApplied && cr.Spec.CustomRegistry != "" {
+		img := operatorutils.ResolveImage(ctx, *container.Image, cr)
+		container.Image = &img
+	}
 
-	return &authModule, &container, nil
+	return &authModule, &container, matched, nil
 }
 
 func getAuthApplyVolumes(ctx context.Context, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, auth csmv1.ContainerTemplate, ctrlClient crclient.Client) ([]acorev1.VolumeApplyConfiguration, error) {
@@ -532,13 +534,13 @@ func getAuthApplyVolumes(ctx context.Context, cr csmv1.ContainerStorageModule, o
 
 // AuthInjectDaemonset  - inject authorization into daemonset
 func AuthInjectDaemonset(ctx context.Context, ds applyv1.DaemonSetApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, ctrlClient crclient.Client) (*applyv1.DaemonSetApplyConfiguration, error) {
-	authModule, containerPtr, err := getAuthApplyCR(ctx, cr, op, ctrlClient)
+	authModule, containerPtr, matched, err := getAuthApplyCR(ctx, cr, op, ctrlClient)
 	if err != nil {
 		return nil, err
 	}
 
 	container := *containerPtr
-	operatorutils.UpdateSideCarApply(ctx, authModule.Components, &container, cr, operatorutils.VersionSpec{})
+	operatorutils.UpdateSideCarApply(ctx, authModule.Components, &container, cr, matched)
 	vols, err := getAuthApplyVolumes(ctx, cr, op, authModule.Components[0], ctrlClient)
 	if err != nil {
 		return nil, err
@@ -559,13 +561,13 @@ func AuthInjectDaemonset(ctx context.Context, ds applyv1.DaemonSetApplyConfigura
 
 // AuthInjectDeployment - inject authorization into deployment
 func AuthInjectDeployment(ctx context.Context, dp applyv1.DeploymentApplyConfiguration, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, ctrlClient crclient.Client) (*applyv1.DeploymentApplyConfiguration, error) {
-	authModule, containerPtr, err := getAuthApplyCR(ctx, cr, op, ctrlClient)
+	authModule, containerPtr, matched, err := getAuthApplyCR(ctx, cr, op, ctrlClient)
 	if err != nil {
 		return nil, err
 	}
 
 	container := *containerPtr
-	operatorutils.UpdateSideCarApply(ctx, authModule.Components, &container, cr, operatorutils.VersionSpec{})
+	operatorutils.UpdateSideCarApply(ctx, authModule.Components, &container, cr, matched)
 
 	vols, err := getAuthApplyVolumes(ctx, cr, op, authModule.Components[0], ctrlClient)
 	if err != nil {
@@ -771,8 +773,22 @@ func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.Oper
 	for _, component := range auth.Components {
 		// proxy-server component
 		if component.Name == AuthProxyServerComponent {
-			roleServiceImage := getDefaultAuthImage(component.RoleService, DefaultRoleServiceImage, matched)
-			controllerImage := getDefaultAuthImage(component.AuthorizationController, DefaultControllerImage, matched)
+			// Use version-specific default images
+			versionDefaults, err := getVersionSpecificDefaultImages(auth.ConfigVersion, op.ConfigDirectory)
+			if err != nil {
+				return YamlString, fmt.Errorf("failed to get version-specific default images: %w", err)
+			}
+			defaultRoleImage := DefaultRoleServiceImage
+			defaultControllerImage := DefaultControllerImage
+			if img, ok := versionDefaults["role-service"]; ok {
+				defaultRoleImage = img
+			}
+			if img, ok := versionDefaults["authorization-controller"]; ok {
+				defaultControllerImage = img
+			}
+
+			roleServiceImage := getDefaultAuthImage(component.RoleService, defaultRoleImage, matched)
+			controllerImage := getDefaultAuthImage(component.AuthorizationController, defaultControllerImage, matched)
 			authProxyImages := map[string]*string{
 				"role-service":             &roleServiceImage,
 				"authorization-controller": &controllerImage,
@@ -863,18 +879,18 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op oper
 			return err
 		}
 
-		err = applyDeleteAuthorizationProxyServerV2(ctx, isDeleting, cr, ctrlClient, authModule, matched)
+		err = applyDeleteAuthorizationProxyServerV2(ctx, isDeleting, cr, ctrlClient, authModule, matched, op)
 		if err != nil {
 			return err
 		}
 
-		err = applyDeleteAuthorizationTenantServiceV2(ctx, isDeleting, cr, ctrlClient, authModule, matched)
+		err = applyDeleteAuthorizationTenantServiceV2(ctx, isDeleting, cr, ctrlClient, authModule, matched, op)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = authorizationStorageServiceV2(ctx, isDeleting, cr, ctrlClient, authModule, matched)
+	err = authorizationStorageServiceV2(ctx, isDeleting, cr, ctrlClient, authModule, matched, op)
 	if err != nil {
 		return err
 	}
@@ -882,7 +898,7 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op oper
 	return nil
 }
 
-func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, authModule csmv1.Module, matched operatorutils.VersionSpec) error {
+func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, authModule csmv1.Module, matched operatorutils.VersionSpec, op operatorutils.OperatorConfig) error {
 	log := logger.GetLogger(ctx)
 	// SecretProviderClasses and K8s secret for storage credentials is supported from config v2.3.0 (CSM 1.15) onwards
 	storageCreds, err := operatorutils.MinVersionCheck("v2.3.0", authModule.ConfigVersion)
@@ -903,7 +919,16 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		switch component.Name {
 		case AuthProxyServerComponent:
 			replicas = component.StorageServiceReplicas
-			image = getDefaultAuthImage(component.StorageService, DefaultStorageServiceImage, matched)
+			// Use version-specific default image
+			versionDefaults, err := getVersionSpecificDefaultImages(authModule.ConfigVersion, op.ConfigDirectory)
+			if err != nil {
+				return fmt.Errorf("failed to get version-specific default images: %w", err)
+			}
+			defaultStorageImage := DefaultStorageServiceImage
+			if img, ok := versionDefaults["storage-service"]; ok {
+				defaultStorageImage = img
+			}
+			image = getDefaultAuthImage(component.StorageService, defaultStorageImage, matched)
 			image = getImageForKey(ctx, "storage-service", image, cr, matched)
 			leaderElection = component.LeaderElection
 			otelCollector = component.OpenTelemetryCollectorAddress
@@ -1230,7 +1255,7 @@ func configureConjurSecretProvider(secretProviderClasses *csmv1.StorageSystemSec
 	}
 }
 
-func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, authModule csmv1.Module, matched operatorutils.VersionSpec) error {
+func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, authModule csmv1.Module, matched operatorutils.VersionSpec, op operatorutils.OperatorConfig) error {
 	replicas := 0
 	redisReplicas := 0
 	sentinelName := ""
@@ -1242,8 +1267,18 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 		switch component.Name {
 		case AuthProxyServerComponent:
 			replicas = component.ProxyServiceReplicas
-			proxyImage = getDefaultAuthImage(component.ProxyService, DefaultProxyServerImage, matched)
+			// Use version-specific default image
+			versionDefaults, err := getVersionSpecificDefaultImages(authModule.ConfigVersion, op.ConfigDirectory)
+			if err != nil {
+				return fmt.Errorf("failed to get version-specific default images: %w", err)
+			}
+			defaultProxyImage := DefaultProxyServerImage
+			if img, ok := versionDefaults["proxy-service"]; ok {
+				defaultProxyImage = img
+			}
+			proxyImage = getDefaultAuthImage(component.ProxyService, defaultProxyImage, matched)
 			proxyImage = getImageForKey(ctx, "proxy-service", proxyImage, cr, matched)
+			// OPA images are not version-specific, use defaults
 			opaImage = getDefaultAuthImage(component.Opa, DefaultOpaImage, matched)
 			opaImage = getImageForKey(ctx, "opa", opaImage, cr, matched)
 			opaKubeMgmtImage = getDefaultAuthImage(component.OpaKubeMgmt, DefaultOpaKubeMgmtImage, matched)
@@ -1285,7 +1320,7 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 	return nil
 }
 
-func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, authModule csmv1.Module, matched operatorutils.VersionSpec) error {
+func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, authModule csmv1.Module, matched operatorutils.VersionSpec, op operatorutils.OperatorConfig) error {
 	replicas := 0
 	redisReplicas := 0
 	image := ""
@@ -1294,7 +1329,16 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 	for _, component := range authModule.Components {
 		switch component.Name {
 		case AuthProxyServerComponent:
-			image = getDefaultAuthImage(component.TenantService, DefaultTenantServiceImage, matched)
+			// Use version-specific default image
+			versionDefaults, err := getVersionSpecificDefaultImages(authModule.ConfigVersion, op.ConfigDirectory)
+			if err != nil {
+				return fmt.Errorf("failed to get version-specific default images: %w", err)
+			}
+			defaultTenantImage := DefaultTenantServiceImage
+			if img, ok := versionDefaults["tenant-service"]; ok {
+				defaultTenantImage = img
+			}
+			image = getDefaultAuthImage(component.TenantService, defaultTenantImage, matched)
 			image = getImageForKey(ctx, "tenant-service", image, cr, matched)
 			replicas = component.TenantServiceReplicas
 		case AuthRedisComponent:
@@ -2516,11 +2560,14 @@ func updateConjurAnnotations(annotations map[string]string, paths ...string) {
 func getImageForKey(ctx context.Context, key string, defaultImage string, cr csmv1.ContainerStorageModule, matched operatorutils.VersionSpec) string {
 	// Config map gets highest priority
 	returnImg := defaultImage
+	matchedImageApplied := false
 	if matched.Version != "" {
 		if img := matched.Images[key]; img != "" {
 			returnImg = img
+			matchedImageApplied = true
 		}
-	} else if cr.Spec.CustomRegistry != "" {
+	}
+	if !matchedImageApplied && cr.Spec.CustomRegistry != "" {
 		// Followed by custom registry
 		returnImg = operatorutils.ResolveImage(ctx, returnImg, cr)
 	}
@@ -2536,4 +2583,61 @@ func getDefaultAuthImage(componentImage, defaultImage string, _ operatorutils.Ve
 		return defaultImage
 	}
 	return componentImage
+}
+
+// getLatestAuthVersion returns the latest authorization version by scanning operatorconfig
+func getLatestAuthVersion(configDirectory string) (string, error) {
+	authConfigPath := fmt.Sprintf("%s/moduleconfig/%s", configDirectory, csmv1.Authorization)
+
+	// Read the directory to find all version subdirectories
+	files, err := os.ReadDir(authConfigPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read authorization config directory %s: %w", authConfigPath, err)
+	}
+
+	if len(files) == 0 {
+		return "", fmt.Errorf("no authorization versions found in directory %s", authConfigPath)
+	}
+
+	latestVersion := "v0.0.0"
+	for _, file := range files {
+		if file.IsDir() {
+			version := file.Name()
+			// Simple version comparison - assumes semantic versioning
+			if version > latestVersion {
+				latestVersion = version
+			}
+		}
+	}
+
+	if latestVersion == "v0.0.0" {
+		return "", fmt.Errorf("no valid authorization versions found in directory %s", authConfigPath)
+	}
+
+	return latestVersion, nil
+}
+
+// getVersionSpecificDefaultImages returns the default images for a given config version
+// It dynamically constructs image tags based on the config version
+func getVersionSpecificDefaultImages(configVersion string, configDirectory string) (map[string]string, error) {
+	images := make(map[string]string)
+
+	// Construct version-specific images by appending the version tag
+	tag := configVersion
+	if tag == "" {
+		// Infer latest version from operatorconfig directory instead of hardcoding
+		latestVersion, err := getLatestAuthVersion(configDirectory)
+		if err != nil {
+			return nil, fmt.Errorf("failed to determine latest authorization version: %w", err)
+		}
+		tag = latestVersion
+	}
+
+	images["proxy-service"] = fmt.Sprintf("%s:%s", DefaultProxyServerImage, tag)
+	images["tenant-service"] = fmt.Sprintf("%s:%s", DefaultTenantServiceImage, tag)
+	images["role-service"] = fmt.Sprintf("%s:%s", DefaultRoleServiceImage, tag)
+	images["storage-service"] = fmt.Sprintf("%s:%s", DefaultStorageServiceImage, tag)
+	images["authorization-controller"] = fmt.Sprintf("%s:%s", DefaultControllerImage, tag)
+
+	return images, nil
 }

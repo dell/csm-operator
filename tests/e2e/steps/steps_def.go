@@ -1,4 +1,4 @@
-//  Copyright © 2022-2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2022-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -51,47 +52,61 @@ const (
 )
 
 var (
-	authString        = "karavi-authorization-proxy"
-	operatorNamespace = "dell-csm-operator"
-	quotaLimit        = "100000000"
-	pflexSecretMap    = map[string]string{ // #nosec G101
-		"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_PROTOCOL": "PFLEX_PROTOCOL", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_NAS": "PFLEX_NAS", "REPLACE_SFTP_REPO_ADDRESS": "PFLEX_SFTP_REPO_ADDRESS", "REPLACE_SFTP_REPO_USER": "PFLEX_SFTP_REPO_USER",
-		"REPLACE_ZONING_USER": "PFLEX_ZONING_USER", "REPLACE_ZONING_PASS": "PFLEX_ZONING_PASS", "REPLACE_ZONING_SYSTEMID": "PFLEX_ZONING_SYSTEMID", "REPLACE_ZONING_ENDPOINT": "PFLEX_ZONING_ENDPOINT", "REPLACE_ZONING_MDM": "PFLEX_ZONING_MDM", "REPLACE_ZONING_POOL": "PFLEX_ZONING_POOL", "REPLACE_ZONING_NAS": "PFLEX_ZONING_NAS",
-		"REPLACE_OIDC_CLIENTID": "PFLEX_OIDC_CLIENTID", "REPLACE_OIDC_CLIENT_SECRET": "PFLEX_OIDC_CLIENT_SECRET", "REPLACE_CIAM_CLIENTID": "PFLEX_CIAM_CLIENTID", "REPLACE_CIAM_CLIENT_SECRET": "PFLEX_CIAM_CLIENT_SECRET", "REPLACE_ISSUER": "PFLEX_ISSUER", "REPLACE_SCOPE": "PFLEX_SCOPE",
+	authString         = "karavi-authorization-proxy"
+	operatorNamespace  = "dell-csm-operator"
+	quotaLimit         = "100000000"
+	powerflexSecretMap = map[string]string{ // #nosec G101
+		"REPLACE_USER": "POWERFLEX_USER", "REPLACE_PASS": "POWERFLEX_PASS", "REPLACE_SYSTEMID": "POWERFLEX_SYSTEMID", "REPLACE_ENDPOINT": "POWERFLEX_ENDPOINT", "REPLACE_MDM": "POWERFLEX_MDM", "REPLACE_PROTOCOL": "POWERFLEX_PROTOCOL", "REPLACE_POOL": "POWERFLEX_POOL", "REPLACE_NAS": "POWERFLEX_NAS", "REPLACE_SFTP_REPO_ADDRESS": "POWERFLEX_SFTP_REPO_ADDRESS", "REPLACE_SFTP_REPO_USER": "POWERFLEX_SFTP_REPO_USER",
+		"REPLACE_ZONING_USER": "POWERFLEX_ZONING_USER", "REPLACE_ZONING_PASS": "POWERFLEX_ZONING_PASS", "REPLACE_ZONING_SYSTEMID": "POWERFLEX_ZONING_SYSTEMID", "REPLACE_ZONING_ENDPOINT": "POWERFLEX_ZONING_ENDPOINT", "REPLACE_ZONING_MDM": "POWERFLEX_ZONING_MDM", "REPLACE_ZONING_POOL": "POWERFLEX_ZONING_POOL", "REPLACE_ZONING_NAS": "POWERFLEX_ZONING_NAS",
+		"REPLACE_OIDC_CLIENTID": "POWERFLEX_OIDC_CLIENTID", "REPLACE_OIDC_CLIENT_SECRET": "POWERFLEX_OIDC_CLIENT_SECRET", "REPLACE_CIAM_CLIENTID": "POWERFLEX_CIAM_CLIENTID", "REPLACE_CIAM_CLIENT_SECRET": "POWERFLEX_CIAM_CLIENT_SECRET", "REPLACE_ISSUER": "POWERFLEX_ISSUER", "REPLACE_SCOPE": "POWERFLEX_SCOPE",
 	} //gosec:disable G101 -- this is a test automation tool
-	pflexAuthSecretMap       = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_PROTOCOL": "PFLEX_PROTOCOL"}
-	pscaleSecretMap          = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT", "REPLACE_MULTI_CLUSTERNAME": "PSCALE_MULTI_CLUSTER", "REPLACE_MULTI_USER": "PSCALE_MULTI_USER", "REPLACE_MULTI_PASS": "PSCALE_MULTI_PASS", "REPLACE_MULTI_ENDPOINT": "PSCALE_MULTI_ENDPOINT", "REPLACE_MULTI_PORT": "PSCALE_MULTI_PORT", "REPLACE_MULTI_AUTH_ENDPOINT": "PSCALE_MULTI_AUTH_ENDPOINT", "REPLACE_MULTI_AUTH_PORT": "PSCALE_MULTI_AUTH_PORT"} //gosec:disable G101 -- this is a test automation tool
-	pscaleAuthSecretMap      = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
-	pscaleAuthSidecarMap     = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_PORT": "PSCALE_PORT"}
-	pscaleEphemeralVolumeMap = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT"}
-	pflexEphemeralVolumeMap  = map[string]string{"REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_VOLUME": "PFLEX_VOLUME"}
-	pflexAuthSidecarMap      = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PFLEX_AUTH_ENDPOINT"}
-	pmaxCredMap              = map[string]string{"REPLACE_USER": "PMAX_USER_ENCODED", "REPLACE_PASS": "PMAX_PASS_ENCODED"} //gosec:disable G101 -- this is a test automation tool
-	pmaxSecretMap            = map[string]string{
-		"REPLACE_USERNAME": "PMAX_USER", "REPLACE_PASSWORD": "PMAX_PASS", "REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_ENDPOINT": "PMAX_ENDPOINT",
-		"REPLACE_ZONING_USERNAME": "PMAX_ZONING_USER", "REPLACE_ZONING_PASSWORD": "PMAX_ZONING_PASS", "REPLACE_ZONING_SYSTEMID": "PMAX_ZONING_SYSTEMID", "REPLACE_ZONING_ENDPOINT": "PMAX_ZONING_ENDPOINT",
+	powerflexAuthSecretMap       = map[string]string{"REPLACE_USER": "POWERFLEX_USER", "REPLACE_PASS": "POWERFLEX_PASS", "REPLACE_SYSTEMID": "POWERFLEX_SYSTEMID", "REPLACE_ENDPOINT": "POWERFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "POWERFLEX_MDM", "REPLACE_PROTOCOL": "POWERFLEX_PROTOCOL"}
+	powerscaleSecretMap          = map[string]string{"REPLACE_CLUSTERNAME": "POWERSCALE_CLUSTER", "REPLACE_USER": "POWERSCALE_USER", "REPLACE_PASS": "POWERSCALE_PASS", "REPLACE_ENDPOINT": "POWERSCALE_ENDPOINT", "REPLACE_PORT": "POWERSCALE_PORT", "REPLACE_MULTI_CLUSTERNAME": "POWERSCALE_MULTI_CLUSTER", "REPLACE_MULTI_USER": "POWERSCALE_MULTI_USER", "REPLACE_MULTI_PASS": "POWERSCALE_MULTI_PASS", "REPLACE_MULTI_ENDPOINT": "POWERSCALE_MULTI_ENDPOINT", "REPLACE_MULTI_PORT": "POWERSCALE_MULTI_PORT", "REPLACE_MULTI_AUTH_ENDPOINT": "POWERSCALE_MULTI_AUTH_ENDPOINT", "REPLACE_MULTI_AUTH_PORT": "POWERSCALE_MULTI_AUTH_PORT"} //gosec:disable G101 -- this is a test automation tool
+	powerscaleAuthSecretMap      = map[string]string{"REPLACE_CLUSTERNAME": "POWERSCALE_CLUSTER", "REPLACE_USER": "POWERSCALE_USER", "REPLACE_PASS": "POWERSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "POWERSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "POWERSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "POWERSCALE_ENDPOINT", "REPLACE_PORT": "POWERSCALE_PORT"}
+	powerscaleAuthSidecarMap     = map[string]string{"REPLACE_CLUSTERNAME": "POWERSCALE_CLUSTER", "REPLACE_ENDPOINT": "POWERSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "POWERSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "POWERSCALE_AUTH_PORT", "REPLACE_PORT": "POWERSCALE_PORT"}
+	powerscaleEphemeralVolumeMap = map[string]string{"REPLACE_CLUSTERNAME": "POWERSCALE_CLUSTER", "REPLACE_ENDPOINT": "POWERSCALE_ENDPOINT"}
+	powerflexEphemeralVolumeMap  = map[string]string{"REPLACE_SYSTEMID": "POWERFLEX_SYSTEMID", "REPLACE_POOL": "POWERFLEX_POOL", "REPLACE_VOLUME": "POWERFLEX_VOLUME"}
+	powerflexAuthSidecarMap      = map[string]string{"REPLACE_USER": "POWERFLEX_USER", "REPLACE_PASS": "POWERFLEX_PASS", "REPLACE_SYSTEMID": "POWERFLEX_SYSTEMID", "REPLACE_ENDPOINT": "POWERFLEX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "POWERFLEX_AUTH_ENDPOINT"}
+	powermaxCredMap              = map[string]string{"REPLACE_USER": "POWERMAX_USER_ENCODED", "REPLACE_PASS": "POWERMAX_PASS_ENCODED"} //gosec:disable G101 -- this is a test automation tool
+	powermaxSecretMap            = map[string]string{
+		"REPLACE_USERNAME": "POWERMAX_USER", "REPLACE_PASSWORD": "POWERMAX_PASS", "REPLACE_SYSTEMID": "POWERMAX_SYSTEMID", "REPLACE_ENDPOINT": "POWERMAX_ENDPOINT",
+		"REPLACE_ZONING_USERNAME": "POWERMAX_ZONING_USER", "REPLACE_ZONING_PASSWORD": "POWERMAX_ZONING_PASS", "REPLACE_ZONING_SYSTEMID": "POWERMAX_ZONING_SYSTEMID", "REPLACE_ZONING_ENDPOINT": "POWERMAX_ZONING_ENDPOINT",
 	}
-	pmaxAuthSidecarMap     = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_ENDPOINT": "PMAX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
-	pmaxStorageMap         = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_RESOURCE_POOL": "PMAX_POOL_V1", "REPLACE_SERVICE_LEVEL": "PMAX_SERVICE_LEVEL"}
-	pmaxReverseProxyMap    = map[string]string{"REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_AUTH_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
-	authSidecarRootCertMap = map[string]string{}
-	pmaxArrayConfigMap     = map[string]string{"REPLACE_PORTGROUPS": "PMAX_PORTGROUPS", "REPLACE_PROTOCOL": "PMAX_PROTOCOL", "REPLACE_ARRAYS": "PMAX_ARRAYS", "REPLACE_ENDPOINT": "PMAX_ENDPOINT"}
-	pmaxAuthArrayConfigMap = map[string]string{"REPLACE_PORTGROUPS": "PMAX_PORTGROUPS", "REPLACE_PROTOCOL": "PMAX_PROTOCOL", "REPLACE_ARRAYS": "PMAX_ARRAYS", "REPLACE_ENDPOINT": "PMAX_AUTH_ENDPOINT"}
+	powermaxAuthSidecarMap     = map[string]string{"REPLACE_SYSTEMID": "POWERMAX_SYSTEMID", "REPLACE_ENDPOINT": "POWERMAX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "POWERMAX_AUTH_ENDPOINT"}
+	powermaxStorageMap         = map[string]string{"REPLACE_USER": "POWERMAX_USER", "REPLACE_PASS": "POWERMAX_PASS", "REPLACE_SYSTEMID": "POWERMAX_SYSTEMID", "REPLACE_RESOURCE_POOL": "POWERMAX_POOL_V1", "REPLACE_SERVICE_LEVEL": "POWERMAX_SERVICE_LEVEL"}
+	powermaxReverseProxyMap    = map[string]string{"REPLACE_SYSTEMID": "POWERMAX_SYSTEMID", "REPLACE_AUTH_ENDPOINT": "POWERMAX_AUTH_ENDPOINT"}
+	authSidecarRootCertMap     = map[string]string{}
+	powermaxArrayConfigMap     = map[string]string{"REPLACE_PORTGROUPS": "POWERMAX_PORTGROUPS", "REPLACE_PROTOCOL": "POWERMAX_PROTOCOL", "REPLACE_ARRAYS": "POWERMAX_ARRAYS", "REPLACE_ENDPOINT": "POWERMAX_ENDPOINT"}
+	powermaxAuthArrayConfigMap = map[string]string{"REPLACE_PORTGROUPS": "POWERMAX_PORTGROUPS", "REPLACE_PROTOCOL": "POWERMAX_PROTOCOL", "REPLACE_ARRAYS": "POWERMAX_ARRAYS", "REPLACE_ENDPOINT": "POWERMAX_AUTH_ENDPOINT"}
 	// Auth V2
-	pflexCrMap  = map[string]string{"REPLACE_STORAGE_NAME": "PFLEX_STORAGE", "REPLACE_STORAGE_TYPE": "PFLEX_STORAGE", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_SYSTEM_ID": "PFLEX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PFLEX_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PFLEX_ROLE", "REPLACE_QUOTA": "PFLEX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PFLEX_POOL", "REPLACE_TENANT_NAME": "PFLEX_TENANT", "REPLACE_TENANT_ROLES": "PFLEX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PFLEX_TENANT_PREFIX", "REPLACE_USERNAME_OBJECT_NAME": "secrets/powerflex-username", "REPLACE_PASSWORD_OBJECT_NAME": "secrets/powerflex-password"}
-	pscaleCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PSCALE_STORAGE", "REPLACE_STORAGE_TYPE": "PSCALE_STORAGE", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_SYSTEM_ID": "PSCALE_CLUSTER", "REPLACE_VAULT_STORAGE_PATH": "PSCALE_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PSCALE_ROLE", "REPLACE_QUOTA": "PSCALE_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PSCALE_POOL_V2", "REPLACE_TENANT_NAME": "PSCALE_TENANT", "REPLACE_TENANT_ROLES": "PSCALE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PSCALE_TENANT_PREFIX", "REPLACE_USERNAME_OBJECT_NAME": "secrets/powerscale-username", "REPLACE_PASSWORD_OBJECT_NAME": "secrets/powerscale-password"}
-	pmaxCrMap   = map[string]string{"REPLACE_STORAGE_NAME": "PMAX_STORAGE", "REPLACE_STORAGE_TYPE": "PMAX_STORAGE", "REPLACE_ENDPOINT": "PMAX_ENDPOINT", "REPLACE_SYSTEM_ID": "PMAX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "PMAX_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PMAX_ROLE", "REPLACE_QUOTA": "PMAX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PMAX_POOL_V2", "REPLACE_TENANT_NAME": "PMAX_TENANT", "REPLACE_TENANT_ROLES": "PMAX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PMAX_TENANT_PREFIX", "REPLACE_USERNAME_OBJECT_NAME": "secrets/powermax-username", "REPLACE_PASSWORD_OBJECT_NAME": "secrets/powermax-password"}
-	pstoreCrMap = map[string]string{"REPLACE_STORAGE_NAME": "PSTORE_STORAGE", "REPLACE_STORAGE_TYPE": "PSTORE_STORAGE", "REPLACE_ENDPOINT": "PSTORE_ENDPOINT", "REPLACE_SYSTEM_ID": "PSTORE_GLOBALID", "REPLACE_VAULT_STORAGE_PATH": "PSTORE_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "PSTORE_ROLE", "REPLACE_QUOTA": "PSTORE_QUOTA", "REPLACE_STORAGE_POOL_PATH": "PSTORE_POOL", "REPLACE_TENANT_NAME": "PSTORE_TENANT", "REPLACE_TENANT_ROLES": "PSTORE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "PSTORE_TENANT_PREFIX", "REPLACE_USERNAME_OBJECT_NAME": "secrets/powerstore-username", "REPLACE_PASSWORD_OBJECT_NAME": "secrets/powerstore-password"}
+	powerflexCrMap  = map[string]string{"REPLACE_STORAGE_NAME": "POWERFLEX_STORAGE", "REPLACE_STORAGE_TYPE": "POWERFLEX_STORAGE", "REPLACE_ENDPOINT": "POWERFLEX_ENDPOINT", "REPLACE_SYSTEM_ID": "POWERFLEX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "POWERFLEX_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "POWERFLEX_ROLE", "REPLACE_QUOTA": "POWERFLEX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "POWERFLEX_POOL", "REPLACE_TENANT_NAME": "POWERFLEX_TENANT", "REPLACE_TENANT_ROLES": "POWERFLEX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "POWERFLEX_TENANT_PREFIX", "REPLACE_USERNAME_OBJECT_NAME": "secrets/powerflex-username", "REPLACE_PASSWORD_OBJECT_NAME": "secrets/powerflex-password"}
+	powerscaleCrMap = map[string]string{"REPLACE_STORAGE_NAME": "POWERSCALE_STORAGE", "REPLACE_STORAGE_TYPE": "POWERSCALE_STORAGE", "REPLACE_ENDPOINT": "POWERSCALE_ENDPOINT", "REPLACE_SYSTEM_ID": "POWERSCALE_CLUSTER", "REPLACE_VAULT_STORAGE_PATH": "POWERSCALE_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "POWERSCALE_ROLE", "REPLACE_QUOTA": "POWERSCALE_QUOTA", "REPLACE_STORAGE_POOL_PATH": "POWERSCALE_POOL_V2", "REPLACE_TENANT_NAME": "POWERSCALE_TENANT", "REPLACE_TENANT_ROLES": "POWERSCALE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "POWERSCALE_TENANT_PREFIX", "REPLACE_USERNAME_OBJECT_NAME": "secrets/powerscale-username", "REPLACE_PASSWORD_OBJECT_NAME": "secrets/powerscale-password"}
+	powermaxCrMap   = map[string]string{"REPLACE_STORAGE_NAME": "POWERMAX_STORAGE", "REPLACE_STORAGE_TYPE": "POWERMAX_STORAGE", "REPLACE_ENDPOINT": "POWERMAX_ENDPOINT", "REPLACE_SYSTEM_ID": "POWERMAX_SYSTEMID", "REPLACE_VAULT_STORAGE_PATH": "POWERMAX_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "POWERMAX_ROLE", "REPLACE_QUOTA": "POWERMAX_QUOTA", "REPLACE_STORAGE_POOL_PATH": "POWERMAX_POOL_V2", "REPLACE_TENANT_NAME": "POWERMAX_TENANT", "REPLACE_TENANT_ROLES": "POWERMAX_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "POWERMAX_TENANT_PREFIX", "REPLACE_USERNAME_OBJECT_NAME": "secrets/powermax-username", "REPLACE_PASSWORD_OBJECT_NAME": "secrets/powermax-password"}
+	powerstoreCrMap = map[string]string{"REPLACE_STORAGE_NAME": "POWERSTORE_STORAGE", "REPLACE_STORAGE_TYPE": "POWERSTORE_STORAGE", "REPLACE_ENDPOINT": "POWERSTORE_ENDPOINT", "REPLACE_SYSTEM_ID": "POWERSTORE_GLOBALID", "REPLACE_VAULT_STORAGE_PATH": "POWERSTORE_VAULT_STORAGE_PATH", "REPLACE_ROLE_NAME": "POWERSTORE_ROLE", "REPLACE_QUOTA": "POWERSTORE_QUOTA", "REPLACE_STORAGE_POOL_PATH": "POWERSTORE_POOL", "REPLACE_TENANT_NAME": "POWERSTORE_TENANT", "REPLACE_TENANT_ROLES": "POWERSTORE_ROLE", "REPLACE_TENANT_VOLUME_PREFIX": "POWERSTORE_TENANT_PREFIX", "REPLACE_USERNAME_OBJECT_NAME": "secrets/powerstore-username", "REPLACE_PASSWORD_OBJECT_NAME": "secrets/powerstore-password"}
 
-	pstoreSecretMap          = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_GLOBALID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_ENDPOINT", "REPLACE_PROTOCOL": "PSTORE_PROTOCOL"}
-	pstoreEphemeralVolumeMap = map[string]string{"REPLACE_GLOBALID": "PSTORE_GLOBALID"}
-	pstoreAuthSecretMap      = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_GLOBALID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_AUTH_ENDPOINT", "REPLACE_PROTOCOL": "PSTORE_PROTOCOL"}
-	pstoreAuthSidecarMap     = map[string]string{"REPLACE_USER": "PSTORE_USER", "REPLACE_PASS": "PSTORE_PASS", "REPLACE_SYSTEMID": "PSTORE_GLOBALID", "REPLACE_ENDPOINT": "PSTORE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSTORE_AUTH_ENDPOINT"}
-	unitySecretMap           = map[string]string{"REPLACE_USER": "UNITY_USER", "REPLACE_PASS": "UNITY_PASS", "REPLACE_ARRAYID": "UNITY_ARRAYID", "REPLACE_ENDPOINT": "UNITY_ENDPOINT", "REPLACE_POOL": "UNITY_POOL", "REPLACE_NAS": "UNITY_NAS"}
-	unityEphemeralVolumeMap  = map[string]string{"REPLACE_ARRAYID": "UNITY_ARRAYID", "REPLACE_POOL": "UNITY_POOL", "REPLACE_NAS": "UNITY_NAS"}
+	powerstoreSecretMap          = map[string]string{"REPLACE_USER": "POWERSTORE_USER", "REPLACE_PASS": "POWERSTORE_PASS", "REPLACE_GLOBALID": "POWERSTORE_GLOBALID", "REPLACE_ENDPOINT": "POWERSTORE_ENDPOINT", "REPLACE_PROTOCOL": "POWERSTORE_PROTOCOL"}
+	powerstoreEphemeralVolumeMap = map[string]string{"REPLACE_GLOBALID": "POWERSTORE_GLOBALID"}
+	powerstoreAuthSecretMap      = map[string]string{"REPLACE_USER": "POWERSTORE_USER", "REPLACE_PASS": "POWERSTORE_PASS", "REPLACE_GLOBALID": "POWERSTORE_GLOBALID", "REPLACE_ENDPOINT": "POWERSTORE_AUTH_ENDPOINT", "REPLACE_PROTOCOL": "POWERSTORE_PROTOCOL"}
+	powerstoreAuthSidecarMap     = map[string]string{"REPLACE_USER": "POWERSTORE_USER", "REPLACE_PASS": "POWERSTORE_PASS", "REPLACE_SYSTEMID": "POWERSTORE_GLOBALID", "REPLACE_ENDPOINT": "POWERSTORE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "POWERSTORE_AUTH_ENDPOINT"}
+	unitySecretMap               = map[string]string{"REPLACE_USER": "UNITY_USER", "REPLACE_PASS": "UNITY_PASS", "REPLACE_ARRAYID": "UNITY_ARRAYID", "REPLACE_ENDPOINT": "UNITY_ENDPOINT", "REPLACE_POOL": "UNITY_POOL", "REPLACE_NAS": "UNITY_NAS"}
+	unityEphemeralVolumeMap      = map[string]string{"REPLACE_ARRAYID": "UNITY_ARRAYID", "REPLACE_POOL": "UNITY_POOL", "REPLACE_NAS": "UNITY_NAS"}
 
 	cosiSecretMap = map[string]string{"REPLACE_USER": "COSI_USER", "REPLACE_PASS": "COSI_PASS", "REPLACE_NAMESPACE": "COSI_NAMESPACE", "REPLACE_MGMT_ENDPOINT": "COSI_MGMT_ENDPOINT", "REPLACE_S3_ENDPOINT": "COSI_S3_ENDPOINT"}
+
+	// authV2SetupDone tracks which drivers have completed the one-time
+	// AuthorizationV2 resource setup (template rendering, admin token,
+	// kubectl apply). Only the token generation step needs to be retried.
+	authV2SetupDone = map[string]bool{}
 )
+
+// ResetPerScenarioState clears in-memory state that should not persist across
+// scenarios.  Call this at the start of each scenario, alongside the temp/
+// directory cleanup, so that auth setup always re-runs with the correct paths
+// for the current scenario.
+func ResetPerScenarioState() {
+	authV2SetupDone = map[string]bool{}
+	lastAuthCRRecreation = map[string]time.Time{}
+}
 
 var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations map[string]string, vols []acorev1.VolumeApplyConfiguration, cnt []acorev1.ContainerApplyConfiguration, ctrlClient client.Client) error {
 	authModule := csmv1.Module{}
@@ -102,6 +117,13 @@ var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations ma
 		}
 	}
 	authConfigVersion := authModule.ConfigVersion
+	// When spec.version is used instead of module-level configVersion, the operator
+	// resolves the config version and stores it in an annotation on the CSM CR.
+	if authConfigVersion == "" {
+		if crAnnotations := cr.GetAnnotations(); crAnnotations != nil {
+			authConfigVersion = crAnnotations["storage.dell.com/CSMOperatorConfigVersion"]
+		}
+	}
 
 	err := modules.CheckAnnotationAuth(annotations)
 	if err != nil {
@@ -118,6 +140,55 @@ var correctlyAuthInjected = func(cr csmv1.ContainerStorageModule, annotations ma
 		return err
 	}
 	return nil
+}
+
+// ParseScenarios reads the scenarios YAML file and returns the scenario
+// metadata without loading any custom resource files. Use this when you
+// want to determine which files will be needed before generating them.
+func ParseScenarios(valuesFilePath string) ([]Scenario, error) {
+	b, err := os.ReadFile(valuesFilePath) // #nosec G304
+	if err != nil {
+		return nil, fmt.Errorf("failed to read values file: %v", err)
+	}
+	var scenarios []Scenario
+	if err := yaml.Unmarshal(b, &scenarios); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal scenarios: %v", err)
+	}
+	return scenarios, nil
+}
+
+// LoadResourceForScenario generates any on-demand test files referenced by
+// the scenario, then reads and unmarshals the custom resource YAML for each
+// path. Call EnsureTestfileGenerated for each path before reading.
+func LoadResourceForScenario(scene Scenario) (Resource, error) {
+	// Create a deep copy of the Paths array to avoid collisions between scenarios
+	copiedScene := scene
+	copiedScene.Paths = make([]string, len(scene.Paths))
+	copy(copiedScene.Paths, scene.Paths)
+
+	var customResources []interface{}
+	for _, path := range copiedScene.Paths {
+		if err := EnsureTestfileGenerated(path); err != nil {
+			return Resource{}, fmt.Errorf("generate testfile %s: %v", path, err)
+		}
+
+		b, err := os.ReadFile(path) // #nosec G304
+		if err != nil {
+			return Resource{}, fmt.Errorf("failed to read testdata: %v", err)
+		}
+
+		expanded := os.ExpandEnv(string(b))
+
+		customResource := csmv1.ContainerStorageModule{}
+		if err := yaml.Unmarshal([]byte(expanded), &customResource); err != nil {
+			return Resource{}, fmt.Errorf("failed to unmarshal CSM custom resource: %v", err)
+		}
+		customResources = append(customResources, customResource)
+	}
+	return Resource{
+		Scenario:       copiedScene,
+		CustomResource: customResources,
+	}, nil
 }
 
 // GetTestResources -- parse values file
@@ -142,8 +213,12 @@ func GetTestResources(valuesFilePath string) ([]Resource, error) {
 				return nil, fmt.Errorf("failed to read testdata: %v", err)
 			}
 
+			// Expand env vars (e.g. ${E2E_NS_POWERFLEX}) so namespace fields
+			// resolve to the prefix-based names at load time.
+			expanded := os.ExpandEnv(string(b))
+
 			customResource := csmv1.ContainerStorageModule{}
-			err = yaml.Unmarshal(b, &customResource)
+			err = yaml.Unmarshal([]byte(expanded), &customResource)
 			if err != nil {
 				return nil, fmt.Errorf("failed to read unmarshal CSM custom resource: %v", err)
 			}
@@ -178,7 +253,8 @@ func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
 		return fmt.Errorf("failed to read testdata: %v", err)
 	}
 
-	if _, err := kubectl.RunKubectlInput(cr.Namespace, string(crBuff), "apply", "--validate=true", "-f", "-"); err != nil {
+	crContent := os.ExpandEnv(string(crBuff))
+	if _, err := kubectl.RunKubectlInput(cr.Namespace, crContent, "apply", "--validate=true", "-f", "-"); err != nil {
 		return fmt.Errorf("failed to apply CR %s in namespace %s: %v", cr.Name, cr.Namespace, err)
 	}
 
@@ -206,7 +282,7 @@ func (step *Step) applyAuthorizationConjur(res Resource, crNumStr string) error 
 	}
 
 	customResource := csmv1.ContainerStorageModule{}
-	err = yaml.Unmarshal(crBuff, &customResource)
+	err = yaml.Unmarshal([]byte(os.ExpandEnv(string(crBuff))), &customResource)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal CSM custom resource: %v", err)
 	}
@@ -217,14 +293,14 @@ loop:
 		if module.Name == "authorization-proxy-server" {
 			for compIndex, comp := range module.Components {
 				if comp.Name == "storage-system-credentials" {
-					powerflexUsername := os.Getenv("PFLEX_USER")
-					powerflexPassword := os.Getenv("PFLEX_PASS")
-					powermaxUsername := os.Getenv("PMAX_USER")
-					powermaxPassword := os.Getenv("PMAX_PASS")
-					powerscaleUsername := os.Getenv("PSCALE_USER")
-					powerscalePassword := os.Getenv("PSCALE_PASS")
-					powerstoreUsername := os.Getenv("PSTORE_USER")
-					powerstorePassword := os.Getenv("PSTORE_PASS")
+					powerflexUsername := os.Getenv("POWERFLEX_USER")
+					powerflexPassword := os.Getenv("POWERFLEX_PASS")
+					powermaxUsername := os.Getenv("POWERMAX_USER")
+					powermaxPassword := os.Getenv("POWERMAX_PASS")
+					powerscaleUsername := os.Getenv("POWERSCALE_USER")
+					powerscalePassword := os.Getenv("POWERSCALE_PASS")
+					powerstoreUsername := os.Getenv("POWERSTORE_USER")
+					powerstorePassword := os.Getenv("POWERSTORE_PASS")
 
 					var conjurPaths []csmv1.ConjurCredentialPath
 					if powerflexUsername != "" && powerflexPassword != "" {
@@ -273,7 +349,7 @@ STORAGE_CAPACITY_POLL_INTERVAL: 30s`
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "csm-config-params",
-			Namespace: "authorization",
+			Namespace: os.Getenv("E2E_NS_AUTH"),
 		},
 		Data: map[string]string{
 			"csm-config-params.yaml": dataBytes,
@@ -369,7 +445,6 @@ func (step *Step) deleteCustomResource(res Resource, crNumStr string) error {
 func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
-	time.Sleep(20 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -412,9 +487,84 @@ func (step *Step) validateContainerArg(res Resource, crNumStr string, arg string
 	return fmt.Errorf("unknown error validating container arg")
 }
 
+func (step *Step) validateDeploymentContainerImage(res Resource, crNumStr string, expectedImage string, container string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+	staticDp, err := getDriverDeployment(cr, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get deployment: %v", err)
+	}
+	for _, cnt := range staticDp.Spec.Template.Spec.Containers {
+		if cnt.Name != container {
+			continue
+		}
+		if cnt.Image != expectedImage {
+			return fmt.Errorf("expected deployment container %s image %q, got %q", container, expectedImage, cnt.Image)
+		}
+		return nil
+	}
+	return fmt.Errorf("container %s not found in deployment", container)
+}
+
+func (step *Step) validateDeploymentContainerImageContains(res Resource, crNumStr string, expectedSubstring string, container string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+	staticDp, err := getDriverDeployment(cr, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get deployment: %v", err)
+	}
+	for _, cnt := range staticDp.Spec.Template.Spec.Containers {
+		if cnt.Name != container {
+			continue
+		}
+		if !strings.Contains(cnt.Image, expectedSubstring) {
+			return fmt.Errorf("expected deployment container %s image to contain %q, got %q", container, expectedSubstring, cnt.Image)
+		}
+		return nil
+	}
+	return fmt.Errorf("container %s not found in deployment", container)
+}
+
+func (step *Step) validateDaemonSetContainerImage(res Resource, crNumStr string, expectedImage string, container string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+	staticDs, err := getDriverDaemonset(cr, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get daemonset: %v", err)
+	}
+	for _, cnt := range staticDs.Spec.Template.Spec.Containers {
+		if cnt.Name != container {
+			continue
+		}
+		if cnt.Image != expectedImage {
+			return fmt.Errorf("expected daemonset container %s image %q, got %q", container, expectedImage, cnt.Image)
+		}
+		return nil
+	}
+	return fmt.Errorf("container %s not found in daemonset", container)
+}
+
+func (step *Step) validateDaemonSetContainerImageContains(res Resource, crNumStr string, expectedSubstring string, container string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+	staticDs, err := getDriverDaemonset(cr, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get daemonset: %v", err)
+	}
+	for _, cnt := range staticDs.Spec.Template.Spec.Containers {
+		if cnt.Name != container {
+			continue
+		}
+		if !strings.Contains(cnt.Image, expectedSubstring) {
+			return fmt.Errorf("expected daemonset container %s image to contain %q, got %q", container, expectedSubstring, cnt.Image)
+		}
+		return nil
+	}
+	return fmt.Errorf("container %s not found in daemonset", container)
+}
+
 func (step *Step) validateDriverInstalled(res Resource, driverName string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	time.Sleep(20 * time.Second)
 	return checkAllRunningPods(context.TODO(), res.CustomResource[crNum-1].(csmv1.ContainerStorageModule).Namespace, step.clientSet)
 }
 
@@ -433,9 +583,18 @@ func (step *Step) validateMinimalCSMDriverSpec(res Resource, driverName string, 
 		return fmt.Errorf("failed to get CSM resource '%s/%s': %w", cr.Namespace, cr.Name, err)
 	}
 	driver := found.Spec.Driver
-	if driver.ConfigVersion == "" {
-		return fmt.Errorf("configVersion is missing")
+
+	// Check that the operator has resolved the config version.
+	// The operator stores the resolved version in the CSMOperatorConfigVersion
+	// annotation (via applyConfigVersionAnnotations), regardless of whether the
+	// CR uses spec.version or driver.configVersion. Check annotation first,
+	// then fall back to driver.ConfigVersion for backward compatibility.
+	annotations := found.GetAnnotations()
+	configVersion := annotations["storage.dell.com/CSMOperatorConfigVersion"]
+	if configVersion == "" && driver.ConfigVersion == "" {
+		return fmt.Errorf("configVersion is missing: neither annotation storage.dell.com/CSMOperatorConfigVersion nor driver.configVersion is set")
 	}
+
 	if driver.CSIDriverType == "" {
 		return fmt.Errorf("csiDriverType is missing")
 	}
@@ -463,7 +622,6 @@ func (step *Step) validateMinimalCSMDriverSpec(res Resource, driverName string, 
 
 func (step *Step) validateDriverNotInstalled(res Resource, driverName string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	time.Sleep(20 * time.Second)
 	return checkNoRunningPods(context.TODO(), res.CustomResource[crNum-1].(csmv1.ContainerStorageModule).Namespace, step.clientSet)
 }
 
@@ -490,7 +648,6 @@ func (step *Step) removeNodeLabel(res Resource, label string) error {
 func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
-	time.Sleep(10 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -507,19 +664,19 @@ func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr 
 			}
 			switch m.Name {
 			case csmv1.Authorization:
-				return step.validateAuthorizationInstalled(cr)
+				return step.validateAuthorizationInstalled(*found)
 
 			case csmv1.Replication:
-				return step.validateReplicationInstalled(cr)
+				return step.validateReplicationInstalled(*found)
 
 			case csmv1.Observability:
-				return step.validateObservabilityInstalled(cr)
+				return step.validateObservabilityInstalled(*found)
 
 			case csmv1.AuthorizationServer:
-				return step.validateAuthorizationProxyServerInstalled(cr)
+				return step.validateAuthorizationProxyServerInstalled(*found)
 
 			case csmv1.Resiliency:
-				return step.validateResiliencyInstalled(cr)
+				return step.validateResiliencyInstalled(*found)
 			default:
 				return fmt.Errorf("%s module is not found", module)
 			}
@@ -531,7 +688,6 @@ func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr 
 func (step *Step) validateModuleNotInstalled(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
-	time.Sleep(10 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -737,7 +893,6 @@ func (step *Step) validateAuthorizationNotInstalled(cr csmv1.ContainerStorageMod
 
 func (step *Step) validateAuthorizationPodsNotInstalled(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
-	time.Sleep(20 * time.Second)
 	return checkNoRunningPods(context.TODO(), res.CustomResource[crNum-1].(csmv1.ContainerStorageModule).Namespace, step.clientSet)
 }
 
@@ -896,9 +1051,9 @@ func (step *Step) generateAndCreateSftpSecrets(_ Resource, privateKeyPath, priva
 	defer os.RemoveAll(tmpDir)
 
 	// Load env vars
-	repoAddress, repoUser := os.Getenv("PFLEX_SFTP_REPO_ADDRESS"), os.Getenv("PFLEX_SFTP_REPO_USER")
+	repoAddress, repoUser := os.Getenv("POWERFLEX_SFTP_REPO_ADDRESS"), os.Getenv("POWERFLEX_SFTP_REPO_USER")
 	if repoAddress == "" || repoUser == "" {
-		return fmt.Errorf("PFLEX_SFTP_REPO_ADDRESS and PFLEX_SFTP_REPO_USER must be set")
+		return fmt.Errorf("POWERFLEX_SFTP_REPO_ADDRESS and POWERFLEX_SFTP_REPO_USER must be set")
 	}
 	repoHost := strings.TrimPrefix(repoAddress, "sftp://")
 	repoHost = strings.TrimSuffix(repoHost, "/")
@@ -1000,14 +1155,27 @@ func deleteSecretIfExists(namespace, secretName string) error {
 }
 
 func renderTemplate(crType string, templateFile string) (string, error) {
-	// read the template into memory
+	// Check if an InSpec step has already modified this file and written
+	// a temp copy. If so, read from the temp file to preserve those
+	// modifications (e.g., module enables, driver image changes).
+	// We use struct-level substitution (unmarshal → substitute → marshal)
+	// instead of raw text substitution to preserve YAML string quoting
+	// for numeric values like "000297900536".
+	tempFilePath := getRenderedFilePath(templateFile)
+	if tempFilePath != templateFile {
+		if tempData, err := os.ReadFile(tempFilePath); err == nil { // #nosec G304
+			return renderFromInSpecTemp(crType, tempData)
+		}
+	}
+
+	// Standard path: read original template, use raw text substitution.
 	fileContent, err := os.ReadFile(templateFile) // #nosec G304
 	if err != nil {
 		return "", fmt.Errorf("error reading template file: %v", err)
 	}
 
 	// Convert the file content to a string
-	fileString := string(fileContent)
+	fileString := os.ExpandEnv(string(fileContent))
 
 	if crType == "" {
 		return fileString, nil
@@ -1021,61 +1189,151 @@ func renderTemplate(crType string, templateFile string) (string, error) {
 
 	// Replace all fields in temporary (in memory) string
 	for key, val := range mapValues {
-		fileString = strings.ReplaceAll(fileString, key, os.Getenv(val))
+		envVal := os.Getenv(val)
+		if envVal == "" && strings.Contains(fileString, key) {
+			return "", fmt.Errorf(
+				"env var %s is empty but template %s contains placeholder %s; "+
+					"check array-info.yaml and ensure the section containing %s is filled in",
+				val, templateFile, key, val)
+		}
+		fileString = strings.ReplaceAll(fileString, key, envVal)
 	}
 	return fileString, nil
 }
 
+// renderFromInSpecTemp renders a template from a temp file previously written
+// by an InSpec step. It uses struct-level substitution (unmarshal, substitute,
+// re-marshal) instead of raw text substitution. This preserves YAML string
+// quoting for numeric values like "000297900536" which would otherwise be
+// interpreted as integers by Kubernetes.
+func renderFromInSpecTemp(crType string, tempData []byte) (string, error) {
+	// Expand env vars (e.g., ${E2E_NS_POWERMAX}) before unmarshalling.
+	expanded := os.ExpandEnv(string(tempData))
+
+	if crType == "" {
+		return expanded, nil
+	}
+
+	mapValues, err := determineMap(crType)
+	if err != nil {
+		return "", err
+	}
+
+	// Try to unmarshal as a CSM CR for type-safe struct-level substitution.
+	cr := csmv1.ContainerStorageModule{}
+	if err := yaml.Unmarshal([]byte(expanded), &cr); err != nil {
+		// Not a CSM CR (e.g., a Secret). Fall back to text substitution.
+		result := expanded
+		for key, val := range mapValues {
+			envVal := os.Getenv(val)
+			result = strings.ReplaceAll(result, key, envVal)
+		}
+		return result, nil
+	}
+
+	// Apply REPLACE_* substitutions to env var values in the struct.
+	applyEnvSubstitutions(&cr, mapValues)
+
+	out, err := yaml.Marshal(cr)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal CR after substitution: %v", err)
+	}
+	return string(out), nil
+}
+
+// applyEnvSubstitutions replaces REPLACE_* placeholder strings in all
+// env var values throughout the CSM CR struct (common, controller, node,
+// sidecars, init containers, and module components).
+func applyEnvSubstitutions(cr *csmv1.ContainerStorageModule, mapValues map[string]string) {
+	substituteEnvSlice := func(envs []corev1.EnvVar) {
+		for i, env := range envs {
+			for key, val := range mapValues {
+				envVal := os.Getenv(val)
+				if strings.Contains(env.Value, key) {
+					envs[i].Value = strings.ReplaceAll(env.Value, key, envVal)
+				}
+			}
+		}
+	}
+
+	// Driver containers
+	if cr.Spec.Driver.Common != nil {
+		substituteEnvSlice(cr.Spec.Driver.Common.Envs)
+	}
+	if cr.Spec.Driver.Controller != nil {
+		substituteEnvSlice(cr.Spec.Driver.Controller.Envs)
+	}
+	if cr.Spec.Driver.Node != nil {
+		substituteEnvSlice(cr.Spec.Driver.Node.Envs)
+	}
+	for i := range cr.Spec.Driver.SideCars {
+		substituteEnvSlice(cr.Spec.Driver.SideCars[i].Envs)
+	}
+	for i := range cr.Spec.Driver.InitContainers {
+		substituteEnvSlice(cr.Spec.Driver.InitContainers[i].Envs)
+	}
+
+	// Module components and init containers
+	for i := range cr.Spec.Modules {
+		for j := range cr.Spec.Modules[i].Components {
+			substituteEnvSlice(cr.Spec.Modules[i].Components[j].Envs)
+		}
+		for j := range cr.Spec.Modules[i].InitContainer {
+			substituteEnvSlice(cr.Spec.Modules[i].InitContainer[j].Envs)
+		}
+	}
+}
+
 func determineMap(crType string) (map[string]string, error) {
 	mapValues := map[string]string{}
-	if crType == "pflex" {
-		mapValues = pflexSecretMap
-	} else if crType == "pflexAuth" {
-		mapValues = pflexAuthSecretMap
-	} else if crType == "pflexEphemeral" {
-		mapValues = pflexEphemeralVolumeMap
-	} else if crType == "pscale" {
-		mapValues = pscaleSecretMap
-	} else if crType == "pscaleEphemeral" {
-		mapValues = pscaleEphemeralVolumeMap
-	} else if crType == "pscaleAuth" {
-		mapValues = pscaleAuthSecretMap
-	} else if crType == "pscaleAuthSidecar" {
-		mapValues = pscaleAuthSidecarMap
-	} else if crType == "pflexAuthSidecar" {
-		mapValues = pflexAuthSidecarMap
-	} else if crType == "pmax" {
-		mapValues = pmaxStorageMap
-	} else if crType == "pmaxAuthSidecar" {
-		mapValues = pmaxAuthSidecarMap
-	} else if crType == "pmaxCreds" {
-		mapValues = pmaxCredMap
-	} else if crType == "pmaxUseSecret" {
-		mapValues = pmaxSecretMap
-	} else if crType == "pmaxReverseProxy" {
-		mapValues = pmaxReverseProxyMap
-	} else if crType == "pmaxArrayConfig" {
-		mapValues = pmaxArrayConfigMap
-	} else if crType == "pmaxAuthArrayConfig" {
-		mapValues = pmaxAuthArrayConfigMap
+	if crType == "powerflex" {
+		mapValues = powerflexSecretMap
+	} else if crType == "powerflexAuth" {
+		mapValues = powerflexAuthSecretMap
+	} else if crType == "powerflexEphemeral" {
+		mapValues = powerflexEphemeralVolumeMap
+	} else if crType == "powerscale" {
+		mapValues = powerscaleSecretMap
+	} else if crType == "powerscaleEphemeral" {
+		mapValues = powerscaleEphemeralVolumeMap
+	} else if crType == "powerscaleAuth" {
+		mapValues = powerscaleAuthSecretMap
+	} else if crType == "powerscaleAuthSidecar" {
+		mapValues = powerscaleAuthSidecarMap
+	} else if crType == "powerflexAuthSidecar" {
+		mapValues = powerflexAuthSidecarMap
+	} else if crType == "powermax" {
+		mapValues = powermaxStorageMap
+	} else if crType == "powermaxAuthSidecar" {
+		mapValues = powermaxAuthSidecarMap
+	} else if crType == "powermaxCreds" {
+		mapValues = powermaxCredMap
+	} else if crType == "powermaxUseSecret" {
+		mapValues = powermaxSecretMap
+	} else if crType == "powermaxReverseProxy" {
+		mapValues = powermaxReverseProxyMap
+	} else if crType == "powermaxArrayConfig" {
+		mapValues = powermaxArrayConfigMap
+	} else if crType == "powermaxAuthArrayConfig" {
+		mapValues = powermaxAuthArrayConfigMap
 	} else if crType == "authSidecarCert" {
 		mapValues = authSidecarRootCertMap
-	} else if crType == "pflexAuthCRs" {
-		mapValues = pflexCrMap
-	} else if crType == "pscaleAuthCRs" {
-		mapValues = pscaleCrMap
-	} else if crType == "pmaxAuthCRs" {
-		mapValues = pmaxCrMap
-	} else if crType == "pstoreAuthCRs" {
-		mapValues = pstoreCrMap
-	} else if crType == "pstore" {
-		mapValues = pstoreSecretMap
-	} else if crType == "pstoreEphemeral" {
-		mapValues = pstoreEphemeralVolumeMap
-	} else if crType == "pstoreAuthSidecar" {
-		mapValues = pstoreAuthSidecarMap
-	} else if crType == "pstoreAuth" {
-		mapValues = pstoreAuthSecretMap
+	} else if crType == "powerflexAuthCRs" {
+		mapValues = powerflexCrMap
+	} else if crType == "powerscaleAuthCRs" {
+		mapValues = powerscaleCrMap
+	} else if crType == "powermaxAuthCRs" {
+		mapValues = powermaxCrMap
+	} else if crType == "powerstoreAuthCRs" {
+		mapValues = powerstoreCrMap
+	} else if crType == "powerstore" {
+		mapValues = powerstoreSecretMap
+	} else if crType == "powerstoreEphemeral" {
+		mapValues = powerstoreEphemeralVolumeMap
+	} else if crType == "powerstoreAuthSidecar" {
+		mapValues = powerstoreAuthSidecarMap
+	} else if crType == "powerstoreAuth" {
+		mapValues = powerstoreAuthSecretMap
 	} else if crType == "unity" {
 		mapValues = unitySecretMap
 	} else if crType == "unityEphemeral" {
@@ -1127,7 +1385,7 @@ func (step *Step) runCustomTest(res Resource) error {
 	}
 
 	for testNum, customTest := range res.Scenario.CustomTest[0].Run {
-		args := strings.Split(customTest, " ")
+		args := strings.Split(os.ExpandEnv(customTest), " ")
 		if len(args) == 1 {
 			stdout, stderr, err = framework.RunCmd(args[0])
 		} else {
@@ -1165,7 +1423,7 @@ func (step *Step) runCustomTestSelector(res Resource, testName string) error {
 	}
 
 	for testNum, customTest := range selectedTest.Run {
-		args := strings.Split(customTest, " ")
+		args := strings.Split(os.ExpandEnv(customTest), " ")
 		if len(args) == 1 {
 			stdout, stderr, err = framework.RunCmd(args[0])
 		} else {
@@ -1181,8 +1439,8 @@ func (step *Step) runCustomTestSelector(res Resource, testName string) error {
 }
 
 func (step *Step) setupEphemeralVolumeProperties(_ Resource, templateFile string, crType string) error {
-	if crType == "pflexEphemeral" {
-		_ = os.Setenv("PFLEX_VOLUME", fmt.Sprintf("k8s-%s", randomAlphaNumberic(10)))
+	if crType == "powerflexEphemeral" {
+		_ = os.Setenv("POWERFLEX_VOLUME", fmt.Sprintf("k8s-%s", randomAlphaNumberic(10)))
 	}
 
 	fileString, err := renderTemplate(crType, templateFile)
@@ -1211,7 +1469,15 @@ func randomAlphaNumberic(length int) string {
 }
 
 func getRenderedFilePath(templatePath string) string {
-	return strings.Replace(templatePath, "testfiles/", "temp/", 1)
+	// If already a temp path, return as-is (idempotent for chained step functions)
+	if strings.HasPrefix(templatePath, "temp/") {
+		return templatePath
+	}
+	if strings.HasPrefix(templatePath, "testfiles/") {
+		return "temp/" + strings.TrimPrefix(templatePath, "testfiles/")
+	}
+	// For paths outside testfiles (e.g., samples), use temp/ with the base filename
+	return filepath.Join("temp", "samples", filepath.Base(templatePath))
 }
 
 // To not contaminate the source tree with rendered template files,
@@ -1220,6 +1486,17 @@ func getRenderedFilePath(templatePath string) string {
 // "testfiles/powerscale-templates/ephemeral.properties" the rendered file
 // will be written to "temp/powerscale-templates/ephemeral.properties".
 func writeRenderedFile(templatePath, content string) (newPath string, err error) {
+	// Preserve trailing YAML documents from the original source file.
+	// InSpec functions that roundtrip through yaml.Unmarshal/yaml.Marshal
+	// lose any documents after the first one (e.g., a ConfigMap appended
+	// after a "---" separator). String-manipulation callers already
+	// include them, so we only append when the new content is missing them.
+	if !strings.Contains(content, "\n---\n") {
+		if trailing := trailingYAMLDocs(templatePath); trailing != "" {
+			content = strings.TrimRight(content, "\n") + trailing
+		}
+	}
+
 	newPath = getRenderedFilePath(templatePath)
 
 	// make sure the base path exist
@@ -1236,10 +1513,46 @@ func writeRenderedFile(templatePath, content string) (newPath string, err error)
 	return newPath, nil
 }
 
+// trailingYAMLDocs returns any YAML documents after the first one in the
+// original (non-temp) source file for the given path. This is used to
+// preserve multi-document YAML files (e.g., a CSM CR followed by a
+// ConfigMap separated by "---") when InSpec functions roundtrip the first
+// document through yaml.Unmarshal/yaml.Marshal.
+func trailingYAMLDocs(templatePath string) string {
+	// Resolve to the original (non-temp) source file.
+	origPath := templatePath
+	if strings.HasPrefix(templatePath, "temp/") {
+		origPath = "testfiles/" + strings.TrimPrefix(templatePath, "temp/")
+	}
+
+	data, err := os.ReadFile(origPath) // #nosec G304
+	if err != nil {
+		return ""
+	}
+
+	idx := bytes.Index(data, []byte("\n---\n"))
+	if idx < 0 {
+		return ""
+	}
+	return string(data[idx:]) // includes the "\n---\n" prefix
+}
+
+// readCRFileForInSpec reads a CR file for an InSpec function, preferring
+// any previously rendered temp file so that chained InSpec steps accumulate
+// their modifications instead of overwriting each other.
+func readCRFileForInSpec(crFilePath string) ([]byte, error) {
+	tempFilePath := getRenderedFilePath(crFilePath)
+	if tempFilePath != crFilePath {
+		if data, err := os.ReadFile(tempFilePath); err == nil { // #nosec G304
+			return data, nil
+		}
+	}
+	return os.ReadFile(crFilePath) // #nosec G304
+}
+
 func (step *Step) enableModule(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
-	time.Sleep(15 * time.Second)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
@@ -1498,8 +1811,8 @@ func (step *Step) validateAuthorizationProxyServerInstalled(cr csmv1.ContainerSt
 		return fmt.Errorf("failed to check for AuthorizationProxyServer installation in %s: %v", clusterClient.ClusterID, err)
 	}
 
-	// provide few seconds for cluster to settle down
-	time.Sleep(20 * time.Second)
+	// provide a brief moment for cluster to settle down
+	time.Sleep(5 * time.Second)
 	return nil
 }
 
@@ -1523,6 +1836,16 @@ func (step *Step) validateAuthorizationProxyServerNotInstalled(cr csmv1.Containe
 func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error {
 	fmt.Println("=== Creating Authorization Proxy Server Prerequisites ===")
 
+	// Ensure secrets-store CSI driver is installed (vault pods depend on it)
+	if err := ensureSecretsStoreCSIDriver(); err != nil {
+		return fmt.Errorf("failed to ensure secrets-store CSI driver: %v", err)
+	}
+
+	// Ensure vault is running and ready
+	if err := ensureVaultReady(); err != nil {
+		return fmt.Errorf("failed to ensure vault is ready: %v", err)
+	}
+
 	cmd := exec.Command("kubectl", "get", "ns", cr.Namespace) // #nosec G204
 	err := cmd.Run()
 	if err == nil {
@@ -1534,7 +1857,10 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 			return fmt.Errorf("failed to delete all CSM from namespace: %v\nErrMessage:\n%s", err, string(b))
 		}
 
-		cmd = exec.Command("kubectl", "delete", "ns", cr.Namespace) // #nosec G204
+		// Remove finalizers from authorization CRDs that would block namespace deletion
+		removeAuthorizationFinalizers(cr.Namespace)
+
+		cmd = exec.Command("kubectl", "delete", "ns", cr.Namespace, "--wait=true", "--timeout=60s") // #nosec G204
 		b, err = cmd.CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("failed to delete authorization namespace: %v\nErrMessage:\n%s", err, string(b))
@@ -1594,6 +1920,86 @@ func (step *Step) authProxyServerPrereqs(cr csmv1.ContainerStorageModule) error 
 	return nil
 }
 
+// removeAuthorizationFinalizers strips finalizers from authorization CRDs in the
+// given namespace so that namespace deletion does not hang indefinitely.
+func removeAuthorizationFinalizers(namespace string) {
+	crdTypes := []string{
+		"storage.csm-authorization.storage.dell.com",
+		"csmrole.csm-authorization.storage.dell.com",
+		"csmtenant.csm-authorization.storage.dell.com",
+	}
+	for _, crd := range crdTypes {
+		out, err := exec.Command("kubectl", "get", crd, "-n", namespace, "-o", "name").CombinedOutput() // #nosec G204,G702
+		if err != nil {
+			continue
+		}
+		items := strings.TrimSpace(string(out))
+		if items == "" {
+			continue
+		}
+		for _, item := range strings.Split(items, "\n") {
+			item = strings.TrimSpace(item)
+			if item == "" {
+				continue
+			}
+			fmt.Printf("  Removing finalizers from %s in %s\n", item, namespace)
+			_ = exec.Command("kubectl", "patch", item, "-n", namespace, // #nosec G204,G702
+				"--type", "merge", "-p", `{"metadata":{"finalizers":null}}`).Run()
+			_ = exec.Command("kubectl", "delete", item, "-n", namespace, "--wait=false").Run() // #nosec G204,G702
+		}
+	}
+}
+
+// ensureSecretsStoreCSIDriver checks that the secrets-store CSI driver is installed
+// and installs it via helm if missing. Authorization tests depend on this driver
+// for vault secret synchronization. We check the CSIDriver registration (not just
+// CRDs) because CRDs can survive a helm uninstall while the actual driver is gone.
+func ensureSecretsStoreCSIDriver() error {
+	cmd := exec.Command("kubectl", "get", "csidriver", "secrets-store.csi.k8s.io") // #nosec G204
+	if cmd.Run() == nil {
+		fmt.Println("secrets-store CSI driver is already installed")
+		return nil
+	}
+
+	fmt.Println("secrets-store CSI driver not found, installing...")
+	// Remove stale helm release if CRDs were deleted but release remains
+	_ = exec.Command("helm", "uninstall", "csi-secrets-store", "-n", "kube-system").Run() // #nosec G204
+
+	_ = exec.Command("helm", "repo", "add", "secrets-store-csi-driver", // #nosec G204
+		"https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts").Run()
+
+	cmd = exec.Command("helm", "install", "csi-secrets-store", // #nosec G204
+		"secrets-store-csi-driver/secrets-store-csi-driver",
+		"--wait",
+		"--namespace", "kube-system",
+		"--set", "enableSecretRotation=true",
+		"--set", "syncSecret.enabled=true",
+		"--set", "tokenRequests[0].audience=conjur",
+	)
+	b, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to install secrets-store CSI driver: %v\nErrMessage:\n%s", err, string(b))
+	}
+	fmt.Println("secrets-store CSI driver installed successfully")
+	return nil
+}
+
+// ensureVaultReady checks that the vault pod is running and ready.
+func ensureVaultReady() error {
+	cmd := exec.Command("kubectl", "get", "pod", "vault0-0", "-n", "default", // #nosec G204
+		"-o", "jsonpath={.status.phase}")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("vault0-0 pod not found in default namespace: %v", err)
+	}
+	phase := strings.TrimSpace(string(out))
+	if phase == "Running" {
+		fmt.Println("vault0-0 is running")
+		return nil
+	}
+	return fmt.Errorf("vault0-0 is in phase %q, expected Running", phase)
+}
+
 func (step *Step) configureAuthorizationProxyServer(res Resource, authConfigurationPath, driver, crNumStr string) error {
 	fmt.Println("=== Configuring Authorization Proxy Server ===")
 
@@ -1611,31 +2017,31 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, authConfigurat
 	// if tests are running multiple scenarios that require differently configured auth servers, we will not be able to use one set of vars
 	// this section is for powerflex, other drivers can add their sections as required.
 	if driver == "powerflex" {
-		_ = os.Setenv("PFLEX_STORAGE", "powerflex")
-		_ = os.Setenv("DRIVER_NAMESPACE", "test-vxflexos")
-		storageType = os.Getenv("PFLEX_STORAGE")
-		csmTenantName = os.Getenv("PFLEX_TENANT")
+		_ = os.Setenv("POWERFLEX_STORAGE", "powerflex")
+		_ = os.Setenv("DRIVER_NAMESPACE", os.Getenv("E2E_NS_POWERFLEX"))
+		storageType = os.Getenv("POWERFLEX_STORAGE")
+		csmTenantName = os.Getenv("POWERFLEX_TENANT")
 	}
 
 	if driver == "powerscale" {
-		_ = os.Setenv("PSCALE_STORAGE", "powerscale")
-		_ = os.Setenv("DRIVER_NAMESPACE", "isilon")
-		storageType = os.Getenv("PSCALE_STORAGE")
-		csmTenantName = os.Getenv("PSCALE_TENANT")
+		_ = os.Setenv("POWERSCALE_STORAGE", "powerscale")
+		_ = os.Setenv("DRIVER_NAMESPACE", os.Getenv("E2E_NS_POWERSCALE"))
+		storageType = os.Getenv("POWERSCALE_STORAGE")
+		csmTenantName = os.Getenv("POWERSCALE_TENANT")
 	}
 
 	if driver == "powermax" {
-		_ = os.Setenv("PMAX_STORAGE", "powermax")
-		_ = os.Setenv("DRIVER_NAMESPACE", "powermax")
-		storageType = os.Getenv("PMAX_STORAGE")
-		csmTenantName = os.Getenv("PMAX_TENANT")
+		_ = os.Setenv("POWERMAX_STORAGE", "powermax")
+		_ = os.Setenv("DRIVER_NAMESPACE", os.Getenv("E2E_NS_POWERMAX"))
+		storageType = os.Getenv("POWERMAX_STORAGE")
+		csmTenantName = os.Getenv("POWERMAX_TENANT")
 	}
 
 	if driver == "powerstore" {
-		_ = os.Setenv("PSTORE_STORAGE", "powerstore")
-		_ = os.Setenv("DRIVER_NAMESPACE", "test-powerstore")
-		storageType = os.Getenv("PSTORE_STORAGE")
-		csmTenantName = os.Getenv("PSTORE_TENANT")
+		_ = os.Setenv("POWERSTORE_STORAGE", "powerstore")
+		_ = os.Setenv("DRIVER_NAMESPACE", os.Getenv("E2E_NS_POWERSTORE"))
+		storageType = os.Getenv("POWERSTORE_STORAGE")
+		csmTenantName = os.Getenv("POWERSTORE_TENANT")
 	}
 
 	proxyHost = os.Getenv("PROXY_HOST")
@@ -1652,8 +2058,32 @@ func (step *Step) configureAuthorizationProxyServer(res Resource, authConfigurat
 	return step.AuthorizationV2Resources(res, storageType, driver, driverNamespace, address, port, csmTenantName, cr.Spec.Modules[0].ConfigVersion, authConfigurationPath)
 }
 
-// AuthorizationV2Resources creates resources using CRs and dellctl for V2 versions of Authorization Proxy Server
+// AuthorizationV2Resources creates resources using CRs and dellctl for V2 versions of Authorization Proxy Server.
+// The one-time setup (template rendering, admin token, resource creation) runs once per driver.
+// Only the token generation and application steps are retried on subsequent calls.
 func (step *Step) AuthorizationV2Resources(res Resource, storageType, driver, driverNamespace, proxyHost, port, csmTenantName, configVersion string, configurationTemplate string) error {
+	// Re-run setup if temp files were cleaned between scenarios
+	if authV2SetupDone[driver] {
+		if _, err := os.Stat("temp/adminToken.yaml"); os.IsNotExist(err) {
+			fmt.Printf("=== temp/adminToken.yaml missing, re-running setup for %s ===\n", driver)
+			authV2SetupDone[driver] = false
+		}
+	}
+
+	if !authV2SetupDone[driver] {
+		if err := step.authorizationV2Setup(res, storageType, driver, configVersion, configurationTemplate); err != nil {
+			return err
+		}
+		authV2SetupDone[driver] = true
+	} else {
+		fmt.Printf("=== Skipping one-time setup for %s (already done) ===\n", driver)
+	}
+
+	return step.authorizationV2GenerateAndApplyToken(driver, driverNamespace, proxyHost, port, csmTenantName)
+}
+
+// authorizationV2Setup performs the one-time setup: template rendering, admin token creation, and resource application.
+func (step *Step) authorizationV2Setup(res Resource, storageType, driver, configVersion string, configurationTemplate string) error {
 	var (
 		crMap               = ""
 		templateFile        = configurationTemplate
@@ -1665,16 +2095,16 @@ func (step *Step) AuthorizationV2Resources(res Resource, storageType, driver, dr
 	}
 
 	if driver == "powerflex" {
-		crMap = "pflexAuthCRs"
+		crMap = "powerflexAuthCRs"
 		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powerflex.yaml"
 	} else if driver == "powerscale" {
-		crMap = "pscaleAuthCRs"
+		crMap = "powerscaleAuthCRs"
 		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powerscale.yaml"
 	} else if driver == "powermax" {
-		crMap = "pmaxAuthCRs"
+		crMap = "powermaxAuthCRs"
 		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powermax.yaml"
 	} else if driver == "powerstore" {
-		crMap = "pstoreAuthCRs"
+		crMap = "powerstoreAuthCRs"
 		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powerstore.yaml"
 	}
 
@@ -1684,9 +2114,20 @@ func (step *Step) AuthorizationV2Resources(res Resource, storageType, driver, dr
 		return fmt.Errorf("failed to copy template file %s to %s: %v", templateFile, updatedTemplateFile, err)
 	}
 
+	// Expand env vars (e.g. ${E2E_NS_AUTH}) in the copied template file
+	raw, err := os.ReadFile(updatedTemplateFile)
+	if err != nil {
+		return fmt.Errorf("failed to read template %s: %v", updatedTemplateFile, err)
+	}
+	if err := os.WriteFile(filepath.Clean(updatedTemplateFile), []byte(os.ExpandEnv(string(raw))), 0o644); err != nil { // #nosec G703 -- path is constructed from hardcoded template dirs
+		return fmt.Errorf("failed to write expanded template %s: %v", updatedTemplateFile, err)
+	}
+
 	// Create Admin Token
 	fmt.Printf("=== Generating Admin Token ===\n")
-	adminTkn := exec.Command("dellctl",
+	adminCtx, adminCancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer adminCancel()
+	adminTkn := exec.CommandContext(adminCtx, "dellctl",
 		"admin", "token",
 		"--name", "Admin",
 		"--jwt-signing-secret", "secret",
@@ -1755,19 +2196,43 @@ func (step *Step) AuthorizationV2Resources(res Resource, storageType, driver, dr
 	fmt.Println("Waiting 5 seconds before generating token.")
 	time.Sleep(5 * time.Second)
 
+	return nil
+}
+
+// authorizationV2GenerateAndApplyToken generates a tenant token and applies it.
+// This is the retry-safe portion of AuthorizationV2Resources.
+func (step *Step) authorizationV2GenerateAndApplyToken(driver, driverNamespace, proxyHost, port, csmTenantName string) error {
+	// Verify proxy server is reachable before attempting token generation.
+	// Without this check, dellctl can hang on an unresponsive endpoint.
+	addr := net.JoinHostPort(proxyHost, port)
+	fmt.Printf("=== Checking proxy server connectivity at %s ===\n", addr)
+	conn, err := net.DialTimeout("tcp", addr, 10*time.Second) // #nosec G704
+	if err != nil {
+		return fmt.Errorf("proxy server not reachable at %s: %v", addr, err)
+	}
+	conn.Close()
+
 	// Generate tenant token
 	fmt.Println("=== Generating token ===\n ")
-	cmd = exec.Command("dellctl",
+	genCtx, genCancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer genCancel()
+	cmd := exec.CommandContext(genCtx, "dellctl",
 		"generate", "token",
 		"--admin-token", "temp/adminToken.yaml",
 		"--access-token-expiration", fmt.Sprint(10*time.Minute),
 		"--refresh-token-expiration", "48h",
 		"--tenant", csmTenantName,
-		"--insecure", "--addr", fmt.Sprintf("%s:%s", proxyHost, port),
+		"--insecure", "--addr", addr,
 	) // #nosec G204, G702 -- this is a test automation tool
 	fmt.Println("=== Token ===\n", cmd.String())
-	b, err = cmd.CombinedOutput()
+	b, err := cmd.CombinedOutput()
 	if err != nil {
+		// If tenant is not found, delete and recreate the auth CRs so the
+		// tenant-service can reconcile them from scratch. The Eventually
+		// retry loop will call us again after this returns.
+		if strings.Contains(string(b), "tenant not found") {
+			step.recreateAuthorizationCRs(driver)
+		}
 		return fmt.Errorf("failed to generate token for %s: %v\nErrMessage:\n%s", csmTenantName, err, string(b))
 	}
 
@@ -1790,6 +2255,82 @@ func (step *Step) AuthorizationV2Resources(res Resource, storageType, driver, dr
 	fmt.Println("=== Token Applied ===\n ")
 
 	return nil
+}
+
+// lastAuthCRRecreation tracks when we last recreated auth CRs per driver,
+// to avoid spamming delete/recreate on every retry iteration.
+var lastAuthCRRecreation = map[string]time.Time{}
+
+// recreateAuthorizationCRs deletes and recreates the storage, role, and tenant
+// CRs for the given driver. This is a workaround for a race condition where
+// the tenant-service does not reconcile CRs created before it was fully ready,
+// resulting in a persistent "tenant not found" error during token generation.
+func (step *Step) recreateAuthorizationCRs(driver string) {
+	// Debounce: skip if we recreated less than 60 seconds ago for this driver
+	if last, ok := lastAuthCRRecreation[driver]; ok && time.Since(last) < 60*time.Second {
+		fmt.Printf("=== Skipping auth CR recreation for %s (last recreated %v ago) ===\n", driver, time.Since(last).Round(time.Second))
+		return
+	}
+	templateFile := ""
+	switch driver {
+	case "powerflex":
+		templateFile = "temp/authorization-templates/storage_csm_authorization_crs_powerflex.yaml"
+	case "powerscale":
+		templateFile = "temp/authorization-templates/storage_csm_authorization_crs_powerscale.yaml"
+	case "powermax":
+		templateFile = "temp/authorization-templates/storage_csm_authorization_crs_powermax.yaml"
+	case "powerstore":
+		templateFile = "temp/authorization-templates/storage_csm_authorization_crs_powerstore.yaml"
+	default:
+		fmt.Printf("=== Unknown driver %q, skipping auth CR recreation ===\n", driver)
+		return
+	}
+
+	if _, err := os.Stat(templateFile); os.IsNotExist(err) {
+		fmt.Printf("=== Template file %s not found, skipping auth CR recreation ===\n", templateFile)
+		return
+	}
+
+	fmt.Printf("=== Tenant not found: deleting and recreating auth CRs for %s ===\n", driver)
+
+	// Strip finalizers first -- auth CRs have finalizers that block deletion.
+	authNS := os.Getenv("E2E_NS_AUTH")
+	if authNS == "" {
+		authNS = "e2e-authorization"
+	}
+	removeAuthorizationFinalizers(authNS)
+
+	// Delete existing CRs (ignore errors -- they may not exist)
+	delCmd := exec.Command("kubectl", "delete", "-f", templateFile, "--ignore-not-found", "--wait=false") // #nosec G204
+	if out, err := delCmd.CombinedOutput(); err != nil {
+		fmt.Printf("=== Warning: delete auth CRs returned error: %v\n%s\n", err, string(out))
+	}
+
+	// Wait for deletion to propagate — the tenant-service needs time to process
+	// delete events before we create new CRs to avoid a race condition.
+	fmt.Println("=== Waiting 15 seconds for delete to propagate ===")
+	time.Sleep(15 * time.Second)
+
+	// Recreate CRs
+	createCmd := exec.Command("kubectl", "apply", "-f", templateFile) // #nosec G204
+	if out, err := createCmd.CombinedOutput(); err != nil {
+		fmt.Printf("=== Warning: recreate auth CRs returned error: %v\n%s\n", err, string(out))
+	} else {
+		fmt.Printf("=== Auth CRs recreated for %s ===\n", driver)
+	}
+
+	// Restart tenant-service to force it to re-read the new CRs
+	fmt.Println("=== Restarting tenant-service to pick up new CRs ===")
+	restartCmd := exec.Command("kubectl", "rollout", "restart", "deployment/tenant-service", "-n", authNS) // #nosec G204,G702
+	if out, err := restartCmd.CombinedOutput(); err != nil {
+		fmt.Printf("=== Warning: restart tenant-service returned error: %v\n%s\n", err, string(out))
+	}
+
+	// Give the tenant-service time to restart and reconcile the new resources
+	fmt.Println("=== Waiting 45 seconds for tenant-service to restart and reconcile ===")
+	time.Sleep(45 * time.Second)
+
+	lastAuthCRRecreation[driver] = time.Now()
 }
 
 func (step *Step) validateResiliencyInstalled(cr csmv1.ContainerStorageModule) error {
@@ -1851,7 +2392,7 @@ func (step *Step) validateResiliencyNotInstalled(cr csmv1.ContainerStorageModule
 func (step *Step) configurePowerflexSftpInstall(res Resource, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	crFilePath := res.Scenario.Paths[crNum-1]
-	fileString, err := renderTemplate("pflex", crFilePath)
+	fileString, err := renderTemplate("powerflex", crFilePath)
 	if err != nil {
 		return err
 	}
@@ -1899,7 +2440,16 @@ func (step *Step) deleteAuthorizationCRs(_ Resource, driver string) error {
 		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powerstore.yaml"
 	}
 
-	cmd := exec.Command("kubectl", "delete", "-f", updatedTemplateFile)
+	// Strip finalizers from authorization CRs before deletion so that the
+	// kubectl delete does not hang indefinitely waiting for the authorization
+	// controller to process them.
+	authNS := os.Getenv("E2E_NS_AUTH")
+	if authNS == "" {
+		authNS = "e2e-authorization"
+	}
+	removeAuthorizationFinalizers(authNS)
+
+	cmd := exec.Command("kubectl", "delete", "-f", updatedTemplateFile, "--wait=false", "--ignore-not-found") // #nosec G204
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to delete csm authorization CRs: %v", err)
@@ -1914,6 +2464,11 @@ func (step *Step) deleteCustomResourceDefinition(res Resource, crdNumStr string)
 	if err != nil {
 		return fmt.Errorf("csm authorization crds uninstall failed: %v", err)
 	}
+	return nil
+}
+
+func (step *Step) removeAuthorizationFinalizers(_ Resource, namespace string) error {
+	removeAuthorizationFinalizers(namespace)
 	return nil
 }
 
@@ -2046,11 +2601,21 @@ func (step *Step) setUpTLSSecretWithSAN(res Resource, namespace string) error {
 	return nil
 }
 
-func (step *Step) deleteConfigMap(_ Resource) error {
-	cmd := exec.Command("kubectl", "delete", "cm", "csm-images", "-n", "dell-csm-operator") // #nosec G204
+func (step *Step) restoreConfigMap(_ Resource) error {
+	cmd := exec.Command("kubectl", "apply", "-f", "testfiles/authorization-templates/csm-images-baseline.yaml") // #nosec G204
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("failed to delete configmap csm-images: %v", err)
+		return fmt.Errorf("failed to restore baseline configmap csm-images: %v", err)
+	}
+
+	return nil
+}
+
+func (step *Step) deleteConfigMap(_ Resource) error {
+	cmd := exec.Command("kubectl", "delete", "-f", "testfiles/authorization-templates/csm-images-baseline.yaml") // #nosec G204
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to restore baseline configmap csm-images: %v", err)
 	}
 
 	return nil
@@ -2179,14 +2744,14 @@ func (step *Step) setEnvInSpec(res Resource, section, envName, envValue, crNumSt
 	crFilePath := res.Scenario.Paths[crNum-1]
 
 	// Read the original CR file
-	crBuff, err := os.ReadFile(crFilePath) // #nosec G304
+	crBuff, err := readCRFileForInSpec(crFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to read CR file %s: %v", crFilePath, err)
 	}
 
 	// Unmarshal into CSM struct
 	customResource := csmv1.ContainerStorageModule{}
-	err = yaml.Unmarshal(crBuff, &customResource)
+	err = yaml.Unmarshal([]byte(os.ExpandEnv(string(crBuff))), &customResource)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal CSM custom resource: %v", err)
 	}
@@ -2237,5 +2802,605 @@ func (step *Step) setEnvInSpec(res Resource, section, envName, envValue, crNumSt
 	// Update the scenario path to use the temp file
 	res.Scenario.Paths[crNum-1] = tempPath
 
+	return nil
+}
+
+// setForceRemoveDriverInSpec modifies forceRemoveDriver in a CR file and writes to temp directory.
+// Use value "true"/"false" to set the field, or "remove" to remove it entirely.
+func (step *Step) setForceRemoveDriverInSpec(res Resource, value string, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	crFilePath := res.Scenario.Paths[crNum-1]
+
+	crBuff, err := readCRFileForInSpec(crFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read CR file %s: %v", crFilePath, err)
+	}
+
+	customResource := csmv1.ContainerStorageModule{}
+	err = yaml.Unmarshal(crBuff, &customResource)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal CSM custom resource: %v", err)
+	}
+
+	switch strings.ToLower(value) {
+	case "true":
+		trueBool := true
+		customResource.Spec.Driver.ForceRemoveDriver = &trueBool
+	case "false":
+		falseBool := false
+		customResource.Spec.Driver.ForceRemoveDriver = &falseBool
+	case "remove":
+		customResource.Spec.Driver.ForceRemoveDriver = nil
+	default:
+		return fmt.Errorf("unsupported forceRemoveDriver value: %s (use true, false, or remove)", value)
+	}
+
+	modifiedYAML, err := yaml.Marshal(customResource)
+	if err != nil {
+		return fmt.Errorf("failed to marshal modified YAML: %v", err)
+	}
+
+	tempPath, err := writeRenderedFile(crFilePath, string(modifiedYAML))
+	if err != nil {
+		return fmt.Errorf("failed to write temp file: %v", err)
+	}
+
+	res.Scenario.Paths[crNum-1] = tempPath
+	return nil
+}
+
+// removeFieldFromSpec removes any field from a CR file and writes to temp directory.
+// Supports field paths like "version", "driver.forceRemoveDriver", "driver.configVersion", etc.
+func (step *Step) removeFieldFromSpec(res Resource, fieldPath string, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	crFilePath := res.Scenario.Paths[crNum-1]
+
+	crBuff, err := readCRFileForInSpec(crFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read CR file %s: %v", crFilePath, err)
+	}
+
+	customResource := csmv1.ContainerStorageModule{}
+	err = yaml.Unmarshal(crBuff, &customResource)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal CSM custom resource: %v", err)
+	}
+
+	// Convert to map to manipulate fields dynamically
+	crMap := make(map[string]interface{})
+	err = yaml.Unmarshal(crBuff, &crMap)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal CSM to map: %v", err)
+	}
+
+	// Remove the field using dot notation
+	fields := strings.Split(fieldPath, ".")
+	removeFieldFromMap(crMap, fields)
+
+	modifiedYAML, err := yaml.Marshal(crMap)
+	if err != nil {
+		return fmt.Errorf("failed to marshal modified YAML: %v", err)
+	}
+
+	tempPath, err := writeRenderedFile(crFilePath, string(modifiedYAML))
+	if err != nil {
+		return fmt.Errorf("failed to write temp file: %v", err)
+	}
+
+	res.Scenario.Paths[crNum-1] = tempPath
+	return nil
+}
+
+// removeFieldFromMap recursively removes a field from a nested map using dot notation
+func removeFieldFromMap(m map[string]interface{}, fields []string) {
+	if len(fields) == 0 {
+		return
+	}
+
+	field := fields[0]
+	if len(fields) == 1 {
+		// Remove the final field
+		delete(m, field)
+		return
+	}
+
+	// Recurse into nested map
+	if nextMap, ok := m[field].(map[string]interface{}); ok {
+		removeFieldFromMap(nextMap, fields[1:])
+		// If the nested map becomes empty, remove it too
+		if len(nextMap) == 0 {
+			delete(m, field)
+		}
+	}
+}
+
+// enableModuleInSpec enables a module in a CR file before applying it.
+func (step *Step) enableModuleInSpec(res Resource, module string, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	crFilePath := res.Scenario.Paths[crNum-1]
+
+	crBuff, err := readCRFileForInSpec(crFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read CR file %s: %v", crFilePath, err)
+	}
+
+	customResource := csmv1.ContainerStorageModule{}
+	err = yaml.Unmarshal(crBuff, &customResource)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal CSM custom resource: %v", err)
+	}
+
+	found := false
+	for i, m := range customResource.Spec.Modules {
+		if m.Name == csmv1.ModuleType(module) {
+			customResource.Spec.Modules[i].Enabled = true
+			// for observability, enable all components
+			if m.Name == csmv1.Observability {
+				for j := range m.Components {
+					customResource.Spec.Modules[i].Components[j].Enabled = pointer.Bool(true)
+				}
+			}
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("module %s not found in CR spec", module)
+	}
+
+	modifiedYAML, err := yaml.Marshal(customResource)
+	if err != nil {
+		return fmt.Errorf("failed to marshal modified YAML: %v", err)
+	}
+
+	tempPath, err := writeRenderedFile(crFilePath, string(modifiedYAML))
+	if err != nil {
+		return fmt.Errorf("failed to write temp file: %v", err)
+	}
+
+	res.Scenario.Paths[crNum-1] = tempPath
+	return nil
+}
+
+// setEnvFromEnvVarInSpec sets an environment variable in the CR spec from a system environment variable.
+func (step *Step) setEnvFromEnvVarInSpec(res Resource, section, envName, envVarName, crNumStr string) error {
+	envValue := os.Getenv(envVarName)
+	return step.setEnvInSpec(res, section, envName, envValue, crNumStr)
+}
+
+// setDriverImage sets spec.driver.common.image in a CR file before applying it.
+func (step *Step) setDriverImage(res Resource, image string, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	crFilePath := res.Scenario.Paths[crNum-1]
+
+	crBuff, err := readCRFileForInSpec(crFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read CR file %s: %v", crFilePath, err)
+	}
+
+	customResource := csmv1.ContainerStorageModule{}
+	err = yaml.Unmarshal(crBuff, &customResource)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal CSM custom resource: %v", err)
+	}
+
+	if customResource.Spec.Driver.Common == nil {
+		customResource.Spec.Driver.Common = &csmv1.ContainerTemplate{}
+	}
+	customResource.Spec.Driver.Common.Image = csmv1.ImageType(image)
+
+	modifiedYAML, err := yaml.Marshal(customResource)
+	if err != nil {
+		return fmt.Errorf("failed to marshal modified YAML: %v", err)
+	}
+
+	tempPath, err := writeRenderedFile(crFilePath, string(modifiedYAML))
+	if err != nil {
+		return fmt.Errorf("failed to write temp file: %v", err)
+	}
+
+	res.Scenario.Paths[crNum-1] = tempPath
+	return nil
+}
+
+// setReplicasInSpec sets spec.driver.replicas in a CR file before applying it.
+func (step *Step) setReplicasInSpec(res Resource, replicasStr string, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	replicas, err := strconv.ParseInt(replicasStr, 10, 32)
+	if err != nil {
+		return fmt.Errorf("invalid replicas value %s: %v", replicasStr, err)
+	}
+	crFilePath := res.Scenario.Paths[crNum-1]
+
+	crBuff, err := readCRFileForInSpec(crFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read CR file %s: %v", crFilePath, err)
+	}
+
+	customResource := csmv1.ContainerStorageModule{}
+	err = yaml.Unmarshal(crBuff, &customResource)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal CSM custom resource: %v", err)
+	}
+
+	customResource.Spec.Driver.Replicas = int32(replicas)
+
+	modifiedYAML, err := yaml.Marshal(customResource)
+	if err != nil {
+		return fmt.Errorf("failed to marshal modified YAML: %v", err)
+	}
+
+	tempPath, err := writeRenderedFile(crFilePath, string(modifiedYAML))
+	if err != nil {
+		return fmt.Errorf("failed to write temp file: %v", err)
+	}
+
+	res.Scenario.Paths[crNum-1] = tempPath
+	return nil
+}
+
+// setMetadataInSpec sets metadata.name and metadata.namespace in a CR file before applying it.
+func (step *Step) setMetadataInSpec(res Resource, name, namespace, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	crFilePath := res.Scenario.Paths[crNum-1]
+
+	crBuff, err := readCRFileForInSpec(crFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read CR file %s: %v", crFilePath, err)
+	}
+
+	customResource := csmv1.ContainerStorageModule{}
+	err = yaml.Unmarshal(crBuff, &customResource)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal CSM custom resource: %v", err)
+	}
+
+	customResource.Name = name
+	customResource.Namespace = namespace
+
+	modifiedYAML, err := yaml.Marshal(customResource)
+	if err != nil {
+		return fmt.Errorf("failed to marshal modified YAML: %v", err)
+	}
+
+	tempPath, err := writeRenderedFile(crFilePath, string(modifiedYAML))
+	if err != nil {
+		return fmt.Errorf("failed to write temp file: %v", err)
+	}
+
+	res.Scenario.Paths[crNum-1] = tempPath
+	return nil
+}
+
+// setImagePullPolicyInSpec sets spec.driver.common.imagePullPolicy in a CR file before applying it.
+func (step *Step) setImagePullPolicyInSpec(res Resource, policy, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	crFilePath := res.Scenario.Paths[crNum-1]
+
+	crBuff, err := readCRFileForInSpec(crFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read CR file %s: %v", crFilePath, err)
+	}
+
+	customResource := csmv1.ContainerStorageModule{}
+	err = yaml.Unmarshal(crBuff, &customResource)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal CSM custom resource: %v", err)
+	}
+
+	if customResource.Spec.Driver.Common == nil {
+		customResource.Spec.Driver.Common = &csmv1.ContainerTemplate{}
+	}
+	customResource.Spec.Driver.Common.ImagePullPolicy = corev1.PullPolicy(policy)
+
+	modifiedYAML, err := yaml.Marshal(customResource)
+	if err != nil {
+		return fmt.Errorf("failed to marshal modified YAML: %v", err)
+	}
+
+	tempPath, err := writeRenderedFile(crFilePath, string(modifiedYAML))
+	if err != nil {
+		return fmt.Errorf("failed to write temp file: %v", err)
+	}
+
+	res.Scenario.Paths[crNum-1] = tempPath
+	return nil
+}
+
+// setModuleComponentImageInSpec sets a component's image within a module in a CR file before applying it.
+func (step *Step) setModuleComponentImageInSpec(res Resource, module, component, image, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	crFilePath := res.Scenario.Paths[crNum-1]
+
+	crBuff, err := readCRFileForInSpec(crFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read CR file %s: %v", crFilePath, err)
+	}
+
+	customResource := csmv1.ContainerStorageModule{}
+	err = yaml.Unmarshal(crBuff, &customResource)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal CSM custom resource: %v", err)
+	}
+
+	found := false
+	for i, m := range customResource.Spec.Modules {
+		if m.Name == csmv1.ModuleType(module) {
+			for j, c := range m.Components {
+				if c.Name == component {
+					customResource.Spec.Modules[i].Components[j].Image = csmv1.ImageType(image)
+					found = true
+					break
+				}
+			}
+			break
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("component %s not found in module %s", component, module)
+	}
+
+	modifiedYAML, err := yaml.Marshal(customResource)
+	if err != nil {
+		return fmt.Errorf("failed to marshal modified YAML: %v", err)
+	}
+
+	tempPath, err := writeRenderedFile(crFilePath, string(modifiedYAML))
+	if err != nil {
+		return fmt.Errorf("failed to write temp file: %v", err)
+	}
+
+	res.Scenario.Paths[crNum-1] = tempPath
+	return nil
+}
+
+// setModuleComponentEnvInSpec sets an environment variable on a component within a module in a CR file before applying it.
+func (step *Step) setModuleComponentEnvInSpec(res Resource, module, component, envName, envValue, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	crFilePath := res.Scenario.Paths[crNum-1]
+
+	crBuff, err := readCRFileForInSpec(crFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read CR file %s: %v", crFilePath, err)
+	}
+
+	customResource := csmv1.ContainerStorageModule{}
+	err = yaml.Unmarshal(crBuff, &customResource)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal CSM custom resource: %v", err)
+	}
+
+	moduleFound := false
+	for i, m := range customResource.Spec.Modules {
+		if m.Name == csmv1.ModuleType(module) {
+			for j, c := range m.Components {
+				if c.Name == component {
+					envFound := false
+					for k, env := range c.Envs {
+						if env.Name == envName {
+							customResource.Spec.Modules[i].Components[j].Envs[k].Value = envValue
+							envFound = true
+							break
+						}
+					}
+					if !envFound {
+						customResource.Spec.Modules[i].Components[j].Envs = append(
+							customResource.Spec.Modules[i].Components[j].Envs,
+							corev1.EnvVar{Name: envName, Value: envValue},
+						)
+					}
+					moduleFound = true
+					break
+				}
+			}
+			break
+		}
+	}
+
+	if !moduleFound {
+		return fmt.Errorf("component %s not found in module %s", component, module)
+	}
+
+	modifiedYAML, err := yaml.Marshal(customResource)
+	if err != nil {
+		return fmt.Errorf("failed to marshal modified YAML: %v", err)
+	}
+
+	tempPath, err := writeRenderedFile(crFilePath, string(modifiedYAML))
+	if err != nil {
+		return fmt.Errorf("failed to write temp file: %v", err)
+	}
+
+	res.Scenario.Paths[crNum-1] = tempPath
+	return nil
+}
+
+// setDriverConfigVersionInSpec sets the driver configVersion in a CR file before applying it.
+func (step *Step) setDriverConfigVersionInSpec(res Resource, configVersion, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	crFilePath := res.Scenario.Paths[crNum-1]
+
+	crBuff, err := readCRFileForInSpec(crFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read CR file %s: %v", crFilePath, err)
+	}
+
+	customResource := csmv1.ContainerStorageModule{}
+	err = yaml.Unmarshal(crBuff, &customResource)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal CSM custom resource: %v", err)
+	}
+
+	customResource.Spec.Driver.ConfigVersion = configVersion
+
+	modifiedYAML, err := yaml.Marshal(customResource)
+	if err != nil {
+		return fmt.Errorf("failed to marshal modified YAML: %v", err)
+	}
+
+	tempPath, err := writeRenderedFile(crFilePath, string(modifiedYAML))
+	if err != nil {
+		return fmt.Errorf("failed to write temp file: %v", err)
+	}
+
+	res.Scenario.Paths[crNum-1] = tempPath
+	return nil
+}
+
+// setModuleConfigVersionInSpec sets the configVersion of a module in a CR file before applying it.
+func (step *Step) setModuleConfigVersionInSpec(res Resource, module, configVersion, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	crFilePath := res.Scenario.Paths[crNum-1]
+
+	crBuff, err := readCRFileForInSpec(crFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read CR file %s: %v", crFilePath, err)
+	}
+
+	customResource := csmv1.ContainerStorageModule{}
+	err = yaml.Unmarshal(crBuff, &customResource)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal CSM custom resource: %v", err)
+	}
+
+	found := false
+	for i, m := range customResource.Spec.Modules {
+		if m.Name == csmv1.ModuleType(module) {
+			customResource.Spec.Modules[i].ConfigVersion = configVersion
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("module %s not found in CR", module)
+	}
+
+	modifiedYAML, err := yaml.Marshal(customResource)
+	if err != nil {
+		return fmt.Errorf("failed to marshal modified YAML: %v", err)
+	}
+
+	tempPath, err := writeRenderedFile(crFilePath, string(modifiedYAML))
+	if err != nil {
+		return fmt.Errorf("failed to write temp file: %v", err)
+	}
+
+	res.Scenario.Paths[crNum-1] = tempPath
+	return nil
+}
+
+// setModuleComponentEnabledInSpec sets a component's enabled flag within a module in a CR file before applying it.
+func (step *Step) setModuleComponentEnabledInSpec(res Resource, module, component, enabledStr, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	crFilePath := res.Scenario.Paths[crNum-1]
+
+	crBuff, err := readCRFileForInSpec(crFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read CR file %s: %v", crFilePath, err)
+	}
+
+	customResource := csmv1.ContainerStorageModule{}
+	err = yaml.Unmarshal(crBuff, &customResource)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal CSM custom resource: %v", err)
+	}
+
+	enabled := strings.ToLower(enabledStr) == "true"
+	found := false
+	for i, m := range customResource.Spec.Modules {
+		if m.Name == csmv1.ModuleType(module) {
+			for j, c := range m.Components {
+				if c.Name == component {
+					customResource.Spec.Modules[i].Components[j].Enabled = pointer.Bool(enabled)
+					found = true
+					break
+				}
+			}
+			break
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("component %s not found in module %s", component, module)
+	}
+
+	modifiedYAML, err := yaml.Marshal(customResource)
+	if err != nil {
+		return fmt.Errorf("failed to marshal modified YAML: %v", err)
+	}
+
+	tempPath, err := writeRenderedFile(crFilePath, string(modifiedYAML))
+	if err != nil {
+		return fmt.Errorf("failed to write temp file: %v", err)
+	}
+
+	res.Scenario.Paths[crNum-1] = tempPath
+	return nil
+}
+
+// setSpecVersionInSpec sets spec.version on a CR file before applying it.
+func (step *Step) setSpecVersionInSpec(res Resource, version, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	crFilePath := res.Scenario.Paths[crNum-1]
+
+	crBuff, err := readCRFileForInSpec(crFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read CR file %s: %v", crFilePath, err)
+	}
+
+	customResource := csmv1.ContainerStorageModule{}
+	err = yaml.Unmarshal(crBuff, &customResource)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal CSM custom resource: %v", err)
+	}
+
+	customResource.Spec.Version = version
+
+	modifiedYAML, err := yaml.Marshal(customResource)
+	if err != nil {
+		return fmt.Errorf("failed to marshal modified YAML: %v", err)
+	}
+
+	tempPath, err := writeRenderedFile(crFilePath, string(modifiedYAML))
+	if err != nil {
+		return fmt.Errorf("failed to write temp file: %v", err)
+	}
+
+	res.Scenario.Paths[crNum-1] = tempPath
+	return nil
+}
+
+// setCustomRegistryInSpec sets spec.customRegistry on a CR file before applying it.
+func (step *Step) setCustomRegistryInSpec(res Resource, registry, crNumStr string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	crFilePath := res.Scenario.Paths[crNum-1]
+
+	crBuff, err := readCRFileForInSpec(crFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read CR file %s: %v", crFilePath, err)
+	}
+
+	customResource := csmv1.ContainerStorageModule{}
+	err = yaml.Unmarshal(crBuff, &customResource)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal CSM custom resource: %v", err)
+	}
+
+	customResource.Spec.CustomRegistry = registry
+
+	modifiedYAML, err := yaml.Marshal(customResource)
+	if err != nil {
+		return fmt.Errorf("failed to marshal modified YAML: %v", err)
+	}
+
+	tempPath, err := writeRenderedFile(crFilePath, string(modifiedYAML))
+	if err != nil {
+		return fmt.Errorf("failed to write temp file: %v", err)
+	}
+
+	res.Scenario.Paths[crNum-1] = tempPath
 	return nil
 }

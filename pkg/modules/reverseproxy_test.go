@@ -1,4 +1,4 @@
-//  Copyright © 2023-2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2023-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -856,4 +856,147 @@ func TestGetRevProxyVolumeComp_TLSSecretConditional(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetRevproxyApplyCR_ConfigMapImageOverride(t *testing.T) {
+	ctx := context.Background()
+
+	cr, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	// Clear the component image so the result comes from the matched (ConfigMap) path in GetFinalImage.
+	for i, c := range cr.Spec.Modules[0].Components {
+		if c.Name == ReverseProxyServerComponent {
+			cr.Spec.Modules[0].Components[i].Image = ""
+		}
+	}
+
+	op := operatorutils.OperatorConfig{
+		ConfigDirectory: "../../operatorconfig",
+	}
+
+	controllerYAML, err := drivers.GetController(ctx, cr, op, csmv1.PowerMax, operatorutils.VersionSpec{})
+	if err != nil {
+		panic(err)
+	}
+
+	matched := operatorutils.VersionSpec{
+		Version: "v2.16.0",
+		Images: map[string]string{
+			ReverseProxyServerComponent: "configmap-registry.io/revproxy:from-configmap",
+		},
+	}
+
+	newDp, err := ReverseProxyInjectDeployment(ctx, controllerYAML.Deployment, cr, op, matched)
+	assert.NoError(t, err, "ReverseProxyInjectDeployment should not error")
+
+	// The revproxy container is appended; find it by name "reverseproxy".
+	found := false
+	for _, c := range newDp.Spec.Template.Spec.Containers {
+		if c.Name != nil && *c.Name == "reverseproxy" {
+			assert.Equal(t, "configmap-registry.io/revproxy:from-configmap", *c.Image,
+				"ConfigMap image should override the template default")
+			found = true
+			break
+		}
+	}
+	assert.True(t, found, "reverseproxy container should be present in the deployment")
+}
+
+func TestGetRevproxyApplyCR_CustomRegistryOnly(t *testing.T) {
+	ctx := context.Background()
+
+	cr, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	// Clear the component image so the code reaches the CustomRegistry branch.
+	for i, c := range cr.Spec.Modules[0].Components {
+		if c.Name == ReverseProxyServerComponent {
+			cr.Spec.Modules[0].Components[i].Image = ""
+		}
+	}
+
+	// Set custom registry; no ConfigMap (empty matched).
+	cr.Spec.CustomRegistry = "my-registry.example.com"
+
+	op := operatorutils.OperatorConfig{
+		ConfigDirectory: "../../operatorconfig",
+	}
+
+	controllerYAML, err := drivers.GetController(ctx, cr, op, csmv1.PowerMax, operatorutils.VersionSpec{})
+	if err != nil {
+		panic(err)
+	}
+
+	matched := operatorutils.VersionSpec{} // empty – no ConfigMap
+
+	newDp, err := ReverseProxyInjectDeployment(ctx, controllerYAML.Deployment, cr, op, matched)
+	assert.NoError(t, err, "ReverseProxyInjectDeployment should not error")
+
+	found := false
+	for _, c := range newDp.Spec.Template.Spec.Containers {
+		if c.Name != nil && *c.Name == "reverseproxy" {
+			got := *c.Image
+			assert.True(t, strings.HasPrefix(got, "my-registry.example.com/"),
+				"revproxy image should use custom registry, got: %s", got)
+			assert.True(t, strings.Contains(got, "csipowermax-reverseproxy"),
+				"revproxy image should still reference csipowermax-reverseproxy, got: %s", got)
+			found = true
+			break
+		}
+	}
+	assert.True(t, found, "reverseproxy container should be present in the deployment")
+}
+
+func TestGetRevproxyApplyCR_ConfigMapWinsOverCustomRegistry(t *testing.T) {
+	ctx := context.Background()
+
+	cr, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	// Clear the component image so the result is determined solely by matched vs custom registry.
+	for i, c := range cr.Spec.Modules[0].Components {
+		if c.Name == ReverseProxyServerComponent {
+			cr.Spec.Modules[0].Components[i].Image = ""
+		}
+	}
+
+	// Set BOTH custom registry and ConfigMap image.
+	cr.Spec.CustomRegistry = "my-registry.example.com"
+
+	op := operatorutils.OperatorConfig{
+		ConfigDirectory: "../../operatorconfig",
+	}
+
+	controllerYAML, err := drivers.GetController(ctx, cr, op, csmv1.PowerMax, operatorutils.VersionSpec{})
+	if err != nil {
+		panic(err)
+	}
+
+	matched := operatorutils.VersionSpec{
+		Version: "v2.16.0",
+		Images: map[string]string{
+			ReverseProxyServerComponent: "configmap-registry.io/revproxy:from-configmap",
+		},
+	}
+
+	newDp, err := ReverseProxyInjectDeployment(ctx, controllerYAML.Deployment, cr, op, matched)
+	assert.NoError(t, err, "ReverseProxyInjectDeployment should not error")
+
+	found := false
+	for _, c := range newDp.Spec.Template.Spec.Containers {
+		if c.Name != nil && *c.Name == "reverseproxy" {
+			assert.Equal(t, "configmap-registry.io/revproxy:from-configmap", *c.Image,
+				"ConfigMap image should win over custom registry")
+			found = true
+			break
+		}
+	}
+	assert.True(t, found, "reverseproxy container should be present in the deployment")
 }

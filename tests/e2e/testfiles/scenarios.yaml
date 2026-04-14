@@ -44,7 +44,7 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [pflexAuthCRs]"
+    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powerflexAuthCRs]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [3] for [powerflex] for CR [1]"
@@ -64,7 +64,7 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [authorization] for [pflex]"
+    - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [${E2E_NS_AUTH}] for [powerflex]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [3] for [powerflex] for CR [1]"
@@ -81,12 +81,12 @@
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [powerscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
-    - "Set up ephemeral volume properties [testfiles/powerscale-templates/ephemeral.properties] for [pscaleEphemeral]"
+    - "Set up ephemeral volume properties [testfiles/powerscale-templates/ephemeral.properties] for [powerscaleEphemeral]"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
@@ -100,14 +100,14 @@
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [powerscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
     - "Enable healthmonitor from CR [1]"
     - "Validate custom resource [1]"
-    - "Set up ephemeral volume properties [testfiles/powerscale-templates/ephemeral.properties] for [pscaleEphemeral]"
+    - "Set up ephemeral volume properties [testfiles/powerscale-templates/ephemeral.properties] for [powerscaleEphemeral]"
     # cleanup
     - "Disable healthmonitor from CR [1]"
     - "Enable forceRemoveDriver on CR [1]"
@@ -121,8 +121,8 @@
     - "powerscale"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template-altifs.yaml] for [pscale]"
-    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [csm-creds] in namespace [dell] for [pscale]"
+    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template-altifs.yaml] for [powerscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [csm-creds] in namespace [${E2E_NS_OPERATOR}] for [powerscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
@@ -134,7 +134,7 @@
   customTest:
     - name: check_parameters.sh
       run:
-        - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_1_values.csv dell powerscale
+        - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_1_values.csv ${E2E_NS_OPERATOR} powerscale
 
 - scenario: "Install PowerScale Driver with second alternate sample file"
   paths:
@@ -143,8 +143,8 @@
     - "powerscale"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [csm-creds] in namespace [dell] for [pscale]"
+    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [powerscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [csm-creds] in namespace [${E2E_NS_OPERATOR}] for [powerscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
@@ -156,7 +156,7 @@
   customTest:
     - name: check_parameters.sh
       run:
-        - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_2_values.csv dell powerscale
+        - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_2_values.csv ${E2E_NS_OPERATOR} powerscale
 
 - scenario: "Install PowerScale Driver with third alternate sample file"
   paths:
@@ -166,8 +166,8 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Set [control-plane] node label"
-    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [csm-creds] in namespace [dell] for [pscale]"
+    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [powerscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [csm-creds] in namespace [${E2E_NS_OPERATOR}] for [powerscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
@@ -180,7 +180,7 @@
   customTest:
     - name: check_parameters.sh
       run:
-        - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_3_values.csv dell powerscale
+        - /bin/bash check_parameters.sh testfiles/powerscale_alt_vals_3_values.csv ${E2E_NS_OPERATOR} powerscale
 
 - scenario: "Install PowerScale Driver with health monitor"
   paths:
@@ -190,8 +190,8 @@
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [csm-creds] in namespace [dell] for [pscale]"
+    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [powerscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [powerscale-creds] in namespace [${E2E_NS_OPERATOR}] for [powerscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
@@ -208,8 +208,8 @@
     - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [powerscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
@@ -228,8 +228,8 @@
     - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [powerscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
@@ -253,7 +253,7 @@
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
@@ -266,10 +266,11 @@
     - "testfiles/storage_csm_powerscale_observability.yaml"
   tags:
     - "observability"
+    - "powerscale"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [powerscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
@@ -287,7 +288,7 @@
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
@@ -308,10 +309,11 @@
     - "testfiles/storage_csm_powerscale_observability_top_custom_cert.yaml"
   tags:
     - "observability"
+    - "powerscale"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [powerscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
@@ -331,14 +333,14 @@
     enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
-    - "Set up ephemeral volume properties [testfiles/powerflex-templates/ephemeral.properties] for [pflexEphemeral]"
+    - "Set up ephemeral volume properties [testfiles/powerflex-templates/ephemeral.properties] for [powerflexEphemeral]"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
@@ -352,8 +354,8 @@
     - "fscheck"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -389,16 +391,16 @@
     enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
     - "Enable healthmonitor from CR [1]"
     - "Validate custom resource [1]"
-    - "Set up ephemeral volume properties [testfiles/powerflex-templates/ephemeral.properties] for [pflexEphemeral]"
+    - "Set up ephemeral volume properties [testfiles/powerflex-templates/ephemeral.properties] for [powerflexEphemeral]"
     # cleanup
     - "Disable healthmonitor from CR [1]"
     - "Enable forceRemoveDriver on CR [1]"
@@ -415,9 +417,9 @@
     enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [dell] for [pflex]"
+    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [2]"
     - "Apply custom resource [1]"
@@ -432,7 +434,7 @@
   customTest:
     - name: check_parameters.sh
       run:
-        - /bin/bash check_parameters.sh testfiles/powerflex_alt_vals_1_values.csv dell powerflex
+        - /bin/bash check_parameters.sh testfiles/powerflex_alt_vals_1_values.csv ${E2E_NS_POWERFLEX} powerflex
 
 - scenario: "Install PowerFlex Driver with second set of alternate values"
   paths:
@@ -443,9 +445,9 @@
     enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [dell] for [pflex]"
+    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -458,7 +460,7 @@
   customTest:
     - name: check_parameters.sh
       run:
-        - /bin/bash check_parameters.sh testfiles/powerflex_alt_vals_2_values.csv dell powerflex
+        - /bin/bash check_parameters.sh testfiles/powerflex_alt_vals_2_values.csv ${E2E_NS_POWERFLEX} powerflex
 
 - scenario: "Install PowerFlex Driver with third set of alternate values"
   paths:
@@ -470,9 +472,9 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Set [control-plane] node label"
-    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [dell] for [pflex]"
+    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -486,7 +488,7 @@
   customTest:
     - name: check_parameters.sh
       run:
-        - /bin/bash check_parameters.sh testfiles/powerflex_alt_vals_3_values.csv dell powerflex
+        - /bin/bash check_parameters.sh testfiles/powerflex_alt_vals_3_values.csv ${E2E_NS_POWERFLEX} powerflex
 
 - scenario: "Install PowerFlex Driver with fourth set of alternate values"
   paths:
@@ -497,9 +499,9 @@
     enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [dell] for [pflex]"
+    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -512,7 +514,7 @@
   customTest:
     - name: check_parameters.sh
       run:
-        - /bin/bash check_parameters.sh testfiles/powerflex_alt_vals_4_values.csv dell powerflex
+        - /bin/bash check_parameters.sh testfiles/powerflex_alt_vals_4_values.csv ${E2E_NS_POWERFLEX} powerflex
 
 - scenario: "Install PowerFlex Driver without SDC"
   paths:
@@ -523,9 +525,9 @@
     enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [dell] for [pflex]"
+    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -538,7 +540,7 @@
   customTest:
     - name: check_parameters.sh
       run:
-        - /bin/bash check_parameters.sh testfiles/powerflex_no_sdc_values.csv dell powerflex
+        - /bin/bash check_parameters.sh testfiles/powerflex_no_sdc_values.csv ${E2E_NS_POWERFLEX} powerflex
 
 - scenario: "Install PowerFlex Driver with health monitor"
   paths:
@@ -549,9 +551,9 @@
     enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [dell] for [pflex]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [dell] for [pflex]"
+    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -561,24 +563,24 @@
     - "Delete custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is not installed"
 
-- scenario: "Uninstall PowerFlex Driver"
-  paths:
-    - "testfiles/storage_csm_powerflex.yaml"
-  tags:
-    - "powerflex"
-  config:
-    enableSftpSDC: false
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
-    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is not installed"
+# - scenario: "Uninstall PowerFlex Driver"
+#   paths:
+#     - "testfiles/storage_csm_powerflex.yaml"
+#   tags:
+#     - "powerflex"
+#   config:
+#     enableSftpSDC: false
+#   steps:
+#     - "Given an environment with k8s or openshift, and CSM operator installed"
+#     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+#     - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+#     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
+#     - "Apply custom resource [1]"
+#     - "Validate custom resource [1]"
+#     - "Validate [powerflex] driver from CR [1] is installed"
+#     - "Enable forceRemoveDriver on CR [1]"
+#     - "Delete custom resource [1]"
+#     - "Validate [powerflex] driver from CR [1] is not installed"
 
 - scenario: "Install PowerFlex Driver (With Authorization V2)"
   paths:
@@ -589,21 +591,21 @@
   tags:
     - "authorization"
     - "authorizationproxyserver"
-    # - "powerflex"
+    - "powerflex"
   config:
     enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [pflexAuthCRs]"
+    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powerflexAuthCRs]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powerflex] for CR [1]"
-    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-vxflexos] for [pflexAuthSidecar]"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflexAuthSidecar]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflexAuth]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [2]"
     - "Apply custom resource [2]"
     - "Validate custom resource [2]"
@@ -632,12 +634,12 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [pscaleAuthCRs]"
+    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powerscaleAuthCRs]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powerscale] for CR [1]"
-    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Create Secret with template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscaleAuth]"
+    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [powerscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscaleAuth]"
     - "Apply custom resource [2]"
     - "Validate custom resource [2]"
     - "Validate [powerscale] driver from CR [2] is installed"
@@ -665,14 +667,14 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [authorization] for [pscale]"
+    - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [${E2E_NS_AUTH}] for [powerscale]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powerscale] for CR [1]"
-    - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [isilon] for [pscale]"
-    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Create Secret with template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscaleAuth]"
-    - "Create Secret with template [testfiles/powerscale-templates/karavi-authorization-config.json] name [karavi-authorization-config] in namespace [isilon] for [pscaleAuthSidecar]"
+    - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
+    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [powerscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscaleAuth]"
+    - "Create Secret with template [testfiles/powerscale-templates/karavi-authorization-config.json] name [karavi-authorization-config] in namespace [${E2E_NS_POWERSCALE}] for [powerscaleAuthSidecar]"
     - "Apply custom resource [2]"
     - "Validate custom resource [2]"
     - "Validate [powerscale] driver from CR [2] is installed"
@@ -701,13 +703,13 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [pscaleAuthCRs]"
+    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powerscaleAuthCRs]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powerscale] for CR [1]"
-    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Create Secret with template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscaleAuth]"
-    - "Create Secret with template [testfiles/powerscale-templates/karavi-authorization-config.json] name [karavi-authorization-config] in namespace [isilon] for [pscaleAuthSidecar]"
+    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [powerscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscaleAuth]"
+    - "Create Secret with template [testfiles/powerscale-templates/karavi-authorization-config.json] name [karavi-authorization-config] in namespace [${E2E_NS_POWERSCALE}] for [powerscaleAuthSidecar]"
     - "Apply custom resource [2]"
     - "Validate custom resource [2]"
     - "Validate [powerscale] driver from CR [2] is installed"
@@ -737,13 +739,13 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [pscaleAuthCRs]"
+    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powerscaleAuthCRs]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powerscale] for CR [1]"
-    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Create Secret with template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscaleAuth]"
-    - "Create Secret with template [testfiles/powerscale-templates/karavi-authorization-config.json] name [karavi-authorization-config] in namespace [isilon] for [pscaleAuthSidecar]"
+    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [powerscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-auth-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscaleAuth]"
+    - "Create Secret with template [testfiles/powerscale-templates/karavi-authorization-config.json] name [karavi-authorization-config] in namespace [${E2E_NS_POWERSCALE}] for [powerscaleAuthSidecar]"
     - "Apply custom resource [2]"
     - "Validate custom resource [2]"
     - "Validate [powerscale] driver from CR [2] is installed"
@@ -754,7 +756,7 @@
     - "Validate [authorization] module from CR [2] is installed"
     - "Validate [observability] module from CR [2] is not installed"
     - "Disable [authorization] module from CR [2]"
-    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
     - "Set secret for driver from CR [2] to [isilon-creds]"
     - "Validate [powerscale] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is not installed"
@@ -770,7 +772,7 @@
 
 - scenario: "Install PowerFlex Driver (With Authorization V2), Upgrade driver and authorization sidecar"
   paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_k8s_secret_n_minus_1.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_n-1_k8s-secret.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_k8s_secret.yaml" # n
     - "testfiles/storage_csm_powerflex_auth_n_minus_1.yaml" # n-1
     - "testfiles/storage_csm_powerflex_auth.yaml" # n
@@ -780,22 +782,25 @@
   tags:
     - "authorization"
     - "authorizationproxyserver"
-    # - "powerflex"
+    - "powerflex"
   config:
     enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [5]" # v2.4.0 CRDs for n-1
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [authorization] for [pflex]"
+    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powerflexAuthCRs]"
+    - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [${E2E_NS_AUTH}] for [powerflex]"
+    - "Set spec version to [${E2E_CREG_VERSION}] in CR spec [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [7] for [powerflex] for CR [1]"
-    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-vxflexos] for [pflexAuthSidecar]"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflexAuthSidecar]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflexAuth]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [2]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [3]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [4]"
     - "Apply custom resource [3]"
@@ -831,9 +836,9 @@
     enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -858,9 +863,9 @@
     enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -875,13 +880,14 @@
     - "testfiles/storage_csm_powerflex_observability_custom_cert.yaml"
   tags:
     - "observability"
+    - "powerflex"
   config:
     enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -896,13 +902,14 @@
     - "testfiles/storage_csm_powerflex_observability_otel_custom_cert.yaml"
   tags:
     - "observability"
+    - "powerflex"
   config:
     enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -923,9 +930,9 @@
     enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -952,9 +959,9 @@
     enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -974,9 +981,9 @@
     enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -1001,7 +1008,7 @@
   tags:
     - "authorizationproxyserver"
     - "authorization"
-    # - "powerflex"
+    - "powerflex"
     - "observability"
     # - "sanity"
   config:
@@ -1011,15 +1018,15 @@
     # Install Auth proxy server
     - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [pflexAuthCRs]"
+    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powerflexAuthCRs]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powerflex] for CR [1]"
     # Install powerflex driver (with Auth and Obs modules enabled)
-    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [test-vxflexos] for [pflexAuthSidecar]"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflexAuth]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflexAuthSidecar]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflexAuth]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [2]"
     - "Apply custom resource [2]"
     - "Validate custom resource [2]"
@@ -1032,7 +1039,7 @@
     - "Validate [authorization] module from CR [2] is installed"
     - "Validate [observability] module from CR [2] is not installed"
     # Re-create powerflex array secret for direct connectivity and disable Auth module in the driver CSM CR
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "Disable [authorization] module from CR [2]"
     - "Validate [powerflex] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is not installed"
@@ -1057,8 +1064,8 @@
     enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -1078,8 +1085,8 @@
     enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -1104,7 +1111,7 @@
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
@@ -1123,7 +1130,7 @@
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
@@ -1152,9 +1159,9 @@
 #     enableSftpSDC: false
 #   steps:
 #     - "Given an environment with k8s or openshift, and CSM operator installed"
-#     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-#     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
-#     - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+#     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+#     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
+#     - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
 #     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [2]"
 #     - "Apply custom resource [1]"
 #     - "Apply custom resource [2]"
@@ -1179,13 +1186,13 @@
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
-    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
+    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [powerstore]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is installed"
     # ephemeral.properties must be set up according to the storage class created
-    - "Set up ephemeral volume properties [testfiles/powerstore-templates/ephemeral.properties] for [pstoreEphemeral]"
+    - "Set up ephemeral volume properties [testfiles/powerstore-templates/ephemeral.properties] for [powerstoreEphemeral]"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
@@ -1199,7 +1206,7 @@
     - "fscheck"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is installed"
@@ -1232,15 +1239,15 @@
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
-    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
+    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [powerstore]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is installed"
     - "Enable healthmonitor from CR [1]"
     - "Validate custom resource [1]"
     # ephemeral.properties must be set up according to the storage class created
-    - "Set up ephemeral volume properties [testfiles/powerstore-templates/ephemeral.properties] for [pstoreEphemeral]"
+    - "Set up ephemeral volume properties [testfiles/powerstore-templates/ephemeral.properties] for [powerstoreEphemeral]"
     # cleanup
     - "Disable healthmonitor from CR [1]"
     - "Enable forceRemoveDriver on CR [1]"
@@ -1261,12 +1268,12 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [pstoreAuthCRs]"
+    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powerstoreAuthCRs]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powerstore] for CR [1]"
-    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
-    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template-auth.yaml] name [test-powerstore-config] in namespace [test-powerstore] for [pstoreAuth]"
+    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [powerstore]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template-auth.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstoreAuth]"
     - "Apply custom resource [3]"
     - "Validate custom resource [3]"
     - "Validate [powerstore] driver from CR [3] is installed"
@@ -1288,8 +1295,8 @@
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
-    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
+    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [powerstore]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is installed"
@@ -1307,8 +1314,8 @@
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
-    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
+    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [powerstore]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is installed"
@@ -1332,8 +1339,8 @@
     - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
-    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
+    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [powerstore]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is installed"
@@ -1351,8 +1358,8 @@
     - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
-    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
+    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [powerstore]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is installed"
@@ -1376,8 +1383,8 @@
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
-    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-creds] in namespace [powerstore] for [pstore]"
+    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [powerstore]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is installed"
@@ -1395,7 +1402,7 @@
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-creds] in namespace [powerstore] for [pstore]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is installed"
@@ -1420,7 +1427,7 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
-    - "Create Secret with template [testfiles/unity-templates/unity-secret-template.yaml] name [unity-creds] in namespace [unity] for [unity]"
+    - "Create Secret with template [testfiles/unity-templates/unity-secret-template.yaml] name [unity-creds] in namespace [${E2E_NS_UNITY}] for [unity]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [unity] driver from CR [1] is installed"
@@ -1440,7 +1447,7 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
-    - "Create Secret with template [testfiles/unity-templates/unity-secret-template.yaml] name [unity-creds] in namespace [unity] for [unity]"
+    - "Create Secret with template [testfiles/unity-templates/unity-secret-template.yaml] name [unity-creds] in namespace [${E2E_NS_UNITY}] for [unity]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [unity] driver from CR [1] is installed"
@@ -1462,7 +1469,7 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
-    - "Create Secret with template [testfiles/unity-templates/unity-secret-template.yaml] name [unity-creds] in namespace [unity] for [unity]"
+    - "Create Secret with template [testfiles/unity-templates/unity-secret-template.yaml] name [unity-creds] in namespace [${E2E_NS_UNITY}] for [unity]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [unity] driver from CR [1] is installed"
@@ -1479,11 +1486,11 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
-    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
+    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
@@ -1491,42 +1498,113 @@
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
 
-- scenario: "Install PowerMax Driver (FS Check)"
+- scenario: "Install PowerMax Driver(Standalone) with CustomRegistry"
   paths:
     - "testfiles/storage_csm_powermax.yaml"
   tags:
     - "powermax"
-    - "fscheck"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
-    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
+    - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/cicd] in CR spec [1]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
+    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
-    # Validate initial defaults
-    - "Validate [common] env [X_CSI_FS_CHECK_ENABLED] is [] in CSM CR for resource [1]"
-    - "Validate [common] env [X_CSI_FS_CHECK_MODE] is [] in CSM CR for resource [1]"
-    - "Validate [node] [driver] env [X_CSI_FS_CHECK_ENABLED] is [false] in driver for resource [1]"
-    - "Validate [node] [driver] env [X_CSI_FS_CHECK_MODE] is [checkOnly] in driver for resource [1]"
-    # Patch CSM CR to enable FS check
-    - "Set [common] env [X_CSI_FS_CHECK_ENABLED] to [true] in resource [1]"
-    - "Set [common] env [X_CSI_FS_CHECK_MODE] to [checkAndRepair] in resource [1]"
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is not installed"
+
+- scenario: "Install PowerMax Driver(Sidecar) with CustomRegistry"
+  paths:
+    - "testfiles/storage_csm_powermax_sidecar.yaml"
+  tags:
+    - "powermax"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/cicd] in CR spec [1]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
+    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
-    # Wait for driver to be redeployed and validate new values
     - "Validate [powermax] driver from CR [1] is installed"
-    - "Validate [common] env [X_CSI_FS_CHECK_ENABLED] is [true] in CSM CR for resource [1]"
-    - "Validate [common] env [X_CSI_FS_CHECK_MODE] is [checkAndRepair] in CSM CR for resource [1]"
-    - "Validate [node] [driver] env [X_CSI_FS_CHECK_ENABLED] is [true] in driver for resource [1]"
-    - "Validate [node] [driver] env [X_CSI_FS_CHECK_MODE] is [checkAndRepair] in driver for resource [1]"
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is not installed"
+
+- scenario: "Install PowerMax Driver with Mount Credentials and CustomRegistry"
+  paths:
+    - "testfiles/storage_csm_powermax_secret.yaml"
+  tags:
+    - "powermax"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/cicd] in CR spec [1]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-creds] in namespace [${E2E_NS_POWERMAX}] for [powermaxUseSecret]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is installed"
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is not installed"
+
+- scenario: "Install PowerMax Driver with Mount Credentials (Sidecar), Observability and CustomRegistry"
+  paths:
+    - "testfiles/storage_csm_powermax_secret_sidecar.yaml"
+  tags:
+    - "powermax"
+    - "observability"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/cicd] in CR spec [1]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-creds] in namespace [${E2E_NS_POWERMAX}] for [powermaxUseSecret]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is not installed"
+    - "Enable [observability] module from CR [1]"
+    - "Validate [powermax] driver from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is installed"
+    # cleanup
+    - "Disable [observability] module from CR [1]"
+    - "Validate [observability] module from CR [1] is not installed"
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is not installed"
+
+- scenario: "Install PowerMax Driver(Standalone) with ConfigMap Images"
+  paths:
+    - "testfiles/storage_csm_powermax.yaml"
+  tags:
+    - "powermax"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create resource with template [testfiles/authorization-templates/csm-images.yaml] for ['']"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
+    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powermax] driver from CR [1] is installed"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
+    - "Restore ConfigMap"
 
 - scenario: "Install PowerMax Driver with HealthMonitor"
   paths:
@@ -1536,11 +1614,11 @@
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-config] in namespace [powermax] for [pmaxUseSecret]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
-    - "Create resource with template [testfiles/storage_csm_powermax_secret.yaml] for [pmaxArrayConfig]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-creds] in namespace [${E2E_NS_POWERMAX}] for [powermaxUseSecret]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
+    - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
     - "Enable healthmonitor from CR [1]"
@@ -1558,11 +1636,11 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
-    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
-    - "Create resource with template [testfiles/storage_csm_powermax.yaml] for [pmaxArrayConfig]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
+    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
+    - "Create resource with template [testfiles/storage_csm_powermax.yaml] for [powermaxArrayConfig]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
     - "Enable forceRemoveDriver on CR [1]"
@@ -1576,10 +1654,10 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-config] in namespace [powermax] for [pmaxUseSecret]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-creds] in namespace [${E2E_NS_POWERMAX}] for [powermaxUseSecret]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
@@ -1594,10 +1672,10 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-config] in namespace [powermax] for [pmaxUseSecret]"
-    - "Create resource with template [testfiles/storage_csm_powermax_secret.yaml] for [pmaxArrayConfig]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-creds] in namespace [${E2E_NS_POWERMAX}] for [powermaxUseSecret]"
+    - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
     - "Enable forceRemoveDriver on CR [1]"
@@ -1612,10 +1690,10 @@
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-config] in namespace [powermax] for [pmaxUseSecret]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-creds] in namespace [${E2E_NS_POWERMAX}] for [powermaxUseSecret]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
@@ -1623,6 +1701,9 @@
     - "Enable [observability] module from CR [1]"
     - "Validate [powermax] driver from CR [1] is installed"
     - "Validate [observability] module from CR [1] is installed"
+    # cleanup
+    - "Disable [observability] module from CR [1]"
+    - "Validate [observability] module from CR [1] is not installed"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
@@ -1635,16 +1716,19 @@
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-config] in namespace [powermax] for [pmaxUseSecret]"
-    - "Create resource with template [testfiles/storage_csm_powermax_secret_sidecar.yaml] for [pmaxArrayConfig]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-creds] in namespace [${E2E_NS_POWERMAX}] for [powermaxUseSecret]"
+    - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
     - "Validate [observability] module from CR [1] is not installed"
     - "Enable [observability] module from CR [1]"
     - "Validate [powermax] driver from CR [1] is installed"
     - "Validate [observability] module from CR [1] is installed"
+    # cleanup
+    - "Disable [observability] module from CR [1]"
+    - "Validate [observability] module from CR [1] is not installed"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
@@ -1656,10 +1740,10 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-config] in namespace [powermax] for [pmaxUseSecret]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-creds] in namespace [${E2E_NS_POWERMAX}] for [powermaxUseSecret]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
@@ -1674,10 +1758,10 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-config] in namespace [powermax] for [pmaxUseSecret]"
-    - "Create resource with template [testfiles/storage_csm_powermax_secret_sidecar.yaml] for [pmaxArrayConfig]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-creds] in namespace [${E2E_NS_POWERMAX}] for [powermaxUseSecret]"
+    - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
     - "Enable forceRemoveDriver on CR [1]"
@@ -1692,10 +1776,10 @@
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-config] in namespace [powermax] for [pmaxUseSecret]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-creds] in namespace [${E2E_NS_POWERMAX}] for [powermaxUseSecret]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
@@ -1703,6 +1787,9 @@
     - "Enable [observability] module from CR [1]"
     - "Validate [powermax] driver from CR [1] is installed"
     - "Validate [observability] module from CR [1] is installed"
+    # cleanup
+    - "Disable [observability] module from CR [1]"
+    - "Validate [observability] module from CR [1] is not installed"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
@@ -1714,11 +1801,11 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up reverse proxy tls secret with SAN namespace [powermax]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
-    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret with SAN namespace [${E2E_NS_POWERMAX}]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
+    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
@@ -1733,11 +1820,11 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up reverse proxy tls secret with SAN namespace [powermax]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
-    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
-    - "Create resource with template [testfiles/storage_csm_powermax_tls.yaml] for [pmaxArrayConfig]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret with SAN namespace [${E2E_NS_POWERMAX}]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
+    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
+    - "Create resource with template [testfiles/storage_csm_powermax_tls.yaml] for [powermaxArrayConfig]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
     - "Enable forceRemoveDriver on CR [1]"
@@ -1751,11 +1838,11 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
-    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
+    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
@@ -1771,11 +1858,11 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
-    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
-    - "Create resource with template [testfiles/storage_csm_powermax_sidecar.yaml] for [pmaxArrayConfig]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
+    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
+    - "Create resource with template [testfiles/storage_csm_powermax_sidecar.yaml] for [powermaxArrayConfig]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
     # Last two steps perform Clean Up
@@ -1790,11 +1877,11 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up reverse proxy tls secret with SAN namespace [powermax]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
-    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret with SAN namespace [${E2E_NS_POWERMAX}]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
+    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
@@ -1810,11 +1897,11 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up reverse proxy tls secret with SAN namespace [powermax]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
-    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
-    - "Create resource with template [testfiles/storage_csm_powermax_sidecar_tls.yaml] for [pmaxArrayConfig]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret with SAN namespace [${E2E_NS_POWERMAX}]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
+    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
+    - "Create resource with template [testfiles/storage_csm_powermax_sidecar_tls.yaml] for [powermaxArrayConfig]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
     # Last two steps perform Clean Up
@@ -1830,16 +1917,18 @@
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
-    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
+    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
     - "Validate [observability] module from CR [1] is installed"
     # cleanup
+    - "Disable [observability] module from CR [1]"
+    - "Validate [observability] module from CR [1] is not installed"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
@@ -1852,15 +1941,17 @@
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
-    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
-    - "Create resource with template [testfiles/storage_csm_powermax_observability.yaml] for [pmaxArrayConfig]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
+    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
+    - "Create resource with template [testfiles/storage_csm_powermax_observability.yaml] for [powermaxArrayConfig]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
     - "Validate [observability] module from CR [1] is installed"
     # cleanup
+    - "Disable [observability] module from CR [1]"
+    - "Validate [observability] module from CR [1] is not installed"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
@@ -1879,16 +1970,16 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [pmaxAuthCRs]"
+    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powermaxAuthCRs]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powermax] for CR [1]"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Create Secret with template [testfiles/powermax-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [powermax] for [pmaxAuthSidecar]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxAuthArrayConfig]"
-    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config_auth.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxReverseProxy]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Create Secret with template [testfiles/powermax-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxAuthArrayConfig]"
+    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config_auth.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxReverseProxy]"
     - "Apply custom resource [3]"
     - "Validate custom resource [3]"
     - "Validate [powermax] driver from CR [3] is installed"
@@ -1916,16 +2007,16 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [pmaxAuthCRs]"
+    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powermaxAuthCRs]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powermax] for CR [1]"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Create Secret with template [testfiles/powermax-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [powermax] for [pmaxAuthSidecar]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
-    - "Create resource with template [testfiles/storage_csm_powermax_authorization.yaml] for [pmaxArrayConfig]"
-    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config_auth.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxReverseProxy]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Create Secret with template [testfiles/powermax-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
+    - "Create resource with template [testfiles/storage_csm_powermax_authorization.yaml] for [powermaxArrayConfig]"
+    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config_auth.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxReverseProxy]"
     - "Validate custom resource [3]"
     - "Validate [powermax] driver from CR [3] is installed"
     - "Validate [authorization] module from CR [3] is installed"
@@ -1952,15 +2043,15 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [pmaxAuthCRs]"
+    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powermaxAuthCRs]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powermax] for CR [1]"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Create Secret with template [testfiles/powermax-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [powermax] for [pmaxAuthSidecar]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-auth-template.yaml] name [powermax-config] in namespace [powermax] for [pmaxAuthSidecar]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Create Secret with template [testfiles/powermax-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-auth-template.yaml] name [powermax-creds] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
     - "Apply custom resource [3]"
     - "Validate custom resource [3]"
     - "Validate [powermax] driver from CR [3] is installed"
@@ -1988,15 +2079,15 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [pmaxAuthCRs]"
+    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powermaxAuthCRs]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powermax] for CR [1]"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Create Secret with template [testfiles/powermax-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [powermax] for [pmaxAuthSidecar]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-auth-template.yaml] name [powermax-config] in namespace [powermax] for [pmaxAuthSidecar]"
-    - "Create resource with template [testfiles/storage_csm_powermax_secret_auth_v2.yaml] for [pmaxArrayConfig]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Create Secret with template [testfiles/powermax-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-auth-template.yaml] name [powermax-creds] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
+    - "Create resource with template [testfiles/storage_csm_powermax_secret_auth_v2.yaml] for [powermaxArrayConfig]"
     - "Validate custom resource [3]"
     - "Validate [powermax] driver from CR [3] is installed"
     - "Validate [authorization] module from CR [3] is installed"
@@ -2025,23 +2116,25 @@
     # Install Auth proxy server
     - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [pmaxAuthCRs]"
+    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powermaxAuthCRs]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powermax] for CR [1]"
     # Install powermax driver (with Auth and Obs modules enabled)
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Create Secret with template [testfiles/powermax-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [powermax] for [pmaxAuthSidecar]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxAuthArrayConfig]"
-    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config_auth.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxReverseProxy]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Create Secret with template [testfiles/powermax-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxAuthArrayConfig]"
+    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config_auth.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxReverseProxy]"
     - "Apply custom resource [2]"
     - "Validate custom resource [2]"
     - "Validate [powermax] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
     - "Validate [observability] module from CR [2] is installed"
     # cleanup
+    - "Disable [observability] module from CR [2]"
+    - "Validate [observability] module from CR [2] is not installed"
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Validate [powermax] driver from CR [2] is not installed"
@@ -2065,22 +2158,24 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [pmaxAuthCRs]"
+    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powermaxAuthCRs]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powermax] for CR [1]"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Create Secret with template [testfiles/powermax-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [powermax] for [pmaxAuthSidecar]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
-    - "Create resource with template [testfiles/storage_csm_powermax_observability_authorization.yaml] for [pmaxArrayConfig]"
-    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config_auth.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxReverseProxy]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Create Secret with template [testfiles/powermax-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
+    - "Create resource with template [testfiles/storage_csm_powermax_observability_authorization.yaml] for [powermaxArrayConfig]"
+    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config_auth.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxReverseProxy]"
     - "Apply custom resource [2]"
     - "Validate custom resource [2]"
     - "Validate [powermax] driver from CR [2] is installed"
     - "Validate [authorization] module from CR [2] is installed"
     - "Validate [observability] module from CR [2] is installed"
     # cleanup
+    - "Disable [observability] module from CR [2]"
+    - "Validate [observability] module from CR [2] is not installed"
     - "Enable forceRemoveDriver on CR [2]"
     - "Delete custom resource [2]"
     - "Validate [powermax] driver from CR [2] is not installed"
@@ -2097,11 +2192,11 @@
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
-    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
+    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
@@ -2122,11 +2217,11 @@
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
-    - "Create resource with template [testfiles/storage_csm_powermax.yaml] for [pmaxArrayConfig]"
-    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
+    - "Create resource with template [testfiles/storage_csm_powermax.yaml] for [powermaxArrayConfig]"
+    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
     - "Validate [resiliency] module from CR [1] is not installed"
@@ -2146,11 +2241,11 @@
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
-    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
+    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
@@ -2171,11 +2266,11 @@
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
-    - "Create resource with template [testfiles/storage_csm_powermax_resiliency.yaml] for [pmaxArrayConfig]"
-    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
+    - "Create resource with template [testfiles/storage_csm_powermax_resiliency.yaml] for [powermaxArrayConfig]"
+    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
     - "Validate [resiliency] module from CR [1] is installed"
@@ -2198,8 +2293,8 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Run [Apply Node Labels]"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-zoning-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-zoning-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -2228,19 +2323,19 @@
   paths:
     - "testfiles/storage_csm_powerflex_oidc.yaml"
   tags:
-    # - "powerflex"
+  # - "powerflex"
   config:
     enableSftpSDC: false
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [pflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-oidc-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-oidc-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
-    - "Set up ephemeral volume properties [testfiles/powerflex-templates/ephemeral.properties] for [pflexEphemeral]"
+    - "Set up ephemeral volume properties [testfiles/powerflex-templates/ephemeral.properties] for [powerflexEphemeral]"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
@@ -2255,9 +2350,9 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Run [Apply Node Labels]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create Secret with template [testfiles/powermax-templates/powermax-zoning-use-secret-template.yaml] name [powermax-config] in namespace [powermax] for [pmaxUseSecret]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create Secret with template [testfiles/powermax-templates/powermax-zoning-use-secret-template.yaml] name [powermax-creds] in namespace [${E2E_NS_POWERMAX}] for [powermaxUseSecret]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
@@ -2289,7 +2384,7 @@
     - "cosi"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create Secret from template [testfiles/cosi-templates/cosi-secret.yaml] as field [config.yaml] named [cosi-config] in namespace [dell-cosi] for [cosi]"
+    - "Create Secret from template [testfiles/cosi-templates/cosi-secret.yaml] as field [config.yaml] named [cosi-config] in namespace [${E2E_NS_COSI}] for [cosi]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [cosi] driver from CR [1] is installed"
@@ -2306,12 +2401,12 @@
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [powerscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
-    - "Set up ephemeral volume properties [testfiles/powerscale-templates/ephemeral.properties] for [pscaleEphemeral]"
+    - "Set up ephemeral volume properties [testfiles/powerscale-templates/ephemeral.properties] for [powerscaleEphemeral]"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
@@ -2326,13 +2421,13 @@
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
-    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
+    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [powerstore]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is installed"
     # ephemeral.properties must be set up according to the storage class created
-    - "Set up ephemeral volume properties [testfiles/powerstore-templates/ephemeral.properties] for [pstoreEphemeral]"
+    - "Set up ephemeral volume properties [testfiles/powerstore-templates/ephemeral.properties] for [powerstoreEphemeral]"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
@@ -2346,7 +2441,7 @@
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
@@ -2364,8 +2459,8 @@
     - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [powerscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
@@ -2383,8 +2478,8 @@
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [pscale]"
-    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [isilon] for [pscale]"
+    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [powerscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerscale] driver from CR [1] is installed"
@@ -2396,7 +2491,7 @@
 
 - scenario: "Install Authorization Proxy Server V2 Using Version (Default Images)"
   paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_using_version.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_n-1_nginx-controller.yaml"
     - "../../operatorconfig/moduleconfig/authorization/v2.4.0/authorization-crds.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
   tags:
@@ -2405,7 +2500,8 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [authorization] for [pflex]"
+    - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [${E2E_NS_AUTH}] for [powerflex]"
+    - "Set spec version to [${E2E_CREG_VERSION}] in CR spec [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [3] for [powerflex] for CR [1]"
@@ -2416,7 +2512,7 @@
 
 - scenario: "Install Authorization Proxy Server V2 Using Version (ConfigMap Images)"
   paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_using_version.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_n-1_nginx-controller.yaml"
     - "../../operatorconfig/moduleconfig/authorization/v2.4.0/authorization-crds.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
   tags:
@@ -2426,7 +2522,8 @@
     - "Create resource with template [testfiles/authorization-templates/csm-images.yaml] for ['']"
     - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [authorization] for [pflex]"
+    - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [${E2E_NS_AUTH}] for [powerflex]"
+    - "Set spec version to [${E2E_CREG_VERSION}] in CR spec [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [3] for [powerflex] for CR [1]"
@@ -2434,11 +2531,11 @@
     - "Delete custom resource [1]"
     - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [2]"
-    - "Delete ConfigMap"
+    - "Restore ConfigMap"
 
 - scenario: "Install Authorization Proxy Server V2 Using Version (With CustomRegistry Images)"
   paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_using_customRegistry.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_n-1_nginx-controller.yaml"
     - "../../operatorconfig/moduleconfig/authorization/v2.4.0/authorization-crds.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
   tags:
@@ -2447,7 +2544,8 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [authorization] for [pflex]"
+    - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [${E2E_NS_AUTH}] for [powerflex]"
+    - "Set spec version to [${E2E_CREG_VERSION}] in CR spec [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [3] for [powerflex] for CR [1]"
@@ -2468,8 +2566,8 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create resource with template [testfiles/authorization-templates/csm-images.yaml] for ['']"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [test-vxflexos-config] in namespace [test-vxflexos] for [pflex]"
-    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [test-vxflexos] for [pflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "If config.enableSftpSDC is true: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If config.enableSftpSDC is true: Set up Powerflex SFTP CR [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
@@ -2480,7 +2578,7 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is not installed"
-    - "Delete ConfigMap"
+    - "Restore ConfigMap"
 
 - scenario: "Install Powermax with Replication Using Version (ConfigMap Images)"
   paths:
@@ -2491,11 +2589,11 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create resource with template [testfiles/authorization-templates/csm-images.yaml] for ['']"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [pmax]"
-    - "Set up reverse proxy tls secret namespace [powermax]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [pmaxCreds]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [pmaxArrayConfig]"
-    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [powermax] for [pmaxAuthSidecar]"
+    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
+    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
+    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
+    - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
@@ -2504,7 +2602,7 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
-    - "Delete ConfigMap"
+    - "Restore ConfigMap"
 
 - scenario: "Install PowerStore Using Version with Resiliency (With CustomRegistry Images)"
   paths:
@@ -2514,14 +2612,58 @@
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [pstore]"
-    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [powerstore] for [pstore]"
+    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [powerstore]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is installed"
     # ephemeral.properties must be set up according to the storage class created
-    - "Set up ephemeral volume properties [testfiles/powerstore-templates/ephemeral.properties] for [pstoreEphemeral]"
+    - "Set up ephemeral volume properties [testfiles/powerstore-templates/ephemeral.properties] for [powerstoreEphemeral]"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is not installed"
+
+- scenario: "Install PowerStore Using Version with Resiliency (ConfigMap Missing Version - Fallback)"
+  paths:
+    - "testfiles/storage_csm_powerstore_using_custom_registry_resiliency.yaml"
+  tags:
+    - "powerstore"
+    - "resiliency"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create resource with template [testfiles/authorization-templates/csm-images-missing-version.yaml] for ['']"
+    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [powerstore]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Validate deployment from CR [1] has image [csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:v1.15.0] in container [podmon]"
+    - "Validate daemonset from CR [1] has image [csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:v1.15.0] in container [podmon]"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is not installed"
+    - "Restore ConfigMap"
+
+- scenario: "Install PowerStore Using Version with Resiliency (Partial ConfigMap Override + CustomRegistry)"
+  paths:
+    - "testfiles/storage_csm_powerstore_using_custom_registry_resiliency.yaml"
+  tags:
+    - "powerstore"
+    - "resiliency"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Create resource with template [testfiles/authorization-templates/csm-images-partial-podmon.yaml] for ['']"
+    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [powerstore]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Validate deployment from CR [1] has image [csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:nightly] in container [podmon]"
+    - "Validate daemonset from CR [1] has image [csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:nightly] in container [podmon]"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is not installed"
+    - "Restore ConfigMap"

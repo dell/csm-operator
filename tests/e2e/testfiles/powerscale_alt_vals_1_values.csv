@@ -1,6 +1,6 @@
 parameter name, grep option for paramater value, parameter value,resource to describe
 Name,,powerscale,controller,2
-Namespace,,dell,controller,1
+Namespace,,e2e,controller,1
 F S Group Policy,,File,csm,1
 Auth Secret,,csm-creds,csm,1
 Replicas,,3,csm,1

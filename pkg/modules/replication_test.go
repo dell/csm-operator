@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2025 Dell Inc., or its subsidiaries. All Rights Reserved.
+// Copyright (c) 2022-2026 Dell Inc., or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@ package modules
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
@@ -929,6 +930,54 @@ func TestGetReplicaController_EnableKubevirtPVCRemap_True(t *testing.T) {
 	assert.True(t, foundArg, "deployment args should contain --enable-kubevirt-pvc-remap=true when env is set to true")
 }
 
+func TestGetReplicaController_CustomRegistryOnly(t *testing.T) {
+	ctx := context.Background()
+
+	cr, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+	if err != nil {
+		panic(err)
+	}
+	if len(cr.Spec.Modules) == 0 {
+		t.Fatalf("test CR must have at least one module")
+	}
+
+	// Clear the manager component image so the code falls through to the CustomRegistry branch in GetFinalImage.
+	replica := cr.Spec.Modules[0]
+	for i, c := range replica.Components {
+		if c.Name == operatorutils.ReplicationControllerManager {
+			replica.Components[i].Image = ""
+		}
+	}
+	cr.Spec.Modules[0] = replica
+
+	// Use real operatorconfig directory (v1.15.0 has the placeholder)
+	op := operatorutils.OperatorConfig{
+		ConfigDirectory: "../../operatorconfig",
+	}
+	matched := operatorutils.VersionSpec{}
+	// Set custom registry on the CR; no ConfigMap (empty matched).
+	cr.Spec.CustomRegistry = "my-registry.example.com"
+
+	ctrlObjects, err := getReplicaController(ctx, op, cr, matched)
+	assert.NoError(t, err, "getReplicaController should not error")
+
+	var dep *appsv1.Deployment
+	for _, obj := range ctrlObjects {
+		if d, ok := obj.(*appsv1.Deployment); ok {
+			dep = d
+			break
+		}
+	}
+	if dep == nil {
+		t.Fatalf("expected a Deployment in ctrlObjects, got none")
+	}
+
+	// Verify the manager container image uses the custom registry prefix
+	managerImage := dep.Spec.Template.Spec.Containers[0].Image
+	assert.True(t, strings.HasPrefix(managerImage, "my-registry.example.com/"),
+		"manager image should start with custom registry, got: %s", managerImage)
+}
+
 func TestGetReplicaController_EnableKubevirtPVCRemap_BackwardCompat(t *testing.T) {
 	ctx := context.Background()
 
@@ -982,4 +1031,126 @@ func TestGetReplicaController_EnableKubevirtPVCRemap_BackwardCompat(t *testing.T
 		}
 	}
 	assert.True(t, foundArg, "deployment args should default to --enable-kubevirt-pvc-remap=false when env var is absent (backward compatibility)")
+}
+
+func TestGetReplicaController_ConfigMapWinsOverCustomRegistry(t *testing.T) {
+	ctx := context.Background()
+
+	cr, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+	if err != nil {
+		panic(err)
+	}
+	if len(cr.Spec.Modules) == 0 {
+		t.Fatalf("test CR must have at least one module")
+	}
+
+	// Clear the manager component image so the result is determined solely by matched vs custom registry.
+	replica := cr.Spec.Modules[0]
+	for i, c := range replica.Components {
+		if c.Name == operatorutils.ReplicationControllerManager {
+			replica.Components[i].Image = ""
+		}
+	}
+	cr.Spec.Modules[0] = replica
+
+	// Use real operatorconfig directory (v1.15.0 has the placeholder)
+	op := operatorutils.OperatorConfig{
+		ConfigDirectory: "../../operatorconfig",
+	}
+	matched := operatorutils.VersionSpec{}
+
+	ctrlObjects, err := getReplicaController(ctx, op, cr, matched)
+	assert.NoError(t, err, "getReplicaController should not error for backward-compatible CR without ENABLE_KUBEVIRT_PVC_REMAP")
+	// Set BOTH a custom registry and a matched (ConfigMap) image.
+	cr.Spec.CustomRegistry = "my-registry.example.com"
+
+	matched = operatorutils.VersionSpec{
+		Version: "v1.15.0",
+		Images: map[string]string{
+			operatorutils.ReplicationControllerManager: "configmap-registry.io/replication-manager:from-configmap",
+		},
+	}
+
+	ctrlObjects, err = getReplicaController(ctx, op, cr, matched)
+	assert.NoError(t, err, "getReplicaController should not error")
+
+	var dep *appsv1.Deployment
+	for _, obj := range ctrlObjects {
+		if d, ok := obj.(*appsv1.Deployment); ok {
+			dep = d
+			break
+		}
+	}
+	if dep == nil {
+		t.Fatalf("expected a Deployment in ctrlObjects, got none")
+	}
+
+	// Verify deployment args default to --enable-kubevirt-pvc-remap=false
+	foundArg := false
+	for _, arg := range dep.Spec.Template.Spec.Containers[0].Args {
+		if arg == "--enable-kubevirt-pvc-remap=false" {
+			foundArg = true
+			break
+		}
+	}
+	assert.True(t, foundArg, "deployment args should default to --enable-kubevirt-pvc-remap=false when env var is absent (backward compatibility)")
+	if len(dep.Spec.Template.Spec.Containers) == 0 {
+		t.Fatalf("expected at least one container in deployment")
+	}
+
+	got := dep.Spec.Template.Spec.Containers[0].Image
+	want := "configmap-registry.io/replication-manager:from-configmap"
+	assert.Equal(t, want, got, "ConfigMap image should win over custom registry")
+}
+
+func TestGetReplicaController_NeitherConfigMapNorRegistry(t *testing.T) {
+	ctx := context.Background()
+
+	cr, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+	if err != nil {
+		panic(err)
+	}
+	if len(cr.Spec.Modules) == 0 {
+		t.Fatalf("test CR must have at least one module")
+	}
+
+	// Clear the manager component image so the code falls all the way through to the template default.
+	replica := cr.Spec.Modules[0]
+	for i, c := range replica.Components {
+		if c.Name == operatorutils.ReplicationControllerManager {
+			replica.Components[i].Image = ""
+		}
+	}
+	cr.Spec.Modules[0] = replica
+
+	// No custom registry, no ConfigMap.
+	cr.Spec.CustomRegistry = ""
+
+	matched := operatorutils.VersionSpec{} // empty
+
+	op := operatorutils.OperatorConfig{
+		ConfigDirectory: "../../operatorconfig",
+	}
+
+	ctrlObjects, err := getReplicaController(ctx, op, cr, matched)
+	assert.NoError(t, err, "getReplicaController should not error")
+
+	var dep *appsv1.Deployment
+	for _, obj := range ctrlObjects {
+		if d, ok := obj.(*appsv1.Deployment); ok {
+			dep = d
+			break
+		}
+	}
+	if dep == nil {
+		t.Fatalf("expected a Deployment in ctrlObjects, got none")
+	}
+	if len(dep.Spec.Template.Spec.Containers) == 0 {
+		t.Fatalf("expected at least one container in deployment")
+	}
+
+	// With no ConfigMap and no custom registry, the default template image should be used.
+	got := dep.Spec.Template.Spec.Containers[0].Image
+	assert.True(t, strings.Contains(got, "quay.io/dell/container-storage-modules/dell-replication-controller"),
+		"manager image should be the default template image, got: %s", got)
 }

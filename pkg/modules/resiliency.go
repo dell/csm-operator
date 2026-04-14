@@ -1,4 +1,4 @@
-//  Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2023-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -187,15 +187,18 @@ func getResiliencyEnv(resiliencyModule csmv1.Module, _ csmv1.DriverType) string 
 
 // Apply resiliency module from the manifest file to the podmon sidecar
 func modifyPodmon(ctx context.Context, component csmv1.ContainerTemplate, container *acorev1.ContainerApplyConfiguration, matched operatorutils.VersionSpec, cr csmv1.ContainerStorageModule) {
+	matchedImageApplied := false
 	if matched.Version != "" {
 		containerName := *container.Name
 		if img := matched.Images[containerName]; img != "" {
 			*container.Image = img
+			matchedImageApplied = true
 		}
-	} else if cr.Spec.CustomRegistry != "" {
+	}
+	if !matchedImageApplied && cr.Spec.CustomRegistry != "" {
 		image := operatorutils.ResolveImage(ctx, *container.Image, cr)
 		*container.Image = image
-	} else if component.Image != "" {
+	} else if !matchedImageApplied && component.Image != "" {
 		image := string(component.Image)
 		if container.Image != nil {
 			*container.Image = image

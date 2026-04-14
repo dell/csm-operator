@@ -1,4 +1,4 @@
-// Copyright © 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+// Copyright © 2025-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -127,19 +127,19 @@ storage "file" {
 `
 
 	// env variables that align with operator e2e
-	powerflexSecretPath  = "PFLEX_VAULT_STORAGE_PATH"  // #nosec G101 -- env var, not hardcode
-	powerflexUsername    = "PFLEX_USER"                // #nosec G101 -- env var, not hardcode
-	powerflexPassword    = "PFLEX_PASS"                // #nosec G101 -- env var, not hardcode
-	powerscaleSecretPath = "PSCALE_VAULT_STORAGE_PATH" // #nosec G101 -- env var, not hardcode
-	powerscaleUsername   = "PSCALE_USER"               // #nosec G101 -- env var, not hardcode
-	powerscalePassword   = "PSCALE_PASS"               // #nosec G101 -- env var, not hardcode
-	powermaxSecretPath   = "PMAX_VAULT_STORAGE_PATH"   // #nosec G101 -- env var, not hardcode
-	powermaxUsername     = "PMAX_USER"                 // #nosec G101 -- env var, not hardcode
-	powermaxPassword     = "PMAX_PASS"                 // #nosec G101 -- env var, not hardcode
-	powerstoreSecretPath = "PSTORE_VAULT_STORAGE_PATH" // #nosec G101 -- env var, not hardcode
-	powerstoreUsername   = "PSTORE_USER"               // #nosec G101 -- env var, not hardcode
-	powerstorePassword   = "PSTORE_PASS"               // #nosec G101 -- env var, not hardcode
-	configObject         = "CONFIG_OBJECT"             // #nosec G101 -- env var, not hardcode
+	powerflexSecretPath  = "POWERFLEX_VAULT_STORAGE_PATH"  // #nosec G101 -- env var, not hardcode
+	powerflexUsername    = "POWERFLEX_USER"                // #nosec G101 -- env var, not hardcode
+	powerflexPassword    = "POWERFLEX_PASS"                // #nosec G101 -- env var, not hardcode
+	powerscaleSecretPath = "POWERSCALE_VAULT_STORAGE_PATH" // #nosec G101 -- env var, not hardcode
+	powerscaleUsername   = "POWERSCALE_USER"               // #nosec G101 -- env var, not hardcode
+	powerscalePassword   = "POWERSCALE_PASS"               // #nosec G101 -- env var, not hardcode
+	powermaxSecretPath   = "POWERMAX_VAULT_STORAGE_PATH"   // #nosec G101 -- env var, not hardcode
+	powermaxUsername     = "POWERMAX_USER"                 // #nosec G101 -- env var, not hardcode
+	powermaxPassword     = "POWERMAX_PASS"                 // #nosec G101 -- env var, not hardcode
+	powerstoreSecretPath = "POWERSTORE_VAULT_STORAGE_PATH" // #nosec G101 -- env var, not hardcode
+	powerstoreUsername   = "POWERSTORE_USER"               // #nosec G101 -- env var, not hardcode
+	powerstorePassword   = "POWERSTORE_PASS"               // #nosec G101 -- env var, not hardcode
+	configObject         = "JWT_SIGNING_SECRET"            // #nosec G101 -- env var, not hardcode
 	// timestamps to create certificates
 	notBefore = time.Now()
 	notAfter  = notBefore.Add(8766 * time.Hour)

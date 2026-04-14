@@ -2,7 +2,7 @@ apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
   name: unity
-  namespace: unity
+  namespace: ${E2E_NS_UNITY}
 spec:
   driver:
     csiDriverType: "unity"

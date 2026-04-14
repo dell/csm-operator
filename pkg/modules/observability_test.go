@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Dell Inc., or its subsidiaries. All Rights Reserved.
+// Copyright (c) 2025-2026 Dell Inc., or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -2144,5 +2144,255 @@ spec:
 	}
 	if !found {
 		t.Fatalf("expected karavi-metrics-powerflex image from matched.Images to override component/template")
+	}
+}
+
+func TestGetPowerFlexMetricsObject_CustomRegistryOnly(t *testing.T) {
+	ctx := context.Background()
+
+	origGetObs := getObservabilityModuleFn
+	origReadCfg := readConfigFileFn
+	defer func() {
+		getObservabilityModuleFn = origGetObs
+		readConfigFileFn = origReadCfg
+	}()
+
+	getObservabilityModuleFn = func(_ csmv1.ContainerStorageModule) (csmv1.Module, error) {
+		return csmv1.Module{
+			Name:    csmv1.Observability,
+			Enabled: true,
+			Components: []csmv1.ContainerTemplate{
+				{
+					Name: ObservabilityMetricsPowerFlexName,
+					Envs: []corev1.EnvVar{
+						{Name: PowerflexLogLevel, Value: "INFO"},
+					},
+				},
+			},
+		}, nil
+	}
+
+	readConfigFileFn = func(_ context.Context, _ csmv1.Module, cr csmv1.ContainerStorageModule, _ operatorutils.OperatorConfig, _ string) ([]byte, error) {
+		yaml := fmt.Sprintf(`
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: karavi-metrics-powerflex
+  namespace: %s
+spec:
+  template:
+    spec:
+      containers:
+      - name: karavi-metrics-powerflex
+        image: quay.io/dell/karavi-metrics-powerflex:template
+        env:
+        - name: %s
+          value: INFO
+`, cr.Namespace, PowerflexLogLevel)
+		return []byte(yaml), nil
+	}
+
+	cr := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "csm-ut",
+			Namespace: "csm-ut-ns",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			CustomRegistry: "my-registry.example.com",
+		},
+	}
+	op := operatorConfig
+
+	matched := operatorutils.VersionSpec{} // empty - no ConfigMap
+
+	objs, err := getPowerFlexMetricsObject(ctx, op, cr, matched)
+	if err != nil {
+		t.Fatalf("getPowerFlexMetricsObject returned error: %v", err)
+	}
+
+	found := false
+	for _, obj := range objs {
+		if dep, ok := obj.(*appsv1.Deployment); ok {
+			for _, c := range dep.Spec.Template.Spec.Containers {
+				if c.Name == "karavi-metrics-powerflex" {
+					if strings.HasPrefix(c.Image, "my-registry.example.com/") {
+						found = true
+					} else {
+						t.Errorf("expected custom registry prefix, got %q", c.Image)
+					}
+				}
+			}
+		}
+	}
+	if !found {
+		t.Fatalf("karavi-metrics-powerflex container with custom registry image not found")
+	}
+}
+
+func TestGetPowerFlexMetricsObject_ConfigMapWinsOverCustomRegistry(t *testing.T) {
+	ctx := context.Background()
+
+	origGetObs := getObservabilityModuleFn
+	origReadCfg := readConfigFileFn
+	defer func() {
+		getObservabilityModuleFn = origGetObs
+		readConfigFileFn = origReadCfg
+	}()
+
+	getObservabilityModuleFn = func(_ csmv1.ContainerStorageModule) (csmv1.Module, error) {
+		return csmv1.Module{
+			Name:    csmv1.Observability,
+			Enabled: true,
+			Components: []csmv1.ContainerTemplate{
+				{
+					Name: ObservabilityMetricsPowerFlexName,
+					Envs: []corev1.EnvVar{
+						{Name: PowerflexLogLevel, Value: "INFO"},
+					},
+				},
+			},
+		}, nil
+	}
+
+	readConfigFileFn = func(_ context.Context, _ csmv1.Module, cr csmv1.ContainerStorageModule, _ operatorutils.OperatorConfig, _ string) ([]byte, error) {
+		yaml := fmt.Sprintf(`
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: karavi-metrics-powerflex
+  namespace: %s
+spec:
+  template:
+    spec:
+      containers:
+      - name: karavi-metrics-powerflex
+        image: quay.io/dell/karavi-metrics-powerflex:template
+        env:
+        - name: %s
+          value: INFO
+`, cr.Namespace, PowerflexLogLevel)
+		return []byte(yaml), nil
+	}
+
+	cr := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "csm-ut",
+			Namespace: "csm-ut-ns",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			CustomRegistry: "my-registry.example.com",
+		},
+	}
+	op := operatorConfig
+
+	configMapImage := "configmap-registry.example.com/karavi-metrics-powerflex:from-cm"
+	matched := operatorutils.VersionSpec{
+		Version: "v9.9.9",
+		Images: map[string]string{
+			ObservabilityMetricsPowerFlexName: configMapImage,
+		},
+	}
+
+	objs, err := getPowerFlexMetricsObject(ctx, op, cr, matched)
+	if err != nil {
+		t.Fatalf("getPowerFlexMetricsObject returned error: %v", err)
+	}
+
+	found := false
+	for _, obj := range objs {
+		if dep, ok := obj.(*appsv1.Deployment); ok {
+			for _, c := range dep.Spec.Template.Spec.Containers {
+				if c.Name == "karavi-metrics-powerflex" {
+					if c.Image == configMapImage {
+						found = true
+					} else {
+						t.Errorf("expected ConfigMap image %q, got %q", configMapImage, c.Image)
+					}
+				}
+			}
+		}
+	}
+	if !found {
+		t.Fatalf("expected ConfigMap image to win over custom registry")
+	}
+}
+
+func TestGetPowerFlexMetricsObject_NeitherConfigMapNorRegistry(t *testing.T) {
+	ctx := context.Background()
+
+	origGetObs := getObservabilityModuleFn
+	origReadCfg := readConfigFileFn
+	defer func() {
+		getObservabilityModuleFn = origGetObs
+		readConfigFileFn = origReadCfg
+	}()
+
+	getObservabilityModuleFn = func(_ csmv1.ContainerStorageModule) (csmv1.Module, error) {
+		return csmv1.Module{
+			Name:    csmv1.Observability,
+			Enabled: true,
+			Components: []csmv1.ContainerTemplate{
+				{
+					Name: ObservabilityMetricsPowerFlexName,
+					Envs: []corev1.EnvVar{
+						{Name: PowerflexLogLevel, Value: "INFO"},
+					},
+				},
+			},
+		}, nil
+	}
+
+	templateImage := "quay.io/dell/karavi-metrics-powerflex:template"
+	readConfigFileFn = func(_ context.Context, _ csmv1.Module, cr csmv1.ContainerStorageModule, _ operatorutils.OperatorConfig, _ string) ([]byte, error) {
+		yaml := fmt.Sprintf(`
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: karavi-metrics-powerflex
+  namespace: %s
+spec:
+  template:
+    spec:
+      containers:
+      - name: karavi-metrics-powerflex
+        image: %s
+        env:
+        - name: %s
+          value: INFO
+`, cr.Namespace, templateImage, PowerflexLogLevel)
+		return []byte(yaml), nil
+	}
+
+	cr := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "csm-ut",
+			Namespace: "csm-ut-ns",
+		},
+	}
+	op := operatorConfig
+
+	matched := operatorutils.VersionSpec{} // empty
+
+	objs, err := getPowerFlexMetricsObject(ctx, op, cr, matched)
+	if err != nil {
+		t.Fatalf("getPowerFlexMetricsObject returned error: %v", err)
+	}
+
+	found := false
+	for _, obj := range objs {
+		if dep, ok := obj.(*appsv1.Deployment); ok {
+			for _, c := range dep.Spec.Template.Spec.Containers {
+				if c.Name == "karavi-metrics-powerflex" {
+					if c.Image == templateImage {
+						found = true
+					} else {
+						t.Errorf("expected template default image %q, got %q", templateImage, c.Image)
+					}
+				}
+			}
+		}
+	}
+	if !found {
+		t.Fatalf("expected template default image to be used")
 	}
 }

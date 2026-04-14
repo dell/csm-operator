@@ -1,4 +1,4 @@
-//  Copyright © 2022-2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2022-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"strings"
+	"time"
 
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -50,6 +52,10 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Upgrade from custom resource \[(\d+)\] to \[(\d+)\]$`, step.upgradeCustomResource)
 	runner.addStep(`^Validate custom resource \[(\d+)\]$`, step.validateCustomResourceStatus)
 	runner.addStep(`^Validate deployment from CR \[(\d+)\] has argument \[([^"]*)\] in container \[([^"]*)\]$`, step.validateContainerArg)
+	runner.addStep(`^Validate deployment from CR \[(\d+)\] has image \[([^"]*)\] in container \[([^"]*)\]$`, step.validateDeploymentContainerImage)
+	runner.addStep(`^Validate deployment from CR \[(\d+)\] has image containing \[([^"]*)\] in container \[([^"]*)\]$`, step.validateDeploymentContainerImageContains)
+	runner.addStep(`^Validate daemonset from CR \[(\d+)\] has image \[([^"]*)\] in container \[([^"]*)\]$`, step.validateDaemonSetContainerImage)
+	runner.addStep(`^Validate daemonset from CR \[(\d+)\] has image containing \[([^"]*)\] in container \[([^"]*)\]$`, step.validateDaemonSetContainerImageContains)
 	runner.addStep(`^Validate \[([^"]*)\] driver from CR \[(\d+)\] is installed$`, step.validateDriverInstalled)
 	runner.addStep(`^Validate \[([^"]*)\] driver spec from CR \[(\d+)\]$`, step.validateMinimalCSMDriverSpec)
 	runner.addStep(`^Validate \[([^"]*)\] driver from CR \[(\d+)\] is not installed$`, step.validateDriverNotInstalled)
@@ -90,15 +96,34 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Validate \[([^"]*)\] CRD for Authorization is installed$`, step.validateCustomResourceDefinition)
 	runner.addStep(`^Delete Authorization CRs for \[([^"]*)\]$`, step.deleteAuthorizationCRs)
 	runner.addStep(`^Delete Authorization CRDs \[(\d+)\]$`, step.deleteCustomResourceDefinition)
+	runner.addStep(`^Remove finalizers from authorization CRs in namespace \[([^"]*)\]$`, step.removeAuthorizationFinalizers)
 	runner.addStep(`^Set up Powerflex SFTP CR \[([^"]*)\]$`, step.configurePowerflexSftpInstall)
 	runner.addStep(`^Set up reverse proxy tls secret namespace \[([^"]*)\]`, step.setUpReverseProxy)
 	runner.addStep(`^Set up reverse proxy tls secret with SAN namespace \[([^"]*)\]`, step.setUpTLSSecretWithSAN)
+	runner.addStep(`^Restore ConfigMap$`, step.restoreConfigMap)
 	runner.addStep(`^Delete ConfigMap$`, step.deleteConfigMap)
 
 	// Environment variables management steps
 	runner.addStep(`^Validate \[(node|controller)\] \[([^"]*)\] env \[([^"]*)\] is \[([^"]*)\] in driver for resource \[(\d+)\]$`, step.validateEnvInDriverPod)
 	runner.addStep(`^Validate \[(common|node|controller)\] env \[([^"]*)\] is \[([^"]*)\] in CSM CR for resource \[(\d+)\]$`, step.validateEnvInCSMCR)
 	runner.addStep(`^Set \[(common|node|controller)\] env \[([^"]*)\] to \[([^"]*)\] in resource \[(\d+)\]$`, step.setEnvInSpec)
+
+	// Pre-apply CR modification steps
+	runner.addStep(`^Set forceRemoveDriver to \[([^"]*)\] in CR spec \[(\d+)\]$`, step.setForceRemoveDriverInSpec)
+	runner.addStep(`^Enable \[([^"]*)\] module in CR spec \[(\d+)\]$`, step.enableModuleInSpec)
+	runner.addStep(`^Set \[(common|node|controller)\] env \[([^"]*)\] from env \[([^"]*)\] in resource \[(\d+)\]$`, step.setEnvFromEnvVarInSpec)
+	runner.addStep(`^Set driver image to \[([^"]*)\] in CR spec \[(\d+)\]$`, step.setDriverImage)
+	runner.addStep(`^Set replicas to \[(\d+)\] in CR spec \[(\d+)\]$`, step.setReplicasInSpec)
+	runner.addStep(`^Set metadata name \[([^"]*)\] namespace \[([^"]*)\] in CR spec \[(\d+)\]$`, step.setMetadataInSpec)
+	runner.addStep(`^Set imagePullPolicy to \[([^"]*)\] in CR spec \[(\d+)\]$`, step.setImagePullPolicyInSpec)
+	runner.addStep(`^Set \[([^"]*)\] component \[([^"]*)\] image to \[([^"]*)\] in CR spec \[(\d+)\]$`, step.setModuleComponentImageInSpec)
+	runner.addStep(`^Set \[([^"]*)\] component \[([^"]*)\] env \[([^"]*)\] to \[([^"]*)\] in CR spec \[(\d+)\]$`, step.setModuleComponentEnvInSpec)
+	runner.addStep(`^Set \[([^"]*)\] component \[([^"]*)\] enabled \[([^"]*)\] in CR spec \[(\d+)\]$`, step.setModuleComponentEnabledInSpec)
+	runner.addStep(`^Set \[([^"]*)\] module configVersion to \[([^"]*)\] in CR spec \[(\d+)\]$`, step.setModuleConfigVersionInSpec)
+	runner.addStep(`^Set driver configVersion to \[([^"]*)\] in CR spec \[(\d+)\]$`, step.setDriverConfigVersionInSpec)
+	runner.addStep(`^Set spec version to \[([^"]*)\] in CR spec \[(\d+)\]$`, step.setSpecVersionInSpec)
+	runner.addStep(`^Remove \[([^"]*)\] from CR spec \[(\d+)\]$`, step.removeFieldFromSpec)
+	runner.addStep(`^Set customRegistry to \[([^"]*)\] in CR spec \[(\d+)\]$`, step.setCustomRegistryInSpec)
 }
 
 func (runner *Runner) addStep(expr string, stepFunc interface{}) {
@@ -165,7 +190,7 @@ func (runner *Runner) RunStep(stepName string, res Resource) error {
 
 			res := stepDef.Handler.Call(values)
 			if err, ok := res[0].Interface().(error); ok {
-				fmt.Printf("\nerr: %+v\n", err)
+				fmt.Printf("             Retrying   %v\n", err)
 				return err
 			}
 			return nil
@@ -195,7 +220,7 @@ func (runner *Runner) RunStepClient(stepName string, res Resource) error {
 
 			res := stepDef.Handler.Call(values)
 			if err, ok := res[0].Interface().(error); ok {
-				fmt.Printf("\nerr: %+v\n", err)
+				fmt.Printf("             Retrying   %v\n", err)
 				return err
 			}
 			return nil
@@ -203,4 +228,36 @@ func (runner *Runner) RunStepClient(stepName string, res Resource) error {
 	}
 
 	return fmt.Errorf("no method for step: %s", stepName)
+}
+
+// StepTimeout returns an appropriate timeout for the given step name.
+// Steps are categorized into fast (3 min), medium (10 min), and long (20 min).
+func StepTimeout(stepName string) time.Duration {
+	// Long-running steps (20 min): upgrades, third-party installs, custom tests, auth proxy config
+	longPatterns := []string{
+		"Upgrade from custom resource",
+		"Install [",
+		"Uninstall [",
+		"Run custom test",
+		"Run [",
+		"Configure authorization-proxy-server",
+	}
+	for _, p := range longPatterns {
+		if strings.Contains(stepName, p) {
+			return 20 * time.Minute
+		}
+	}
+
+	// Medium steps (10 min): validation/installation checks that poll
+	mediumPatterns := []string{
+		"Validate",
+	}
+	for _, p := range mediumPatterns {
+		if strings.Contains(stepName, p) {
+			return 10 * time.Minute
+		}
+	}
+
+	// Fast steps (3 min): apply, delete, create, set, enable/disable, etc.
+	return 3 * time.Minute
 }
