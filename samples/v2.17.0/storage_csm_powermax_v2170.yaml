@@ -1,5 +1,5 @@
 #
-# Copyright © 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2025-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -170,6 +170,19 @@ spec:
         # Default value: "checkOnly"
         - name: "X_CSI_FS_CHECK_MODE"
           value: "checkOnly"
+        # X_CSM_DR_ENABLED: Enable/Disable CSM-DR (Disaster Recovery) support
+        # When enabled, the driver initializes the CSM-DR controller for volume journaling
+        # Allowed values:
+        #   "true"  - Enable CSM-DR support
+        #   "false" - Disable CSM-DR support
+        # Default value: "true"
+        - name: "X_CSM_DR_ENABLED"
+          value: "true"
+        # X_CSM_DR_BIND_PORT: Port for CSM-DR controller to bind to
+        # Allowed values: Valid port number
+        # Default value: "8082"
+        - name: "X_CSM_DR_BIND_PORT"
+          value: "8082"
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin- volume usage, volume condition

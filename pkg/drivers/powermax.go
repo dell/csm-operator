@@ -1,4 +1,4 @@
-//  Copyright © 2023-2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2023-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -64,6 +64,10 @@ const (
 	CSIPmaxChap             = "<X_CSI_POWERMAX_ISCSI_ENABLE_CHAP>"
 	ReverseProxyTLSSecret   = "<X_CSI_REVPROXY_TLS_SECRET>" // #nosec G101
 	CSIPmaxDynamicSGEnabled = "<X_CSI_DYNAMIC_SG_ENABLED>"
+
+	// CSM-DR constants
+	CSIPmaxCSMDREnabled  = "<X_CSM_DR_ENABLED>"
+	CSIPmaxCSMDRBindPort = "<X_CSM_DR_BIND_PORT>"
 
 	// CsiPmaxMaxVolumesPerNode - Maximum volumes that the controller can schedule on the node
 	CsiPmaxMaxVolumesPerNode = "<X_CSI_MAX_VOLUMES_PER_NODE>"
@@ -196,6 +200,8 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 	dynamicSGEnabled := "false"
 	fsckEnabled := GetDriverCommonEnv(cr, CsiFsCheckEnabled, "false")
 	fsckMode := GetDriverCommonEnv(cr, CsiFsCheckMode, "checkOnly")
+	enableCSMDR := GetDriverCommonEnv(cr, "X_CSM_DR_ENABLED", "true")
+	drBindPort := GetDriverCommonEnv(cr, "X_CSM_DR_BIND_PORT", "8082")
 
 	// #nosec G101 - False positives
 	switch fileType {
@@ -289,6 +295,8 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		yamlString = strings.ReplaceAll(yamlString, ReverseProxyTLSSecret, proxyTLSSecret)
 		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxDynamicSGEnabled, dynamicSGEnabled)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxCSMDREnabled, enableCSMDR)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxCSMDRBindPort, drBindPort)
 
 		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckEnabled, fsckEnabled)
 		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckMode, fsckMode)
@@ -370,6 +378,8 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		yamlString = strings.ReplaceAll(yamlString, ReverseProxyTLSSecret, proxyTLSSecret)
 		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxDynamicSGEnabled, dynamicSGEnabled)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxCSMDREnabled, enableCSMDR)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxCSMDRBindPort, drBindPort)
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"

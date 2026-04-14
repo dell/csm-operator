@@ -43,6 +43,10 @@ rules:
     resourceNames: ["privileged"]
     resources: ["securitycontextconstraints"]
     verbs: ["use"]
+  # Permissions for CSM-DR VolumeJournal
+  - apiGroups: ["dr.storage.dell.com"]
+    resources: ["volumejournals"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -191,6 +195,10 @@ spec:
               value: <X_CSI_FS_CHECK_ENABLED>
             - name: X_CSI_FS_CHECK_MODE
               value: <X_CSI_FS_CHECK_MODE>
+            - name: X_CSM_DR_ENABLED
+              value: "<X_CSM_DR_ENABLED>"
+            - name: X_CSM_DR_BIND_PORT
+              value: "<X_CSM_DR_BIND_PORT>"
           volumeMounts:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/powermax.emc.dell.com
