@@ -2,7 +2,6 @@
 Install Vault in Kubernetes/Openshift configured for CSM Authorization
 
 # Prerequisites
-- helm
 - kubectl
 
 # Installing
@@ -43,8 +42,7 @@ There are multiple ways to configure Vault with key/value secrets with this tool
 2024/10/29 19:47:26 Creating vaultx-policy configMap in default namespace
 2024/10/29 19:47:26 Creating vaultx-tls secret in default namespace
 2024/10/29 19:47:26 Creating vaultx-ca secret in default namespace
-2024/10/29 19:47:26 Configuring values file for Vault helm chart
-2024/10/29 19:47:26 Installing vaultx via helm
+2024/10/29 19:47:26 Installing vaultx via Kubernetes manifests
 2024/10/29 19:47:27 Waiting for pod/vaultx-0 to be Ready
 2024/10/29 19:47:37 Enabling Kubernetes authentication in vaultx
 2024/10/29 19:47:38 Configuring Kubernetes authentication in vaultx
@@ -62,8 +60,7 @@ There are multiple ways to configure Vault with key/value secrets with this tool
 2024/10/29 19:47:26 Creating vaultx-policy configMap in default namespace
 2024/10/29 19:47:26 Creating vaultx-tls secret in default namespace
 2024/10/29 19:47:26 Creating vaultx-ca secret in default namespace
-2024/10/29 19:47:26 Configuring values file for Vault helm chart
-2024/10/29 19:47:26 Installing vaultx via helm
+2024/10/29 19:47:26 Installing vaultx via Kubernetes manifests
 2024/10/29 19:47:27 Waiting for pod/vaultx-0 to be Ready
 2024/10/29 19:47:37 Enabling Kubernetes authentication in vaultx
 2024/10/29 19:47:38 Configuring Kubernetes authentication in vaultx
@@ -94,8 +91,7 @@ Example configuration file:
 2025/05/20 17:20:46 Creating vault0-config configMap in default namespace
 2025/05/20 17:20:46 Creating vault0-tls secret in default namespace
 2025/05/20 17:20:46 Creating vault0-ca secret in default namespace
-2025/05/20 17:20:46 Configuring values file for Vault helm chart
-2025/05/20 17:20:46 Installing vault0 via helm
+2025/05/20 17:20:46 Installing vault0 via Kubernetes manifests
 2025/05/20 17:20:48 Waiting for pod/vault0-0 to be Ready
 2025/05/20 17:20:55 Enabling Kubernetes authentication in vault0
 2025/05/20 17:20:56 Configuring Kubernetes authentication in vault0
@@ -134,8 +130,7 @@ The variables in each set of three, three variables per platform, must be set pr
 2025/05/20 17:26:38 Creating vault0-config configMap in default namespace
 2025/05/20 17:26:38 Creating vault0-tls secret in default namespace
 2025/05/20 17:26:38 Creating vault0-ca secret in default namespace
-2025/05/20 17:26:38 Configuring values file for Vault helm chart
-2025/05/20 17:26:38 Installing vault0 via helm
+2025/05/20 17:26:38 Installing vault0 via Kubernetes manifests
 2025/05/20 17:26:40 Waiting for pod/vault0-0 to be Ready
 2025/05/20 17:26:47 Enabling Kubernetes authentication in vault0
 2025/05/20 17:26:48 Configuring Kubernetes authentication in vault0
@@ -165,5 +160,9 @@ kubectl port-forward sts/<name> 8400:8400 --address 0.0.0.0
 
 # Uninstall
 ```
-helm delete <name>
+kubectl delete statefulset,service,serviceaccount <name> -n default
+kubectl delete daemonset,configmap <name>-csi-provider-agent-config -n default
+kubectl delete serviceaccount,daemonset <name>-csi-provider -n default
+kubectl delete clusterrole,clusterrolebinding <name>-csi-provider-clusterrole <name>-csi-provider-clusterrolebinding
+kubectl delete role,rolebinding <name>-csi-provider-role <name>-csi-provider-rolebinding -n default
 ```

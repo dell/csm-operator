@@ -92,27 +92,29 @@ function getArrayInfo() {
 
 function installSecretsStoreCSIDriver() {
   # Check for the actual CSIDriver registration, not just CRDs.
-  # CRDs can survive a helm uninstall while the driver pods are gone.
+  # CRDs can survive uninstalls while the driver pods are gone.
   if kubectl get csidriver secrets-store.csi.k8s.io &>/dev/null; then
     echo "secrets-store-csi-driver is already running, skipping."
     return
   fi
-  # Remove stale helm release if CRDs were deleted but release remains
-  helm uninstall csi-secrets-store -n kube-system 2>/dev/null || true
   echo "Installing secrets-store-csi-driver..."
-  helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
-  helm install csi-secrets-store \
-    secrets-store-csi-driver/secrets-store-csi-driver \
-    --wait \
-    --namespace kube-system \
-    --set 'enableSecretRotation=true' \
-    --set 'syncSecret.enabled=true' \
-    --set 'tokenRequests[0].audience=conjur'
+  kubectl apply -f "./scripts/secrets-store-csi-driver/secrets-store-csi-driver.yaml"
+  echo "Waiting for CRD installation job to complete..."
+  kubectl wait --for=condition=complete job/secrets-store-csi-driver-upgrade-crds -n kube-system --timeout=2m
+  kubectl rollout status daemonset/csi-secrets-store-secrets-store-csi-driver -n kube-system --timeout=5m
 }
 
 function vaultSetupAutomation() {
   echo "Removing any existing vault installation..."
-  helm delete vault0 || true
+  kubectl delete statefulset vault0 -n default 2>/dev/null || true
+  kubectl delete service vault0 vault0-internal -n default 2>/dev/null || true
+  kubectl delete daemonset vault0-csi-provider -n default 2>/dev/null || true
+  kubectl delete configmap vault0-csi-provider-agent-config -n default 2>/dev/null || true
+  kubectl delete serviceaccount vault0 vault0-csi-provider -n default 2>/dev/null || true
+  kubectl delete clusterrole vault0-csi-provider-clusterrole 2>/dev/null || true
+  kubectl delete clusterrolebinding vault0-csi-provider-clusterrolebinding 2>/dev/null || true
+  kubectl delete role vault0-csi-provider-role -n default 2>/dev/null || true
+  kubectl delete rolebinding vault0-csi-provider-rolebinding -n default 2>/dev/null || true
   echo "Installing vault with all secrets for Authorization tests..."
   cd ./scripts/vault-automation
   go run main.go --kubeconfig "$KUBECONFIG" --name vault0 --env-config --secrets-store-csi-driver=true --csm-authorization-namespace "$E2E_NS_AUTH"
@@ -121,8 +123,11 @@ function vaultSetupAutomation() {
 
 function conjurSetupAutomation() {
   echo "Removing any existing conjur installation..."
-  helm delete conjur || true
-  helm delete conjur-csi-provider || true
+  kubectl delete -f ./scripts/conjur-automation/manifests/conjur.yaml --ignore-not-found=true 2>/dev/null || true
+  kubectl delete -f ./scripts/conjur-automation/manifests/conjur-csi-provider.yaml --ignore-not-found=true 2>/dev/null || true
+  kubectl delete secret conjur-conjur-data-key conjur-conjur-database-url conjur-conjur-database-password \
+    conjur-conjur-database-ssl conjur-conjur-ssl-ca-cert conjur-conjur-ssl-cert conjur-conjur-authenticators \
+    -n default 2>/dev/null || true
   echo "Installing conjur with all secrets for Authorization tests..."
   cd ./scripts/conjur-automation
   ./conjur.sh --control-node $CLUSTER_IP --env-config
@@ -271,10 +276,18 @@ function cleanupNamespaces() {
       kubectl delete namespace "$ns" --wait=true --timeout=60s || true
     fi
   done
-  # Clean up vault and secrets-store helm releases
+  # Clean up vault and secrets-store installations
   echo "Cleaning up vault and secrets-store installations..."
-  helm uninstall vault0 -n default 2>/dev/null || true
-  helm uninstall csi-secrets-store -n kube-system 2>/dev/null || true
+  kubectl delete statefulset vault0 -n default 2>/dev/null || true
+  kubectl delete service vault0 vault0-internal -n default 2>/dev/null || true
+  kubectl delete daemonset vault0-csi-provider -n default 2>/dev/null || true
+  kubectl delete configmap vault0-csi-provider-agent-config -n default 2>/dev/null || true
+  kubectl delete serviceaccount vault0 vault0-csi-provider -n default 2>/dev/null || true
+  kubectl delete clusterrole vault0-csi-provider-clusterrole 2>/dev/null || true
+  kubectl delete clusterrolebinding vault0-csi-provider-clusterrolebinding 2>/dev/null || true
+  kubectl delete role vault0-csi-provider-role -n default 2>/dev/null || true
+  kubectl delete rolebinding vault0-csi-provider-rolebinding -n default 2>/dev/null || true
+  kubectl delete -f ./scripts/secrets-store-csi-driver/secrets-store-csi-driver.yaml 2>/dev/null || true
   cleanupSecretsStoreCRDs
   echo "Namespace cleanup complete."
 }

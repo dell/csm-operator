@@ -60,31 +60,65 @@ else
 fi
 
 
-printf "=== Installing Conjur Open Source Suite Helm Chart ===\n\n"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-helm repo add cyberark https://cyberark.github.io/helm-charts
-helm install \
-   --set dataKey="$DATA_KEY" \
-   --set account.create=true \
-   --set account.name=dev-cluster \
-   --set-literal authenticators="authn-jwt/kube" \
-   --set postgres.persistentVolume.create=false \
-   --set securityContext.privileged=true \
-   --set securityContext.allowPrivilegeEscalation=true \
-   --set service.external.enabled=false \
-   --wait \
-   conjur \
-   https://github.com/cyberark/conjur-oss-helm-chart/releases/download/v"$VERSION"/conjur-oss-"$VERSION".tgz
+printf "=== Generating TLS certificates for Conjur ===\n\n"
 
-printf "=== Installing Conjur CSI Provider Helm Chart ===\n\n"
+DB_PASS=$(openssl rand -base64 24 | tr -d '\n/+=')
 
-helm install conjur-csi-provider \
-  cyberark/conjur-k8s-csi-provider \
-  --wait \
-  --set daemonSet.image.tag="0.2.0" \
-  --set provider.name="conjur" \
-  --set provider.healthPort="8080" \
-  --set provider.socketDir="/var/run/secrets-store-csi-providers"
+openssl req -newkey rsa:4096 -nodes \
+  -keyout conjur-ca.key -x509 -days 3650 \
+  -out conjur-ca.crt -subj "/CN=conjur-oss" 2>/dev/null
+
+openssl genrsa -out conjur-server.key 4096 2>/dev/null
+openssl req -new -key conjur-server.key -out conjur-server.csr \
+  -subj "/CN=conjur-conjur-oss.default.svc.cluster.local" 2>/dev/null
+openssl x509 -req -days 3650 \
+  -in conjur-server.csr -CA conjur-ca.crt -CAkey conjur-ca.key -CAcreateserial \
+  -out conjur-server.crt \
+  -extfile <(printf 'subjectAltName=DNS:conjur-conjur-oss.default.svc.cluster.local,DNS:conjur-conjur-oss,DNS:conjur-conjur-oss.default.svc') 2>/dev/null
+
+openssl req -newkey rsa:4096 -nodes \
+  -keyout conjur-db.key -x509 -days 3650 \
+  -out conjur-db.crt -subj "/CN=postgres" 2>/dev/null
+
+printf "=== Creating Conjur secrets ===\n\n"
+
+kubectl create secret generic conjur-conjur-data-key \
+  --from-literal=key="$DATA_KEY" --namespace default \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+kubectl create secret generic conjur-conjur-database-password \
+  --from-literal=key="$DB_PASS" --namespace default \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+DB_URL="postgres://postgres:${DB_PASS}@conjur-postgres/postgres?sslmode=require"
+kubectl create secret generic conjur-conjur-database-url \
+  --from-literal=key="$DB_URL" --namespace default \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+kubectl create secret tls conjur-conjur-database-ssl \
+  --cert=conjur-db.crt --key=conjur-db.key --namespace default \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+kubectl create secret tls conjur-conjur-ssl-ca-cert \
+  --cert=conjur-ca.crt --key=conjur-ca.key --namespace default \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+kubectl create secret tls conjur-conjur-ssl-cert \
+  --cert=conjur-server.crt --key=conjur-server.key --namespace default \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+printf "=== Installing Conjur Open Source Suite ===\n\n"
+
+kubectl apply -f "$SCRIPT_DIR/manifests/conjur.yaml"
+kubectl rollout status statefulset/conjur-postgres --timeout=5m
+kubectl rollout status deployment/conjur-conjur-oss --timeout=10m
+
+printf "=== Installing Conjur CSI Provider ===\n\n"
+
+kubectl apply -f "$SCRIPT_DIR/manifests/conjur-csi-provider.yaml"
+kubectl rollout status daemonset/conjur-k8s-csi-provider --timeout=5m
 
 rm -rf conjur-csm-authorization
 mkdir conjur-csm-authorization

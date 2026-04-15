@@ -1,0 +1,86 @@
+---
+# Source: conjur-k8s-csi-provider/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: conjur-k8s-csi-provider
+  namespace: default
+---
+# Source: conjur-k8s-csi-provider/templates/role-binding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: read-pod-annotations-role
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+---
+# Source: conjur-k8s-csi-provider/templates/role-binding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: read-pod-annotations
+subjects:
+- kind: ServiceAccount
+  name: conjur-k8s-csi-provider
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: read-pod-annotations-role
+  apiGroup: rbac.authorization.k8s.io
+---
+# Source: conjur-k8s-csi-provider/templates/provider.yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: conjur-k8s-csi-provider
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      name: conjur-k8s-csi-provider
+  template:
+    metadata:
+      labels:
+        name: conjur-k8s-csi-provider
+    spec:
+      serviceAccountName: conjur-k8s-csi-provider
+      containers:
+      - name: conjur-provider
+        image: cyberark/conjur-k8s-csi-provider:0.2.0
+        imagePullPolicy: IfNotPresent
+        args:
+          - -socketPath=/var/run/secrets-store-csi-providers/conjur.sock
+          - -healthPort=8080
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 50m
+            memory: 100Mi
+          limits:
+            cpu: 50m
+            memory: 100Mi
+        volumeMounts:
+        - name: provider-volume
+          mountPath: /var/run/secrets-store-csi-providers
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        securityContext:
+          allowPrivilegeEscalation: false
+          privileged: false
+      volumes:
+      - name: provider-volume
+        hostPath:
+          path: /var/run/secrets-store-csi-providers

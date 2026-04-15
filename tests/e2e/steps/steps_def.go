@@ -1951,9 +1951,9 @@ func removeAuthorizationFinalizers(namespace string) {
 }
 
 // ensureSecretsStoreCSIDriver checks that the secrets-store CSI driver is installed
-// and installs it via helm if missing. Authorization tests depend on this driver
-// for vault secret synchronization. We check the CSIDriver registration (not just
-// CRDs) because CRDs can survive a helm uninstall while the actual driver is gone.
+// and installs it via kubectl apply if missing. Authorization tests depend on this
+// driver for vault secret synchronization. We check the CSIDriver registration (not
+// just CRDs) because CRDs can survive uninstalls while the actual driver is gone.
 func ensureSecretsStoreCSIDriver() error {
 	cmd := exec.Command("kubectl", "get", "csidriver", "secrets-store.csi.k8s.io") // #nosec G204
 	if cmd.Run() == nil {
@@ -1962,24 +1962,32 @@ func ensureSecretsStoreCSIDriver() error {
 	}
 
 	fmt.Println("secrets-store CSI driver not found, installing...")
-	// Remove stale helm release if CRDs were deleted but release remains
-	_ = exec.Command("helm", "uninstall", "csi-secrets-store", "-n", "kube-system").Run() // #nosec G204
-
-	_ = exec.Command("helm", "repo", "add", "secrets-store-csi-driver", // #nosec G204
-		"https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts").Run()
-
-	cmd = exec.Command("helm", "install", "csi-secrets-store", // #nosec G204
-		"secrets-store-csi-driver/secrets-store-csi-driver",
-		"--wait",
-		"--namespace", "kube-system",
-		"--set", "enableSecretRotation=true",
-		"--set", "syncSecret.enabled=true",
-		"--set", "tokenRequests[0].audience=conjur",
+	cmd = exec.Command("kubectl", "apply", "-f", // #nosec G204
+		"./scripts/secrets-store-csi-driver/secrets-store-csi-driver.yaml",
 	)
 	b, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to install secrets-store CSI driver: %v\nErrMessage:\n%s", err, string(b))
 	}
+
+	fmt.Println("Waiting for CRD installation job to complete...")
+	cmd = exec.Command("kubectl", "wait", "--for=condition=complete", // #nosec G204
+		"job/secrets-store-csi-driver-upgrade-crds", "-n", "kube-system", "--timeout=2m",
+	)
+	b, err = cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("CRD installation job did not complete: %v\nErrMessage:\n%s", err, string(b))
+	}
+
+	fmt.Println("Waiting for secrets-store CSI driver DaemonSet rollout...")
+	cmd = exec.Command("kubectl", "rollout", "status", // #nosec G204
+		"daemonset/csi-secrets-store-secrets-store-csi-driver", "-n", "kube-system", "--timeout=5m",
+	)
+	b, err = cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("secrets-store CSI driver rollout failed: %v\nErrMessage:\n%s", err, string(b))
+	}
+
 	fmt.Println("secrets-store CSI driver installed successfully")
 	return nil
 }

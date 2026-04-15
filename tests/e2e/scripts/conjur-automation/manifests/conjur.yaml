@@ -1,0 +1,332 @@
+---
+# Source: conjur-oss/templates/auth-role.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: conjur-conjur-oss
+  labels:
+    app: conjur-oss
+    chart: conjur-oss-2.0.7
+    release: conjur
+    heritage: Helm
+    app.kubernetes.io/name: conjur
+---
+# Source: conjur-oss/templates/secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: conjur-conjur-authenticators
+  labels:
+    app: conjur-oss
+    chart: conjur-oss-2.0.7
+    release: conjur
+    heritage: Helm
+    app.kubernetes.io/name: conjur
+    app.kubernetes.io/component: service
+type: Opaque
+data:
+  key: "YXV0aG4tand0L2t1YmU="
+---
+# Source: conjur-oss/templates/nginx-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: conjur-conjur-nginx-configmap
+  namespace: default
+  labels:
+    chart: conjur-oss-2.0.7
+    release: conjur
+    heritage: Helm
+data:
+  nginx_conf: "worker_processes auto;\npid /var/run/nginx.pid;\n\nevents {\n    worker_connections 768;\n}\n\nhttp {\n    server_tokens off;\n    include       mime.types;\n    default_type  application/octet-stream;\n\n    sendfile        on;\n    keepalive_timeout  65;\n    client_max_body_size 10M;\n    proxy_read_timeout 600s;\n\n    # Prevent DoS attacks\n    reset_timedout_connection on;\n\n    # Speed up SSL connections\n    ssl_session_timeout 10m;\n    ssl_session_cache   shared:SSL:10m;\n\n    # Custom security-minded SSL settings\n    ssl_dhparam /etc/nginx/dhparams.pem;\n    ssl_protocols TLSv1.3 TLSv1.2;\n    ssl_prefer_server_ciphers on;\n    ssl_ciphers 'ALL:!RSA:!SHA:!aNULL:!eNULL:!EXPORT:!MEDIUM:!LOW:!CAMELLIA:!3DES:!DES:!MD5:!PSK:!RC4:!DSS:!SRP:!DSS:!SEED:!SSLv3:!SSLv2:!IDEA:!aGOST';\n\n    log_format syslog '$http_host '\n                      '$remote_addr '\n                      '\"$request\" $status $body_bytes_sent '\n                      '\"$http_referer\" \"$http_user_agent\" '\n                      '$request_time '\n                      '$upstream_response_time';\n\n    access_log /var/log/nginx/access.log syslog;\n\n    # Don't ever retry failed requests. In spite of the name, this\n    # prevents retries even if there's only a single upstream.\n    proxy_next_upstream off;\n\n    include /etc/nginx/sites-enabled/*;\n}\n"
+  mime_types: "types {\n  text/html                                        html htm shtml;\n  text/css                                         css;\n  text/xml                                         xml;\n  image/gif                                        gif;\n  image/jpeg                                       jpeg jpg;\n  application/javascript                           js;\n  application/atom+xml                             atom;\n  application/rss+xml                              rss;\n\n  text/mathml                                      mml;\n  text/plain                                       txt;\n  text/vnd.sun.j2me.app-descriptor                 jad;\n  text/vnd.wap.wml                                 wml;\n  text/x-component                                 htc;\n\n  image/png                                        png;\n  image/svg+xml                                    svg svgz;\n  image/tiff                                       tif tiff;\n  image/vnd.wap.wbmp                               wbmp;\n  image/webp                                       webp;\n  image/x-icon                                     ico;\n  image/x-jng                                      jng;\n  image/x-ms-bmp                                   bmp;\n\n  font/woff                                        woff;\n  font/woff2                                       woff2;\n\n  application/java-archive                         jar war ear;\n  application/json                                 json;\n  application/mac-binhex40                         hqx;\n  application/msword                               doc;\n  application/pdf                                  pdf;\n  application/postscript                           ps eps ai;\n  application/rtf                                  rtf;\n  application/vnd.apple.mpegurl                    m3u8;\n  application/vnd.google-earth.kml+xml             kml;\n  application/vnd.google-earth.kmz                 kmz;\n  application/vnd.ms-excel                         xls;\n  application/vnd.ms-fontobject                    eot;\n  application/vnd.ms-powerpoint                    ppt;\n  application/vnd.oasis.opendocument.graphics      odg;\n  application/vnd.oasis.opendocument.presentation  odp;\n  application/vnd.oasis.opendocument.spreadsheet   ods;\n  application/vnd.oasis.opendocument.text          odt;\n  application/vnd.openxmlformats-officedocument.presentationml.presentation\n                                                   pptx;\n  application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\n                                                   xlsx;\n  application/vnd.openxmlformats-officedocument.wordprocessingml.document\n                                                   docx;\n  application/vnd.wap.wmlc                         wmlc;\n  application/x-7z-compressed                      7z;\n  application/x-cocoa                              cco;\n  application/x-java-archive-diff                  jardiff;\n  application/x-java-jnlp-file                     jnlp;\n  application/x-makeself                           run;\n  application/x-perl                               pl pm;\n  application/x-pilot                              prc pdb;\n  application/x-rar-compressed                     rar;\n  application/x-redhat-package-manager             rpm;\n  application/x-sea                                sea;\n  application/x-shockwave-flash                    swf;\n  application/x-stuffit                            sit;\n  application/x-tcl                                tcl tk;\n  application/x-x509-ca-cert                       der pem crt;\n  application/x-xpinstall                          xpi;\n  application/xhtml+xml                            xhtml;\n  application/xspf+xml                             xspf;\n  application/zip                                  zip;\n\n  application/octet-stream                         bin exe dll;\n  application/octet-stream                         deb;\n  application/octet-stream                         dmg;\n  application/octet-stream                         iso img;\n  application/octet-stream                         msi msp msm;\n\n  audio/midi                                       mid midi kar;\n  audio/mpeg                                       mp3;\n  audio/ogg                                        ogg;\n  audio/x-m4a                                      m4a;\n  audio/x-realaudio                                ra;\n\n  video/3gpp                                       3gpp 3gp;\n  video/mp2t                                       ts;\n  video/mp4                                        mp4;\n  video/mpeg                                       mpeg mpg;\n  video/quicktime                                  mov;\n  video/webm                                       webm;\n  video/x-flv                                      flv;\n  video/x-m4v                                      m4v;\n  video/x-mng                                      mng;\n  video/x-ms-asf                                   asx asf;\n  video/x-ms-wmv                                   wmv;\n  video/x-msvideo                                  avi;\n}\n"
+  conjur_site: "server {\n  ssl_certificate /opt/conjur/etc/ssl/cert/tls.crt;\n  ssl_certificate_key /opt/conjur/etc/ssl/cert/tls.key;\n\n  ssl_client_certificate /opt/conjur/etc/ssl/ca/tls.crt;\n\n  ssl_verify_client optional_no_ca;\n\n  listen 9443 ssl;\n  listen [::]:9443 ssl;\n\n  proxy_set_header Conjur-Forwarded-Host $http_host;\n  proxy_set_header X-Forwarded-Proto $scheme;\n  proxy_set_header X-Real_IP $remote_Addr;\n  proxy_set_header X-Forwarded_For $proxy_add_x_forwarded_for;\n  proxy_set_header X-SSL-Client-Certificate $ssl_client_escaped_cert;\n\n  # Container health status\n  location /status {\n    access_log off;\n    return 200 'OK';\n  }\n\n  location / {\n    proxy_pass http://127.0.0.1:8080;\n  }\n}\n\nserver {\n  # redirect outside unencrypted access to https\n  listen 9000;\n  listen [::]:9000;\n  return 301 https://$host$request_uri;\n}\n"
+  dhparams: "-----BEGIN DH PARAMETERS-----\nMIIBCAKCAQEAhg2rRNwhgO8Nxc363bnKNKxb7xP8BXdQBnEHNxtqfpPRQViiP8K9\nfMHHvN5/QAeB0hCOEg6dhbYurOcT9ZfFy9BSC9QFTixfDmMHe9MT1VIYqvsXVyjO\nl/ivdCW0/eMZ5sc1Fcleym+TQzzrgnI0Kad17tmq4tvBKky+0YY4Q/M9BupZ7omc\nfyqhY+LyEqIjWuCd3eE7YQIonOrXJ+8xuOjl5uilFu4Zz+i4KeELmAG1WaOjvg+Z\ndJcve9soB3uaJW45jS/7cRl94VPJsfCJC/Z6E2R6CSPDgvytxL8aAM5FCyMQljN3\nvS9xNgsWz5gZqU3gbxW2dRgedjEvW5VHMwIBAg==\n-----END DH PARAMETERS-----\n"
+---
+# Source: conjur-oss/templates/auth-role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: conjur-conjur-authenticator
+  labels:
+    app: conjur-oss
+    chart: conjur-oss-2.0.7
+    release: conjur
+    heritage: Helm
+    app.kubernetes.io/name: conjur
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources: ["pods", "serviceaccounts"]
+  verbs: ["get", "list"]
+- apiGroups: ["extensions"]
+  resources: [ "deployments", "replicasets"]
+  verbs: ["get", "list"]
+- apiGroups: ["apps"]
+  resources: [ "deployments", "statefulsets", "replicasets"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["pods/exec"]
+  verbs: ["create", "get"]
+---
+# Source: conjur-oss/templates/auth-role.yaml
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: conjur-conjur-authenticator
+  labels:
+    app: conjur-oss
+    chart: conjur-oss-2.0.7
+    release: conjur
+    heritage: Helm
+    app.kubernetes.io/name: conjur
+subjects:
+- kind: ServiceAccount
+  name: conjur-conjur-oss
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: conjur-conjur-authenticator
+  apiGroup: rbac.authorization.k8s.io
+---
+# Source: conjur-oss/templates/postgres.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: conjur-postgres
+  labels: &AppPostgresServiceLabels
+    app: conjur-oss-postgres
+    chart: conjur-oss-2.0.7
+    release: conjur
+    heritage: Helm
+    app.kubernetes.io/name: conjur
+    app.kubernetes.io/component: postgres
+spec:
+  ports:
+  - port: 5432
+  selector: *AppPostgresServiceLabels
+---
+# Source: conjur-oss/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: conjur-conjur-oss
+  labels: &AppConjurLabels
+    app: conjur-oss
+    chart: conjur-oss-2.0.7
+    release: conjur
+    heritage: Helm
+    app.kubernetes.io/name: conjur
+    app.kubernetes.io/component: service
+spec:
+  type: NodePort
+  ports:
+    - port: 443
+      targetPort: https
+      protocol: TCP
+      name: https
+  selector: *AppConjurLabels
+---
+# Source: conjur-oss/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: conjur-conjur-oss
+  labels: &AppConjurLabels
+    app: conjur-oss
+    chart: conjur-oss-2.0.7
+    release: conjur
+    heritage: Helm
+    app.kubernetes.io/name: conjur
+    app.kubernetes.io/component: service
+spec:
+  replicas: 1
+  selector:
+    matchLabels: *AppConjurLabels
+  template:
+    metadata:
+      labels: *AppConjurLabels
+      annotations:
+        # Automatically roll deployment if dependent secrets have been changed
+        checksum/secrets: 0c55c0eb6887b53048a101760605eef5027df5182e4f7f6517649d8ba09a50cd
+        checksum/ssl-cert: 3f44bd62322cf0436190443a9a738e763e08b29ae5c90900e152eb2bcf75925d
+        checksum/nginx-configmap: ab306be888df4e4b40b24c9816b8db8b5b055cb803427cd37480de55b908e076
+    spec:
+      serviceAccountName: conjur-conjur-oss
+      volumes:
+      - name: conjur-conjur-ssl-cert-volume
+        secret:
+          secretName: conjur-conjur-ssl-cert
+          # Permission == 0400. JSON spec doesn't support octal notation.
+          defaultMode: 256
+      - name: conjur-conjur-ssl-ca-cert-volume
+        secret:
+          secretName: conjur-conjur-ssl-ca-cert
+          # Permission == 0400. JSON spec doesn't support octal notation.
+          defaultMode: 256
+      - name: conjur-conjur-configmap-volume
+        configMap:
+          name: conjur-conjur-nginx-configmap
+          items:
+            - key: nginx_conf
+              path: nginx.conf
+            - key: mime_types
+              path: mime.types
+            - key: dhparams
+              path: dhparams.pem
+            - key: conjur_site
+              path: sites-enabled/conjur.conf
+      containers:
+      - name: conjur-nginx
+        image: "nginx:1.15"
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 9443
+          name: https
+        - containerPort: 9000
+          name: http
+        livenessProbe:
+          httpGet:
+            path: /status
+            scheme: HTTPS
+            port: https
+          initialDelaySeconds: 1
+          periodSeconds: 5
+          timeoutSeconds: 3
+          # 1 seconds * 180 = 3 minutes
+          failureThreshold: 180
+        readinessProbe:
+          httpGet:
+            path: /status
+            scheme: HTTPS
+            port: https
+          initialDelaySeconds: 1
+          periodSeconds: 5
+          timeoutSeconds: 3
+          # 1 seconds * 180 = 3 minutes
+          failureThreshold: 180
+        volumeMounts:
+        - name: conjur-conjur-ssl-cert-volume
+          mountPath: /opt/conjur/etc/ssl/cert
+          readOnly: true
+        - name: conjur-conjur-ssl-ca-cert-volume
+          mountPath: /opt/conjur/etc/ssl/ca
+          readOnly: true
+        - name: conjur-conjur-configmap-volume
+          mountPath: /etc/nginx
+          readOnly: true
+
+      - name: conjur-oss
+        image: "cyberark/conjur:latest"
+        imagePullPolicy: Always
+        # If the configured account has already been created, then start the
+        # server without account creation. Otherwise, start the server with
+        # account creation.
+        command: ["bash"]
+        args:
+        - -c
+        - |
+           if conjurctl role retrieve-key dev-cluster:user:admin >/dev/null 2>&1; then
+             conjurctl server;
+           else
+             conjurctl server --account=dev-cluster | grep -v 'API key for admin:';
+           fi
+
+        ports:
+          - name: http
+            containerPort: 8080
+            protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 1
+          periodSeconds: 5
+          timeoutSeconds: 2
+          # 1 seconds * 180 = 3 minutes
+          failureThreshold: 180
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 1
+          periodSeconds: 30
+          timeoutSeconds: 30
+          # 1 seconds * 180 = 3 minutes
+          failureThreshold: 180
+        env:
+        - name: PORT
+          value: "8080"
+        - name: CONJUR_AUTHENTICATORS
+          valueFrom:
+            secretKeyRef:
+              name: conjur-conjur-authenticators
+              key: key
+        - name: CONJUR_DATA_KEY
+          valueFrom:
+            secretKeyRef:
+              name: conjur-conjur-data-key
+              key: key
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: conjur-conjur-database-url
+              key: key
+        - name: CONJUR_ACCOUNT
+          value: dev-cluster
+        - name: CONJUR_LOG_LEVEL
+          value: info
+        resources:
+            {}
+---
+# Source: conjur-oss/templates/postgres.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: conjur-postgres
+  labels: &AppPostgresLabels
+    app: conjur-oss-postgres
+    chart: conjur-oss-2.0.7
+    release: conjur
+    heritage: Helm
+    app.kubernetes.io/name: conjur
+    app.kubernetes.io/component: postgres
+spec:
+  serviceName: conjur-postgres
+  replicas: 1
+  selector:
+    matchLabels: *AppPostgresLabels
+  template:
+    metadata:
+      labels: *AppPostgresLabels
+      annotations:
+        checksum/secrets: 03341cebda6a04c1358347f551ab8e4110a07c3596178dee994fa9f3d69e41bf
+    spec:
+      securityContext:
+        fsGroup: 999
+      containers:
+      - image: "postgres:15.4"
+        imagePullPolicy: Always
+        name: postgres
+        args: ["-c", "ssl=on", "-c", "ssl_cert_file=/etc/certs/tls.crt", "-c", "ssl_key_file=/etc/certs/tls.key"]
+        env:
+        - name: POSTGRES_HOST_AUTH_METHOD
+          value: password
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: conjur-conjur-database-password
+              key: key
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+
+        - name: ssl-certs
+          mountPath: "/etc/certs"
+          readOnly: true
+      volumes:
+
+      - name: ssl-certs
+        secret:
+          secretName: conjur-conjur-database-ssl
+          # Set file permissions to 0600 (which corresponds to 384 decimal)
+          defaultMode: 384

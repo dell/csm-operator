@@ -14,17 +14,10 @@ Install Conjur and Conjur CSI Provider in Kubernetes/Openshift configured for CS
 This does not install the Secrets Store CSI Driver. Use the command below to do so.
 
 ```
-helm install csi-secrets-store \
-    secrets-store-csi-driver/secrets-store-csi-driver \
-    --wait \
-    --namespace kube-system \
-    --set 'enableSecretRotation=true' \
-    --set 'syncSecret.enabled=true' \
-    --set 'tokenRequests[0].audience=conjur'
+kubectl apply -f ../secrets-store-csi-driver/secrets-store-csi-driver.yaml
 ```
 
 # Prerequisites
-- helm
 - kubectl
 - jq
 - docker or podman

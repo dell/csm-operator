@@ -28,6 +28,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,71 +39,347 @@ import (
 )
 
 var (
-	values = `
-injector:
-  enabled: false
-server:
-  image:
-    repository: %s
-    tag: "latest"
-  service:
+	vaultResources = `
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: %[1]s
+  namespace: default
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: %[1]s-csi-provider
+  namespace: default
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: %[1]s-csi-provider-agent-config
+  namespace: default
+data:
+  config.hcl: |
+    vault {
+        "address" = "http://%[1]s.default.svc:8400"
+    }
+
+    cache {}
+
+    listener "unix" {
+        address = "/var/run/vault/agent.sock"
+        tls_disable = true
+    }
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: %[1]s-csi-provider-clusterrole
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - serviceaccounts/token
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: %[1]s-csi-provider-clusterrolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: %[1]s-csi-provider-clusterrole
+subjects:
+- kind: ServiceAccount
+  name: %[1]s-csi-provider
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: %[1]s-csi-provider-role
+  namespace: default
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get"]
+  resourceNames:
+  - vault-csi-provider-hmac-key
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: %[1]s-csi-provider-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: %[1]s-csi-provider-role
+subjects:
+- kind: ServiceAccount
+  name: %[1]s-csi-provider
+  namespace: default
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: %[1]s-internal
+  namespace: default
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+  - name: http
     port: 8400
     targetPort: 8400
-  extraEnvironmentVars:
-    KUBERNETES_HOST: %s
-  extraArgs: "-config=/config/%s-config.hcl"
-  standalone:
-    enabled: true
-  authDelegator:
-    enabled: false
-  dev:
-    enabled: true
-  volumeMounts:
-    - name: config
-      mountPath: /config
-  volumes:
-    - name: config
-      projected:
-        sources:
-        - secret:
-            name: %s-ca
-        - secret:
-            name: %s-tls
-        - configMap:
-            name: kube-root-ca.crt
-        - configMap:
-            name: %s-config
-ui:
-  enabled: true
-# secrets-store-csi-driver-provider-vault
-csi:
-  enabled: %s
-  image:
-    repository: "hashicorp/vault-csi-provider"
-    tag: "latest"
-  volumeMounts:
-    - name: config
-      mountPath: /config
-  volumes:
-    - name: config
-      projected:
-        sources:
-        - secret:
-            name: %s-ca
-        - secret:
-            name: %s-tls
-        - configMap:
-            name: kube-root-ca.crt
-        - configMap:
-            name: %s-config
-  daemonSet:
-    securityContext:
-      container:
-        privileged: true
-  agent:
-    image:
-      repository: %s
-      tag: "latest"
+  - name: https-internal
+    port: 8201
+    targetPort: 8201
+  selector:
+    app.kubernetes.io/name: vault
+    app.kubernetes.io/instance: %[1]s
+    component: server
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: %[1]s
+  namespace: default
+spec:
+  publishNotReadyAddresses: true
+  ports:
+  - name: http
+    port: 8400
+    targetPort: 8400
+  - name: https-internal
+    port: 8201
+    targetPort: 8201
+  selector:
+    app.kubernetes.io/name: vault
+    app.kubernetes.io/instance: %[1]s
+    component: server
+`
+
+	vaultCSIDaemonSet = `
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: %[1]s-csi-provider
+  namespace: default
+spec:
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vault-csi-provider
+      app.kubernetes.io/instance: %[1]s
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vault-csi-provider
+        app.kubernetes.io/instance: %[1]s
+    spec:
+      serviceAccountName: %[1]s-csi-provider
+      containers:
+      - name: vault-csi-provider
+        image: hashicorp/vault-csi-provider:latest
+        imagePullPolicy: IfNotPresent
+        args:
+        - --endpoint=/provider/vault.sock
+        - --log-level=info
+        - --hmac-secret-name=vault-csi-provider-hmac-key
+        env:
+        - name: VAULT_ADDR
+          value: "unix:///var/run/vault/agent.sock"
+        volumeMounts:
+        - name: providervol
+          mountPath: /provider
+        - name: agent-unix-socket
+          mountPath: /var/run/vault
+        - name: config
+          mountPath: /config
+      - name: vault-agent
+        image: %[2]s:latest
+        imagePullPolicy: IfNotPresent
+        command:
+        - vault
+        args:
+        - agent
+        - -config=/etc/vault/config.hcl
+        env:
+        - name: VAULT_LOG_LEVEL
+          value: "info"
+        - name: VAULT_LOG_FORMAT
+          value: "standard"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsGroup: 1000
+          runAsNonRoot: true
+          runAsUser: 100
+        volumeMounts:
+        - name: agent-config
+          mountPath: /etc/vault/config.hcl
+          subPath: config.hcl
+          readOnly: true
+        - name: agent-unix-socket
+          mountPath: /var/run/vault
+        - name: config
+          mountPath: /config
+      volumes:
+      - name: providervol
+        hostPath:
+          path: /var/run/secrets-store-csi-providers
+      - name: agent-config
+        configMap:
+          name: %[1]s-csi-provider-agent-config
+      - name: agent-unix-socket
+        emptyDir:
+          medium: Memory
+      - name: config
+        projected:
+          sources:
+          - secret:
+              name: %[1]s-ca
+          - secret:
+              name: %[1]s-tls
+          - configMap:
+              name: kube-root-ca.crt
+          - configMap:
+              name: %[1]s-config
+`
+
+	vaultStatefulSet = `
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: %[1]s
+  namespace: default
+spec:
+  serviceName: %[1]s-internal
+  podManagementPolicy: Parallel
+  replicas: 1
+  updateStrategy:
+    type: OnDelete
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vault
+      app.kubernetes.io/instance: %[1]s
+      component: server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vault
+        app.kubernetes.io/instance: %[1]s
+        component: server
+    spec:
+      terminationGracePeriodSeconds: 10
+      serviceAccountName: %[1]s
+      securityContext:
+        runAsNonRoot: true
+        runAsGroup: 1000
+        runAsUser: 100
+        fsGroup: 1000
+      containers:
+      - name: vault
+        image: %[2]s:latest
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/sh
+        - -ec
+        args:
+        - |
+          /usr/local/bin/docker-entrypoint.sh vault server -dev -config=/config/%[1]s-config.hcl
+        env:
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: VAULT_K8S_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: VAULT_K8S_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: VAULT_ADDR
+          value: "http://127.0.0.1:8200"
+        - name: VAULT_API_ADDR
+          value: "http://$(POD_IP):8200"
+        - name: SKIP_CHOWN
+          value: "true"
+        - name: SKIP_SETCAP
+          value: "true"
+        - name: HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: VAULT_CLUSTER_ADDR
+          value: "https://$(HOSTNAME).%[1]s-internal:8201"
+        - name: HOME
+          value: "/home/vault"
+        - name: VAULT_DEV_ROOT_TOKEN_ID
+          value: root
+        - name: VAULT_DEV_LISTEN_ADDRESS
+          value: "[::]:8200"
+        - name: KUBERNETES_HOST
+          value: "%[3]s"
+        volumeMounts:
+        - name: home
+          mountPath: /home/vault
+        - name: config
+          mountPath: /config
+        ports:
+        - containerPort: 8200
+          name: http
+        - containerPort: 8201
+          name: https-internal
+        - containerPort: 8202
+          name: http-rep
+        readinessProbe:
+          exec:
+            command: ["/bin/sh", "-ec", "vault status -tls-skip-verify"]
+          failureThreshold: 2
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 3
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - sleep 5 && kill -SIGTERM $(pidof vault)
+      volumes:
+      - name: home
+        emptyDir: {}
+      - name: config
+        projected:
+          sources:
+          - secret:
+              name: %[1]s-ca
+          - secret:
+              name: %[1]s-tls
+          - configMap:
+              name: kube-root-ca.crt
+          - configMap:
+              name: %[1]s-config
 `
 
 	policy = `
@@ -158,6 +435,8 @@ type sequence struct {
 	secretsStoreCSIDriver bool
 	namespace             string
 	kube                  *kubernetes.Clientset
+	imageRepository       string
+	k8sHost               string
 
 	caCert *x509.Certificate
 	caKey  *rsa.PrivateKey
@@ -225,11 +504,20 @@ func main() {
 		log.Fatal(err)
 	}
 
+	var imageRepository string
+	if *openshift {
+		imageRepository = "registry.connect.redhat.com/hashicorp/vault"
+	} else {
+		imageRepository = "hashicorp/vault"
+	}
+
 	// execute steps for each vault
 	for _, name := range vaultNames {
 		seq := &sequence{
 			name:                  name,
 			kubeconfig:            *kubeconfig,
+			imageRepository:       imageRepository,
+			k8sHost:               kconfig.Host,
 			secretsStoreCSIDriver: *secretsStoreCSIDriver,
 			namespace:             *csmAuthorizationNamespace,
 			kube:                  kube,
@@ -249,7 +537,6 @@ func main() {
 			seq.createConfigurationConfigMap,
 			seq.createTLSSecret,
 			seq.createCASecret,
-			seq.configureValues,
 			seq.installVault,
 			seq.waitForVault,
 			seq.enableKubernetesAuth,
@@ -266,10 +553,6 @@ func main() {
 				os.Exit(1)
 			}
 		}
-
-		// cleanup
-
-		_ = os.Remove(fmt.Sprintf("%s-values.yaml", seq.name))
 	}
 }
 
@@ -466,53 +749,21 @@ func (s *sequence) createCASecret() error {
 	return nil
 }
 
-func (s *sequence) configureValues() error {
-	log.Println("Configuring values file for Vault helm chart")
-
-	var b bytes.Buffer
-	cmd := exec.Command("kubectl", "config", "view", "--raw", "--minify", "--flatten", `--output=jsonpath={.clusters[].cluster.server}`)
-	cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%s", s.kubeconfig))
-	cmd.Stdout = &b
-	cmd.Stderr = &b
-	err := cmd.Run()
-	if err != nil {
-		return fmt.Errorf("%v: %s", err, b.String())
-	}
-	k8sHost := b.String()
-
-	var imageRepository string
-	if s.openshift {
-		imageRepository = "registry.connect.redhat.com/hashicorp/vault"
-	} else {
-		imageRepository = "hashicorp/vault"
-	}
-
-	err = os.WriteFile(fmt.Sprintf("%s-values.yaml", s.name), []byte(fmt.Sprintf(values, imageRepository, k8sHost, s.name, s.name, s.name, s.name, strconv.FormatBool(s.secretsStoreCSIDriver), s.name, s.name, s.name, imageRepository)), 0644) // #nosec G306 -- this is a test automation tool
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (s *sequence) installVault() error {
-	log.Printf("Installing %s via helm", s.name)
+	log.Printf("Installing %s via Kubernetes manifests", s.name)
+
+	manifest := fmt.Sprintf(vaultResources, s.name)
+	if s.secretsStoreCSIDriver {
+		manifest += fmt.Sprintf(vaultCSIDaemonSet, s.name, s.imageRepository)
+	}
+	manifest += fmt.Sprintf(vaultStatefulSet, s.name, s.imageRepository, s.k8sHost)
 
 	var b bytes.Buffer
-	cmd := exec.Command("helm", "repo", "add", "hashicorp", "https://helm.releases.hashicorp.com")
+	cmd := exec.Command("kubectl", "apply", "-f", "-") // #nosec G204 -- this is a test automation tool
+	cmd.Stdin = strings.NewReader(manifest)
 	cmd.Stdout = &b
 	cmd.Stderr = &b
-	err := cmd.Run()
-	if err != nil {
-		return fmt.Errorf("%v: %s", err, b.String())
-	}
-
-	b.Reset()
-	cmd = exec.Command("helm", "install", s.name, "hashicorp/vault", "-f", fmt.Sprintf("%s-values.yaml", s.name)) // #nosec G204 -- this is a test automation tool
-	cmd.Stdout = &b
-	cmd.Stderr = &b
-	err = cmd.Run()
-	if err != nil {
+	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("%v: %s", err, b.String())
 	}
 
