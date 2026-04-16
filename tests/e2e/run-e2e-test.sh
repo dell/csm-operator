@@ -90,6 +90,32 @@ function getArrayInfo() {
   cd ../..
 }
 
+function ensureHelmInstalled() {
+  if ! command -v helm &> /dev/null; then
+    echo "Helm not found. Installing Helm..."
+    if [[ "$IS_OPENSHIFT" == "true" ]]; then
+      echo "Installing Helm on OpenShift..."
+      curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+      chmod +x get_helm.sh
+      ./get_helm.sh
+      rm get_helm.sh
+    else
+      echo "Installing Helm..."
+      curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+      chmod +x get_helm.sh
+      ./get_helm.sh
+      rm get_helm.sh
+    fi
+    if ! command -v helm &> /dev/null; then
+      echo "Failed to install Helm"
+      exit 1
+    fi
+    echo "Helm installed successfully"
+  else
+    echo "Helm is already installed: $(helm version --short)"
+  fi
+}
+
 function installSecretsStoreCSIDriver() {
   # Check for the actual CSIDriver registration, not just CRDs.
   # CRDs can survive a helm uninstall while the driver pods are gone.
@@ -112,7 +138,11 @@ function installSecretsStoreCSIDriver() {
 
 function vaultSetupAutomation() {
   echo "Removing any existing vault installation..."
-  helm delete vault0 || true
+  if command -v helm &> /dev/null; then
+    helm delete vault0 || true
+  else
+    echo "Helm not found, skipping vault helm cleanup"
+  fi
   echo "Installing vault with all secrets for Authorization tests..."
   cd ./scripts/vault-automation
   go run main.go --kubeconfig "$KUBECONFIG" --name vault0 --env-config --secrets-store-csi-driver=true --csm-authorization-namespace "$E2E_NS_AUTH"
@@ -121,8 +151,12 @@ function vaultSetupAutomation() {
 
 function conjurSetupAutomation() {
   echo "Removing any existing conjur installation..."
-  helm delete conjur || true
-  helm delete conjur-csi-provider || true
+  if command -v helm &> /dev/null; then
+    helm delete conjur || true
+    helm delete conjur-csi-provider || true
+  else
+    echo "Helm not found, skipping conjur helm cleanup"
+  fi
   echo "Installing conjur with all secrets for Authorization tests..."
   cd ./scripts/conjur-automation
   ./conjur.sh --control-node $CLUSTER_IP --env-config
@@ -273,8 +307,12 @@ function cleanupNamespaces() {
   done
   # Clean up vault and secrets-store helm releases
   echo "Cleaning up vault and secrets-store installations..."
-  helm uninstall vault0 -n default 2>/dev/null || true
-  helm uninstall csi-secrets-store -n kube-system 2>/dev/null || true
+  if command -v helm &> /dev/null; then
+    helm uninstall vault0 -n default 2>/dev/null || true
+    helm uninstall csi-secrets-store -n kube-system 2>/dev/null || true
+  else
+    echo "Helm not found, skipping helm cleanup"
+  fi
   cleanupSecretsStoreCRDs
   echo "Namespace cleanup complete."
 }
@@ -572,6 +610,7 @@ fi
 
 # Install secrets-store-csi-driver CRDs if needed for authorization tests.
 if [[ "$AUTH_WILL_RUN" == "true" || "$INSTALL_VAULT" == "true" || "$INSTALL_CONJUR" == "true" ]]; then
+  ensureHelmInstalled
   installSecretsStoreCSIDriver
 fi
 
