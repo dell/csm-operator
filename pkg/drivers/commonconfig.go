@@ -169,17 +169,22 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	//      the "managed versioning" path where the operator picks images
 	//      automatically based on the requested version.
 	//
-	//   2. Custom registry (spec.customRegistry) -- the template image path
-	//      is re-rooted under the user-supplied registry prefix. Only valid
-	//      when spec.version is set (CEL validation enforces this).
+	//   2. Environment variable default (RELATED_IMAGE_*) -- image from
+	//      OLM-provided environment variables. This provides platform-aware
+	//      defaults (e.g., OpenShift vs Kubernetes images).
 	//
-	//   3. Explicit image (spec.driver.common.image) -- the user provides a
+	//   3. Custom registry (spec.customRegistry) -- the template image path
+	//      or environment variable image is re-rooted under the user-supplied
+	//      registry prefix. Only valid when spec.version is set (CEL validation
+	//      enforces this).
+	//
+	//   4. Explicit image (spec.driver.common.image) -- the user provides a
 	//      fully-qualified image in the CR. This is the configVersion path
 	//      where the user manages image references directly. configVersion
 	//      is deprecated in favor of spec.version; this path remains for
 	//      backward compatibility.
 	//
-	//   4. Template default -- if none of the above apply, the image baked
+	//   5. Template default -- if none of the above apply, the image baked
 	//      into the operatorconfig YAML template is used as-is.
 	//
 	// Sidecar containers follow a similar chain via UpdateSideCarApply and
@@ -200,20 +205,33 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 				img := matchedDriverImage
 				c.Image = &img
 				recordMatchedContainerImage(&matched, string(*c.Name), matchedDriverImage)
-				log.Infow("Matched container image override", "container", string(*c.Name), "image", matchedDriverImage)
+				log.Infow("Matched container image override", "container", string(*c.Name), "image", matchedDriverImage, "source", "configmap")
 				// Clear after use so it isn't applied to a second container
 				matchedDriverImage = ""
+			} else if envImg, found := operatorutils.GetRelatedImage(string(cr.Spec.Driver.CSIDriverType)); found {
+				// Priority 2: Environment variable default
+				if cr.Spec.CustomRegistry != "" {
+					// Apply custom registry to the environment variable image
+					resolvedImagePath := operatorutils.ResolveImage(ctx, envImg, cr)
+					c.Image = &resolvedImagePath
+					log.Infow("Using environment variable image with custom registry", "container", string(*c.Name), "envImage", envImg, "resolvedImage", resolvedImagePath, "source", "environment-variable+custom-registry")
+				} else {
+					c.Image = &envImg
+					log.Infow("Using environment variable image", "container", string(*c.Name), "image", envImg, "source", "environment-variable")
+				}
 			} else if cr.Spec.CustomRegistry != "" {
-				// Priority 2: Custom registry prefix
+				// Priority 3: Custom registry prefix with template default
 				resolvedImagePath := operatorutils.ResolveImage(ctx, string(*c.Image), cr)
 				c.Image = &resolvedImagePath
+				log.Infow("Using custom registry with template default", "container", string(*c.Name), "resolvedImage", resolvedImagePath, "source", "custom-registry+template-default")
 			} else {
-				// Priority 3: Explicit image from CR spec (falls through to
-				// priority 4 / template default if Common.Image is empty)
+				// Priority 4: Explicit image from CR spec (falls through to
+				// priority 5 / template default if Common.Image is empty)
 				if cr.Spec.Driver.Common != nil {
 					if cr.Spec.Driver.Common.Image != "" {
 						image := string(cr.Spec.Driver.Common.Image)
 						c.Image = &image
+						log.Infow("Using explicit image from CR spec", "container", string(*c.Name), "image", image, "source", "explicit-cr-spec")
 					}
 				}
 			}
@@ -387,7 +405,8 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 	}
 
 	// Driver container image override -- same priority as GetController:
-	// 1. ConfigMap version match, 2. CustomRegistry, 3. Common.Image, 4. Template default.
+	// 1. ConfigMap version match, 2. Environment variable default, 3. CustomRegistry,
+	// 4. Common.Image, 5. Template default.
 	found := false
 	var image string
 	var mdmInitContainerImage string
@@ -408,17 +427,31 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 				// Priority 1: ConfigMap version match
 				c.Image = &image
 				recordMatchedContainerImage(&matched, string(*c.Name), image)
+				log.Infow("Matched container image override", "container", string(*c.Name), "image", image, "source", "configmap")
+			} else if envImg, envFound := operatorutils.GetRelatedImage(string(cr.Spec.Driver.CSIDriverType)); envFound {
+				// Priority 2: Environment variable default
+				if cr.Spec.CustomRegistry != "" {
+					// Apply custom registry to the environment variable image
+					resolvedImagePath := operatorutils.ResolveImage(ctx, envImg, cr)
+					c.Image = &resolvedImagePath
+					log.Infow("Using environment variable image with custom registry", "container", string(*c.Name), "envImage", envImg, "resolvedImage", resolvedImagePath, "source", "environment-variable+custom-registry")
+				} else {
+					c.Image = &envImg
+					log.Infow("Using environment variable image", "container", string(*c.Name), "image", envImg, "source", "environment-variable")
+				}
 			} else if cr.Spec.CustomRegistry != "" {
-				// Priority 2: Custom registry prefix
+				// Priority 3: Custom registry prefix with template default
 				resolvedImagePath := operatorutils.ResolveImage(ctx, string(*c.Image), cr)
 				c.Image = &resolvedImagePath
+				log.Infow("Using custom registry with template default", "container", string(*c.Name), "resolvedImage", resolvedImagePath, "source", "custom-registry+template-default")
 			} else {
-				// Priority 3: Explicit image from CR spec
+				// Priority 4: Explicit image from CR spec
 				if cr.Spec.Driver.Common != nil {
 					// With minimal, this will override the node image if the driver image is overridden.
 					if cr.Spec.Driver.Common.Image != "" {
-						image := string(cr.Spec.Driver.Common.Image)
-						c.Image = &image
+						explicitImage := string(cr.Spec.Driver.Common.Image)
+						c.Image = &explicitImage
+						log.Infow("Using explicit image from CR spec", "container", string(*c.Name), "image", explicitImage, "source", "explicit-cr-spec")
 					}
 				}
 			}
@@ -514,6 +547,13 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 				log.Debugw("MDM initcontainer image resolved from ConfigMap",
 					"mdmInitContainerImage", mdmInitContainerImage,
 				)
+			} else if envImg, envFound := operatorutils.GetRelatedImage(string(cr.Spec.Driver.CSIDriverType)); envFound {
+				if updatedCr.Spec.CustomRegistry != "" {
+					resolvedImagePath := operatorutils.ResolveImage(ctx, envImg, cr)
+					initcontainers[i].Image = &resolvedImagePath
+				} else {
+					initcontainers[i].Image = &envImg
+				}
 			} else if updatedCr.Spec.CustomRegistry != "" {
 				resolvedImagePath := operatorutils.ResolveImage(ctx, string(*initcontainers[i].Image), cr)
 				initcontainers[i].Image = &resolvedImagePath
@@ -537,6 +577,13 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 				log.Infow("SDC initcontainer image resolved from ConfigMap",
 					"image", sdcImage,
 				)
+			} else if envImg, envFound := operatorutils.GetRelatedImage("sdc"); envFound {
+				if updatedCr.Spec.CustomRegistry != "" {
+					resolvedImagePath := operatorutils.ResolveImage(ctx, envImg, cr)
+					initcontainers[i].Image = &resolvedImagePath
+				} else {
+					initcontainers[i].Image = &envImg
+				}
 			} else if updatedCr.Spec.CustomRegistry != "" {
 				resolvedImagePath := operatorutils.ResolveImage(ctx, string(*initcontainers[i].Image), cr)
 				initcontainers[i].Image = &resolvedImagePath

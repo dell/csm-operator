@@ -545,3 +545,36 @@ func execShell(commands string) error {
 func isDebugEnabled() bool {
 	return os.Getenv("E2E_VERBOSE") == "true"
 }
+
+// getOperatorPodEnvVar retrieves an environment variable value from the operator pod's
+// manager container. RELATED_IMAGE_* variables are set on the operator pod (e.g., via OLM
+// subscriptions in OpenShift), not on the E2E test runner process.
+func getOperatorPodEnvVar(clientSet *kubernetes.Clientset, envVarName string) (string, error) {
+	ns := operatorNamespace
+	if override := os.Getenv("OPERATOR_NAMESPACE"); override != "" {
+		ns = override
+	}
+
+	pods, err := fpod.GetPodsInNamespace(context.TODO(), clientSet, ns, map[string]string{})
+	if err != nil {
+		return "", fmt.Errorf("failed to list pods in operator namespace %s: %v", ns, err)
+	}
+	if len(pods) == 0 {
+		return "", fmt.Errorf("no operator pods found in namespace %s", ns)
+	}
+
+	for _, pod := range pods {
+		for _, container := range pod.Spec.Containers {
+			if container.Name != "manager" {
+				continue
+			}
+			for _, env := range container.Env {
+				if env.Name == envVarName {
+					return env.Value, nil
+				}
+			}
+		}
+	}
+
+	return "", fmt.Errorf("environment variable %s not found on operator pod in namespace %s", envVarName, ns)
+}

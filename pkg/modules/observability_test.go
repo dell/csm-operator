@@ -754,13 +754,53 @@ func TestOtelCollector(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, operatorConfig
 		},
+
+		"success - with version spec and configmap images": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+
+		"success - with custom registry": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			tmpCR := customResource
+			tmpCR.Spec.CustomRegistry = "my-registry.example.com"
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
-			err := OtelCollector(ctx, isDeleting, op, cr, sourceClient, operatorutils.VersionSpec{})
+			var matched operatorutils.VersionSpec
+			if name == "success - with version spec and configmap images" {
+				matched = operatorutils.VersionSpec{
+					Version: "v1.17.0",
+					Images: map[string]string{
+						"otel-collector": "my-registry.example.com/otel-collector:v1.0.0",
+						"nginx-proxy":    "my-registry.example.com/nginx:v1.0.0",
+					},
+				}
+			} else {
+				matched = operatorutils.VersionSpec{}
+			}
+
+			err := OtelCollector(ctx, isDeleting, op, cr, sourceClient, matched)
 			if success {
 				assert.NoError(t, err)
 			} else {

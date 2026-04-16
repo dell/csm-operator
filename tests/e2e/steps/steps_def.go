@@ -3450,3 +3450,379 @@ func (step *Step) setCustomRegistryInSpec(res Resource, registry, crNumStr strin
 	res.Scenario.Paths[crNum-1] = tempPath
 	return nil
 }
+
+// validateDeploymentContainerEnvironmentVariable validates that a deployment container's image
+// was resolved from the RELATED_IMAGE_* environment variable set on the operator pod.
+func (step *Step) validateDeploymentContainerEnvironmentVariable(res Resource, crNumStr string, envVarName string, container string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+	staticDp, err := getDriverDeployment(cr, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get deployment: %v", err)
+	}
+
+	expectedImage, err := getOperatorPodEnvVar(step.clientSet, envVarName)
+	if err != nil {
+		return fmt.Errorf("failed to get %s from operator pod: %v", envVarName, err)
+	}
+	if expectedImage == "" {
+		return fmt.Errorf("environment variable %s is not set on the operator pod", envVarName)
+	}
+
+	for _, cnt := range staticDp.Spec.Template.Spec.Containers {
+		if cnt.Name != container {
+			continue
+		}
+
+		if cnt.Image == "" {
+			return fmt.Errorf("deployment container %s has no image set", container)
+		}
+
+		if cnt.Image != expectedImage {
+			return fmt.Errorf("expected deployment container %s image to be %s (from %s), got %s", container, expectedImage, envVarName, cnt.Image)
+		}
+		return nil
+	}
+	return fmt.Errorf("container %s not found in deployment", container)
+}
+
+// validateDaemonSetContainerEnvironmentVariable validates that a daemonset container's image
+// was resolved from the RELATED_IMAGE_* environment variable set on the operator pod.
+func (step *Step) validateDaemonSetContainerEnvironmentVariable(res Resource, crNumStr string, envVarName string, container string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+	staticDs, err := getDriverDaemonset(cr, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get daemonset: %v", err)
+	}
+
+	expectedImage, err := getOperatorPodEnvVar(step.clientSet, envVarName)
+	if err != nil {
+		return fmt.Errorf("failed to get %s from operator pod: %v", envVarName, err)
+	}
+	if expectedImage == "" {
+		return fmt.Errorf("environment variable %s is not set on the operator pod", envVarName)
+	}
+
+	for _, cnt := range staticDs.Spec.Template.Spec.Containers {
+		if cnt.Name != container {
+			continue
+		}
+
+		if cnt.Image == "" {
+			return fmt.Errorf("daemonset container %s has no image set", container)
+		}
+
+		if cnt.Image != expectedImage {
+			return fmt.Errorf("expected daemonset container %s image to be %s (from %s), got %s", container, expectedImage, envVarName, cnt.Image)
+		}
+		return nil
+	}
+	return fmt.Errorf("container %s not found in daemonset", container)
+}
+
+// validateSidecarEnvironmentVariable validates that a sidecar container's image
+// was resolved from the RELATED_IMAGE_* environment variable set on the operator pod.
+func (step *Step) validateSidecarEnvironmentVariable(res Resource, sidecarName string, crNumStr string, envVarName string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	expectedImage, err := getOperatorPodEnvVar(step.clientSet, envVarName)
+	if err != nil {
+		return fmt.Errorf("failed to get %s from operator pod: %v", envVarName, err)
+	}
+	if expectedImage == "" {
+		return fmt.Errorf("environment variable %s is not set on the operator pod", envVarName)
+	}
+
+	// Check both deployment and daemonset for the sidecar
+	staticDp, err := getDriverDeployment(cr, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get deployment: %v", err)
+	}
+
+	// First check deployment
+	for _, cnt := range staticDp.Spec.Template.Spec.Containers {
+		if cnt.Name != sidecarName {
+			continue
+		}
+
+		if cnt.Image != expectedImage {
+			return fmt.Errorf("expected sidecar %s image to be %s (from %s), got %s", sidecarName, expectedImage, envVarName, cnt.Image)
+		}
+		return nil
+	}
+
+	// If not found in deployment, check daemonset
+	staticDs, err := getDriverDaemonset(cr, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get daemonset: %v", err)
+	}
+
+	for _, cnt := range staticDs.Spec.Template.Spec.Containers {
+		if cnt.Name != sidecarName {
+			continue
+		}
+
+		if cnt.Image != expectedImage {
+			return fmt.Errorf("expected sidecar %s image to be %s (from %s), got %s", sidecarName, expectedImage, envVarName, cnt.Image)
+		}
+		return nil
+	}
+
+	return fmt.Errorf("sidecar %s not found in deployment or daemonset", sidecarName)
+}
+
+// validateDeploymentContainerCustomRegistry validates that a deployment container's image
+// was resolved from the RELATED_IMAGE_* env var with custom registry prefix applied.
+func (step *Step) validateDeploymentContainerCustomRegistry(res Resource, crNumStr string, envVarName string, container string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	// Check if CR has custom registry
+	if cr.Spec.CustomRegistry == "" {
+		return fmt.Errorf("expected CR to have custom registry configured")
+	}
+
+	envImage, err := getOperatorPodEnvVar(step.clientSet, envVarName)
+	if err != nil {
+		return fmt.Errorf("failed to get %s from operator pod: %v", envVarName, err)
+	}
+	if envImage == "" {
+		return fmt.Errorf("environment variable %s is not set on the operator pod", envVarName)
+	}
+
+	staticDp, err := getDriverDeployment(cr, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get deployment: %v", err)
+	}
+
+	for _, cnt := range staticDp.Spec.Template.Spec.Containers {
+		if cnt.Name != container {
+			continue
+		}
+
+		// Check if the image contains the custom registry
+		if !strings.Contains(cnt.Image, cr.Spec.CustomRegistry) {
+			return fmt.Errorf("expected deployment container %s image to contain custom registry %s, got %s", container, cr.Spec.CustomRegistry, cnt.Image)
+		}
+
+		return nil
+	}
+	return fmt.Errorf("container %s not found in deployment", container)
+}
+
+// validateDaemonSetContainerCustomRegistry validates that a daemonset container's image
+// was resolved from the RELATED_IMAGE_* env var with custom registry prefix applied.
+func (step *Step) validateDaemonSetContainerCustomRegistry(res Resource, crNumStr string, envVarName string, container string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	// Check if CR has custom registry
+	if cr.Spec.CustomRegistry == "" {
+		return fmt.Errorf("expected CR to have custom registry configured")
+	}
+
+	envImage, err := getOperatorPodEnvVar(step.clientSet, envVarName)
+	if err != nil {
+		return fmt.Errorf("failed to get %s from operator pod: %v", envVarName, err)
+	}
+	if envImage == "" {
+		return fmt.Errorf("environment variable %s is not set on the operator pod", envVarName)
+	}
+
+	staticDs, err := getDriverDaemonset(cr, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get daemonset: %v", err)
+	}
+
+	for _, cnt := range staticDs.Spec.Template.Spec.Containers {
+		if cnt.Name != container {
+			continue
+		}
+
+		// Check if the image contains the custom registry
+		if !strings.Contains(cnt.Image, cr.Spec.CustomRegistry) {
+			return fmt.Errorf("expected daemonset container %s image to contain custom registry %s, got %s", container, cr.Spec.CustomRegistry, cnt.Image)
+		}
+
+		return nil
+	}
+	return fmt.Errorf("container %s not found in daemonset", container)
+}
+
+// validateDeploymentContainerConfigMapImage validates that a deployment container uses
+// ConfigMap image (takes priority over environment variables).
+func (step *Step) validateDeploymentContainerConfigMapImage(res Resource, crNumStr string, container string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	staticDp, err := getDriverDeployment(cr, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get deployment: %v", err)
+	}
+
+	// Get the env var image to make sure ConfigMap took priority
+	envVarKey := strings.TrimPrefix(container, "csi-")
+	if envVarKey == "" {
+		envVarKey = container
+	}
+	envImage, _ := getOperatorPodEnvVar(step.clientSet, "RELATED_IMAGE_"+container)
+
+	for _, cnt := range staticDp.Spec.Template.Spec.Containers {
+		if cnt.Name != container {
+			continue
+		}
+
+		// Verify the image is set
+		if cnt.Image == "" {
+			return fmt.Errorf("expected deployment container %s to have image set from ConfigMap", container)
+		}
+
+		// If env var is also set, the images should differ (ConfigMap has priority)
+		if envImage != "" && cnt.Image == envImage {
+			return fmt.Errorf("deployment container %s image matches environment variable (%s), expected ConfigMap to take priority", container, envImage)
+		}
+
+		return nil
+	}
+	return fmt.Errorf("container %s not found in deployment", container)
+}
+
+// validateDaemonSetContainerConfigMapImage validates that a daemonset container uses
+// ConfigMap image (takes priority over environment variables).
+func (step *Step) validateDaemonSetContainerConfigMapImage(res Resource, crNumStr string, container string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	staticDs, err := getDriverDaemonset(cr, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get daemonset: %v", err)
+	}
+
+	// Get the env var image to make sure ConfigMap took priority
+	envImage, _ := getOperatorPodEnvVar(step.clientSet, "RELATED_IMAGE_"+container)
+
+	for _, cnt := range staticDs.Spec.Template.Spec.Containers {
+		if cnt.Name != container {
+			continue
+		}
+
+		// Verify the image is set
+		if cnt.Image == "" {
+			return fmt.Errorf("expected daemonset container %s to have image set from ConfigMap", container)
+		}
+
+		// If env var is also set, the images should differ (ConfigMap has priority)
+		if envImage != "" && cnt.Image == envImage {
+			return fmt.Errorf("daemonset container %s image matches environment variable (%s), expected ConfigMap to take priority", container, envImage)
+		}
+
+		return nil
+	}
+	return fmt.Errorf("container %s not found in daemonset", container)
+}
+
+// validateObservabilityDeploymentContainerEnvironmentVariable validates that an observability
+// module deployment container's image was resolved from the RELATED_IMAGE_* environment variable.
+func (step *Step) validateObservabilityDeploymentContainerEnvironmentVariable(res Resource, crNumStr string, envVarName string, container string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	dp, err := getObservabilityDeployment(cr.Namespace, cr.Spec.Driver.CSIDriverType, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get observability deployment: %v", err)
+	}
+
+	expectedImage, err := getOperatorPodEnvVar(step.clientSet, envVarName)
+	if err != nil {
+		return fmt.Errorf("failed to get %s from operator pod: %v", envVarName, err)
+	}
+	if expectedImage == "" {
+		return fmt.Errorf("environment variable %s is not set on the operator pod", envVarName)
+	}
+
+	for _, cnt := range dp.Spec.Template.Spec.Containers {
+		if cnt.Name != container {
+			continue
+		}
+
+		if cnt.Image == "" {
+			return fmt.Errorf("observability deployment container %s has no image set", container)
+		}
+
+		if cnt.Image != expectedImage {
+			return fmt.Errorf("expected observability deployment container %s image to be %s (from %s), got %s", container, expectedImage, envVarName, cnt.Image)
+		}
+		return nil
+	}
+	return fmt.Errorf("container %s not found in observability deployment", container)
+}
+
+// validateObservabilityDeploymentContainerCustomRegistry validates that an observability
+// module deployment container's image was resolved with custom registry prefix applied.
+func (step *Step) validateObservabilityDeploymentContainerCustomRegistry(res Resource, crNumStr string, envVarName string, container string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	if cr.Spec.CustomRegistry == "" {
+		return fmt.Errorf("expected CR to have custom registry configured")
+	}
+
+	envImage, err := getOperatorPodEnvVar(step.clientSet, envVarName)
+	if err != nil {
+		return fmt.Errorf("failed to get %s from operator pod: %v", envVarName, err)
+	}
+	if envImage == "" {
+		return fmt.Errorf("environment variable %s is not set on the operator pod", envVarName)
+	}
+
+	dp, err := getObservabilityDeployment(cr.Namespace, cr.Spec.Driver.CSIDriverType, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get observability deployment: %v", err)
+	}
+
+	for _, cnt := range dp.Spec.Template.Spec.Containers {
+		if cnt.Name != container {
+			continue
+		}
+
+		if !strings.Contains(cnt.Image, cr.Spec.CustomRegistry) {
+			return fmt.Errorf("expected observability deployment container %s image to contain custom registry %s, got %s", container, cr.Spec.CustomRegistry, cnt.Image)
+		}
+
+		return nil
+	}
+	return fmt.Errorf("container %s not found in observability deployment", container)
+}
+
+// validateObservabilityDeploymentContainerConfigMapImage validates that an observability
+// module deployment container uses ConfigMap image (takes priority over environment variables).
+func (step *Step) validateObservabilityDeploymentContainerConfigMapImage(res Resource, crNumStr string, container string) error {
+	crNum, _ := strconv.Atoi(crNumStr)
+	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
+
+	dp, err := getObservabilityDeployment(cr.Namespace, cr.Spec.Driver.CSIDriverType, step.ctrlClient)
+	if err != nil {
+		return fmt.Errorf("failed to get observability deployment: %v", err)
+	}
+
+	envImage, _ := getOperatorPodEnvVar(step.clientSet, "RELATED_IMAGE_"+container)
+
+	for _, cnt := range dp.Spec.Template.Spec.Containers {
+		if cnt.Name != container {
+			continue
+		}
+
+		if cnt.Image == "" {
+			return fmt.Errorf("expected observability deployment container %s to have image set from ConfigMap", container)
+		}
+
+		if envImage != "" && cnt.Image == envImage {
+			return fmt.Errorf("observability deployment container %s image matches environment variable (%s), expected ConfigMap to take priority", container, envImage)
+		}
+
+		return nil
+	}
+	return fmt.Errorf("container %s not found in observability deployment", container)
+}

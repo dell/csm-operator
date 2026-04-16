@@ -275,6 +275,10 @@ func main() {
 	ctrl.SetLogger(crzap.New(crzap.UseFlagOptions(&opts)))
 
 	printVersion(log)
+
+	// Initialize the RELATED_IMAGE environment variable cache
+	operatorutils.InitRelatedImagesCache()
+
 	operatorConfig, err := getOperatorConfig(log)
 	if err != nil {
 		setupLog.Error(err, "unable to get operator config")

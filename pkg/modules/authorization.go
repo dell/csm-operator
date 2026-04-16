@@ -450,9 +450,18 @@ func getAuthApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op ope
 			log.Infow("Overriding container image from ConfigMap csm-images", "key", proxyKey, "image", img, "specVersion", matched.Version)
 		}
 	}
-	if !matchedImageApplied && cr.Spec.CustomRegistry != "" {
-		img := operatorutils.ResolveImage(ctx, *container.Image, cr)
-		container.Image = &img
+	if !matchedImageApplied {
+		if envImg, found := operatorutils.GetRelatedImage("karavi-authorization-proxy"); found {
+			if cr.Spec.CustomRegistry != "" {
+				img := operatorutils.ResolveImage(ctx, envImg, cr)
+				container.Image = &img
+			} else {
+				container.Image = &envImg
+			}
+		} else if cr.Spec.CustomRegistry != "" {
+			img := operatorutils.ResolveImage(ctx, *container.Image, cr)
+			container.Image = &img
+		}
 	}
 
 	return &authModule, &container, matched, nil
@@ -2620,9 +2629,18 @@ func getImageForKey(ctx context.Context, key string, defaultImage string, cr csm
 			matchedImageApplied = true
 		}
 	}
-	if !matchedImageApplied && cr.Spec.CustomRegistry != "" {
-		// Followed by custom registry
-		returnImg = operatorutils.ResolveImage(ctx, returnImg, cr)
+	if !matchedImageApplied {
+		if envImg, found := operatorutils.GetRelatedImage(key); found {
+			// Environment variable takes next priority
+			if cr.Spec.CustomRegistry != "" {
+				returnImg = operatorutils.ResolveImage(ctx, envImg, cr)
+			} else {
+				returnImg = envImg
+			}
+		} else if cr.Spec.CustomRegistry != "" {
+			// Followed by custom registry
+			returnImg = operatorutils.ResolveImage(ctx, returnImg, cr)
+		}
 	}
 
 	return returnImg

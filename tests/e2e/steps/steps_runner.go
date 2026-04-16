@@ -126,6 +126,20 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Set spec version to \[([^"]*)\] in CR spec \[(\d+)\]$`, step.setSpecVersionInSpec)
 	runner.addStep(`^Remove \[([^"]*)\] from CR spec \[(\d+)\]$`, step.removeFieldFromSpec)
 	runner.addStep(`^Set customRegistry to \[([^"]*)\] in CR spec \[(\d+)\]$`, step.setCustomRegistryInSpec)
+
+	// Image resolution validation steps
+	runner.addStep(`^Validate deployment from CR \[(\d+)\] uses environment variable \[([^]]*)\] for container \[([^]]*)\]$`, step.validateDeploymentContainerEnvironmentVariable)
+	runner.addStep(`^Validate daemonset from CR \[(\d+)\] uses environment variable \[([^]]*)\] for container \[([^]]*)\]$`, step.validateDaemonSetContainerEnvironmentVariable)
+	runner.addStep(`^Validate sidecar \[([^]]*)\] from CR \[(\d+)\] uses environment variable \[([^]]*)\]$`, step.validateSidecarEnvironmentVariable)
+	runner.addStep(`^Validate deployment from CR \[(\d+)\] uses custom registry with environment variable \[([^]]*)\] for container \[([^]]*)\]$`, step.validateDeploymentContainerCustomRegistry)
+	runner.addStep(`^Validate daemonset from CR \[(\d+)\] uses custom registry with environment variable \[([^]]*)\] for container \[([^]]*)\]$`, step.validateDaemonSetContainerCustomRegistry)
+	runner.addStep(`^Validate deployment from CR \[(\d+)\] uses ConfigMap image for container \[([^]]*)\]$`, step.validateDeploymentContainerConfigMapImage)
+	runner.addStep(`^Validate daemonset from CR \[(\d+)\] uses ConfigMap image for container \[([^]]*)\]$`, step.validateDaemonSetContainerConfigMapImage)
+
+	// Observability module deployment image resolution validation steps
+	runner.addStep(`^Validate observability deployment from CR \[(\d+)\] uses environment variable \[([^]]*)\] for container \[([^]]*)\]$`, step.validateObservabilityDeploymentContainerEnvironmentVariable)
+	runner.addStep(`^Validate observability deployment from CR \[(\d+)\] uses custom registry with environment variable \[([^]]*)\] for container \[([^]]*)\]$`, step.validateObservabilityDeploymentContainerCustomRegistry)
+	runner.addStep(`^Validate observability deployment from CR \[(\d+)\] uses ConfigMap image for container \[([^]]*)\]$`, step.validateObservabilityDeploymentContainerConfigMapImage)
 }
 
 func (runner *Runner) addStep(expr string, stepFunc interface{}) {

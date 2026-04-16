@@ -470,10 +470,18 @@ func getOtelCollector(ctx context.Context, op operatorutils.OperatorConfig, cr c
 					otelCollectorImageFromConfigMap = true
 				}
 			}
-			if !otelCollectorImageFromConfigMap && cr.Spec.CustomRegistry != "" {
-				otelCollectorImage = operatorutils.ResolveImage(ctx, otelCollectorImage, cr)
-			} else if !otelCollectorImageFromConfigMap && component.Image != "" {
-				otelCollectorImage = string(component.Image)
+			if !otelCollectorImageFromConfigMap {
+				if envImg, found := operatorutils.GetRelatedImage(string(component.Name)); found {
+					if cr.Spec.CustomRegistry != "" {
+						otelCollectorImage = operatorutils.ResolveImage(ctx, envImg, cr)
+					} else {
+						otelCollectorImage = envImg
+					}
+				} else if cr.Spec.CustomRegistry != "" {
+					otelCollectorImage = operatorutils.ResolveImage(ctx, otelCollectorImage, cr)
+				} else if component.Image != "" {
+					otelCollectorImage = string(component.Image)
+				}
 			}
 
 			for _, env := range component.Envs {

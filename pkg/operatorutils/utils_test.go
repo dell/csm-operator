@@ -4712,3 +4712,339 @@ func TestResolveImage(t *testing.T) {
 		})
 	}
 }
+
+func TestInitRelatedImagesCache(t *testing.T) {
+	// Save original environment
+	origEnv := os.Environ()
+	defer func() {
+		// Restore original environment
+		for _, pair := range origEnv {
+			parts := strings.SplitN(pair, "=", 2)
+			if len(parts) == 2 {
+				os.Setenv(parts[0], parts[1])
+			}
+		}
+		// Clear the cache to reset state
+		relatedImagesCache = nil
+		relatedImagesOnce = sync.Once{}
+	}()
+
+	// Set test environment variables
+	testEnvVars := map[string]string{
+		"RELATED_IMAGE_csi-vxflexos": "quay.io/dell/container-storage-modules/csi-vxflexos:v2.17.0",
+		"RELATED_IMAGE_csi-powermax": "quay.io/dell/container-storage-modules/csi-powermax:v2.17.0",
+		"RELATED_IMAGE_attacher":     "registry.k8s.io/sig-storage/csi-attacher:v4.11.0",
+		"UNRELATED_VAR":              "should_not_be_cached",
+	}
+
+	for key, value := range testEnvVars {
+		os.Setenv(key, value)
+	}
+
+	// Reset cache and reinitialize
+	relatedImagesCache = nil
+	relatedImagesOnce = sync.Once{}
+	InitRelatedImagesCache()
+
+	// Verify cache was populated
+	// 3 direct env vars + 2 aliases (powerflex->csi-vxflexos, vxflexos->csi-vxflexos, powermax->csi-powermax)
+	assert.Equal(t, 6, GetRelatedImagesCount(), "Expected 6 cached entries (3 env vars + 3 driver-type aliases)")
+
+	// Verify specific images can be retrieved by their original keys
+	img, found := GetRelatedImage("csi-vxflexos")
+	assert.True(t, found, "Expected to find csi-vxflexos")
+	assert.Equal(t, "quay.io/dell/container-storage-modules/csi-vxflexos:v2.17.0", img)
+
+	img, found = GetRelatedImage("csi-powermax")
+	assert.True(t, found, "Expected to find csi-powermax")
+	assert.Equal(t, "quay.io/dell/container-storage-modules/csi-powermax:v2.17.0", img)
+
+	img, found = GetRelatedImage("attacher")
+	assert.True(t, found, "Expected to find attacher")
+	assert.Equal(t, "registry.k8s.io/sig-storage/csi-attacher:v4.11.0", img)
+
+	// Verify driver-type aliases resolve to the same image
+	img, found = GetRelatedImage("powerflex")
+	assert.True(t, found, "Expected to find powerflex via alias")
+	assert.Equal(t, "quay.io/dell/container-storage-modules/csi-vxflexos:v2.17.0", img)
+
+	img, found = GetRelatedImage("vxflexos")
+	assert.True(t, found, "Expected to find vxflexos via alias")
+	assert.Equal(t, "quay.io/dell/container-storage-modules/csi-vxflexos:v2.17.0", img)
+
+	img, found = GetRelatedImage("powermax")
+	assert.True(t, found, "Expected to find powermax via alias")
+	assert.Equal(t, "quay.io/dell/container-storage-modules/csi-powermax:v2.17.0", img)
+
+	// Verify unrelated variables are not cached
+	_, found = GetRelatedImage("UNRELATED_VAR")
+	assert.False(t, found, "Expected not to find UNRELATED_VAR")
+
+	// Verify non-existent image key
+	_, found = GetRelatedImage("non-existent")
+	assert.False(t, found, "Expected not to find non-existent")
+}
+
+func TestGetRelatedImage(t *testing.T) {
+	// Save original environment
+	origEnv := os.Environ()
+	// Clear all RELATED_IMAGE environment variables
+	for _, pair := range origEnv {
+		parts := strings.SplitN(pair, "=", 2)
+		if len(parts) == 2 && strings.HasPrefix(parts[0], "RELATED_IMAGE_") {
+			os.Unsetenv(parts[0])
+		}
+	}
+
+	defer func() {
+		// Restore original environment
+		for _, pair := range origEnv {
+			parts := strings.SplitN(pair, "=", 2)
+			if len(parts) == 2 {
+				os.Setenv(parts[0], parts[1])
+			}
+		}
+		// Clear the cache to reset state
+		relatedImagesCache = nil
+		relatedImagesOnce = sync.Once{}
+	}()
+
+	tests := []struct {
+		name        string
+		envKey      string
+		envValue    string
+		imageKey    string
+		expected    string
+		expectFound bool
+	}{
+		{
+			name:        "Found_csi-vxflexos",
+			envKey:      "RELATED_IMAGE_csi-vxflexos",
+			envValue:    "quay.io/dell/container-storage-modules/csi-vxflexos:v2.17.0",
+			imageKey:    "csi-vxflexos",
+			expected:    "quay.io/dell/container-storage-modules/csi-vxflexos:v2.17.0",
+			expectFound: true,
+		},
+		{
+			name:        "Found_csi-powermax",
+			envKey:      "RELATED_IMAGE_csi-powermax",
+			envValue:    "quay.io/dell/container-storage-modules/csi-powermax:v2.17.0",
+			imageKey:    "csi-powermax",
+			expected:    "quay.io/dell/container-storage-modules/csi-powermax:v2.17.0",
+			expectFound: true,
+		},
+		{
+			name:        "NotFound_Unknown",
+			envKey:      "RELATED_IMAGE_csi-vxflexos",
+			envValue:    "quay.io/dell/container-storage-modules/csi-vxflexos:v2.17.0",
+			imageKey:    "unknown",
+			expected:    "",
+			expectFound: false,
+		},
+		{
+			name:        "NotFound_NoEnvVars",
+			envKey:      "",
+			envValue:    "",
+			imageKey:    "csi-vxflexos",
+			expected:    "",
+			expectFound: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Clear cache and set up environment
+			relatedImagesCache = nil
+			relatedImagesOnce = sync.Once{}
+
+			// Clear all RELATED_IMAGE variables first
+			for _, pair := range os.Environ() {
+				parts := strings.SplitN(pair, "=", 2)
+				if len(parts) == 2 && strings.HasPrefix(parts[0], "RELATED_IMAGE_") {
+					os.Unsetenv(parts[0])
+				}
+			}
+
+			if tt.envKey != "" {
+				os.Setenv(tt.envKey, tt.envValue)
+			}
+
+			InitRelatedImagesCache()
+
+			img, found := GetRelatedImage(tt.imageKey)
+
+			if found != tt.expectFound {
+				t.Errorf("GetRelatedImage() found = %v, want %v", found, tt.expectFound)
+			}
+
+			if found && img != tt.expected {
+				t.Errorf("GetRelatedImage() = %q, want %q", img, tt.expected)
+			}
+		})
+	}
+}
+
+func TestGetRelatedImagesCount(t *testing.T) {
+	// Save original environment
+	origEnv := os.Environ()
+	// Clear all RELATED_IMAGE environment variables
+	for _, pair := range origEnv {
+		parts := strings.SplitN(pair, "=", 2)
+		if len(parts) == 2 && strings.HasPrefix(parts[0], "RELATED_IMAGE_") {
+			os.Unsetenv(parts[0])
+		}
+	}
+
+	defer func() {
+		// Restore original environment
+		for _, pair := range origEnv {
+			parts := strings.SplitN(pair, "=", 2)
+			if len(parts) == 2 {
+				os.Setenv(parts[0], parts[1])
+			}
+		}
+		// Clear the cache to reset state
+		relatedImagesCache = nil
+		relatedImagesOnce = sync.Once{}
+	}()
+
+	// Test with no RELATED_IMAGE variables
+	relatedImagesCache = nil
+	relatedImagesOnce = sync.Once{}
+	InitRelatedImagesCache()
+	assert.Equal(t, 0, GetRelatedImagesCount(), "Expected 0 when no RELATED_IMAGE_* vars set")
+
+	// Test with some RELATED_IMAGE variables (no aliases since test1/test2 are not driver keys)
+	os.Setenv("RELATED_IMAGE_test1", "image1:latest")
+	os.Setenv("RELATED_IMAGE_test2", "image2:latest")
+	os.Setenv("UNRELATED_VAR", "should_not_count")
+
+	relatedImagesCache = nil
+	relatedImagesOnce = sync.Once{}
+	InitRelatedImagesCache()
+	assert.Equal(t, 2, GetRelatedImagesCount(), "Expected 2 RELATED_IMAGE_* variables")
+}
+
+func TestDriverImageAliases(t *testing.T) {
+	// Save original environment
+	origEnv := os.Environ()
+	defer func() {
+		for _, pair := range origEnv {
+			parts := strings.SplitN(pair, "=", 2)
+			if len(parts) == 2 {
+				os.Setenv(parts[0], parts[1])
+			}
+		}
+		relatedImagesCache = nil
+		relatedImagesOnce = sync.Once{}
+	}()
+
+	// Clear all RELATED_IMAGE variables
+	for _, pair := range os.Environ() {
+		parts := strings.SplitN(pair, "=", 2)
+		if len(parts) == 2 && strings.HasPrefix(parts[0], "RELATED_IMAGE_") {
+			os.Unsetenv(parts[0])
+		}
+	}
+
+	t.Run("all driver types resolve via aliases", func(t *testing.T) {
+		relatedImagesCache = nil
+		relatedImagesOnce = sync.Once{}
+
+		// Clear all RELATED_IMAGE variables
+		for _, pair := range os.Environ() {
+			parts := strings.SplitN(pair, "=", 2)
+			if len(parts) == 2 && strings.HasPrefix(parts[0], "RELATED_IMAGE_") {
+				os.Unsetenv(parts[0])
+			}
+		}
+
+		// Set CSV-style env vars for all drivers
+		os.Setenv("RELATED_IMAGE_csi-vxflexos", "quay.io/dell/csi-vxflexos:v2.17.0")
+		os.Setenv("RELATED_IMAGE_csi-isilon", "quay.io/dell/csi-isilon:v2.17.0")
+		os.Setenv("RELATED_IMAGE_csi-powermax", "quay.io/dell/csi-powermax:v2.17.0")
+		os.Setenv("RELATED_IMAGE_csi-powerstore", "quay.io/dell/csi-powerstore:v2.17.0")
+		os.Setenv("RELATED_IMAGE_csi-unity", "quay.io/dell/csi-unity:v2.17.0")
+
+		InitRelatedImagesCache()
+
+		// Each driver type used by CSIDriverType should now resolve
+		tests := []struct {
+			driverType string
+			expected   string
+		}{
+			{"powerflex", "quay.io/dell/csi-vxflexos:v2.17.0"},
+			{"vxflexos", "quay.io/dell/csi-vxflexos:v2.17.0"},
+			{"isilon", "quay.io/dell/csi-isilon:v2.17.0"},
+			{"powerscale", "quay.io/dell/csi-isilon:v2.17.0"},
+			{"powermax", "quay.io/dell/csi-powermax:v2.17.0"},
+			{"powerstore", "quay.io/dell/csi-powerstore:v2.17.0"},
+			{"unity", "quay.io/dell/csi-unity:v2.17.0"},
+		}
+		for _, tt := range tests {
+			img, found := GetRelatedImage(tt.driverType)
+			assert.True(t, found, "Expected to find alias %q", tt.driverType)
+			assert.Equal(t, tt.expected, img, "Alias %q resolved to wrong image", tt.driverType)
+		}
+
+		// Original CSV keys must still work
+		img, found := GetRelatedImage("csi-vxflexos")
+		assert.True(t, found)
+		assert.Equal(t, "quay.io/dell/csi-vxflexos:v2.17.0", img)
+	})
+
+	t.Run("explicit env var takes precedence over alias", func(t *testing.T) {
+		relatedImagesCache = nil
+		relatedImagesOnce = sync.Once{}
+
+		// Clear all RELATED_IMAGE variables
+		for _, pair := range os.Environ() {
+			parts := strings.SplitN(pair, "=", 2)
+			if len(parts) == 2 && strings.HasPrefix(parts[0], "RELATED_IMAGE_") {
+				os.Unsetenv(parts[0])
+			}
+		}
+
+		// Set CSV key and an explicit override for the driver-type key
+		os.Setenv("RELATED_IMAGE_csi-vxflexos", "quay.io/dell/csi-vxflexos:v2.17.0")
+		os.Setenv("RELATED_IMAGE_powerflex", "my-registry.example/custom-powerflex:latest")
+
+		InitRelatedImagesCache()
+
+		// The explicit env var should win over the alias
+		img, found := GetRelatedImage("powerflex")
+		assert.True(t, found)
+		assert.Equal(t, "my-registry.example/custom-powerflex:latest", img,
+			"Explicit RELATED_IMAGE_powerflex should take precedence over alias from csi-vxflexos")
+
+		// Original key should still work
+		img, found = GetRelatedImage("csi-vxflexos")
+		assert.True(t, found)
+		assert.Equal(t, "quay.io/dell/csi-vxflexos:v2.17.0", img)
+	})
+
+	t.Run("no aliases created when CSV vars are absent", func(t *testing.T) {
+		relatedImagesCache = nil
+		relatedImagesOnce = sync.Once{}
+
+		// Clear all RELATED_IMAGE variables
+		for _, pair := range os.Environ() {
+			parts := strings.SplitN(pair, "=", 2)
+			if len(parts) == 2 && strings.HasPrefix(parts[0], "RELATED_IMAGE_") {
+				os.Unsetenv(parts[0])
+			}
+		}
+
+		// Only set an unrelated image
+		os.Setenv("RELATED_IMAGE_attacher", "registry.k8s.io/sig-storage/csi-attacher:v4.11.0")
+
+		InitRelatedImagesCache()
+
+		// No driver aliases should exist
+		_, found := GetRelatedImage("powerflex")
+		assert.False(t, found, "No alias should be created when csi-vxflexos is not set")
+
+		_, found = GetRelatedImage("isilon")
+		assert.False(t, found, "No alias should be created when csi-isilon is not set")
+	})
+}

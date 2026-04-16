@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 
 	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
@@ -140,6 +141,74 @@ type VersionSpec struct {
 	Images  map[string]string `yaml:",inline"`
 }
 
+// relatedImagesCache stores the RELATED_IMAGE_* environment variables
+var (
+	relatedImagesCache map[string]string
+	relatedImagesOnce  sync.Once
+)
+
+// driverImageAliases maps CSIDriverType values (used by GetRelatedImage callers)
+// to their corresponding RELATED_IMAGE env-var keys (as defined in the OLM CSV).
+// For example, the driver type "powerflex" must resolve to the env var
+// RELATED_IMAGE_csi-vxflexos. Without these aliases the lookup silently misses.
+var driverImageAliases = map[string]string{
+	"powerflex":  "csi-vxflexos",
+	"vxflexos":   "csi-vxflexos",
+	"isilon":     "csi-isilon",
+	"powerscale": "csi-isilon",
+	"powermax":   "csi-powermax",
+	"powerstore": "csi-powerstore",
+	"unity":      "csi-unity",
+}
+
+// InitRelatedImagesCache reads all RELATED_IMAGE_* environment variables and caches them
+func InitRelatedImagesCache() {
+	relatedImagesOnce.Do(func() {
+		relatedImagesCache = make(map[string]string)
+		for _, env := range os.Environ() {
+			if strings.HasPrefix(env, "RELATED_IMAGE_") {
+				parts := strings.SplitN(env, "=", 2)
+				if len(parts) == 2 {
+					// Remove "RELATED_IMAGE_" prefix to get the image key
+					key := strings.TrimPrefix(parts[0], "RELATED_IMAGE_")
+					relatedImagesCache[key] = parts[1]
+				}
+			}
+		}
+
+		// Register driver-type aliases so that callers using the CSIDriverType
+		// string (e.g. "powerflex") find the image stored under the CSV key
+		// (e.g. "csi-vxflexos"). Explicit env vars always take precedence.
+		for alias, canonical := range driverImageAliases {
+			if img, exists := relatedImagesCache[canonical]; exists {
+				if _, already := relatedImagesCache[alias]; !already {
+					relatedImagesCache[alias] = img
+				}
+			}
+		}
+
+		log := logger.GetLogger(context.Background())
+		log.Infow("Initialized RELATED_IMAGE cache", "imageCount", len(relatedImagesCache))
+	})
+}
+
+// GetRelatedImage retrieves an image from the environment variable cache
+func GetRelatedImage(imageKey string) (string, bool) {
+	if relatedImagesCache == nil {
+		InitRelatedImagesCache()
+	}
+	img, found := relatedImagesCache[imageKey]
+	return img, found
+}
+
+// GetRelatedImagesCount returns the number of cached related images (for testing)
+func GetRelatedImagesCount() int {
+	if relatedImagesCache == nil {
+		InitRelatedImagesCache()
+	}
+	return len(relatedImagesCache)
+}
+
 const (
 	// DefaultReleaseName constant
 	DefaultReleaseName = "<DriverDefaultReleaseName>"
@@ -226,7 +295,14 @@ func UpdateContainerApply(ctx context.Context, toBeApplied []csmv1.ContainerTemp
 					goto applySidecarPolicy
 				}
 			}
-			if cr.Spec.CustomRegistry != "" {
+			// Check environment variables for sidecar images
+			if envImg, found := GetRelatedImage(ctr.Name); found {
+				if cr.Spec.CustomRegistry != "" {
+					*c.Image = ResolveImage(ctx, envImg, cr)
+				} else {
+					*c.Image = envImg
+				}
+			} else if cr.Spec.CustomRegistry != "" {
 				*c.Image = ResolveImage(ctx, string(*c.Image), cr)
 			} else if ctr.Image != "" {
 				*c.Image = string(ctr.Image)
@@ -250,6 +326,15 @@ func UpdateContainerApply(ctx context.Context, toBeApplied []csmv1.ContainerTemp
 				*c.Image = img
 				return
 			}
+		}
+		// Check environment variables for sidecar images
+		if envImg, found := GetRelatedImage(*c.Name); found {
+			if cr.Spec.CustomRegistry != "" {
+				*c.Image = ResolveImage(ctx, envImg, cr)
+			} else {
+				*c.Image = envImg
+			}
+			return
 		}
 		if cr.Spec.CustomRegistry != "" {
 			*c.Image = ResolveImage(ctx, string(*c.Image), cr)
@@ -1567,6 +1652,12 @@ func GetFinalImage(ctx context.Context, cr csmv1.ContainerStorageModule, matched
 		if img := matched.Images[component.Name]; img != "" {
 			return img
 		}
+	}
+	if envImg, found := GetRelatedImage(component.Name); found {
+		if cr.Spec.CustomRegistry != "" {
+			return ResolveImage(ctx, envImg, cr)
+		}
+		return envImg
 	}
 	if cr.Spec.CustomRegistry != "" {
 		return ResolveImage(ctx, GetImageField(YamlString), cr)

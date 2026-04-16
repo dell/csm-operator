@@ -188,22 +188,36 @@ func getResiliencyEnv(resiliencyModule csmv1.Module, _ csmv1.DriverType) string 
 // Apply resiliency module from the manifest file to the podmon sidecar
 func modifyPodmon(ctx context.Context, component csmv1.ContainerTemplate, container *acorev1.ContainerApplyConfiguration, matched operatorutils.VersionSpec, cr csmv1.ContainerStorageModule) {
 	matchedImageApplied := false
-	if matched.Version != "" {
+	if matched.Version != "" && container.Name != nil {
 		containerName := *container.Name
 		if img := matched.Images[containerName]; img != "" {
 			*container.Image = img
 			matchedImageApplied = true
 		}
 	}
-	if !matchedImageApplied && cr.Spec.CustomRegistry != "" {
-		image := operatorutils.ResolveImage(ctx, *container.Image, cr)
-		*container.Image = image
-	} else if !matchedImageApplied && component.Image != "" {
-		image := string(component.Image)
-		if container.Image != nil {
-			*container.Image = image
+	if !matchedImageApplied {
+		if container.Name != nil {
+			if envImg, found := operatorutils.GetRelatedImage(*container.Name); found {
+				if cr.Spec.CustomRegistry != "" {
+					*container.Image = operatorutils.ResolveImage(ctx, envImg, cr)
+				} else {
+					*container.Image = envImg
+				}
+				matchedImageApplied = true
+			}
 		}
-		container.Image = &image
+	}
+	if !matchedImageApplied {
+		if cr.Spec.CustomRegistry != "" && container.Image != nil {
+			image := operatorutils.ResolveImage(ctx, *container.Image, cr)
+			*container.Image = image
+		} else if component.Image != "" {
+			image := string(component.Image)
+			if container.Image != nil {
+				*container.Image = image
+			}
+			container.Image = &image
+		}
 	}
 
 	if component.ImagePullPolicy != "" {
