@@ -565,7 +565,7 @@ setupNamespaces
 # Install Gateway API and NGINX Gateway Fabric CRDs (prerequisite for auth v2.5.0+)
 if [[ "$AUTH_WILL_RUN" == "true" ]] && [ "$IS_OPENSHIFT" != "true" ]; then
   echo "Installing Gateway API CRDs..."
-  kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
+  kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/standard-install.yaml
   echo "Installing NGINX Gateway Fabric CRDs..."
   kubectl apply --server-side -f https://raw.githubusercontent.com/nginx/nginx-gateway-fabric/v2.4.2/deploy/crds.yaml
 fi

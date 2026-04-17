@@ -13,11 +13,11 @@ spec:
       enabled: true
       forceRemoveModule: true
       components:
-        # For Kubernetes Container Platform only
+        # For Kubernetes Container Platform only (ignored on OpenShift)
         # enabled: Enable/Disable Gateway API Controller (NGINX Gateway Fabric)
         # Allowed values:
         #   true: enable deployment of Gateway API Controller
-        #   false: disable deployment of Gateway API Controller only if you have your own gateway. Set the appropriate gatewayParentRef in the proxy-server section
+        #   false: disable deployment of Gateway API Controller only if you have your own gateway.
         # Default value: true
         - name: nginx-gateway-fabric
           enabled: true

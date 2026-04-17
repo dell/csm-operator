@@ -2354,6 +2354,11 @@ func getHosts(cr csmv1.ContainerStorageModule) ([]string, error) {
 				// proxyServerIngress.hosts
 				hosts = append(hosts, proxyServerIngress.Hosts...)
 			}
+
+			// gateway.hosts (v2.5.0+)
+			if component.Gateway != nil {
+				hosts = append(hosts, component.Gateway.Hosts...)
+			}
 		}
 	}
 
@@ -2361,6 +2366,10 @@ func getHosts(cr csmv1.ContainerStorageModule) ([]string, error) {
 }
 
 func getClassName(isOpenShift bool, cr csmv1.ContainerStorageModule) (string, error) {
+	if isOpenShift {
+		return "openshift-default", nil
+	}
+
 	authModule, err := getAuthorizationModule(cr)
 	if err != nil {
 		return "", err
@@ -2369,11 +2378,7 @@ func getClassName(isOpenShift bool, cr csmv1.ContainerStorageModule) (string, er
 	for _, component := range authModule.Components {
 		if component.Name == AuthProxyServerComponent {
 			for _, proxyServerIngress := range component.ProxyServerIngress {
-				if !isOpenShift {
-					proxyIngressClassName = proxyServerIngress.IngressClassName
-				} else {
-					proxyIngressClassName = "openshift-default"
-				}
+				proxyIngressClassName = proxyServerIngress.IngressClassName
 			}
 		}
 	}

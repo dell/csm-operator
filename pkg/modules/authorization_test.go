@@ -4069,3 +4069,120 @@ func TestGetAuthApplyCR_EmptyVersionSkipsConfigMap(t *testing.T) {
 		t.Fatalf("empty version should skip ConfigMap images, but ConfigMap image was applied")
 	}
 }
+
+func TestGetClassName(t *testing.T) {
+	tests := []struct {
+		name        string
+		isOpenShift bool
+		cr          csmv1.ContainerStorageModule
+		want        string
+		wantErr     bool
+	}{
+		{
+			name:        "OpenShift returns openshift-default",
+			isOpenShift: true,
+			cr:          createAuthCRWithGatewayAPI(),
+			want:        "openshift-default",
+		},
+		{
+			name:        "Kubernetes returns IngressClassName from ProxyServerIngress",
+			isOpenShift: false,
+			cr: func() csmv1.ContainerStorageModule {
+				cr := createAuthCRWithGatewayAPI()
+				cr.Spec.Modules[0].Components[0].ProxyServerIngress = []csmv1.ProxyServerIngress{
+					{IngressClassName: "nginx"},
+				}
+				return cr
+			}(),
+			want: "nginx",
+		},
+		{
+			name:        "Kubernetes with empty ProxyServerIngress",
+			isOpenShift: false,
+			cr:          createAuthCRWithGatewayAPI(),
+			want:        "",
+		},
+		{
+			name:        "No auth module returns error",
+			isOpenShift: false,
+			cr:          createCRWithoutAuthModule(),
+			wantErr:     true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset global variable before each test
+			proxyIngressClassName = ""
+			got, err := getClassName(tt.isOpenShift, tt.cr)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func TestGetHosts(t *testing.T) {
+	tests := []struct {
+		name      string
+		cr        csmv1.ContainerStorageModule
+		wantHosts []string
+		wantErr   bool
+	}{
+		{
+			name: "Collects hostname and gateway hosts",
+			cr: func() csmv1.ContainerStorageModule {
+				cr := createAuthCRWithGatewayAPI()
+				cr.Spec.Modules[0].Components[0].Hostname = "csm-authorization.com"
+				cr.Spec.Modules[0].Components[0].Gateway = &csmv1.ProxyServerGateway{
+					Hosts: []string{"router-internal.openshift-ingress.svc.cluster.local"},
+				}
+				return cr
+			}(),
+			wantHosts: []string{"csm-authorization.com", "router-internal.openshift-ingress.svc.cluster.local"},
+		},
+		{
+			name: "Collects hostname and proxyServerIngress hosts",
+			cr: func() csmv1.ContainerStorageModule {
+				cr := createAuthCRWithGatewayAPI()
+				cr.Spec.Modules[0].Components[0].Hostname = "csm-authorization.com"
+				cr.Spec.Modules[0].Components[0].Gateway = nil
+				cr.Spec.Modules[0].Components[0].ProxyServerIngress = []csmv1.ProxyServerIngress{
+					{Hosts: []string{"ingress-host.example.com"}},
+				}
+				return cr
+			}(),
+			wantHosts: []string{"csm-authorization.com", "ingress-host.example.com"},
+		},
+		{
+			name: "Nil gateway does not panic",
+			cr: func() csmv1.ContainerStorageModule {
+				cr := createAuthCRWithGatewayAPI()
+				cr.Spec.Modules[0].Components[0].Hostname = "csm-authorization.com"
+				cr.Spec.Modules[0].Components[0].Gateway = nil
+				return cr
+			}(),
+			wantHosts: []string{"csm-authorization.com"},
+		},
+		{
+			name:    "No auth module returns error",
+			cr:      createCRWithoutAuthModule(),
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getHosts(tt.cr)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantHosts, got)
+			}
+		})
+	}
+}

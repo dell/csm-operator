@@ -437,13 +437,46 @@ func splitModuleComponent(key string) (string, string) {
 	return key, ""
 }
 
-// authProxyHost is the PROXY_HOST value used for authorization test variants.
-// The data plane service is auto-created by nginx-gateway-fabric as <ns>-gateway-nginx.
-const authProxyHost = "${E2E_NS_AUTH}-gateway-nginx.${E2E_NS_AUTH}.svc.cluster.local"
+// isOpenShift detects if the cluster is OpenShift by checking environment variables
+// or the IS_OPENSHIFT flag which can be set explicitly for testing.
+func isOpenShift() bool {
+	// Check explicit flag first (for testing)
+	if os.Getenv("IS_OPENSHIFT") == "true" {
+		return true
+	}
+	// Check for OpenShift-specific environment variables
+	if os.Getenv("OPENSHIFT_BUILD_NAME") != "" {
+		return true
+	}
+	// Check for OpenShift API server
+	if strings.Contains(os.Getenv("KUBERNETES_SERVICE_HOST"), "openshift") {
+		return true
+	}
+	return false
+}
 
-// authProxyHostN1 is the PROXY_HOST value for n-1 authorization test variants
-// that use ingress-nginx (Ingress API) instead of nginx-gateway-fabric (Gateway API).
-const authProxyHostN1 = "${E2E_NS_AUTH}-ingress-nginx-controller.${E2E_NS_AUTH}.svc.cluster.local"
+// getAuthProxyHost returns the appropriate PROXY_HOST based on the platform.
+// For OpenShift, uses the router internal service.
+// For Kubernetes with nginx-gateway-fabric, uses the Gateway service.
+func getAuthProxyHost(authNamespace string) string {
+	if isOpenShift() {
+		return "router-internal-default.openshift-ingress.svc.cluster.local"
+	}
+	return fmt.Sprintf("%s-gateway-nginx.%s.svc.cluster.local", authNamespace, authNamespace)
+}
+
+// TODO: Remove getAuthProxyHostN1 in the next release when n-1 also uses
+// Gateway API (auth v2.5.0+) and ingress-nginx is no longer tested.
+
+// getAuthProxyHostN1 returns the appropriate PROXY_HOST for n-1 authorization variants.
+// For OpenShift, uses the router internal service.
+// For Kubernetes with ingress-nginx, uses the ingress-nginx controller service.
+func getAuthProxyHostN1(authNamespace string) string {
+	if isOpenShift() {
+		return "router-internal-default.openshift-ingress.svc.cluster.local"
+	}
+	return fmt.Sprintf("%s-ingress-nginx-controller.%s.svc.cluster.local", authNamespace, authNamespace)
+}
 
 // testfileSpecs returns the complete list of 40 TestfileSpec entries.
 func testfileSpecs() []TestfileSpec {
@@ -465,7 +498,7 @@ func testfileSpecs() []TestfileSpec {
 			Name:           "vxflexos",
 			EnableModules:  []string{"authorization"},
 			ComponentEnvOverrides: map[string]map[string]string{
-				"authorization/karavi-authorization-proxy": {"PROXY_HOST": authProxyHost},
+				"authorization/karavi-authorization-proxy": {"PROXY_HOST": getAuthProxyHost("${E2E_NS_AUTH}")},
 			},
 		},
 		{
@@ -488,7 +521,7 @@ func testfileSpecs() []TestfileSpec {
 				"observability": {"otel-collector", "cert-manager", "metrics-powerflex"},
 			},
 			ComponentEnvOverrides: map[string]map[string]string{
-				"authorization/karavi-authorization-proxy": {"PROXY_HOST": authProxyHost},
+				"authorization/karavi-authorization-proxy": {"PROXY_HOST": getAuthProxyHost("${E2E_NS_AUTH}")},
 			},
 		},
 		{
@@ -526,7 +559,7 @@ func testfileSpecs() []TestfileSpec {
 			Name:           "isilon",
 			EnableModules:  []string{"authorization"},
 			ComponentEnvOverrides: map[string]map[string]string{
-				"authorization/karavi-authorization-proxy": {"PROXY_HOST": authProxyHost},
+				"authorization/karavi-authorization-proxy": {"PROXY_HOST": getAuthProxyHost("${E2E_NS_AUTH}")},
 			},
 		},
 		{
@@ -549,7 +582,7 @@ func testfileSpecs() []TestfileSpec {
 				"observability": {"otel-collector", "cert-manager", "metrics-powerscale"},
 			},
 			ComponentEnvOverrides: map[string]map[string]string{
-				"authorization/karavi-authorization-proxy": {"PROXY_HOST": authProxyHost},
+				"authorization/karavi-authorization-proxy": {"PROXY_HOST": getAuthProxyHost("${E2E_NS_AUTH}")},
 			},
 		},
 		{
@@ -589,7 +622,7 @@ func testfileSpecs() []TestfileSpec {
 			Name:           "powerstore",
 			EnableModules:  []string{"authorization"},
 			ComponentEnvOverrides: map[string]map[string]string{
-				"authorization/karavi-authorization-proxy": {"PROXY_HOST": authProxyHost},
+				"authorization/karavi-authorization-proxy": {"PROXY_HOST": getAuthProxyHost("${E2E_NS_AUTH}")},
 			},
 		},
 		{
@@ -634,7 +667,7 @@ func testfileSpecs() []TestfileSpec {
 			Name:           "powermax",
 			EnableModules:  []string{"authorization"},
 			ComponentEnvOverrides: map[string]map[string]string{
-				"authorization/karavi-authorization-proxy": {"PROXY_HOST": authProxyHost},
+				"authorization/karavi-authorization-proxy": {"PROXY_HOST": getAuthProxyHost("${E2E_NS_AUTH}")},
 			},
 		},
 		{
@@ -657,7 +690,7 @@ func testfileSpecs() []TestfileSpec {
 				"observability": {"otel-collector", "cert-manager", "metrics-powermax"},
 			},
 			ComponentEnvOverrides: map[string]map[string]string{
-				"authorization/karavi-authorization-proxy": {"PROXY_HOST": authProxyHost},
+				"authorization/karavi-authorization-proxy": {"PROXY_HOST": getAuthProxyHost("${E2E_NS_AUTH}")},
 			},
 		},
 		{
@@ -690,7 +723,7 @@ func testfileSpecs() []TestfileSpec {
 			Name:           "vxflexos",
 			EnableModules:  []string{"authorization"},
 			ComponentEnvOverrides: map[string]map[string]string{
-				"authorization/karavi-authorization-proxy": {"PROXY_HOST": authProxyHostN1},
+				"authorization/karavi-authorization-proxy": {"PROXY_HOST": getAuthProxyHostN1("${E2E_NS_AUTH}")},
 			},
 		},
 
@@ -763,7 +796,7 @@ func testfileSpecs() []TestfileSpec {
 			},
 			ComponentEnvOverrides: map[string]map[string]string{
 				"csireverseproxy/csipowermax-reverseproxy": {"DeployAsSidecar": "true"},
-				"authorization/karavi-authorization-proxy": {"PROXY_HOST": authProxyHost},
+				"authorization/karavi-authorization-proxy": {"PROXY_HOST": getAuthProxyHost("${E2E_NS_AUTH}")},
 			},
 		},
 
