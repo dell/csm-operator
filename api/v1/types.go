@@ -379,6 +379,14 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Skip Certificate Validation"
 	SkipCertificateValidation bool `json:"skipCertificateValidation,omitempty" yaml:"skipCertificateValidation,omitempty"`
 
+	// RedisUsername is the username for the redis instance
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Username"
+	RedisUsername string `json:"redisUsername,omitempty" yaml:"redisUsername,omitempty"`
+
+	// RedisPassword is the password for the redis instance
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Password"
+	RedisPassword string `json:"redisPassword,omitempty" yaml:"redisPassword,omitempty"`
+
 	// RedisName is the name of the redis statefulset
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis StatefulSet Name"
 	RedisName string `json:"redisName,omitempty" yaml:"redisName,omitempty"`

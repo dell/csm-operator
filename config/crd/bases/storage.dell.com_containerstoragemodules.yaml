@@ -397,6 +397,10 @@ spec:
                         redisName:
                           description: RedisName is the name of the redis statefulset
                           type: string
+                        redisPassword:
+                          description: RedisPassword is the password for the redis
+                            instance
+                          type: string
                         redisReplicas:
                           description: RedisReplicas is the number of replicas for
                             the redis deployment
@@ -441,6 +445,10 @@ spec:
                             type: object
                           maxItems: 1
                           type: array
+                        redisUsername:
+                          description: RedisUsername is the username for the redis
+                            instance
+                          type: string
                         roleService:
                           description: RoleService is the image tag for the Container
                           type: string
@@ -921,6 +929,10 @@ spec:
                         redisName:
                           description: RedisName is the name of the redis statefulset
                           type: string
+                        redisPassword:
+                          description: RedisPassword is the password for the redis
+                            instance
+                          type: string
                         redisReplicas:
                           description: RedisReplicas is the number of replicas for
                             the redis deployment
@@ -965,6 +977,10 @@ spec:
                             type: object
                           maxItems: 1
                           type: array
+                        redisUsername:
+                          description: RedisUsername is the username for the redis
+                            instance
+                          type: string
                         roleService:
                           description: RoleService is the image tag for the Container
                           type: string
@@ -1466,6 +1482,10 @@ spec:
                           redisName:
                             description: RedisName is the name of the redis statefulset
                             type: string
+                          redisPassword:
+                            description: RedisPassword is the password for the redis
+                              instance
+                            type: string
                           redisReplicas:
                             description: RedisReplicas is the number of replicas for
                               the redis deployment
@@ -1512,6 +1532,10 @@ spec:
                               type: object
                             maxItems: 1
                             type: array
+                          redisUsername:
+                            description: RedisUsername is the username for the redis
+                              instance
+                            type: string
                           roleService:
                             description: RoleService is the image tag for the Container
                             type: string
@@ -1990,6 +2014,10 @@ spec:
                         redisName:
                           description: RedisName is the name of the redis statefulset
                           type: string
+                        redisPassword:
+                          description: RedisPassword is the password for the redis
+                            instance
+                          type: string
                         redisReplicas:
                           description: RedisReplicas is the number of replicas for
                             the redis deployment
@@ -2034,6 +2062,10 @@ spec:
                             type: object
                           maxItems: 1
                           type: array
+                        redisUsername:
+                          description: RedisUsername is the username for the redis
+                            instance
+                          type: string
                         roleService:
                           description: RoleService is the image tag for the Container
                           type: string
@@ -2520,6 +2552,10 @@ spec:
                           redisName:
                             description: RedisName is the name of the redis statefulset
                             type: string
+                          redisPassword:
+                            description: RedisPassword is the password for the redis
+                              instance
+                            type: string
                           redisReplicas:
                             description: RedisReplicas is the number of replicas for
                               the redis deployment
@@ -2566,6 +2602,10 @@ spec:
                               type: object
                             maxItems: 1
                             type: array
+                          redisUsername:
+                            description: RedisUsername is the username for the redis
+                              instance
+                            type: string
                           roleService:
                             description: RoleService is the image tag for the Container
                             type: string
@@ -3085,6 +3125,10 @@ spec:
                             redisName:
                               description: RedisName is the name of the redis statefulset
                               type: string
+                            redisPassword:
+                              description: RedisPassword is the password for the redis
+                                instance
+                              type: string
                             redisReplicas:
                               description: RedisReplicas is the number of replicas
                                 for the redis deployment
@@ -3131,6 +3175,10 @@ spec:
                                 type: object
                               maxItems: 1
                               type: array
+                            redisUsername:
+                              description: RedisUsername is the username for the redis
+                                instance
+                              type: string
                             roleService:
                               description: RoleService is the image tag for the Container
                               type: string
@@ -3637,6 +3685,10 @@ spec:
                             redisName:
                               description: RedisName is the name of the redis statefulset
                               type: string
+                            redisPassword:
+                              description: RedisPassword is the password for the redis
+                                instance
+                              type: string
                             redisReplicas:
                               description: RedisReplicas is the number of replicas
                                 for the redis deployment
@@ -3683,6 +3735,10 @@ spec:
                                 type: object
                               maxItems: 1
                               type: array
+                            redisUsername:
+                              description: RedisUsername is the username for the redis
+                                instance
+                              type: string
                             roleService:
                               description: RoleService is the image tag for the Container
                               type: string

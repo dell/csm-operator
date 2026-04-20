@@ -1045,6 +1045,22 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 		},
 		"success - use default redis kubernetes secret": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
 			customResource := CsmAuthorizationCR()
+			for i := range customResource.Spec.Modules {
+				tmp := customResource.Spec.Modules[i]
+
+				if tmp.Name == csmv1.AuthorizationServer {
+					for j := range tmp.Components {
+						if tmp.Components[j].Name == AuthRedisComponent {
+							tmp.Components[j].RedisUsername = "test-user"
+							tmp.Components[j].RedisPassword = "test-password"
+							tmp.Components[j].RedisSecretProviderClass = nil
+							break
+						}
+					}
+					customResource.Spec.Modules[i] = tmp
+					break
+				}
+			}
 
 			err := certmanagerv1.AddToScheme(scheme.Scheme)
 			if err != nil {
@@ -1060,17 +1076,22 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 				tmp := customResource.Spec.Modules[i]
 
 				if tmp.Name == csmv1.AuthorizationServer {
-					tmp.Components = append(tmp.Components, csmv1.ContainerTemplate{
-						Name: AuthRedisComponent,
-						RedisSecretProviderClass: []csmv1.RedisSecretProviderClass{
-							{
-								SecretProviderClassName: "secret-provider-class-1",
-								RedisSecretName:         "test-secret",
-								RedisUsernameKey:        "key",
-								RedisPasswordKey:        "key",
-							},
-						},
-					})
+					for j := range tmp.Components {
+						if tmp.Components[j].Name == AuthRedisComponent {
+							tmp.Components[j].RedisUsername = ""
+							tmp.Components[j].RedisPassword = ""
+							tmp.Components[j].RedisSecretProviderClass = []csmv1.RedisSecretProviderClass{
+								{
+									SecretProviderClassName: "secret-provider-class-1",
+									RedisSecretName:         "test-secret",
+									RedisUsernameKey:        "key",
+									RedisPasswordKey:        "key",
+								},
+							}
+							break
+						}
+					}
+					customResource.Spec.Modules[i] = tmp
 					break
 				}
 			}
@@ -2364,6 +2385,143 @@ func TestAuthorizationCrdDeploy(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateRedisConfig(t *testing.T) {
+	tests := []struct {
+		name          string
+		component     csmv1.ContainerTemplate
+		expectError   bool
+		errorContains string
+	}{
+		{
+			name: "success - direct credentials provided",
+			component: csmv1.ContainerTemplate{
+				Name:           AuthRedisComponent,
+				RedisUsername:  "test-user",
+				RedisPassword:  "test-password",
+				RedisName:      "redis-csm",
+				RedisCommander: "rediscommander",
+			},
+			expectError: false,
+		},
+		{
+			name: "success - secret provider class provided",
+			component: csmv1.ContainerTemplate{
+				Name: AuthRedisComponent,
+				RedisSecretProviderClass: []csmv1.RedisSecretProviderClass{
+					{
+						SecretProviderClassName: "redis-spc",
+						RedisSecretName:         "redis-secret",
+						RedisUsernameKey:        "username",
+						RedisPasswordKey:        "password",
+					},
+				},
+				RedisName:      "redis-csm",
+				RedisCommander: "rediscommander",
+			},
+			expectError: false,
+		},
+		{
+			name: "error - secret provider class with empty entry",
+			component: csmv1.ContainerTemplate{
+				Name: AuthRedisComponent,
+				RedisSecretProviderClass: []csmv1.RedisSecretProviderClass{
+					{
+						// All empty
+					},
+				},
+				RedisName:      "redis-csm",
+				RedisCommander: "rediscommander",
+			},
+			expectError: true,
+		},
+		{
+			name: "error - no credentials provided",
+			component: csmv1.ContainerTemplate{
+				Name:           AuthRedisComponent,
+				RedisName:      "redis-csm",
+				RedisCommander: "rediscommander",
+			},
+			expectError:   true,
+			errorContains: "redis credentials are required",
+		},
+		{
+			name: "error - only username provided",
+			component: csmv1.ContainerTemplate{
+				Name:           AuthRedisComponent,
+				RedisUsername:  "test-user",
+				RedisName:      "redis-csm",
+				RedisCommander: "rediscommander",
+			},
+			expectError:   true,
+			errorContains: "must be provided together",
+		},
+		{
+			name: "error - only password provided",
+			component: csmv1.ContainerTemplate{
+				Name:           AuthRedisComponent,
+				RedisPassword:  "test-password",
+				RedisName:      "redis-csm",
+				RedisCommander: "rediscommander",
+			},
+			expectError:   true,
+			errorContains: "must be provided together",
+		},
+		{
+			name: "error - incomplete secret provider class",
+			component: csmv1.ContainerTemplate{
+				Name: AuthRedisComponent,
+				RedisSecretProviderClass: []csmv1.RedisSecretProviderClass{
+					{
+						SecretProviderClassName: "redis-spc",
+						// Missing RedisSecretName, RedisUsernameKey, RedisPasswordKey
+					},
+				},
+				RedisName:      "redis-csm",
+				RedisCommander: "rediscommander",
+			},
+			expectError:   true,
+			errorContains: "requires all of",
+		},
+		{
+			name: "error - both direct credentials and secret provider class provided",
+			component: csmv1.ContainerTemplate{
+				Name:          AuthRedisComponent,
+				RedisUsername: "test-user",
+				RedisPassword: "test-password",
+				RedisSecretProviderClass: []csmv1.RedisSecretProviderClass{
+					{
+						SecretProviderClassName: "redis-spc",
+						RedisSecretName:         "redis-secret",
+						RedisUsernameKey:        "username",
+						RedisPasswordKey:        "password",
+					},
+				},
+				RedisName:      "redis-csm",
+				RedisCommander: "rediscommander",
+			},
+			expectError:   true,
+			errorContains: "specify either",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := validateRedisConfig(tt.component)
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("expected error but got nil")
+				} else if tt.errorContains != "" && !strings.Contains(err.Error(), tt.errorContains) {
+					t.Errorf("expected error to contain '%s', got: %v", tt.errorContains, err)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("expected no error but got: %v", err)
+				}
 			}
 		})
 	}

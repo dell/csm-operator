@@ -937,6 +937,52 @@ func (step *Step) setUpStorageClass(_ Resource, templateFile, crType string) err
 	return nil
 }
 
+func (step *Step) createResourceInNamespaceWithType(_ Resource, templateFile, namespace, crType string) error {
+	// Expand environment variables in the namespace parameter (e.g., ${E2E_NS_AUTH})
+	expandedNamespace := os.ExpandEnv(namespace)
+
+	// Read the template file and expand environment variables and driver-specific substitutions
+	fileString, err := renderTemplate(crType, templateFile)
+	if err != nil {
+		return err
+	}
+
+	filePath, err := writeRenderedFile(templateFile, fileString)
+	if err != nil {
+		return err
+	}
+
+	// Apply the resource to the specified namespace
+	err = execCommand("kubectl", "apply", "-n", expandedNamespace, "-f", filePath)
+	if err != nil {
+		return fmt.Errorf("failed to apply resource spec file %s in namespace %s: %v", filePath, expandedNamespace, err)
+	}
+	return nil
+}
+
+func (step *Step) createResourceInNamespace(_ Resource, templateFile, namespace string) error {
+	// Expand environment variables in the namespace parameter (e.g., ${E2E_NS_AUTH})
+	expandedNamespace := os.ExpandEnv(namespace)
+
+	// Read the template file and expand environment variables only
+	fileString, err := renderTemplate("", templateFile)
+	if err != nil {
+		return err
+	}
+
+	filePath, err := writeRenderedFile(templateFile, fileString)
+	if err != nil {
+		return err
+	}
+
+	// Apply the resource to the specified namespace
+	err = execCommand("kubectl", "apply", "-n", expandedNamespace, "-f", filePath)
+	if err != nil {
+		return fmt.Errorf("failed to apply resource spec file %s in namespace %s: %v", filePath, expandedNamespace, err)
+	}
+	return nil
+}
+
 func (step *Step) createResource(_ Resource, templateFile, crType string) error {
 	fileString, err := renderTemplate(crType, templateFile)
 	if err != nil {

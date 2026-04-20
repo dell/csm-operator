@@ -105,47 +105,47 @@ $CONTAINER_RUNTIME run --rm -it -v $PWD/conjur-csm-authorization:/home/cli docke
 
 cat <<EOF > conjur-csm-authorization/config.yaml
 - !host
-  id: system:serviceaccount:authorization:storage-service
+  id: system:serviceaccount:${E2E_NS_AUTH}:storage-service
 
 - !host
-  id: system:serviceaccount:authorization:proxy-server
+  id: system:serviceaccount:${E2E_NS_AUTH}:proxy-server
 
 - !host
-  id: system:serviceaccount:authorization:tenant-service
+  id: system:serviceaccount:${E2E_NS_AUTH}:tenant-service
 
 - !host
-  id: system:serviceaccount:authorization:redis
+  id: system:serviceaccount:${E2E_NS_AUTH}:redis
 
 - !host
-  id: system:serviceaccount:authorization:sentinel
+  id: system:serviceaccount:${E2E_NS_AUTH}:sentinel
 
 - !policy
   id: csm-authorization
   body:
     - !host
-      id: system:serviceaccount:authorization:storage-service
+      id: system:serviceaccount:${E2E_NS_AUTH}:storage-service
       annotations:
-        authn-jwt/kube/kubernetes.io/namespace: "authorization"
+        authn-jwt/kube/kubernetes.io/namespace: "${E2E_NS_AUTH}"
         authn-jwt/kube/kubernetes.io/serviceaccount/name: "storage-service"
     - !host
-      id: system:serviceaccount:authorization:proxy-server
+      id: system:serviceaccount:${E2E_NS_AUTH}:proxy-server
       annotations:
-        authn-jwt/kube/kubernetes.io/namespace: "authorization"
+        authn-jwt/kube/kubernetes.io/namespace: "${E2E_NS_AUTH}"
         authn-jwt/kube/kubernetes.io/serviceaccount/name: "proxy-server"
     - !host
-      id: system:serviceaccount:authorization:tenant-service
+      id: system:serviceaccount:${E2E_NS_AUTH}:tenant-service
       annotations:
-        authn-jwt/kube/kubernetes.io/namespace: "authorization"
+        authn-jwt/kube/kubernetes.io/namespace: "${E2E_NS_AUTH}"
         authn-jwt/kube/kubernetes.io/serviceaccount/name: "tenant-service"
     - !host
-      id: system:serviceaccount:authorization:redis
+      id: system:serviceaccount:${E2E_NS_AUTH}:redis
       annotations:
-        authn-jwt/kube/kubernetes.io/namespace: "authorization"
+        authn-jwt/kube/kubernetes.io/namespace: "${E2E_NS_AUTH}"
         authn-jwt/kube/kubernetes.io/serviceaccount/name: "redis"
     - !host
-      id: system:serviceaccount:authorization:sentinel
+      id: system:serviceaccount:${E2E_NS_AUTH}:sentinel
       annotations:
-        authn-jwt/kube/kubernetes.io/namespace: "authorization"
+        authn-jwt/kube/kubernetes.io/namespace: "${E2E_NS_AUTH}"
         authn-jwt/kube/kubernetes.io/serviceaccount/name: "sentinel"
 
 - !policy
@@ -171,11 +171,11 @@ cat <<EOF > conjur-csm-authorization/config.yaml
 
 - !permit
   role:
-    - !host csm-authorization/system:serviceaccount:authorization:storage-service
-    - !host csm-authorization/system:serviceaccount:authorization:proxy-server
-    - !host csm-authorization/system:serviceaccount:authorization:tenant-service
-    - !host csm-authorization/system:serviceaccount:authorization:redis
-    - !host csm-authorization/system:serviceaccount:authorization:sentinel
+    - !host csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:storage-service
+    - !host csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:proxy-server
+    - !host csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:tenant-service
+    - !host csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:redis
+    - !host csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:sentinel
   privilege: [ read, authenticate ]
   resource: !webservice conjur/authn-jwt/kube
 EOF
@@ -206,11 +206,11 @@ cat <<EOF > conjur-csm-authorization/secrets.yaml
     - &variables []
     - !permit
       role:
-        - !host /csm-authorization/system:serviceaccount:authorization:storage-service
-        - !host /csm-authorization/system:serviceaccount:authorization:proxy-server
-        - !host /csm-authorization/system:serviceaccount:authorization:tenant-service
-        - !host /csm-authorization/system:serviceaccount:authorization:redis
-        - !host /csm-authorization/system:serviceaccount:authorization:sentinel
+        - !host /csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:storage-service
+        - !host /csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:proxy-server
+        - !host /csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:tenant-service
+        - !host /csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:redis
+        - !host /csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:sentinel
       privilege: [ read, execute ]
       resource: *variables
 EOF
@@ -244,11 +244,11 @@ cat <<EOF > conjur-csm-authorization/secrets.yaml
       - !variable config-object
     - !permit
       role:
-        - !host /csm-authorization/system:serviceaccount:authorization:storage-service
-        - !host /csm-authorization/system:serviceaccount:authorization:proxy-server
-        - !host /csm-authorization/system:serviceaccount:authorization:tenant-service
-        - !host /csm-authorization/system:serviceaccount:authorization:redis
-        - !host /csm-authorization/system:serviceaccount:authorization:sentinel
+        - !host /csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:storage-service
+        - !host /csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:proxy-server
+        - !host /csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:tenant-service
+        - !host /csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:redis
+        - !host /csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:sentinel
       privilege: [ read, execute ]
       resource: *variables
 EOF
@@ -297,7 +297,7 @@ apiVersion: secrets-store.csi.x-k8s.io/v1
 kind: SecretProviderClass
 metadata:
   name: conjur
-  namespace: authorization
+  namespace: ${E2E_NS_AUTH}
 spec:
   provider: conjur
   secretObjects:

@@ -84,6 +84,8 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Create Secret from template \[([^"]*)\] as field \[([^"]*)\] named \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpSecretFromTemplateWithFieldName)
 	runner.addStep(`^Generate and Create SFTP Secrets from template \[([^"]*)\] private-secret \[([^"]*)\] public-secret \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]$`, step.generateAndCreateSftpSecrets)
 	runner.addStep(`^Create ConfigMap with template \[([^"]*)\] name \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpConfigMap)
+	runner.addStep(`^Create resource with template \[([^\]]*)\] in namespace \[([^\]]*)\]$`, step.createResourceInNamespace)
+	runner.addStep(`^Create resource with template \[([^\]]*)\] in namespace \[([^\]]*)\] for \[([^\]]*)\]$`, step.createResourceInNamespaceWithType)
 	runner.addStep(`^Create resource with template \[([^"]*)\] for \[([^"]*)\]`, step.createResource)
 	runner.addStep(`^Create StorageClass with template \[([^"]*)\] for \[([^"]*)\]`, step.setUpStorageClass)
 	runner.addStep(`^Create \[([^"]*)\] prerequisites from CR \[(\d+)\]$`, step.createPrereqs)

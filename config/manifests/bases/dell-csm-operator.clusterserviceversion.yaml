@@ -172,6 +172,9 @@ spec:
           - description: RedisName is the name of the redis statefulset
             displayName: Redis StatefulSet Name
             path: driver.common.redisName
+          - description: RedisPassword is the password for the redis instance
+            displayName: Redis Password
+            path: driver.common.redisPassword
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: driver.common.redisReplicas
@@ -206,6 +209,9 @@ spec:
               that holds the Redis secretObject
             displayName: Redis Secret Provider Class Name
             path: driver.common.redisSecretProviderClass[0].secretProviderClassName
+          - description: RedisUsername is the username for the redis instance
+            displayName: Redis Username
+            path: driver.common.redisUsername
           - description: RoleService is the image tag for the Container
             displayName: Authorization Role Service Container Image
             path: driver.common.roleService
@@ -436,6 +442,9 @@ spec:
           - description: RedisName is the name of the redis statefulset
             displayName: Redis StatefulSet Name
             path: driver.controller.redisName
+          - description: RedisPassword is the password for the redis instance
+            displayName: Redis Password
+            path: driver.controller.redisPassword
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: driver.controller.redisReplicas
@@ -470,6 +479,9 @@ spec:
               that holds the Redis secretObject
             displayName: Redis Secret Provider Class Name
             path: driver.controller.redisSecretProviderClass[0].secretProviderClassName
+          - description: RedisUsername is the username for the redis instance
+            displayName: Redis Username
+            path: driver.controller.redisUsername
           - description: RoleService is the image tag for the Container
             displayName: Authorization Role Service Container Image
             path: driver.controller.roleService
@@ -708,6 +720,9 @@ spec:
           - description: RedisName is the name of the redis statefulset
             displayName: Redis StatefulSet Name
             path: driver.initContainers[0].redisName
+          - description: RedisPassword is the password for the redis instance
+            displayName: Redis Password
+            path: driver.initContainers[0].redisPassword
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: driver.initContainers[0].redisReplicas
@@ -742,6 +757,9 @@ spec:
               that holds the Redis secretObject
             displayName: Redis Secret Provider Class Name
             path: driver.initContainers[0].redisSecretProviderClass[0].secretProviderClassName
+          - description: RedisUsername is the username for the redis instance
+            displayName: Redis Username
+            path: driver.initContainers[0].redisUsername
           - description: RoleService is the image tag for the Container
             displayName: Authorization Role Service Container Image
             path: driver.initContainers[0].roleService
@@ -969,6 +987,9 @@ spec:
           - description: RedisName is the name of the redis statefulset
             displayName: Redis StatefulSet Name
             path: driver.node.redisName
+          - description: RedisPassword is the password for the redis instance
+            displayName: Redis Password
+            path: driver.node.redisPassword
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: driver.node.redisReplicas
@@ -1003,6 +1024,9 @@ spec:
               that holds the Redis secretObject
             displayName: Redis Secret Provider Class Name
             path: driver.node.redisSecretProviderClass[0].secretProviderClassName
+          - description: RedisUsername is the username for the redis instance
+            displayName: Redis Username
+            path: driver.node.redisUsername
           - description: RoleService is the image tag for the Container
             displayName: Authorization Role Service Container Image
             path: driver.node.roleService
@@ -1233,6 +1257,9 @@ spec:
           - description: RedisName is the name of the redis statefulset
             displayName: Redis StatefulSet Name
             path: driver.sideCars[0].redisName
+          - description: RedisPassword is the password for the redis instance
+            displayName: Redis Password
+            path: driver.sideCars[0].redisPassword
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: driver.sideCars[0].redisReplicas
@@ -1267,6 +1294,9 @@ spec:
               that holds the Redis secretObject
             displayName: Redis Secret Provider Class Name
             path: driver.sideCars[0].redisSecretProviderClass[0].secretProviderClassName
+          - description: RedisUsername is the username for the redis instance
+            displayName: Redis Username
+            path: driver.sideCars[0].redisUsername
           - description: RoleService is the image tag for the Container
             displayName: Authorization Role Service Container Image
             path: driver.sideCars[0].roleService
@@ -1507,6 +1537,9 @@ spec:
           - description: RedisName is the name of the redis statefulset
             displayName: Redis StatefulSet Name
             path: modules[0].components[0].redisName
+          - description: RedisPassword is the password for the redis instance
+            displayName: Redis Password
+            path: modules[0].components[0].redisPassword
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: modules[0].components[0].redisReplicas
@@ -1541,6 +1574,9 @@ spec:
               that holds the Redis secretObject
             displayName: Redis Secret Provider Class Name
             path: modules[0].components[0].redisSecretProviderClass[0].secretProviderClassName
+          - description: RedisUsername is the username for the redis instance
+            displayName: Redis Username
+            path: modules[0].components[0].redisUsername
           - description: RoleService is the image tag for the Container
             displayName: Authorization Role Service Container Image
             path: modules[0].components[0].roleService
@@ -1775,6 +1811,9 @@ spec:
           - description: RedisName is the name of the redis statefulset
             displayName: Redis StatefulSet Name
             path: modules[0].initContainer[0].redisName
+          - description: RedisPassword is the password for the redis instance
+            displayName: Redis Password
+            path: modules[0].initContainer[0].redisPassword
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: modules[0].initContainer[0].redisReplicas
@@ -1809,6 +1848,9 @@ spec:
               that holds the Redis secretObject
             displayName: Redis Secret Provider Class Name
             path: modules[0].initContainer[0].redisSecretProviderClass[0].secretProviderClassName
+          - description: RedisUsername is the username for the redis instance
+            displayName: Redis Username
+            path: modules[0].initContainer[0].redisUsername
           - description: RoleService is the image tag for the Container
             displayName: Authorization Role Service Container Image
             path: modules[0].initContainer[0].roleService
@@ -1952,28 +1994,27 @@ spec:
               - urn:alm:descriptor:text
         version: v1
   description: "Dell Container Storage Modules (CSM) Operator is a Kubernetes Operator
-    which can be \nused to install and manage Dell’s CSI drivers and CSM modules.
-    \nBy using Dell CSM Operator, enterprises can quickly and easily deploy the \nCSM
-    modules for CSI drivers making it easy for DevOps \nteams to build and optimize
-    their Kubernetes workloads using enterprise grade storage \nwhile consistently
-    aligning with the desired outcomes of the organization.\nThis operator is available
-    as both community and certified operator for Openshift \nand as a community operator
-    for upstream Kubernetes.\nOperator can be deployed via OperatorHub.io. using Operator
-    Lifecycle Manager (OLM)\n\n### About Dell CSM\n\nDell CSM brings powerful enterprise
-    storage features and functionality to Kubernetes for \neasier adoption of cloud
-    native workloads, improved productivity and scalable operations. \n\nCSM delivers
-    software modules for storage management that provide developers access to \nbuild
-    automation for enhanced IT needs and other critical enterprise storage features.
-    \n\nCurrently, the following modules are available as part of Dell CSM. \n*\tObservability
-    - Delivers a high-level view of the storage capacity \n  and performance usage
-    via Grafana dashboards to the Kubernetes users\n*\tReplication - Enables array
-    replication capabilities for Kubernetes users\n*\tAuthorization - Provides both
-    storage and Kubernetes administrators the ability \n  to apply RBAC for Dell CSI
-    Drivers\n*\tResiliency - Designed to make Kubernetes applications more resilient
-    to \n  node failures\n\nThese modules are available for various storage platforms
-    in the Dell portfolio, \nsuch as Dell PowerStore, Dell PowerMax, Dell PowerFlex,
-    Dell PowerScale, and Dell Unity XT.\n\nFor more information, visit [Dell’s Container
-    Storage Module web page](https://www.dell.com/en-us/dt/solutions/kubernetes-containers/kubernetes-storage.htm)\n\nAdditional
+    which can be used to install and manage Dell’s CSI drivers and CSM modules. By
+    using Dell CSM Operator, enterprises can quickly and easily deploy the CSM modules
+    for CSI drivers making it easy for DevOps teams to build and optimize their Kubernetes
+    workloads using enterprise grade storage while consistently aligning with the
+    desired outcomes of the organization.\nThis operator is available as both community
+    and certified operator for Openshift and as a community operator for upstream
+    Kubernetes.\nOperator can be deployed via OperatorHub.io. using Operator Lifecycle
+    Manager (OLM)\n\n### About Dell CSM\n\nDell CSM brings powerful enterprise storage
+    features and functionality to Kubernetes for easier adoption of cloud native workloads,
+    improved productivity and scalable operations.\nCSM delivers software modules
+    for storage management that provide developers access to build automation for
+    enhanced IT needs and other critical enterprise storage features.\nCurrently,
+    the following modules are available as part of Dell CSM. *\tObservability - Delivers
+    a high-level view of the storage capacity   and performance usage via Grafana
+    dashboards to the Kubernetes users\n*\tReplication - Enables array replication
+    capabilities for Kubernetes users\n*\tAuthorization - Provides both storage and
+    Kubernetes administrators the ability   to apply RBAC for Dell CSI Drivers\n*\tResiliency
+    - Designed to make Kubernetes applications more resilient to   node failures\n\nThese
+    modules are available for various storage platforms in the Dell portfolio, such
+    as Dell PowerStore, Dell PowerMax, Dell PowerFlex, Dell PowerScale, and Dell Unity
+    XT.\n\nFor more information, visit [Dell’s Container Storage Module web page](https://www.dell.com/en-us/dt/solutions/kubernetes-containers/kubernetes-storage.htm)\n\nAdditional
     Materials\n*\t[Documentation](https://dell.github.io/csm-docs)\n*\t[CSM Solution
     Brief](https://www.delltechnologies.com/asset/en-us/products/storage/briefs-summaries/csm-solution-brief.pdf)\n"
   displayName: Dell Container Storage Modules

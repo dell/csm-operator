@@ -276,8 +276,8 @@ function cleanupNamespaces() {
     fi
   done
   # Clean up vault and secrets-store helm releases
-  echo "Cleaning up vault and secrets-store installations..."
-  helm uninstall vault0 -n default 2>/dev/null || true
+  echo "Cleaning up vault, conjur, and secrets-store installations..."
+  helm uninstall vault0 conjur conjur-csi-provider -n default 2>/dev/null || true
   helm uninstall csi-secrets-store -n kube-system 2>/dev/null || true
   cleanupSecretsStoreCRDs
   echo "Namespace cleanup complete."

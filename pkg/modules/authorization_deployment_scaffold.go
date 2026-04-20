@@ -781,7 +781,7 @@ func buildSentinelList(replicas int, sentinelName, namespace string) string {
 }
 
 // createRedisK8sSecret creates a k8s secret for redis
-func createRedisK8sSecret(name, namespace string) corev1.Secret {
+func createRedisK8sSecret(name, namespace, username, password string) corev1.Secret {
 	return corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Secret",
@@ -792,8 +792,8 @@ func createRedisK8sSecret(name, namespace string) corev1.Secret {
 		},
 		Type: corev1.SecretTypeBasicAuth,
 		StringData: map[string]string{
-			"password":       "REDACTED",
-			"commander_user": "dev",
+			"password":       password,
+			"commander_user": username,
 		},
 	}
 }
