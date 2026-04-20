@@ -170,6 +170,7 @@ cd tests/e2e
 | `--replication` | Run replication module tests |
 | `--resiliency` | Run resiliency module tests |
 | `--zoning` | Run PowerFlex zoning tests (opt-in, requires multiple storage systems) |
+| `--sftp` | Enable SFTP for PowerFlex tests (opt-in, loads `powerflex-sftp` config section) |
 | `--no-modules` | Run driver-only tests (no module scenarios) |
 | `--sanity` | Run sanity test subset |
 | **Test files** | |
@@ -206,7 +207,7 @@ Platform flags select which **drivers** to test. Module flags select which **fea
 | `--no-modules` | Run driver-only (standalone) scenarios, skip all module scenarios |
 | `--sanity` | Run only scenarios tagged `sanity` |
 
-**Opt-in tags:** `--zoning` and `--cosi` are opt-in -- they never run unless explicitly specified. Similarly, `--auth` and `--auth-proxy` are considered "exclusive" module tags: when other module filters are active, auth scenarios only run if explicitly included.
+**Opt-in tags:** `--zoning`, `--sftp`, and `--cosi` are opt-in -- they never run unless explicitly specified. The `--sftp` flag enables SFTP support for PowerFlex tests and loads the `powerflex-sftp` section from `array-info.yaml`. Similarly, `--auth` and `--auth-proxy` are considered "exclusive" module tags: when other module filters are active, auth scenarios only run if explicitly included.
 
 ### Examples
 

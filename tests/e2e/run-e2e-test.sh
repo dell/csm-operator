@@ -31,6 +31,7 @@ export REPLICATION=false
 export OBSERVABILITY=false
 export RESILIENCY=false
 export ZONING=false
+export SFTP=false
 
 export INSTALL_VAULT=false
 export INSTALL_CONJUR=false
@@ -76,6 +77,8 @@ function getArrayInfo() {
     [[ "${ZONING:-}" == "true" ]]       && features="${features},zoning"
     [[ "${REPLICATION:-}" == "true" ]]  && features="${features},replication"
   fi
+  # check for sftp feature for powerflex driver
+  [[ "${POWERFLEX:-}" == "true" ]] && [[ "${SFTP:-}" == "true" ]] && features="${features},sftp"
 
   cd ./scripts/parse-array-info
   if ! output=$(go run main.go \
@@ -86,6 +89,7 @@ function getArrayInfo() {
     echo "$output"
     exit 1
   fi
+
   eval "$output"
   cd ../..
 }
@@ -321,6 +325,7 @@ function usage() {
   echo "  --unity                                      use to run e2e unity suite"
   echo "  --powermax                                    use to run e2e powermax suite"
   echo "  --zoning                                     use to run powerflex zoning tests (requires multiple storage systems)"
+  echo "  --sftp                                       use to enable SFTP for PowerFlex tests"
   echo "  --minimal                                    use minimal testfiles scenarios"
   echo "  --install-vault                              force vault install (auto-installed when auth scenarios will run)"
   echo "  --install-conjur                             use to install authorization conjur instance with secrets for authorization tests"
@@ -405,6 +410,8 @@ while getopts ":hcv-:" optchar; do
       export POWERMAX=true ;;
     zoning)
       export ZONING=true ;;
+    sftp)
+      export SFTP=true ;;
     kube-cfg)
       export KUBECONFIG="${!OPTIND}"
       OPTIND=$((OPTIND + 1))

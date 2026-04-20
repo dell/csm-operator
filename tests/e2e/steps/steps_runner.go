@@ -159,7 +159,7 @@ func (runner *Runner) addStep(expr string, stepFunc interface{}) {
 // RunStep - runs a step
 func (runner *Runner) RunStep(stepName string, res Resource) error {
 	// Support conditional execution: "If config.enableSftpSDC is true: ..."
-	const conditionalPrefix = "If config.enableSftpSDC is true: "
+	const conditionalPrefix = "If POWERFLEX_SDC_SFTP_REPO_ENABLED: "
 	if len(stepName) > len(conditionalPrefix) && stepName[:len(conditionalPrefix)] == conditionalPrefix {
 		if res.Scenario.Config["enableSftpSDC"] != "true" {
 			// Skip the step if the config is not enabled
