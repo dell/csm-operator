@@ -56,7 +56,7 @@ spec:
             gatewayClassName: nginx
             # additional hostnames for the proxy-server HTTPRoute
             hosts:
-              - authorization-gateway-nginx.${E2E_NS_AUTH}.svc.cluster.local
+              - ${AUTHORIZATION_GATEWAY_HOST}
             # additional annotations for the proxy-server HTTPRoute
             annotations: {}
         - name: redis

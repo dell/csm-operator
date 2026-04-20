@@ -507,6 +507,17 @@ export E2E_NS_COSI="${NS_PREFIX}-cosi"
 export E2E_NS_AUTH="${NS_PREFIX}-authorization"
 export E2E_NS_PROXY="${NS_PREFIX}-proxy-ns"
 
+# Set authorization gateway and ingress hosts based on cluster type
+if [[ "$IS_OPENSHIFT" == "true" ]]; then
+  export AUTHORIZATION_GATEWAY_HOST="router-internal-default.openshift-ingress.svc.cluster.local"
+  export AUTHORIZATION_INGRESS_HOST_N1="router-internal-default.openshift-ingress.svc.cluster.local"
+else
+  export AUTHORIZATION_GATEWAY_HOST="authorization-gateway-nginx.${E2E_NS_AUTH}.svc.cluster.local"
+  export AUTHORIZATION_INGRESS_HOST_N1="${E2E_NS_AUTH}-ingress-nginx-controller.${E2E_NS_AUTH}.svc.cluster.local"
+fi
+echo "AUTHORIZATION_GATEWAY_HOST: $AUTHORIZATION_GATEWAY_HOST"
+echo "AUTHORIZATION_INGRESS_HOST_N1: $AUTHORIZATION_INGRESS_HOST_N1"
+
 # Build namespace list based on selected platforms and modules.
 # When no platform or module flags are set, treat as "run everything".
 ANY_FLAG_SET=false
