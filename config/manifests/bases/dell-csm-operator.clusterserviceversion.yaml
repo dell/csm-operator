@@ -2118,7 +2118,7 @@ spec:
       name: resizer
     - image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.17.0
       name: externalhealthmonitorcontroller
-    - image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.13.0
+    - image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.14.0
       name: metadataretriever
     - image: gcr.io/k8s-staging-sig-storage/objectstorage-sidecar:release-0.2
       name: objectstorage-provisioner-sidecar
