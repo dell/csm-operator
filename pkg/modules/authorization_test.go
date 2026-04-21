@@ -4182,7 +4182,7 @@ func TestGetImageForKey_Precedence(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := getImageForKey(ctx, key, defaultImage, tt.cr, tt.matched)
+			got := getImageForKey(ctx, key, defaultImage, tt.cr, tt.matched, "")
 			if tt.wantExact != "" {
 				if got != tt.wantExact {
 					t.Fatalf("expected %q, got %q", tt.wantExact, got)

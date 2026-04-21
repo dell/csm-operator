@@ -186,7 +186,7 @@ func getResiliencyEnv(resiliencyModule csmv1.Module, _ csmv1.DriverType) string 
 }
 
 // Apply resiliency module from the manifest file to the podmon sidecar
-func modifyPodmon(ctx context.Context, component csmv1.ContainerTemplate, container *acorev1.ContainerApplyConfiguration, matched operatorutils.VersionSpec, cr csmv1.ContainerStorageModule) {
+func modifyPodmon(ctx context.Context, component csmv1.ContainerTemplate, container *acorev1.ContainerApplyConfiguration, matched operatorutils.VersionSpec, cr csmv1.ContainerStorageModule, operatorCSMVersion string) {
 	matchedImageApplied := false
 	if matched.Version != "" && container.Name != nil {
 		containerName := *container.Name
@@ -197,7 +197,7 @@ func modifyPodmon(ctx context.Context, component csmv1.ContainerTemplate, contai
 	}
 	if !matchedImageApplied {
 		if container.Name != nil {
-			if envImg, found := operatorutils.GetRelatedImage(*container.Name); found {
+			if envImg, found := operatorutils.GetRelatedImage(*container.Name); found && operatorutils.ShouldUseEnvVarImages(cr, operatorCSMVersion) {
 				if cr.Spec.CustomRegistry != "" {
 					*container.Image = operatorutils.ResolveImage(ctx, envImg, cr)
 				} else {
@@ -231,7 +231,7 @@ func modifyPodmon(ctx context.Context, component csmv1.ContainerTemplate, contai
 	container.Args = operatorutils.ReplaceAllArgs(container.Args, component.Args)
 }
 
-func setResiliencyArgs(ctx context.Context, m csmv1.Module, mode string, container *acorev1.ContainerApplyConfiguration, matched operatorutils.VersionSpec, cr csmv1.ContainerStorageModule) {
+func setResiliencyArgs(ctx context.Context, m csmv1.Module, mode string, container *acorev1.ContainerApplyConfiguration, matched operatorutils.VersionSpec, cr csmv1.ContainerStorageModule, operatorCSMVersion string) {
 	// handle minimal manifest (no components listed) for override with configmap
 	if len(m.Components) == 0 {
 		var synthetic csmv1.ContainerTemplate
@@ -247,14 +247,14 @@ func setResiliencyArgs(ctx context.Context, m csmv1.Module, mode string, contain
 		default:
 			return
 		}
-		modifyPodmon(ctx, synthetic, container, matched, cr)
+		modifyPodmon(ctx, synthetic, container, matched, cr, operatorCSMVersion)
 	}
 	for _, component := range m.Components {
 		if component.Name == operatorutils.PodmonControllerComponent && mode == controllerMode {
-			modifyPodmon(ctx, component, container, matched, cr)
+			modifyPodmon(ctx, component, container, matched, cr, operatorCSMVersion)
 		}
 		if component.Name == operatorutils.PodmonNodeComponent && mode == "node" {
-			modifyPodmon(ctx, component, container, matched, cr)
+			modifyPodmon(ctx, component, container, matched, cr, operatorCSMVersion)
 		}
 	}
 }
@@ -300,7 +300,7 @@ func getResiliencyApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, 
 	}
 
 	// read args from the respective components
-	setResiliencyArgs(ctx, resiliencyModule, mode, &container, matched, cr)
+	setResiliencyArgs(ctx, resiliencyModule, mode, &container, matched, cr, op.CSMVersion)
 	return &resiliencyModule, &container, nil
 }
 

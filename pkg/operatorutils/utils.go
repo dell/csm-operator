@@ -84,6 +84,13 @@ type OperatorConfig struct {
 	IsOpenShift     bool
 	K8sVersion      K8sImagesConfig
 	ConfigDirectory string
+	// CSMVersion is the CSM release version this operator was built for (e.g.
+	// "v1.17.0"). It is set at startup and used to decide whether RELATED_IMAGE
+	// environment variables (which carry images for this specific release) are
+	// applicable to a given CR. When the CR requests a different CSM version the
+	// env-var images must be skipped so that version-specific template defaults
+	// are used instead.
+	CSMVersion string
 }
 
 // RbacYAML -
@@ -159,6 +166,7 @@ var driverImageAliases = map[string]string{
 	"powermax":   "csi-powermax",
 	"powerstore": "csi-powerstore",
 	"unity":      "csi-unity",
+	"cosi":       "cosi",
 }
 
 // InitRelatedImagesCache reads all RELATED_IMAGE_* environment variables and caches them
@@ -207,6 +215,24 @@ func GetRelatedImagesCount() int {
 		InitRelatedImagesCache()
 	}
 	return len(relatedImagesCache)
+}
+
+// ShouldUseEnvVarImages returns true when the RELATED_IMAGE environment
+// variables are applicable for the given CR. The env vars carry images
+// for the operator's own CSM release (operatorCSMVersion); they must be
+// skipped when the CR targets a different version so that the
+// version-specific template defaults are used instead.
+//
+// The function returns true only when spec.version equals the operator's
+// CSM version. When spec.version is empty (the deprecated configVersion
+// path), env vars are not used because the user manages image references
+// explicitly in that flow.
+func ShouldUseEnvVarImages(cr csmv1.ContainerStorageModule, operatorCSMVersion string) bool {
+	if cr.Spec.Version == "" {
+		// configVersion path: user manages images explicitly; skip env vars.
+		return false
+	}
+	return cr.Spec.Version == operatorCSMVersion
 }
 
 const (
@@ -278,11 +304,12 @@ func SplitYaml(gaintYAML []byte) ([][]byte, error) {
 }
 
 // UpdateSideCarApply -
-func UpdateSideCarApply(ctx context.Context, sideCars []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule, matched VersionSpec) {
-	UpdateContainerApply(ctx, sideCars, c, cr, matched)
+func UpdateSideCarApply(ctx context.Context, sideCars []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule, matched VersionSpec, operatorCSMVersion string) {
+	UpdateContainerApply(ctx, sideCars, c, cr, matched, operatorCSMVersion)
 }
 
-func UpdateContainerApply(ctx context.Context, toBeApplied []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule, matched VersionSpec) {
+func UpdateContainerApply(ctx context.Context, toBeApplied []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule, matched VersionSpec, operatorCSMVersion string) {
+	useEnvVars := ShouldUseEnvVarImages(cr, operatorCSMVersion)
 	sidecarInSpec := false
 	// Apples to sidecars referenced in the spec
 	for _, ctr := range toBeApplied {
@@ -296,7 +323,7 @@ func UpdateContainerApply(ctx context.Context, toBeApplied []csmv1.ContainerTemp
 				}
 			}
 			// Check environment variables for sidecar images
-			if envImg, found := GetRelatedImage(ctr.Name); found {
+			if envImg, found := GetRelatedImage(ctr.Name); found && useEnvVars {
 				if cr.Spec.CustomRegistry != "" {
 					*c.Image = ResolveImage(ctx, envImg, cr)
 				} else {
@@ -328,7 +355,7 @@ func UpdateContainerApply(ctx context.Context, toBeApplied []csmv1.ContainerTemp
 			}
 		}
 		// Check environment variables for sidecar images
-		if envImg, found := GetRelatedImage(*c.Name); found {
+		if envImg, found := GetRelatedImage(*c.Name); found && useEnvVars {
 			if cr.Spec.CustomRegistry != "" {
 				*c.Image = ResolveImage(ctx, envImg, cr)
 			} else {
@@ -367,8 +394,8 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 }
 
 // UpdateInitContainerApply -
-func UpdateInitContainerApply(ctx context.Context, initContainers []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule, matched VersionSpec) {
-	UpdateContainerApply(ctx, initContainers, c, cr, matched)
+func UpdateInitContainerApply(ctx context.Context, initContainers []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule, matched VersionSpec, operatorCSMVersion string) {
+	UpdateContainerApply(ctx, initContainers, c, cr, matched, operatorCSMVersion)
 }
 
 // ReplaceAllApplyCustomEnvs -

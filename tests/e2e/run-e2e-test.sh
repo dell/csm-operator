@@ -12,6 +12,13 @@
 
 #!/bin/bash
 
+# Ensure script is running with bash, not sh
+if [ -z "$BASH_VERSION" ]; then
+  echo "Error: This script must be run with bash, not sh."
+  echo "Usage: bash $0 or ./run-e2e-test.sh"
+  exit 1
+fi
+
 ###############################################################################
 # Set environment variables and options
 ###############################################################################

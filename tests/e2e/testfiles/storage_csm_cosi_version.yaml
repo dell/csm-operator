@@ -1,0 +1,32 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: cosi
+  namespace: ${E2E_NS_COSI}
+spec:
+  driver:
+    csiDriverType: "cosi"
+    replicas: 1
+    forceRemoveDriver: true
+    common:
+      imagePullPolicy: Always
+      # Node selector for scheduling the COSI driver pod.
+      nodeSelector: {}
+      # Tolerations for scheduling the COSI driver pod.
+      tolerations: []
+      envs:
+        # COSI driver log level.
+        # Options are "PANIC", "FATAL", "ERROR", "WARN", "INFO",
+        # "DEBUG", and "TRACE".
+        - name: COSI_LOG_LEVEL
+          value: "INFO"
+        # COSI driver log format
+        # Allowed values: "TEXT" or "JSON"
+        # Default value: "TEXT"
+        - name: COSI_LOG_FORMAT
+          value: "TEXT"
+        # OTEL_COLLECTOR_ADDRESS is the gRPC endpoint for the OTEL Collector.
+        # Example: "otel-collector.namespace:4317"
+        # Default: ""
+        - name: OTEL_COLLECTOR_ADDRESS
+          value: ""

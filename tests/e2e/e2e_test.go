@@ -316,6 +316,11 @@ var _ = BeforeSuite(func() {
 		os.Setenv("E2E_CREG_VERSION", "v1.16.0") // fallback to last stable release
 	}
 
+	By("Setting E2E_CSM_VERSION fallback (current operator CSM version)")
+	if os.Getenv("E2E_CSM_VERSION") == "" {
+		os.Setenv("E2E_CSM_VERSION", "v1.17.0") // must match controllers.CSMVersion
+	}
+
 	By("Generating minimal testfiles")
 	if err := step.GenerateMinimalTestfiles("testfiles/minimal-testfiles"); err != nil {
 		framework.Failf("Failed to generate minimal testfiles: %v", err)

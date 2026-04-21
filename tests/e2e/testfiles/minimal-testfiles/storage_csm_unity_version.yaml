@@ -1,0 +1,26 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: unity
+  namespace: ${E2E_NS_UNITY}
+spec:
+  version: ${E2E_CSM_VERSION}
+  driver:
+    csiDriverType: "unity"
+    forceRemoveDriver: true
+    common:
+      envs:
+        - name: X_CSI_UNITY_ALLOW_MULTI_POD_ACCESS
+          value: "false"
+        - name: X_CSI_EPHEMERAL_STAGING_PATH
+          value: "/var/lib/kubelet/plugins/kubernetes.io/csi/pv/"
+        - name: X_CSI_ISCSI_CHROOT
+          value: "/noderoot"
+        - name: X_CSI_UNITY_SYNC_NODEINFO_INTERVAL
+          value: "15"
+        - name: KUBELET_CONFIG_DIR
+          value: /var/lib/kubelet
+        - name: CSI_LOG_LEVEL
+          value: debug
+        - name: TENANT_NAME
+          value: ""

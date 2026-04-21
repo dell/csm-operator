@@ -2658,10 +2658,10 @@ func (step *Step) restoreConfigMap(_ Resource) error {
 }
 
 func (step *Step) deleteConfigMap(_ Resource) error {
-	cmd := exec.Command("kubectl", "delete", "-f", "testfiles/authorization-templates/csm-images-baseline.yaml") // #nosec G204
+	cmd := exec.Command("kubectl", "delete", "--ignore-not-found", "-f", "testfiles/authorization-templates/csm-images-baseline.yaml") // #nosec G204
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("failed to restore baseline configmap csm-images: %v", err)
+		return fmt.Errorf("failed to delete baseline configmap csm-images: %v", err)
 	}
 
 	return nil
@@ -3579,8 +3579,17 @@ func (step *Step) validateDeploymentContainerCustomRegistry(res Resource, crNumS
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 
+	// Get the CR from the cluster to check the actual state
+	found := new(csmv1.ContainerStorageModule)
+	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+		Namespace: cr.Namespace,
+		Name:      cr.Name,
+	}, found); err != nil {
+		return fmt.Errorf("failed to get CR from cluster: %v", err)
+	}
+
 	// Check if CR has custom registry
-	if cr.Spec.CustomRegistry == "" {
+	if found.Spec.CustomRegistry == "" {
 		return fmt.Errorf("expected CR to have custom registry configured")
 	}
 
@@ -3603,8 +3612,8 @@ func (step *Step) validateDeploymentContainerCustomRegistry(res Resource, crNumS
 		}
 
 		// Check if the image contains the custom registry
-		if !strings.Contains(cnt.Image, cr.Spec.CustomRegistry) {
-			return fmt.Errorf("expected deployment container %s image to contain custom registry %s, got %s", container, cr.Spec.CustomRegistry, cnt.Image)
+		if !strings.Contains(cnt.Image, found.Spec.CustomRegistry) {
+			return fmt.Errorf("expected deployment container %s image to contain custom registry %s, got %s", container, found.Spec.CustomRegistry, cnt.Image)
 		}
 
 		return nil
@@ -3618,8 +3627,17 @@ func (step *Step) validateDaemonSetContainerCustomRegistry(res Resource, crNumSt
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 
+	// Get the CR from the cluster to check the actual state
+	found := new(csmv1.ContainerStorageModule)
+	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+		Namespace: cr.Namespace,
+		Name:      cr.Name,
+	}, found); err != nil {
+		return fmt.Errorf("failed to get CR from cluster: %v", err)
+	}
+
 	// Check if CR has custom registry
-	if cr.Spec.CustomRegistry == "" {
+	if found.Spec.CustomRegistry == "" {
 		return fmt.Errorf("expected CR to have custom registry configured")
 	}
 
@@ -3642,8 +3660,8 @@ func (step *Step) validateDaemonSetContainerCustomRegistry(res Resource, crNumSt
 		}
 
 		// Check if the image contains the custom registry
-		if !strings.Contains(cnt.Image, cr.Spec.CustomRegistry) {
-			return fmt.Errorf("expected daemonset container %s image to contain custom registry %s, got %s", container, cr.Spec.CustomRegistry, cnt.Image)
+		if !strings.Contains(cnt.Image, found.Spec.CustomRegistry) {
+			return fmt.Errorf("expected daemonset container %s image to contain custom registry %s, got %s", container, found.Spec.CustomRegistry, cnt.Image)
 		}
 
 		return nil
@@ -3765,7 +3783,16 @@ func (step *Step) validateObservabilityDeploymentContainerCustomRegistry(res Res
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 
-	if cr.Spec.CustomRegistry == "" {
+	// Get the CR from the cluster to check the actual state
+	found := new(csmv1.ContainerStorageModule)
+	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+		Namespace: cr.Namespace,
+		Name:      cr.Name,
+	}, found); err != nil {
+		return fmt.Errorf("failed to get CR from cluster: %v", err)
+	}
+
+	if found.Spec.CustomRegistry == "" {
 		return fmt.Errorf("expected CR to have custom registry configured")
 	}
 
@@ -3787,8 +3814,8 @@ func (step *Step) validateObservabilityDeploymentContainerCustomRegistry(res Res
 			continue
 		}
 
-		if !strings.Contains(cnt.Image, cr.Spec.CustomRegistry) {
-			return fmt.Errorf("expected observability deployment container %s image to contain custom registry %s, got %s", container, cr.Spec.CustomRegistry, cnt.Image)
+		if !strings.Contains(cnt.Image, found.Spec.CustomRegistry) {
+			return fmt.Errorf("expected observability deployment container %s image to contain custom registry %s, got %s", container, found.Spec.CustomRegistry, cnt.Image)
 		}
 
 		return nil

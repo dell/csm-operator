@@ -439,7 +439,7 @@ func checkApplyContainersResiliency(containers []acorev1.ContainerApplyConfigura
 	podmonAPIPort := getResiliencyEnv(resiliencyModule, cr.Spec.Driver.CSIDriverType)
 	var container acorev1.ContainerApplyConfiguration
 	// fetch podmonArrayConnectivityPollRate
-	setResiliencyArgs(ctx, resiliencyModule, nodeMode, &container, operatorutils.VersionSpec{}, cr)
+	setResiliencyArgs(ctx, resiliencyModule, nodeMode, &container, operatorutils.VersionSpec{}, cr, "")
 	podmonArrayConnectivityPollRate := getPollRateFromArgs(container.Args)
 
 	for _, cnt := range containers {
@@ -660,7 +660,7 @@ func TestModifyPodmon_UsesMatchedImageWhenVersionSet(t *testing.T) {
 		WithImage(originalImage)
 
 	// Act
-	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{})
+	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{}, "")
 
 	// Assert
 	if container.Image == nil {
@@ -694,7 +694,7 @@ func TestModifyPodmon_SkipsMatchedWhenVersionEmpty(t *testing.T) {
 		WithName(name).
 		WithImage(originalImage)
 
-	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{})
+	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{}, "")
 
 	if container.Image == nil {
 		t.Fatalf("container.Image should not be nil after modifyPodmon")
@@ -730,7 +730,7 @@ func TestModifyPodmon_ComponentOverridesImageAndPullPolicy(t *testing.T) {
 		WithImage(originalImage).
 		WithImagePullPolicy(corev1.PullIfNotPresent) // initial policy
 
-	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{})
+	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{}, "")
 
 	// Image should be from ConfigMap (matched.Images takes precedence over component override)
 	if container.Image == nil {
@@ -767,7 +767,7 @@ func TestModifyPodmon_ReplacesEnvAndArgs(t *testing.T) {
 		// NOTE: intentionally NOT calling WithArgs("--old")
 
 	// Act
-	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{})
+	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{}, "")
 
 	// Assert env replacement
 	found := false
@@ -806,7 +806,7 @@ func TestModifyPodmon_CustomRegistryOnly(t *testing.T) {
 		WithName(name).
 		WithImage(originalImage)
 
-	modifyPodmon(ctx, component, container, matched, cr)
+	modifyPodmon(ctx, component, container, matched, cr, "")
 
 	if container.Image == nil {
 		t.Fatalf("container.Image should not be nil")
@@ -838,7 +838,7 @@ func TestModifyPodmon_SparseConfigMapWithCustomRegistry(t *testing.T) {
 		WithName(name).
 		WithImage(originalImage)
 
-	modifyPodmon(ctx, component, container, matched, cr)
+	modifyPodmon(ctx, component, container, matched, cr, "")
 
 	if container.Image == nil {
 		t.Fatalf("container.Image should not be nil")
@@ -864,7 +864,7 @@ func TestModifyPodmon_ComponentImageNoConfigMapNoRegistry(t *testing.T) {
 		WithName(name).
 		WithImage(originalImage)
 
-	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{})
+	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{}, "")
 
 	if container.Image == nil {
 		t.Fatalf("container.Image should not be nil")
@@ -897,7 +897,7 @@ func TestModifyPodmon_ConfigMapWinsOverCustomRegistry(t *testing.T) {
 		WithName(name).
 		WithImage(originalImage)
 
-	modifyPodmon(ctx, component, container, matched, cr)
+	modifyPodmon(ctx, component, container, matched, cr, "")
 
 	if container.Image == nil {
 		t.Fatalf("container.Image should not be nil")
@@ -943,7 +943,7 @@ func TestSetResiliencyArgs_SyntheticControllerMode_OverridesImageFromMatched(t *
 	}
 
 	// Act: controller mode synthetic branch.
-	setResiliencyArgs(ctx, resiliency, controllerMode, container, matched, cr)
+	setResiliencyArgs(ctx, resiliency, controllerMode, container, matched, cr, "")
 
 	// Assert: container.Image must be overridden by matched.Images[*container.Name].
 	if container.Image == nil {
@@ -986,7 +986,7 @@ func TestSetResiliencyArgs_SyntheticNodeMode_OverridesImageFromMatched(t *testin
 	cr := csmv1.ContainerStorageModule{} // not used by matched path
 
 	// Act: node mode synthetic branch.
-	setResiliencyArgs(ctx, resiliency, nodeMode, container, matched, cr)
+	setResiliencyArgs(ctx, resiliency, nodeMode, container, matched, cr, "")
 
 	// Assert: container.Image must be overridden by matched.Images[*container.Name].
 	if container.Image == nil {
@@ -1027,7 +1027,7 @@ func TestSetResiliencyArgs_SyntheticUnsupportedMode_NoChange(t *testing.T) {
 	cr := csmv1.ContainerStorageModule{}
 
 	// Act: unsupported mode
-	setResiliencyArgs(ctx, resiliency, "unsupported-mode", container, matched, cr)
+	setResiliencyArgs(ctx, resiliency, "unsupported-mode", container, matched, cr, "")
 
 	// Assert: no change expected
 	if container.Image == nil {

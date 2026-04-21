@@ -776,7 +776,7 @@ func TestUpdateSideCarApply(t *testing.T) {
 	},
 	)
 
-	UpdateSideCarApply(ctx, sideCars, container, csmv1.ContainerStorageModule{}, VersionSpec{})
+	UpdateSideCarApply(ctx, sideCars, container, csmv1.ContainerStorageModule{}, VersionSpec{}, "")
 
 	expectedContainer := acorev1.Container().WithName("sidecar1").WithImage("sidecar1-image").WithImagePullPolicy("sidecar1-image-pull-policy").
 		WithEnv(&acorev1.EnvVarApplyConfiguration{
@@ -799,7 +799,7 @@ func TestUpdateSideCarApply(t *testing.T) {
 		Images: map[string]string{
 			"sidecar1": "configmap-sidecar1-image",
 		},
-	})
+	}, "")
 
 	expectedContainer2 := acorev1.Container().WithName("sidecar1").WithImage("configmap-sidecar1-image").WithImagePullPolicy("sidecar1-image-pull-policy").
 		WithEnv(&acorev1.EnvVarApplyConfiguration{
@@ -818,7 +818,7 @@ func TestUpdateSideCarApply(t *testing.T) {
 			Version:        "v1.16.0",
 			CustomRegistry: "test-custom-registry",
 		},
-	}, VersionSpec{})
+	}, VersionSpec{}, "")
 
 	expectedContainer3 := acorev1.Container().WithName("sidecar1").WithImage("test-custom-registry/configmap-sidecar1-image").WithImagePullPolicy("sidecar1-image-pull-policy").
 		WithEnv(&acorev1.EnvVarApplyConfiguration{
@@ -845,7 +845,7 @@ func TestUpdateSideCarApply(t *testing.T) {
 		},
 	}
 
-	UpdateSideCarApply(ctx, sideCars, container2, csmv1.ContainerStorageModule{}, matched)
+	UpdateSideCarApply(ctx, sideCars, container2, csmv1.ContainerStorageModule{}, matched, "")
 
 	expectedContainer4 := acorev1.Container().
 		WithName("sidecarX").
@@ -859,7 +859,7 @@ func TestUpdateSideCarApply(t *testing.T) {
 		Spec: csmv1.ContainerStorageModuleSpec{
 			CustomRegistry: "test-custom-registry",
 		},
-	}, VersionSpec{})
+	}, VersionSpec{}, "")
 
 	expectedContainer5 := acorev1.Container().
 		WithName("sidecarX").
@@ -870,7 +870,7 @@ func TestUpdateSideCarApply(t *testing.T) {
 
 	// repeat the test with the other function that uses the child function
 	// very minor code coverage gain, 0.1%
-	UpdateInitContainerApply(ctx, sideCars, container, csmv1.ContainerStorageModule{}, VersionSpec{})
+	UpdateInitContainerApply(ctx, sideCars, container, csmv1.ContainerStorageModule{}, VersionSpec{}, "")
 	assert.Equal(t, expectedContainer, container)
 }
 
@@ -4359,7 +4359,7 @@ func TestUpdateContainerApply_ImagePrecedence(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := acorev1.Container().WithName(tt.containerName).WithImage(tt.defaultImage).WithImagePullPolicy(corev1.PullIfNotPresent)
-			UpdateContainerApply(ctx, tt.toBeApplied, c, tt.cr, tt.matched)
+			UpdateContainerApply(ctx, tt.toBeApplied, c, tt.cr, tt.matched, "")
 
 			got := ""
 			if c.Image != nil {
@@ -4481,7 +4481,7 @@ func TestUpdateContainerApply_RetainImageRegistryPath(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := acorev1.Container().WithName(tt.containerName).WithImage(tt.defaultImage).WithImagePullPolicy(corev1.PullIfNotPresent)
-			UpdateContainerApply(ctx, tt.toBeApplied, c, tt.cr, tt.matched)
+			UpdateContainerApply(ctx, tt.toBeApplied, c, tt.cr, tt.matched, "")
 
 			got := ""
 			if c.Image != nil {

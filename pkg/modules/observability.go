@@ -471,7 +471,7 @@ func getOtelCollector(ctx context.Context, op operatorutils.OperatorConfig, cr c
 				}
 			}
 			if !otelCollectorImageFromConfigMap {
-				if envImg, found := operatorutils.GetRelatedImage(string(component.Name)); found {
+				if envImg, found := operatorutils.GetRelatedImage(string(component.Name)); found && operatorutils.ShouldUseEnvVarImages(cr, op.CSMVersion) {
 					if cr.Spec.CustomRegistry != "" {
 						otelCollectorImage = operatorutils.ResolveImage(ctx, envImg, cr)
 					} else {

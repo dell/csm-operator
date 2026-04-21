@@ -83,6 +83,7 @@ func TestGetOperatorConfig(t *testing.T) {
 			expectedConfig: operatorutils.OperatorConfig{
 				IsOpenShift:     true,
 				ConfigDirectory: "testdata",
+				CSMVersion:      controllers.CSMVersion,
 				K8sVersion: operatorutils.K8sImagesConfig{
 					Images: struct {
 						Attacher              string `json:"attacher" yaml:"attacher"`
@@ -121,6 +122,7 @@ func TestGetOperatorConfig(t *testing.T) {
 			expectedConfig: operatorutils.OperatorConfig{
 				IsOpenShift:     false,
 				ConfigDirectory: "testdata",
+				CSMVersion:      controllers.CSMVersion,
 				K8sVersion: operatorutils.K8sImagesConfig{
 					Images: struct {
 						Attacher              string `json:"attacher" yaml:"attacher"`
@@ -159,6 +161,7 @@ func TestGetOperatorConfig(t *testing.T) {
 			expectedConfig: operatorutils.OperatorConfig{
 				IsOpenShift:     false,
 				ConfigDirectory: "operatorconfig",
+				CSMVersion:      controllers.CSMVersion,
 				K8sVersion: operatorutils.K8sImagesConfig{
 					Images: struct {
 						Attacher              string `json:"attacher" yaml:"attacher"`
@@ -189,6 +192,7 @@ func TestGetOperatorConfig(t *testing.T) {
 			expectedConfig: operatorutils.OperatorConfig{
 				IsOpenShift:     false,
 				ConfigDirectory: "operatorconfig",
+				CSMVersion:      controllers.CSMVersion,
 				K8sVersion: operatorutils.K8sImagesConfig{
 					Images: struct {
 						Attacher              string `json:"attacher" yaml:"attacher"`
@@ -219,6 +223,7 @@ func TestGetOperatorConfig(t *testing.T) {
 			expectedConfig: operatorutils.OperatorConfig{
 				IsOpenShift:     false,
 				ConfigDirectory: "operatorconfig",
+				CSMVersion:      controllers.CSMVersion,
 				K8sVersion: operatorutils.K8sImagesConfig{
 					Images: struct {
 						Attacher              string `json:"attacher" yaml:"attacher"`
@@ -249,6 +254,7 @@ func TestGetOperatorConfig(t *testing.T) {
 			expectedConfig: operatorutils.OperatorConfig{
 				IsOpenShift:     false,
 				ConfigDirectory: "operatorconfig",
+				CSMVersion:      controllers.CSMVersion,
 				K8sVersion: operatorutils.K8sImagesConfig{
 					Images: struct {
 						Attacher              string `json:"attacher" yaml:"attacher"`
@@ -279,6 +285,7 @@ func TestGetOperatorConfig(t *testing.T) {
 			expectedConfig: operatorutils.OperatorConfig{
 				IsOpenShift:     false,
 				ConfigDirectory: "operatorconfig",
+				CSMVersion:      controllers.CSMVersion,
 				K8sVersion: operatorutils.K8sImagesConfig{
 					Images: struct {
 						Attacher              string `json:"attacher" yaml:"attacher"`
@@ -309,6 +316,7 @@ func TestGetOperatorConfig(t *testing.T) {
 			expectedConfig: operatorutils.OperatorConfig{
 				IsOpenShift:     false,
 				ConfigDirectory: "operatorconfig",
+				CSMVersion:      controllers.CSMVersion,
 				K8sVersion: operatorutils.K8sImagesConfig{
 					Images: struct {
 						Attacher              string `json:"attacher" yaml:"attacher"`
@@ -340,6 +348,7 @@ func TestGetOperatorConfig(t *testing.T) {
 			expectedConfig: operatorutils.OperatorConfig{
 				IsOpenShift:     false,
 				ConfigDirectory: "operatorconfig",
+				CSMVersion:      controllers.CSMVersion,
 				K8sVersion: operatorutils.K8sImagesConfig{
 					Images: struct {
 						Attacher              string `json:"attacher" yaml:"attacher"`

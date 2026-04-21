@@ -216,6 +216,11 @@ func getApplyDeploymentDaemonSet(cr csmv1.ContainerStorageModule, ctrlClient cli
 		return confv1.DeploymentApplyConfiguration{}, confv1.DaemonSetApplyConfiguration{}, err
 	}
 
+	// COSI doesn't have a daemonset, only a deployment
+	if cr.Spec.Driver.CSIDriverType == csmv1.Cosi {
+		return dpApply, confv1.DaemonSetApplyConfiguration{}, nil
+	}
+
 	ds, err := getDriverDaemonset(cr, ctrlClient)
 	if err != nil {
 		return confv1.DeploymentApplyConfiguration{}, confv1.DaemonSetApplyConfiguration{}, fmt.Errorf("failed to get daemonset: %v", err)
@@ -236,9 +241,15 @@ func getApplyDeploymentDaemonSet(cr csmv1.ContainerStorageModule, ctrlClient cli
 
 func getDriverDeployment(cr csmv1.ContainerStorageModule, ctrlClient client.Client) (*appsv1.Deployment, error) {
 	dp := &appsv1.Deployment{}
+	// COSI uses just {cr.Name} instead of {cr.Name}-controller
+	deploymentName := fmt.Sprintf("%s-controller", cr.Name)
+	if cr.Spec.Driver.CSIDriverType == csmv1.Cosi {
+		deploymentName = cr.Name
+	}
+
 	if err := ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
-		Name:      fmt.Sprintf("%s-controller", cr.Name),
+		Name:      deploymentName,
 	}, dp); err != nil {
 		return nil, err
 	}
@@ -247,6 +258,11 @@ func getDriverDeployment(cr csmv1.ContainerStorageModule, ctrlClient client.Clie
 }
 
 func getDriverDaemonset(cr csmv1.ContainerStorageModule, ctrlClient client.Client) (*appsv1.DaemonSet, error) {
+	// COSI doesn't have a daemonset, only a deployment
+	if cr.Spec.Driver.CSIDriverType == csmv1.Cosi {
+		return nil, fmt.Errorf("COSI driver does not have a daemonset")
+	}
+
 	ds := &appsv1.DaemonSet{}
 	if err := ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,

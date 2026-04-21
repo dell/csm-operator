@@ -267,6 +267,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 		IsOpenShift:     r.Config.IsOpenShift,
 		K8sVersion:      r.Config.K8sVersion,
 		ConfigDirectory: r.Config.ConfigDirectory,
+		CSMVersion:      r.Config.CSMVersion,
 	}
 
 	// Set default value for forceRemoveDriver to true if not specified by the user

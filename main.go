@@ -192,6 +192,7 @@ func getOperatorConfig(log *zap.SugaredLogger) (operatorutils.OperatorConfig, er
 	}
 
 	cfg.K8sVersion = imageConfig
+	cfg.CSMVersion = controllers.CSMVersion
 
 	return cfg, nil
 }
