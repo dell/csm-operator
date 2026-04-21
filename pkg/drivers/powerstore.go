@@ -203,6 +203,10 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 
 	fsckEnabled := GetDriverCommonEnv(cr, CsiFsCheckEnabled, "false")
 	fsckMode := GetDriverCommonEnv(cr, CsiFsCheckMode, "checkOnly")
+	spaceReclamationEnabled := GetDriverCommonEnv(cr, CsiSpaceReclamationEnabled, "false")
+	spaceReclamationSchedule := GetDriverCommonEnv(cr, CsiSpaceReclamationSchedule, "")
+	spaceReclamationMaxConcurrent := GetDriverCommonEnv(cr, CsiSpaceReclamationMaxConcurrent, "")
+	spaceReclamationTimeOut := GetDriverCommonEnv(cr, CsiSpaceReclamationTimeOut, "")
 
 	for _, mod := range cr.Spec.Modules {
 		if mod.Name == csmv1.Authorization {
@@ -325,6 +329,10 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 
 		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckEnabled, fsckEnabled)
 		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckMode, fsckMode)
+		yamlString = SubstituteEnvVar(yamlString, CsiSpaceReclamationEnabled, spaceReclamationEnabled)
+		yamlString = SubstituteEnvVar(yamlString, CsiSpaceReclamationSchedule, spaceReclamationSchedule)
+		yamlString = SubstituteEnvVar(yamlString, CsiSpaceReclamationMaxConcurrent, spaceReclamationMaxConcurrent)
+		yamlString = SubstituteEnvVar(yamlString, CsiSpaceReclamationTimeOut, spaceReclamationTimeOut)
 
 	case "Controller":
 		if cr.Spec.Driver.Controller != nil {

@@ -182,6 +182,14 @@ spec:
               value: <X_CSI_FS_CHECK_ENABLED>
             - name: X_CSI_FS_CHECK_MODE
               value: <X_CSI_FS_CHECK_MODE>
+            - name: X_CSI_SPACE_RECLAMATION_ENABLED
+              value: <X_CSI_SPACE_RECLAMATION_ENABLED>
+            - name: X_CSI_SPACE_RECLAMATION_SCHEDULE
+              value: "<X_CSI_SPACE_RECLAMATION_SCHEDULE>"
+            - name: X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT
+              value: <X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT>
+            - name: X_CSI_SPACE_RECLAMATION_TIMEOUT
+              value: <X_CSI_SPACE_RECLAMATION_TIMEOUT>
           ports:
             - containerPort: 2050
           volumeMounts:

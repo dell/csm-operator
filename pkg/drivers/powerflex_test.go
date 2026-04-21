@@ -135,6 +135,44 @@ var (
 			expected: "CSI_SDC_ENABLED=NEW_SDC_ENABLED CSI_APPROVE_SDC_ENABLED=NEW_APPROVE_SDC CSI_RENAME_SDC_ENABLED=NEW_RENAME_SDC CSI_PREFIX_RENAME_SDC=NEW_RENAME_PREFIX CSI_VXFLEXOS_MAX_VOLUMES_PER_NODE=NEW_MAX_VOLUMES CSI_HEALTH_MONITOR_ENABLED=NEW_HEALTH_MONITOR_NODE CSI_DEBUG=NEW_DEBUG CSI_FS_CHECK_ENABLED=false CSI_FS_CHECK_MODE=checkOnly",
 		},
 		{
+			name:       "Node case with values - fscheck",
+			yamlString: "CSI_FS_CHECK_ENABLED=<X_CSI_FS_CHECK_ENABLED> CSI_FS_CHECK_MODE=<X_CSI_FS_CHECK_MODE>",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{Name: "X_CSI_FS_CHECK_ENABLED", Value: "true"},
+								{Name: "X_CSI_FS_CHECK_MODE", Value: "checkOnly"},
+							},
+						},
+					},
+				},
+			},
+			fileType: "Node",
+			expected: "CSI_FS_CHECK_ENABLED=true CSI_FS_CHECK_MODE=checkOnly",
+		},
+		{
+			name:       "Node case with values - space reclamation",
+			yamlString: "CSI_SPACE_RECLAMATION_ENABLED=<X_CSI_SPACE_RECLAMATION_ENABLED> CSI_SPACE_RECLAMATION_SCHEDULE=<X_CSI_SPACE_RECLAMATION_SCHEDULE> CSI_SPACE_RECLAMATION_MAX_CONCURRENT=<X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT> CSI_SPACE_RECLAMATION_TIMEOUT=<X_CSI_SPACE_RECLAMATION_TIMEOUT>",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Common: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{Name: "X_CSI_SPACE_RECLAMATION_ENABLED", Value: "true"},
+								{Name: "X_CSI_SPACE_RECLAMATION_SCHEDULE", Value: "0 2 * * 0"},
+								{Name: "X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT", Value: "1"},
+								{Name: "X_CSI_SPACE_RECLAMATION_TIMEOUT", Value: "1h"},
+							},
+						},
+					},
+				},
+			},
+			fileType: "Node",
+			expected: "CSI_SPACE_RECLAMATION_ENABLED=true CSI_SPACE_RECLAMATION_SCHEDULE=0 2 * * 0 CSI_SPACE_RECLAMATION_MAX_CONCURRENT=1 CSI_SPACE_RECLAMATION_TIMEOUT=1h",
+		},
+		{
 			name:       "CSIDriverSpec case with storage capacity",
 			yamlString: "CSI_STORAGE_CAPACITY_ENABLED=OLD CSI_VXFLEXOS_QUOTA_ENABLED=OLD",
 			cr: csmv1.ContainerStorageModule{

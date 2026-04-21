@@ -197,6 +197,11 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 	fsckEnabled := GetDriverCommonEnv(cr, CsiFsCheckEnabled, "false")
 	fsckMode := GetDriverCommonEnv(cr, CsiFsCheckMode, "checkOnly")
 
+	spaceReclamationEnabled := GetDriverCommonEnv(cr, CsiSpaceReclamationEnabled, "false")
+	spaceReclamationSchedule := GetDriverCommonEnv(cr, CsiSpaceReclamationSchedule, "")
+	spaceReclamationMaxConcurrent := GetDriverCommonEnv(cr, CsiSpaceReclamationMaxConcurrent, "")
+	spaceReclamationTimeOut := GetDriverCommonEnv(cr, CsiSpaceReclamationTimeOut, "")
+
 	// #nosec G101 - False positives
 	switch fileType {
 	case "Node":
@@ -292,6 +297,10 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 
 		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckEnabled, fsckEnabled)
 		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckMode, fsckMode)
+		yamlString = SubstituteEnvVar(yamlString, CsiSpaceReclamationEnabled, spaceReclamationEnabled)
+		yamlString = SubstituteEnvVar(yamlString, CsiSpaceReclamationSchedule, spaceReclamationSchedule)
+		yamlString = SubstituteEnvVar(yamlString, CsiSpaceReclamationMaxConcurrent, spaceReclamationMaxConcurrent)
+		yamlString = SubstituteEnvVar(yamlString, CsiSpaceReclamationTimeOut, spaceReclamationTimeOut)
 	case "Controller":
 		if cr.Spec.Driver.Common != nil {
 			for _, env := range cr.Spec.Driver.Common.Envs {

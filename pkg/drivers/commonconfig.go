@@ -68,6 +68,18 @@ const (
 	// Pre-mount file system check/repair feature configuration
 	CsiFsCheckEnabled = "X_CSI_FS_CHECK_ENABLED"
 	CsiFsCheckMode    = "X_CSI_FS_CHECK_MODE"
+
+	// CsiSpaceReclamationEnabled - Enable/Disable Space Reclamation
+	CsiSpaceReclamationEnabled = "X_CSI_SPACE_RECLAMATION_ENABLED"
+
+	// CsiSpaceReclamationSchedule - Space Reclamation Schedule
+	CsiSpaceReclamationSchedule = "X_CSI_SPACE_RECLAMATION_SCHEDULE"
+
+	// CsiSpaceReclamationMaxConcurrent - Space Reclamation Max Concurrent
+	CsiSpaceReclamationMaxConcurrent = "X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT"
+
+	// CsiSpaceReclamationTimeOut - Space Reclamation Timeout
+	CsiSpaceReclamationTimeOut = "X_CSI_SPACE_RECLAMATION_TIMEOUT"
 )
 
 func EnvToPlaceholder(envName string) string {

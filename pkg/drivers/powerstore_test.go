@@ -234,6 +234,33 @@ var (
 			fileType:   "Controller",
 			expected:   "FS_CHECK_ENABLED=<X_CSI_FS_CHECK_ENABLED> FS_CHECK_MODE=<X_CSI_FS_CHECK_MODE>",
 		},
+		{
+			name:       "Node: space reclamation values substituted from Common.Envs",
+			yamlString: "ENABLED=<X_CSI_SPACE_RECLAMATION_ENABLED> SCHEDULE=<X_CSI_SPACE_RECLAMATION_SCHEDULE> MAX_CONCURRENT=<X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT> TIMEOUT=<X_CSI_SPACE_RECLAMATION_TIMEOUT>",
+			csm:        csmForPowerstoreSpaceReclamation("true", "@hourly", "5", "300s"),
+			ct:         powerStoreClient,
+			sec:        powerStoreSecret,
+			fileType:   "Node",
+			expected:   "ENABLED=true SCHEDULE=@hourly MAX_CONCURRENT=5 TIMEOUT=300s",
+		},
+		{
+			name:       "Node: space reclamation default values when Common.Envs has no space reclamation entries",
+			yamlString: "ENABLED=<X_CSI_SPACE_RECLAMATION_ENABLED> SCHEDULE=<X_CSI_SPACE_RECLAMATION_SCHEDULE> MAX_CONCURRENT=<X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT> TIMEOUT=<X_CSI_SPACE_RECLAMATION_TIMEOUT>",
+			csm:        csmForPowerStore("csm"),
+			ct:         powerStoreClient,
+			sec:        powerStoreSecret,
+			fileType:   "Node",
+			expected:   "ENABLED=false SCHEDULE= MAX_CONCURRENT= TIMEOUT=",
+		},
+		{
+			name:       "Controller: space reclamation placeholders are not substituted",
+			yamlString: "ENABLED=<X_CSI_SPACE_RECLAMATION_ENABLED> SCHEDULE=<X_CSI_SPACE_RECLAMATION_SCHEDULE> MAX_CONCURRENT=<X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT> TIMEOUT=<X_CSI_SPACE_RECLAMATION_TIMEOUT>",
+			csm:        csmForPowerstoreSpaceReclamation("true", "@hourly", "5", "300s"),
+			ct:         powerStoreClient,
+			sec:        powerStoreSecret,
+			fileType:   "Controller",
+			expected:   "ENABLED=<X_CSI_SPACE_RECLAMATION_ENABLED> SCHEDULE=<X_CSI_SPACE_RECLAMATION_SCHEDULE> MAX_CONCURRENT=<X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT> TIMEOUT=<X_CSI_SPACE_RECLAMATION_TIMEOUT>",
+		},
 	}
 )
 
@@ -486,6 +513,17 @@ func getNilEnvObject() csmv1.ContainerStorageModule {
 func setAuthModuleEnv(value string) csmv1.ContainerStorageModule {
 	cr := csmForPowerStore("csm")
 	cr.Spec.Driver.Node.Envs = append(cr.Spec.Driver.Node.Envs, corev1.EnvVar{Name: "X_CSM_AUTH_ENABLED", Value: value})
+	return cr
+}
+
+func csmForPowerstoreSpaceReclamation(enabled, schedule, maxConcurrent, timeout string) csmv1.ContainerStorageModule {
+	cr := csmForPowerStore("csm")
+	cr.Spec.Driver.Common.Envs = append(cr.Spec.Driver.Common.Envs,
+		corev1.EnvVar{Name: "X_CSI_SPACE_RECLAMATION_ENABLED", Value: enabled},
+		corev1.EnvVar{Name: "X_CSI_SPACE_RECLAMATION_SCHEDULE", Value: schedule},
+		corev1.EnvVar{Name: "X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT", Value: maxConcurrent},
+		corev1.EnvVar{Name: "X_CSI_SPACE_RECLAMATION_TIMEOUT", Value: timeout},
+	)
 	return cr
 }
 

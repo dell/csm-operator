@@ -385,6 +385,11 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	fsckEnabled := GetDriverCommonEnv(cr, CsiFsCheckEnabled, "false")
 	fsckMode := GetDriverCommonEnv(cr, CsiFsCheckMode, "checkOnly")
 
+	spaceReclamationEnabled := GetDriverCommonEnv(cr, CsiSpaceReclamationEnabled, "false")
+	spaceReclamationSchedule := GetDriverCommonEnv(cr, CsiSpaceReclamationSchedule, "")
+	spaceReclamationMaxConcurrent := GetDriverCommonEnv(cr, CsiSpaceReclamationMaxConcurrent, "")
+	spaceReclamationTimeOut := GetDriverCommonEnv(cr, CsiSpaceReclamationTimeOut, "")
+
 	// nolint:gosec
 	switch fileType {
 	case "Controller":
@@ -455,6 +460,10 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 
 		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckEnabled, fsckEnabled)
 		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckMode, fsckMode)
+		yamlString = SubstituteEnvVar(yamlString, CsiSpaceReclamationEnabled, spaceReclamationEnabled)
+		yamlString = SubstituteEnvVar(yamlString, CsiSpaceReclamationSchedule, spaceReclamationSchedule)
+		yamlString = SubstituteEnvVar(yamlString, CsiSpaceReclamationMaxConcurrent, spaceReclamationMaxConcurrent)
+		yamlString = SubstituteEnvVar(yamlString, CsiSpaceReclamationTimeOut, spaceReclamationTimeOut)
 
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {

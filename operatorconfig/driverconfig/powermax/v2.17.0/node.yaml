@@ -187,6 +187,14 @@ spec:
               value: /app/tls
             - name: X_CSI_DYNAMIC_SG_ENABLED
               value: "<X_CSI_DYNAMIC_SG_ENABLED>"
+            - name: X_CSI_SPACE_RECLAMATION_ENABLED
+              value: <X_CSI_SPACE_RECLAMATION_ENABLED>
+            - name: X_CSI_SPACE_RECLAMATION_SCHEDULE
+              value: "<X_CSI_SPACE_RECLAMATION_SCHEDULE>"
+            - name: X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT
+              value: <X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT>
+            - name: X_CSI_SPACE_RECLAMATION_TIMEOUT
+              value: <X_CSI_SPACE_RECLAMATION_TIMEOUT>
             - name: X_CSI_FS_CHECK_ENABLED
               value: <X_CSI_FS_CHECK_ENABLED>
             - name: X_CSI_FS_CHECK_MODE

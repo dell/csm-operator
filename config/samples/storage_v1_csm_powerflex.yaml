@@ -78,6 +78,22 @@ spec:
         # Default value: checkOnly
         - name: X_CSI_FS_CHECK_MODE
           value: "checkOnly"
+        # X_CSI_SPACE_RECLAMATION_ENABLED: Enable/Disable space reclamation
+        # Allowed values:
+        #    true: enable space reclamation.
+        #    false: disable space reclamation.
+        # Default value: false
+        - name: X_CSI_SPACE_RECLAMATION_ENABLED
+          value: "false"
+        # X_CSI_SPACE_RECLAMATION_SCHEDULE: Cron expression for reclamation schedule
+        - name: X_CSI_SPACE_RECLAMATION_SCHEDULE
+          value: "0 2 * * 0"
+        # X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT: Max number of concurrent reclamation operations per node
+        - name: X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT
+          value: "2"
+        # X_CSI_SPACE_RECLAMATION_TIMEOUT: TimeOut in Seconds
+        - name: X_CSI_SPACE_RECLAMATION_TIMEOUT
+          value: "3600"
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner

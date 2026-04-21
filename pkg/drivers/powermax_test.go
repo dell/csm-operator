@@ -458,6 +458,72 @@ func TestModifyPowermaxCRFsckParameters(t *testing.T) {
 	}
 }
 
+func TestModifyPowermaxCRSpaceReclamationParameters(t *testing.T) {
+	tests := []struct {
+		name              string
+		fileType          string
+		cr                csmv1.ContainerStorageModule
+		expectedSpaceRecl map[string]string
+	}{
+		{
+			name:     "Node: space reclamation enabled with schedule substituted from Common.Envs",
+			fileType: "Node",
+			cr:       createCSMWithSpaceReclamationEnvs("true", "0 2 * * *", "5", "300"),
+			expectedSpaceRecl: map[string]string{
+				"X_CSI_SPACE_RECLAMATION_ENABLED":        "true",
+				"X_CSI_SPACE_RECLAMATION_SCHEDULE":       "0 2 * * *",
+				"X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT": "5",
+				"X_CSI_SPACE_RECLAMATION_TIMEOUT":        "300",
+			},
+		},
+		{
+			name:     "Node: space reclamation default values when Common.Envs has no entries",
+			fileType: "Node",
+			cr:       shared.MakeCSM("csm", "pmax-test", shared.PmaxConfigVersion),
+			expectedSpaceRecl: map[string]string{
+				"X_CSI_SPACE_RECLAMATION_ENABLED":        "false",
+				"X_CSI_SPACE_RECLAMATION_SCHEDULE":       "",
+				"X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT": "",
+				"X_CSI_SPACE_RECLAMATION_TIMEOUT":        "",
+			},
+		},
+		{
+			name:     "Node: space reclamation disabled with empty parameters",
+			fileType: "Node",
+			cr:       createCSMWithSpaceReclamationEnvs("false", "", "", ""),
+			expectedSpaceRecl: map[string]string{
+				"X_CSI_SPACE_RECLAMATION_ENABLED":        "false",
+				"X_CSI_SPACE_RECLAMATION_SCHEDULE":       "",
+				"X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT": "",
+				"X_CSI_SPACE_RECLAMATION_TIMEOUT":        "",
+			},
+		},
+		{
+			name:     "Controller: space reclamation placeholders are not substituted",
+			fileType: "Controller",
+			cr:       createCSMWithSpaceReclamationEnvs("true", "0 2 * * *", "5", "300"),
+			expectedSpaceRecl: map[string]string{
+				"X_CSI_SPACE_RECLAMATION_ENABLED":        "<X_CSI_SPACE_RECLAMATION_ENABLED>",
+				"X_CSI_SPACE_RECLAMATION_SCHEDULE":       "<X_CSI_SPACE_RECLAMATION_SCHEDULE>",
+				"X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT": "<X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT>",
+				"X_CSI_SPACE_RECLAMATION_TIMEOUT":        "<X_CSI_SPACE_RECLAMATION_TIMEOUT>",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			yamlString := "X_CSI_SPACE_RECLAMATION_ENABLED=<X_CSI_SPACE_RECLAMATION_ENABLED> X_CSI_SPACE_RECLAMATION_SCHEDULE=<X_CSI_SPACE_RECLAMATION_SCHEDULE> X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT=<X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT> X_CSI_SPACE_RECLAMATION_TIMEOUT=<X_CSI_SPACE_RECLAMATION_TIMEOUT>"
+
+			result := ModifyPowermaxCR(yamlString, tt.cr, tt.fileType)
+
+			for key, expectedValue := range tt.expectedSpaceRecl {
+				assert.Containsf(t, result, expectedValue, "expected %s value %q in result", key, expectedValue)
+			}
+		})
+	}
+}
+
 // Helper function to create CSM with fsck environment variables
 func createCSMWithFsckEnvs(fsckEnabled string, fsckMode string) csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "pmax-test", shared.PmaxConfigVersion)
@@ -465,6 +531,23 @@ func createCSMWithFsckEnvs(fsckEnabled string, fsckMode string) csmv1.ContainerS
 	res.Spec.Driver.Common.Envs = []corev1.EnvVar{
 		{Name: "X_CSI_FS_CHECK_ENABLED", Value: fsckEnabled},
 		{Name: "X_CSI_FS_CHECK_MODE", Value: fsckMode},
+	}
+	res.Spec.Driver.AuthSecret = "csm-creds"
+	res.Spec.Driver.ConfigVersion = shared.PmaxConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.PowerMax
+
+	return res
+}
+
+// Helper function to create CSM with SpaceReclamation environment variables
+func createCSMWithSpaceReclamationEnvs(spaceReclamationEnabled string, spaceReclamationSchedule string, spaceReclamationMaxConcurrent string, spaceReclamationTimeOut string) csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "pmax-test", shared.PmaxConfigVersion)
+
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{
+		{Name: "X_CSI_SPACE_RECLAMATION_ENABLED", Value: spaceReclamationEnabled},
+		{Name: "X_CSI_SPACE_RECLAMATION_SCHEDULE", Value: spaceReclamationSchedule},
+		{Name: "X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT", Value: spaceReclamationMaxConcurrent},
+		{Name: "X_CSI_SPACE_RECLAMATION_TIMEOUT", Value: spaceReclamationTimeOut},
 	}
 	res.Spec.Driver.AuthSecret = "csm-creds"
 	res.Spec.Driver.ConfigVersion = shared.PmaxConfigVersion
