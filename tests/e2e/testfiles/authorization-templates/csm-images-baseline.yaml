@@ -15,6 +15,8 @@ data:
         cosi: csm.artifactory.cec.lab.emc.com/csm-users/cicd/cosi:nightly
         karavi-authorization-proxy: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-sidecar:nightly
         podmon: csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:nightly
+        podmon-controller: csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:nightly
+        podmon-node: csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:nightly
         otel-collector: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.143.1
         nginx-proxy: quay.io/nginx/nginx-unprivileged:1.27
         metrics-powermax: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-metrics-powermax:nightly
@@ -33,7 +35,7 @@ data:
         role-service: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-role:nightly
         storage-service: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-storage:nightly
         opa: docker.io/openpolicyagent/opa:0.70.0
-        opa-kube-mgmt: docker.io/openpolicyagent/kube-mgmt:9.2.1
+        opa-kube-mgmt: docker.io/openpolicyagent/kube-mgmt:9.3.0
         redis: redis:8.4.0-alpine
         commander: docker.io/rediscommander/redis-commander:latest
         attacher: registry.k8s.io/sig-storage/csi-attacher:v4.11.0
