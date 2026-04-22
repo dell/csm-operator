@@ -1,0 +1,71 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: isilon
+  namespace: ${E2E_NS_OPERATOR}
+spec:
+  version: v1.17.0
+  driver:
+    csiDriverType: "isilon"
+    csiDriverSpec:
+      fSGroupPolicy: "File"
+    replicas: 2
+    dnsPolicy: ClusterFirstWithHostNet
+    forceRemoveDriver: true
+    common:
+      imagePullPolicy: Always
+      envs:
+        - name: X_CSI_ISI_PORT
+          value: "8080"
+        - name: X_CSI_ISI_PATH
+          value: "/ifs/e2etest"
+        - name: X_CSI_ISI_NO_PROBE_ON_START
+          value: "true"
+        - name: X_CSI_ISI_AUTOPROBE
+          value: "true"
+        - name: X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION
+          value: "true"
+        - name: X_CSI_ISI_AUTH_TYPE
+          value: "1"
+        - name: KUBELET_CONFIG_DIR
+          value: "/var/lib/kubelet"
+    controller:
+      envs:
+        - name: X_CSI_ISI_QUOTA_ENABLED
+          value: "false"
+        - name: X_CSI_ISI_ACCESS_ZONE
+          value: "E2eTestZone"
+        - name: X_CSI_ISI_VOLUME_PATH_PERMISSIONS
+          value: "777"
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+    node:
+      envs:
+        - name: X_CSI_MAX_VOLUMES_PER_NODE
+          value: "20"
+        - name: X_CSI_ALLOWED_NETWORKS
+          value: ""
+        - name: X_CSI_MAX_PATH_LIMIT
+          value: "256"
+      tolerations:
+        - key: "node.kubernetes.io/memory-pressure"
+          operator: "Exists"
+          effect: "NoExecute"
+        - key: "node.kubernetes.io/disk-pressure"
+          operator: "Exists"
+          effect: "NoExecute"
+        - key: "node.kubernetes.io/network-unavailable"
+          operator: "Exists"
+          effect: "NoExecute"
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+  modules:
+    - name: observability
+      enabled: true
+      configVersion: v1.15.0
+      components:
+        - name: metrics-powerscale
+          enabled: true

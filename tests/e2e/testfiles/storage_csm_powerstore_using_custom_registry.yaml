@@ -34,7 +34,7 @@ spec:
     # resiliency test will fail with 2 replicas.
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
-    forceRemoveDriver: true
+    forceRemoveDriver: false
     common:
       imagePullPolicy: Always
       envs:
@@ -52,7 +52,7 @@ spec:
       # health monitor is disabled by default, refer to driver documentation before enabling it
       # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
       - name: external-health-monitor
-        enabled: false
+        enabled: true
         args: ["--monitor-interval=60s"]
     controller:
       envs:
