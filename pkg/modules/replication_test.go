@@ -1154,3 +1154,182 @@ func TestGetReplicaController_NeitherConfigMapNorRegistry(t *testing.T) {
 	assert.True(t, strings.Contains(got, "quay.io/dell/container-storage-modules/dell-replication-controller"),
 		"manager image should be the default template image, got: %s", got)
 }
+
+// TestValidateReplicationPolicyRules tests the validateReplicationPolicyRules function
+func TestValidateReplicationPolicyRules(t *testing.T) {
+	tests := []struct {
+		name      string
+		rules     []rbacv1.PolicyRule
+		wantError bool
+		errorMsg  string
+	}{
+		{
+			name: "Valid replication rules should pass",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"persistentvolumeclaims", "volumesnapshots"},
+					Verbs:     []string{"get", "list", "watch", "create", "delete"},
+				},
+			},
+			wantError: false,
+		},
+		{
+			name: "Wildcard APIGroup should be rejected",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{"*"},
+					Resources: []string{"persistentvolumeclaims"},
+					Verbs:     []string{"get"},
+				},
+			},
+			wantError: true,
+			errorMsg:  "wildcard APIGroup not allowed",
+		},
+		{
+			name: "Wildcard resource should be rejected",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"*"},
+					Verbs:     []string{"get"},
+				},
+			},
+			wantError: true,
+			errorMsg:  "wildcard resource not allowed",
+		},
+		{
+			name: "Wildcard verb should be rejected",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"persistentvolumeclaims"},
+					Verbs:     []string{"*"},
+				},
+			},
+			wantError: true,
+			errorMsg:  "wildcard verb not allowed",
+		},
+		{
+			name: "Escalate verb should be rejected",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"persistentvolumeclaims"},
+					Verbs:     []string{"escalate"},
+				},
+			},
+			wantError: true,
+			errorMsg:  "verb 'escalate' not allowed",
+		},
+		{
+			name: "Bind verb should be rejected",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"persistentvolumeclaims"},
+					Verbs:     []string{"bind"},
+				},
+			},
+			wantError: true,
+			errorMsg:  "verb 'bind' not allowed",
+		},
+		{
+			name: "Impersonate verb should be rejected",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"persistentvolumeclaims"},
+					Verbs:     []string{"impersonate"},
+				},
+			},
+			wantError: true,
+			errorMsg:  "verb 'impersonate' not allowed",
+		},
+		{
+			name: "NonResourceURLs should be rejected",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups:       []string{""},
+					Resources:       []string{"persistentvolumeclaims"},
+					Verbs:           []string{"get"},
+					NonResourceURLs: []string{"/healthz"},
+				},
+			},
+			wantError: true,
+			errorMsg:  "NonResourceURLs not allowed",
+		},
+		{
+			name: "Disallowed resource should be rejected",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"secrets"},
+					Verbs:     []string{"get"},
+				},
+			},
+			wantError: true,
+			errorMsg:  "resource 'secrets' not allowed for replication module",
+		},
+		{
+			name: "Multiple valid rules should pass",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"persistentvolumeclaims"},
+					Verbs:     []string{"get", "list", "watch", "create", "delete", "update", "patch"},
+				},
+				{
+					APIGroups: []string{"snapshot.storage.k8s.io"},
+					Resources: []string{"volumesnapshots"},
+					Verbs:     []string{"get", "list", "watch", "create", "delete", "update"},
+				},
+			},
+			wantError: false,
+		},
+		{
+			name:      "Empty rules should pass",
+			rules:     []rbacv1.PolicyRule{},
+			wantError: false,
+		},
+		{
+			name: "Nodes resource should be rejected for replication",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"nodes"},
+					Verbs:     []string{"get"},
+				},
+			},
+			wantError: true,
+			errorMsg:  "resource 'nodes' not allowed for replication module",
+		},
+		{
+			name: "Pods resource should be rejected for replication",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"pods"},
+					Verbs:     []string{"get"},
+				},
+			},
+			wantError: true,
+			errorMsg:  "resource 'pods' not allowed for replication module",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateReplicationPolicyRules(tt.rules)
+
+			if tt.wantError {
+				assert.Error(t, err)
+				if tt.errorMsg != "" {
+					assert.Contains(t, err.Error(), tt.errorMsg)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

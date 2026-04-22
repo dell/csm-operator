@@ -1038,3 +1038,213 @@ func TestSetResiliencyArgs_SyntheticUnsupportedMode_NoChange(t *testing.T) {
 		t.Errorf("image unexpectedly changed for unsupported mode: got=%s want=%s", got, image)
 	}
 }
+
+// TestValidatePolicyRules tests the validatePolicyRules function
+func TestValidatePolicyRules(t *testing.T) {
+	tests := []struct {
+		name      string
+		rules     []rbacv1.PolicyRule
+		module    string
+		wantError bool
+		errorMsg  string
+	}{
+		{
+			name: "Valid resiliency rules should pass",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"nodes", "pods"},
+					Verbs:     []string{"get", "list", "watch"},
+				},
+			},
+			module:    "resiliency",
+			wantError: false,
+		},
+		{
+			name: "Valid replication rules should pass",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"persistentvolumeclaims", "volumesnapshots"},
+					Verbs:     []string{"get", "list"},
+				},
+			},
+			module:    "replication",
+			wantError: false,
+		},
+		{
+			name: "Wildcard APIGroup should be rejected",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{"*"},
+					Resources: []string{"nodes"},
+					Verbs:     []string{"get"},
+				},
+			},
+			module:    "resiliency",
+			wantError: true,
+			errorMsg:  "wildcard APIGroup not allowed",
+		},
+		{
+			name: "Wildcard resource should be rejected",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"*"},
+					Verbs:     []string{"get"},
+				},
+			},
+			module:    "resiliency",
+			wantError: true,
+			errorMsg:  "wildcard resource not allowed",
+		},
+		{
+			name: "Wildcard verb should be rejected",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"nodes"},
+					Verbs:     []string{"*"},
+				},
+			},
+			module:    "resiliency",
+			wantError: true,
+			errorMsg:  "wildcard verb not allowed",
+		},
+		{
+			name: "Escalate verb should be rejected",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"nodes"},
+					Verbs:     []string{"escalate"},
+				},
+			},
+			module:    "resiliency",
+			wantError: true,
+			errorMsg:  "verb 'escalate' not allowed",
+		},
+		{
+			name: "Bind verb should be rejected",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"nodes"},
+					Verbs:     []string{"bind"},
+				},
+			},
+			module:    "resiliency",
+			wantError: true,
+			errorMsg:  "verb 'bind' not allowed",
+		},
+		{
+			name: "Impersonate verb should be rejected",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"nodes"},
+					Verbs:     []string{"impersonate"},
+				},
+			},
+			module:    "resiliency",
+			wantError: true,
+			errorMsg:  "verb 'impersonate' not allowed",
+		},
+		{
+			name: "NonResourceURLs should be rejected",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups:       []string{""},
+					Resources:       []string{"nodes"},
+					Verbs:           []string{"get"},
+					NonResourceURLs: []string{"/healthz"},
+				},
+			},
+			module:    "resiliency",
+			wantError: true,
+			errorMsg:  "NonResourceURLs not allowed",
+		},
+		{
+			name: "Disallowed resource for resiliency should be rejected",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"secrets"},
+					Verbs:     []string{"get"},
+				},
+			},
+			module:    "resiliency",
+			wantError: true,
+			errorMsg:  "resource 'secrets' not allowed for module 'resiliency'",
+		},
+		{
+			name: "Disallowed resource for replication should be rejected",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"nodes"},
+					Verbs:     []string{"get"},
+				},
+			},
+			module:    "replication",
+			wantError: true,
+			errorMsg:  "resource 'nodes' not allowed for module 'replication'",
+		},
+		{
+			name: "Unknown module should be rejected",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"nodes"},
+					Verbs:     []string{"get"},
+				},
+			},
+			module:    "unknown-module",
+			wantError: true,
+			errorMsg:  "unknown module: unknown-module",
+		},
+		{
+			name: "Multiple valid rules should pass",
+			rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"nodes"},
+					Verbs:     []string{"get", "list", "watch", "patch"},
+				},
+				{
+					APIGroups: []string{"storage.k8s.io"},
+					Resources: []string{"volumeattachments"},
+					Verbs:     []string{"get", "list", "watch", "update", "patch", "delete"},
+				},
+				{
+					APIGroups: []string{""},
+					Resources: []string{"pods"},
+					Verbs:     []string{"get", "list", "watch", "delete"},
+				},
+			},
+			module:    "resiliency",
+			wantError: false,
+		},
+		{
+			name:      "Empty rules should pass",
+			rules:     []rbacv1.PolicyRule{},
+			module:    "resiliency",
+			wantError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validatePolicyRules(tt.rules, tt.module)
+
+			if tt.wantError {
+				assert.Error(t, err)
+				if tt.errorMsg != "" {
+					assert.Contains(t, err.Error(), tt.errorMsg)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
