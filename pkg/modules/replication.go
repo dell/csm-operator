@@ -293,6 +293,52 @@ func CheckClusterRoleReplica(rules []rbacv1.PolicyRule) error {
 	return nil
 }
 
+// validateReplicationPolicyRules validates that PolicyRules only contain allowed permissions for replication module
+func validateReplicationPolicyRules(rules []rbacv1.PolicyRule) error {
+	// Allowlist of resources replication module can access
+	allowedResources := map[string]bool{
+		"persistentvolumeclaims": true,
+		"volumesnapshots":        true,
+	}
+
+	for i, rule := range rules {
+		// Check for wildcards in APIGroups
+		for _, apiGroup := range rule.APIGroups {
+			if apiGroup == "*" {
+				return fmt.Errorf("rule %d: wildcard APIGroup not allowed", i)
+			}
+		}
+
+		// Check for wildcards or disallowed resources
+		for _, resource := range rule.Resources {
+			if resource == "*" {
+				return fmt.Errorf("rule %d: wildcard resource not allowed", i)
+			}
+			if !allowedResources[resource] {
+				return fmt.Errorf("rule %d: resource '%s' not allowed for replication module",
+					i, resource)
+			}
+		}
+
+		// Check for wildcard or dangerous verbs
+		for _, verb := range rule.Verbs {
+			if verb == "*" {
+				return fmt.Errorf("rule %d: wildcard verb not allowed", i)
+			}
+			// Disallow privilege escalation verbs
+			if verb == "escalate" || verb == "bind" || verb == "impersonate" {
+				return fmt.Errorf("rule %d: verb '%s' not allowed", i, verb)
+			}
+		}
+
+		// Disallow NonResourceURLs (shouldn't be needed for CSI modules)
+		if len(rule.NonResourceURLs) > 0 {
+			return fmt.Errorf("rule %d: NonResourceURLs not allowed", i)
+		}
+	}
+	return nil
+}
+
 // ReplicationInjectClusterRole - inject replication into clusterrole
 func ReplicationInjectClusterRole(ctx context.Context, clusterRole rbacv1.ClusterRole, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig) (*rbacv1.ClusterRole, error) {
 	var err error
@@ -311,6 +357,12 @@ func ReplicationInjectClusterRole(ctx context.Context, clusterRole rbacv1.Cluste
 	err = yaml.Unmarshal(buf, &rules)
 	if err != nil {
 		return nil, err
+	}
+
+	// Validate PolicyRules before applying them
+	err = validateReplicationPolicyRules(rules)
+	if err != nil {
+		return nil, fmt.Errorf("invalid PolicyRules: %w", err)
 	}
 
 	clusterRole.Rules = append(clusterRole.Rules, rules...)

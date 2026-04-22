@@ -92,6 +92,65 @@ func ResiliencyPrecheck(ctx context.Context, op operatorutils.OperatorConfig, re
 	return nil
 }
 
+// validatePolicyRules validates that PolicyRules only contain allowed permissions
+func validatePolicyRules(rules []rbacv1.PolicyRule, moduleName string) error {
+	// Allowlist of resources each module can access
+	allowedResources := map[string]map[string]bool{
+		"resiliency": {
+			"nodes":             true,
+			"volumeattachments": true,
+			"pods":              true,
+		},
+		"replication": {
+			"persistentvolumeclaims": true,
+			"volumesnapshots":        true,
+		},
+		// ... other modules
+	}
+
+	allowed, ok := allowedResources[moduleName]
+	if !ok {
+		return fmt.Errorf("unknown module: %s", moduleName)
+	}
+
+	for i, rule := range rules {
+		// Check for wildcards in APIGroups
+		for _, apiGroup := range rule.APIGroups {
+			if apiGroup == "*" {
+				return fmt.Errorf("rule %d: wildcard APIGroup not allowed", i)
+			}
+		}
+
+		// Check for wildcards or disallowed resources
+		for _, resource := range rule.Resources {
+			if resource == "*" {
+				return fmt.Errorf("rule %d: wildcard resource not allowed", i)
+			}
+			if !allowed[resource] {
+				return fmt.Errorf("rule %d: resource '%s' not allowed for module '%s'",
+					i, resource, moduleName)
+			}
+		}
+
+		// Check for wildcard or dangerous verbs
+		for _, verb := range rule.Verbs {
+			if verb == "*" {
+				return fmt.Errorf("rule %d: wildcard verb not allowed", i)
+			}
+			// Disallow privilege escalation verbs
+			if verb == "escalate" || verb == "bind" || verb == "impersonate" {
+				return fmt.Errorf("rule %d: verb '%s' not allowed", i, verb)
+			}
+		}
+
+		// Disallow NonResourceURLs (shouldn't be needed for CSI modules)
+		if len(rule.NonResourceURLs) > 0 {
+			return fmt.Errorf("rule %d: NonResourceURLs not allowed", i)
+		}
+	}
+	return nil
+}
+
 // ResiliencyInjectClusterRole - inject resiliency into clusterrole
 func ResiliencyInjectClusterRole(ctx context.Context, clusterRole rbacv1.ClusterRole, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, mode string) (*rbacv1.ClusterRole, error) {
 	var err error
@@ -110,6 +169,12 @@ func ResiliencyInjectClusterRole(ctx context.Context, clusterRole rbacv1.Cluster
 	err = yaml.Unmarshal(buf, &rules)
 	if err != nil {
 		return nil, err
+	}
+
+	// Validate PolicyRules before applying them
+	err = validatePolicyRules(rules, "resiliency")
+	if err != nil {
+		return nil, fmt.Errorf("invalid PolicyRules: %w", err)
 	}
 
 	clusterRole.Rules = append(clusterRole.Rules, rules...)

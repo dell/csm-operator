@@ -48,12 +48,29 @@ rules:
       - persistentvolumeclaims
       - pods
       - roles
-      - secrets
       - serviceaccounts
       - services
       - services/finalizers
     verbs:
-      - "*"
+      - get
+      - list
+      - create
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    resourceNames:
+      - dell-csm-*
+      - karavi-*
+      - vxflexos-*
+      - powermax-*
+      - isilon-*
+    verbs:
+      - get
+      - list
+      - create
+      - update
   - apiGroups:
       - ""
     resourceNames:
@@ -613,10 +630,20 @@ rules:
   - apiGroups:
       - rbac.authorization.k8s.io
     resources:
-      - clusterrolebindings
       - clusterroles
-      - clusterroles/finalizers
-      - replicasets
+    resourceNames:
+      - csm-*
+      - dell-*
+      - *-controller
+      - *-node
+    verbs:
+      - get
+      - list
+      - create
+      - update
+  - apiGroups:
+      - rbac.authorization.k8s.io
+    resources:
       - rolebindings
       - roles
     verbs:
