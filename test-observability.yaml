@@ -1,0 +1,21 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: powerstore
+  namespace: powerstore
+spec:
+  version: v1.17.0
+  driver:
+    csiDriverType: "powerstore"
+    common:
+      image: "csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-powerstore:nightly"
+  modules:
+    - name: resiliency
+      enabled: true
+      components:
+        - name: podmon-controller
+          enabled: true
+          image: "csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:nightly"
+        - name: podmon-node
+          enabled: true
+          image: "csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:nightly"
