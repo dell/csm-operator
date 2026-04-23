@@ -264,7 +264,7 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 		return reconcile.Result{}, nil
 	}
 
-	// Merge default spec from DefaultCRs to fill in missing fields
+	// Merge default spec from DefaultCRs to fill in missing fileds or overwrite any info supplied by the csm CR
 	driverType := csm.Spec.Driver.CSIDriverType
 	if defaultSpec, exists := r.DefaultCRs[driverType]; exists {
 		if err := r.mergeDefaultSpec(log, csm, defaultSpec); err != nil {
