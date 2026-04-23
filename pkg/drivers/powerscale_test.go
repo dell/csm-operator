@@ -118,7 +118,12 @@ func TestPrecheckPowerScale(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range preCheckPowerScaleTest {
 		t.Run(tt.name, func(t *testing.T) { // #nosec G601 - Run waits for the call to complete.
-			err := PrecheckPowerScale(ctx, &tt.csm, config, tt.ct)
+			// Use configForVersionChecks for invalid CSM version test
+			cfg := config
+			if tt.name == "invalid csm version" {
+				cfg = configForVersionChecks
+			}
+			err := PrecheckPowerScale(ctx, &tt.csm, cfg, tt.ct)
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 			} else {
@@ -135,9 +140,13 @@ func TestPrecheckPowerScale(t *testing.T) {
 		if err != nil {
 			assert.Nil(t, err)
 		}
-
 		t.Run(tt.name, func(t *testing.T) { // #nosec G601 - Run waits for the call to complete.
-			err := PrecheckPowerScale(ctx, &tt.csm, config, tt.ct)
+			// Use configForVersionChecks for invalid CSM version test
+			cfg := config
+			if tt.name == "invalid csm version" {
+				cfg = configForVersionChecks
+			}
+			err := PrecheckPowerScale(ctx, &tt.csm, cfg, tt.ct)
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 			} else {

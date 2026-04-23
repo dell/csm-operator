@@ -30,6 +30,7 @@ import (
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/constants"
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/modules"
 	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/e2e/pkg/version"
 	"golang.org/x/mod/semver"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -154,6 +155,14 @@ func ParseScenarios(valuesFilePath string) ([]Scenario, error) {
 	if err := yaml.Unmarshal(b, &scenarios); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal scenarios: %v", err)
 	}
+	// Expand version tokens (e.g. {authorization-proxy-server}) in paths.
+	if info := version.GetInfo(); info != nil {
+		for i := range scenarios {
+			for j, p := range scenarios[i].Paths {
+				scenarios[i].Paths[j] = info.ExpandPathTokens(p)
+			}
+		}
+	}
 	return scenarios, nil
 }
 
@@ -202,6 +211,15 @@ func GetTestResources(valuesFilePath string) ([]Resource, error) {
 	err = yaml.Unmarshal(b, &scenarios)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read unmarshal values file: %v", err)
+	}
+
+	// Expand version tokens (e.g. {authorization-proxy-server}) in paths.
+	if info := version.GetInfo(); info != nil {
+		for i := range scenarios {
+			for j, p := range scenarios[i].Paths {
+				scenarios[i].Paths[j] = info.ExpandPathTokens(p)
+			}
+		}
 	}
 
 	resources := []Resource{}
@@ -3264,6 +3282,9 @@ func (step *Step) setModuleComponentEnvInSpec(res Resource, module, component, e
 }
 
 // setDriverConfigVersionInSpec sets the driver configVersion in a CR file before applying it.
+// configVersion may be a literal version string (e.g. "v2.16.0") or one of
+// the keywords "n-1" / "n-2", which are resolved dynamically from
+// csm-version-mapping.yaml based on the driver type in the CR.
 func (step *Step) setDriverConfigVersionInSpec(res Resource, configVersion, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	crFilePath := res.Scenario.Paths[crNum-1]
@@ -3277,6 +3298,12 @@ func (step *Step) setDriverConfigVersionInSpec(res Resource, configVersion, crNu
 	err = yaml.Unmarshal(crBuff, &customResource)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal CSM custom resource: %v", err)
+	}
+
+	if resolved, err := resolveNMinusConfigVersion(configVersion, string(customResource.Spec.Driver.CSIDriverType)); err != nil {
+		return err
+	} else {
+		configVersion = resolved
 	}
 
 	customResource.Spec.Driver.ConfigVersion = configVersion
@@ -3296,6 +3323,9 @@ func (step *Step) setDriverConfigVersionInSpec(res Resource, configVersion, crNu
 }
 
 // setModuleConfigVersionInSpec sets the configVersion of a module in a CR file before applying it.
+// configVersion may be a literal version string or one of the keywords "n-1" / "n-2",
+// which are resolved dynamically using the version package. Resolution uses the
+// driver type from the CR and version-values.yaml to find the correct module version.
 func (step *Step) setModuleConfigVersionInSpec(res Resource, module, configVersion, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	crFilePath := res.Scenario.Paths[crNum-1]
@@ -3309,6 +3339,12 @@ func (step *Step) setModuleConfigVersionInSpec(res Resource, module, configVersi
 	err = yaml.Unmarshal(crBuff, &customResource)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal CSM custom resource: %v", err)
+	}
+
+	if resolved, err := resolveNMinusModuleVersion(configVersion, module, string(customResource.Spec.Driver.CSIDriverType)); err != nil {
+		return err
+	} else {
+		configVersion = resolved
 	}
 
 	found := false
@@ -3388,7 +3424,16 @@ func (step *Step) setModuleComponentEnabledInSpec(res Resource, module, componen
 }
 
 // setSpecVersionInSpec sets spec.version on a CR file before applying it.
-func (step *Step) setSpecVersionInSpec(res Resource, version, crNumStr string) error {
+// version may be a literal version string (e.g. "v1.16.3") or one of the
+// keywords "n-1" / "n-2", which are resolved dynamically from
+// csm-version-mapping.yaml.
+func (step *Step) setSpecVersionInSpec(res Resource, ver, crNumStr string) error {
+	if resolved, err := resolveNMinusCSMVersion(ver); err != nil {
+		return err
+	} else {
+		ver = resolved
+	}
+
 	crNum, _ := strconv.Atoi(crNumStr)
 	crFilePath := res.Scenario.Paths[crNum-1]
 
@@ -3403,7 +3448,7 @@ func (step *Step) setSpecVersionInSpec(res Resource, version, crNumStr string) e
 		return fmt.Errorf("failed to unmarshal CSM custom resource: %v", err)
 	}
 
-	customResource.Spec.Version = version
+	customResource.Spec.Version = ver
 
 	modifiedYAML, err := yaml.Marshal(customResource)
 	if err != nil {
@@ -3449,4 +3494,96 @@ func (step *Step) setCustomRegistryInSpec(res Resource, registry, crNumStr strin
 
 	res.Scenario.Paths[crNum-1] = tempPath
 	return nil
+}
+
+// resolveNMinusCSMVersion resolves "n-1" / "n-2" keywords to actual CSM
+// operator versions using the version package. Literal version strings are
+// returned as-is.
+func resolveNMinusCSMVersion(ver string) (string, error) {
+	idx, ok := nMinusIndex(ver)
+	if !ok {
+		return ver, nil // literal version, no resolution needed
+	}
+	info := version.GetInfo()
+	if info == nil {
+		return "", fmt.Errorf("version.Init has not been called; cannot resolve %q", ver)
+	}
+	resolved := info.CSMVersion(idx)
+	if resolved == "" {
+		return "", fmt.Errorf("no CSM version available at index %d for keyword %q", idx, ver)
+	}
+	fmt.Printf("             Resolved spec version keyword %q → %s\n", ver, resolved)
+	return resolved, nil
+}
+
+// resolveNMinusConfigVersion resolves "n-1" / "n-2" keywords to actual driver
+// configVersion strings using the version package. Literal version strings
+// are returned as-is.
+func resolveNMinusConfigVersion(configVersion, driverType string) (string, error) {
+	idx, ok := nMinusIndex(configVersion)
+	if !ok {
+		return configVersion, nil // literal version, no resolution needed
+	}
+	info := version.GetInfo()
+	if info == nil {
+		return "", fmt.Errorf("version.Init has not been called; cannot resolve %q", configVersion)
+	}
+	entity := driverTypeToMappingKey(driverType)
+	resolved := info.ConfigVersionAtIndex(entity, idx)
+	if resolved == "" {
+		return "", fmt.Errorf("no config version for driver %q (%s) at index %d for keyword %q",
+			driverType, entity, idx, configVersion)
+	}
+	fmt.Printf("             Resolved configVersion keyword %q for %s → %s\n", configVersion, entity, resolved)
+	return resolved, nil
+}
+
+// nMinusIndex maps "n-1" → NMinusOne, "n-2" → NMinusTwo. Returns false if
+// the string is not an n-minus keyword.
+func nMinusIndex(s string) (int, bool) {
+	switch s {
+	case "n-1":
+		return version.NMinusOne, true
+	case "n-2":
+		return version.NMinusTwo, true
+	default:
+		return 0, false
+	}
+}
+
+// resolveNMinusModuleVersion resolves "n-1" / "n-2" keywords to actual module
+// configVersion strings using the version package. It chains through
+// version-values.yaml: CSM version → driver configVersion → module configVersion.
+// Literal version strings are returned as-is.
+func resolveNMinusModuleVersion(configVersion, moduleName, driverType string) (string, error) {
+	idx, ok := nMinusIndex(configVersion)
+	if !ok {
+		return configVersion, nil // literal version, no resolution needed
+	}
+	info := version.GetInfo()
+	if info == nil {
+		return "", fmt.Errorf("version.Init has not been called; cannot resolve %q", configVersion)
+	}
+	entity := driverTypeToMappingKey(driverType)
+	resolved := info.ModuleVersionAtIndex(entity, moduleName, idx)
+	if resolved == "" {
+		return "", fmt.Errorf("no module version for %s/%s (driver %q) at index %d for keyword %q",
+			entity, moduleName, driverType, idx, configVersion)
+	}
+	fmt.Printf("             Resolved module configVersion keyword %q for %s/%s → %s\n",
+		configVersion, entity, moduleName, resolved)
+	return resolved, nil
+}
+
+// driverTypeToMappingKey translates a CSIDriverType value (e.g. "isilon",
+// "vxflexos") to the entity key used in csm-version-mapping.yaml.
+func driverTypeToMappingKey(driverType string) string {
+	switch driverType {
+	case "isilon":
+		return "powerscale"
+	case "vxflexos":
+		return "powerflex"
+	default:
+		return driverType
+	}
 }

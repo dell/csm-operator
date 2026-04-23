@@ -21,6 +21,7 @@ import (
 	"time"
 
 	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/e2e/pkg/version"
 	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/e2e/scripts/junit"
 	step "eos2git.cec.lab.emc.com/CSM/csm-operator/tests/e2e/steps"
 
@@ -311,10 +312,18 @@ var _ = BeforeSuite(func() {
 
 	By(fmt.Sprint(tagsSpecified))
 
-	By("Setting E2E_CREG_VERSION fallback for custom registry tests")
-	if os.Getenv("E2E_CREG_VERSION") == "" {
-		os.Setenv("E2E_CREG_VERSION", "v1.16.0") // fallback to last stable release
+	By("Loading CSM version info from csm-version-mapping.yaml and version-values.yaml")
+	if err := version.Init(
+		"../../operatorconfig/common/csm-version-mapping.yaml",
+		"../../operatorconfig/moduleconfig/common/version-values.yaml",
+	); err != nil {
+		framework.Failf("Failed to load version info: %v", err)
 	}
+	vInfo := version.GetInfo()
+	fmt.Printf("  CSM versions: latest=%s  n-1=%s  n-2=%s\n",
+		vInfo.CSMVersion(version.Latest),
+		vInfo.CSMVersion(version.NMinusOne),
+		vInfo.CSMVersion(version.NMinusTwo))
 
 	By("Generating minimal testfiles")
 	if err := step.GenerateMinimalTestfiles("testfiles/minimal-testfiles"); err != nil {

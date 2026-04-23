@@ -407,12 +407,29 @@ Steps are retried every 10 seconds within their timeout window. If a step doesn'
 
 Some scenarios test the `spec.customRegistry` feature, which overrides image registries in driver/module CRs. These scenarios require that the referenced images actually exist in the custom registry.
 
-The `E2E_CREG_VERSION` environment variable controls the `spec.version` set on custom-registry test CRs. If not set, it defaults to `v1.16.0`. Override it when a newer stable version is available:
+## Dynamic Version Resolution
 
-```bash
-export E2E_CREG_VERSION=v1.17.0
-./run-e2e-test.sh --powermax
+Version strings in scenario steps are resolved automatically from
+`operatorconfig/common/csm-version-mapping.yaml`. The `pkg/version` package
+reads the mapping file at test startup and provides indexed access to CSM
+operator versions grouped by minor release (latest, n-1, n-2).
+
+Scenario steps support the keywords **`n-1`** and **`n-2`** in place of
+literal version strings:
+
+```yaml
+- "Set spec version to [n-1] in CR spec [1]"
+- "Set driver configVersion to [n-2] in CR spec [1]"
 ```
+
+The step functions resolve these keywords dynamically:
+- `n-1` resolves to the highest-patch version from the previous minor release.
+- `n-2` resolves to the highest-patch version from two minor releases back.
+- For `configVersion`, the driver type is read from the CR to look up the
+  correct per-driver config version.
+
+This eliminates the need for the `E2E_CREG_VERSION` environment variable and
+hardcoded version strings in scenario files.
 
 ---
 
@@ -464,4 +481,4 @@ export E2E_CREG_VERSION=v1.17.0
 | Namespace deletion hangs | Authorization CRDs with finalizers can block deletion. The script handles this automatically, but if it hangs, manually remove finalizers: `kubectl patch csmtenant <name> -n <ns> -p '{"metadata":{"finalizers":null}}' --type=merge` |
 | `--no-cleanup-ns` to debug | Keeps all test namespaces after the run so you can inspect pods, logs, and events. |
 | Tests show transient "Failed" status then pass | The operator's status calculation has a brief window where DaemonSet/Deployment counts are still converging. The test framework retries and this is expected behavior. |
-| Custom registry tests fail with image pull errors | Ensure `E2E_CREG_VERSION` matches a version whose images exist in your custom registry. |
+| Custom registry tests fail with image pull errors | Ensure the latest CSM version (resolved from `csm-version-mapping.yaml`) has images in your custom registry. |

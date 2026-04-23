@@ -16,13 +16,20 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/e2e/pkg/version"
 )
 
-// Version constant used by minimal testfiles.
-// Update this when bumping the CSM version.
-const (
-	minimalCSMVersion = "v1.17.0"
-)
+// latestCSMVersion returns the latest CSM operator version, dynamically
+// resolved from csm-version-mapping.yaml via the version package.
+// Requires version.Init to have been called first (done in BeforeSuite).
+func latestCSMVersion() string {
+	if info := version.GetInfo(); info != nil {
+		return info.CSMVersion(version.Latest)
+	}
+	// Should not happen in normal test flow; Init is called in BeforeSuite.
+	panic("version.Init has not been called; cannot determine CSM version")
+}
 
 // GenerateMinimalTestfiles writes the base minimal testfiles to the given directory.
 // Only one file per driver is generated; variant scenarios use InSpec step
@@ -100,7 +107,7 @@ spec:
           enabled: false
         - name: metrics-powerstore
           enabled: false
-`, minimalCSMVersion)
+`, latestCSMVersion())
 
 	// ── PowerFlex ───────────────────────────────────────────────────────
 	// Includes: authorization (with component), resiliency, replication,
@@ -133,7 +140,7 @@ spec:
           enabled: false
         - name: metrics-powerflex
           enabled: false
-`, minimalCSMVersion)
+`, latestCSMVersion())
 
 	// ── PowerScale ──────────────────────────────────────────────────────
 	// Includes: authorization (with component), resiliency, replication,
@@ -166,7 +173,7 @@ spec:
           enabled: false
         - name: metrics-powerscale
           enabled: false
-`, minimalCSMVersion)
+`, latestCSMVersion())
 
 	// ── PowerMax ────────────────────────────────────────────────────────
 	// Includes: authorization, resiliency, replication,
@@ -200,7 +207,7 @@ spec:
           enabled: false
         - name: metrics-powermax
           enabled: false
-`, minimalCSMVersion, pmaxEnvs)
+`, latestCSMVersion(), pmaxEnvs)
 
 	// ── Unity ───────────────────────────────────────────────────────────
 	m["storage_csm_unity.yaml"] = fmt.Sprintf(`apiVersion: storage.dell.com/v1
@@ -213,7 +220,7 @@ spec:
   driver:
     csiDriverType: "unity"
     forceRemoveDriver: true
-`, minimalCSMVersion)
+`, latestCSMVersion())
 
 	// ── COSI ────────────────────────────────────────────────────────────
 	m["storage_csm_cosi.yaml"] = fmt.Sprintf(`apiVersion: storage.dell.com/v1
@@ -226,7 +233,7 @@ spec:
   driver:
     csiDriverType: "cosi"
     forceRemoveDriver: true
-`, minimalCSMVersion)
+`, latestCSMVersion())
 
 	return m
 }

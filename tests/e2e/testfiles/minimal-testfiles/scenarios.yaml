@@ -23,7 +23,7 @@
 - scenario: "Install Powerstore Driver (Minimal, With Authorization v2)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/{authorization-proxy-server}/authorization-crds.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerstore.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
@@ -60,7 +60,7 @@
 - scenario: "Install Powerstore Driver (Minimal, With Authorization v2 and Kubernetes Secret)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_k8s_secret.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/{authorization-proxy-server}/authorization-crds.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerstore.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
   tags:
@@ -178,7 +178,7 @@
     - "powerstore"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Set spec version to [${E2E_CREG_VERSION}] in CR spec [1]"
+    - "Set spec version to [n-1] in CR spec [1]"
     - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [powerstore]"
     - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
     - "Apply custom resource [1]"
@@ -197,7 +197,7 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Remove [spec.version] from CR spec [1]"
-    - "Set driver configVersion to [v2.15.0] in CR spec [1]"
+    - "Set driver configVersion to [n-2] in CR spec [1]"
     - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [powerstore]"
     - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
     - "Apply custom resource [1]"
@@ -382,7 +382,7 @@
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_k8s_secret.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerflex.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/{authorization-proxy-server}/authorization-crds.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
   tags:
     - "authorization"
@@ -419,7 +419,7 @@
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerflex.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/{authorization-proxy-server}/authorization-crds.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
     - "authorization"
@@ -522,7 +522,7 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Set replicas to [1] in CR spec [1]"
     - "Remove [spec.version] from CR spec [1]"
-    - "Set driver configVersion to [v2.16.0] in CR spec [1]"
+    - "Set driver configVersion to [n-1] in CR spec [1]"
     - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
     - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [powerscale]"
@@ -763,7 +763,7 @@
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_k8s_secret.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerscale.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/{authorization-proxy-server}/authorization-crds.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
   tags:
     - "authorization"
@@ -802,7 +802,7 @@
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerscale.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/{authorization-proxy-server}/authorization-crds.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
     - "authorization"
@@ -844,7 +844,7 @@
     - "powerscale"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Set spec version to [${E2E_CREG_VERSION}] in CR spec [1]"
+    - "Set spec version to [n-1] in CR spec [1]"
     - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
     - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [powerscale]"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
@@ -860,7 +860,7 @@
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_n-1_nginx-controller.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerscale.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.4.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/{authorization-proxy-server:n-1}/authorization-crds.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
     - "authorization"
@@ -869,7 +869,7 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     # Configure CR [1] (authorization proxy server) for n-1 version
-    - "Set spec version to [${E2E_CREG_VERSION}] in CR spec [1]"
+    - "Set spec version to [n-1] in CR spec [1]"
     - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powerscaleAuthCRs]"
@@ -880,7 +880,7 @@
     - "Enable [authorization] module in CR spec [2]"
     - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${E2E_NS_AUTH}-ingress-nginx-controller.${E2E_NS_AUTH}.svc.cluster.local] in CR spec [2]"
     - "Set [authorization] component [karavi-authorization-proxy] env [SKIP_CERTIFICATE_VALIDATION] to [true] in CR spec [2]"
-    - "Set spec version to [${E2E_CREG_VERSION}] in CR spec [2]"
+    - "Set spec version to [n-1] in CR spec [2]"
     - "Configure authorization-proxy-server with template [4] for [powerscale] for CR [1]"
     - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
     - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [powerscale]"
@@ -1056,7 +1056,7 @@
 - scenario: "Install Powermax Driver (Minimal, With Authorization v2 and Kubernetes Secret)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_k8s_secret.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/{authorization-proxy-server}/authorization-crds.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powermax_reverseproxy_authorization_v2.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
   tags:
@@ -1116,7 +1116,7 @@
 - scenario: "Install Powermax Driver (Minimal, With Authorization v2)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/{authorization-proxy-server}/authorization-crds.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powermax_reverseproxy_authorization_v2.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
@@ -1154,7 +1154,7 @@
 - scenario: "Install Powermax Driver (Minimal, With Authorization v2, n-1 version)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_n-1_nginx-controller.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.4.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/{authorization-proxy-server:n-1}/authorization-crds.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powermax_reverseproxy_authorization_v2.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
   tags:
@@ -1166,7 +1166,7 @@
     - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powermaxAuthCRs]"
-    - "Set spec version to [${E2E_CREG_VERSION}] in CR spec [1]"
+    - "Set spec version to [n-1] in CR spec [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powermax] for CR [1]"
@@ -1177,7 +1177,7 @@
     - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config_auth.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxReverseProxy]"
     - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
     - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${E2E_NS_AUTH}-ingress-nginx-controller.${E2E_NS_AUTH}.svc.cluster.local] in CR spec [3]"
-    - "Set spec version to [${E2E_CREG_VERSION}] in CR spec [3]"
+    - "Set spec version to [n-1] in CR spec [3]"
     - "Apply custom resource [3]"
     - "Validate custom resource [3]"
     - "Validate [powermax] driver from CR [3] is installed"
@@ -1272,7 +1272,7 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Set spec version to [${E2E_CREG_VERSION}] in CR spec [1]"
+    - "Set spec version to [n-1] in CR spec [1]"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
     - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
     - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
@@ -1294,7 +1294,7 @@
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Remove [spec.version] from CR spec [1]"
-    - "Set driver configVersion to [v2.15.0] in CR spec [1]"
+    - "Set driver configVersion to [n-2] in CR spec [1]"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
     - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
     - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
@@ -1311,7 +1311,7 @@
 - scenario: "Install Powermax Driver (Minimal, With Authorization v2, n-1 auth and n-1 driver)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_n-1_k8s-secret.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.4.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/{authorization-proxy-server:n-1}/authorization-crds.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powermax_reverseproxy_authorization_v2.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
   tags:
@@ -1323,12 +1323,12 @@
     - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [${E2E_NS_AUTH}] for [powermax]"
-    - "Set spec version to [${E2E_CREG_VERSION}] in CR spec [1]"
+    - "Set spec version to [n-1] in CR spec [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powermax] for CR [1]"
     - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${E2E_NS_AUTH}-ingress-nginx-controller.${E2E_NS_AUTH}.svc.cluster.local] in CR spec [3]"
-    - "Set spec version to [${E2E_CREG_VERSION}] in CR spec [3]"
+    - "Set spec version to [n-1] in CR spec [3]"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
     - "Create Secret with template [testfiles/powermax-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
     - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
@@ -1371,7 +1371,7 @@
 - scenario: "Install PowerStore Driver (Minimal, With CustomRegistry and Authorization v2)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
-    - "../../operatorconfig/moduleconfig/authorization/v2.5.0/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/{authorization-proxy-server}/authorization-crds.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerstore.yaml"
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
     - "testfiles/common-templates/cm-sidecars-only.yaml"
@@ -1387,7 +1387,7 @@
     - "Enable [authorization] module in CR spec [3]"
     - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${E2E_NS_AUTH}-gateway-nginx.${E2E_NS_AUTH}.svc.cluster.local] in CR spec [3]"
     - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/cicd] in CR spec [3]"
-    - "Set spec version to [${E2E_CREG_VERSION}] in CR spec [3]"
+    - "Set spec version to [n-1] in CR spec [3]"
     - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powerstoreAuthCRs]"
@@ -1423,7 +1423,7 @@
     - "Delete ConfigMap"
     - "Enable [resiliency] module in CR spec [1]"
     - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/cicd] in CR spec [1]"
-    - "Set spec version to [${E2E_CREG_VERSION}] in CR spec [1]"
+    - "Set spec version to [n-1] in CR spec [1]"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "Apply custom resource [2]"
@@ -1449,7 +1449,7 @@
     - "Delete ConfigMap"
     - "Enable [replication] module in CR spec [1]"
     - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/cicd] in CR spec [1]"
-    - "Set spec version to [${E2E_CREG_VERSION}] in CR spec [1]"
+    - "Set spec version to [n-1] in CR spec [1]"
     - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
     - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [powerscale]"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
@@ -1475,7 +1475,7 @@
     - "Delete ConfigMap"
     - "Enable [replication] module in CR spec [1]"
     - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/cicd] in CR spec [1]"
-    - "Set spec version to [${E2E_CREG_VERSION}] in CR spec [1]"
+    - "Set spec version to [n-1] in CR spec [1]"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
     - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
     - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
@@ -1502,7 +1502,7 @@
     - "Create StorageClass with template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
     - "Create Secret with template [testfiles/unity-templates/unity-secret-template.yaml] name [unity-creds] in namespace [${E2E_NS_UNITY}] for [unity]"
     - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/cicd] in CR spec [1]"
-    - "Set spec version to [${E2E_CREG_VERSION}] in CR spec [1]"
+    - "Set spec version to [n-1] in CR spec [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [unity] driver from CR [1] is installed"
@@ -1522,7 +1522,7 @@
     - "Delete ConfigMap"
     - "Create Secret from template [testfiles/cosi-templates/cosi-secret.yaml] as field [config.yaml] named [cosi-config] in namespace [${E2E_NS_COSI}] for [cosi]"
     - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/cicd] in CR spec [1]"
-    - "Set spec version to [${E2E_CREG_VERSION}] in CR spec [1]"
+    - "Set spec version to [n-1] in CR spec [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [cosi] driver from CR [1] is installed"

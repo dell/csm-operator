@@ -27,6 +27,11 @@ var (
 		ConfigDirectory: "../../tests/config",
 	}
 
+	// config for version checks (csm-version-mapping.yaml is in operatorconfig)
+	configForVersionChecks = operatorutils.OperatorConfig{
+		ConfigDirectory: "../../operatorconfig",
+	}
+
 	pflexCSMName   = "pflex-csm"
 	pflexCredsName = pflexCSMName + "-config"
 	pFlexNS        = "pflex-test"

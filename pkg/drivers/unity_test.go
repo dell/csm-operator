@@ -138,12 +138,17 @@ func TestPrecheckUnity(t *testing.T) {
 		if err != nil {
 			assert.Nil(t, err)
 		}
-
 		t.Run(tt.name, func(t *testing.T) { // #nosec G601 - Run waits for the call to complete.
-			err := PrecheckUnity(ctx, &tt.csm, config, tt.ct)
+			// Use configForVersionChecks for invalid CSM version test
+			cfg := config
+			if tt.name == "invalid csm version" {
+				cfg = configForVersionChecks
+			}
+			err := PrecheckUnity(ctx, &tt.csm, cfg, tt.ct)
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
-			} else if err != nil {
+			} else {
+				fmt.Printf("err: %+v\n", err)
 				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
 			}
 		})

@@ -73,7 +73,12 @@ func TestGetCsiDriver(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			csiDriver, err := GetCSIDriver(ctx, tt.csm, config, tt.driverName)
+			// Use configForVersionChecks for invalid CSM version test
+			cfg := config
+			if tt.csm.Spec.Version == shared.InvalidCSMVersion {
+				cfg = configForVersionChecks
+			}
+			csiDriver, err := GetCSIDriver(ctx, tt.csm, cfg, tt.driverName)
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 				if tt.csm.Spec.Driver.CSIDriverSpec != nil {
@@ -99,7 +104,12 @@ func TestGetConfigMap(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := GetConfigMap(ctx, tt.csm, config, tt.driverName)
+			// Use configForVersionChecks for invalid CSM version test
+			cfg := config
+			if tt.csm.Spec.Version == shared.InvalidCSMVersion {
+				cfg = configForVersionChecks
+			}
+			_, err := GetConfigMap(ctx, tt.csm, cfg, tt.driverName)
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 			} else {
@@ -114,7 +124,12 @@ func TestGetUpgradeInfo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.csm.Spec.Driver.ConfigVersion != "" {
-				_, err := GetUpgradeInfo(ctx, config, tt.driverName, tt.csm.Spec.Driver.ConfigVersion)
+				// Use configForVersionChecks for invalid CSM version test
+				cfg := config
+				if tt.csm.Spec.Version == shared.InvalidCSMVersion {
+					cfg = configForVersionChecks
+				}
+				_, err := GetUpgradeInfo(ctx, cfg, tt.driverName, tt.csm.Spec.Driver.ConfigVersion)
 				if tt.expectedErr == "" {
 					assert.Nil(t, err)
 				} else {
@@ -129,7 +144,12 @@ func TestGetController(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := GetController(ctx, tt.csm, config, tt.driverName, operatorutils.VersionSpec{})
+			// Use configForVersionChecks for invalid CSM version test
+			cfg := config
+			if tt.csm.Spec.Version == shared.InvalidCSMVersion {
+				cfg = configForVersionChecks
+			}
+			_, err := GetController(ctx, tt.csm, cfg, tt.driverName, operatorutils.VersionSpec{})
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 			} else {
@@ -161,7 +181,12 @@ func TestGetNode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			node, err := GetNode(ctx, tt.csm, config, tt.driverName, tt.filename, ctrlClientFake.NewClientBuilder().Build(), operatorutils.VersionSpec{})
+			// Use configForVersionChecks for invalid CSM version test
+			cfg := config
+			if tt.csm.Spec.Version == shared.InvalidCSMVersion {
+				cfg = configForVersionChecks
+			}
+			node, err := GetNode(ctx, tt.csm, cfg, tt.driverName, tt.filename, ctrlClientFake.NewClientBuilder().Build(), operatorutils.VersionSpec{})
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 				initcontainers := node.DaemonSetApplyConfig.Spec.Template.Spec.InitContainers
