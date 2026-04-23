@@ -3915,21 +3915,6 @@ spec:
                   rule: "!(has(self.version) && self.version != \"\" && has(self.driver)
                     && has(self.driver.configVersion) && self.driver.configVersion
                     != \"\")"
-                - message: spec.driver.common.image is forbidden when spec.version
-                    is set
-                  rule: "!(has(self.version) && self.version != \"\" && has(self.driver)
-                    && has(self.driver.common) && has(self.driver.common.image) &&
-                    self.driver.common.image != \"\")"
-                - message: spec.driver.sideCars[*].image is forbidden when spec.version
-                    is set
-                  rule: "!(has(self.version) && self.version != \"\" && has(self.driver)
-                    && has(self.driver.sideCars) && self.driver.sideCars.exists(sc,
-                    has(sc.image) && sc.image != \"\"))"
-                - message: spec.modules[*].components[*].image is forbidden when spec.version
-                    is set
-                  rule: "!(has(self.version) && self.version != \"\" && has(self.modules)
-                    && self.modules.exists(m, has(m.components) && m.components.exists(c,
-                    has(c.image) && c.image != \"\")))"
                 - message: spec.customRegistry is forbidden when spec.version is empty
                   rule: "!(has(self.customRegistry) && self.customRegistry != \"\"
                     && !(has(self.version) && self.version != \"\"))"

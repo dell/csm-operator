@@ -23,12 +23,8 @@ import (
 
 // ContainerStorageModuleSpec defines the desired state of ContainerStorageModule
 // +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.driver) && has(self.driver.configVersion) && self.driver.configVersion != \"\")",message="spec.version and spec.driver.configVersion cannot both be set"
-// +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.driver) && has(self.driver.common) && has(self.driver.common.image) && self.driver.common.image != \"\")",message="spec.driver.common.image is forbidden when spec.version is set"
-// +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.driver) && has(self.driver.sideCars) && self.driver.sideCars.exists(sc, has(sc.image) && sc.image != \"\"))",message="spec.driver.sideCars[*].image is forbidden when spec.version is set"
-// +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.modules) && self.modules.exists(m, has(m.components) && m.components.exists(c, has(c.image) && c.image != \"\")))",message="spec.modules[*].components[*].image is forbidden when spec.version is set"
 // +kubebuilder:validation:XValidation:rule="!(has(self.customRegistry) && self.customRegistry != \"\" && !(has(self.version) && self.version != \"\"))",message="spec.customRegistry is forbidden when spec.version is empty"
 // +kubebuilder:validation:XValidation:rule="!(has(self.retainImageRegistryPath) && !(has(self.version) && self.version != \"\" && has(self.customRegistry) && self.customRegistry != \"\"))",message="spec.retainImageRegistryPath is forbidden unless both spec.version and spec.customRegistry are set"
-// +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.driver) && has(self.driver.initContainers) && self.driver.initContainers.exists(ic, has(ic.image) && ic.image != \"\"))",message="spec.driver.initContainers[*].image is forbidden when spec.version is set"
 // +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.modules) && self.modules.exists(m, has(m.components) && m.components.exists(c, has(c.envs) && c.envs.exists(e, has(e.name) && e.name == \"NGINX_PROXY_IMAGE\"))))",message="env NGINX_PROXY_IMAGE is forbidden when spec.version is set"
 type ContainerStorageModuleSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster

@@ -264,6 +264,301 @@ var (
 	}
 )
 
+// getDriverImagesFromEnv reads environment variables beginning with "RELATED_IMAGE_"
+// and returns a map of DriverType to ContainerStorageModuleSpec with all images populated
+func getDriverImagesFromEnv() map[csmv1.DriverType]csmv1.ContainerStorageModuleSpec {
+	driverImageMap := make(map[csmv1.DriverType]csmv1.ContainerStorageModuleSpec)
+
+	// Driver image mappings
+	driverImageMappings := map[string]csmv1.DriverType{
+		"RELATED_IMAGE_csi-vxflexos":   csmv1.PowerFlex,
+		"RELATED_IMAGE_csi-powermax":   csmv1.PowerMax,
+		"RELATED_IMAGE_csi-isilon":     csmv1.PowerScale,
+		"RELATED_IMAGE_csi-unity":      csmv1.Unity,
+		"RELATED_IMAGE_csi-powerstore": csmv1.PowerStore,
+		"RELATED_IMAGE_cosi":           csmv1.Cosi,
+	}
+
+	// Initialize specs for each driver type
+	for _, driverType := range driverImageMappings {
+		driverImageMap[driverType] = csmv1.ContainerStorageModuleSpec{
+			Driver: csmv1.Driver{
+				CSIDriverType:  driverType,
+				Common:         &csmv1.ContainerTemplate{},
+				SideCars:       []csmv1.ContainerTemplate{},
+				InitContainers: []csmv1.ContainerTemplate{},
+			},
+			Modules: []csmv1.Module{},
+		}
+	}
+
+	// Populate driver images
+	for envName, driverType := range driverImageMappings {
+		imageValue := os.Getenv(envName)
+		if imageValue != "" && driverImageMap[driverType].Driver.Common != nil {
+			driverImageMap[driverType].Driver.Common.Image = csmv1.ImageType(imageValue)
+		}
+	}
+
+	// CSI sidecar images (common to all drivers)
+	sideCarMappings := map[string]string{
+		"RELATED_IMAGE_attacher":                        csmv1.Attacher,
+		"RELATED_IMAGE_provisioner":                     csmv1.Provisioner,
+		"RELATED_IMAGE_snapshotter":                     csmv1.Snapshotter,
+		"RELATED_IMAGE_registrar":                       csmv1.Registrar,
+		"RELATED_IMAGE_resizer":                         csmv1.Resizer,
+		"RELATED_IMAGE_externalhealthmonitorcontroller": csmv1.Externalhealthmonitor,
+	}
+
+	for envName, sideCarName := range sideCarMappings {
+		imageValue := os.Getenv(envName)
+		if imageValue != "" {
+			for driverType := range driverImageMap {
+				spec := driverImageMap[driverType]
+				spec.Driver.SideCars = append(spec.Driver.SideCars, csmv1.ContainerTemplate{
+					Name:  sideCarName,
+					Image: csmv1.ImageType(imageValue),
+				})
+				driverImageMap[driverType] = spec
+			}
+		}
+	}
+
+	// Driver-specific images
+	driverSpecificMappings := map[string]map[csmv1.DriverType]string{
+		"RELATED_IMAGE_sdc": {
+			csmv1.PowerFlex: csmv1.Sdcmonitor,
+		},
+		"RELATED_IMAGE_csipowermax-reverseproxy": {
+			csmv1.PowerMax: string(csmv1.ReverseProxyServer),
+		},
+	}
+
+	for envName, driverTypeMap := range driverSpecificMappings {
+		imageValue := os.Getenv(envName)
+		if imageValue != "" {
+			for driverType, componentName := range driverTypeMap {
+				if spec, exists := driverImageMap[driverType]; exists {
+					spec.Driver.SideCars = append(spec.Driver.SideCars, csmv1.ContainerTemplate{
+						Name:  componentName,
+						Image: csmv1.ImageType(imageValue),
+					})
+					driverImageMap[driverType] = spec
+				}
+			}
+		}
+	}
+
+	// Authorization module images
+	authMappings := map[string]string{
+		"RELATED_IMAGE_csm-authorization-proxy":      "proxyService",
+		"RELATED_IMAGE_csm-authorization-tenant":     "tenantService",
+		"RELATED_IMAGE_csm-authorization-role":       "roleService",
+		"RELATED_IMAGE_csm-authorization-storage":    "storageService",
+		"RELATED_IMAGE_csm-authorization-controller": "authorizationController",
+		"RELATED_IMAGE_redis-commander":              "redisCommander",
+		"RELATED_IMAGE_opa":                          "opa",
+		"RELATED_IMAGE_kube-mgmt":                    "opaKubeMgmt",
+		"RELATED_IMAGE_nginx":                        "nginx",
+	}
+
+	authModule := csmv1.Module{
+		Name:    csmv1.Authorization,
+		Enabled: true,
+	}
+
+	for envName, fieldName := range authMappings {
+		imageValue := os.Getenv(envName)
+		if imageValue != "" {
+			switch fieldName {
+			case "proxyService":
+				authModule.Components = append(authModule.Components, csmv1.ContainerTemplate{ProxyService: imageValue})
+			case "tenantService":
+				authModule.Components = append(authModule.Components, csmv1.ContainerTemplate{TenantService: imageValue})
+			case "roleService":
+				authModule.Components = append(authModule.Components, csmv1.ContainerTemplate{RoleService: imageValue})
+			case "storageService":
+				authModule.Components = append(authModule.Components, csmv1.ContainerTemplate{StorageService: imageValue})
+			case "authorizationController":
+				authModule.Components = append(authModule.Components, csmv1.ContainerTemplate{AuthorizationController: imageValue})
+			case "redisCommander":
+				authModule.Components = append(authModule.Components, csmv1.ContainerTemplate{Commander: imageValue})
+			case "opa":
+				authModule.Components = append(authModule.Components, csmv1.ContainerTemplate{Opa: imageValue})
+			case "opaKubeMgmt":
+				authModule.Components = append(authModule.Components, csmv1.ContainerTemplate{OpaKubeMgmt: imageValue})
+			case "nginx":
+				// Add nginx as env var for authorization module
+				for driverType := range driverImageMap {
+					if driverImageMap[driverType].Driver.Common != nil {
+						driverImageMap[driverType].Driver.Common.Envs = append(driverImageMap[driverType].Driver.Common.Envs, corev1.EnvVar{
+							Name:  "NGINX_PROXY_IMAGE",
+							Value: imageValue,
+						})
+					}
+				}
+			}
+		}
+	}
+
+	// Add authorization module to all drivers if any auth images were set
+	if len(authModule.Components) > 0 {
+		for driverType := range driverImageMap {
+			spec := driverImageMap[driverType]
+			spec.Modules = append(spec.Modules, authModule)
+			driverImageMap[driverType] = spec
+		}
+	}
+
+	// Observability module images
+	obsMappings := map[string]string{
+		"RELATED_IMAGE_otel-collector": string(csmv1.OtelCollector),
+	}
+
+	obsModule := csmv1.Module{
+		Name:    csmv1.Observability,
+		Enabled: true,
+	}
+
+	for envName, componentName := range obsMappings {
+		imageValue := os.Getenv(envName)
+		if imageValue != "" {
+			obsModule.Components = append(obsModule.Components, csmv1.ContainerTemplate{
+				Name:  componentName,
+				Image: csmv1.ImageType(imageValue),
+			})
+		}
+	}
+
+	// Add observability module to all drivers if any obs images were set
+	if len(obsModule.Components) > 0 {
+		for driverType := range driverImageMap {
+			spec := driverImageMap[driverType]
+			spec.Modules = append(spec.Modules, obsModule)
+			driverImageMap[driverType] = spec
+		}
+	}
+
+	// Metrics images (driver-specific)
+	metricsMappings := map[string]map[csmv1.DriverType]string{
+		"RELATED_IMAGE_metrics-powerscale": {
+			csmv1.PowerScale: "metrics",
+		},
+		"RELATED_IMAGE_metrics-powermax": {
+			csmv1.PowerMax: "metrics",
+		},
+		"RELATED_IMAGE_metrics-powerflex": {
+			csmv1.PowerFlex: "metrics",
+		},
+		"RELATED_IMAGE_metrics-powerstore": {
+			csmv1.PowerStore: "metrics",
+		},
+	}
+
+	for envName, driverTypeMap := range metricsMappings {
+		imageValue := os.Getenv(envName)
+		if imageValue != "" {
+			for driverType, componentName := range driverTypeMap {
+				if spec, exists := driverImageMap[driverType]; exists {
+					obsModule := csmv1.Module{
+						Name:    csmv1.Observability,
+						Enabled: true,
+						Components: []csmv1.ContainerTemplate{
+							{
+								Name:  componentName,
+								Image: csmv1.ImageType(imageValue),
+							},
+						},
+					}
+					spec.Modules = append(spec.Modules, obsModule)
+					driverImageMap[driverType] = spec
+				}
+			}
+		}
+	}
+
+	// Replication module images
+	repMappings := map[string]string{
+		"RELATED_IMAGE_dell-csi-replicator":                 "replicator",
+		"RELATED_IMAGE_dell-replication-controller-manager": "controller-manager",
+	}
+
+	repModule := csmv1.Module{
+		Name:    csmv1.Replication,
+		Enabled: true,
+	}
+
+	for envName, componentName := range repMappings {
+		imageValue := os.Getenv(envName)
+		if imageValue != "" {
+			repModule.Components = append(repModule.Components, csmv1.ContainerTemplate{
+				Name:  componentName,
+				Image: csmv1.ImageType(imageValue),
+			})
+		}
+	}
+
+	// Add replication module to all drivers if any replication images were set
+	if len(repModule.Components) > 0 {
+		for driverType := range driverImageMap {
+			spec := driverImageMap[driverType]
+			spec.Modules = append(spec.Modules, repModule)
+			driverImageMap[driverType] = spec
+		}
+	}
+
+	// Podmon module images
+	podmonMappings := map[string]string{
+		"RELATED_IMAGE_podmon-node": "podmon",
+	}
+
+	podmonModule := csmv1.Module{
+		Name:    csmv1.PodMon,
+		Enabled: true,
+	}
+
+	for envName, componentName := range podmonMappings {
+		imageValue := os.Getenv(envName)
+		if imageValue != "" {
+			podmonModule.Components = append(podmonModule.Components, csmv1.ContainerTemplate{
+				Name:  componentName,
+				Image: csmv1.ImageType(imageValue),
+			})
+		}
+	}
+
+	// Add podmon module to all drivers if any podmon images were set
+	if len(podmonModule.Components) > 0 {
+		for driverType := range driverImageMap {
+			spec := driverImageMap[driverType]
+			spec.Modules = append(spec.Modules, podmonModule)
+			driverImageMap[driverType] = spec
+		}
+	}
+
+	// Other images
+	otherMappings := map[string]string{
+		"RELATED_IMAGE_metadataretriever":                 "metadataretriever",
+		"RELATED_IMAGE_objectstorage-provisioner-sidecar": "objectstorage-provisioner",
+	}
+
+	for envName, componentName := range otherMappings {
+		imageValue := os.Getenv(envName)
+		if imageValue != "" {
+			for driverType := range driverImageMap {
+				spec := driverImageMap[driverType]
+				spec.Driver.InitContainers = append(spec.Driver.InitContainers, csmv1.ContainerTemplate{
+					Name:  componentName,
+					Image: csmv1.ImageType(imageValue),
+				})
+				driverImageMap[driverType] = spec
+			}
+		}
+	}
+
+	return driverImageMap
+}
+
 var flags struct {
 	metricsBindAddress     *string
 	healthProbeBindAddress *string
@@ -323,6 +618,8 @@ func main() {
 
 	expRateLimiter := workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](5*time.Millisecond, 120*time.Second)
 
+	defaultCSMSpecs := getDriverImagesFromEnv()
+
 	r := &controllers.ContainerStorageModuleReconciler{
 		Client:               mgr.GetClient(),
 		K8sClient:            k8sClient,
@@ -332,6 +629,7 @@ func main() {
 		Config:               operatorConfig,
 		ContentWatchChannels: make(map[string]chan struct{}),
 		ContentWatchLock:     sync.Mutex{},
+		DefaultCRs:           defaultCSMSpecs,
 	}
 
 	setupWithManager := getSetupWithManagerFn(r)

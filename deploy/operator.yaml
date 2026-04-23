@@ -985,7 +985,7 @@ spec:
             - name: REFRESH_INTERVAL_MINUTES
               value: "60"
             - name: RELATED_IMAGE_dell-csm-operator
-              value: quay.io/dell/container-storage-modules/dell-csm-operator:v1.12.0
+              value: csm.artifactory.cec.lab.emc.com/csm-users/luke_lau/dell-csm-operator:20260423131146
             - name: RELATED_IMAGE_csi-isilon
               value: quay.io/dell/container-storage-modules/csi-isilon:v2.17.0
             - name: RELATED_IMAGE_csi-powermax
@@ -1054,7 +1054,7 @@ spec:
               value: docker.io/openpolicyagent/kube-mgmt:9.2.1
             - name: RELATED_IMAGE_objectstorage-provisioner-sidecar
               value: gcr.io/k8s-staging-sig-storage/objectstorage-sidecar:release-0.2
-          image: quay.io/dell/container-storage-modules/dell-csm-operator:v1.12.0
+          image: csm.artifactory.cec.lab.emc.com/csm-users/luke_lau/dell-csm-operator:20260423131146
           imagePullPolicy: Always
           livenessProbe:
             httpGet:

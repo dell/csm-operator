@@ -76,6 +76,7 @@ type ContainerStorageModuleReconciler struct {
 	EventRecorder        record.EventRecorder
 	ContentWatchChannels map[string]chan struct{}
 	ContentWatchLock     sync.Mutex
+	DefaultCRs           map[csmv1.DriverType]csmv1.ContainerStorageModuleSpec
 }
 
 // DriverConfig  -
@@ -261,6 +262,14 @@ func (r *ContainerStorageModuleReconciler) Reconcile(_ context.Context, req ctrl
 		}
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, nil
+	}
+
+	// Merge default spec from DefaultCRs to fill in missing fields
+	driverType := csm.Spec.Driver.CSIDriverType
+	if defaultSpec, exists := r.DefaultCRs[driverType]; exists {
+		if err := r.mergeDefaultSpec(log, csm, defaultSpec); err != nil {
+			return ctrl.Result{}, err
+		}
 	}
 
 	operatorConfig := &operatorutils.OperatorConfig{
@@ -1857,5 +1866,36 @@ func applyCSMDRCRD(ctx context.Context, cr csmv1.ContainerStorageModule, isDelet
 		return fmt.Errorf("unable to patch the common CSM Disaster Recovery (DR) Controller: %v", err)
 	}
 
+	return nil
+}
+
+// mergeDefaultSpec merges the default spec into the current CSM spec, filling in missing fields.
+// It uses encoding/json: the default spec is used as the base, then the existing spec is
+// unmarshalled on top of it. Fields absent from the existing spec's JSON (zero-valued strings
+// and nil/empty slices marked with omitempty) are not written, so their defaults survive.
+//
+// Note: Driver.Common has no omitempty tag, so a nil pointer marshals as null and would clear
+// the default. We normalise it to a non-nil empty struct before marshalling to avoid this.
+//
+// Limitation: slices (SideCars, InitContainers, Modules) are replaced wholesale when the
+// user supplies even one element — there is no per-name element merging in this approach.
+func (r *ContainerStorageModuleReconciler) mergeDefaultSpec(log *zap.SugaredLogger, csm *csmv1.ContainerStorageModule, defaultSpec csmv1.ContainerStorageModuleSpec) error {
+	log.Infow("Merging default spec", "DriverType", csm.Spec.Driver.CSIDriverType)
+
+	// Normalise nil Common to an empty struct so it marshals as {} (not null).
+	if csm.Spec.Driver.Common == nil {
+		csm.Spec.Driver.Common = &csmv1.ContainerTemplate{}
+	}
+
+	merged := defaultSpec
+	existingJSON, err := json.Marshal(csm.Spec)
+	if err != nil {
+		return fmt.Errorf("mergeDefaultSpec: marshal: %w", err)
+	}
+	if err := json.Unmarshal(existingJSON, &merged); err != nil {
+		return fmt.Errorf("mergeDefaultSpec: unmarshal: %w", err)
+	}
+
+	csm.Spec = merged
 	return nil
 }
