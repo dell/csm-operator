@@ -1,0 +1,11 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: powerstore
+  namespace: powerstore
+spec:
+  version: v1.17.0
+  driver:
+    csiDriverType: "powerstore"
+    common:
+      image: "csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-powerstore:nightly"
