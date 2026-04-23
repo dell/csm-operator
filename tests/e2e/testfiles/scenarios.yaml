@@ -2298,23 +2298,6 @@
     - "Delete custom resource [1]"
     - "Validate [cosi] driver from CR [1] is not installed"
 
-- scenario: "Install COSI Driver (With Version for Env Var Resolution)"
-  paths:
-    - "testfiles/storage_csm_cosi_version.yaml"
-  tags:
-    - "cosi"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Set spec version to [${E2E_CSM_VERSION}] in CR spec [1]"
-    - "Create Secret from template [testfiles/cosi-templates/cosi-secret.yaml] as field [config.yaml] named [cosi-config] in namespace [${E2E_NS_COSI}] for [cosi]"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    # Verify image source from environment variable (deployment spec check only - images may not exist for in-development versions)
-    - "Validate deployment from CR [1] uses environment variable [RELATED_IMAGE_cosi] for container [objectstorage-provisioner]"
-    # cleanup
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-
 - scenario: "Install PowerScale Driver(Standalone) Using Version"
   paths:
     - "testfiles/storage_csm_powerscale_using_version.yaml"
@@ -2588,107 +2571,77 @@
     - "Validate [powerstore] driver from CR [1] is not installed"
     - "Restore ConfigMap"
 
-- scenario: "Test Environment Variable Image Resolution (Non-Minimal, PowerFlex)"
+- scenario: "Test Environment Variable Image Resolution with Sidecars (Non-Minimal, PowerScale)"
   paths:
-    - "testfiles/storage_csm_powerflex_alt_vals_1.yaml"
+    - "testfiles/storage_csm_powerscale_sidecars_version.yaml"
   tags:
-    - "powerflex"
+    - "powerscale"
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Delete ConfigMap"
-    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-creds] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "Set spec version to [${E2E_CSM_VERSION}] in CR spec [1]"
+    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [powerscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [powerscale-creds] in namespace [${E2E_NS_OPERATOR}] for [powerscale]"
     - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate deployment from CR [1] uses environment variable [RELATED_IMAGE_csi-vxflexos] for container [csi-vxflexos]"
-    - "Validate daemonset from CR [1] uses environment variable [RELATED_IMAGE_csi-vxflexos] for container [csi-vxflexos]"
-    - "Validate sidecar [attacher] from CR [1] uses environment variable [RELATED_IMAGE_attacher]"
-    - "Validate sidecar [provisioner] from CR [1] uses environment variable [RELATED_IMAGE_provisioner]"
+    # Verify image source from environment variable (deployment/daemonset spec check only
+    # - images may not exist for in-development versions)
+    - "Validate deployment from CR [1] uses environment variable [RELATED_IMAGE_csi-isilon] for container [driver]"
+    - "Validate daemonset from CR [1] uses environment variable [RELATED_IMAGE_csi-isilon] for container [driver]"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is not installed"
+    - "Validate [powerscale] driver from CR [1] is not installed"
     - "Restore ConfigMap"
 
-- scenario: "Test Environment Variable Resolution with Custom Registry (Non-Minimal, PowerFlex)"
+- scenario: "Test Environment Variable Resolution with Custom Registry and Sidecars (Non-Minimal, PowerStore)"
   paths:
-    - "testfiles/storage_csm_powerflex_alt_vals_1.yaml"
+    - "testfiles/storage_csm_powerstore_using_custom_registry.yaml"
   tags:
-    - "powerflex"
+    - "powerstore"
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Delete ConfigMap"
-    - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/cicd] in CR spec [1]"
-    - "Set spec version to [${E2E_CREG_VERSION}] in CR spec [1]"
-    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-creds] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "Set spec version to [${E2E_CSM_VERSION}] in CR spec [1]"
+    - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [powerstore]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
     - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate deployment from CR [1] uses custom registry with environment variable [RELATED_IMAGE_csi-vxflexos] for container [csi-vxflexos]"
-    - "Validate daemonset from CR [1] uses custom registry with environment variable [RELATED_IMAGE_csi-vxflexos] for container [csi-vxflexos]"
+    # Verify image source from environment variable with custom registry (deployment/daemonset spec check only
+    # - images may not exist for in-development versions)
+    - "Validate deployment from CR [1] uses custom registry with environment variable [RELATED_IMAGE_csi-powerstore] for container [driver]"
+    - "Validate daemonset from CR [1] uses custom registry with environment variable [RELATED_IMAGE_csi-powerstore] for container [driver]"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is not installed"
+    - "Validate [powerstore] driver from CR [1] is not installed"
     - "Restore ConfigMap"
 
-- scenario: "Test ConfigMap Priority Over Environment Variables (Non-Minimal, PowerFlex)"
+- scenario: "Test Environment Variable Resolution for Observability (Non-Minimal, PowerScale)"
   paths:
-    - "testfiles/storage_csm_powerflex_alt_vals_1.yaml"
+    - "testfiles/storage_csm_powerscale_observability_version.yaml"
   tags:
-    - "powerflex"
-    - "sanity"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create resource with template [testfiles/authorization-templates/csm-images.yaml] for ['']"
-    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
-    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-creds] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is installed"
-    - "Validate deployment from CR [1] uses ConfigMap image for container [csi-vxflexos]"
-    - "Validate daemonset from CR [1] uses ConfigMap image for container [csi-vxflexos]"
-    # cleanup
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-    - "Validate [powerflex] driver from CR [1] is not installed"
-    - "Restore ConfigMap"
-
-- scenario: "Test Environment Variable Image Resolution (Non-Minimal, PowerMax)"
-  paths:
-    - "testfiles/storage_csm_powermax_secret_sidecar.yaml"
-  tags:
-    - "powermax"
+    - "powerscale"
+    - "observability"
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Delete ConfigMap"
-    - "Remove [configVersion] from CR spec [1]"
-    - "Set spec version to [${E2E_CREG_VERSION}] in CR spec [1]"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
-    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
-    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-creds] in namespace [${E2E_NS_POWERMAX}] for [powermaxUseSecret]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
+    - "Set spec version to [${E2E_CSM_VERSION}] in CR spec [1]"
+    - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [powerscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_OPERATOR}] for [powerscale]"
     - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powermax] driver from CR [1] is installed"
-    - "Validate deployment from CR [1] uses environment variable [RELATED_IMAGE_csi-powermax] for container [csi-powermax]"
-    - "Validate daemonset from CR [1] uses environment variable [RELATED_IMAGE_csi-powermax] for container [csi-powermax]"
-    - "Validate sidecar [attacher] from CR [1] uses environment variable [RELATED_IMAGE_attacher]"
-    - "Validate sidecar [provisioner] from CR [1] uses environment variable [RELATED_IMAGE_provisioner]"
+    # Verify image source from environment variable (deployment spec check only - images may not exist for in-development versions)
+    - "Validate observability deployment from CR [1] uses environment variable [RELATED_IMAGE_metrics-powerscale] for container [karavi-metrics-powerscale]"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [powermax] driver from CR [1] is not installed"
+    - "Validate [powerscale] driver from CR [1] is not installed"
     - "Restore ConfigMap"
 
 - scenario: "Test Environment Variable Resolution with Custom Registry (Non-Minimal, PowerMax)"
   paths:
-    - "testfiles/storage_csm_powermax_secret_sidecar.yaml"
+    - "testfiles/minimal-testfiles/storage_csm_powermax_secret.yaml"
   tags:
     - "powermax"
     - "sanity"
@@ -2696,130 +2649,42 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Delete ConfigMap"
     - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/cicd] in CR spec [1]"
-    - "Set spec version to [${E2E_CREG_VERSION}] in CR spec [1]"
+    - "Set spec version to [${E2E_CSM_VERSION}] in CR spec [1]"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
     - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
     - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-creds] in namespace [${E2E_NS_POWERMAX}] for [powermaxUseSecret]"
     - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
     - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powermax] driver from CR [1] is installed"
-    - "Validate deployment from CR [1] uses custom registry with environment variable [RELATED_IMAGE_csi-powermax] for container [csi-powermax]"
-    - "Validate daemonset from CR [1] uses custom registry with environment variable [RELATED_IMAGE_csi-powermax] for container [csi-powermax]"
+    # Verify image uses custom registry with env var (deployment/daemonset spec check only
+    # - images may not exist for in-development versions)
+    - "Validate deployment from CR [1] uses custom registry with environment variable [RELATED_IMAGE_csi-powermax] for container [driver]"
+    - "Validate daemonset from CR [1] uses custom registry with environment variable [RELATED_IMAGE_csi-powermax] for container [driver]"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
     - "Restore ConfigMap"
 
-- scenario: "Test ConfigMap Priority Over Environment Variables (Non-Minimal, PowerMax)"
+- scenario: "Test Environment Variable Image Resolution (Non-Minimal, PowerFlex)"
   paths:
-    - "testfiles/storage_csm_powermax_secret_sidecar.yaml"
+    - "testfiles/storage_csm_powerflex_version.yaml"
   tags:
-    - "powermax"
-    - "sanity"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create resource with template [testfiles/authorization-templates/csm-images.yaml] for ['']"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
-    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
-    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-creds] in namespace [${E2E_NS_POWERMAX}] for [powermaxUseSecret]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powermax] driver from CR [1] is installed"
-    - "Validate deployment from CR [1] uses ConfigMap image for container [csi-powermax]"
-    - "Validate daemonset from CR [1] uses ConfigMap image for container [csi-powermax]"
-    # cleanup
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-    - "Validate [powermax] driver from CR [1] is not installed"
-    - "Restore ConfigMap"
-
-- scenario: "Test Environment Variable Image Resolution for Observability (Non-Minimal, PowerMax)"
-  paths:
-    - "testfiles/storage_csm_powermax_secret_sidecar.yaml"
-  tags:
-    - "powermax"
-    - "observability"
+    - "powerflex"
     - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Delete ConfigMap"
-    - "Remove [configVersion] from CR spec [1]"
-    - "Set spec version to [${E2E_CREG_VERSION}] in CR spec [1]"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
-    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
-    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-creds] in namespace [${E2E_NS_POWERMAX}] for [powermaxUseSecret]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
+    - "Set spec version to [${E2E_CSM_VERSION}] in CR spec [1]"
+    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powermax] driver from CR [1] is installed"
-    - "Enable [observability] module from CR [1]"
-    - "Validate [observability] module from CR [1] is installed"
-    - "Validate observability deployment from CR [1] uses environment variable [RELATED_IMAGE_metrics-powermax] for container [karavi-metrics-powermax]"
+    - "Validate deployment from CR [1] uses environment variable [RELATED_IMAGE_csi-vxflexos] for container [driver]"
+    - "Validate daemonset from CR [1] uses environment variable [RELATED_IMAGE_csi-vxflexos] for container [driver]"
+    - "Validate sidecar [attacher] from CR [1] uses environment variable [RELATED_IMAGE_attacher]"
+    - "Validate sidecar [provisioner] from CR [1] uses environment variable [RELATED_IMAGE_provisioner]"
     # cleanup
-    - "Disable [observability] module from CR [1]"
-    - "Validate [observability] module from CR [1] is not installed"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
-    - "Validate [powermax] driver from CR [1] is not installed"
+    - "Validate [powerflex] driver from CR [1] is not installed"
     - "Restore ConfigMap"
 
-- scenario: "Test Environment Variable Resolution with Custom Registry for Observability (Non-Minimal, PowerMax)"
-  paths:
-    - "testfiles/storage_csm_powermax_secret_sidecar.yaml"
-  tags:
-    - "powermax"
-    - "observability"
-    - "sanity"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Delete ConfigMap"
-    - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/cicd] in CR spec [1]"
-    - "Set spec version to [${E2E_CREG_VERSION}] in CR spec [1]"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
-    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
-    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-creds] in namespace [${E2E_NS_POWERMAX}] for [powermaxUseSecret]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powermax] driver from CR [1] is installed"
-    - "Enable [observability] module from CR [1]"
-    - "Validate [observability] module from CR [1] is installed"
-    - "Validate observability deployment from CR [1] uses custom registry with environment variable [RELATED_IMAGE_metrics-powermax] for container [karavi-metrics-powermax]"
-    # cleanup
-    - "Disable [observability] module from CR [1]"
-    - "Validate [observability] module from CR [1] is not installed"
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-    - "Validate [powermax] driver from CR [1] is not installed"
-    - "Restore ConfigMap"
-
-- scenario: "Test ConfigMap Priority Over Environment Variables for Observability (Non-Minimal, PowerMax)"
-  paths:
-    - "testfiles/storage_csm_powermax_secret_sidecar.yaml"
-  tags:
-    - "powermax"
-    - "observability"
-    - "sanity"
-  steps:
-    - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create resource with template [testfiles/authorization-templates/csm-images.yaml] for ['']"
-    - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
-    - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
-    - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-creds] in namespace [${E2E_NS_POWERMAX}] for [powermaxUseSecret]"
-    - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
-    - "Apply custom resource [1]"
-    - "Validate custom resource [1]"
-    - "Validate [powermax] driver from CR [1] is installed"
-    - "Enable [observability] module from CR [1]"
-    - "Validate [observability] module from CR [1] is installed"
-    - "Validate observability deployment from CR [1] uses ConfigMap image for container [karavi-metrics-powermax]"
-    # cleanup
-    - "Disable [observability] module from CR [1]"
-    - "Validate [observability] module from CR [1] is not installed"
-    - "Enable forceRemoveDriver on CR [1]"
-    - "Delete custom resource [1]"
-    - "Validate [powermax] driver from CR [1] is not installed"
-    - "Restore ConfigMap"

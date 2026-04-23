@@ -1,0 +1,63 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: powerflex
+  namespace: ${E2E_NS_POWERFLEX}
+spec:
+  version: v1.17.0
+  driver:
+    csiDriverType: "powerflex"
+    csiDriverSpec:
+      fSGroupPolicy: "ReadWriteOnceWithFSType"
+    replicas: 2
+    dnsPolicy: ClusterFirstWithHostNet
+    forceRemoveDriver: true
+    common:
+      imagePullPolicy: Always
+      envs:
+        - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
+          value: "true"
+        - name: X_CSI_VXFLEXOS_ENABLESNAPSHOTCGDELETE
+          value: "true"
+        - name: X_CSI_DEBUG
+          value: "false"
+        - name: X_CSI_ALLOW_RWO_MULTI_POD_ACCESS
+          value: "true"
+        - name: KUBELET_CONFIG_DIR
+          value: "/var/lib/kubelet"
+        - name: "CERT_SECRET_COUNT"
+          value: "1"
+        - name: X_CSI_QUOTA_ENABLED
+          value: "false"
+    sideCars:
+      - name: sdc-monitor
+        enabled: false
+      - name: csi-external-health-monitor-controller
+        enabled: false
+    controller:
+      envs:
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
+    node:
+      envs:
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
+        - name: X_CSI_APPROVE_SDC_ENABLED
+          value: "true"
+        - name: X_CSI_RENAME_SDC_ENABLED
+          value: "true"
+        - name: X_CSI_RENAME_SDC_PREFIX
+          value: "s"
+        - name: X_CSI_MAX_VOLUMES_PER_NODE
+          value: "0"
+        - name: X_CSI_SDC_SFTP_REPO_ENABLED
+          value: "false"
+  modules:
+    - name: authorization
+      enabled: false
+    - name: observability
+      enabled: false
+    - name: resiliency
+      enabled: false
+    - name: replication
+      enabled: false
