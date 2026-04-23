@@ -297,8 +297,11 @@ func CheckClusterRoleReplica(rules []rbacv1.PolicyRule) error {
 func validateReplicationPolicyRules(rules []rbacv1.PolicyRule) error {
 	// Allowlist of resources replication module can access
 	allowedResources := map[string]bool{
-		"persistentvolumeclaims": true,
-		"volumesnapshots":        true,
+		"persistentvolumeclaims":          true,
+		"volumesnapshots":                 true,
+		"dellcsireplicationgroups":        true,
+		"dellcsireplicationgroups/status": true,
+		"configmaps":                      true,
 	}
 
 	for i, rule := range rules {
