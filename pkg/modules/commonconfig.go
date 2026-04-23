@@ -154,7 +154,7 @@ func getCertManager(ctx context.Context, op operatorutils.OperatorConfig, cr csm
 			resolved = matched.Images[img.key]
 		}
 		if resolved == "" {
-			if envImg, found := operatorutils.GetRelatedImage(img.key); found && operatorutils.ShouldUseEnvVarImages(cr, op.CSMVersion) {
+			if envImg, found := operatorutils.GetRelatedImage(img.key); found && operatorutils.ShouldUseEnvVarImages(cr) {
 				if cr.Spec.CustomRegistry != "" {
 					resolved = operatorutils.ResolveImage(ctx, envImg, cr)
 				} else {

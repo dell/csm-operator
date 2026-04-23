@@ -280,6 +280,9 @@ func main() {
 	// Initialize the RELATED_IMAGE environment variable cache
 	operatorutils.InitRelatedImagesCache()
 
+	// Set the CSM version for image resolution
+	operatorutils.SetCSMVersion(controllers.CSMVersion)
+
 	operatorConfig, err := getOperatorConfig(log)
 	if err != nil {
 		setupLog.Error(err, "unable to get operator config")

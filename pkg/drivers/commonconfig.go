@@ -208,7 +208,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 				log.Infow("Matched container image override", "container", string(*c.Name), "image", matchedDriverImage, "source", "configmap")
 				// Clear after use so it isn't applied to a second container
 				matchedDriverImage = ""
-			} else if envImg, found := operatorutils.GetRelatedImage(string(cr.Spec.Driver.CSIDriverType)); found && operatorutils.ShouldUseEnvVarImages(cr, operatorConfig.CSMVersion) {
+			} else if envImg, found := operatorutils.GetRelatedImage(string(cr.Spec.Driver.CSIDriverType)); found && operatorutils.ShouldUseEnvVarImages(cr) {
 				// Priority 2: Environment variable default (only when
 				// spec.version matches the operator's CSM version)
 				if cr.Spec.CustomRegistry != "" {
@@ -280,7 +280,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 			// Running it again would double-resolve the image, which corrupts
 			// the path when retainImageRegistryPath is true.
 			if string(*c.Name) != "driver" && string(*c.Name) != "objectstorage-provisioner" {
-				operatorutils.UpdateSideCarApply(ctx, cr.Spec.Driver.SideCars, &c, cr, matched, operatorConfig.CSMVersion)
+				operatorutils.UpdateSideCarApply(ctx, cr.Spec.Driver.SideCars, &c, cr, matched)
 			}
 			newcontainers = append(newcontainers, c)
 		}
@@ -429,7 +429,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 				c.Image = &image
 				recordMatchedContainerImage(&matched, string(*c.Name), image)
 				log.Infow("Matched container image override", "container", string(*c.Name), "image", image, "source", "configmap")
-			} else if envImg, envFound := operatorutils.GetRelatedImage(string(cr.Spec.Driver.CSIDriverType)); envFound && operatorutils.ShouldUseEnvVarImages(cr, operatorConfig.CSMVersion) {
+			} else if envImg, envFound := operatorutils.GetRelatedImage(string(cr.Spec.Driver.CSIDriverType)); envFound && operatorutils.ShouldUseEnvVarImages(cr) {
 				// Priority 2: Environment variable default (only when
 				// spec.version matches the operator's CSM version)
 				if cr.Spec.CustomRegistry != "" {
@@ -499,7 +499,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 			// Running it again would double-resolve the image, which corrupts
 			// the path when retainImageRegistryPath is true.
 			if string(*c.Name) != "driver" && string(*c.Name) != "objectstorage-provisioner" {
-				operatorutils.UpdateSideCarApply(ctx, cr.Spec.Driver.SideCars, &containers[i], cr, matched, operatorConfig.CSMVersion)
+				operatorutils.UpdateSideCarApply(ctx, cr.Spec.Driver.SideCars, &containers[i], cr, matched)
 			}
 			newcontainers = append(newcontainers, c)
 		}
@@ -533,7 +533,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 
 	for i := range initcontainers {
 		operatorutils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &initcontainers[i])
-		operatorutils.UpdateInitContainerApply(ctx, updatedCr.Spec.Driver.InitContainers, &initcontainers[i], cr, matched, operatorConfig.CSMVersion)
+		operatorutils.UpdateInitContainerApply(ctx, updatedCr.Spec.Driver.InitContainers, &initcontainers[i], cr, matched)
 		// mdm-container is exclusive to powerflex driver deamonset, will use the driver image as an init container
 		if *initcontainers[i].Name == "mdm-container" {
 			// driver minimial manifest may not have common section
@@ -549,7 +549,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 				log.Debugw("MDM initcontainer image resolved from ConfigMap",
 					"mdmInitContainerImage", mdmInitContainerImage,
 				)
-			} else if envImg, envFound := operatorutils.GetRelatedImage(string(cr.Spec.Driver.CSIDriverType)); envFound && operatorutils.ShouldUseEnvVarImages(cr, operatorConfig.CSMVersion) {
+			} else if envImg, envFound := operatorutils.GetRelatedImage(string(cr.Spec.Driver.CSIDriverType)); envFound && operatorutils.ShouldUseEnvVarImages(cr) {
 				if updatedCr.Spec.CustomRegistry != "" {
 					resolvedImagePath := operatorutils.ResolveImage(ctx, envImg, cr)
 					initcontainers[i].Image = &resolvedImagePath
@@ -579,7 +579,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 				log.Infow("SDC initcontainer image resolved from ConfigMap",
 					"image", sdcImage,
 				)
-			} else if envImg, envFound := operatorutils.GetRelatedImage("sdc"); envFound && operatorutils.ShouldUseEnvVarImages(cr, operatorConfig.CSMVersion) {
+			} else if envImg, envFound := operatorutils.GetRelatedImage("sdc"); envFound && operatorutils.ShouldUseEnvVarImages(cr) {
 				if updatedCr.Spec.CustomRegistry != "" {
 					resolvedImagePath := operatorutils.ResolveImage(ctx, envImg, cr)
 					initcontainers[i].Image = &resolvedImagePath

@@ -154,6 +154,11 @@ var (
 	relatedImagesOnce  sync.Once
 )
 
+// currentCSMVersion stores the CSM release version this operator was built for.
+// It is set at startup and used to decide whether RELATED_IMAGE environment variables
+// are applicable for a given CR. This avoids prop drilling the version through function calls.
+var currentCSMVersion string
+
 // driverImageAliases maps CSIDriverType values (used by GetRelatedImage callers)
 // to their corresponding RELATED_IMAGE env-var keys (as defined in the OLM CSV).
 // For example, the driver type "powerflex" must resolve to the env var
@@ -217,22 +222,33 @@ func GetRelatedImagesCount() int {
 	return len(relatedImagesCache)
 }
 
+// SetCSMVersion sets the CSM release version for image resolution.
+// This should be called once at startup from main.go.
+func SetCSMVersion(version string) {
+	currentCSMVersion = version
+}
+
+// GetCSMVersion returns the current CSM version (for testing)
+func GetCSMVersion() string {
+	return currentCSMVersion
+}
+
 // ShouldUseEnvVarImages returns true when the RELATED_IMAGE environment
 // variables are applicable for the given CR. The env vars carry images
-// for the operator's own CSM release (operatorCSMVersion); they must be
-// skipped when the CR targets a different version so that the
-// version-specific template defaults are used instead.
+// for the operator's own CSM release; they must be skipped when the CR
+// targets a different version so that version-specific template defaults
+// are used instead.
 //
 // The function returns true only when spec.version equals the operator's
 // CSM version. When spec.version is empty (the deprecated configVersion
 // path), env vars are not used because the user manages image references
 // explicitly in that flow.
-func ShouldUseEnvVarImages(cr csmv1.ContainerStorageModule, operatorCSMVersion string) bool {
+func ShouldUseEnvVarImages(cr csmv1.ContainerStorageModule) bool {
 	if cr.Spec.Version == "" {
 		// configVersion path: user manages images explicitly; skip env vars.
 		return false
 	}
-	return cr.Spec.Version == operatorCSMVersion
+	return cr.Spec.Version == currentCSMVersion
 }
 
 const (
@@ -304,12 +320,12 @@ func SplitYaml(gaintYAML []byte) ([][]byte, error) {
 }
 
 // UpdateSideCarApply -
-func UpdateSideCarApply(ctx context.Context, sideCars []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule, matched VersionSpec, operatorCSMVersion string) {
-	UpdateContainerApply(ctx, sideCars, c, cr, matched, operatorCSMVersion)
+func UpdateSideCarApply(ctx context.Context, sideCars []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule, matched VersionSpec) {
+	UpdateContainerApply(ctx, sideCars, c, cr, matched)
 }
 
-func UpdateContainerApply(ctx context.Context, toBeApplied []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule, matched VersionSpec, operatorCSMVersion string) {
-	useEnvVars := ShouldUseEnvVarImages(cr, operatorCSMVersion)
+func UpdateContainerApply(ctx context.Context, toBeApplied []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule, matched VersionSpec) {
+	useEnvVars := ShouldUseEnvVarImages(cr)
 	sidecarInSpec := false
 	// Apples to sidecars referenced in the spec
 	for _, ctr := range toBeApplied {
@@ -394,8 +410,8 @@ func ReplaceAllContainerImageApply(img K8sImagesConfig, c *acorev1.ContainerAppl
 }
 
 // UpdateInitContainerApply -
-func UpdateInitContainerApply(ctx context.Context, initContainers []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule, matched VersionSpec, operatorCSMVersion string) {
-	UpdateContainerApply(ctx, initContainers, c, cr, matched, operatorCSMVersion)
+func UpdateInitContainerApply(ctx context.Context, initContainers []csmv1.ContainerTemplate, c *acorev1.ContainerApplyConfiguration, cr csmv1.ContainerStorageModule, matched VersionSpec) {
+	UpdateContainerApply(ctx, initContainers, c, cr, matched)
 }
 
 // ReplaceAllApplyCustomEnvs -
@@ -1680,7 +1696,7 @@ func GetFinalImage(ctx context.Context, cr csmv1.ContainerStorageModule, matched
 			return img
 		}
 	}
-	if envImg, found := GetRelatedImage(component.Name); found {
+	if envImg, found := GetRelatedImage(component.Name); found && ShouldUseEnvVarImages(cr) {
 		if cr.Spec.CustomRegistry != "" {
 			return ResolveImage(ctx, envImg, cr)
 		}

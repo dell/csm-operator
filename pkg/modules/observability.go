@@ -471,7 +471,7 @@ func getOtelCollector(ctx context.Context, op operatorutils.OperatorConfig, cr c
 				}
 			}
 			if !otelCollectorImageFromConfigMap {
-				if envImg, found := operatorutils.GetRelatedImage(string(component.Name)); found && operatorutils.ShouldUseEnvVarImages(cr, op.CSMVersion) {
+				if envImg, found := operatorutils.GetRelatedImage(string(component.Name)); found && operatorutils.ShouldUseEnvVarImages(cr) {
 					if cr.Spec.CustomRegistry != "" {
 						otelCollectorImage = operatorutils.ResolveImage(ctx, envImg, cr)
 					} else {
@@ -494,8 +494,17 @@ func getOtelCollector(ctx context.Context, op operatorutils.OperatorConfig, cr c
 							nginxProxyImageFromConfigMap = true
 						}
 					}
-					if !nginxProxyImageFromConfigMap && cr.Spec.CustomRegistry != "" {
-						nginxProxyImage = operatorutils.ResolveImage(ctx, nginxProxyImage, cr)
+					if !nginxProxyImageFromConfigMap {
+						if envImg, found := operatorutils.GetRelatedImage("nginx-proxy"); found && operatorutils.ShouldUseEnvVarImages(cr) {
+							if cr.Spec.CustomRegistry != "" {
+								nginxProxyImage = operatorutils.ResolveImage(ctx, envImg, cr)
+							} else {
+								nginxProxyImage = envImg
+							}
+							nginxProxyImageFromConfigMap = true
+						} else if cr.Spec.CustomRegistry != "" {
+							nginxProxyImage = operatorutils.ResolveImage(ctx, nginxProxyImage, cr)
+						}
 					}
 				}
 			}
