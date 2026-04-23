@@ -978,6 +978,7 @@ spec:
       containers:
         - args:
             - --leader-elect
+            - --metrics-bind-address=:8443
           command:
             - /manager
           env:
@@ -1029,8 +1030,6 @@ spec:
               value: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.15.0
             - name: RELATED_IMAGE_podmon-node
               value: quay.io/dell/container-storage-modules/podmon:v1.16.0
-            - name: RELATED_IMAGE_kube-rbac-proxy
-              value: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
             - name: RELATED_IMAGE_attacher
               value: registry.k8s.io/sig-storage/csi-attacher:v4.11.0
             - name: RELATED_IMAGE_provisioner

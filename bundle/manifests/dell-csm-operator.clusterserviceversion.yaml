@@ -1703,7 +1703,7 @@ metadata:
     capabilities: Seamless Upgrades
     categories: Storage
     containerImage: quay.io/dell/container-storage-modules/dell-csm-operator:v1.12.0
-    createdAt: "2026-04-21T10:12:10Z"
+    createdAt: "2026-04-21T09:32:05Z"
     description: Easily install and manage Dell’s CSI Drivers and CSM
     features.operators.openshift.io/disconnected: "true"
     features.operators.openshift.io/fips-compliant: "false"
@@ -4509,21 +4509,8 @@ spec:
               spec:
                 containers:
                   - args:
-                      - --secure-listen-address=0.0.0.0:8443
-                      - --upstream=http://127.0.0.1:8080/
-                      - --logtostderr=true
-                      - --v=10
-                    image: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
-                    name: kube-rbac-proxy
-                    ports:
-                      - containerPort: 8443
-                        name: https
-                        protocol: TCP
-                    resources: {}
-                  - args:
-                      - --health-probe-bind-address=:8081
-                      - --metrics-bind-address=127.0.0.1:8080
                       - --leader-elect
+                      - --metrics-bind-address=:8443
                     command:
                       - /manager
                     env:
@@ -4575,8 +4562,6 @@ spec:
                         value: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.15.0
                       - name: RELATED_IMAGE_podmon-node
                         value: quay.io/dell/container-storage-modules/podmon:v1.16.0
-                      - name: RELATED_IMAGE_kube-rbac-proxy
-                        value: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
                       - name: RELATED_IMAGE_attacher
                         value: registry.k8s.io/sig-storage/csi-attacher:v4.11.0
                       - name: RELATED_IMAGE_provisioner
@@ -4711,8 +4696,6 @@ spec:
       name: metrics-powerstore
     - image: quay.io/dell/container-storage-modules/podmon:v1.16.0
       name: podmon-node
-    - image: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
-      name: kube-rbac-proxy
     - image: registry.k8s.io/sig-storage/csi-attacher:v4.11.0
       name: attacher
     - image: registry.k8s.io/sig-storage/csi-provisioner:v6.2.0

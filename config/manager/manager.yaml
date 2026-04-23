@@ -27,6 +27,7 @@ spec:
             - /manager
           args:
             - --leader-elect
+            - --metrics-bind-address=:8443
           image: controller:latest
           imagePullPolicy: Always
           name: manager
@@ -79,8 +80,6 @@ spec:
               name: RELATED_IMAGE_metrics-powerstore
             - value: quay.io/dell/container-storage-modules/podmon:v1.16.0
               name: RELATED_IMAGE_podmon-node
-            - value: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
-              name: RELATED_IMAGE_kube-rbac-proxy
             - value: registry.k8s.io/sig-storage/csi-attacher:v4.11.0
               name: RELATED_IMAGE_attacher
             - value: registry.k8s.io/sig-storage/csi-provisioner:v6.2.0

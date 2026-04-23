@@ -586,11 +586,13 @@ func TestMain(_ *testing.T) {
 
 	initFlags = func() crzap.Options {
 		LEEnabled := false
+		secureMetricsEnabled := true
 		metricsBindAddress := ":8082"
 		healthProbeBindAddress := ":8081"
 		flags.metricsBindAddress = &metricsBindAddress
 		flags.healthProbeBindAddress = &healthProbeBindAddress
 		flags.leaderElect = &LEEnabled
+		flags.secureMetrics = &secureMetricsEnabled
 		opts := initZapFlags()
 		return opts
 	}
@@ -687,11 +689,13 @@ func TestMainGetOperatorConfigError(_ *testing.T) {
 
 	initFlags = func() crzap.Options {
 		LEEnabled := false
+		secureMetricsEnabled := true
 		metricsBindAddress := ":8082"
 		healthProbeBindAddress := ":8081"
 		flags.metricsBindAddress = &metricsBindAddress
 		flags.healthProbeBindAddress = &healthProbeBindAddress
 		flags.leaderElect = &LEEnabled
+		flags.secureMetrics = &secureMetricsEnabled
 		opts := initZapFlags()
 		return opts
 	}
@@ -777,11 +781,13 @@ func TestMainNewManagerError(_ *testing.T) {
 
 	initFlags = func() crzap.Options {
 		LEEnabled := false
+		secureMetricsEnabled := true
 		metricsBindAddress := ":8082"
 		healthProbeBindAddress := ":8081"
 		flags.metricsBindAddress = &metricsBindAddress
 		flags.healthProbeBindAddress = &healthProbeBindAddress
 		flags.leaderElect = &LEEnabled
+		flags.secureMetrics = &secureMetricsEnabled
 		opts := initZapFlags()
 		return opts
 	}
@@ -838,11 +844,13 @@ func TestMainSetupWithManagerError(_ *testing.T) {
 	}
 	initFlags = func() crzap.Options {
 		LEEnabled := false
+		secureMetricsEnabled := true
 		metricsBindAddress := ":8082"
 		healthProbeBindAddress := ":8081"
 		flags.metricsBindAddress = &metricsBindAddress
 		flags.healthProbeBindAddress = &healthProbeBindAddress
 		flags.leaderElect = &LEEnabled
+		flags.secureMetrics = &secureMetricsEnabled
 		opts := initZapFlags()
 		return opts
 	}
@@ -914,11 +922,13 @@ func TestMainAddHealthzCheckError(_ *testing.T) {
 	}
 	initFlags = func() crzap.Options {
 		LEEnabled := false
+		secureMetricsEnabled := true
 		metricsBindAddress := ":8082"
 		healthProbeBindAddress := ":8081"
 		flags.metricsBindAddress = &metricsBindAddress
 		flags.healthProbeBindAddress = &healthProbeBindAddress
 		flags.leaderElect = &LEEnabled
+		flags.secureMetrics = &secureMetricsEnabled
 		opts := initZapFlags()
 		return opts
 	}
@@ -995,11 +1005,13 @@ func TestMainAddReadyzCheckError(_ *testing.T) {
 	}
 	initFlags = func() crzap.Options {
 		LEEnabled := false
+		secureMetricsEnabled := true
 		metricsBindAddress := ":8082"
 		healthProbeBindAddress := ":8081"
 		flags.metricsBindAddress = &metricsBindAddress
 		flags.healthProbeBindAddress = &healthProbeBindAddress
 		flags.leaderElect = &LEEnabled
+		flags.secureMetrics = &secureMetricsEnabled
 		opts := initZapFlags()
 		return opts
 	}
@@ -1083,11 +1095,13 @@ func TestMainStartError(_ *testing.T) {
 	}
 	initFlags = func() crzap.Options {
 		LEEnabled := false
+		secureMetricsEnabled := true
 		metricsBindAddress := ":8082"
 		healthProbeBindAddress := ":8081"
 		flags.metricsBindAddress = &metricsBindAddress
 		flags.healthProbeBindAddress = &healthProbeBindAddress
 		flags.leaderElect = &LEEnabled
+		flags.secureMetrics = &secureMetricsEnabled
 		opts := initZapFlags()
 		return opts
 	}

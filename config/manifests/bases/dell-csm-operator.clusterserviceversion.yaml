@@ -2104,8 +2104,6 @@ spec:
       name: metrics-powerstore
     - image: quay.io/dell/container-storage-modules/podmon:v1.16.0
       name: podmon-node
-    - image: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
-      name: kube-rbac-proxy
     - image: registry.k8s.io/sig-storage/csi-attacher:v4.11.0
       name: attacher
     - image: registry.k8s.io/sig-storage/csi-provisioner:v6.2.0

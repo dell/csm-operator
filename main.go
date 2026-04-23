@@ -14,6 +14,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"os"
@@ -40,6 +41,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	crzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	filters "sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -233,11 +235,13 @@ var (
 	}
 
 	initFlags = func() crzap.Options {
-		flags.metricsBindAddress = flag.String("metrics-bind-address", ":8082", "The address the metric endpoint binds to.")
+		flags.metricsBindAddress = flag.String("metrics-bind-address", ":8443", "The address the metric endpoint binds to.")
 		flags.healthProbeBindAddress = flag.String("health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 		flags.leaderElect = flag.Bool("leader-elect", false,
 			"Enable leader election for controller manager. "+
 				"Enabling this will ensure there is only one active controller manager.")
+		flags.secureMetrics = flag.Bool("metrics-secure", true,
+			"If set, the metrics endpoint is served securely via HTTPS. Use --metrics-secure=false to use HTTP instead.")
 		opts := initZapFlags()
 		flag.Parse()
 		return opts
@@ -264,6 +268,7 @@ var flags struct {
 	metricsBindAddress     *string
 	healthProbeBindAddress *string
 	leaderElect            *bool
+	secureMetrics          *bool
 	zapOpts                crzap.Options
 }
 
@@ -283,9 +288,20 @@ func main() {
 	}
 	restConfig := getConfigOrDie()
 
+	var tlsOpts []func(*tls.Config)
+	disableHTTP2 := func(c *tls.Config) {
+		c.NextProtos = []string{"http/1.1"}
+	}
+	tlsOpts = append(tlsOpts, disableHTTP2)
+
 	mgr, err := newManager(restConfig, ctrl.Options{
-		Scheme:                 scheme,
-		Metrics:                metricsserver.Options{BindAddress: *flags.metricsBindAddress},
+		Scheme: scheme,
+		Metrics: metricsserver.Options{
+			BindAddress:    *flags.metricsBindAddress,
+			SecureServing:  *flags.secureMetrics,
+			TLSOpts:        tlsOpts,
+			FilterProvider: filters.WithAuthenticationAndAuthorization,
+		},
 		HealthProbeBindAddress: *flags.healthProbeBindAddress,
 		LeaderElection:         *flags.leaderElect,
 		LeaderElectionID:       "090cae6a.dell.com",
