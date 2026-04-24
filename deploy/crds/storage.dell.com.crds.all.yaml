@@ -38,7 +38,8 @@ spec:
       name: v1
       schema:
         openAPIV3Schema:
-          description: ContainerStorageModule is the Schema for the containerstoragemodules API
+          description: ContainerStorageModule is the Schema for the
+            containerstoragemodules API
           properties:
             apiVersion:
               description: |-
@@ -58,7 +59,8 @@ spec:
             metadata:
               type: object
             spec:
-              description: ContainerStorageModuleSpec defines the desired state of ContainerStorageModule
+              description: ContainerStorageModuleSpec defines the desired state of
+                ContainerStorageModule
               properties:
                 customRegistry:
                   description: CustomRegistry is the custom registry for the image
@@ -71,7 +73,8 @@ spec:
                       description: AuthSecret is the name of the credentials secret for the driver
                       type: string
                     common:
-                      description: Common is the common specification for both controller and node plugins
+                      description: Common is the common specification for both controller and node
+                        plugins
                       properties:
                         args:
                           description: Args is the set of arguments for the container
@@ -82,13 +85,16 @@ spec:
                           description: AuthorizationController is the image tag for the container
                           type: string
                         authorizationControllerReplicas:
-                          description: AuthorizationControllerReplicas is the number of replicas for the authorization controller deployment
+                          description: AuthorizationControllerReplicas is the number of replicas for the
+                            authorization controller deployment
                           type: integer
                         certificate:
-                          description: Certificate is a certificate used for a certificate/private-key pair
+                          description: Certificate is a certificate used for a certificate/private-key
+                            pair
                           type: string
                         certificateAuthority:
-                          description: CertificateAuthority is a certificate authority used to validate a certificate
+                          description: CertificateAuthority is a certificate authority used to validate a
+                            certificate
                           type: string
                         commander:
                           description: Commander is the image tag for the Container
@@ -98,20 +104,24 @@ spec:
                             ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
                             Applicable from CSM v1.15 onwards
                           items:
-                            description: ConfigSecretProviderClass is the config secret configuration for CSM Authorization
+                            description: ConfigSecretProviderClass is the config secret configuration for
+                              CSM Authorization
                             properties:
                               configSecretName:
-                                description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
+                                description: ConfigSecretName is the name of the Kubernetes secret created by
+                                  the CSI driver
                                 type: string
                               conjur:
-                                description: Conjur is the secret configuration with path to retrieve the Config secret from Conjur
+                                description: Conjur is the secret configuration with path to retrieve the Config
+                                  secret from Conjur
                                 properties:
                                   secretPath:
                                     description: SecretPath is the path to the config secret
                                     type: string
                                 type: object
                               secretProviderClassName:
-                                description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
+                                description: SecretProviderClassName is the name of the SecretProviderClass that
+                                  holds the config secretObject
                                 type: string
                             type: object
                           maxItems: 1
@@ -145,7 +155,8 @@ spec:
                                   Defaults to "".
                                 type: string
                               valueFrom:
-                                description: Source for the environment variable's value. Cannot be used if value is not empty.
+                                description: Source for the environment variable's value. Cannot be used if
+                                  value is not empty.
                                 properties:
                                   configMapKeyRef:
                                     description: Selects a key of a ConfigMap.
@@ -175,7 +186,8 @@ spec:
                                       spec.nodeName, spec.serviceAccountName, status.hostIP, status.podIP, status.podIPs.
                                     properties:
                                       apiVersion:
-                                        description: Version of the schema the FieldPath is written in terms of, defaults to "v1".
+                                        description: Version of the schema the FieldPath is written in terms of,
+                                          defaults to "v1".
                                         type: string
                                       fieldPath:
                                         description: Path of the field to select in the specified API version.
@@ -232,7 +244,8 @@ spec:
                                         anyOf:
                                           - type: integer
                                           - type: string
-                                        description: Specifies the output format of the exposed resources, defaults to "1"
+                                        description: Specifies the output format of the exposed resources, defaults to
+                                          "1"
                                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                         x-kubernetes-int-or-string: true
                                       resource:
@@ -299,20 +312,24 @@ spec:
                           description: OpaKubeMgmt is the image tag for the Container
                           type: string
                         openTelemetryCollectorAddress:
-                          description: OpenTelemetryCollectorAddress is the address of the OTLP receiving endpoint using gRPC
+                          description: OpenTelemetryCollectorAddress is the address of the OTLP receiving
+                            endpoint using gRPC
                           type: string
                         privateKey:
                           description: PrivateKey is a private key used for a certificate/private-key pair
                           type: string
                         proxyServerIngress:
-                          description: ProxyServerIngress is the authorization proxy server ingress configuration
+                          description: ProxyServerIngress is the authorization proxy server ingress
+                            configuration
                           items:
-                            description: ProxyServerIngress is the authorization ingress configuration struct
+                            description: ProxyServerIngress is the authorization ingress configuration
+                              struct
                             properties:
                               annotations:
                                 additionalProperties:
                                   type: string
-                                description: Annotations is an unstructured key value map that stores additional annotations for the ingress
+                                description: Annotations is an unstructured key value map that stores additional
+                                  annotations for the ingress
                                 type: object
                               hosts:
                                 description: Hosts is the hosts rules for the ingress
@@ -328,7 +345,8 @@ spec:
                           description: ProxyService is the image tag for the Container
                           type: string
                         proxyServiceReplicas:
-                          description: ProxyServiceReplicas is the number of replicas for the proxy service deployment
+                          description: ProxyServiceReplicas is the number of replicas for the proxy
+                            service deployment
                           type: integer
                         redis:
                           description: Redis is the image tag for the Container
@@ -339,6 +357,9 @@ spec:
                         redisName:
                           description: RedisName is the name of the redis statefulset
                           type: string
+                        redisPassword:
+                          description: RedisPassword is the password for the redis instance
+                          type: string
                         redisReplicas:
                           description: RedisReplicas is the number of replicas for the redis deployment
                           type: integer
@@ -347,10 +368,12 @@ spec:
                             RedisSecretProviderClass is the SecretProviderClass Object details for redis
                             Applicable from CSM v1.15 onwards
                           items:
-                            description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
+                            description: RedisSecretProviderClass is the redis secret configuration for CSM
+                              Authorization
                             properties:
                               conjur:
-                                description: Conjur is the secret configuration with path to retrieve the Redis credentials from Conjur
+                                description: Conjur is the secret configuration with path to retrieve the Redis
+                                  credentials from Conjur
                                 properties:
                                   passwordPath:
                                     description: PasswordPath is the path to the password in the secret
@@ -360,25 +383,33 @@ spec:
                                     type: string
                                 type: object
                               redisPasswordKey:
-                                description: RedisPasswordKey is the key in the secret that holds the Redis password
+                                description: RedisPasswordKey is the key in the secret that holds the Redis
+                                  password
                                 type: string
                               redisSecretName:
-                                description: RedisSecretName is the name of the Kubernetes secret created by the CSI driver
+                                description: RedisSecretName is the name of the Kubernetes secret created by the
+                                  CSI driver
                                 type: string
                               redisUsernameKey:
-                                description: RedisUsernameKey is the key in the secret that holds the Redis username
+                                description: RedisUsernameKey is the key in the secret that holds the Redis
+                                  username
                                 type: string
                               secretProviderClassName:
-                                description: SecretProviderClassName is the name of the SecretProviderClass that holds the Redis secretObject
+                                description: SecretProviderClassName is the name of the SecretProviderClass that
+                                  holds the Redis secretObject
                                 type: string
                             type: object
                           maxItems: 1
                           type: array
+                        redisUsername:
+                          description: RedisUsername is the username for the redis instance
+                          type: string
                         roleService:
                           description: RoleService is the image tag for the Container
                           type: string
                         roleServiceReplicas:
-                          description: RoleServiceReplicas is the number of replicas for the role service deployment
+                          description: RoleServiceReplicas is the number of replicas for the role service
+                            deployment
                           type: integer
                         secretProviderClasses:
                           description: |-
@@ -425,22 +456,26 @@ spec:
                           description: Sentinel is the name of the sentinel statefulSet
                           type: string
                         skipCertificateValidation:
-                          description: skipCertificateValidation is the flag to skip certificate validation
+                          description: skipCertificateValidation is the flag to skip certificate
+                            validation
                           type: boolean
                         storageService:
                           description: StorageService is the image tag for the Container
                           type: string
                         storageServiceReplicas:
-                          description: StorageServiceReplicas is the number of replicas for storage service deployment
+                          description: StorageServiceReplicas is the number of replicas for storage
+                            service deployment
                           type: integer
                         storageclass:
-                          description: RedisStorageClass is the authorization proxy server redis storage class for persistence
+                          description: RedisStorageClass is the authorization proxy server redis storage
+                            class for persistence
                           type: string
                         tenantService:
                           description: TenantService is the image tag for the Container
                           type: string
                         tenantServiceReplicas:
-                          description: TenantServiceReplicas is the number of replicas for the tenant service deployment
+                          description: TenantServiceReplicas is the number of replicas for the tenant
+                            service deployment
                           type: integer
                         tolerations:
                           description: Tolerations is the list of tolerations for the driver pods
@@ -493,13 +528,16 @@ spec:
                                 description: Address is the address for this vault
                                 type: string
                               certificateAuthority:
-                                description: CertificateAuthority is the base64-encoded certificate authority for validaitng the vault certificate
+                                description: CertificateAuthority is the base64-encoded certificate authority
+                                  for validaitng the vault certificate
                                 type: string
                               clientCertificate:
-                                description: ClientCertificate is the base64-encoded certificate for connecting to vault
+                                description: ClientCertificate is the base64-encoded certificate for connecting
+                                  to vault
                                 type: string
                               clientKey:
-                                description: ClientKey validates is the base64-encoded certificate key for connecting to vault
+                                description: ClientKey validates is the base64-encoded certificate key for
+                                  connecting to vault
                                 type: string
                               identifier:
                                 description: Identifier is the identifier for this vault
@@ -508,7 +546,8 @@ spec:
                                 description: Role is the role for this vault
                                 type: string
                               skipCertificateValidation:
-                                description: SkipCertificateValidation validates the vault server certificate or not
+                                description: SkipCertificateValidation validates the vault server certificate or
+                                  not
                                 type: boolean
                             type: object
                           type: array
@@ -528,13 +567,16 @@ spec:
                           description: AuthorizationController is the image tag for the container
                           type: string
                         authorizationControllerReplicas:
-                          description: AuthorizationControllerReplicas is the number of replicas for the authorization controller deployment
+                          description: AuthorizationControllerReplicas is the number of replicas for the
+                            authorization controller deployment
                           type: integer
                         certificate:
-                          description: Certificate is a certificate used for a certificate/private-key pair
+                          description: Certificate is a certificate used for a certificate/private-key
+                            pair
                           type: string
                         certificateAuthority:
-                          description: CertificateAuthority is a certificate authority used to validate a certificate
+                          description: CertificateAuthority is a certificate authority used to validate a
+                            certificate
                           type: string
                         commander:
                           description: Commander is the image tag for the Container
@@ -544,20 +586,24 @@ spec:
                             ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
                             Applicable from CSM v1.15 onwards
                           items:
-                            description: ConfigSecretProviderClass is the config secret configuration for CSM Authorization
+                            description: ConfigSecretProviderClass is the config secret configuration for
+                              CSM Authorization
                             properties:
                               configSecretName:
-                                description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
+                                description: ConfigSecretName is the name of the Kubernetes secret created by
+                                  the CSI driver
                                 type: string
                               conjur:
-                                description: Conjur is the secret configuration with path to retrieve the Config secret from Conjur
+                                description: Conjur is the secret configuration with path to retrieve the Config
+                                  secret from Conjur
                                 properties:
                                   secretPath:
                                     description: SecretPath is the path to the config secret
                                     type: string
                                 type: object
                               secretProviderClassName:
-                                description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
+                                description: SecretProviderClassName is the name of the SecretProviderClass that
+                                  holds the config secretObject
                                 type: string
                             type: object
                           maxItems: 1
@@ -591,7 +637,8 @@ spec:
                                   Defaults to "".
                                 type: string
                               valueFrom:
-                                description: Source for the environment variable's value. Cannot be used if value is not empty.
+                                description: Source for the environment variable's value. Cannot be used if
+                                  value is not empty.
                                 properties:
                                   configMapKeyRef:
                                     description: Selects a key of a ConfigMap.
@@ -621,7 +668,8 @@ spec:
                                       spec.nodeName, spec.serviceAccountName, status.hostIP, status.podIP, status.podIPs.
                                     properties:
                                       apiVersion:
-                                        description: Version of the schema the FieldPath is written in terms of, defaults to "v1".
+                                        description: Version of the schema the FieldPath is written in terms of,
+                                          defaults to "v1".
                                         type: string
                                       fieldPath:
                                         description: Path of the field to select in the specified API version.
@@ -678,7 +726,8 @@ spec:
                                         anyOf:
                                           - type: integer
                                           - type: string
-                                        description: Specifies the output format of the exposed resources, defaults to "1"
+                                        description: Specifies the output format of the exposed resources, defaults to
+                                          "1"
                                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                         x-kubernetes-int-or-string: true
                                       resource:
@@ -745,20 +794,24 @@ spec:
                           description: OpaKubeMgmt is the image tag for the Container
                           type: string
                         openTelemetryCollectorAddress:
-                          description: OpenTelemetryCollectorAddress is the address of the OTLP receiving endpoint using gRPC
+                          description: OpenTelemetryCollectorAddress is the address of the OTLP receiving
+                            endpoint using gRPC
                           type: string
                         privateKey:
                           description: PrivateKey is a private key used for a certificate/private-key pair
                           type: string
                         proxyServerIngress:
-                          description: ProxyServerIngress is the authorization proxy server ingress configuration
+                          description: ProxyServerIngress is the authorization proxy server ingress
+                            configuration
                           items:
-                            description: ProxyServerIngress is the authorization ingress configuration struct
+                            description: ProxyServerIngress is the authorization ingress configuration
+                              struct
                             properties:
                               annotations:
                                 additionalProperties:
                                   type: string
-                                description: Annotations is an unstructured key value map that stores additional annotations for the ingress
+                                description: Annotations is an unstructured key value map that stores additional
+                                  annotations for the ingress
                                 type: object
                               hosts:
                                 description: Hosts is the hosts rules for the ingress
@@ -774,7 +827,8 @@ spec:
                           description: ProxyService is the image tag for the Container
                           type: string
                         proxyServiceReplicas:
-                          description: ProxyServiceReplicas is the number of replicas for the proxy service deployment
+                          description: ProxyServiceReplicas is the number of replicas for the proxy
+                            service deployment
                           type: integer
                         redis:
                           description: Redis is the image tag for the Container
@@ -785,6 +839,9 @@ spec:
                         redisName:
                           description: RedisName is the name of the redis statefulset
                           type: string
+                        redisPassword:
+                          description: RedisPassword is the password for the redis instance
+                          type: string
                         redisReplicas:
                           description: RedisReplicas is the number of replicas for the redis deployment
                           type: integer
@@ -793,10 +850,12 @@ spec:
                             RedisSecretProviderClass is the SecretProviderClass Object details for redis
                             Applicable from CSM v1.15 onwards
                           items:
-                            description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
+                            description: RedisSecretProviderClass is the redis secret configuration for CSM
+                              Authorization
                             properties:
                               conjur:
-                                description: Conjur is the secret configuration with path to retrieve the Redis credentials from Conjur
+                                description: Conjur is the secret configuration with path to retrieve the Redis
+                                  credentials from Conjur
                                 properties:
                                   passwordPath:
                                     description: PasswordPath is the path to the password in the secret
@@ -806,25 +865,33 @@ spec:
                                     type: string
                                 type: object
                               redisPasswordKey:
-                                description: RedisPasswordKey is the key in the secret that holds the Redis password
+                                description: RedisPasswordKey is the key in the secret that holds the Redis
+                                  password
                                 type: string
                               redisSecretName:
-                                description: RedisSecretName is the name of the Kubernetes secret created by the CSI driver
+                                description: RedisSecretName is the name of the Kubernetes secret created by the
+                                  CSI driver
                                 type: string
                               redisUsernameKey:
-                                description: RedisUsernameKey is the key in the secret that holds the Redis username
+                                description: RedisUsernameKey is the key in the secret that holds the Redis
+                                  username
                                 type: string
                               secretProviderClassName:
-                                description: SecretProviderClassName is the name of the SecretProviderClass that holds the Redis secretObject
+                                description: SecretProviderClassName is the name of the SecretProviderClass that
+                                  holds the Redis secretObject
                                 type: string
                             type: object
                           maxItems: 1
                           type: array
+                        redisUsername:
+                          description: RedisUsername is the username for the redis instance
+                          type: string
                         roleService:
                           description: RoleService is the image tag for the Container
                           type: string
                         roleServiceReplicas:
-                          description: RoleServiceReplicas is the number of replicas for the role service deployment
+                          description: RoleServiceReplicas is the number of replicas for the role service
+                            deployment
                           type: integer
                         secretProviderClasses:
                           description: |-
@@ -871,22 +938,26 @@ spec:
                           description: Sentinel is the name of the sentinel statefulSet
                           type: string
                         skipCertificateValidation:
-                          description: skipCertificateValidation is the flag to skip certificate validation
+                          description: skipCertificateValidation is the flag to skip certificate
+                            validation
                           type: boolean
                         storageService:
                           description: StorageService is the image tag for the Container
                           type: string
                         storageServiceReplicas:
-                          description: StorageServiceReplicas is the number of replicas for storage service deployment
+                          description: StorageServiceReplicas is the number of replicas for storage
+                            service deployment
                           type: integer
                         storageclass:
-                          description: RedisStorageClass is the authorization proxy server redis storage class for persistence
+                          description: RedisStorageClass is the authorization proxy server redis storage
+                            class for persistence
                           type: string
                         tenantService:
                           description: TenantService is the image tag for the Container
                           type: string
                         tenantServiceReplicas:
-                          description: TenantServiceReplicas is the number of replicas for the tenant service deployment
+                          description: TenantServiceReplicas is the number of replicas for the tenant
+                            service deployment
                           type: integer
                         tolerations:
                           description: Tolerations is the list of tolerations for the driver pods
@@ -939,13 +1010,16 @@ spec:
                                 description: Address is the address for this vault
                                 type: string
                               certificateAuthority:
-                                description: CertificateAuthority is the base64-encoded certificate authority for validaitng the vault certificate
+                                description: CertificateAuthority is the base64-encoded certificate authority
+                                  for validaitng the vault certificate
                                 type: string
                               clientCertificate:
-                                description: ClientCertificate is the base64-encoded certificate for connecting to vault
+                                description: ClientCertificate is the base64-encoded certificate for connecting
+                                  to vault
                                 type: string
                               clientKey:
-                                description: ClientKey validates is the base64-encoded certificate key for connecting to vault
+                                description: ClientKey validates is the base64-encoded certificate key for
+                                  connecting to vault
                                 type: string
                               identifier:
                                 description: Identifier is the identifier for this vault
@@ -954,7 +1028,8 @@ spec:
                                 description: Role is the role for this vault
                                 type: string
                               skipCertificateValidation:
-                                description: SkipCertificateValidation validates the vault server certificate or not
+                                description: SkipCertificateValidation validates the vault server certificate or
+                                  not
                                 type: boolean
                             type: object
                           type: array
@@ -968,13 +1043,15 @@ spec:
                           type: boolean
                       type: object
                     csiDriverType:
-                      description: CSIDriverType is the CSI Driver type for Dell Technologies - e.g, powermax, powerflex,...
+                      description: CSIDriverType is the CSI Driver type for Dell Technologies - e.g,
+                        powermax, powerflex,...
                       type: string
                     dnsPolicy:
                       description: DNSPolicy is the dnsPolicy of the daemonset for Node plugin
                       type: string
                     forceRemoveDriver:
-                      description: ForceRemoveDriver is the boolean flag used to remove driver deployment when CR is deleted
+                      description: ForceRemoveDriver is the boolean flag used to remove driver
+                        deployment when CR is deleted
                       type: boolean
                     initContainers:
                       description: InitContainers is the specification for Driver InitContainers
@@ -990,13 +1067,16 @@ spec:
                             description: AuthorizationController is the image tag for the container
                             type: string
                           authorizationControllerReplicas:
-                            description: AuthorizationControllerReplicas is the number of replicas for the authorization controller deployment
+                            description: AuthorizationControllerReplicas is the number of replicas for the
+                              authorization controller deployment
                             type: integer
                           certificate:
-                            description: Certificate is a certificate used for a certificate/private-key pair
+                            description: Certificate is a certificate used for a certificate/private-key
+                              pair
                             type: string
                           certificateAuthority:
-                            description: CertificateAuthority is a certificate authority used to validate a certificate
+                            description: CertificateAuthority is a certificate authority used to validate a
+                              certificate
                             type: string
                           commander:
                             description: Commander is the image tag for the Container
@@ -1006,20 +1086,24 @@ spec:
                               ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
                               Applicable from CSM v1.15 onwards
                             items:
-                              description: ConfigSecretProviderClass is the config secret configuration for CSM Authorization
+                              description: ConfigSecretProviderClass is the config secret configuration for
+                                CSM Authorization
                               properties:
                                 configSecretName:
-                                  description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
+                                  description: ConfigSecretName is the name of the Kubernetes secret created by
+                                    the CSI driver
                                   type: string
                                 conjur:
-                                  description: Conjur is the secret configuration with path to retrieve the Config secret from Conjur
+                                  description: Conjur is the secret configuration with path to retrieve the Config
+                                    secret from Conjur
                                   properties:
                                     secretPath:
                                       description: SecretPath is the path to the config secret
                                       type: string
                                   type: object
                                 secretProviderClassName:
-                                  description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
+                                  description: SecretProviderClassName is the name of the SecretProviderClass that
+                                    holds the config secretObject
                                   type: string
                               type: object
                             maxItems: 1
@@ -1053,7 +1137,8 @@ spec:
                                     Defaults to "".
                                   type: string
                                 valueFrom:
-                                  description: Source for the environment variable's value. Cannot be used if value is not empty.
+                                  description: Source for the environment variable's value. Cannot be used if
+                                    value is not empty.
                                   properties:
                                     configMapKeyRef:
                                       description: Selects a key of a ConfigMap.
@@ -1083,7 +1168,8 @@ spec:
                                         spec.nodeName, spec.serviceAccountName, status.hostIP, status.podIP, status.podIPs.
                                       properties:
                                         apiVersion:
-                                          description: Version of the schema the FieldPath is written in terms of, defaults to "v1".
+                                          description: Version of the schema the FieldPath is written in terms of,
+                                            defaults to "v1".
                                           type: string
                                         fieldPath:
                                           description: Path of the field to select in the specified API version.
@@ -1140,7 +1226,8 @@ spec:
                                           anyOf:
                                             - type: integer
                                             - type: string
-                                          description: Specifies the output format of the exposed resources, defaults to "1"
+                                          description: Specifies the output format of the exposed resources, defaults to
+                                            "1"
                                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                           x-kubernetes-int-or-string: true
                                         resource:
@@ -1207,20 +1294,24 @@ spec:
                             description: OpaKubeMgmt is the image tag for the Container
                             type: string
                           openTelemetryCollectorAddress:
-                            description: OpenTelemetryCollectorAddress is the address of the OTLP receiving endpoint using gRPC
+                            description: OpenTelemetryCollectorAddress is the address of the OTLP receiving
+                              endpoint using gRPC
                             type: string
                           privateKey:
                             description: PrivateKey is a private key used for a certificate/private-key pair
                             type: string
                           proxyServerIngress:
-                            description: ProxyServerIngress is the authorization proxy server ingress configuration
+                            description: ProxyServerIngress is the authorization proxy server ingress
+                              configuration
                             items:
-                              description: ProxyServerIngress is the authorization ingress configuration struct
+                              description: ProxyServerIngress is the authorization ingress configuration
+                                struct
                               properties:
                                 annotations:
                                   additionalProperties:
                                     type: string
-                                  description: Annotations is an unstructured key value map that stores additional annotations for the ingress
+                                  description: Annotations is an unstructured key value map that stores additional
+                                    annotations for the ingress
                                   type: object
                                 hosts:
                                   description: Hosts is the hosts rules for the ingress
@@ -1236,7 +1327,8 @@ spec:
                             description: ProxyService is the image tag for the Container
                             type: string
                           proxyServiceReplicas:
-                            description: ProxyServiceReplicas is the number of replicas for the proxy service deployment
+                            description: ProxyServiceReplicas is the number of replicas for the proxy
+                              service deployment
                             type: integer
                           redis:
                             description: Redis is the image tag for the Container
@@ -1247,6 +1339,9 @@ spec:
                           redisName:
                             description: RedisName is the name of the redis statefulset
                             type: string
+                          redisPassword:
+                            description: RedisPassword is the password for the redis instance
+                            type: string
                           redisReplicas:
                             description: RedisReplicas is the number of replicas for the redis deployment
                             type: integer
@@ -1255,10 +1350,12 @@ spec:
                               RedisSecretProviderClass is the SecretProviderClass Object details for redis
                               Applicable from CSM v1.15 onwards
                             items:
-                              description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
+                              description: RedisSecretProviderClass is the redis secret configuration for CSM
+                                Authorization
                               properties:
                                 conjur:
-                                  description: Conjur is the secret configuration with path to retrieve the Redis credentials from Conjur
+                                  description: Conjur is the secret configuration with path to retrieve the Redis
+                                    credentials from Conjur
                                   properties:
                                     passwordPath:
                                       description: PasswordPath is the path to the password in the secret
@@ -1268,25 +1365,33 @@ spec:
                                       type: string
                                   type: object
                                 redisPasswordKey:
-                                  description: RedisPasswordKey is the key in the secret that holds the Redis password
+                                  description: RedisPasswordKey is the key in the secret that holds the Redis
+                                    password
                                   type: string
                                 redisSecretName:
-                                  description: RedisSecretName is the name of the Kubernetes secret created by the CSI driver
+                                  description: RedisSecretName is the name of the Kubernetes secret created by the
+                                    CSI driver
                                   type: string
                                 redisUsernameKey:
-                                  description: RedisUsernameKey is the key in the secret that holds the Redis username
+                                  description: RedisUsernameKey is the key in the secret that holds the Redis
+                                    username
                                   type: string
                                 secretProviderClassName:
-                                  description: SecretProviderClassName is the name of the SecretProviderClass that holds the Redis secretObject
+                                  description: SecretProviderClassName is the name of the SecretProviderClass that
+                                    holds the Redis secretObject
                                   type: string
                               type: object
                             maxItems: 1
                             type: array
+                          redisUsername:
+                            description: RedisUsername is the username for the redis instance
+                            type: string
                           roleService:
                             description: RoleService is the image tag for the Container
                             type: string
                           roleServiceReplicas:
-                            description: RoleServiceReplicas is the number of replicas for the role service deployment
+                            description: RoleServiceReplicas is the number of replicas for the role service
+                              deployment
                             type: integer
                           secretProviderClasses:
                             description: |-
@@ -1333,22 +1438,26 @@ spec:
                             description: Sentinel is the name of the sentinel statefulSet
                             type: string
                           skipCertificateValidation:
-                            description: skipCertificateValidation is the flag to skip certificate validation
+                            description: skipCertificateValidation is the flag to skip certificate
+                              validation
                             type: boolean
                           storageService:
                             description: StorageService is the image tag for the Container
                             type: string
                           storageServiceReplicas:
-                            description: StorageServiceReplicas is the number of replicas for storage service deployment
+                            description: StorageServiceReplicas is the number of replicas for storage
+                              service deployment
                             type: integer
                           storageclass:
-                            description: RedisStorageClass is the authorization proxy server redis storage class for persistence
+                            description: RedisStorageClass is the authorization proxy server redis storage
+                              class for persistence
                             type: string
                           tenantService:
                             description: TenantService is the image tag for the Container
                             type: string
                           tenantServiceReplicas:
-                            description: TenantServiceReplicas is the number of replicas for the tenant service deployment
+                            description: TenantServiceReplicas is the number of replicas for the tenant
+                              service deployment
                             type: integer
                           tolerations:
                             description: Tolerations is the list of tolerations for the driver pods
@@ -1401,13 +1510,16 @@ spec:
                                   description: Address is the address for this vault
                                   type: string
                                 certificateAuthority:
-                                  description: CertificateAuthority is the base64-encoded certificate authority for validaitng the vault certificate
+                                  description: CertificateAuthority is the base64-encoded certificate authority
+                                    for validaitng the vault certificate
                                   type: string
                                 clientCertificate:
-                                  description: ClientCertificate is the base64-encoded certificate for connecting to vault
+                                  description: ClientCertificate is the base64-encoded certificate for connecting
+                                    to vault
                                   type: string
                                 clientKey:
-                                  description: ClientKey validates is the base64-encoded certificate key for connecting to vault
+                                  description: ClientKey validates is the base64-encoded certificate key for
+                                    connecting to vault
                                   type: string
                                 identifier:
                                   description: Identifier is the identifier for this vault
@@ -1416,7 +1528,8 @@ spec:
                                   description: Role is the role for this vault
                                   type: string
                                 skipCertificateValidation:
-                                  description: SkipCertificateValidation validates the vault server certificate or not
+                                  description: SkipCertificateValidation validates the vault server certificate or
+                                    not
                                   type: boolean
                               type: object
                             type: array
@@ -1434,13 +1547,16 @@ spec:
                           description: AuthorizationController is the image tag for the container
                           type: string
                         authorizationControllerReplicas:
-                          description: AuthorizationControllerReplicas is the number of replicas for the authorization controller deployment
+                          description: AuthorizationControllerReplicas is the number of replicas for the
+                            authorization controller deployment
                           type: integer
                         certificate:
-                          description: Certificate is a certificate used for a certificate/private-key pair
+                          description: Certificate is a certificate used for a certificate/private-key
+                            pair
                           type: string
                         certificateAuthority:
-                          description: CertificateAuthority is a certificate authority used to validate a certificate
+                          description: CertificateAuthority is a certificate authority used to validate a
+                            certificate
                           type: string
                         commander:
                           description: Commander is the image tag for the Container
@@ -1450,20 +1566,24 @@ spec:
                             ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
                             Applicable from CSM v1.15 onwards
                           items:
-                            description: ConfigSecretProviderClass is the config secret configuration for CSM Authorization
+                            description: ConfigSecretProviderClass is the config secret configuration for
+                              CSM Authorization
                             properties:
                               configSecretName:
-                                description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
+                                description: ConfigSecretName is the name of the Kubernetes secret created by
+                                  the CSI driver
                                 type: string
                               conjur:
-                                description: Conjur is the secret configuration with path to retrieve the Config secret from Conjur
+                                description: Conjur is the secret configuration with path to retrieve the Config
+                                  secret from Conjur
                                 properties:
                                   secretPath:
                                     description: SecretPath is the path to the config secret
                                     type: string
                                 type: object
                               secretProviderClassName:
-                                description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
+                                description: SecretProviderClassName is the name of the SecretProviderClass that
+                                  holds the config secretObject
                                 type: string
                             type: object
                           maxItems: 1
@@ -1497,7 +1617,8 @@ spec:
                                   Defaults to "".
                                 type: string
                               valueFrom:
-                                description: Source for the environment variable's value. Cannot be used if value is not empty.
+                                description: Source for the environment variable's value. Cannot be used if
+                                  value is not empty.
                                 properties:
                                   configMapKeyRef:
                                     description: Selects a key of a ConfigMap.
@@ -1527,7 +1648,8 @@ spec:
                                       spec.nodeName, spec.serviceAccountName, status.hostIP, status.podIP, status.podIPs.
                                     properties:
                                       apiVersion:
-                                        description: Version of the schema the FieldPath is written in terms of, defaults to "v1".
+                                        description: Version of the schema the FieldPath is written in terms of,
+                                          defaults to "v1".
                                         type: string
                                       fieldPath:
                                         description: Path of the field to select in the specified API version.
@@ -1584,7 +1706,8 @@ spec:
                                         anyOf:
                                           - type: integer
                                           - type: string
-                                        description: Specifies the output format of the exposed resources, defaults to "1"
+                                        description: Specifies the output format of the exposed resources, defaults to
+                                          "1"
                                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                         x-kubernetes-int-or-string: true
                                       resource:
@@ -1651,20 +1774,24 @@ spec:
                           description: OpaKubeMgmt is the image tag for the Container
                           type: string
                         openTelemetryCollectorAddress:
-                          description: OpenTelemetryCollectorAddress is the address of the OTLP receiving endpoint using gRPC
+                          description: OpenTelemetryCollectorAddress is the address of the OTLP receiving
+                            endpoint using gRPC
                           type: string
                         privateKey:
                           description: PrivateKey is a private key used for a certificate/private-key pair
                           type: string
                         proxyServerIngress:
-                          description: ProxyServerIngress is the authorization proxy server ingress configuration
+                          description: ProxyServerIngress is the authorization proxy server ingress
+                            configuration
                           items:
-                            description: ProxyServerIngress is the authorization ingress configuration struct
+                            description: ProxyServerIngress is the authorization ingress configuration
+                              struct
                             properties:
                               annotations:
                                 additionalProperties:
                                   type: string
-                                description: Annotations is an unstructured key value map that stores additional annotations for the ingress
+                                description: Annotations is an unstructured key value map that stores additional
+                                  annotations for the ingress
                                 type: object
                               hosts:
                                 description: Hosts is the hosts rules for the ingress
@@ -1680,7 +1807,8 @@ spec:
                           description: ProxyService is the image tag for the Container
                           type: string
                         proxyServiceReplicas:
-                          description: ProxyServiceReplicas is the number of replicas for the proxy service deployment
+                          description: ProxyServiceReplicas is the number of replicas for the proxy
+                            service deployment
                           type: integer
                         redis:
                           description: Redis is the image tag for the Container
@@ -1691,6 +1819,9 @@ spec:
                         redisName:
                           description: RedisName is the name of the redis statefulset
                           type: string
+                        redisPassword:
+                          description: RedisPassword is the password for the redis instance
+                          type: string
                         redisReplicas:
                           description: RedisReplicas is the number of replicas for the redis deployment
                           type: integer
@@ -1699,10 +1830,12 @@ spec:
                             RedisSecretProviderClass is the SecretProviderClass Object details for redis
                             Applicable from CSM v1.15 onwards
                           items:
-                            description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
+                            description: RedisSecretProviderClass is the redis secret configuration for CSM
+                              Authorization
                             properties:
                               conjur:
-                                description: Conjur is the secret configuration with path to retrieve the Redis credentials from Conjur
+                                description: Conjur is the secret configuration with path to retrieve the Redis
+                                  credentials from Conjur
                                 properties:
                                   passwordPath:
                                     description: PasswordPath is the path to the password in the secret
@@ -1712,25 +1845,33 @@ spec:
                                     type: string
                                 type: object
                               redisPasswordKey:
-                                description: RedisPasswordKey is the key in the secret that holds the Redis password
+                                description: RedisPasswordKey is the key in the secret that holds the Redis
+                                  password
                                 type: string
                               redisSecretName:
-                                description: RedisSecretName is the name of the Kubernetes secret created by the CSI driver
+                                description: RedisSecretName is the name of the Kubernetes secret created by the
+                                  CSI driver
                                 type: string
                               redisUsernameKey:
-                                description: RedisUsernameKey is the key in the secret that holds the Redis username
+                                description: RedisUsernameKey is the key in the secret that holds the Redis
+                                  username
                                 type: string
                               secretProviderClassName:
-                                description: SecretProviderClassName is the name of the SecretProviderClass that holds the Redis secretObject
+                                description: SecretProviderClassName is the name of the SecretProviderClass that
+                                  holds the Redis secretObject
                                 type: string
                             type: object
                           maxItems: 1
                           type: array
+                        redisUsername:
+                          description: RedisUsername is the username for the redis instance
+                          type: string
                         roleService:
                           description: RoleService is the image tag for the Container
                           type: string
                         roleServiceReplicas:
-                          description: RoleServiceReplicas is the number of replicas for the role service deployment
+                          description: RoleServiceReplicas is the number of replicas for the role service
+                            deployment
                           type: integer
                         secretProviderClasses:
                           description: |-
@@ -1777,22 +1918,26 @@ spec:
                           description: Sentinel is the name of the sentinel statefulSet
                           type: string
                         skipCertificateValidation:
-                          description: skipCertificateValidation is the flag to skip certificate validation
+                          description: skipCertificateValidation is the flag to skip certificate
+                            validation
                           type: boolean
                         storageService:
                           description: StorageService is the image tag for the Container
                           type: string
                         storageServiceReplicas:
-                          description: StorageServiceReplicas is the number of replicas for storage service deployment
+                          description: StorageServiceReplicas is the number of replicas for storage
+                            service deployment
                           type: integer
                         storageclass:
-                          description: RedisStorageClass is the authorization proxy server redis storage class for persistence
+                          description: RedisStorageClass is the authorization proxy server redis storage
+                            class for persistence
                           type: string
                         tenantService:
                           description: TenantService is the image tag for the Container
                           type: string
                         tenantServiceReplicas:
-                          description: TenantServiceReplicas is the number of replicas for the tenant service deployment
+                          description: TenantServiceReplicas is the number of replicas for the tenant
+                            service deployment
                           type: integer
                         tolerations:
                           description: Tolerations is the list of tolerations for the driver pods
@@ -1845,13 +1990,16 @@ spec:
                                 description: Address is the address for this vault
                                 type: string
                               certificateAuthority:
-                                description: CertificateAuthority is the base64-encoded certificate authority for validaitng the vault certificate
+                                description: CertificateAuthority is the base64-encoded certificate authority
+                                  for validaitng the vault certificate
                                 type: string
                               clientCertificate:
-                                description: ClientCertificate is the base64-encoded certificate for connecting to vault
+                                description: ClientCertificate is the base64-encoded certificate for connecting
+                                  to vault
                                 type: string
                               clientKey:
-                                description: ClientKey validates is the base64-encoded certificate key for connecting to vault
+                                description: ClientKey validates is the base64-encoded certificate key for
+                                  connecting to vault
                                 type: string
                               identifier:
                                 description: Identifier is the identifier for this vault
@@ -1860,7 +2008,8 @@ spec:
                                 description: Role is the role for this vault
                                 type: string
                               skipCertificateValidation:
-                                description: SkipCertificateValidation validates the vault server certificate or not
+                                description: SkipCertificateValidation validates the vault server certificate or
+                                  not
                                 type: boolean
                             type: object
                           type: array
@@ -1884,13 +2033,16 @@ spec:
                             description: AuthorizationController is the image tag for the container
                             type: string
                           authorizationControllerReplicas:
-                            description: AuthorizationControllerReplicas is the number of replicas for the authorization controller deployment
+                            description: AuthorizationControllerReplicas is the number of replicas for the
+                              authorization controller deployment
                             type: integer
                           certificate:
-                            description: Certificate is a certificate used for a certificate/private-key pair
+                            description: Certificate is a certificate used for a certificate/private-key
+                              pair
                             type: string
                           certificateAuthority:
-                            description: CertificateAuthority is a certificate authority used to validate a certificate
+                            description: CertificateAuthority is a certificate authority used to validate a
+                              certificate
                             type: string
                           commander:
                             description: Commander is the image tag for the Container
@@ -1900,20 +2052,24 @@ spec:
                               ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
                               Applicable from CSM v1.15 onwards
                             items:
-                              description: ConfigSecretProviderClass is the config secret configuration for CSM Authorization
+                              description: ConfigSecretProviderClass is the config secret configuration for
+                                CSM Authorization
                               properties:
                                 configSecretName:
-                                  description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
+                                  description: ConfigSecretName is the name of the Kubernetes secret created by
+                                    the CSI driver
                                   type: string
                                 conjur:
-                                  description: Conjur is the secret configuration with path to retrieve the Config secret from Conjur
+                                  description: Conjur is the secret configuration with path to retrieve the Config
+                                    secret from Conjur
                                   properties:
                                     secretPath:
                                       description: SecretPath is the path to the config secret
                                       type: string
                                   type: object
                                 secretProviderClassName:
-                                  description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
+                                  description: SecretProviderClassName is the name of the SecretProviderClass that
+                                    holds the config secretObject
                                   type: string
                               type: object
                             maxItems: 1
@@ -1947,7 +2103,8 @@ spec:
                                     Defaults to "".
                                   type: string
                                 valueFrom:
-                                  description: Source for the environment variable's value. Cannot be used if value is not empty.
+                                  description: Source for the environment variable's value. Cannot be used if
+                                    value is not empty.
                                   properties:
                                     configMapKeyRef:
                                       description: Selects a key of a ConfigMap.
@@ -1977,7 +2134,8 @@ spec:
                                         spec.nodeName, spec.serviceAccountName, status.hostIP, status.podIP, status.podIPs.
                                       properties:
                                         apiVersion:
-                                          description: Version of the schema the FieldPath is written in terms of, defaults to "v1".
+                                          description: Version of the schema the FieldPath is written in terms of,
+                                            defaults to "v1".
                                           type: string
                                         fieldPath:
                                           description: Path of the field to select in the specified API version.
@@ -2034,7 +2192,8 @@ spec:
                                           anyOf:
                                             - type: integer
                                             - type: string
-                                          description: Specifies the output format of the exposed resources, defaults to "1"
+                                          description: Specifies the output format of the exposed resources, defaults to
+                                            "1"
                                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                           x-kubernetes-int-or-string: true
                                         resource:
@@ -2101,20 +2260,24 @@ spec:
                             description: OpaKubeMgmt is the image tag for the Container
                             type: string
                           openTelemetryCollectorAddress:
-                            description: OpenTelemetryCollectorAddress is the address of the OTLP receiving endpoint using gRPC
+                            description: OpenTelemetryCollectorAddress is the address of the OTLP receiving
+                              endpoint using gRPC
                             type: string
                           privateKey:
                             description: PrivateKey is a private key used for a certificate/private-key pair
                             type: string
                           proxyServerIngress:
-                            description: ProxyServerIngress is the authorization proxy server ingress configuration
+                            description: ProxyServerIngress is the authorization proxy server ingress
+                              configuration
                             items:
-                              description: ProxyServerIngress is the authorization ingress configuration struct
+                              description: ProxyServerIngress is the authorization ingress configuration
+                                struct
                               properties:
                                 annotations:
                                   additionalProperties:
                                     type: string
-                                  description: Annotations is an unstructured key value map that stores additional annotations for the ingress
+                                  description: Annotations is an unstructured key value map that stores additional
+                                    annotations for the ingress
                                   type: object
                                 hosts:
                                   description: Hosts is the hosts rules for the ingress
@@ -2130,7 +2293,8 @@ spec:
                             description: ProxyService is the image tag for the Container
                             type: string
                           proxyServiceReplicas:
-                            description: ProxyServiceReplicas is the number of replicas for the proxy service deployment
+                            description: ProxyServiceReplicas is the number of replicas for the proxy
+                              service deployment
                             type: integer
                           redis:
                             description: Redis is the image tag for the Container
@@ -2141,6 +2305,9 @@ spec:
                           redisName:
                             description: RedisName is the name of the redis statefulset
                             type: string
+                          redisPassword:
+                            description: RedisPassword is the password for the redis instance
+                            type: string
                           redisReplicas:
                             description: RedisReplicas is the number of replicas for the redis deployment
                             type: integer
@@ -2149,10 +2316,12 @@ spec:
                               RedisSecretProviderClass is the SecretProviderClass Object details for redis
                               Applicable from CSM v1.15 onwards
                             items:
-                              description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
+                              description: RedisSecretProviderClass is the redis secret configuration for CSM
+                                Authorization
                               properties:
                                 conjur:
-                                  description: Conjur is the secret configuration with path to retrieve the Redis credentials from Conjur
+                                  description: Conjur is the secret configuration with path to retrieve the Redis
+                                    credentials from Conjur
                                   properties:
                                     passwordPath:
                                       description: PasswordPath is the path to the password in the secret
@@ -2162,25 +2331,33 @@ spec:
                                       type: string
                                   type: object
                                 redisPasswordKey:
-                                  description: RedisPasswordKey is the key in the secret that holds the Redis password
+                                  description: RedisPasswordKey is the key in the secret that holds the Redis
+                                    password
                                   type: string
                                 redisSecretName:
-                                  description: RedisSecretName is the name of the Kubernetes secret created by the CSI driver
+                                  description: RedisSecretName is the name of the Kubernetes secret created by the
+                                    CSI driver
                                   type: string
                                 redisUsernameKey:
-                                  description: RedisUsernameKey is the key in the secret that holds the Redis username
+                                  description: RedisUsernameKey is the key in the secret that holds the Redis
+                                    username
                                   type: string
                                 secretProviderClassName:
-                                  description: SecretProviderClassName is the name of the SecretProviderClass that holds the Redis secretObject
+                                  description: SecretProviderClassName is the name of the SecretProviderClass that
+                                    holds the Redis secretObject
                                   type: string
                               type: object
                             maxItems: 1
                             type: array
+                          redisUsername:
+                            description: RedisUsername is the username for the redis instance
+                            type: string
                           roleService:
                             description: RoleService is the image tag for the Container
                             type: string
                           roleServiceReplicas:
-                            description: RoleServiceReplicas is the number of replicas for the role service deployment
+                            description: RoleServiceReplicas is the number of replicas for the role service
+                              deployment
                             type: integer
                           secretProviderClasses:
                             description: |-
@@ -2227,22 +2404,26 @@ spec:
                             description: Sentinel is the name of the sentinel statefulSet
                             type: string
                           skipCertificateValidation:
-                            description: skipCertificateValidation is the flag to skip certificate validation
+                            description: skipCertificateValidation is the flag to skip certificate
+                              validation
                             type: boolean
                           storageService:
                             description: StorageService is the image tag for the Container
                             type: string
                           storageServiceReplicas:
-                            description: StorageServiceReplicas is the number of replicas for storage service deployment
+                            description: StorageServiceReplicas is the number of replicas for storage
+                              service deployment
                             type: integer
                           storageclass:
-                            description: RedisStorageClass is the authorization proxy server redis storage class for persistence
+                            description: RedisStorageClass is the authorization proxy server redis storage
+                              class for persistence
                             type: string
                           tenantService:
                             description: TenantService is the image tag for the Container
                             type: string
                           tenantServiceReplicas:
-                            description: TenantServiceReplicas is the number of replicas for the tenant service deployment
+                            description: TenantServiceReplicas is the number of replicas for the tenant
+                              service deployment
                             type: integer
                           tolerations:
                             description: Tolerations is the list of tolerations for the driver pods
@@ -2295,13 +2476,16 @@ spec:
                                   description: Address is the address for this vault
                                   type: string
                                 certificateAuthority:
-                                  description: CertificateAuthority is the base64-encoded certificate authority for validaitng the vault certificate
+                                  description: CertificateAuthority is the base64-encoded certificate authority
+                                    for validaitng the vault certificate
                                   type: string
                                 clientCertificate:
-                                  description: ClientCertificate is the base64-encoded certificate for connecting to vault
+                                  description: ClientCertificate is the base64-encoded certificate for connecting
+                                    to vault
                                   type: string
                                 clientKey:
-                                  description: ClientKey validates is the base64-encoded certificate key for connecting to vault
+                                  description: ClientKey validates is the base64-encoded certificate key for
+                                    connecting to vault
                                   type: string
                                 identifier:
                                   description: Identifier is the identifier for this vault
@@ -2310,7 +2494,8 @@ spec:
                                   description: Role is the role for this vault
                                   type: string
                                 skipCertificateValidation:
-                                  description: SkipCertificateValidation validates the vault server certificate or not
+                                  description: SkipCertificateValidation validates the vault server certificate or
+                                    not
                                   type: boolean
                               type: object
                             type: array
@@ -2328,7 +2513,8 @@ spec:
                           parameters:
                             additionalProperties:
                               type: string
-                            description: Parameters is a map of driver specific parameters for snapshot class
+                            description: Parameters is a map of driver specific parameters for snapshot
+                              class
                             type: object
                         type: object
                       type: array
@@ -2337,7 +2523,8 @@ spec:
                       type: string
                   type: object
                 modules:
-                  description: Modules is list of Container Storage Module modules you want to deploy
+                  description: Modules is list of Container Storage Module modules you want to
+                    deploy
                   items:
                     description: Module defines the desired state of a ContainerStorageModule
                     maxProperties: 10
@@ -2356,13 +2543,16 @@ spec:
                               description: AuthorizationController is the image tag for the container
                               type: string
                             authorizationControllerReplicas:
-                              description: AuthorizationControllerReplicas is the number of replicas for the authorization controller deployment
+                              description: AuthorizationControllerReplicas is the number of replicas for the
+                                authorization controller deployment
                               type: integer
                             certificate:
-                              description: Certificate is a certificate used for a certificate/private-key pair
+                              description: Certificate is a certificate used for a certificate/private-key
+                                pair
                               type: string
                             certificateAuthority:
-                              description: CertificateAuthority is a certificate authority used to validate a certificate
+                              description: CertificateAuthority is a certificate authority used to validate a
+                                certificate
                               type: string
                             commander:
                               description: Commander is the image tag for the Container
@@ -2372,20 +2562,24 @@ spec:
                                 ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
                                 Applicable from CSM v1.15 onwards
                               items:
-                                description: ConfigSecretProviderClass is the config secret configuration for CSM Authorization
+                                description: ConfigSecretProviderClass is the config secret configuration for
+                                  CSM Authorization
                                 properties:
                                   configSecretName:
-                                    description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
+                                    description: ConfigSecretName is the name of the Kubernetes secret created by
+                                      the CSI driver
                                     type: string
                                   conjur:
-                                    description: Conjur is the secret configuration with path to retrieve the Config secret from Conjur
+                                    description: Conjur is the secret configuration with path to retrieve the Config
+                                      secret from Conjur
                                     properties:
                                       secretPath:
                                         description: SecretPath is the path to the config secret
                                         type: string
                                     type: object
                                   secretProviderClassName:
-                                    description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
+                                    description: SecretProviderClassName is the name of the SecretProviderClass that
+                                      holds the config secretObject
                                     type: string
                                 type: object
                               maxItems: 1
@@ -2419,7 +2613,8 @@ spec:
                                       Defaults to "".
                                     type: string
                                   valueFrom:
-                                    description: Source for the environment variable's value. Cannot be used if value is not empty.
+                                    description: Source for the environment variable's value. Cannot be used if
+                                      value is not empty.
                                     properties:
                                       configMapKeyRef:
                                         description: Selects a key of a ConfigMap.
@@ -2449,7 +2644,8 @@ spec:
                                           spec.nodeName, spec.serviceAccountName, status.hostIP, status.podIP, status.podIPs.
                                         properties:
                                           apiVersion:
-                                            description: Version of the schema the FieldPath is written in terms of, defaults to "v1".
+                                            description: Version of the schema the FieldPath is written in terms of,
+                                              defaults to "v1".
                                             type: string
                                           fieldPath:
                                             description: Path of the field to select in the specified API version.
@@ -2506,7 +2702,8 @@ spec:
                                             anyOf:
                                               - type: integer
                                               - type: string
-                                            description: Specifies the output format of the exposed resources, defaults to "1"
+                                            description: Specifies the output format of the exposed resources, defaults to
+                                              "1"
                                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                             x-kubernetes-int-or-string: true
                                           resource:
@@ -2573,20 +2770,24 @@ spec:
                               description: OpaKubeMgmt is the image tag for the Container
                               type: string
                             openTelemetryCollectorAddress:
-                              description: OpenTelemetryCollectorAddress is the address of the OTLP receiving endpoint using gRPC
+                              description: OpenTelemetryCollectorAddress is the address of the OTLP receiving
+                                endpoint using gRPC
                               type: string
                             privateKey:
                               description: PrivateKey is a private key used for a certificate/private-key pair
                               type: string
                             proxyServerIngress:
-                              description: ProxyServerIngress is the authorization proxy server ingress configuration
+                              description: ProxyServerIngress is the authorization proxy server ingress
+                                configuration
                               items:
-                                description: ProxyServerIngress is the authorization ingress configuration struct
+                                description: ProxyServerIngress is the authorization ingress configuration
+                                  struct
                                 properties:
                                   annotations:
                                     additionalProperties:
                                       type: string
-                                    description: Annotations is an unstructured key value map that stores additional annotations for the ingress
+                                    description: Annotations is an unstructured key value map that stores additional
+                                      annotations for the ingress
                                     type: object
                                   hosts:
                                     description: Hosts is the hosts rules for the ingress
@@ -2602,7 +2803,8 @@ spec:
                               description: ProxyService is the image tag for the Container
                               type: string
                             proxyServiceReplicas:
-                              description: ProxyServiceReplicas is the number of replicas for the proxy service deployment
+                              description: ProxyServiceReplicas is the number of replicas for the proxy
+                                service deployment
                               type: integer
                             redis:
                               description: Redis is the image tag for the Container
@@ -2613,6 +2815,9 @@ spec:
                             redisName:
                               description: RedisName is the name of the redis statefulset
                               type: string
+                            redisPassword:
+                              description: RedisPassword is the password for the redis instance
+                              type: string
                             redisReplicas:
                               description: RedisReplicas is the number of replicas for the redis deployment
                               type: integer
@@ -2621,10 +2826,12 @@ spec:
                                 RedisSecretProviderClass is the SecretProviderClass Object details for redis
                                 Applicable from CSM v1.15 onwards
                               items:
-                                description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
+                                description: RedisSecretProviderClass is the redis secret configuration for CSM
+                                  Authorization
                                 properties:
                                   conjur:
-                                    description: Conjur is the secret configuration with path to retrieve the Redis credentials from Conjur
+                                    description: Conjur is the secret configuration with path to retrieve the Redis
+                                      credentials from Conjur
                                     properties:
                                       passwordPath:
                                         description: PasswordPath is the path to the password in the secret
@@ -2634,25 +2841,33 @@ spec:
                                         type: string
                                     type: object
                                   redisPasswordKey:
-                                    description: RedisPasswordKey is the key in the secret that holds the Redis password
+                                    description: RedisPasswordKey is the key in the secret that holds the Redis
+                                      password
                                     type: string
                                   redisSecretName:
-                                    description: RedisSecretName is the name of the Kubernetes secret created by the CSI driver
+                                    description: RedisSecretName is the name of the Kubernetes secret created by the
+                                      CSI driver
                                     type: string
                                   redisUsernameKey:
-                                    description: RedisUsernameKey is the key in the secret that holds the Redis username
+                                    description: RedisUsernameKey is the key in the secret that holds the Redis
+                                      username
                                     type: string
                                   secretProviderClassName:
-                                    description: SecretProviderClassName is the name of the SecretProviderClass that holds the Redis secretObject
+                                    description: SecretProviderClassName is the name of the SecretProviderClass that
+                                      holds the Redis secretObject
                                     type: string
                                 type: object
                               maxItems: 1
                               type: array
+                            redisUsername:
+                              description: RedisUsername is the username for the redis instance
+                              type: string
                             roleService:
                               description: RoleService is the image tag for the Container
                               type: string
                             roleServiceReplicas:
-                              description: RoleServiceReplicas is the number of replicas for the role service deployment
+                              description: RoleServiceReplicas is the number of replicas for the role service
+                                deployment
                               type: integer
                             secretProviderClasses:
                               description: |-
@@ -2699,22 +2914,26 @@ spec:
                               description: Sentinel is the name of the sentinel statefulSet
                               type: string
                             skipCertificateValidation:
-                              description: skipCertificateValidation is the flag to skip certificate validation
+                              description: skipCertificateValidation is the flag to skip certificate
+                                validation
                               type: boolean
                             storageService:
                               description: StorageService is the image tag for the Container
                               type: string
                             storageServiceReplicas:
-                              description: StorageServiceReplicas is the number of replicas for storage service deployment
+                              description: StorageServiceReplicas is the number of replicas for storage
+                                service deployment
                               type: integer
                             storageclass:
-                              description: RedisStorageClass is the authorization proxy server redis storage class for persistence
+                              description: RedisStorageClass is the authorization proxy server redis storage
+                                class for persistence
                               type: string
                             tenantService:
                               description: TenantService is the image tag for the Container
                               type: string
                             tenantServiceReplicas:
-                              description: TenantServiceReplicas is the number of replicas for the tenant service deployment
+                              description: TenantServiceReplicas is the number of replicas for the tenant
+                                service deployment
                               type: integer
                             tolerations:
                               description: Tolerations is the list of tolerations for the driver pods
@@ -2767,13 +2986,16 @@ spec:
                                     description: Address is the address for this vault
                                     type: string
                                   certificateAuthority:
-                                    description: CertificateAuthority is the base64-encoded certificate authority for validaitng the vault certificate
+                                    description: CertificateAuthority is the base64-encoded certificate authority
+                                      for validaitng the vault certificate
                                     type: string
                                   clientCertificate:
-                                    description: ClientCertificate is the base64-encoded certificate for connecting to vault
+                                    description: ClientCertificate is the base64-encoded certificate for connecting
+                                      to vault
                                     type: string
                                   clientKey:
-                                    description: ClientKey validates is the base64-encoded certificate key for connecting to vault
+                                    description: ClientKey validates is the base64-encoded certificate key for
+                                      connecting to vault
                                     type: string
                                   identifier:
                                     description: Identifier is the identifier for this vault
@@ -2782,7 +3004,8 @@ spec:
                                     description: Role is the role for this vault
                                     type: string
                                   skipCertificateValidation:
-                                    description: SkipCertificateValidation validates the vault server certificate or not
+                                    description: SkipCertificateValidation validates the vault server certificate or
+                                      not
                                     type: boolean
                                 type: object
                               type: array
@@ -2796,7 +3019,8 @@ spec:
                         description: Enabled is used to indicate whether or not to deploy a module
                         type: boolean
                       forceRemoveModule:
-                        description: ForceRemoveModule is the boolean flag used to remove authorization proxy server deployment when CR is deleted
+                        description: ForceRemoveModule is the boolean flag used to remove authorization
+                          proxy server deployment when CR is deleted
                         type: boolean
                       initContainer:
                         description: InitContainer is the specification for Module InitContainer
@@ -2812,13 +3036,16 @@ spec:
                               description: AuthorizationController is the image tag for the container
                               type: string
                             authorizationControllerReplicas:
-                              description: AuthorizationControllerReplicas is the number of replicas for the authorization controller deployment
+                              description: AuthorizationControllerReplicas is the number of replicas for the
+                                authorization controller deployment
                               type: integer
                             certificate:
-                              description: Certificate is a certificate used for a certificate/private-key pair
+                              description: Certificate is a certificate used for a certificate/private-key
+                                pair
                               type: string
                             certificateAuthority:
-                              description: CertificateAuthority is a certificate authority used to validate a certificate
+                              description: CertificateAuthority is a certificate authority used to validate a
+                                certificate
                               type: string
                             commander:
                               description: Commander is the image tag for the Container
@@ -2828,20 +3055,24 @@ spec:
                                 ConfigSecretProviderClass is the SecretProviderClass Object details for config secret
                                 Applicable from CSM v1.15 onwards
                               items:
-                                description: ConfigSecretProviderClass is the config secret configuration for CSM Authorization
+                                description: ConfigSecretProviderClass is the config secret configuration for
+                                  CSM Authorization
                                 properties:
                                   configSecretName:
-                                    description: ConfigSecretName is the name of the Kubernetes secret created by the CSI driver
+                                    description: ConfigSecretName is the name of the Kubernetes secret created by
+                                      the CSI driver
                                     type: string
                                   conjur:
-                                    description: Conjur is the secret configuration with path to retrieve the Config secret from Conjur
+                                    description: Conjur is the secret configuration with path to retrieve the Config
+                                      secret from Conjur
                                     properties:
                                       secretPath:
                                         description: SecretPath is the path to the config secret
                                         type: string
                                     type: object
                                   secretProviderClassName:
-                                    description: SecretProviderClassName is the name of the SecretProviderClass that holds the config secretObject
+                                    description: SecretProviderClassName is the name of the SecretProviderClass that
+                                      holds the config secretObject
                                     type: string
                                 type: object
                               maxItems: 1
@@ -2875,7 +3106,8 @@ spec:
                                       Defaults to "".
                                     type: string
                                   valueFrom:
-                                    description: Source for the environment variable's value. Cannot be used if value is not empty.
+                                    description: Source for the environment variable's value. Cannot be used if
+                                      value is not empty.
                                     properties:
                                       configMapKeyRef:
                                         description: Selects a key of a ConfigMap.
@@ -2905,7 +3137,8 @@ spec:
                                           spec.nodeName, spec.serviceAccountName, status.hostIP, status.podIP, status.podIPs.
                                         properties:
                                           apiVersion:
-                                            description: Version of the schema the FieldPath is written in terms of, defaults to "v1".
+                                            description: Version of the schema the FieldPath is written in terms of,
+                                              defaults to "v1".
                                             type: string
                                           fieldPath:
                                             description: Path of the field to select in the specified API version.
@@ -2962,7 +3195,8 @@ spec:
                                             anyOf:
                                               - type: integer
                                               - type: string
-                                            description: Specifies the output format of the exposed resources, defaults to "1"
+                                            description: Specifies the output format of the exposed resources, defaults to
+                                              "1"
                                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                             x-kubernetes-int-or-string: true
                                           resource:
@@ -3029,20 +3263,24 @@ spec:
                               description: OpaKubeMgmt is the image tag for the Container
                               type: string
                             openTelemetryCollectorAddress:
-                              description: OpenTelemetryCollectorAddress is the address of the OTLP receiving endpoint using gRPC
+                              description: OpenTelemetryCollectorAddress is the address of the OTLP receiving
+                                endpoint using gRPC
                               type: string
                             privateKey:
                               description: PrivateKey is a private key used for a certificate/private-key pair
                               type: string
                             proxyServerIngress:
-                              description: ProxyServerIngress is the authorization proxy server ingress configuration
+                              description: ProxyServerIngress is the authorization proxy server ingress
+                                configuration
                               items:
-                                description: ProxyServerIngress is the authorization ingress configuration struct
+                                description: ProxyServerIngress is the authorization ingress configuration
+                                  struct
                                 properties:
                                   annotations:
                                     additionalProperties:
                                       type: string
-                                    description: Annotations is an unstructured key value map that stores additional annotations for the ingress
+                                    description: Annotations is an unstructured key value map that stores additional
+                                      annotations for the ingress
                                     type: object
                                   hosts:
                                     description: Hosts is the hosts rules for the ingress
@@ -3058,7 +3296,8 @@ spec:
                               description: ProxyService is the image tag for the Container
                               type: string
                             proxyServiceReplicas:
-                              description: ProxyServiceReplicas is the number of replicas for the proxy service deployment
+                              description: ProxyServiceReplicas is the number of replicas for the proxy
+                                service deployment
                               type: integer
                             redis:
                               description: Redis is the image tag for the Container
@@ -3069,6 +3308,9 @@ spec:
                             redisName:
                               description: RedisName is the name of the redis statefulset
                               type: string
+                            redisPassword:
+                              description: RedisPassword is the password for the redis instance
+                              type: string
                             redisReplicas:
                               description: RedisReplicas is the number of replicas for the redis deployment
                               type: integer
@@ -3077,10 +3319,12 @@ spec:
                                 RedisSecretProviderClass is the SecretProviderClass Object details for redis
                                 Applicable from CSM v1.15 onwards
                               items:
-                                description: RedisSecretProviderClass is the redis secret configuration for CSM Authorization
+                                description: RedisSecretProviderClass is the redis secret configuration for CSM
+                                  Authorization
                                 properties:
                                   conjur:
-                                    description: Conjur is the secret configuration with path to retrieve the Redis credentials from Conjur
+                                    description: Conjur is the secret configuration with path to retrieve the Redis
+                                      credentials from Conjur
                                     properties:
                                       passwordPath:
                                         description: PasswordPath is the path to the password in the secret
@@ -3090,25 +3334,33 @@ spec:
                                         type: string
                                     type: object
                                   redisPasswordKey:
-                                    description: RedisPasswordKey is the key in the secret that holds the Redis password
+                                    description: RedisPasswordKey is the key in the secret that holds the Redis
+                                      password
                                     type: string
                                   redisSecretName:
-                                    description: RedisSecretName is the name of the Kubernetes secret created by the CSI driver
+                                    description: RedisSecretName is the name of the Kubernetes secret created by the
+                                      CSI driver
                                     type: string
                                   redisUsernameKey:
-                                    description: RedisUsernameKey is the key in the secret that holds the Redis username
+                                    description: RedisUsernameKey is the key in the secret that holds the Redis
+                                      username
                                     type: string
                                   secretProviderClassName:
-                                    description: SecretProviderClassName is the name of the SecretProviderClass that holds the Redis secretObject
+                                    description: SecretProviderClassName is the name of the SecretProviderClass that
+                                      holds the Redis secretObject
                                     type: string
                                 type: object
                               maxItems: 1
                               type: array
+                            redisUsername:
+                              description: RedisUsername is the username for the redis instance
+                              type: string
                             roleService:
                               description: RoleService is the image tag for the Container
                               type: string
                             roleServiceReplicas:
-                              description: RoleServiceReplicas is the number of replicas for the role service deployment
+                              description: RoleServiceReplicas is the number of replicas for the role service
+                                deployment
                               type: integer
                             secretProviderClasses:
                               description: |-
@@ -3155,22 +3407,26 @@ spec:
                               description: Sentinel is the name of the sentinel statefulSet
                               type: string
                             skipCertificateValidation:
-                              description: skipCertificateValidation is the flag to skip certificate validation
+                              description: skipCertificateValidation is the flag to skip certificate
+                                validation
                               type: boolean
                             storageService:
                               description: StorageService is the image tag for the Container
                               type: string
                             storageServiceReplicas:
-                              description: StorageServiceReplicas is the number of replicas for storage service deployment
+                              description: StorageServiceReplicas is the number of replicas for storage
+                                service deployment
                               type: integer
                             storageclass:
-                              description: RedisStorageClass is the authorization proxy server redis storage class for persistence
+                              description: RedisStorageClass is the authorization proxy server redis storage
+                                class for persistence
                               type: string
                             tenantService:
                               description: TenantService is the image tag for the Container
                               type: string
                             tenantServiceReplicas:
-                              description: TenantServiceReplicas is the number of replicas for the tenant service deployment
+                              description: TenantServiceReplicas is the number of replicas for the tenant
+                                service deployment
                               type: integer
                             tolerations:
                               description: Tolerations is the list of tolerations for the driver pods
@@ -3223,13 +3479,16 @@ spec:
                                     description: Address is the address for this vault
                                     type: string
                                   certificateAuthority:
-                                    description: CertificateAuthority is the base64-encoded certificate authority for validaitng the vault certificate
+                                    description: CertificateAuthority is the base64-encoded certificate authority
+                                      for validaitng the vault certificate
                                     type: string
                                   clientCertificate:
-                                    description: ClientCertificate is the base64-encoded certificate for connecting to vault
+                                    description: ClientCertificate is the base64-encoded certificate for connecting
+                                      to vault
                                     type: string
                                   clientKey:
-                                    description: ClientKey validates is the base64-encoded certificate key for connecting to vault
+                                    description: ClientKey validates is the base64-encoded certificate key for
+                                      connecting to vault
                                     type: string
                                   identifier:
                                     description: Identifier is the identifier for this vault
@@ -3238,7 +3497,8 @@ spec:
                                     description: Role is the role for this vault
                                     type: string
                                   skipCertificateValidation:
-                                    description: SkipCertificateValidation validates the vault server certificate or not
+                                    description: SkipCertificateValidation validates the vault server certificate or
+                                      not
                                     type: boolean
                                 type: object
                               type: array
@@ -3251,30 +3511,52 @@ spec:
                   maxItems: 20
                   type: array
                 retainImageRegistryPath:
-                  description: RetainImageRegistryPath is the boolean flag used to retain image registry path
+                  description: RetainImageRegistryPath is the boolean flag used to retain image
+                    registry path
                   type: boolean
                 version:
                   type: string
               type: object
               x-kubernetes-validations:
                 - message: spec.version and spec.driver.configVersion cannot both be set
-                  rule: '!(has(self.version) && self.version != "" && has(self.driver) && has(self.driver.configVersion) && self.driver.configVersion != "")'
+                  rule: "!(has(self.version) && self.version != \"\" && has(self.driver) &&
+                    has(self.driver.configVersion) && self.driver.configVersion
+                    != \"\")"
                 - message: spec.driver.common.image is forbidden when spec.version is set
-                  rule: '!(has(self.version) && self.version != "" && has(self.driver) && has(self.driver.common) && has(self.driver.common.image) && self.driver.common.image != "")'
+                  rule: "!(has(self.version) && self.version != \"\" && has(self.driver) &&
+                    has(self.driver.common) && has(self.driver.common.image) &&
+                    self.driver.common.image != \"\")"
                 - message: spec.driver.sideCars[*].image is forbidden when spec.version is set
-                  rule: '!(has(self.version) && self.version != "" && has(self.driver) && has(self.driver.sideCars) && self.driver.sideCars.exists(sc, has(sc.image) && sc.image != ""))'
-                - message: spec.modules[*].components[*].image is forbidden when spec.version is set
-                  rule: '!(has(self.version) && self.version != "" && has(self.modules) && self.modules.exists(m, has(m.components) && m.components.exists(c, has(c.image) && c.image != "")))'
+                  rule: "!(has(self.version) && self.version != \"\" && has(self.driver) &&
+                    has(self.driver.sideCars) && self.driver.sideCars.exists(sc,
+                    has(sc.image) && sc.image != \"\"))"
+                - message: spec.modules[*].components[*].image is forbidden when spec.version is
+                    set
+                  rule: "!(has(self.version) && self.version != \"\" && has(self.modules) &&
+                    self.modules.exists(m, has(m.components) &&
+                    m.components.exists(c, has(c.image) && c.image != \"\")))"
                 - message: spec.customRegistry is forbidden when spec.version is empty
-                  rule: '!(has(self.customRegistry) && self.customRegistry != "" && !(has(self.version) && self.version != ""))'
-                - message: spec.retainImageRegistryPath is forbidden unless both spec.version and spec.customRegistry are set
-                  rule: '!(has(self.retainImageRegistryPath) && !(has(self.version) && self.version != "" && has(self.customRegistry) && self.customRegistry != ""))'
-                - message: spec.driver.initContainers[*].image is forbidden when spec.version is set
-                  rule: '!(has(self.version) && self.version != "" && has(self.driver) && has(self.driver.initContainers) && self.driver.initContainers.exists(ic, has(ic.image) && ic.image != ""))'
+                  rule: "!(has(self.customRegistry) && self.customRegistry != \"\" &&
+                    !(has(self.version) && self.version != \"\"))"
+                - message: spec.retainImageRegistryPath is forbidden unless both spec.version and
+                    spec.customRegistry are set
+                  rule: "!(has(self.retainImageRegistryPath) && !(has(self.version) &&
+                    self.version != \"\" && has(self.customRegistry) &&
+                    self.customRegistry != \"\"))"
+                - message: spec.driver.initContainers[*].image is forbidden when spec.version is
+                    set
+                  rule: "!(has(self.version) && self.version != \"\" && has(self.driver) &&
+                    has(self.driver.initContainers) &&
+                    self.driver.initContainers.exists(ic, has(ic.image) &&
+                    ic.image != \"\"))"
                 - message: env NGINX_PROXY_IMAGE is forbidden when spec.version is set
-                  rule: '!(has(self.version) && self.version != "" && has(self.modules) && self.modules.exists(m, has(m.components) && m.components.exists(c, has(c.envs) && c.envs.exists(e, has(e.name) && e.name == "NGINX_PROXY_IMAGE"))))'
+                  rule: "!(has(self.version) && self.version != \"\" && has(self.modules) &&
+                    self.modules.exists(m, has(m.components) &&
+                    m.components.exists(c, has(c.envs) && c.envs.exists(e,
+                    has(e.name) && e.name == \"NGINX_PROXY_IMAGE\"))))"
             status:
-              description: ContainerStorageModuleStatus defines the observed state of ContainerStorageModule
+              description: ContainerStorageModuleStatus defines the observed state of
+                ContainerStorageModule
               properties:
                 controllerStatus:
                   description: ControllerStatus is the status of Controller pods
@@ -3290,7 +3572,8 @@ spec:
                       type: string
                   type: object
                 lastSuccessfulConfiguration:
-                  description: LastSuccessfulConfiguration is configurations details only when the CSM CR goes into a successful state
+                  description: LastSuccessfulConfiguration is configurations details only when the
+                    CSM CR goes into a successful state
                   type: string
                 nodeStatus:
                   description: NodeStatus is the status of Controller pods

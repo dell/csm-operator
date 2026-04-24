@@ -60,6 +60,8 @@ spec:
               annotations:
                 "label": "value"
         - name: redis
+          redisUsername: "test"
+          redisPassword: "test"
           # Optional Redis secret configuration:
           # If using Secret Store CSI driver, specify the SecretProviderClass for Redis credentials.
           # Otherwise, a default Kubernetes secret will be used.
