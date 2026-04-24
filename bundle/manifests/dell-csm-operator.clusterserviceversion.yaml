@@ -1639,7 +1639,7 @@ metadata:
     capabilities: Seamless Upgrades
     categories: Storage
     containerImage: quay.io/dell/container-storage-modules/dell-csm-operator:v1.11.2
-    createdAt: "2026-02-05T22:08:07Z"
+    createdAt: "2026-04-23T15:23:20Z"
     description: Easily install and manage Dell’s CSI Drivers and CSM
     features.operators.openshift.io/disconnected: "true"
     features.operators.openshift.io/fips-compliant: "false"
@@ -1658,9 +1658,8 @@ spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
-      - description:
-          ContainerStorageModule is the Schema for the containerstoragemodules
-          API
+      - description: ContainerStorageModule is the Schema for the
+          containerstoragemodules API
         displayName: Container Storage Module
         kind: ContainerStorageModule
         name: containerstoragemodules.storage.dell.com
@@ -1671,8 +1670,7 @@ spec:
           - description: AuthSecret is the name of the credentials secret for the driver
             displayName: Auth Secret
             path: driver.authSecret
-          - description:
-              Common is the common specification for both controller and node
+          - description: Common is the common specification for both controller and node
               plugins
             displayName: Common specification
             path: driver.common
@@ -1682,19 +1680,16 @@ spec:
           - description: AuthorizationController is the image tag for the container
             displayName: Authorization Controller Container Image
             path: driver.common.authorizationController
-          - description:
-              AuthorizationControllerReplicas is the number of replicas for
-              the authorization controller deployment
+          - description: AuthorizationControllerReplicas is the number of replicas for the
+              authorization controller deployment
             displayName: Authorization Controller Replicas
             path: driver.common.authorizationControllerReplicas
-          - description:
-              Certificate is a certificate used for a certificate/private-key
+          - description: Certificate is a certificate used for a certificate/private-key
               pair
             displayName: Certificate for certificate/private-key pair
             path: driver.common.certificate
-          - description:
-              CertificateAuthority is a certificate authority used to validate
-              a certificate
+          - description: CertificateAuthority is a certificate authority used to validate a
+              certificate
             displayName: Certificate authority for validating a certificate
             path: driver.common.certificateAuthority
           - description: Commander is the image tag for the Container
@@ -1705,22 +1700,19 @@ spec:
               Applicable from CSM v1.15 onwards
             displayName: Config SecretProviderClass details
             path: driver.common.configSecretProviderClass
-          - description:
-              ConfigSecretName is the name of the Kubernetes secret created
-              by the CSI driver
+          - description: ConfigSecretName is the name of the Kubernetes secret created by
+              the CSI driver
             displayName: Config Secret Name
             path: driver.common.configSecretProviderClass[0].configSecretName
-          - description:
-              Conjur is the secret configuration with path to retrieve the
-              Config secret from Conjur
+          - description: Conjur is the secret configuration with path to retrieve the Config
+              secret from Conjur
             displayName: Conjur Config Secret Configuration
             path: driver.common.configSecretProviderClass[0].conjur
           - description: SecretPath is the path to the config secret
             displayName: Conjur Secret Path
             path: driver.common.configSecretProviderClass[0].conjur.secretPath
-          - description:
-              SecretProviderClassName is the name of the SecretProviderClass
-              that holds the config secretObject
+          - description: SecretProviderClassName is the name of the SecretProviderClass that
+              holds the config secretObject
             displayName: Config Secret Provider Class Name
             path: driver.common.configSecretProviderClass[0].secretProviderClassName
           - description: The interval which the reconcile of each controller is run
@@ -1760,23 +1752,18 @@ spec:
           - description: OpaKubeMgmt is the image tag for the Container
             displayName: Authorization Opa Kube Management Container Image
             path: driver.common.opaKubeMgmt
-          - description:
-              OpenTelemetryCollectorAddress is the address of the OTLP receiving
+          - description: OpenTelemetryCollectorAddress is the address of the OTLP receiving
               endpoint using gRPC
             displayName: OpenTelemetry Collector Address of the OTLP endpoint using gRPC
             path: driver.common.openTelemetryCollectorAddress
-          - description:
-              PrivateKey is a private key used for a certificate/private-key
-              pair
+          - description: PrivateKey is a private key used for a certificate/private-key pair
             displayName: Private key for certificate/private-key pair
             path: driver.common.privateKey
-          - description:
-              ProxyServerIngress is the authorization proxy server ingress
+          - description: ProxyServerIngress is the authorization proxy server ingress
               configuration
             displayName: Authorization Proxy Server ingress configuration
             path: driver.common.proxyServerIngress
-          - description:
-              Annotations is an unstructured key value map that stores additional
+          - description: Annotations is an unstructured key value map that stores additional
               annotations for the ingress
             displayName: Authorization Proxy Server Annotations
             path: driver.common.proxyServerIngress[0].annotations
@@ -1789,8 +1776,7 @@ spec:
           - description: ProxyService is the image tag for the Container
             displayName: Authorization Proxy Service Container Image
             path: driver.common.proxyService
-          - description:
-              ProxyServiceReplicas is the number of replicas for the proxy
+          - description: ProxyServiceReplicas is the number of replicas for the proxy
               service deployment
             displayName: Proxy Service Replicas
             path: driver.common.proxyServiceReplicas
@@ -1803,6 +1789,9 @@ spec:
           - description: RedisName is the name of the redis statefulset
             displayName: Redis StatefulSet Name
             path: driver.common.redisName
+          - description: RedisPassword is the password for the redis instance
+            displayName: Redis Password
+            path: driver.common.redisPassword
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: driver.common.redisReplicas
@@ -1811,9 +1800,8 @@ spec:
               Applicable from CSM v1.15 onwards
             displayName: Redis SecretProviderClass details
             path: driver.common.redisSecretProviderClass
-          - description:
-              Conjur is the secret configuration with path to retrieve the
-              Redis credentials from Conjur
+          - description: Conjur is the secret configuration with path to retrieve the Redis
+              credentials from Conjur
             displayName: Conjur Secret Configuration
             path: driver.common.redisSecretProviderClass[0].conjur
           - description: PasswordPath is the path to the password in the secret
@@ -1822,31 +1810,29 @@ spec:
           - description: UsernamePath is the path to the username in the secret
             displayName: Conjur Username Path
             path: driver.common.redisSecretProviderClass[0].conjur.usernamePath
-          - description:
-              RedisPasswordKey is the key in the secret that holds the Redis
+          - description: RedisPasswordKey is the key in the secret that holds the Redis
               password
             displayName: Redis Password Key
             path: driver.common.redisSecretProviderClass[0].redisPasswordKey
-          - description:
-              RedisSecretName is the name of the Kubernetes secret created
-              by the CSI driver
+          - description: RedisSecretName is the name of the Kubernetes secret created by the
+              CSI driver
             displayName: Redis Secret Name
             path: driver.common.redisSecretProviderClass[0].redisSecretName
-          - description:
-              RedisUsernameKey is the key in the secret that holds the Redis
+          - description: RedisUsernameKey is the key in the secret that holds the Redis
               username
             displayName: Redis Username Key
             path: driver.common.redisSecretProviderClass[0].redisUsernameKey
-          - description:
-              SecretProviderClassName is the name of the SecretProviderClass
-              that holds the Redis secretObject
+          - description: SecretProviderClassName is the name of the SecretProviderClass that
+              holds the Redis secretObject
             displayName: Redis Secret Provider Class Name
             path: driver.common.redisSecretProviderClass[0].secretProviderClassName
+          - description: RedisUsername is the username for the redis instance
+            displayName: Redis Username
+            path: driver.common.redisUsername
           - description: RoleService is the image tag for the Container
             displayName: Authorization Role Service Container Image
             path: driver.common.roleService
-          - description:
-              RoleServiceReplicas is the number of replicas for the role service
+          - description: RoleServiceReplicas is the number of replicas for the role service
               deployment
             displayName: Role Service Replicas
             path: driver.common.roleServiceReplicas
@@ -1883,27 +1869,25 @@ spec:
           - description: Sentinel is the name of the sentinel statefulSet
             displayName: Sentinel StatefulSet Name
             path: driver.common.sentinel
-          - description: skipCertificateValidation is the flag to skip certificate validation
+          - description: skipCertificateValidation is the flag to skip certificate
+              validation
             displayName: Authorization Skip Certificate Validation
             path: driver.common.skipCertificateValidation
           - description: StorageService is the image tag for the Container
             displayName: Authorization Storage Service Container Image
             path: driver.common.storageService
-          - description:
-              StorageServiceReplicas is the number of replicas for storage
+          - description: StorageServiceReplicas is the number of replicas for storage
               service deployment
             displayName: Storage Service Replicas
             path: driver.common.storageServiceReplicas
-          - description:
-              RedisStorageClass is the authorization proxy server redis storage
+          - description: RedisStorageClass is the authorization proxy server redis storage
               class for persistence
             displayName: Authorization Proxy Server Redis storage class
             path: driver.common.storageclass
           - description: TenantService is the image tag for the Container
             displayName: Authorization Tenant Service Container Image
             path: driver.common.tenantService
-          - description:
-              TenantServiceReplicas is the number of replicas for the tenant
+          - description: TenantServiceReplicas is the number of replicas for the tenant
               service deployment
             displayName: Tenant Service Replicas
             path: driver.common.tenantServiceReplicas
@@ -1918,18 +1902,15 @@ spec:
           - description: Address is the address for this vault
             displayName: Vault Address
             path: driver.common.vaultConfigurations[0].address
-          - description:
-              CertificateAuthority is the base64-encoded certificate authority
+          - description: CertificateAuthority is the base64-encoded certificate authority
               for validaitng the vault certificate
             displayName: Vault Certificate Authority
             path: driver.common.vaultConfigurations[0].certificateAuthority
-          - description:
-              ClientCertificate is the base64-encoded certificate for connecting
+          - description: ClientCertificate is the base64-encoded certificate for connecting
               to vault
             displayName: Vault CLient Certificate
             path: driver.common.vaultConfigurations[0].clientCertificate
-          - description:
-              ClientKey validates is the base64-encoded certificate key for
+          - description: ClientKey validates is the base64-encoded certificate key for
               connecting to vault
             displayName: Vault CLient Certificate Key
             path: driver.common.vaultConfigurations[0].clientKey
@@ -1939,9 +1920,8 @@ spec:
           - description: Role is the role for this vault
             displayName: Vault Role
             path: driver.common.vaultConfigurations[0].role
-          - description:
-              SkipCertificateValidation validates the vault server certificate
-              or not
+          - description: SkipCertificateValidation validates the vault server certificate or
+              not
             displayName: Vault Skip Certificate Validation
             path: driver.common.vaultConfigurations[0].skipCertificateValidation
           - description: ConfigVersion is the configuration version of the driver
@@ -1956,19 +1936,16 @@ spec:
           - description: AuthorizationController is the image tag for the container
             displayName: Authorization Controller Container Image
             path: driver.controller.authorizationController
-          - description:
-              AuthorizationControllerReplicas is the number of replicas for
-              the authorization controller deployment
+          - description: AuthorizationControllerReplicas is the number of replicas for the
+              authorization controller deployment
             displayName: Authorization Controller Replicas
             path: driver.controller.authorizationControllerReplicas
-          - description:
-              Certificate is a certificate used for a certificate/private-key
+          - description: Certificate is a certificate used for a certificate/private-key
               pair
             displayName: Certificate for certificate/private-key pair
             path: driver.controller.certificate
-          - description:
-              CertificateAuthority is a certificate authority used to validate
-              a certificate
+          - description: CertificateAuthority is a certificate authority used to validate a
+              certificate
             displayName: Certificate authority for validating a certificate
             path: driver.controller.certificateAuthority
           - description: Commander is the image tag for the Container
@@ -1979,22 +1956,19 @@ spec:
               Applicable from CSM v1.15 onwards
             displayName: Config SecretProviderClass details
             path: driver.controller.configSecretProviderClass
-          - description:
-              ConfigSecretName is the name of the Kubernetes secret created
-              by the CSI driver
+          - description: ConfigSecretName is the name of the Kubernetes secret created by
+              the CSI driver
             displayName: Config Secret Name
             path: driver.controller.configSecretProviderClass[0].configSecretName
-          - description:
-              Conjur is the secret configuration with path to retrieve the
-              Config secret from Conjur
+          - description: Conjur is the secret configuration with path to retrieve the Config
+              secret from Conjur
             displayName: Conjur Config Secret Configuration
             path: driver.controller.configSecretProviderClass[0].conjur
           - description: SecretPath is the path to the config secret
             displayName: Conjur Secret Path
             path: driver.controller.configSecretProviderClass[0].conjur.secretPath
-          - description:
-              SecretProviderClassName is the name of the SecretProviderClass
-              that holds the config secretObject
+          - description: SecretProviderClassName is the name of the SecretProviderClass that
+              holds the config secretObject
             displayName: Config Secret Provider Class Name
             path: driver.controller.configSecretProviderClass[0].secretProviderClassName
           - description: The interval which the reconcile of each controller is run
@@ -2034,23 +2008,18 @@ spec:
           - description: OpaKubeMgmt is the image tag for the Container
             displayName: Authorization Opa Kube Management Container Image
             path: driver.controller.opaKubeMgmt
-          - description:
-              OpenTelemetryCollectorAddress is the address of the OTLP receiving
+          - description: OpenTelemetryCollectorAddress is the address of the OTLP receiving
               endpoint using gRPC
             displayName: OpenTelemetry Collector Address of the OTLP endpoint using gRPC
             path: driver.controller.openTelemetryCollectorAddress
-          - description:
-              PrivateKey is a private key used for a certificate/private-key
-              pair
+          - description: PrivateKey is a private key used for a certificate/private-key pair
             displayName: Private key for certificate/private-key pair
             path: driver.controller.privateKey
-          - description:
-              ProxyServerIngress is the authorization proxy server ingress
+          - description: ProxyServerIngress is the authorization proxy server ingress
               configuration
             displayName: Authorization Proxy Server ingress configuration
             path: driver.controller.proxyServerIngress
-          - description:
-              Annotations is an unstructured key value map that stores additional
+          - description: Annotations is an unstructured key value map that stores additional
               annotations for the ingress
             displayName: Authorization Proxy Server Annotations
             path: driver.controller.proxyServerIngress[0].annotations
@@ -2063,8 +2032,7 @@ spec:
           - description: ProxyService is the image tag for the Container
             displayName: Authorization Proxy Service Container Image
             path: driver.controller.proxyService
-          - description:
-              ProxyServiceReplicas is the number of replicas for the proxy
+          - description: ProxyServiceReplicas is the number of replicas for the proxy
               service deployment
             displayName: Proxy Service Replicas
             path: driver.controller.proxyServiceReplicas
@@ -2077,6 +2045,9 @@ spec:
           - description: RedisName is the name of the redis statefulset
             displayName: Redis StatefulSet Name
             path: driver.controller.redisName
+          - description: RedisPassword is the password for the redis instance
+            displayName: Redis Password
+            path: driver.controller.redisPassword
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: driver.controller.redisReplicas
@@ -2085,9 +2056,8 @@ spec:
               Applicable from CSM v1.15 onwards
             displayName: Redis SecretProviderClass details
             path: driver.controller.redisSecretProviderClass
-          - description:
-              Conjur is the secret configuration with path to retrieve the
-              Redis credentials from Conjur
+          - description: Conjur is the secret configuration with path to retrieve the Redis
+              credentials from Conjur
             displayName: Conjur Secret Configuration
             path: driver.controller.redisSecretProviderClass[0].conjur
           - description: PasswordPath is the path to the password in the secret
@@ -2096,31 +2066,29 @@ spec:
           - description: UsernamePath is the path to the username in the secret
             displayName: Conjur Username Path
             path: driver.controller.redisSecretProviderClass[0].conjur.usernamePath
-          - description:
-              RedisPasswordKey is the key in the secret that holds the Redis
+          - description: RedisPasswordKey is the key in the secret that holds the Redis
               password
             displayName: Redis Password Key
             path: driver.controller.redisSecretProviderClass[0].redisPasswordKey
-          - description:
-              RedisSecretName is the name of the Kubernetes secret created
-              by the CSI driver
+          - description: RedisSecretName is the name of the Kubernetes secret created by the
+              CSI driver
             displayName: Redis Secret Name
             path: driver.controller.redisSecretProviderClass[0].redisSecretName
-          - description:
-              RedisUsernameKey is the key in the secret that holds the Redis
+          - description: RedisUsernameKey is the key in the secret that holds the Redis
               username
             displayName: Redis Username Key
             path: driver.controller.redisSecretProviderClass[0].redisUsernameKey
-          - description:
-              SecretProviderClassName is the name of the SecretProviderClass
-              that holds the Redis secretObject
+          - description: SecretProviderClassName is the name of the SecretProviderClass that
+              holds the Redis secretObject
             displayName: Redis Secret Provider Class Name
             path: driver.controller.redisSecretProviderClass[0].secretProviderClassName
+          - description: RedisUsername is the username for the redis instance
+            displayName: Redis Username
+            path: driver.controller.redisUsername
           - description: RoleService is the image tag for the Container
             displayName: Authorization Role Service Container Image
             path: driver.controller.roleService
-          - description:
-              RoleServiceReplicas is the number of replicas for the role service
+          - description: RoleServiceReplicas is the number of replicas for the role service
               deployment
             displayName: Role Service Replicas
             path: driver.controller.roleServiceReplicas
@@ -2157,27 +2125,25 @@ spec:
           - description: Sentinel is the name of the sentinel statefulSet
             displayName: Sentinel StatefulSet Name
             path: driver.controller.sentinel
-          - description: skipCertificateValidation is the flag to skip certificate validation
+          - description: skipCertificateValidation is the flag to skip certificate
+              validation
             displayName: Authorization Skip Certificate Validation
             path: driver.controller.skipCertificateValidation
           - description: StorageService is the image tag for the Container
             displayName: Authorization Storage Service Container Image
             path: driver.controller.storageService
-          - description:
-              StorageServiceReplicas is the number of replicas for storage
+          - description: StorageServiceReplicas is the number of replicas for storage
               service deployment
             displayName: Storage Service Replicas
             path: driver.controller.storageServiceReplicas
-          - description:
-              RedisStorageClass is the authorization proxy server redis storage
+          - description: RedisStorageClass is the authorization proxy server redis storage
               class for persistence
             displayName: Authorization Proxy Server Redis storage class
             path: driver.controller.storageclass
           - description: TenantService is the image tag for the Container
             displayName: Authorization Tenant Service Container Image
             path: driver.controller.tenantService
-          - description:
-              TenantServiceReplicas is the number of replicas for the tenant
+          - description: TenantServiceReplicas is the number of replicas for the tenant
               service deployment
             displayName: Tenant Service Replicas
             path: driver.controller.tenantServiceReplicas
@@ -2192,18 +2158,15 @@ spec:
           - description: Address is the address for this vault
             displayName: Vault Address
             path: driver.controller.vaultConfigurations[0].address
-          - description:
-              CertificateAuthority is the base64-encoded certificate authority
+          - description: CertificateAuthority is the base64-encoded certificate authority
               for validaitng the vault certificate
             displayName: Vault Certificate Authority
             path: driver.controller.vaultConfigurations[0].certificateAuthority
-          - description:
-              ClientCertificate is the base64-encoded certificate for connecting
+          - description: ClientCertificate is the base64-encoded certificate for connecting
               to vault
             displayName: Vault CLient Certificate
             path: driver.controller.vaultConfigurations[0].clientCertificate
-          - description:
-              ClientKey validates is the base64-encoded certificate key for
+          - description: ClientKey validates is the base64-encoded certificate key for
               connecting to vault
             displayName: Vault CLient Certificate Key
             path: driver.controller.vaultConfigurations[0].clientKey
@@ -2213,25 +2176,22 @@ spec:
           - description: Role is the role for this vault
             displayName: Vault Role
             path: driver.controller.vaultConfigurations[0].role
-          - description:
-              SkipCertificateValidation validates the vault server certificate
-              or not
+          - description: SkipCertificateValidation validates the vault server certificate or
+              not
             displayName: Vault Skip Certificate Validation
             path: driver.controller.vaultConfigurations[0].skipCertificateValidation
           - description: CSIDriverSpec is the specification for CSIDriver
             displayName: CSI Driver Spec
             path: driver.csiDriverSpec
-          - description:
-              CSIDriverType is the CSI Driver type for Dell Technologies -
-              e.g, powermax, powerflex,...
+          - description: CSIDriverType is the CSI Driver type for Dell Technologies - e.g,
+              powermax, powerflex,...
             displayName: CSI Driver Type
             path: driver.csiDriverType
           - description: DNSPolicy is the dnsPolicy of the daemonset for Node plugin
             displayName: DNSPolicy
             path: driver.dnsPolicy
-          - description:
-              ForceRemoveDriver is the boolean flag used to remove driver deployment
-              when CR is deleted
+          - description: ForceRemoveDriver is the boolean flag used to remove driver
+              deployment when CR is deleted
             displayName: Force Remove Driver
             path: driver.forceRemoveDriver
           - description: Args is the set of arguments for the container
@@ -2240,19 +2200,16 @@ spec:
           - description: AuthorizationController is the image tag for the container
             displayName: Authorization Controller Container Image
             path: driver.initContainers[0].authorizationController
-          - description:
-              AuthorizationControllerReplicas is the number of replicas for
-              the authorization controller deployment
+          - description: AuthorizationControllerReplicas is the number of replicas for the
+              authorization controller deployment
             displayName: Authorization Controller Replicas
             path: driver.initContainers[0].authorizationControllerReplicas
-          - description:
-              Certificate is a certificate used for a certificate/private-key
+          - description: Certificate is a certificate used for a certificate/private-key
               pair
             displayName: Certificate for certificate/private-key pair
             path: driver.initContainers[0].certificate
-          - description:
-              CertificateAuthority is a certificate authority used to validate
-              a certificate
+          - description: CertificateAuthority is a certificate authority used to validate a
+              certificate
             displayName: Certificate authority for validating a certificate
             path: driver.initContainers[0].certificateAuthority
           - description: Commander is the image tag for the Container
@@ -2263,22 +2220,19 @@ spec:
               Applicable from CSM v1.15 onwards
             displayName: Config SecretProviderClass details
             path: driver.initContainers[0].configSecretProviderClass
-          - description:
-              ConfigSecretName is the name of the Kubernetes secret created
-              by the CSI driver
+          - description: ConfigSecretName is the name of the Kubernetes secret created by
+              the CSI driver
             displayName: Config Secret Name
             path: driver.initContainers[0].configSecretProviderClass[0].configSecretName
-          - description:
-              Conjur is the secret configuration with path to retrieve the
-              Config secret from Conjur
+          - description: Conjur is the secret configuration with path to retrieve the Config
+              secret from Conjur
             displayName: Conjur Config Secret Configuration
             path: driver.initContainers[0].configSecretProviderClass[0].conjur
           - description: SecretPath is the path to the config secret
             displayName: Conjur Secret Path
             path: driver.initContainers[0].configSecretProviderClass[0].conjur.secretPath
-          - description:
-              SecretProviderClassName is the name of the SecretProviderClass
-              that holds the config secretObject
+          - description: SecretProviderClassName is the name of the SecretProviderClass that
+              holds the config secretObject
             displayName: Config Secret Provider Class Name
             path: driver.initContainers[0].configSecretProviderClass[0].secretProviderClassName
           - description: The interval which the reconcile of each controller is run
@@ -2318,23 +2272,18 @@ spec:
           - description: OpaKubeMgmt is the image tag for the Container
             displayName: Authorization Opa Kube Management Container Image
             path: driver.initContainers[0].opaKubeMgmt
-          - description:
-              OpenTelemetryCollectorAddress is the address of the OTLP receiving
+          - description: OpenTelemetryCollectorAddress is the address of the OTLP receiving
               endpoint using gRPC
             displayName: OpenTelemetry Collector Address of the OTLP endpoint using gRPC
             path: driver.initContainers[0].openTelemetryCollectorAddress
-          - description:
-              PrivateKey is a private key used for a certificate/private-key
-              pair
+          - description: PrivateKey is a private key used for a certificate/private-key pair
             displayName: Private key for certificate/private-key pair
             path: driver.initContainers[0].privateKey
-          - description:
-              ProxyServerIngress is the authorization proxy server ingress
+          - description: ProxyServerIngress is the authorization proxy server ingress
               configuration
             displayName: Authorization Proxy Server ingress configuration
             path: driver.initContainers[0].proxyServerIngress
-          - description:
-              Annotations is an unstructured key value map that stores additional
+          - description: Annotations is an unstructured key value map that stores additional
               annotations for the ingress
             displayName: Authorization Proxy Server Annotations
             path: driver.initContainers[0].proxyServerIngress[0].annotations
@@ -2347,8 +2296,7 @@ spec:
           - description: ProxyService is the image tag for the Container
             displayName: Authorization Proxy Service Container Image
             path: driver.initContainers[0].proxyService
-          - description:
-              ProxyServiceReplicas is the number of replicas for the proxy
+          - description: ProxyServiceReplicas is the number of replicas for the proxy
               service deployment
             displayName: Proxy Service Replicas
             path: driver.initContainers[0].proxyServiceReplicas
@@ -2361,6 +2309,9 @@ spec:
           - description: RedisName is the name of the redis statefulset
             displayName: Redis StatefulSet Name
             path: driver.initContainers[0].redisName
+          - description: RedisPassword is the password for the redis instance
+            displayName: Redis Password
+            path: driver.initContainers[0].redisPassword
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: driver.initContainers[0].redisReplicas
@@ -2369,9 +2320,8 @@ spec:
               Applicable from CSM v1.15 onwards
             displayName: Redis SecretProviderClass details
             path: driver.initContainers[0].redisSecretProviderClass
-          - description:
-              Conjur is the secret configuration with path to retrieve the
-              Redis credentials from Conjur
+          - description: Conjur is the secret configuration with path to retrieve the Redis
+              credentials from Conjur
             displayName: Conjur Secret Configuration
             path: driver.initContainers[0].redisSecretProviderClass[0].conjur
           - description: PasswordPath is the path to the password in the secret
@@ -2380,31 +2330,29 @@ spec:
           - description: UsernamePath is the path to the username in the secret
             displayName: Conjur Username Path
             path: driver.initContainers[0].redisSecretProviderClass[0].conjur.usernamePath
-          - description:
-              RedisPasswordKey is the key in the secret that holds the Redis
+          - description: RedisPasswordKey is the key in the secret that holds the Redis
               password
             displayName: Redis Password Key
             path: driver.initContainers[0].redisSecretProviderClass[0].redisPasswordKey
-          - description:
-              RedisSecretName is the name of the Kubernetes secret created
-              by the CSI driver
+          - description: RedisSecretName is the name of the Kubernetes secret created by the
+              CSI driver
             displayName: Redis Secret Name
             path: driver.initContainers[0].redisSecretProviderClass[0].redisSecretName
-          - description:
-              RedisUsernameKey is the key in the secret that holds the Redis
+          - description: RedisUsernameKey is the key in the secret that holds the Redis
               username
             displayName: Redis Username Key
             path: driver.initContainers[0].redisSecretProviderClass[0].redisUsernameKey
-          - description:
-              SecretProviderClassName is the name of the SecretProviderClass
-              that holds the Redis secretObject
+          - description: SecretProviderClassName is the name of the SecretProviderClass that
+              holds the Redis secretObject
             displayName: Redis Secret Provider Class Name
             path: driver.initContainers[0].redisSecretProviderClass[0].secretProviderClassName
+          - description: RedisUsername is the username for the redis instance
+            displayName: Redis Username
+            path: driver.initContainers[0].redisUsername
           - description: RoleService is the image tag for the Container
             displayName: Authorization Role Service Container Image
             path: driver.initContainers[0].roleService
-          - description:
-              RoleServiceReplicas is the number of replicas for the role service
+          - description: RoleServiceReplicas is the number of replicas for the role service
               deployment
             displayName: Role Service Replicas
             path: driver.initContainers[0].roleServiceReplicas
@@ -2441,27 +2389,25 @@ spec:
           - description: Sentinel is the name of the sentinel statefulSet
             displayName: Sentinel StatefulSet Name
             path: driver.initContainers[0].sentinel
-          - description: skipCertificateValidation is the flag to skip certificate validation
+          - description: skipCertificateValidation is the flag to skip certificate
+              validation
             displayName: Authorization Skip Certificate Validation
             path: driver.initContainers[0].skipCertificateValidation
           - description: StorageService is the image tag for the Container
             displayName: Authorization Storage Service Container Image
             path: driver.initContainers[0].storageService
-          - description:
-              StorageServiceReplicas is the number of replicas for storage
+          - description: StorageServiceReplicas is the number of replicas for storage
               service deployment
             displayName: Storage Service Replicas
             path: driver.initContainers[0].storageServiceReplicas
-          - description:
-              RedisStorageClass is the authorization proxy server redis storage
+          - description: RedisStorageClass is the authorization proxy server redis storage
               class for persistence
             displayName: Authorization Proxy Server Redis storage class
             path: driver.initContainers[0].storageclass
           - description: TenantService is the image tag for the Container
             displayName: Authorization Tenant Service Container Image
             path: driver.initContainers[0].tenantService
-          - description:
-              TenantServiceReplicas is the number of replicas for the tenant
+          - description: TenantServiceReplicas is the number of replicas for the tenant
               service deployment
             displayName: Tenant Service Replicas
             path: driver.initContainers[0].tenantServiceReplicas
@@ -2476,18 +2422,15 @@ spec:
           - description: Address is the address for this vault
             displayName: Vault Address
             path: driver.initContainers[0].vaultConfigurations[0].address
-          - description:
-              CertificateAuthority is the base64-encoded certificate authority
+          - description: CertificateAuthority is the base64-encoded certificate authority
               for validaitng the vault certificate
             displayName: Vault Certificate Authority
             path: driver.initContainers[0].vaultConfigurations[0].certificateAuthority
-          - description:
-              ClientCertificate is the base64-encoded certificate for connecting
+          - description: ClientCertificate is the base64-encoded certificate for connecting
               to vault
             displayName: Vault CLient Certificate
             path: driver.initContainers[0].vaultConfigurations[0].clientCertificate
-          - description:
-              ClientKey validates is the base64-encoded certificate key for
+          - description: ClientKey validates is the base64-encoded certificate key for
               connecting to vault
             displayName: Vault CLient Certificate Key
             path: driver.initContainers[0].vaultConfigurations[0].clientKey
@@ -2497,9 +2440,8 @@ spec:
           - description: Role is the role for this vault
             displayName: Vault Role
             path: driver.initContainers[0].vaultConfigurations[0].role
-          - description:
-              SkipCertificateValidation validates the vault server certificate
-              or not
+          - description: SkipCertificateValidation validates the vault server certificate or
+              not
             displayName: Vault Skip Certificate Validation
             path: driver.initContainers[0].vaultConfigurations[0].skipCertificateValidation
           - description: Node is the specification for Node plugin only
@@ -2511,19 +2453,16 @@ spec:
           - description: AuthorizationController is the image tag for the container
             displayName: Authorization Controller Container Image
             path: driver.node.authorizationController
-          - description:
-              AuthorizationControllerReplicas is the number of replicas for
-              the authorization controller deployment
+          - description: AuthorizationControllerReplicas is the number of replicas for the
+              authorization controller deployment
             displayName: Authorization Controller Replicas
             path: driver.node.authorizationControllerReplicas
-          - description:
-              Certificate is a certificate used for a certificate/private-key
+          - description: Certificate is a certificate used for a certificate/private-key
               pair
             displayName: Certificate for certificate/private-key pair
             path: driver.node.certificate
-          - description:
-              CertificateAuthority is a certificate authority used to validate
-              a certificate
+          - description: CertificateAuthority is a certificate authority used to validate a
+              certificate
             displayName: Certificate authority for validating a certificate
             path: driver.node.certificateAuthority
           - description: Commander is the image tag for the Container
@@ -2534,22 +2473,19 @@ spec:
               Applicable from CSM v1.15 onwards
             displayName: Config SecretProviderClass details
             path: driver.node.configSecretProviderClass
-          - description:
-              ConfigSecretName is the name of the Kubernetes secret created
-              by the CSI driver
+          - description: ConfigSecretName is the name of the Kubernetes secret created by
+              the CSI driver
             displayName: Config Secret Name
             path: driver.node.configSecretProviderClass[0].configSecretName
-          - description:
-              Conjur is the secret configuration with path to retrieve the
-              Config secret from Conjur
+          - description: Conjur is the secret configuration with path to retrieve the Config
+              secret from Conjur
             displayName: Conjur Config Secret Configuration
             path: driver.node.configSecretProviderClass[0].conjur
           - description: SecretPath is the path to the config secret
             displayName: Conjur Secret Path
             path: driver.node.configSecretProviderClass[0].conjur.secretPath
-          - description:
-              SecretProviderClassName is the name of the SecretProviderClass
-              that holds the config secretObject
+          - description: SecretProviderClassName is the name of the SecretProviderClass that
+              holds the config secretObject
             displayName: Config Secret Provider Class Name
             path: driver.node.configSecretProviderClass[0].secretProviderClassName
           - description: The interval which the reconcile of each controller is run
@@ -2589,23 +2525,18 @@ spec:
           - description: OpaKubeMgmt is the image tag for the Container
             displayName: Authorization Opa Kube Management Container Image
             path: driver.node.opaKubeMgmt
-          - description:
-              OpenTelemetryCollectorAddress is the address of the OTLP receiving
+          - description: OpenTelemetryCollectorAddress is the address of the OTLP receiving
               endpoint using gRPC
             displayName: OpenTelemetry Collector Address of the OTLP endpoint using gRPC
             path: driver.node.openTelemetryCollectorAddress
-          - description:
-              PrivateKey is a private key used for a certificate/private-key
-              pair
+          - description: PrivateKey is a private key used for a certificate/private-key pair
             displayName: Private key for certificate/private-key pair
             path: driver.node.privateKey
-          - description:
-              ProxyServerIngress is the authorization proxy server ingress
+          - description: ProxyServerIngress is the authorization proxy server ingress
               configuration
             displayName: Authorization Proxy Server ingress configuration
             path: driver.node.proxyServerIngress
-          - description:
-              Annotations is an unstructured key value map that stores additional
+          - description: Annotations is an unstructured key value map that stores additional
               annotations for the ingress
             displayName: Authorization Proxy Server Annotations
             path: driver.node.proxyServerIngress[0].annotations
@@ -2618,8 +2549,7 @@ spec:
           - description: ProxyService is the image tag for the Container
             displayName: Authorization Proxy Service Container Image
             path: driver.node.proxyService
-          - description:
-              ProxyServiceReplicas is the number of replicas for the proxy
+          - description: ProxyServiceReplicas is the number of replicas for the proxy
               service deployment
             displayName: Proxy Service Replicas
             path: driver.node.proxyServiceReplicas
@@ -2632,6 +2562,9 @@ spec:
           - description: RedisName is the name of the redis statefulset
             displayName: Redis StatefulSet Name
             path: driver.node.redisName
+          - description: RedisPassword is the password for the redis instance
+            displayName: Redis Password
+            path: driver.node.redisPassword
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: driver.node.redisReplicas
@@ -2640,9 +2573,8 @@ spec:
               Applicable from CSM v1.15 onwards
             displayName: Redis SecretProviderClass details
             path: driver.node.redisSecretProviderClass
-          - description:
-              Conjur is the secret configuration with path to retrieve the
-              Redis credentials from Conjur
+          - description: Conjur is the secret configuration with path to retrieve the Redis
+              credentials from Conjur
             displayName: Conjur Secret Configuration
             path: driver.node.redisSecretProviderClass[0].conjur
           - description: PasswordPath is the path to the password in the secret
@@ -2651,31 +2583,29 @@ spec:
           - description: UsernamePath is the path to the username in the secret
             displayName: Conjur Username Path
             path: driver.node.redisSecretProviderClass[0].conjur.usernamePath
-          - description:
-              RedisPasswordKey is the key in the secret that holds the Redis
+          - description: RedisPasswordKey is the key in the secret that holds the Redis
               password
             displayName: Redis Password Key
             path: driver.node.redisSecretProviderClass[0].redisPasswordKey
-          - description:
-              RedisSecretName is the name of the Kubernetes secret created
-              by the CSI driver
+          - description: RedisSecretName is the name of the Kubernetes secret created by the
+              CSI driver
             displayName: Redis Secret Name
             path: driver.node.redisSecretProviderClass[0].redisSecretName
-          - description:
-              RedisUsernameKey is the key in the secret that holds the Redis
+          - description: RedisUsernameKey is the key in the secret that holds the Redis
               username
             displayName: Redis Username Key
             path: driver.node.redisSecretProviderClass[0].redisUsernameKey
-          - description:
-              SecretProviderClassName is the name of the SecretProviderClass
-              that holds the Redis secretObject
+          - description: SecretProviderClassName is the name of the SecretProviderClass that
+              holds the Redis secretObject
             displayName: Redis Secret Provider Class Name
             path: driver.node.redisSecretProviderClass[0].secretProviderClassName
+          - description: RedisUsername is the username for the redis instance
+            displayName: Redis Username
+            path: driver.node.redisUsername
           - description: RoleService is the image tag for the Container
             displayName: Authorization Role Service Container Image
             path: driver.node.roleService
-          - description:
-              RoleServiceReplicas is the number of replicas for the role service
+          - description: RoleServiceReplicas is the number of replicas for the role service
               deployment
             displayName: Role Service Replicas
             path: driver.node.roleServiceReplicas
@@ -2712,27 +2642,25 @@ spec:
           - description: Sentinel is the name of the sentinel statefulSet
             displayName: Sentinel StatefulSet Name
             path: driver.node.sentinel
-          - description: skipCertificateValidation is the flag to skip certificate validation
+          - description: skipCertificateValidation is the flag to skip certificate
+              validation
             displayName: Authorization Skip Certificate Validation
             path: driver.node.skipCertificateValidation
           - description: StorageService is the image tag for the Container
             displayName: Authorization Storage Service Container Image
             path: driver.node.storageService
-          - description:
-              StorageServiceReplicas is the number of replicas for storage
+          - description: StorageServiceReplicas is the number of replicas for storage
               service deployment
             displayName: Storage Service Replicas
             path: driver.node.storageServiceReplicas
-          - description:
-              RedisStorageClass is the authorization proxy server redis storage
+          - description: RedisStorageClass is the authorization proxy server redis storage
               class for persistence
             displayName: Authorization Proxy Server Redis storage class
             path: driver.node.storageclass
           - description: TenantService is the image tag for the Container
             displayName: Authorization Tenant Service Container Image
             path: driver.node.tenantService
-          - description:
-              TenantServiceReplicas is the number of replicas for the tenant
+          - description: TenantServiceReplicas is the number of replicas for the tenant
               service deployment
             displayName: Tenant Service Replicas
             path: driver.node.tenantServiceReplicas
@@ -2747,18 +2675,15 @@ spec:
           - description: Address is the address for this vault
             displayName: Vault Address
             path: driver.node.vaultConfigurations[0].address
-          - description:
-              CertificateAuthority is the base64-encoded certificate authority
+          - description: CertificateAuthority is the base64-encoded certificate authority
               for validaitng the vault certificate
             displayName: Vault Certificate Authority
             path: driver.node.vaultConfigurations[0].certificateAuthority
-          - description:
-              ClientCertificate is the base64-encoded certificate for connecting
+          - description: ClientCertificate is the base64-encoded certificate for connecting
               to vault
             displayName: Vault CLient Certificate
             path: driver.node.vaultConfigurations[0].clientCertificate
-          - description:
-              ClientKey validates is the base64-encoded certificate key for
+          - description: ClientKey validates is the base64-encoded certificate key for
               connecting to vault
             displayName: Vault CLient Certificate Key
             path: driver.node.vaultConfigurations[0].clientKey
@@ -2768,9 +2693,8 @@ spec:
           - description: Role is the role for this vault
             displayName: Vault Role
             path: driver.node.vaultConfigurations[0].role
-          - description:
-              SkipCertificateValidation validates the vault server certificate
-              or not
+          - description: SkipCertificateValidation validates the vault server certificate or
+              not
             displayName: Vault Skip Certificate Validation
             path: driver.node.vaultConfigurations[0].skipCertificateValidation
           - description: Replicas is the count of controllers for Controller plugin
@@ -2785,19 +2709,16 @@ spec:
           - description: AuthorizationController is the image tag for the container
             displayName: Authorization Controller Container Image
             path: driver.sideCars[0].authorizationController
-          - description:
-              AuthorizationControllerReplicas is the number of replicas for
-              the authorization controller deployment
+          - description: AuthorizationControllerReplicas is the number of replicas for the
+              authorization controller deployment
             displayName: Authorization Controller Replicas
             path: driver.sideCars[0].authorizationControllerReplicas
-          - description:
-              Certificate is a certificate used for a certificate/private-key
+          - description: Certificate is a certificate used for a certificate/private-key
               pair
             displayName: Certificate for certificate/private-key pair
             path: driver.sideCars[0].certificate
-          - description:
-              CertificateAuthority is a certificate authority used to validate
-              a certificate
+          - description: CertificateAuthority is a certificate authority used to validate a
+              certificate
             displayName: Certificate authority for validating a certificate
             path: driver.sideCars[0].certificateAuthority
           - description: Commander is the image tag for the Container
@@ -2808,22 +2729,19 @@ spec:
               Applicable from CSM v1.15 onwards
             displayName: Config SecretProviderClass details
             path: driver.sideCars[0].configSecretProviderClass
-          - description:
-              ConfigSecretName is the name of the Kubernetes secret created
-              by the CSI driver
+          - description: ConfigSecretName is the name of the Kubernetes secret created by
+              the CSI driver
             displayName: Config Secret Name
             path: driver.sideCars[0].configSecretProviderClass[0].configSecretName
-          - description:
-              Conjur is the secret configuration with path to retrieve the
-              Config secret from Conjur
+          - description: Conjur is the secret configuration with path to retrieve the Config
+              secret from Conjur
             displayName: Conjur Config Secret Configuration
             path: driver.sideCars[0].configSecretProviderClass[0].conjur
           - description: SecretPath is the path to the config secret
             displayName: Conjur Secret Path
             path: driver.sideCars[0].configSecretProviderClass[0].conjur.secretPath
-          - description:
-              SecretProviderClassName is the name of the SecretProviderClass
-              that holds the config secretObject
+          - description: SecretProviderClassName is the name of the SecretProviderClass that
+              holds the config secretObject
             displayName: Config Secret Provider Class Name
             path: driver.sideCars[0].configSecretProviderClass[0].secretProviderClassName
           - description: The interval which the reconcile of each controller is run
@@ -2863,23 +2781,18 @@ spec:
           - description: OpaKubeMgmt is the image tag for the Container
             displayName: Authorization Opa Kube Management Container Image
             path: driver.sideCars[0].opaKubeMgmt
-          - description:
-              OpenTelemetryCollectorAddress is the address of the OTLP receiving
+          - description: OpenTelemetryCollectorAddress is the address of the OTLP receiving
               endpoint using gRPC
             displayName: OpenTelemetry Collector Address of the OTLP endpoint using gRPC
             path: driver.sideCars[0].openTelemetryCollectorAddress
-          - description:
-              PrivateKey is a private key used for a certificate/private-key
-              pair
+          - description: PrivateKey is a private key used for a certificate/private-key pair
             displayName: Private key for certificate/private-key pair
             path: driver.sideCars[0].privateKey
-          - description:
-              ProxyServerIngress is the authorization proxy server ingress
+          - description: ProxyServerIngress is the authorization proxy server ingress
               configuration
             displayName: Authorization Proxy Server ingress configuration
             path: driver.sideCars[0].proxyServerIngress
-          - description:
-              Annotations is an unstructured key value map that stores additional
+          - description: Annotations is an unstructured key value map that stores additional
               annotations for the ingress
             displayName: Authorization Proxy Server Annotations
             path: driver.sideCars[0].proxyServerIngress[0].annotations
@@ -2892,8 +2805,7 @@ spec:
           - description: ProxyService is the image tag for the Container
             displayName: Authorization Proxy Service Container Image
             path: driver.sideCars[0].proxyService
-          - description:
-              ProxyServiceReplicas is the number of replicas for the proxy
+          - description: ProxyServiceReplicas is the number of replicas for the proxy
               service deployment
             displayName: Proxy Service Replicas
             path: driver.sideCars[0].proxyServiceReplicas
@@ -2906,6 +2818,9 @@ spec:
           - description: RedisName is the name of the redis statefulset
             displayName: Redis StatefulSet Name
             path: driver.sideCars[0].redisName
+          - description: RedisPassword is the password for the redis instance
+            displayName: Redis Password
+            path: driver.sideCars[0].redisPassword
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: driver.sideCars[0].redisReplicas
@@ -2914,9 +2829,8 @@ spec:
               Applicable from CSM v1.15 onwards
             displayName: Redis SecretProviderClass details
             path: driver.sideCars[0].redisSecretProviderClass
-          - description:
-              Conjur is the secret configuration with path to retrieve the
-              Redis credentials from Conjur
+          - description: Conjur is the secret configuration with path to retrieve the Redis
+              credentials from Conjur
             displayName: Conjur Secret Configuration
             path: driver.sideCars[0].redisSecretProviderClass[0].conjur
           - description: PasswordPath is the path to the password in the secret
@@ -2925,31 +2839,29 @@ spec:
           - description: UsernamePath is the path to the username in the secret
             displayName: Conjur Username Path
             path: driver.sideCars[0].redisSecretProviderClass[0].conjur.usernamePath
-          - description:
-              RedisPasswordKey is the key in the secret that holds the Redis
+          - description: RedisPasswordKey is the key in the secret that holds the Redis
               password
             displayName: Redis Password Key
             path: driver.sideCars[0].redisSecretProviderClass[0].redisPasswordKey
-          - description:
-              RedisSecretName is the name of the Kubernetes secret created
-              by the CSI driver
+          - description: RedisSecretName is the name of the Kubernetes secret created by the
+              CSI driver
             displayName: Redis Secret Name
             path: driver.sideCars[0].redisSecretProviderClass[0].redisSecretName
-          - description:
-              RedisUsernameKey is the key in the secret that holds the Redis
+          - description: RedisUsernameKey is the key in the secret that holds the Redis
               username
             displayName: Redis Username Key
             path: driver.sideCars[0].redisSecretProviderClass[0].redisUsernameKey
-          - description:
-              SecretProviderClassName is the name of the SecretProviderClass
-              that holds the Redis secretObject
+          - description: SecretProviderClassName is the name of the SecretProviderClass that
+              holds the Redis secretObject
             displayName: Redis Secret Provider Class Name
             path: driver.sideCars[0].redisSecretProviderClass[0].secretProviderClassName
+          - description: RedisUsername is the username for the redis instance
+            displayName: Redis Username
+            path: driver.sideCars[0].redisUsername
           - description: RoleService is the image tag for the Container
             displayName: Authorization Role Service Container Image
             path: driver.sideCars[0].roleService
-          - description:
-              RoleServiceReplicas is the number of replicas for the role service
+          - description: RoleServiceReplicas is the number of replicas for the role service
               deployment
             displayName: Role Service Replicas
             path: driver.sideCars[0].roleServiceReplicas
@@ -2986,27 +2898,25 @@ spec:
           - description: Sentinel is the name of the sentinel statefulSet
             displayName: Sentinel StatefulSet Name
             path: driver.sideCars[0].sentinel
-          - description: skipCertificateValidation is the flag to skip certificate validation
+          - description: skipCertificateValidation is the flag to skip certificate
+              validation
             displayName: Authorization Skip Certificate Validation
             path: driver.sideCars[0].skipCertificateValidation
           - description: StorageService is the image tag for the Container
             displayName: Authorization Storage Service Container Image
             path: driver.sideCars[0].storageService
-          - description:
-              StorageServiceReplicas is the number of replicas for storage
+          - description: StorageServiceReplicas is the number of replicas for storage
               service deployment
             displayName: Storage Service Replicas
             path: driver.sideCars[0].storageServiceReplicas
-          - description:
-              RedisStorageClass is the authorization proxy server redis storage
+          - description: RedisStorageClass is the authorization proxy server redis storage
               class for persistence
             displayName: Authorization Proxy Server Redis storage class
             path: driver.sideCars[0].storageclass
           - description: TenantService is the image tag for the Container
             displayName: Authorization Tenant Service Container Image
             path: driver.sideCars[0].tenantService
-          - description:
-              TenantServiceReplicas is the number of replicas for the tenant
+          - description: TenantServiceReplicas is the number of replicas for the tenant
               service deployment
             displayName: Tenant Service Replicas
             path: driver.sideCars[0].tenantServiceReplicas
@@ -3021,18 +2931,15 @@ spec:
           - description: Address is the address for this vault
             displayName: Vault Address
             path: driver.sideCars[0].vaultConfigurations[0].address
-          - description:
-              CertificateAuthority is the base64-encoded certificate authority
+          - description: CertificateAuthority is the base64-encoded certificate authority
               for validaitng the vault certificate
             displayName: Vault Certificate Authority
             path: driver.sideCars[0].vaultConfigurations[0].certificateAuthority
-          - description:
-              ClientCertificate is the base64-encoded certificate for connecting
+          - description: ClientCertificate is the base64-encoded certificate for connecting
               to vault
             displayName: Vault CLient Certificate
             path: driver.sideCars[0].vaultConfigurations[0].clientCertificate
-          - description:
-              ClientKey validates is the base64-encoded certificate key for
+          - description: ClientKey validates is the base64-encoded certificate key for
               connecting to vault
             displayName: Vault CLient Certificate Key
             path: driver.sideCars[0].vaultConfigurations[0].clientKey
@@ -3042,9 +2949,8 @@ spec:
           - description: Role is the role for this vault
             displayName: Vault Role
             path: driver.sideCars[0].vaultConfigurations[0].role
-          - description:
-              SkipCertificateValidation validates the vault server certificate
-              or not
+          - description: SkipCertificateValidation validates the vault server certificate or
+              not
             displayName: Vault Skip Certificate Validation
             path: driver.sideCars[0].vaultConfigurations[0].skipCertificateValidation
           - description: SnapshotClass is the specification for Snapshot Classes
@@ -3053,8 +2959,7 @@ spec:
           - description: Name is the name of the Snapshot Class
             displayName: Snapshot Class Name
             path: driver.snapshotClass[0].name
-          - description:
-              Parameters is a map of driver specific parameters for snapshot
+          - description: Parameters is a map of driver specific parameters for snapshot
               class
             displayName: Snapshot Class Parameters
             path: driver.snapshotClass[0].parameters
@@ -3070,19 +2975,16 @@ spec:
           - description: AuthorizationController is the image tag for the container
             displayName: Authorization Controller Container Image
             path: modules[0].components[0].authorizationController
-          - description:
-              AuthorizationControllerReplicas is the number of replicas for
-              the authorization controller deployment
+          - description: AuthorizationControllerReplicas is the number of replicas for the
+              authorization controller deployment
             displayName: Authorization Controller Replicas
             path: modules[0].components[0].authorizationControllerReplicas
-          - description:
-              Certificate is a certificate used for a certificate/private-key
+          - description: Certificate is a certificate used for a certificate/private-key
               pair
             displayName: Certificate for certificate/private-key pair
             path: modules[0].components[0].certificate
-          - description:
-              CertificateAuthority is a certificate authority used to validate
-              a certificate
+          - description: CertificateAuthority is a certificate authority used to validate a
+              certificate
             displayName: Certificate authority for validating a certificate
             path: modules[0].components[0].certificateAuthority
           - description: Commander is the image tag for the Container
@@ -3093,22 +2995,19 @@ spec:
               Applicable from CSM v1.15 onwards
             displayName: Config SecretProviderClass details
             path: modules[0].components[0].configSecretProviderClass
-          - description:
-              ConfigSecretName is the name of the Kubernetes secret created
-              by the CSI driver
+          - description: ConfigSecretName is the name of the Kubernetes secret created by
+              the CSI driver
             displayName: Config Secret Name
             path: modules[0].components[0].configSecretProviderClass[0].configSecretName
-          - description:
-              Conjur is the secret configuration with path to retrieve the
-              Config secret from Conjur
+          - description: Conjur is the secret configuration with path to retrieve the Config
+              secret from Conjur
             displayName: Conjur Config Secret Configuration
             path: modules[0].components[0].configSecretProviderClass[0].conjur
           - description: SecretPath is the path to the config secret
             displayName: Conjur Secret Path
             path: modules[0].components[0].configSecretProviderClass[0].conjur.secretPath
-          - description:
-              SecretProviderClassName is the name of the SecretProviderClass
-              that holds the config secretObject
+          - description: SecretProviderClassName is the name of the SecretProviderClass that
+              holds the config secretObject
             displayName: Config Secret Provider Class Name
             path: modules[0].components[0].configSecretProviderClass[0].secretProviderClassName
           - description: The interval which the reconcile of each controller is run
@@ -3148,23 +3047,18 @@ spec:
           - description: OpaKubeMgmt is the image tag for the Container
             displayName: Authorization Opa Kube Management Container Image
             path: modules[0].components[0].opaKubeMgmt
-          - description:
-              OpenTelemetryCollectorAddress is the address of the OTLP receiving
+          - description: OpenTelemetryCollectorAddress is the address of the OTLP receiving
               endpoint using gRPC
             displayName: OpenTelemetry Collector Address of the OTLP endpoint using gRPC
             path: modules[0].components[0].openTelemetryCollectorAddress
-          - description:
-              PrivateKey is a private key used for a certificate/private-key
-              pair
+          - description: PrivateKey is a private key used for a certificate/private-key pair
             displayName: Private key for certificate/private-key pair
             path: modules[0].components[0].privateKey
-          - description:
-              ProxyServerIngress is the authorization proxy server ingress
+          - description: ProxyServerIngress is the authorization proxy server ingress
               configuration
             displayName: Authorization Proxy Server ingress configuration
             path: modules[0].components[0].proxyServerIngress
-          - description:
-              Annotations is an unstructured key value map that stores additional
+          - description: Annotations is an unstructured key value map that stores additional
               annotations for the ingress
             displayName: Authorization Proxy Server Annotations
             path: modules[0].components[0].proxyServerIngress[0].annotations
@@ -3177,8 +3071,7 @@ spec:
           - description: ProxyService is the image tag for the Container
             displayName: Authorization Proxy Service Container Image
             path: modules[0].components[0].proxyService
-          - description:
-              ProxyServiceReplicas is the number of replicas for the proxy
+          - description: ProxyServiceReplicas is the number of replicas for the proxy
               service deployment
             displayName: Proxy Service Replicas
             path: modules[0].components[0].proxyServiceReplicas
@@ -3191,6 +3084,9 @@ spec:
           - description: RedisName is the name of the redis statefulset
             displayName: Redis StatefulSet Name
             path: modules[0].components[0].redisName
+          - description: RedisPassword is the password for the redis instance
+            displayName: Redis Password
+            path: modules[0].components[0].redisPassword
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: modules[0].components[0].redisReplicas
@@ -3199,9 +3095,8 @@ spec:
               Applicable from CSM v1.15 onwards
             displayName: Redis SecretProviderClass details
             path: modules[0].components[0].redisSecretProviderClass
-          - description:
-              Conjur is the secret configuration with path to retrieve the
-              Redis credentials from Conjur
+          - description: Conjur is the secret configuration with path to retrieve the Redis
+              credentials from Conjur
             displayName: Conjur Secret Configuration
             path: modules[0].components[0].redisSecretProviderClass[0].conjur
           - description: PasswordPath is the path to the password in the secret
@@ -3210,31 +3105,29 @@ spec:
           - description: UsernamePath is the path to the username in the secret
             displayName: Conjur Username Path
             path: modules[0].components[0].redisSecretProviderClass[0].conjur.usernamePath
-          - description:
-              RedisPasswordKey is the key in the secret that holds the Redis
+          - description: RedisPasswordKey is the key in the secret that holds the Redis
               password
             displayName: Redis Password Key
             path: modules[0].components[0].redisSecretProviderClass[0].redisPasswordKey
-          - description:
-              RedisSecretName is the name of the Kubernetes secret created
-              by the CSI driver
+          - description: RedisSecretName is the name of the Kubernetes secret created by the
+              CSI driver
             displayName: Redis Secret Name
             path: modules[0].components[0].redisSecretProviderClass[0].redisSecretName
-          - description:
-              RedisUsernameKey is the key in the secret that holds the Redis
+          - description: RedisUsernameKey is the key in the secret that holds the Redis
               username
             displayName: Redis Username Key
             path: modules[0].components[0].redisSecretProviderClass[0].redisUsernameKey
-          - description:
-              SecretProviderClassName is the name of the SecretProviderClass
-              that holds the Redis secretObject
+          - description: SecretProviderClassName is the name of the SecretProviderClass that
+              holds the Redis secretObject
             displayName: Redis Secret Provider Class Name
             path: modules[0].components[0].redisSecretProviderClass[0].secretProviderClassName
+          - description: RedisUsername is the username for the redis instance
+            displayName: Redis Username
+            path: modules[0].components[0].redisUsername
           - description: RoleService is the image tag for the Container
             displayName: Authorization Role Service Container Image
             path: modules[0].components[0].roleService
-          - description:
-              RoleServiceReplicas is the number of replicas for the role service
+          - description: RoleServiceReplicas is the number of replicas for the role service
               deployment
             displayName: Role Service Replicas
             path: modules[0].components[0].roleServiceReplicas
@@ -3271,27 +3164,25 @@ spec:
           - description: Sentinel is the name of the sentinel statefulSet
             displayName: Sentinel StatefulSet Name
             path: modules[0].components[0].sentinel
-          - description: skipCertificateValidation is the flag to skip certificate validation
+          - description: skipCertificateValidation is the flag to skip certificate
+              validation
             displayName: Authorization Skip Certificate Validation
             path: modules[0].components[0].skipCertificateValidation
           - description: StorageService is the image tag for the Container
             displayName: Authorization Storage Service Container Image
             path: modules[0].components[0].storageService
-          - description:
-              StorageServiceReplicas is the number of replicas for storage
+          - description: StorageServiceReplicas is the number of replicas for storage
               service deployment
             displayName: Storage Service Replicas
             path: modules[0].components[0].storageServiceReplicas
-          - description:
-              RedisStorageClass is the authorization proxy server redis storage
+          - description: RedisStorageClass is the authorization proxy server redis storage
               class for persistence
             displayName: Authorization Proxy Server Redis storage class
             path: modules[0].components[0].storageclass
           - description: TenantService is the image tag for the Container
             displayName: Authorization Tenant Service Container Image
             path: modules[0].components[0].tenantService
-          - description:
-              TenantServiceReplicas is the number of replicas for the tenant
+          - description: TenantServiceReplicas is the number of replicas for the tenant
               service deployment
             displayName: Tenant Service Replicas
             path: modules[0].components[0].tenantServiceReplicas
@@ -3306,18 +3197,15 @@ spec:
           - description: Address is the address for this vault
             displayName: Vault Address
             path: modules[0].components[0].vaultConfigurations[0].address
-          - description:
-              CertificateAuthority is the base64-encoded certificate authority
+          - description: CertificateAuthority is the base64-encoded certificate authority
               for validaitng the vault certificate
             displayName: Vault Certificate Authority
             path: modules[0].components[0].vaultConfigurations[0].certificateAuthority
-          - description:
-              ClientCertificate is the base64-encoded certificate for connecting
+          - description: ClientCertificate is the base64-encoded certificate for connecting
               to vault
             displayName: Vault CLient Certificate
             path: modules[0].components[0].vaultConfigurations[0].clientCertificate
-          - description:
-              ClientKey validates is the base64-encoded certificate key for
+          - description: ClientKey validates is the base64-encoded certificate key for
               connecting to vault
             displayName: Vault CLient Certificate Key
             path: modules[0].components[0].vaultConfigurations[0].clientKey
@@ -3327,9 +3215,8 @@ spec:
           - description: Role is the role for this vault
             displayName: Vault Role
             path: modules[0].components[0].vaultConfigurations[0].role
-          - description:
-              SkipCertificateValidation validates the vault server certificate
-              or not
+          - description: SkipCertificateValidation validates the vault server certificate or
+              not
             displayName: Vault Skip Certificate Validation
             path: modules[0].components[0].vaultConfigurations[0].skipCertificateValidation
           - description: ConfigVersion is the configuration version of the module
@@ -3338,8 +3225,7 @@ spec:
           - description: Enabled is used to indicate whether or not to deploy a module
             displayName: Enabled
             path: modules[0].enabled
-          - description:
-              ForceRemoveModule is the boolean flag used to remove authorization
+          - description: ForceRemoveModule is the boolean flag used to remove authorization
               proxy server deployment when CR is deleted
             displayName: Force Remove Module
             path: modules[0].forceRemoveModule
@@ -3349,19 +3235,16 @@ spec:
           - description: AuthorizationController is the image tag for the container
             displayName: Authorization Controller Container Image
             path: modules[0].initContainer[0].authorizationController
-          - description:
-              AuthorizationControllerReplicas is the number of replicas for
-              the authorization controller deployment
+          - description: AuthorizationControllerReplicas is the number of replicas for the
+              authorization controller deployment
             displayName: Authorization Controller Replicas
             path: modules[0].initContainer[0].authorizationControllerReplicas
-          - description:
-              Certificate is a certificate used for a certificate/private-key
+          - description: Certificate is a certificate used for a certificate/private-key
               pair
             displayName: Certificate for certificate/private-key pair
             path: modules[0].initContainer[0].certificate
-          - description:
-              CertificateAuthority is a certificate authority used to validate
-              a certificate
+          - description: CertificateAuthority is a certificate authority used to validate a
+              certificate
             displayName: Certificate authority for validating a certificate
             path: modules[0].initContainer[0].certificateAuthority
           - description: Commander is the image tag for the Container
@@ -3372,22 +3255,19 @@ spec:
               Applicable from CSM v1.15 onwards
             displayName: Config SecretProviderClass details
             path: modules[0].initContainer[0].configSecretProviderClass
-          - description:
-              ConfigSecretName is the name of the Kubernetes secret created
-              by the CSI driver
+          - description: ConfigSecretName is the name of the Kubernetes secret created by
+              the CSI driver
             displayName: Config Secret Name
             path: modules[0].initContainer[0].configSecretProviderClass[0].configSecretName
-          - description:
-              Conjur is the secret configuration with path to retrieve the
-              Config secret from Conjur
+          - description: Conjur is the secret configuration with path to retrieve the Config
+              secret from Conjur
             displayName: Conjur Config Secret Configuration
             path: modules[0].initContainer[0].configSecretProviderClass[0].conjur
           - description: SecretPath is the path to the config secret
             displayName: Conjur Secret Path
             path: modules[0].initContainer[0].configSecretProviderClass[0].conjur.secretPath
-          - description:
-              SecretProviderClassName is the name of the SecretProviderClass
-              that holds the config secretObject
+          - description: SecretProviderClassName is the name of the SecretProviderClass that
+              holds the config secretObject
             displayName: Config Secret Provider Class Name
             path: modules[0].initContainer[0].configSecretProviderClass[0].secretProviderClassName
           - description: The interval which the reconcile of each controller is run
@@ -3427,23 +3307,18 @@ spec:
           - description: OpaKubeMgmt is the image tag for the Container
             displayName: Authorization Opa Kube Management Container Image
             path: modules[0].initContainer[0].opaKubeMgmt
-          - description:
-              OpenTelemetryCollectorAddress is the address of the OTLP receiving
+          - description: OpenTelemetryCollectorAddress is the address of the OTLP receiving
               endpoint using gRPC
             displayName: OpenTelemetry Collector Address of the OTLP endpoint using gRPC
             path: modules[0].initContainer[0].openTelemetryCollectorAddress
-          - description:
-              PrivateKey is a private key used for a certificate/private-key
-              pair
+          - description: PrivateKey is a private key used for a certificate/private-key pair
             displayName: Private key for certificate/private-key pair
             path: modules[0].initContainer[0].privateKey
-          - description:
-              ProxyServerIngress is the authorization proxy server ingress
+          - description: ProxyServerIngress is the authorization proxy server ingress
               configuration
             displayName: Authorization Proxy Server ingress configuration
             path: modules[0].initContainer[0].proxyServerIngress
-          - description:
-              Annotations is an unstructured key value map that stores additional
+          - description: Annotations is an unstructured key value map that stores additional
               annotations for the ingress
             displayName: Authorization Proxy Server Annotations
             path: modules[0].initContainer[0].proxyServerIngress[0].annotations
@@ -3456,8 +3331,7 @@ spec:
           - description: ProxyService is the image tag for the Container
             displayName: Authorization Proxy Service Container Image
             path: modules[0].initContainer[0].proxyService
-          - description:
-              ProxyServiceReplicas is the number of replicas for the proxy
+          - description: ProxyServiceReplicas is the number of replicas for the proxy
               service deployment
             displayName: Proxy Service Replicas
             path: modules[0].initContainer[0].proxyServiceReplicas
@@ -3470,6 +3344,9 @@ spec:
           - description: RedisName is the name of the redis statefulset
             displayName: Redis StatefulSet Name
             path: modules[0].initContainer[0].redisName
+          - description: RedisPassword is the password for the redis instance
+            displayName: Redis Password
+            path: modules[0].initContainer[0].redisPassword
           - description: RedisReplicas is the number of replicas for the redis deployment
             displayName: Redis Deployment Replicas
             path: modules[0].initContainer[0].redisReplicas
@@ -3478,9 +3355,8 @@ spec:
               Applicable from CSM v1.15 onwards
             displayName: Redis SecretProviderClass details
             path: modules[0].initContainer[0].redisSecretProviderClass
-          - description:
-              Conjur is the secret configuration with path to retrieve the
-              Redis credentials from Conjur
+          - description: Conjur is the secret configuration with path to retrieve the Redis
+              credentials from Conjur
             displayName: Conjur Secret Configuration
             path: modules[0].initContainer[0].redisSecretProviderClass[0].conjur
           - description: PasswordPath is the path to the password in the secret
@@ -3489,31 +3365,29 @@ spec:
           - description: UsernamePath is the path to the username in the secret
             displayName: Conjur Username Path
             path: modules[0].initContainer[0].redisSecretProviderClass[0].conjur.usernamePath
-          - description:
-              RedisPasswordKey is the key in the secret that holds the Redis
+          - description: RedisPasswordKey is the key in the secret that holds the Redis
               password
             displayName: Redis Password Key
             path: modules[0].initContainer[0].redisSecretProviderClass[0].redisPasswordKey
-          - description:
-              RedisSecretName is the name of the Kubernetes secret created
-              by the CSI driver
+          - description: RedisSecretName is the name of the Kubernetes secret created by the
+              CSI driver
             displayName: Redis Secret Name
             path: modules[0].initContainer[0].redisSecretProviderClass[0].redisSecretName
-          - description:
-              RedisUsernameKey is the key in the secret that holds the Redis
+          - description: RedisUsernameKey is the key in the secret that holds the Redis
               username
             displayName: Redis Username Key
             path: modules[0].initContainer[0].redisSecretProviderClass[0].redisUsernameKey
-          - description:
-              SecretProviderClassName is the name of the SecretProviderClass
-              that holds the Redis secretObject
+          - description: SecretProviderClassName is the name of the SecretProviderClass that
+              holds the Redis secretObject
             displayName: Redis Secret Provider Class Name
             path: modules[0].initContainer[0].redisSecretProviderClass[0].secretProviderClassName
+          - description: RedisUsername is the username for the redis instance
+            displayName: Redis Username
+            path: modules[0].initContainer[0].redisUsername
           - description: RoleService is the image tag for the Container
             displayName: Authorization Role Service Container Image
             path: modules[0].initContainer[0].roleService
-          - description:
-              RoleServiceReplicas is the number of replicas for the role service
+          - description: RoleServiceReplicas is the number of replicas for the role service
               deployment
             displayName: Role Service Replicas
             path: modules[0].initContainer[0].roleServiceReplicas
@@ -3550,27 +3424,25 @@ spec:
           - description: Sentinel is the name of the sentinel statefulSet
             displayName: Sentinel StatefulSet Name
             path: modules[0].initContainer[0].sentinel
-          - description: skipCertificateValidation is the flag to skip certificate validation
+          - description: skipCertificateValidation is the flag to skip certificate
+              validation
             displayName: Authorization Skip Certificate Validation
             path: modules[0].initContainer[0].skipCertificateValidation
           - description: StorageService is the image tag for the Container
             displayName: Authorization Storage Service Container Image
             path: modules[0].initContainer[0].storageService
-          - description:
-              StorageServiceReplicas is the number of replicas for storage
+          - description: StorageServiceReplicas is the number of replicas for storage
               service deployment
             displayName: Storage Service Replicas
             path: modules[0].initContainer[0].storageServiceReplicas
-          - description:
-              RedisStorageClass is the authorization proxy server redis storage
+          - description: RedisStorageClass is the authorization proxy server redis storage
               class for persistence
             displayName: Authorization Proxy Server Redis storage class
             path: modules[0].initContainer[0].storageclass
           - description: TenantService is the image tag for the Container
             displayName: Authorization Tenant Service Container Image
             path: modules[0].initContainer[0].tenantService
-          - description:
-              TenantServiceReplicas is the number of replicas for the tenant
+          - description: TenantServiceReplicas is the number of replicas for the tenant
               service deployment
             displayName: Tenant Service Replicas
             path: modules[0].initContainer[0].tenantServiceReplicas
@@ -3585,18 +3457,15 @@ spec:
           - description: Address is the address for this vault
             displayName: Vault Address
             path: modules[0].initContainer[0].vaultConfigurations[0].address
-          - description:
-              CertificateAuthority is the base64-encoded certificate authority
+          - description: CertificateAuthority is the base64-encoded certificate authority
               for validaitng the vault certificate
             displayName: Vault Certificate Authority
             path: modules[0].initContainer[0].vaultConfigurations[0].certificateAuthority
-          - description:
-              ClientCertificate is the base64-encoded certificate for connecting
+          - description: ClientCertificate is the base64-encoded certificate for connecting
               to vault
             displayName: Vault CLient Certificate
             path: modules[0].initContainer[0].vaultConfigurations[0].clientCertificate
-          - description:
-              ClientKey validates is the base64-encoded certificate key for
+          - description: ClientKey validates is the base64-encoded certificate key for
               connecting to vault
             displayName: Vault CLient Certificate Key
             path: modules[0].initContainer[0].vaultConfigurations[0].clientKey
@@ -3606,16 +3475,14 @@ spec:
           - description: Role is the role for this vault
             displayName: Vault Role
             path: modules[0].initContainer[0].vaultConfigurations[0].role
-          - description:
-              SkipCertificateValidation validates the vault server certificate
-              or not
+          - description: SkipCertificateValidation validates the vault server certificate or
+              not
             displayName: Vault Skip Certificate Validation
             path: modules[0].initContainer[0].vaultConfigurations[0].skipCertificateValidation
           - description: Name is name of ContainerStorageModule modules
             displayName: Name
             path: modules[0].name
-          - description:
-              RetainImageRegistryPath is the boolean flag used to retain image
+          - description: RetainImageRegistryPath is the boolean flag used to retain image
               registry path
             displayName: Retain Image Registry Path
             path: retainImageRegistryPath
@@ -3635,9 +3502,8 @@ spec:
             path: controllerStatus.failed
             x-descriptors:
               - urn:alm:descriptor:text
-          - description:
-              LastSuccessfulConfiguration is configurations details only when
-              the CSM CR goes into a successful state
+          - description: LastSuccessfulConfiguration is configurations details only when the
+              CSM CR goes into a successful state
             displayName: LastSuccessfulConfiguration
             path: lastSuccessfulConfiguration
             x-descriptors:
@@ -3663,32 +3529,61 @@ spec:
             x-descriptors:
               - urn:alm:descriptor:text
         version: v1
-  description:
-    "Dell Container Storage Modules (CSM) Operator is a Kubernetes Operator
-    which can be \nused to install and manage Dell’s CSI drivers and CSM modules.
-    \nBy using Dell CSM Operator, enterprises can quickly and easily deploy the \nCSM
-    modules for CSI drivers making it easy for DevOps \nteams to build and optimize
-    their Kubernetes workloads using enterprise grade storage \nwhile consistently
-    aligning with the desired outcomes of the organization.\nThis operator is available
-    as both community and certified operator for Openshift \nand as a community operator
-    for upstream Kubernetes.\nOperator can be deployed via OperatorHub.io. using Operator
-    Lifecycle Manager (OLM)\n\n### About Dell CSM\n\nDell CSM brings powerful enterprise
-    storage features and functionality to Kubernetes for \neasier adoption of cloud
-    native workloads, improved productivity and scalable operations. \n\nCSM delivers
-    software modules for storage management that provide developers access to \nbuild
-    automation for enhanced IT needs and other critical enterprise storage features.
-    \n\nCurrently, the following modules are available as part of Dell CSM. \n*\tObservability
-    - Delivers a high-level view of the storage capacity \n  and performance usage
-    via Grafana dashboards to the Kubernetes users\n*\tReplication - Enables array
-    replication capabilities for Kubernetes users\n*\tAuthorization - Provides both
-    storage and Kubernetes administrators the ability \n  to apply RBAC for Dell CSI
-    Drivers\n*\tResiliency - Designed to make Kubernetes applications more resilient
-    to \n  node failures\n\nThese modules are available for various storage platforms
-    in the Dell portfolio, \nsuch as Dell PowerStore, Dell PowerMax, Dell PowerFlex,
-    Dell PowerScale, and Dell Unity XT.\n\nFor more information, visit [Dell’s Container
-    Storage Module web page](https://www.dell.com/en-us/dt/solutions/kubernetes-containers/kubernetes-storage.htm)\n\nAdditional
-    Materials\n*\t[Documentation](https://dell.github.io/csm-docs)\n*\t[CSM Solution
-    Brief](https://www.delltechnologies.com/asset/en-us/products/storage/briefs-summaries/csm-solution-brief.pdf)\n"
+  description: "Dell Container Storage Modules (CSM) Operator is a Kubernetes
+    Operator which can be used to install and manage Dell’s CSI drivers and CSM
+    modules. By using Dell CSM Operator, enterprises can quickly and easily
+    deploy the CSM modules for CSI drivers making it easy for DevOps teams to
+    build and optimize their Kubernetes workloads using enterprise grade storage
+    while consistently aligning with the desired outcomes of the organization.
+
+    This operator is available as both community and certified operator for
+    Openshift and as a community operator for upstream Kubernetes.
+
+    Operator can be deployed via OperatorHub.io. using Operator Lifecycle
+    Manager (OLM)
+
+
+    ### About Dell CSM
+
+
+    Dell CSM brings powerful enterprise storage features and functionality to
+    Kubernetes for easier adoption of cloud native workloads, improved
+    productivity and scalable operations.
+
+    CSM delivers software modules for storage management that provide developers
+    access to build automation for enhanced IT needs and other critical
+    enterprise storage features.
+
+    Currently, the following modules are available as part of Dell CSM.
+    *\tObservability - Delivers a high-level view of the storage capacity   and
+    performance usage via Grafana dashboards to the Kubernetes users
+
+    *\tReplication - Enables array replication capabilities for Kubernetes users
+
+    *\tAuthorization - Provides both storage and Kubernetes administrators the
+    ability   to apply RBAC for Dell CSI Drivers
+
+    *\tResiliency - Designed to make Kubernetes applications more resilient
+    to   node failures
+
+
+    These modules are available for various storage platforms in the Dell
+    portfolio, such as Dell PowerStore, Dell PowerMax, Dell PowerFlex, Dell
+    PowerScale, and Dell Unity XT.
+
+
+    For more information, visit [Dell’s Container Storage Module web
+    page](https://www.dell.com/en-us/dt/solutions/kubernetes-containers/kuberne\
+    tes-storage.htm)
+
+
+    Additional Materials
+
+    *\t[Documentation](https://dell.github.io/csm-docs)
+
+    *\t[CSM Solution
+    Brief](https://www.delltechnologies.com/asset/en-us/products/storage/briefs\
+    -summaries/csm-solution-brief.pdf)\n"
   displayName: Dell Container Storage Modules
   icon:
     - base64data: iVBORw0KGgoAAAANSUhEUgAAAFAAAAAoCAYAAABpYH0BAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAALiMAAC4jAXilP3YAAAtlSURBVGhD7ZoNcFXFFcfPfS8JSdBQG5GK38PUDwhFkgAiLQ5+UloGq5OoRcap1lSxKiMhAYOEoIGQhGqNoIJUseo4oGMFpVpHbasiFEIQAWurUrWAGQoin/m829+5d1/ee0leQhJtUof/zL7dc87uubvnnj37cZ8jPQG5lWMl4EyQ+poCuf/CvZb7fwFHcjfeasttI2BqxHV3iLibpXzEF5bbNdy+NkUSE8rpxS+h9GXuJMuR0qEve/L2MHVTmjjujyzlIyB1Upq+1FLtI69qkLhmtKV8OFIvZemPWapNOJK30dhyB2C2kJ6RQONiKRmxxzI7hmmVl4jj6EDP8BmRcBfL/IxbkLfdt7zKXzOECkv5MPIVg/+OpdrHtEp9zsOWsjCHpDTjOEu0iYDNOwgnjaZzxY3bLnkbciVredAK2sfUTb0Z+EJe3WtQrRhPNosT90i7xush6KQBQ3COR0WZnDXgFbmzqv23nl85WoLue7SbTIqOv0YamEpzJSlhmMw/v8pyRWZs7ifT3uY5PROtG9CYNfw+FU7maQa8mvJ/SK3AuVQSzKued7WGnA3JTJX7xXXehBrgMyNg5AMJyoVSnlEgRWl1lsv02nidNDRsFUnaLNOqxlhuj0IsD3yEQDwpnDKuJ7D/RJK+OlmMk438U79aBBwZLsGGZrEE5FaOlD5OFQ43hTrNn9dIKpPkr9KlJH29zwJT3zkJ4z1H/WdIqbQ9k7j4OryKmC+pm9CxKVw0pkHKhq6Q+oR03CY84CYEJjHIi7xi4ZuJlOezPXkLA5zt8aLxD9JoXlAeemt8FsitvFoCiVsw3NWW48PxpvyN7AbG+Yyegc7FwPvT9kqcO4Gp/qXlhOGYPJn6t2FyOKUSI+TBiV5gjHH5+a0kuUMxnoYKH9PXpbK4sLI7eJ7T13IjYN7h53zvBfYgdM6AirnDdmGtBywViSskELcGIwy0dBhGPqHNxYSEKVKUedhyWVw2jWdFZ2vkXGc5YRj2n0ZyJSl9NNuTf1ounrp+AOFkoqW6DZ03oMIJvmBLEXCCeF6cJXwYY0gPy6GEIRjhL5bLNGflnlb1hBh3Je2+Z7mRWIeudNoskCIHzwXGOISGyRIIbkJ2gcfrRnTNgObAv2ypbTjOi5K8/w5ZlHbQcvzj22GXWGdusJxI1JLulsyho/DWD3wWmFp5huRXvYbhFkId1Ub3m0bXDBiXkmxL7eFKYuJa79ikx7e8yiXEutUY9hQrj4DZyOI8jPg4T7IdXaWVRzTdcLMEnc0Ql/i8noGuGdBtOPop5DgZNKiUpPhtEKGzbyTqkc+WfeYCKR32vuVxXFt7KoZnDxpYDJXiM3sOumhA5zZbCsOYHfwS01qD04vUitfp8a1hhJRmFsniTAxpkbeR6R2vxhzrMyKgZ16RP/lE96HzBpxWmUP8usxSYTjOEqbfBHHlBgbZcpvTHMaZ5x/fhoePb1PWn8xCoS/hCRS2PCIa85okxA+msMpyug0dN2ChCRDD7sJQiywnAuYLcVx/a1Oe/qTEO4MZ7B89OhYc80OprT3dUv7xLT74PhN8vOVE4gD6bmVVvkKKB39ued2KGNdZZqo01oe3KPEBR+rjUtkSj4S6ifQDjx8JYxrFBMZJ+dDm04ptx/qb2N0soBwjhplD/Myi6oXk0SeQEIz5s7j1N8qCC7ZbTuvXWWrkxrohthwbgfhaKcvY2ep1lpHD4talWSo20NHJ+8Bm0JsUg2HV62Ihf8vpYmqXMuBLLecogXFdmSG9Vy6UoiJ/LxhC6wY8SnAULc0Y3vp94FHCmKquLSI+dqJpbJvGU8xP+4zYeDmlydQP7wfbBMe3AMe38oyKFsbrIeiCAc0+3sA8Yt5ApsLrltkOHIMRH5ZAI1PMhE8kLXEEj/aPbyUZH1lej4QaUO/42k9GPiN/l/xR8ixJMqdguLtlfqZuJzqGkuGfSNLKi9E1hRQ+E/tYJ0E3+vgWE84Rflrvb3vJ3wZhgYDeBLVep73kyL7u/yp317qzJRj3OJ1ho22KJDOjNHwCOYajg35Tya8601LHcAzHcAz/KzhFRUXPGmPiLd0CyJZSR7/IdQiFhYVscmUtbTf4nK8P6Nbdw2PovtHndB4zZszol5CQ8CW6wl8DO4DAli1bJg4cODBbE8bSLUpiiNY0e/bsts+yMeA4zgiyU33qa0cA/T+z5S4hMTGxIhAIsAPoHKK2MbyFMRhxCkabYFkeysrKeh88eLDPoEGDqrOzs1tsMYqLi/sil3nz5u22LEHH79H1PDr/gMecCMul3Oofh/CCvikpKQ3kLW5vaKs3zynbtm2rXrFihfdseHEYcDfPOEFphfLITiLt4znN95ZSUlLS58iRI0nIqiFjHl/Vu+Pj4/vV19cfou5+y/YQekZycvKB/Pz8A8pr04AYRhU94glF9A9FA5G/Sr25ykDhVWR5DMa7dkf2fbK5yFerASl/BO888n3U0S9t36Vz1xYUFFQjXwb9V/iXua6rch18Hyvffe+9957W2Ni4iPZqtC+QDyZfzTPn0jYI7RnQDuo+aL2I2Er908hrmJa3qh7k/ZE9Dk+NqmPQ7dJyUhbtx5Gep80C+ryGurfAv576qkdfjl5+TEb2CbIc+JPg6/2k9vW42traidEff5oB4z1Fowdp7N27kWvseYaH3oDbb2LgxSgcBe15FnL1tA3kOhg16CiycXSgQWnq3YnOORR/hawX+dVbt24dH+FZuXV1dWSFd2C8ldQp0JehsuXLlwfxwmfRoZe4oZeqoaKALJU2F1H2PIs6E3mOGmkMvCfQsxg9z6mMeuq9+u+vBKW1H4wjHv7l8LOgL6a9Fw/vueeekcFg8HlkGcjKkPVDj/cNmzqFTP+rYp6Fp0+fnkp29o4dO17JycmJ17Rr1y79xqtX69k89FoULkFh07SkrEeca0mhgPwkPM94Coz+Bm2arpro1LKQ8RTofBPeEHKNSYdp27R4aeigbRHFqIUD3i/i4uJm0a5pWjK4p+GfzMAzIc9Dj2c8hfZHPduSkdA1YCljNKHxVldX6wKoYzkXmZ7dZ82cOXMIehN4RhFpSUwD9urV63gapfbv3//ZyERHb4NfRdIpudOvHQYd1JVXDalofuvi0r7pQzsDiZKj0yUFMXQ/8hYXpjU1NZ/Tvp8lPUD3ZVAt/q8IX+sOotgUl0NAv8bBKFD3eNLtzceL6N+kOrxfF601vCyd4i9ixJd47jkxp/DevXt3paam7tuzZ8/PKyoq9DOjBxqeiFufwOCvgTzX54bBW9E48ZYlOwX0f4z+FheaBO80vPNjS4awnT6dw0v7u6W96U5oOIfBvo2e+cjj1POsWF/UAIxgKR/wVO9b1HvI5/hgGo/o3bv3bnYkP0b2EixN6ijj0fFATA+0RnsaI/5G3Vl5dCSRRsvo1Eg6t4zyJHVplSnmzJkzlGw2qUt/0501a9YH6N7Oy8hnYN5IdaXHeHqrXa50BMqo+5CuskpkZWWp8YopvsHgP6b9auQzoJv04IFTtBwJxrOEerczBl30PDDecbzMR3EinTkLWZTOsiKFxtCGKAPSQd1GNL1JOnI3HdiOK+uq+iIsDeyrsP6TdO5zOnIlD57Jg15Cvor2efB00dhPvQ+pH5rKHujEQfjv2fKH1I36dythQ7cN+u1XPeIaUh/0vor+lSwKumrfh2792KTXXO9qPeTKX8L0Xq59ZKv1Crr1E0GOyvfv368hpw86Xkf+AnoehK2LUGirs41+fMl4tuszcY5iO56X0XMdvJ+yjTtAnsUO4QHtC7JV0FeRWn6V/LaBAWeSor7hQN9F8rZiXUV0IPgWAo8dxcyoYCrejHd9ircN01DQ0NBwBdO5y1/2vvUGVOBt55Pp9kr3qXqz/jsMq6trFyHyX+sbEAjrhciCAAAAAElFTkSuQmCC
