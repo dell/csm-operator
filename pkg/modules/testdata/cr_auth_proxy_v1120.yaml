@@ -57,6 +57,8 @@ spec:
               # additional annotations for the proxy-server ingress
               annotations: {}
         - name: redis
+          redisUsername: "test"
+          redisPassword: "test"
           redis: redis:7.4.0-alpine
           commander: rediscommander/redis-commander:latest
           # by default, csm-authorization will deploy a local (https://kubernetes.io/docs/concepts/storage/storage-classes/#local) volume for redis
