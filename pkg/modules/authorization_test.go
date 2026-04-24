@@ -2533,7 +2533,7 @@ func TestUpdateConjurAnnotations(t *testing.T) {
 			name:        "empty annotations, add single path",
 			annotations: map[string]string{},
 			conjurPaths: []string{"secrets/config-object"},
-			want: map[string]string{
+			want: map[string]string{ // #nosec G101 -- test data
 				"conjur.org/secrets": "- secrets/config-object: secrets/config-object",
 			},
 		},
@@ -2614,7 +2614,7 @@ func TestUpdateRedisGlobalVars(t *testing.T) {
 			args: args{
 				component: csmv1.ContainerTemplate{
 					RedisSecretProviderClass: []csmv1.RedisSecretProviderClass{
-						{
+						{ // #nosec G101 -- test data
 							SecretProviderClassName: "ut-provider-class",
 							RedisSecretName:         "",
 							RedisUsernameKey:        "",
@@ -2637,7 +2637,7 @@ func TestUpdateRedisGlobalVars(t *testing.T) {
 			args: args{
 				component: csmv1.ContainerTemplate{
 					RedisSecretProviderClass: []csmv1.RedisSecretProviderClass{
-						{
+						{ // #nosec G101 -- test data
 							SecretProviderClassName: "ut-provider-class",
 							RedisSecretName:         "ut-secret-name",
 							RedisUsernameKey:        "ut-username-key",
@@ -2650,7 +2650,7 @@ func TestUpdateRedisGlobalVars(t *testing.T) {
 					},
 				},
 			},
-			want: map[string]string{
+			want: map[string]string{ // #nosec G101 -- test data
 				"redisSecretProviderClassName": "ut-provider-class",
 				"redisSecretName":              "ut-secret-name",
 				"redisUsernameKey":             "ut-username-key",
@@ -2694,7 +2694,7 @@ func TestUpdateRedisGlobalVars(t *testing.T) {
 							RedisSecretName:         "",
 							RedisUsernameKey:        "",
 							RedisPasswordKey:        "",
-							Conjur: &csmv1.ConjurCredentialPath{
+							Conjur: &csmv1.ConjurCredentialPath{ // #nosec G101 -- test data
 								UsernamePath: "conjur.org/username",
 								PasswordPath: "conjur.org/password",
 							},
@@ -2702,7 +2702,7 @@ func TestUpdateRedisGlobalVars(t *testing.T) {
 					},
 				},
 			},
-			want: map[string]string{
+			want: map[string]string{ // #nosec G101 -- test data
 				"redisSecretProviderClassName": "",
 				"redisSecretName":              defaultRedisSecretName,
 				"redisUsernameKey":             defaultRedisUsernameKey,
@@ -2716,7 +2716,7 @@ func TestUpdateRedisGlobalVars(t *testing.T) {
 			args: args{
 				component: csmv1.ContainerTemplate{
 					RedisSecretProviderClass: []csmv1.RedisSecretProviderClass{
-						{
+						{ // #nosec G101 -- test data
 							SecretProviderClassName: "ut-provider-class",
 							RedisSecretName:         "",
 							RedisUsernameKey:        "ut-username-key",
@@ -2771,7 +2771,7 @@ func TestUpdateConfigGlobalVars(t *testing.T) {
 					ConfigSecretProviderClass: []csmv1.ConfigSecretProviderClass{},
 				},
 			},
-			want: map[string]string{
+			want: map[string]string{ // #nosec G101 -- test data
 				"configSecretProviderClassName ": "",
 				"configSecretName":               "karavi-config-secret",
 				"configSecretPath ":              "",
@@ -2782,14 +2782,14 @@ func TestUpdateConfigGlobalVars(t *testing.T) {
 			args: args{
 				component: csmv1.ContainerTemplate{
 					ConfigSecretProviderClass: []csmv1.ConfigSecretProviderClass{
-						{
+						{ // #nosec G101 -- test data
 							SecretProviderClassName: "ut-provider-class",
 							ConfigSecretName:        "",
 						},
 					},
 				},
 			},
-			want: map[string]string{
+			want: map[string]string{ // #nosec G101 -- test data
 				"configSecretProviderClassName ": "",
 				"configSecretName":               "karavi-config-secret",
 				"configSecretPath":               "",
@@ -2800,7 +2800,7 @@ func TestUpdateConfigGlobalVars(t *testing.T) {
 			args: args{
 				component: csmv1.ContainerTemplate{
 					ConfigSecretProviderClass: []csmv1.ConfigSecretProviderClass{
-						{
+						{ // #nosec G101 -- test data
 							SecretProviderClassName: "ut-provider-class",
 							ConfigSecretName:        "ut-secret-name",
 							Conjur: &csmv1.ConjurConfigPath{
@@ -2810,7 +2810,7 @@ func TestUpdateConfigGlobalVars(t *testing.T) {
 					},
 				},
 			},
-			want: map[string]string{
+			want: map[string]string{ // #nosec G101 -- test data
 				"configSecretProviderClassName ": "ut-provider-class",
 				"configSecretName":               "ut-secret-name",
 				"configSecretPath":               "ut-secret-path",
@@ -2831,7 +2831,7 @@ func TestUpdateConfigGlobalVars(t *testing.T) {
 					},
 				},
 			},
-			want: map[string]string{
+			want: map[string]string{ // #nosec G101 -- test data
 				"configSecretProviderClassName ": "",
 				"configSecretName":               "karavi-config-secret",
 				"configSecretPath":               "",
@@ -3104,6 +3104,143 @@ func TestGetDefaultAuthImage(t *testing.T) {
 				operatorutils.VersionSpec{Version: "1.6.0", Images: map[string]string{}})
 			if got != tt.expectedImg {
 				t.Fatalf("unexpected image: got %q, want %q", got, tt.expectedImg)
+			}
+		})
+	}
+}
+
+func TestValidateRedisConfig(t *testing.T) {
+	tests := []struct {
+		name          string
+		component     csmv1.ContainerTemplate
+		expectError   bool
+		errorContains string
+	}{
+		{
+			name: "success - direct credentials provided",
+			component: csmv1.ContainerTemplate{
+				Name:           AuthRedisComponent,
+				RedisUsername:  "test-user",
+				RedisPassword:  "test-password",
+				RedisName:      "redis-csm",
+				RedisCommander: "rediscommander",
+			},
+			expectError: false,
+		},
+		{
+			name: "success - secret provider class provided",
+			component: csmv1.ContainerTemplate{
+				Name: AuthRedisComponent,
+				RedisSecretProviderClass: []csmv1.RedisSecretProviderClass{
+					{
+						SecretProviderClassName: "redis-spc",
+						RedisSecretName:         "redis-secret",
+						RedisUsernameKey:        "username",
+						RedisPasswordKey:        "password",
+					},
+				},
+				RedisName:      "redis-csm",
+				RedisCommander: "rediscommander",
+			},
+			expectError: false,
+		},
+		{
+			name: "error - secret provider class with empty entry",
+			component: csmv1.ContainerTemplate{
+				Name: AuthRedisComponent,
+				RedisSecretProviderClass: []csmv1.RedisSecretProviderClass{
+					{
+						// All empty
+					},
+				},
+				RedisName:      "redis-csm",
+				RedisCommander: "rediscommander",
+			},
+			expectError: true,
+		},
+		{
+			name: "error - no credentials provided",
+			component: csmv1.ContainerTemplate{
+				Name:           AuthRedisComponent,
+				RedisName:      "redis-csm",
+				RedisCommander: "rediscommander",
+			},
+			expectError:   true,
+			errorContains: "redis credentials are required",
+		},
+		{
+			name: "error - only username provided",
+			component: csmv1.ContainerTemplate{
+				Name:           AuthRedisComponent,
+				RedisUsername:  "test-user",
+				RedisName:      "redis-csm",
+				RedisCommander: "rediscommander",
+			},
+			expectError:   true,
+			errorContains: "must be provided together",
+		},
+		{
+			name: "error - only password provided",
+			component: csmv1.ContainerTemplate{
+				Name:           AuthRedisComponent,
+				RedisPassword:  "test-password",
+				RedisName:      "redis-csm",
+				RedisCommander: "rediscommander",
+			},
+			expectError:   true,
+			errorContains: "must be provided together",
+		},
+		{
+			name: "error - incomplete secret provider class",
+			component: csmv1.ContainerTemplate{
+				Name: AuthRedisComponent,
+				RedisSecretProviderClass: []csmv1.RedisSecretProviderClass{
+					{
+						SecretProviderClassName: "redis-spc",
+						// Missing RedisSecretName, RedisUsernameKey, RedisPasswordKey
+					},
+				},
+				RedisName:      "redis-csm",
+				RedisCommander: "rediscommander",
+			},
+			expectError:   true,
+			errorContains: "requires all of",
+		},
+		{
+			name: "error - both direct credentials and secret provider class provided",
+			component: csmv1.ContainerTemplate{
+				Name:          AuthRedisComponent,
+				RedisUsername: "test-user",
+				RedisPassword: "test-password",
+				RedisSecretProviderClass: []csmv1.RedisSecretProviderClass{
+					{
+						SecretProviderClassName: "redis-spc",
+						RedisSecretName:         "redis-secret",
+						RedisUsernameKey:        "username",
+						RedisPasswordKey:        "password",
+					},
+				},
+				RedisName:      "redis-csm",
+				RedisCommander: "rediscommander",
+			},
+			expectError:   true,
+			errorContains: "specify either",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := validateRedisConfig(tt.component)
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("expected error but got nil")
+				} else if tt.errorContains != "" && !strings.Contains(err.Error(), tt.errorContains) {
+					t.Errorf("expected error to contain '%s', got: %v", tt.errorContains, err)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("expected no error but got: %v", err)
+				}
 			}
 		})
 	}
