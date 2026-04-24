@@ -918,7 +918,7 @@ func (step *Step) generateAndCreateSftpSecrets(_ Resource, privateKeyPath, priva
 	if err != nil {
 		return fmt.Errorf("failed to read private key: %v", err)
 	}
-	if err := os.WriteFile(privateKeyFile, privateKeyData, 0o600); err != nil {
+	if err := os.WriteFile(privateKeyFile, privateKeyData, 0o600); err != nil { // #nosec G703 -- test code
 		return fmt.Errorf("failed to write private key to temp dir: %v", err)
 	}
 
@@ -951,10 +951,10 @@ func (step *Step) generateAndCreateSftpSecrets(_ Resource, privateKeyPath, priva
 	// Write key files to disk for secret creation
 	privateOut := filepath.Join(tmpDir, "sftp-secret-private.crt")
 	publicOut := filepath.Join(tmpDir, "sftp-secret-public.crt")
-	if err := os.WriteFile(privateOut, privateKeyData, 0o600); err != nil {
+	if err := os.WriteFile(privateOut, privateKeyData, 0o600); err != nil { // #nosec G703 -- test code
 		return fmt.Errorf("failed to write private secret file: %v", err)
 	}
-	if err := os.WriteFile(publicOut, []byte(hostPubKey), 0o600); err != nil { // #nosec G703
+	if err := os.WriteFile(publicOut, []byte(hostPubKey), 0o600); err != nil { // #nosec G703 -- test code
 		return fmt.Errorf("failed to write public secret file: %v", err)
 	}
 

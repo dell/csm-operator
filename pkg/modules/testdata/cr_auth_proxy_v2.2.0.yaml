@@ -61,6 +61,8 @@ spec:
           # openTelemetryCollectorAddress: the OTLP receiving endpoint using gRPC
           openTelemetryCollectorAddress: "otel-collector:8889"
         - name: redis
+          redisUsername: "test"
+          redisPassword: "test"
           redis: redis:6.0.8-alpine
           commander: rediscommander/redis-commander:latest
           redisName: redis-csm
