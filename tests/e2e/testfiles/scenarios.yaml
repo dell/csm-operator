@@ -2573,3 +2573,17 @@
     - "Delete custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is not installed"
     - "Restore ConfigMap"
+
+# ---- Offline Bundle tests ----
+
+- scenario: "Offline Bundle - Create and Prepare"
+  paths: []
+  tags:
+    - "offline-bundle"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator is not installed"
+    - "Run custom test"
+  customTest:
+    - name: offline_bundle_test
+      run:
+        - /bin/bash scripts/offline_bundle_test.sh

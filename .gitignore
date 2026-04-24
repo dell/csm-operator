@@ -34,3 +34,7 @@ tests/e2e/array-info.yaml
 
 # Ignore workspace file
 *code-workspace
+
+dell-csm-operator-bundle/
+dell-csm-operator-bundle.tar.gz
+scripts/images.*

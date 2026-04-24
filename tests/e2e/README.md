@@ -28,6 +28,7 @@ This document describes how to run end-to-end tests for the Dell Container Stora
   - [JUnit XML Reports](#junit-xml-reports)
   - [Step Timeouts](#step-timeouts)
 - [Custom Registry Tests](#custom-registry-tests)
+- [Offline Bundle Tests](#offline-bundle-tests)
 - [Developing E2E Tests](#developing-e2e-tests)
   - [Adding a New Scenario](#adding-a-new-scenario)
   - [Adding a New Step](#adding-a-new-step)
@@ -171,6 +172,7 @@ cd tests/e2e
 | `--resiliency` | Run resiliency module tests |
 | `--zoning` | Run PowerFlex zoning tests (opt-in, requires multiple storage systems) |
 | `--sftp` | Enable SFTP for PowerFlex tests (opt-in, loads `powerflex-sftp` config section) |
+| `--offline-bundle` | Run offline bundle create/prepare tests (opt-in, requires local registry) |
 | `--no-modules` | Run driver-only tests (no module scenarios) |
 | `--sanity` | Run sanity test subset |
 | **Test files** | |
@@ -207,7 +209,7 @@ Platform flags select which **drivers** to test. Module flags select which **fea
 | `--no-modules` | Run driver-only (standalone) scenarios, skip all module scenarios |
 | `--sanity` | Run only scenarios tagged `sanity` |
 
-**Opt-in tags:** `--zoning`, `--sftp`, and `--cosi` are opt-in -- they never run unless explicitly specified. The `--sftp` flag enables SFTP support for PowerFlex tests and loads the `powerflex-sftp` section from `array-info.yaml`. Similarly, `--auth` and `--auth-proxy` are considered "exclusive" module tags: when other module filters are active, auth scenarios only run if explicitly included.
+**Opt-in tags:** `--zoning`, `--sftp`, `--offline-bundle`, and `--cosi` are opt-in -- they never run unless explicitly specified. The `--sftp` flag enables SFTP support for PowerFlex tests and loads the `powerflex-sftp` section from `array-info.yaml`. Similarly, `--auth` and `--auth-proxy` are considered "exclusive" module tags: when other module filters are active, auth scenarios only run if explicitly included.
 
 ### Examples
 
@@ -433,6 +435,92 @@ hardcoded version strings in scenario files.
 
 ---
 
+## Offline Bundle Tests
+
+The `--offline-bundle` flag runs end-to-end tests for the offline bundle creation and preparation workflow. These tests exercise `scripts/csm-offline-bundle.sh` by creating a bundle with image overrides, loading images into a local registry, and verifying the bundle's YAML files are correctly updated.
+
+This is an **opt-in** test suite -- it never runs unless `--offline-bundle` is explicitly specified.
+
+### Prerequisites
+
+1. **Container runtime** -- `podman` or `docker` must be installed and functional on the test VM.
+2. **Local container registry** -- A registry must be running and accessible at `localhost:5000` (or the address set via `OFFLINE_BUNDLE_REGISTRY`). To start one quickly:
+   ```bash
+   podman run -d -p 5000:5000 --name registry registry:2
+   # or
+   docker run -d -p 5000:5000 --name registry registry:2
+   ```
+3. **SSH key setup** -- SSH keys must be configured for passwordless access to all cluster nodes. The test script automatically verifies SSH key setup and fails early if keys are not properly configured:
+   ```bash
+   # Generate SSH key (if you don't have one)
+   ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+   
+   # Copy public key to all cluster nodes
+   ssh-copy-id user@node1_ip
+   ssh-copy-id user@node2_ip
+   # ... for all worker nodes
+   
+   # Optional: Load keys into SSH agent
+   ssh-add
+   ```
+   The test script checks for SSH private keys in `~/.ssh/id_rsa`, `~/.ssh/id_ed25519`, `~/.ssh/id_ecdsa`, or `~/.ssh/id_dsa`.
+4. **Cluster-wide registry access** -- All cluster nodes must be able to pull from the local registry. For insecure registries, configure each node's container runtime to trust `localhost:5000`. For example, add to `/etc/containers/registries.conf`:
+   ```toml
+   [[registry]]
+   location = "localhost:5000"
+   insecure = true
+   ```
+   Or for Docker, add to `/etc/docker/daemon.json`:
+   ```json
+   { "insecure-registries": ["localhost:5000"] }
+   ```
+   The test script automatically verifies cluster node registry access via SSH and will fail early if nodes cannot reach the registry.
+5. **Override source registry access** -- If using image overrides (default: `testfiles/common-templates/image-overrides.conf`), the test VM must be able to pull from the override source registry (e.g., `csm.artifactory.cec.lab.emc.com`). The test will attempt a trial pull and fail early if the source is unreachable.
+
+The test script validates all prerequisites automatically and fails with a clear message if any are not met.
+
+### Running
+
+```bash
+cd tests/e2e
+
+# Run offline bundle tests
+./run-e2e-test.sh --offline-bundle
+```
+
+**Note:** The `--offline-bundle` flag cannot be combined with other test suite flags. It runs as a standalone test mode.
+
+### Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `OFFLINE_BUNDLE_REGISTRY` | `localhost:5000/dell/csm` | Target registry for the offline bundle prepare step |
+| `OVERRIDE_CONFIG` | `testfiles/common-templates/image-overrides.conf` | Image override configuration file |
+| `REPO_DIR` | `../../..` (auto-resolved) | Path to the csm-operator repository root |
+
+### Image Override Configuration
+
+The default override config at `testfiles/common-templates/image-overrides.conf` maps Dell images to nightly builds from the internal artifactory. Format:
+
+```
+image_name=full_registry_path:tag
+```
+
+Example:
+```
+csi-vxflexos=csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-vxflexos:nightly
+dell-csm-operator=csm.artifactory.cec.lab.emc.com/csm-users/cicd/dell-csm-operator:nightly
+```
+
+### What the Test Validates
+
+1. **Prerequisites** -- container runtime, local registry, cluster connectivity, override source access.
+2. **Create** (`-c`) -- runs the offline bundle script to pull images and create the bundle tarball.
+3. **Prepare** (`-p`) -- extracts the bundle, loads images, pushes to the local registry, and updates YAML files.
+4. **Verification** -- confirms images exist in the local registry and YAML files reference the target registry.
+
+---
+
 ## Developing E2E Tests
 
 ### Adding a New Scenario
@@ -482,3 +570,6 @@ hardcoded version strings in scenario files.
 | `--no-cleanup-ns` to debug | Keeps all test namespaces after the run so you can inspect pods, logs, and events. |
 | Tests show transient "Failed" status then pass | The operator's status calculation has a brief window where DaemonSet/Deployment counts are still converging. The test framework retries and this is expected behavior. |
 | Custom registry tests fail with image pull errors | Ensure the latest CSM version (resolved from `csm-version-mapping.yaml`) has images in your custom registry. |
+| Offline bundle test fails at "Local registry is NOT accessible" | Start a local registry: `podman run -d -p 5000:5000 registry:2` |
+| Offline bundle test fails at "Cluster nodes CANNOT reach" | Ensure all cluster nodes can reach the registry. For insecure registries, configure `/etc/containers/registries.conf` or `/etc/docker/daemon.json` on each node. |
+| Offline bundle test fails at "Cannot pull from override source" | Verify network access to the override source registry (e.g., `csm.artifactory.cec.lab.emc.com`) and check credentials. |

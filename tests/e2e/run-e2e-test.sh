@@ -332,6 +332,7 @@ function usage() {
   echo "  --add-tag=<scenario tag>                     use to specify scenarios to run by one of their tags"
   echo "  --no-cleanup-ns                              skip namespace deletion at the end of the test run"
   echo "  --continue-on-fail                           continue running scenarios after a failure (default: stop on first failure)"
+  echo "  --offline-bundle                              use to run offline bundle create and prepare tests (requires local registry)"
   echo "  --junit-report=<path>                        write JUnit XML report to the given file path"
   echo
   echo "Examples:"
@@ -364,6 +365,9 @@ function usage() {
   echo "  $PROG --minimal --powerstore                  # all minimal powerstore scenarios"
   echo "  $PROG --minimal --powerstore --resiliency     # only minimal powerstore resiliency"
   echo "  $PROG --minimal --auth-proxy              # minimal auth-proxy for all platforms"
+  echo
+  echo "  # Offline bundle tests (requires local registry at localhost:5000)"
+  echo "  $PROG --offline-bundle"
   echo
 
   exit 0
@@ -412,6 +416,8 @@ while getopts ":hcv-:" optchar; do
       export ZONING=true ;;
     sftp)
       export SFTP=true ;;
+    offline-bundle)
+      export OFFLINE_BUNDLE=true ;;
     kube-cfg)
       export KUBECONFIG="${!OPTIND}"
       OPTIND=$((OPTIND + 1))
@@ -512,14 +518,17 @@ export E2E_NS_PROXY="${NS_PREFIX}-proxy-ns"
 ANY_FLAG_SET=false
 for _v in POWERFLEX POWERSCALE POWERMAX POWERSTORE UNITY COSI \
           AUTHORIZATION AUTHORIZATIONPROXYSERVER REPLICATION OBSERVABILITY \
-          RESILIENCY SANITY ZONING; do
+          RESILIENCY SANITY ZONING OFFLINE_BUNDLE; do
   if [[ "${!_v:-}" == "true" ]]; then
     ANY_FLAG_SET=true
     break
   fi
 done
 
-E2E_NAMESPACES+=("$E2E_NS_OPERATOR")
+# Skip operator namespace for offline-bundle only tests
+if [[ "${OFFLINE_BUNDLE:-}" != "true" ]]; then
+  E2E_NAMESPACES+=("$E2E_NS_OPERATOR")
+fi
 
 if [[ "$ANY_FLAG_SET" == "false" ]]; then
   echo "No platform or module flags specified — running everything."

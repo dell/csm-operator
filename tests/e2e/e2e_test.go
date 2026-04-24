@@ -50,7 +50,7 @@ var (
 	// Unlike standard modules (which run when no module filter is given),
 	// scenarios carrying an opt-in tag are skipped unless that tag appears
 	// in the user-specified filter.
-	optInTags = []string{"zoning"}
+	optInTags = []string{"zoning", "offline-bundle"}
 	// optInPlatformTags are platform tags that require an explicit --flag to run.
 	// Unlike standard platforms (which run when no platform filter is given),
 	// scenarios carrying an opt-in platform tag are skipped unless that tag
@@ -205,6 +205,14 @@ func continueOnFailure() bool {
 // Unlike Eventually().Should(BeNil()), it returns an error instead of panicking.
 func pollStep(runner *step.Runner, stepName string, test step.Resource,
 	timeout, poll time.Duration) error {
+	// Skip retries for offline-bundle tests
+	if strings.EqualFold(os.Getenv("OFFLINE_BUNDLE"), "true") {
+		if err := runner.RunStep(stepName, test); err != nil {
+			return fmt.Errorf("offline-bundle test step %q failed: %v", stepName, err)
+		}
+		return nil
+	}
+
 	deadline := time.After(timeout)
 	ticker := time.NewTicker(poll)
 	defer ticker.Stop()
@@ -293,15 +301,24 @@ func TestE2E(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	tagEnvVars := []string{"AUTHORIZATION", "REPLICATION", "OBSERVABILITY", "AUTHORIZATIONPROXYSERVER", "RESILIENCY", "POWERFLEX", "POWERSCALE", "POWERMAX", "POWERSTORE", "UNITY", "SANITY", "ZONING", "COSI"}
+	tagEnvVars := []string{"AUTHORIZATION", "REPLICATION", "OBSERVABILITY", "AUTHORIZATIONPROXYSERVER", "RESILIENCY", "POWERFLEX", "POWERSCALE", "POWERMAX", "POWERSTORE", "UNITY", "SANITY", "ZONING", "COSI", "OFFLINE_BUNDLE"}
 	By("Getting test environment variables")
 	valuesFile := os.Getenv(valuesFileEnvVar)
 	Expect(valuesFile).NotTo(BeEmpty(), "Missing environment variable required for tests. E2E_SCENARIOS_FILE must be set.")
 
+	// Map env var names to scenario tag names. Most are a direct lowercase,
+	// but some use dashes in the scenario YAML while the env var uses underscores.
+	envToTag := map[string]string{
+		"OFFLINE_BUNDLE": "offline-bundle",
+	}
 	for _, tagEnvVar := range tagEnvVars {
 		enabled := os.Getenv(tagEnvVar)
 		if enabled == "true" {
-			tagsSpecified = append(tagsSpecified, strings.ToLower(tagEnvVar))
+			if mapped, ok := envToTag[tagEnvVar]; ok {
+				tagsSpecified = append(tagsSpecified, mapped)
+			} else {
+				tagsSpecified = append(tagsSpecified, strings.ToLower(tagEnvVar))
+			}
 		}
 	}
 

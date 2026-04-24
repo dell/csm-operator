@@ -1833,6 +1833,34 @@ func (step *Step) validateTestEnvironment(_ Resource) error {
 	return nil
 }
 
+func (step *Step) validateKubernetesEnvironment(_ Resource) error {
+	// Validate we can connect to the cluster
+	_, err := step.clientSet.ServerVersion()
+	if err != nil {
+		return fmt.Errorf("failed to connect to Kubernetes cluster: %v", err)
+	}
+
+	fmt.Println("Successfully connected to Kubernetes cluster")
+
+	// Check that CSM operator is not installed using the same approach as validateTestEnvironment
+	operatorNamespace := os.Getenv("OPERATOR_NAMESPACE")
+	if operatorNamespace == "" {
+		operatorNamespace = "dell-csm-operator"
+	}
+
+	pods, err := fpod.GetPodsInNamespace(context.TODO(), step.clientSet, operatorNamespace, map[string]string{})
+	if err != nil {
+		return fmt.Errorf("failed to check pods in namespace [%s]: %v", operatorNamespace, err)
+	}
+
+	if len(pods) > 0 {
+		return fmt.Errorf("CSM operator is installed in namespace [%s] - found %d pods", operatorNamespace, len(pods))
+	}
+
+	fmt.Printf("Verified CSM operator is not installed in namespace [%s]\n", operatorNamespace)
+	return nil
+}
+
 func (step *Step) createPrereqs(res Resource, module string, crNumStr string) error {
 	crNum, _ := strconv.Atoi(crNumStr)
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
