@@ -54,20 +54,26 @@ var (
 	authString        = "karavi-authorization-proxy"
 	operatorNamespace = "dell-csm-operator"
 	quotaLimit        = "100000000"
-	pflexSecretMap    = map[string]string{
+	// #nosec G101 -- test data mapping for environment variable substitution, not hardcoded credentials
+	pflexSecretMap = map[string]string{
 		"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_PROTOCOL": "PFLEX_PROTOCOL", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_NAS": "PFLEX_NAS", "REPLACE_SFTP_REPO_ADDRESS": "PFLEX_SFTP_REPO_ADDRESS", "REPLACE_SFTP_REPO_USER": "PFLEX_SFTP_REPO_USER",
 		"REPLACE_ZONING_USER": "PFLEX_ZONING_USER", "REPLACE_ZONING_PASS": "PFLEX_ZONING_PASS", "REPLACE_ZONING_SYSTEMID": "PFLEX_ZONING_SYSTEMID", "REPLACE_ZONING_ENDPOINT": "PFLEX_ZONING_ENDPOINT", "REPLACE_ZONING_MDM": "PFLEX_ZONING_MDM", "REPLACE_ZONING_POOL": "PFLEX_ZONING_POOL", "REPLACE_ZONING_NAS": "PFLEX_ZONING_NAS",
 		"REPLACE_OIDC_CLIENTID": "PFLEX_OIDC_CLIENTID", "REPLACE_OIDC_CLIENT_SECRET": "PFLEX_OIDC_CLIENT_SECRET", "REPLACE_CIAM_CLIENTID": "PFLEX_CIAM_CLIENTID", "REPLACE_CIAM_CLIENT_SECRET": "PFLEX_CIAM_CLIENT_SECRET", "REPLACE_ISSUER": "PFLEX_ISSUER", "REPLACE_SCOPE": "PFLEX_SCOPE",
 	}
-	pflexAuthSecretMap       = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_PROTOCOL": "PFLEX_PROTOCOL"}
-	pscaleSecretMap          = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT", "REPLACE_MULTI_CLUSTERNAME": "PSCALE_MULTI_CLUSTER", "REPLACE_MULTI_USER": "PSCALE_MULTI_USER", "REPLACE_MULTI_PASS": "PSCALE_MULTI_PASS", "REPLACE_MULTI_ENDPOINT": "PSCALE_MULTI_ENDPOINT", "REPLACE_MULTI_PORT": "PSCALE_MULTI_PORT", "REPLACE_MULTI_AUTH_ENDPOINT": "PSCALE_MULTI_AUTH_ENDPOINT", "REPLACE_MULTI_AUTH_PORT": "PSCALE_MULTI_AUTH_PORT"}
+	// #nosec G101 -- test data mapping for environment variable substitution, not hardcoded credentials
+	pflexAuthSecretMap = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_AUTH_ENDPOINT", "REPLACE_MDM": "PFLEX_MDM", "REPLACE_PROTOCOL": "PFLEX_PROTOCOL"}
+	// #nosec G101 -- test data mapping for environment variable substitution, not hardcoded credentials
+	pscaleSecretMap = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT", "REPLACE_MULTI_CLUSTERNAME": "PSCALE_MULTI_CLUSTER", "REPLACE_MULTI_USER": "PSCALE_MULTI_USER", "REPLACE_MULTI_PASS": "PSCALE_MULTI_PASS", "REPLACE_MULTI_ENDPOINT": "PSCALE_MULTI_ENDPOINT", "REPLACE_MULTI_PORT": "PSCALE_MULTI_PORT", "REPLACE_MULTI_AUTH_ENDPOINT": "PSCALE_MULTI_AUTH_ENDPOINT", "REPLACE_MULTI_AUTH_PORT": "PSCALE_MULTI_AUTH_PORT"}
+	// #nosec G101 -- test data mapping for environment variable substitution, not hardcoded credentials
 	pscaleAuthSecretMap      = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_USER": "PSCALE_USER", "REPLACE_PASS": "PSCALE_PASS", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_PORT": "PSCALE_PORT"}
 	pscaleAuthSidecarMap     = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PSCALE_AUTH_ENDPOINT", "REPLACE_AUTH_PORT": "PSCALE_AUTH_PORT", "REPLACE_PORT": "PSCALE_PORT"}
 	pscaleEphemeralVolumeMap = map[string]string{"REPLACE_CLUSTERNAME": "PSCALE_CLUSTER", "REPLACE_ENDPOINT": "PSCALE_ENDPOINT"}
 	pflexEphemeralVolumeMap  = map[string]string{"REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_POOL": "PFLEX_POOL", "REPLACE_VOLUME": "PFLEX_VOLUME"}
-	pflexAuthSidecarMap      = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PFLEX_AUTH_ENDPOINT"}
-	pmaxCredMap              = map[string]string{"REPLACE_USER": "PMAX_USER_ENCODED", "REPLACE_PASS": "PMAX_PASS_ENCODED"}
-	pmaxSecretMap            = map[string]string{
+	// #nosec G101 -- test data mapping for environment variable substitution, not hardcoded credentials
+	pflexAuthSidecarMap = map[string]string{"REPLACE_USER": "PFLEX_USER", "REPLACE_PASS": "PFLEX_PASS", "REPLACE_SYSTEMID": "PFLEX_SYSTEMID", "REPLACE_ENDPOINT": "PFLEX_ENDPOINT", "REPLACE_AUTH_ENDPOINT": "PFLEX_AUTH_ENDPOINT"}
+	// #nosec G101 -- test data mapping for environment variable substitution, not hardcoded credentials
+	pmaxCredMap   = map[string]string{"REPLACE_USER": "PMAX_USER_ENCODED", "REPLACE_PASS": "PMAX_PASS_ENCODED"}
+	pmaxSecretMap = map[string]string{
 		"REPLACE_USERNAME": "PMAX_USER", "REPLACE_PASSWORD": "PMAX_PASS", "REPLACE_SYSTEMID": "PMAX_SYSTEMID", "REPLACE_ENDPOINT": "PMAX_ENDPOINT",
 		"REPLACE_ZONING_USERNAME": "PMAX_ZONING_USER", "REPLACE_ZONING_PASSWORD": "PMAX_ZONING_PASS", "REPLACE_ZONING_SYSTEMID": "PMAX_ZONING_SYSTEMID", "REPLACE_ZONING_ENDPOINT": "PMAX_ZONING_ENDPOINT",
 	}
@@ -918,12 +924,14 @@ func (step *Step) generateAndCreateSftpSecrets(_ Resource, privateKeyPath, priva
 	if err != nil {
 		return fmt.Errorf("failed to read private key: %v", err)
 	}
+	// #nosec G703 -- writing to temporary directory for test automation
 	if err := os.WriteFile(privateKeyFile, privateKeyData, 0o600); err != nil {
 		return fmt.Errorf("failed to write private key to temp dir: %v", err)
 	}
 
 	// Run SFTP session to populate known_hosts
 	knownHostsPath := filepath.Join(sshDir, "known_hosts")
+	// #nosec G702 -- test automation tool using external command with controlled arguments
 	cmd := exec.Command("sftp",
 		"-o", "UserKnownHostsFile="+knownHostsPath,
 		"-o", "StrictHostKeyChecking=accept-new",
@@ -951,9 +959,11 @@ func (step *Step) generateAndCreateSftpSecrets(_ Resource, privateKeyPath, priva
 	// Write key files to disk for secret creation
 	privateOut := filepath.Join(tmpDir, "sftp-secret-private.crt")
 	publicOut := filepath.Join(tmpDir, "sftp-secret-public.crt")
+	// #nosec G703 -- writing to temporary directory for test automation
 	if err := os.WriteFile(privateOut, privateKeyData, 0o600); err != nil {
 		return fmt.Errorf("failed to write private secret file: %v", err)
 	}
+	// #nosec G703 -- writing to temporary directory for test automation
 	if err := os.WriteFile(publicOut, []byte(hostPubKey), 0o600); err != nil {
 		return fmt.Errorf("failed to write public secret file: %v", err)
 	}
@@ -1108,6 +1118,7 @@ func storageClassExists(name string) bool {
 
 func replaceInFile(old, new, templateFile string) error { // TODO delete
 	cmdString := "s|" + old + "|" + new + "|g"
+	// #nosec G702 -- test automation tool using sed with controlled arguments
 	cmd := exec.Command("sed", "-i", cmdString, templateFile) // #nosec G204
 	err := cmd.Run()
 	if err != nil {
@@ -1725,6 +1736,7 @@ func (step *Step) AuthorizationV2Resources(res Resource, storageType, driver, dr
 
 	// Generate tenant token
 	fmt.Println("=== Generating token ===\n ")
+	// #nosec G702 -- test automation tool using dellctl with controlled arguments
 	cmd = exec.Command("dellctl",
 		"generate", "token",
 		"--admin-token", "temp/adminToken.yaml",
@@ -1742,11 +1754,13 @@ func (step *Step) AuthorizationV2Resources(res Resource, storageType, driver, dr
 	// Apply token to CSI driver host
 	fmt.Println("=== Applying token ===\n ")
 
-	err = os.WriteFile("temp/token.yaml", b, 0o644) // #nosec G303, G306
+	// #nosec G703 G306 -- writing test token to temporary directory
+	err = os.WriteFile("temp/token.yaml", b, 0o644)
 	if err != nil {
 		return fmt.Errorf("failed to write tenant token: %v\nErrMessage:\n%s", err, string(b))
 	}
 
+	// #nosec G702 -- test automation tool using kubectl with controlled arguments
 	cmd = exec.Command("kubectl", "apply",
 		"-f", "temp/token.yaml",
 		"-n", driverNamespace,

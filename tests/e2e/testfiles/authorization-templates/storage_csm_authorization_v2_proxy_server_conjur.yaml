@@ -66,6 +66,17 @@ spec:
               # additional annotations for the proxy-server ingress
               annotations: {}
         - name: redis
+          # Redis credentials configuration:
+          # Choose ONE of the following methods:
+          # 1. Direct credentials (redisUsername and redisPassword)
+          # 2. Secret Store CSI driver (redisSecretProviderClass)
+          # Do not use both methods at the same time.
+
+          # Direct credentials method (uncomment to use):
+          # redisUsername: "test"
+          # redisPassword: "test"
+
+          # Secret Store CSI driver method (uncomment to use):
           # Optional Redis secret configuration:
           # If using Secret Store CSI driver, specify the SecretProviderClass for Redis credentials.
           # Otherwise, a default Kubernetes secret will be used.
