@@ -282,6 +282,10 @@ spec:
               value: <X_CSI_PROBE_TIMEOUT>
             - name: X_CSI_AUTH_TYPE
               value: <X_CSI_AUTH_TYPE>
+            - name: X_CSI_DRIVER_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi

@@ -164,6 +164,10 @@ spec:
               value: <X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT>
             - name: X_CSI_SPACE_RECLAMATION_TIMEOUT
               value: <X_CSI_SPACE_RECLAMATION_TIMEOUT>
+            - name: X_CSI_DRIVER_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
           volumeMounts:
             - name: driver-path
               mountPath: <KUBELET_CONFIG_DIR>/plugins/vxflexos.emc.dell.com
