@@ -70,6 +70,8 @@ spec:
               annotations: {}
 
         - name: redis
+          redisUsername: "test"
+          redisPassword: "test"
           redis: redis:7.2.4-alpine
           commander: rediscommander/redis-commander:latest
           redisName: redis-csm

@@ -403,6 +403,14 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization KV Engine Path"
 	KvEnginePath string `json:"kvEnginePath,omitempty" yaml:"kvEnginePath,omitempty"`
 
+	// RedisUsername is the username for Redis authentication
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Username"
+	RedisUsername string `json:"redisUsername,omitempty" yaml:"redisUsername,omitempty"`
+
+	// RedisPassword is the password for Redis authentication
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Password"
+	RedisPassword string `json:"redisPassword,omitempty" yaml:"redisPassword,omitempty"`
+
 	// RedisName is the name of the redis statefulset
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis StatefulSet Name"
 	RedisName string `json:"redisName,omitempty" yaml:"redisName,omitempty"`

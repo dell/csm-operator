@@ -71,6 +71,8 @@ spec:
                 "label": "value"
 
         - name: redis
+          redisUsername: "test"
+          redisPassword: "test"
           redis: redis:6.0.8-alpine
           commander: rediscommander/redis-commander:latest
           redisName: redis-csm

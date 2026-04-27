@@ -109,9 +109,9 @@ spec:
       - description: Name is the name of Container
         displayName: Container Name
         path: client.common.name
-      - description: NodeSelector is a selector which must be true for the pod to
-          fit on a node. Selector which must match a node's labels for the pod to
-          be scheduled on that node.
+      - description: |-
+          NodeSelector is a selector which must be true for the pod to fit on a node.
+          Selector which must match a node's labels for the pod to be scheduled on that node.
         displayName: NodeSelector
         path: client.common.nodeSelector
       - description: ObjectStoreSecretName is the name of the secret for the object
@@ -158,9 +158,15 @@ spec:
       - description: RedisName is the name of the redis statefulset
         displayName: Redis StatefulSet Name
         path: client.common.redisName
+      - description: RedisPassword is the password for Redis authentication
+        displayName: Redis Password
+        path: client.common.redisPassword
       - description: RedisReplicas is the number of replicas for the redis deployment
         displayName: Redis Deployment Replicas
         path: client.common.redisReplicas
+      - description: RedisUsername is the username for Redis authentication
+        displayName: Redis Username
+        path: client.common.redisUsername
       - description: ReplicaCount is the replica count for app mobility
         displayName: Application Mobility Replica Count
         path: client.common.replicaCount
@@ -301,9 +307,9 @@ spec:
       - description: Name is the name of Container
         displayName: Container Name
         path: client.initContainers[0].name
-      - description: NodeSelector is a selector which must be true for the pod to
-          fit on a node. Selector which must match a node's labels for the pod to
-          be scheduled on that node.
+      - description: |-
+          NodeSelector is a selector which must be true for the pod to fit on a node.
+          Selector which must match a node's labels for the pod to be scheduled on that node.
         displayName: NodeSelector
         path: client.initContainers[0].nodeSelector
       - description: ObjectStoreSecretName is the name of the secret for the object
@@ -350,9 +356,15 @@ spec:
       - description: RedisName is the name of the redis statefulset
         displayName: Redis StatefulSet Name
         path: client.initContainers[0].redisName
+      - description: RedisPassword is the password for Redis authentication
+        displayName: Redis Password
+        path: client.initContainers[0].redisPassword
       - description: RedisReplicas is the number of replicas for the redis deployment
         displayName: Redis Deployment Replicas
         path: client.initContainers[0].redisReplicas
+      - description: RedisUsername is the username for Redis authentication
+        displayName: Redis Username
+        path: client.initContainers[0].redisUsername
       - description: ReplicaCount is the replica count for app mobility
         displayName: Application Mobility Replica Count
         path: client.initContainers[0].replicaCount
@@ -482,9 +494,9 @@ spec:
       - description: Name is the name of Container
         displayName: Container Name
         path: client.sideCars[0].name
-      - description: NodeSelector is a selector which must be true for the pod to
-          fit on a node. Selector which must match a node's labels for the pod to
-          be scheduled on that node.
+      - description: |-
+          NodeSelector is a selector which must be true for the pod to fit on a node.
+          Selector which must match a node's labels for the pod to be scheduled on that node.
         displayName: NodeSelector
         path: client.sideCars[0].nodeSelector
       - description: ObjectStoreSecretName is the name of the secret for the object
@@ -531,9 +543,15 @@ spec:
       - description: RedisName is the name of the redis statefulset
         displayName: Redis StatefulSet Name
         path: client.sideCars[0].redisName
+      - description: RedisPassword is the password for Redis authentication
+        displayName: Redis Password
+        path: client.sideCars[0].redisPassword
       - description: RedisReplicas is the number of replicas for the redis deployment
         displayName: Redis Deployment Replicas
         path: client.sideCars[0].redisReplicas
+      - description: RedisUsername is the username for Redis authentication
+        displayName: Redis Username
+        path: client.sideCars[0].redisUsername
       - description: ReplicaCount is the replica count for app mobility
         displayName: Application Mobility Replica Count
         path: client.sideCars[0].replicaCount
@@ -688,9 +706,9 @@ spec:
       - description: Name is the name of Container
         displayName: Container Name
         path: driver.common.name
-      - description: NodeSelector is a selector which must be true for the pod to
-          fit on a node. Selector which must match a node's labels for the pod to
-          be scheduled on that node.
+      - description: |-
+          NodeSelector is a selector which must be true for the pod to fit on a node.
+          Selector which must match a node's labels for the pod to be scheduled on that node.
         displayName: NodeSelector
         path: driver.common.nodeSelector
       - description: ObjectStoreSecretName is the name of the secret for the object
@@ -737,9 +755,15 @@ spec:
       - description: RedisName is the name of the redis statefulset
         displayName: Redis StatefulSet Name
         path: driver.common.redisName
+      - description: RedisPassword is the password for Redis authentication
+        displayName: Redis Password
+        path: driver.common.redisPassword
       - description: RedisReplicas is the number of replicas for the redis deployment
         displayName: Redis Deployment Replicas
         path: driver.common.redisReplicas
+      - description: RedisUsername is the username for Redis authentication
+        displayName: Redis Username
+        path: driver.common.redisUsername
       - description: ReplicaCount is the replica count for app mobility
         displayName: Application Mobility Replica Count
         path: driver.common.replicaCount
@@ -872,9 +896,9 @@ spec:
       - description: Name is the name of Container
         displayName: Container Name
         path: driver.controller.name
-      - description: NodeSelector is a selector which must be true for the pod to
-          fit on a node. Selector which must match a node's labels for the pod to
-          be scheduled on that node.
+      - description: |-
+          NodeSelector is a selector which must be true for the pod to fit on a node.
+          Selector which must match a node's labels for the pod to be scheduled on that node.
         displayName: NodeSelector
         path: driver.controller.nodeSelector
       - description: ObjectStoreSecretName is the name of the secret for the object
@@ -921,9 +945,15 @@ spec:
       - description: RedisName is the name of the redis statefulset
         displayName: Redis StatefulSet Name
         path: driver.controller.redisName
+      - description: RedisPassword is the password for Redis authentication
+        displayName: Redis Password
+        path: driver.controller.redisPassword
       - description: RedisReplicas is the number of replicas for the redis deployment
         displayName: Redis Deployment Replicas
         path: driver.controller.redisReplicas
+      - description: RedisUsername is the username for Redis authentication
+        displayName: Redis Username
+        path: driver.controller.redisUsername
       - description: ReplicaCount is the replica count for app mobility
         displayName: Application Mobility Replica Count
         path: driver.controller.replicaCount
@@ -1068,9 +1098,9 @@ spec:
       - description: Name is the name of Container
         displayName: Container Name
         path: driver.initContainers[0].name
-      - description: NodeSelector is a selector which must be true for the pod to
-          fit on a node. Selector which must match a node's labels for the pod to
-          be scheduled on that node.
+      - description: |-
+          NodeSelector is a selector which must be true for the pod to fit on a node.
+          Selector which must match a node's labels for the pod to be scheduled on that node.
         displayName: NodeSelector
         path: driver.initContainers[0].nodeSelector
       - description: ObjectStoreSecretName is the name of the secret for the object
@@ -1117,9 +1147,15 @@ spec:
       - description: RedisName is the name of the redis statefulset
         displayName: Redis StatefulSet Name
         path: driver.initContainers[0].redisName
+      - description: RedisPassword is the password for Redis authentication
+        displayName: Redis Password
+        path: driver.initContainers[0].redisPassword
       - description: RedisReplicas is the number of replicas for the redis deployment
         displayName: Redis Deployment Replicas
         path: driver.initContainers[0].redisReplicas
+      - description: RedisUsername is the username for Redis authentication
+        displayName: Redis Username
+        path: driver.initContainers[0].redisUsername
       - description: ReplicaCount is the replica count for app mobility
         displayName: Application Mobility Replica Count
         path: driver.initContainers[0].replicaCount
@@ -1249,9 +1285,9 @@ spec:
       - description: Name is the name of Container
         displayName: Container Name
         path: driver.node.name
-      - description: NodeSelector is a selector which must be true for the pod to
-          fit on a node. Selector which must match a node's labels for the pod to
-          be scheduled on that node.
+      - description: |-
+          NodeSelector is a selector which must be true for the pod to fit on a node.
+          Selector which must match a node's labels for the pod to be scheduled on that node.
         displayName: NodeSelector
         path: driver.node.nodeSelector
       - description: ObjectStoreSecretName is the name of the secret for the object
@@ -1298,9 +1334,15 @@ spec:
       - description: RedisName is the name of the redis statefulset
         displayName: Redis StatefulSet Name
         path: driver.node.redisName
+      - description: RedisPassword is the password for Redis authentication
+        displayName: Redis Password
+        path: driver.node.redisPassword
       - description: RedisReplicas is the number of replicas for the redis deployment
         displayName: Redis Deployment Replicas
         path: driver.node.redisReplicas
+      - description: RedisUsername is the username for Redis authentication
+        displayName: Redis Username
+        path: driver.node.redisUsername
       - description: ReplicaCount is the replica count for app mobility
         displayName: Application Mobility Replica Count
         path: driver.node.replicaCount
@@ -1433,9 +1475,9 @@ spec:
       - description: Name is the name of Container
         displayName: Container Name
         path: driver.sideCars[0].name
-      - description: NodeSelector is a selector which must be true for the pod to
-          fit on a node. Selector which must match a node's labels for the pod to
-          be scheduled on that node.
+      - description: |-
+          NodeSelector is a selector which must be true for the pod to fit on a node.
+          Selector which must match a node's labels for the pod to be scheduled on that node.
         displayName: NodeSelector
         path: driver.sideCars[0].nodeSelector
       - description: ObjectStoreSecretName is the name of the secret for the object
@@ -1482,9 +1524,15 @@ spec:
       - description: RedisName is the name of the redis statefulset
         displayName: Redis StatefulSet Name
         path: driver.sideCars[0].redisName
+      - description: RedisPassword is the password for Redis authentication
+        displayName: Redis Password
+        path: driver.sideCars[0].redisPassword
       - description: RedisReplicas is the number of replicas for the redis deployment
         displayName: Redis Deployment Replicas
         path: driver.sideCars[0].redisReplicas
+      - description: RedisUsername is the username for Redis authentication
+        displayName: Redis Username
+        path: driver.sideCars[0].redisUsername
       - description: ReplicaCount is the replica count for app mobility
         displayName: Application Mobility Replica Count
         path: driver.sideCars[0].replicaCount
@@ -1627,9 +1675,9 @@ spec:
       - description: Name is the name of Container
         displayName: Container Name
         path: modules[0].components[0].name
-      - description: NodeSelector is a selector which must be true for the pod to
-          fit on a node. Selector which must match a node's labels for the pod to
-          be scheduled on that node.
+      - description: |-
+          NodeSelector is a selector which must be true for the pod to fit on a node.
+          Selector which must match a node's labels for the pod to be scheduled on that node.
         displayName: NodeSelector
         path: modules[0].components[0].nodeSelector
       - description: ObjectStoreSecretName is the name of the secret for the object
@@ -1676,9 +1724,15 @@ spec:
       - description: RedisName is the name of the redis statefulset
         displayName: Redis StatefulSet Name
         path: modules[0].components[0].redisName
+      - description: RedisPassword is the password for Redis authentication
+        displayName: Redis Password
+        path: modules[0].components[0].redisPassword
       - description: RedisReplicas is the number of replicas for the redis deployment
         displayName: Redis Deployment Replicas
         path: modules[0].components[0].redisReplicas
+      - description: RedisUsername is the username for Redis authentication
+        displayName: Redis Username
+        path: modules[0].components[0].redisUsername
       - description: ReplicaCount is the replica count for app mobility
         displayName: Application Mobility Replica Count
         path: modules[0].components[0].replicaCount
@@ -1815,9 +1869,9 @@ spec:
       - description: Name is the name of Container
         displayName: Container Name
         path: modules[0].initContainer[0].name
-      - description: NodeSelector is a selector which must be true for the pod to
-          fit on a node. Selector which must match a node's labels for the pod to
-          be scheduled on that node.
+      - description: |-
+          NodeSelector is a selector which must be true for the pod to fit on a node.
+          Selector which must match a node's labels for the pod to be scheduled on that node.
         displayName: NodeSelector
         path: modules[0].initContainer[0].nodeSelector
       - description: ObjectStoreSecretName is the name of the secret for the object
@@ -1864,9 +1918,15 @@ spec:
       - description: RedisName is the name of the redis statefulset
         displayName: Redis StatefulSet Name
         path: modules[0].initContainer[0].redisName
+      - description: RedisPassword is the password for Redis authentication
+        displayName: Redis Password
+        path: modules[0].initContainer[0].redisPassword
       - description: RedisReplicas is the number of replicas for the redis deployment
         displayName: Redis Deployment Replicas
         path: modules[0].initContainer[0].redisReplicas
+      - description: RedisUsername is the username for Redis authentication
+        displayName: Redis Username
+        path: modules[0].initContainer[0].redisUsername
       - description: ReplicaCount is the replica count for app mobility
         displayName: Application Mobility Replica Count
         path: modules[0].initContainer[0].replicaCount

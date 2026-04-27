@@ -292,9 +292,15 @@ spec:
                       redisName:
                         description: RedisName is the name of the redis statefulset
                         type: string
+                      redisPassword:
+                        description: RedisPassword is the password for Redis authentication
+                        type: string
                       redisReplicas:
                         description: RedisReplicas is the number of replicas for the redis deployment
                         type: integer
+                      redisUsername:
+                        description: RedisUsername is the username for Redis authentication
+                        type: string
                       replicaCount:
                         description: ReplicaCount is the replica count for app mobility
                         type: string
@@ -624,9 +630,15 @@ spec:
                         redisName:
                           description: RedisName is the name of the redis statefulset
                           type: string
+                        redisPassword:
+                          description: RedisPassword is the password for Redis authentication
+                          type: string
                         redisReplicas:
                           description: RedisReplicas is the number of replicas for the redis deployment
                           type: integer
+                        redisUsername:
+                          description: RedisUsername is the username for Redis authentication
+                          type: string
                         replicaCount:
                           description: ReplicaCount is the replica count for app mobility
                           type: string
@@ -945,9 +957,15 @@ spec:
                         redisName:
                           description: RedisName is the name of the redis statefulset
                           type: string
+                        redisPassword:
+                          description: RedisPassword is the password for Redis authentication
+                          type: string
                         redisReplicas:
                           description: RedisReplicas is the number of replicas for the redis deployment
                           type: integer
+                        redisUsername:
+                          description: RedisUsername is the username for Redis authentication
+                          type: string
                         replicaCount:
                           description: ReplicaCount is the replica count for app mobility
                           type: string
@@ -1356,9 +1374,15 @@ spec:
                       redisName:
                         description: RedisName is the name of the redis statefulset
                         type: string
+                      redisPassword:
+                        description: RedisPassword is the password for Redis authentication
+                        type: string
                       redisReplicas:
                         description: RedisReplicas is the number of replicas for the redis deployment
                         type: integer
+                      redisUsername:
+                        description: RedisUsername is the username for Redis authentication
+                        type: string
                       replicaCount:
                         description: ReplicaCount is the replica count for app mobility
                         type: string
@@ -1677,9 +1701,15 @@ spec:
                       redisName:
                         description: RedisName is the name of the redis statefulset
                         type: string
+                      redisPassword:
+                        description: RedisPassword is the password for Redis authentication
+                        type: string
                       redisReplicas:
                         description: RedisReplicas is the number of replicas for the redis deployment
                         type: integer
+                      redisUsername:
+                        description: RedisUsername is the username for Redis authentication
+                        type: string
                       replicaCount:
                         description: ReplicaCount is the replica count for app mobility
                         type: string
@@ -2017,9 +2047,15 @@ spec:
                         redisName:
                           description: RedisName is the name of the redis statefulset
                           type: string
+                        redisPassword:
+                          description: RedisPassword is the password for Redis authentication
+                          type: string
                         redisReplicas:
                           description: RedisReplicas is the number of replicas for the redis deployment
                           type: integer
+                        redisUsername:
+                          description: RedisUsername is the username for Redis authentication
+                          type: string
                         replicaCount:
                           description: ReplicaCount is the replica count for app mobility
                           type: string
@@ -2336,9 +2372,15 @@ spec:
                       redisName:
                         description: RedisName is the name of the redis statefulset
                         type: string
+                      redisPassword:
+                        description: RedisPassword is the password for Redis authentication
+                        type: string
                       redisReplicas:
                         description: RedisReplicas is the number of replicas for the redis deployment
                         type: integer
+                      redisUsername:
+                        description: RedisUsername is the username for Redis authentication
+                        type: string
                       replicaCount:
                         description: ReplicaCount is the replica count for app mobility
                         type: string
@@ -2660,9 +2702,15 @@ spec:
                         redisName:
                           description: RedisName is the name of the redis statefulset
                           type: string
+                        redisPassword:
+                          description: RedisPassword is the password for Redis authentication
+                          type: string
                         redisReplicas:
                           description: RedisReplicas is the number of replicas for the redis deployment
                           type: integer
+                        redisUsername:
+                          description: RedisUsername is the username for Redis authentication
+                          type: string
                         replicaCount:
                           description: ReplicaCount is the replica count for app mobility
                           type: string
@@ -3005,9 +3053,15 @@ spec:
                           redisName:
                             description: RedisName is the name of the redis statefulset
                             type: string
+                          redisPassword:
+                            description: RedisPassword is the password for Redis authentication
+                            type: string
                           redisReplicas:
                             description: RedisReplicas is the number of replicas for the redis deployment
                             type: integer
+                          redisUsername:
+                            description: RedisUsername is the username for Redis authentication
+                            type: string
                           replicaCount:
                             description: ReplicaCount is the replica count for app mobility
                             type: string
@@ -3335,9 +3389,15 @@ spec:
                           redisName:
                             description: RedisName is the name of the redis statefulset
                             type: string
+                          redisPassword:
+                            description: RedisPassword is the password for Redis authentication
+                            type: string
                           redisReplicas:
                             description: RedisReplicas is the number of replicas for the redis deployment
                             type: integer
+                          redisUsername:
+                            description: RedisUsername is the username for Redis authentication
+                            type: string
                           replicaCount:
                             description: ReplicaCount is the replica count for app mobility
                             type: string
