@@ -4,7 +4,7 @@ metadata:
   name: authorization
   namespace: authorization
 spec:
-  version: v1.16.2
+  version: v1.16.1
   modules:
     # Authorization: enable csm-authorization proxy server for RBAC
     - name: authorization-proxy-server
@@ -62,18 +62,23 @@ spec:
           # openTelemetryCollectorAddress: the OTLP receiving endpoint using gRPC
           openTelemetryCollectorAddress: ""
         - name: redis
-          # Optional Redis secret configuration:
-          # If using Secret Store CSI driver, specify the SecretProviderClass for Redis credentials.
-          # Otherwise, a default Kubernetes secret will be used.
-          redisSecretProviderClass:
+          # Redis credentials are required and can be provided in one of two ways:
+          # 1. Directly via redisUsername/redisPassword (a Kubernetes secret will be created automatically)
+          # 2. Via a Secret Store CSI driver (specify the SecretProviderClass details below)
+          #
+          # Option 1: Provide credentials directly
+          redisUsername: ""
+          redisPassword: ""
+          # Option 2: Use a Secret Store CSI driver
+          # redisSecretProviderClass:
             # Name of the SecretProviderClass that holds the Redis secretObject.
-            - secretProviderClassName: ""
+            # - secretProviderClassName: ""
               # Name of the Kubernetes secret (created by the Secret Store CSI driver) that contains Redis credentials.
-              redisSecretName: ""
+              # redisSecretName: ""
               # Key in the secret that stores the Redis username.
-              redisUsernameKey: ""
+              # redisUsernameKey: ""
               # Key in the secret that stores the Redis password.
-              redisPasswordKey: ""
+              # redisPasswordKey: ""
               # Optional paths to the Conjur secrets that store the Redis username and password
               # conjur:
               #  usernamePath: secrets/redis-username
