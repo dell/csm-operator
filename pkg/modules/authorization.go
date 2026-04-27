@@ -119,6 +119,10 @@ const (
 	AuthRedisSentinelValues = "<AUTHORIZATION_REDIS_SENTINEL_VALUES>"
 	// AuthRedisReplicas -
 	AuthRedisReplicas = "<AUTHORIZATION_REDIS_REPLICAS>"
+	// AuthRedisUsername -
+	AuthRedisUsername = "<AUTHORIZATION_COMMANDER_USER>"
+	// AuthRedisPassword -
+	AuthRedisPassword = "<AUTHORIZATION_REDIS_PASSWORD>"
 
 	// AuthCert - for tls secret
 	AuthCert = "<BASE64_CERTIFICATE>"
@@ -604,6 +608,8 @@ func getAuthorizationServerDeployment(op utils.OperatorConfig, cr csmv1.Containe
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommander, component.RedisCommander)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisSentinel, component.Sentinel)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisReplicas, strconv.Itoa(component.RedisReplicas))
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisUsername, component.RedisUsername)
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisPassword, component.RedisPassword)
 			YamlString = strings.ReplaceAll(YamlString, AuthCSMNameSpace, cr.Namespace)
 
 			var sentinelValues []string
