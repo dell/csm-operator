@@ -50,11 +50,11 @@ metadata:
   name: dell-csm-operator-application-mobility-velero-server
 rules:
   - apiGroups:
-      - "*"
+      - '*'
     resources:
-      - "*"
+      - '*'
     verbs:
-      - "*"
+      - '*'
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -111,7 +111,7 @@ rules:
       - services
       - services/finalizers
     verbs:
-      - "*"
+      - '*'
   - apiGroups:
       - ""
     resourceNames:
@@ -172,11 +172,11 @@ rules:
       - update
       - watch
   - apiGroups:
-      - "*"
+      - '*'
     resourceNames:
       - application-mobility-velero-server
     resources:
-      - "*"
+      - '*'
     verbs:
       - "*"
   - apiGroups:
@@ -198,11 +198,7 @@ rules:
       - challenges
       - challenges/status
     verbs:
-      - get
-      - list
-      - patch
-      - update
-      - watch
+      - '*'
   - apiGroups:
       - acme.cert-manager.io
     resources:
@@ -221,21 +217,24 @@ rules:
       - acme.cert-manager.io
     resources:
       - challenges/finalizers
+      - orders/finalizers
     verbs:
       - update
   - apiGroups:
       - acme.cert-manager.io
     resources:
-      - clusterissuers
-      - issuers
+      - challenges/status
     verbs:
       - get
       - list
+      - patch
+      - update
       - watch
   - apiGroups:
       - acme.cert-manager.io
     resources:
-      - orders
+      - clusterissuers
+      - issuers
     verbs:
       - create
       - delete
@@ -252,10 +251,11 @@ rules:
       - update
   - apiGroups:
       - acme.cert-manager.io
+      - cert-manager.io
     resources:
-      - orders/finalizers
+      - '*/*'
     verbs:
-      - update
+      - '*'
   - apiGroups:
       - admissionregistration.k8s.io
     resources:
@@ -274,7 +274,7 @@ rules:
     resources:
       - customresourcedefinitions
     verbs:
-      - "*"
+      - '*'
   - apiGroups:
       - apiextensions.k8s.io
     resources:
@@ -346,6 +346,7 @@ rules:
       - create
   - apiGroups:
       - authorization.k8s.io
+      - rbac.authorization.k8s.io
     resources:
       - subjectaccessreviews
     verbs:
@@ -374,7 +375,7 @@ rules:
       - clusterissuers
       - issuers
     verbs:
-      - "*"
+      - '*'
   - apiGroups:
       - cert-manager.io
     resources:
@@ -406,7 +407,13 @@ rules:
       - cert-manager.io
     resources:
       - clusterissuers
+    verbs:
+      - '*'
+  - apiGroups:
+      - cert-manager.io
+    resources:
       - clusterissuers/status
+      - issuers/status
     verbs:
       - get
       - list
@@ -430,11 +437,7 @@ rules:
       - issuers
       - issuers/status
     verbs:
-      - get
-      - list
-      - patch
-      - update
-      - watch
+      - '*'
   - apiGroups:
       - cert-manager.io
     resourceNames:
@@ -583,6 +586,7 @@ rules:
       - csmtenants/status
     verbs:
       - get
+      - list
       - patch
       - update
   - apiGroups:
@@ -598,12 +602,16 @@ rules:
   - apiGroups:
       - csm-authorization.storage.dell.com
     resources:
+      - csmroles/finalizers
+      - csmtenants/finalizers
       - storages/finalizers
     verbs:
       - update
   - apiGroups:
       - csm-authorization.storage.dell.com
     resources:
+      - csmroles/status
+      - csmtenants/status
       - storages/status
     verbs:
       - get
@@ -752,6 +760,7 @@ rules:
       - mobility.storage.dell.com
     resources:
       - restores
+      - schedules
     verbs:
       - create
       - delete
@@ -763,12 +772,20 @@ rules:
   - apiGroups:
       - mobility.storage.dell.com
     resources:
+      - backups/finalizers
+      - clusterconfigs/finalizers
+      - podvolumebackups/finalizers
+      - podvolumerestores/finalizers
       - restores/finalizers
     verbs:
       - update
   - apiGroups:
       - mobility.storage.dell.com
     resources:
+      - backups/status
+      - clusterconfigs/status
+      - podvolumebackups/status
+      - podvolumerestores/status
       - restores/status
     verbs:
       - get
@@ -817,7 +834,7 @@ rules:
     resources:
       - ingresses
     verbs:
-      - "*"
+      - '*'
   - apiGroups:
       - networking.k8s.io
     resources:
@@ -838,6 +855,7 @@ rules:
     resources:
       - clusterrolebindings
       - clusterroles
+      - clusterroles/finalizers
       - replicasets
       - rolebindings
     verbs:
@@ -950,6 +968,7 @@ rules:
   - apiGroups:
       - snapshot.storage.k8s.io
     resources:
+      - volumesnapshotcontents/status
       - volumesnapshots/status
     verbs:
       - get
@@ -987,6 +1006,8 @@ rules:
       - storage.k8s.io
     resources:
       - csidrivers
+      - csistoragecapacities
+      - volumeattachments
     verbs:
       - create
       - delete
@@ -1062,6 +1083,9 @@ rules:
       - velero.io
     resources:
       - backups
+      - podvolumebackups
+      - podvolumerestores
+      - restores
     verbs:
       - create
       - delete
@@ -1074,6 +1098,7 @@ rules:
       - velero.io
     resources:
       - backups/finalizers
+      - podvolumebackups/finalizers
     verbs:
       - update
   - apiGroups:
