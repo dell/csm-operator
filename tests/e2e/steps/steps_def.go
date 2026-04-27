@@ -252,7 +252,10 @@ func GetTestResources(valuesFilePath string) ([]Resource, error) {
 }
 
 func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 
 	crFilePath := res.Scenario.Paths[crNum-1]
@@ -280,7 +283,10 @@ func (step *Step) applyCustomResource(res Resource, crNumStr string) error {
 }
 
 func (step *Step) applyAuthorizationConjur(res Resource, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 
 	crFilePath := res.Scenario.Paths[crNum-1]
@@ -394,10 +400,16 @@ STORAGE_CAPACITY_POLL_INTERVAL: 30s`
 }
 
 func (step *Step) upgradeCustomResource(res Resource, oldCrNumStr, newCrNumStr string) error {
-	oldCrNum, _ := strconv.Atoi(oldCrNumStr)
+	oldCrNum, err := parseIndex(oldCrNumStr)
+	if err != nil {
+		return err
+	}
 	oldCr := res.CustomResource[oldCrNum-1].(csmv1.ContainerStorageModule)
 
-	newCrNum, _ := strconv.Atoi(newCrNumStr)
+	newCrNum, err := parseIndex(newCrNumStr)
+	if err != nil {
+		return err
+	}
 	newCr := res.CustomResource[newCrNum-1].(csmv1.ContainerStorageModule)
 
 	time.Sleep(60 * time.Second)
@@ -443,10 +455,13 @@ func (step *Step) uninstallThirdPartyModule(res Resource, thirdPartyModule strin
 }
 
 func (step *Step) deleteCustomResource(res Resource, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	found := new(csmv1.ContainerStorageModule)
-	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+	err = step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
 		Name:      cr.Name,
 	}, found,
@@ -461,10 +476,13 @@ func (step *Step) deleteCustomResource(res Resource, crNumStr string) error {
 }
 
 func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	found := new(csmv1.ContainerStorageModule)
-	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+	err = step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
 		Name:      cr.Name,
 	}, found)
@@ -479,7 +497,10 @@ func (step *Step) validateCustomResourceStatus(res Resource, crNumStr string) er
 }
 
 func (step *Step) validateContainerArg(res Resource, crNumStr string, arg string, container string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	dp, err := getDriverDeployment(cr, step.ctrlClient)
 	if err != nil {
@@ -506,7 +527,10 @@ func (step *Step) validateContainerArg(res Resource, crNumStr string, arg string
 }
 
 func (step *Step) validateDeploymentContainerImage(res Resource, crNumStr string, expectedImage string, container string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	staticDp, err := getDriverDeployment(cr, step.ctrlClient)
 	if err != nil {
@@ -525,7 +549,10 @@ func (step *Step) validateDeploymentContainerImage(res Resource, crNumStr string
 }
 
 func (step *Step) validateDeploymentContainerImageContains(res Resource, crNumStr string, expectedSubstring string, container string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	staticDp, err := getDriverDeployment(cr, step.ctrlClient)
 	if err != nil {
@@ -544,7 +571,10 @@ func (step *Step) validateDeploymentContainerImageContains(res Resource, crNumSt
 }
 
 func (step *Step) validateDaemonSetContainerImage(res Resource, crNumStr string, expectedImage string, container string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	staticDs, err := getDriverDaemonset(cr, step.ctrlClient)
 	if err != nil {
@@ -563,7 +593,10 @@ func (step *Step) validateDaemonSetContainerImage(res Resource, crNumStr string,
 }
 
 func (step *Step) validateDaemonSetContainerImageContains(res Resource, crNumStr string, expectedSubstring string, container string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	staticDs, err := getDriverDaemonset(cr, step.ctrlClient)
 	if err != nil {
@@ -582,15 +615,21 @@ func (step *Step) validateDaemonSetContainerImageContains(res Resource, crNumStr
 }
 
 func (step *Step) validateDriverInstalled(res Resource, driverName string, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	return checkAllRunningPods(context.TODO(), res.CustomResource[crNum-1].(csmv1.ContainerStorageModule).Namespace, step.clientSet)
 }
 
 func (step *Step) validateMinimalCSMDriverSpec(res Resource, driverName string, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	found := new(csmv1.ContainerStorageModule)
-	err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
+	err = step.ctrlClient.Get(context.TODO(), client.ObjectKey{
 		Namespace: cr.Namespace,
 		Name:      cr.Name,
 	}, found)
@@ -639,7 +678,10 @@ func (step *Step) validateMinimalCSMDriverSpec(res Resource, driverName string, 
 }
 
 func (step *Step) validateDriverNotInstalled(res Resource, driverName string, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	return checkNoRunningPods(context.TODO(), res.CustomResource[crNum-1].(csmv1.ContainerStorageModule).Namespace, step.clientSet)
 }
 
@@ -664,7 +706,10 @@ func (step *Step) removeNodeLabel(res Resource, label string) error {
 }
 
 func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
@@ -704,7 +749,10 @@ func (step *Step) validateModuleInstalled(res Resource, module string, crNumStr 
 }
 
 func (step *Step) validateModuleNotInstalled(res Resource, module string, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
@@ -910,7 +958,10 @@ func (step *Step) validateAuthorizationNotInstalled(cr csmv1.ContainerStorageMod
 }
 
 func (step *Step) validateAuthorizationPodsNotInstalled(res Resource, module string, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	return checkNoRunningPods(context.TODO(), res.CustomResource[crNum-1].(csmv1.ContainerStorageModule).Namespace, step.clientSet)
 }
 
@@ -1615,7 +1666,10 @@ func readCRFileForInSpec(crFilePath string) ([]byte, error) {
 }
 
 func (step *Step) enableModule(res Resource, module string, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
@@ -1642,7 +1696,10 @@ func (step *Step) enableModule(res Resource, module string, crNumStr string) err
 }
 
 func (step *Step) setDriverSecret(res Resource, crNumStr string, driverSecretName string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
@@ -1657,7 +1714,10 @@ func (step *Step) setDriverSecret(res Resource, crNumStr string, driverSecretNam
 }
 
 func (step *Step) disableModule(res Resource, module string, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
@@ -1684,7 +1744,10 @@ func (step *Step) disableModule(res Resource, module string, crNumStr string) er
 }
 
 func (step *Step) configureHealthMonitor(res Resource, action string, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
@@ -1735,7 +1798,10 @@ func (step *Step) configureHealthMonitor(res Resource, action string, crNumStr s
 }
 
 func (step *Step) enableForceRemoveDriver(res Resource, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
@@ -1752,7 +1818,10 @@ func (step *Step) enableForceRemoveDriver(res Resource, crNumStr string) error {
 }
 
 func (step *Step) validateForceRemoveDriverEnabled(res Resource, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
@@ -1770,7 +1839,10 @@ func (step *Step) validateForceRemoveDriverEnabled(res Resource, crNumStr string
 }
 
 func (step *Step) validateForceRemoveDriverDisabled(res Resource, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
@@ -1788,7 +1860,10 @@ func (step *Step) validateForceRemoveDriverDisabled(res Resource, crNumStr strin
 }
 
 func (step *Step) enableForceRemoveModule(res Resource, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 	found := new(csmv1.ContainerStorageModule)
 	if err := step.ctrlClient.Get(context.TODO(), client.ObjectKey{
@@ -1862,7 +1937,10 @@ func (step *Step) validateKubernetesEnvironment(_ Resource) error {
 }
 
 func (step *Step) createPrereqs(res Resource, module string, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 
 	for _, m := range cr.Spec.Modules {
@@ -2095,10 +2173,12 @@ func ensureVaultReady() error {
 func (step *Step) configureAuthorizationProxyServer(res Resource, authConfigurationPath, driver, crNumStr string) error {
 	fmt.Println("=== Configuring Authorization Proxy Server ===")
 
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 
-	var err error
 	var (
 		storageType     = ""
 		driverNamespace = ""
@@ -2200,8 +2280,11 @@ func (step *Step) authorizationV2Setup(res Resource, storageType, driver, config
 		updatedTemplateFile = "temp/authorization-templates/storage_csm_authorization_crs_powerstore.yaml"
 	}
 
-	pathNum, _ := strconv.Atoi(configurationTemplate)
-	err := execShell(fmt.Sprintf("mkdir -p temp/authorization-templates && cp %s %s", res.Scenario.Paths[pathNum-1], updatedTemplateFile))
+	pathNum, err := parseIndex(configurationTemplate)
+	if err != nil {
+		return err
+	}
+	err = execShell(fmt.Sprintf("mkdir -p temp/authorization-templates && cp %s %s", res.Scenario.Paths[pathNum-1], updatedTemplateFile))
 	if err != nil {
 		return fmt.Errorf("failed to copy template file %s to %s: %v", templateFile, updatedTemplateFile, err)
 	}
@@ -2482,7 +2565,10 @@ func (step *Step) validateResiliencyNotInstalled(cr csmv1.ContainerStorageModule
 
 // Render the Powerflex SFTP CR template into a temporary file with the same name
 func (step *Step) configurePowerflexSftpInstall(res Resource, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	crFilePath := res.Scenario.Paths[crNum-1]
 	fileString, err := renderTemplate("powerflex", crFilePath)
 	if err != nil {
@@ -2499,9 +2585,12 @@ func (step *Step) configurePowerflexSftpInstall(res Resource, crNumStr string) e
 }
 
 func (step *Step) createCustomResourceDefinition(res Resource, crdNumStr string) error {
-	crdNum, _ := strconv.Atoi(crdNumStr)
+	crdNum, err := parseIndex(crdNumStr)
+	if err != nil {
+		return err
+	}
 	cmd := exec.Command("kubectl", "apply", "-f", res.Scenario.Paths[crdNum-1]) // #nosec G204
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("csm authorization crds install failed: %v", err)
 	}
@@ -2550,9 +2639,12 @@ func (step *Step) deleteAuthorizationCRs(_ Resource, driver string) error {
 }
 
 func (step *Step) deleteCustomResourceDefinition(res Resource, crdNumStr string) error {
-	crdNum, _ := strconv.Atoi(crdNumStr)
+	crdNum, err := parseIndex(crdNumStr)
+	if err != nil {
+		return err
+	}
 	cmd := exec.Command("kubectl", "delete", "-f", res.Scenario.Paths[crdNum-1]) // #nosec G204
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("csm authorization crds uninstall failed: %v", err)
 	}
@@ -2694,7 +2786,7 @@ func (step *Step) setUpTLSSecretWithSAN(res Resource, namespace string) error {
 }
 
 func (step *Step) restoreConfigMap(_ Resource) error {
-	cmd := exec.Command("kubectl", "apply", "-f", "testfiles/authorization-templates/csm-images-baseline.yaml") // #nosec G204
+	cmd := exec.Command("kubectl", "apply", "-f", "testfiles/common-templates/csm-images-baseline.yaml") // #nosec G204
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to restore baseline configmap csm-images: %v", err)
@@ -2704,7 +2796,7 @@ func (step *Step) restoreConfigMap(_ Resource) error {
 }
 
 func (step *Step) deleteConfigMap(_ Resource) error {
-	cmd := exec.Command("kubectl", "delete", "-f", "testfiles/authorization-templates/csm-images-baseline.yaml") // #nosec G204
+	cmd := exec.Command("kubectl", "delete", "-f", "testfiles/common-templates/csm-images-baseline.yaml") // #nosec G204
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to restore baseline configmap csm-images: %v", err)
@@ -2715,7 +2807,10 @@ func (step *Step) deleteConfigMap(_ Resource) error {
 
 // validateEnvInDriverPod validates environment variables in the generated DaemonSet/Deployment
 func (step *Step) validateEnvInDriverPod(res Resource, podType, containerName, envName, expectedValue, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 
 	var envVars []corev1.EnvVar
@@ -2778,7 +2873,10 @@ func (step *Step) validateEnvInDriverPod(res Resource, podType, containerName, e
 
 // validateEnvInCSMCR validates environment variables in the CSM CustomResource in the cluster
 func (step *Step) validateEnvInCSMCR(res Resource, section, envName, expectedValue, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	cr := res.CustomResource[crNum-1].(csmv1.ContainerStorageModule)
 
 	// Get the CSM CR from the cluster
@@ -2832,7 +2930,10 @@ func (step *Step) validateEnvInCSMCR(res Resource, section, envName, expectedVal
 
 // setEnvInSpec modifies environment variables in a CR file and writes to temp directory
 func (step *Step) setEnvInSpec(res Resource, section, envName, envValue, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	crFilePath := res.Scenario.Paths[crNum-1]
 
 	// Read the original CR file
@@ -2900,7 +3001,10 @@ func (step *Step) setEnvInSpec(res Resource, section, envName, envValue, crNumSt
 // setForceRemoveDriverInSpec modifies forceRemoveDriver in a CR file and writes to temp directory.
 // Use value "true"/"false" to set the field, or "remove" to remove it entirely.
 func (step *Step) setForceRemoveDriverInSpec(res Resource, value string, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	crFilePath := res.Scenario.Paths[crNum-1]
 
 	crBuff, err := readCRFileForInSpec(crFilePath)
@@ -2944,7 +3048,10 @@ func (step *Step) setForceRemoveDriverInSpec(res Resource, value string, crNumSt
 // removeFieldFromSpec removes any field from a CR file and writes to temp directory.
 // Supports field paths like "version", "driver.forceRemoveDriver", "driver.configVersion", etc.
 func (step *Step) removeFieldFromSpec(res Resource, fieldPath string, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	crFilePath := res.Scenario.Paths[crNum-1]
 
 	crBuff, err := readCRFileForInSpec(crFilePath)
@@ -3008,7 +3115,10 @@ func removeFieldFromMap(m map[string]interface{}, fields []string) {
 
 // enableModuleInSpec enables a module in a CR file before applying it.
 func (step *Step) enableModuleInSpec(res Resource, module string, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	crFilePath := res.Scenario.Paths[crNum-1]
 
 	crBuff, err := readCRFileForInSpec(crFilePath)
@@ -3063,7 +3173,10 @@ func (step *Step) setEnvFromEnvVarInSpec(res Resource, section, envName, envVarN
 
 // setDriverImage sets spec.driver.common.image in a CR file before applying it.
 func (step *Step) setDriverImage(res Resource, image string, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	crFilePath := res.Scenario.Paths[crNum-1]
 
 	crBuff, err := readCRFileForInSpec(crFilePath)
@@ -3098,7 +3211,10 @@ func (step *Step) setDriverImage(res Resource, image string, crNumStr string) er
 
 // setReplicasInSpec sets spec.driver.replicas in a CR file before applying it.
 func (step *Step) setReplicasInSpec(res Resource, replicasStr string, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	replicas, err := strconv.ParseInt(replicasStr, 10, 32)
 	if err != nil {
 		return fmt.Errorf("invalid replicas value %s: %v", replicasStr, err)
@@ -3134,7 +3250,10 @@ func (step *Step) setReplicasInSpec(res Resource, replicasStr string, crNumStr s
 
 // setMetadataInSpec sets metadata.name and metadata.namespace in a CR file before applying it.
 func (step *Step) setMetadataInSpec(res Resource, name, namespace, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	crFilePath := res.Scenario.Paths[crNum-1]
 
 	crBuff, err := readCRFileForInSpec(crFilePath)
@@ -3167,7 +3286,10 @@ func (step *Step) setMetadataInSpec(res Resource, name, namespace, crNumStr stri
 
 // setImagePullPolicyInSpec sets spec.driver.common.imagePullPolicy in a CR file before applying it.
 func (step *Step) setImagePullPolicyInSpec(res Resource, policy, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	crFilePath := res.Scenario.Paths[crNum-1]
 
 	crBuff, err := readCRFileForInSpec(crFilePath)
@@ -3202,7 +3324,10 @@ func (step *Step) setImagePullPolicyInSpec(res Resource, policy, crNumStr string
 
 // setModuleComponentImageInSpec sets a component's image within a module in a CR file before applying it.
 func (step *Step) setModuleComponentImageInSpec(res Resource, module, component, image, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	crFilePath := res.Scenario.Paths[crNum-1]
 
 	crBuff, err := readCRFileForInSpec(crFilePath)
@@ -3250,7 +3375,10 @@ func (step *Step) setModuleComponentImageInSpec(res Resource, module, component,
 
 // setModuleComponentEnvInSpec sets an environment variable on a component within a module in a CR file before applying it.
 func (step *Step) setModuleComponentEnvInSpec(res Resource, module, component, envName, envValue, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	crFilePath := res.Scenario.Paths[crNum-1]
 
 	crBuff, err := readCRFileForInSpec(crFilePath)
@@ -3314,7 +3442,10 @@ func (step *Step) setModuleComponentEnvInSpec(res Resource, module, component, e
 // the keywords "n-1" / "n-2", which are resolved dynamically from
 // csm-version-mapping.yaml based on the driver type in the CR.
 func (step *Step) setDriverConfigVersionInSpec(res Resource, configVersion, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	crFilePath := res.Scenario.Paths[crNum-1]
 
 	crBuff, err := readCRFileForInSpec(crFilePath)
@@ -3328,11 +3459,11 @@ func (step *Step) setDriverConfigVersionInSpec(res Resource, configVersion, crNu
 		return fmt.Errorf("failed to unmarshal CSM custom resource: %v", err)
 	}
 
-	if resolved, err := resolveNMinusConfigVersion(configVersion, string(customResource.Spec.Driver.CSIDriverType)); err != nil {
+	resolved, err := resolveNMinusConfigVersion(configVersion, string(customResource.Spec.Driver.CSIDriverType))
+	if err != nil {
 		return err
-	} else {
-		configVersion = resolved
 	}
+	configVersion = resolved
 
 	customResource.Spec.Driver.ConfigVersion = configVersion
 
@@ -3355,7 +3486,10 @@ func (step *Step) setDriverConfigVersionInSpec(res Resource, configVersion, crNu
 // which are resolved dynamically using the version package. Resolution uses the
 // driver type from the CR and version-values.yaml to find the correct module version.
 func (step *Step) setModuleConfigVersionInSpec(res Resource, module, configVersion, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	crFilePath := res.Scenario.Paths[crNum-1]
 
 	crBuff, err := readCRFileForInSpec(crFilePath)
@@ -3369,11 +3503,11 @@ func (step *Step) setModuleConfigVersionInSpec(res Resource, module, configVersi
 		return fmt.Errorf("failed to unmarshal CSM custom resource: %v", err)
 	}
 
-	if resolved, err := resolveNMinusModuleVersion(configVersion, module, string(customResource.Spec.Driver.CSIDriverType)); err != nil {
+	resolved, err := resolveNMinusModuleVersion(configVersion, module, string(customResource.Spec.Driver.CSIDriverType))
+	if err != nil {
 		return err
-	} else {
-		configVersion = resolved
 	}
+	configVersion = resolved
 
 	found := false
 	for i, m := range customResource.Spec.Modules {
@@ -3404,7 +3538,10 @@ func (step *Step) setModuleConfigVersionInSpec(res Resource, module, configVersi
 
 // setModuleComponentEnabledInSpec sets a component's enabled flag within a module in a CR file before applying it.
 func (step *Step) setModuleComponentEnabledInSpec(res Resource, module, component, enabledStr, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	crFilePath := res.Scenario.Paths[crNum-1]
 
 	crBuff, err := readCRFileForInSpec(crFilePath)
@@ -3456,13 +3593,16 @@ func (step *Step) setModuleComponentEnabledInSpec(res Resource, module, componen
 // keywords "n-1" / "n-2", which are resolved dynamically from
 // csm-version-mapping.yaml.
 func (step *Step) setSpecVersionInSpec(res Resource, ver, crNumStr string) error {
-	if resolved, err := resolveNMinusCSMVersion(ver); err != nil {
+	resolved, err := resolveNMinusCSMVersion(ver)
+	if err != nil {
 		return err
-	} else {
-		ver = resolved
 	}
+	ver = resolved
 
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	crFilePath := res.Scenario.Paths[crNum-1]
 
 	crBuff, err := readCRFileForInSpec(crFilePath)
@@ -3494,7 +3634,10 @@ func (step *Step) setSpecVersionInSpec(res Resource, ver, crNumStr string) error
 
 // setCustomRegistryInSpec sets spec.customRegistry on a CR file before applying it.
 func (step *Step) setCustomRegistryInSpec(res Resource, registry, crNumStr string) error {
-	crNum, _ := strconv.Atoi(crNumStr)
+	crNum, err := parseIndex(crNumStr)
+	if err != nil {
+		return err
+	}
 	crFilePath := res.Scenario.Paths[crNum-1]
 
 	crBuff, err := readCRFileForInSpec(crFilePath)

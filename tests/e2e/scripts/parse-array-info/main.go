@@ -104,6 +104,9 @@ func main() {
 		}
 
 		// Export each non-empty key-value pair
+		if sectionBody == nil || sectionBody.Content == nil {
+			continue
+		}
 		for j := 0; j < len(sectionBody.Content)-1; j += 2 {
 			key := sectionBody.Content[j].Value
 			val := sectionBody.Content[j+1].Value

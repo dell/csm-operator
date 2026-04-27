@@ -51,6 +51,8 @@ spec:
       - name: csi-external-health-monitor-controller
         enabled: false
         args: ["--monitor-interval=60s"]
+      - name: csi-metadata-retriever
+        image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-metadata-retriever:nightly
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin - volume condition.

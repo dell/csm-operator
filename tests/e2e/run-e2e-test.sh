@@ -280,6 +280,13 @@ function cleanupNamespaces() {
   helm uninstall vault0 conjur conjur-csi-provider -n default 2>/dev/null || true
   helm uninstall csi-secrets-store -n kube-system 2>/dev/null || true
   cleanupSecretsStoreCRDs
+  
+  # Clean up /etc/hosts entry for authorization proxy
+  if [[ -n "$PROXY_HOST" && -n "$CLUSTER_IP" ]]; then
+    echo "Removing authorization host from /etc/hosts file"
+    sudo sed -i "/$PROXY_HOST/d" /etc/hosts 2>/dev/null || true
+  fi
+  
   echo "Namespace cleanup complete."
 }
 
@@ -513,6 +520,18 @@ export E2E_NS_COSI="${NS_PREFIX}-cosi"
 export E2E_NS_AUTH="${NS_PREFIX}-authorization"
 export E2E_NS_PROXY="${NS_PREFIX}-proxy-ns"
 
+# Set authorization host based on cluster type
+if [[ "$IS_OPENSHIFT" == "true" ]]; then
+  export AUTHORIZATION_HOST="router-internal-default.openshift-ingress.svc.cluster.local"
+  export AUTHORIZATION_HOST_N1="router-internal-default.openshift-ingress.svc.cluster.local"
+else
+  export AUTHORIZATION_HOST="${E2E_NS_AUTH}-gateway-nginx.${E2E_NS_AUTH}.svc.cluster.local"
+  export AUTHORIZATION_HOST_N1="${E2E_NS_AUTH}-ingress-nginx-controller.${E2E_NS_AUTH}.svc.cluster.local"
+fi
+echo "AUTHORIZATION_HOST: $AUTHORIZATION_HOST"
+echo "AUTHORIZATION_HOST_N1: $AUTHORIZATION_HOST_N1"
+
+
 # Build namespace list based on selected platforms and modules.
 # When no platform or module flags are set, treat as "run everything".
 ANY_FLAG_SET=false
@@ -616,7 +635,7 @@ checkForGinkgo
 # overrides are available for the latest version. This self-heals from a
 # previous run that may have failed before its "Restore ConfigMap" cleanup step.
 echo "Applying baseline csm-images ConfigMap..."
-kubectl apply -f testfiles/authorization-templates/csm-images-baseline.yaml
+kubectl apply -f testfiles/common-templates/csm-images-baseline.yaml
 
 if [[ $CHECK_PREREQUISITES_ONLY == "true" ]]; then
   echo "Skipping tests because check prerequisites only was requested."

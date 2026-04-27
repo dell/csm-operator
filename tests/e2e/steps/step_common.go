@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
@@ -544,4 +545,14 @@ func execShell(commands string) error {
 
 func isDebugEnabled() bool {
 	return os.Getenv("E2E_VERBOSE") == "true"
+}
+
+// parseIndex converts a 1-based index string (from scenario steps) to a 0-based int.
+// It returns a descriptive error instead of silently returning 0 on invalid input.
+func parseIndex(s string) (int, error) {
+	n, err := strconv.Atoi(s)
+	if err != nil {
+		return 0, fmt.Errorf("invalid numeric index %q: %w", s, err)
+	}
+	return n, nil
 }

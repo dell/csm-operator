@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -288,6 +289,9 @@ func CheckApplyContainersAuth(containers []acorev1.ContainerApplyConfiguration, 
 			}
 
 			for _, env := range cnt.Env {
+				if env.Name == nil || env.Value == nil {
+					continue
+				}
 				if *env.Name == "SKIP_CERTIFICATE_VALIDATION" || *env.Name == "INSECURE" {
 					if _, err := strconv.ParseBool(*env.Value); err != nil {
 						return fmt.Errorf("%s is an invalid value for SKIP_CERTIFICATE_VALIDATION: %v", *env.Value, err)
@@ -2652,33 +2656,38 @@ func getLatestAuthVersion(configDirectory string) (string, error) {
 		return "", fmt.Errorf("no authorization versions found in directory %s", authConfigPath)
 	}
 
-	latestVersion := "v0.0.0"
+	latestVersion := ""
 	for _, file := range files {
 		if file.IsDir() {
 			version := file.Name()
-			// Simple version comparison - assumes semantic versioning
-			if version > latestVersion {
+			if latestVersion == "" {
+				latestVersion = version
+				continue
+			}
+			// Use semantic version comparison via MinVersionCheck
+			isNewer, err := operatorutils.MinVersionCheck(latestVersion, version)
+			if err != nil {
+				log.Printf("Warning: skipping version %s due to version comparison error: %v (comparing with %s)", version, err, latestVersion)
+				continue
+			}
+			if isNewer {
 				latestVersion = version
 			}
 		}
 	}
 
-	if latestVersion == "v0.0.0" {
+	if latestVersion == "" {
 		return "", fmt.Errorf("no valid authorization versions found in directory %s", authConfigPath)
 	}
 
 	return latestVersion, nil
 }
 
-// getVersionSpecificDefaultImages returns the default images for a given config version
-// It dynamically constructs image tags based on the config version
+// getVersionSpecificDefaultImages returns the default images for a given config version.
+// When configVersion is empty, the latest version installed under configDirectory is used.
 func getVersionSpecificDefaultImages(configVersion string, configDirectory string) (map[string]string, error) {
-	images := make(map[string]string)
-
-	// Construct version-specific images by appending the version tag
 	tag := configVersion
 	if tag == "" {
-		// Infer latest version from operatorconfig directory instead of hardcoding
 		latestVersion, err := getLatestAuthVersion(configDirectory)
 		if err != nil {
 			return nil, fmt.Errorf("failed to determine latest authorization version: %w", err)
@@ -2686,11 +2695,11 @@ func getVersionSpecificDefaultImages(configVersion string, configDirectory strin
 		tag = latestVersion
 	}
 
-	images["proxy-service"] = fmt.Sprintf("%s:%s", DefaultProxyServerImage, tag)
-	images["tenant-service"] = fmt.Sprintf("%s:%s", DefaultTenantServiceImage, tag)
-	images["role-service"] = fmt.Sprintf("%s:%s", DefaultRoleServiceImage, tag)
-	images["storage-service"] = fmt.Sprintf("%s:%s", DefaultStorageServiceImage, tag)
-	images["authorization-controller"] = fmt.Sprintf("%s:%s", DefaultControllerImage, tag)
-
-	return images, nil
+	return map[string]string{
+		"proxy-service":            fmt.Sprintf("%s:%s", DefaultProxyServerImage, tag),
+		"tenant-service":           fmt.Sprintf("%s:%s", DefaultTenantServiceImage, tag),
+		"role-service":             fmt.Sprintf("%s:%s", DefaultRoleServiceImage, tag),
+		"storage-service":          fmt.Sprintf("%s:%s", DefaultStorageServiceImage, tag),
+		"authorization-controller": fmt.Sprintf("%s:%s", DefaultControllerImage, tag),
+	}, nil
 }

@@ -44,6 +44,6 @@ data:
         registrar: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0
         resizer: registry.k8s.io/sig-storage/csi-resizer:v2.1.0
         external-health-monitor: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.17.0
-        csi-metadata-retriever: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.14.0
+        csi-metadata-retriever: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-metadata-retriever:nightly
         sdc: quay.io/dell/storage/powerflex/sdc:5.0
         sdc-monitor: quay.io/dell/storage/powerflex/sdc:5.0

@@ -3953,6 +3953,7 @@ func (suite *CSMControllerTestSuite) TestSyncCSMResiliencyInjectionErrors() {
 	assert.Contains(suite.T(), err.Error(), "resiliency")
 
 	// Sub-test 2: Restore controller-clusterroles but remove node container file → daemonset injection error (941-943)
+	// #nosec G204 -- Test code with controlled paths
 	err = exec.Command("cp", "-r", "../operatorconfig/moduleconfig/resiliency/v1.15.0/controller-clusterroles.yaml",
 		filepath.Join(tmpDir, "moduleconfig/resiliency/v1.15.0/controller-clusterroles.yaml")).Run()
 	assert.Nil(suite.T(), err)
@@ -3966,6 +3967,7 @@ func (suite *CSMControllerTestSuite) TestSyncCSMResiliencyInjectionErrors() {
 	assert.Contains(suite.T(), err.Error(), "resiliency")
 
 	// Sub-test 3: Restore node container but remove node-clusterroles.yaml → line 948-950
+	// #nosec G204 -- Test code with controlled paths
 	err = exec.Command("cp", "../operatorconfig/moduleconfig/resiliency/v1.15.0/container-powerscale-node.yaml",
 		filepath.Join(tmpDir, "moduleconfig/resiliency/v1.15.0/container-powerscale-node.yaml")).Run()
 	assert.Nil(suite.T(), err)
@@ -3979,6 +3981,7 @@ func (suite *CSMControllerTestSuite) TestSyncCSMResiliencyInjectionErrors() {
 	assert.Contains(suite.T(), err.Error(), "resiliency")
 
 	// Sub-test 4: Restore node-clusterroles but remove node-roles.yaml → line 956-958
+	// #nosec G204 -- Test code with controlled paths
 	err = exec.Command("cp", "../operatorconfig/moduleconfig/resiliency/v1.15.0/node-clusterroles.yaml",
 		filepath.Join(tmpDir, "moduleconfig/resiliency/v1.15.0/node-clusterroles.yaml")).Run()
 	assert.Nil(suite.T(), err)
@@ -4072,7 +4075,7 @@ func (suite *CSMControllerTestSuite) TestSyncCSMAuthInjectionDaemonsetError() {
 	authDir := filepath.Join(tmpDir, "moduleconfig/authorization/v2.4.0")
 	volFile := filepath.Join(authDir, "volumes.yaml")
 	if _, err := os.Stat(volFile); err == nil {
-		os.WriteFile(volFile, []byte("invalid: [yaml: }{"), 0o644)
+		os.WriteFile(volFile, []byte("invalid: [yaml: }{"), 0o600)
 	}
 
 	csm := shared.MakeCSM(csmName, suite.namespace, configVersion)

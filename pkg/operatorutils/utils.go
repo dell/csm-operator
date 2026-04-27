@@ -220,19 +220,20 @@ func UpdateContainerApply(ctx context.Context, toBeApplied []csmv1.ContainerTemp
 		if *c.Name == ctr.Name {
 			sidecarInSpec = true
 
+			imageResolved := false
 			if matched.Version != "" {
 				if img := matched.Images[ctr.Name]; img != "" {
 					*c.Image = img
-					goto applySidecarPolicy
+					imageResolved = true
 				}
 			}
-			if cr.Spec.CustomRegistry != "" {
-				*c.Image = ResolveImage(ctx, string(*c.Image), cr)
-			} else if ctr.Image != "" {
-				*c.Image = string(ctr.Image)
+			if !imageResolved {
+				if cr.Spec.CustomRegistry != "" {
+					*c.Image = ResolveImage(ctx, string(*c.Image), cr)
+				} else if ctr.Image != "" {
+					*c.Image = string(ctr.Image)
+				}
 			}
-
-		applySidecarPolicy:
 
 			if ctr.ImagePullPolicy != "" {
 				*c.ImagePullPolicy = ctr.ImagePullPolicy

@@ -203,36 +203,6 @@ func (runner *Runner) RunStep(stepName string, res Resource) error {
 	return fmt.Errorf("no method for step: %s", stepName)
 }
 
-// RunStepClient - runs a step
-func (runner *Runner) RunStepClient(stepName string, res Resource) error {
-	for _, stepDef := range runner.Definitions {
-		if stepDef.Expr.MatchString(stepName) {
-			var values []reflect.Value
-			groups := stepDef.Expr.FindStringSubmatch(stepName)
-
-			typ := stepDef.Handler.Type()
-			numArgs := typ.NumIn()
-			if numArgs > len(groups) {
-				return fmt.Errorf("expected handler method to take %d but got: %d", numArgs, len(groups))
-			}
-
-			values = append(values, reflect.ValueOf(res))
-			for i := 1; i < len(groups); i++ {
-				values = append(values, reflect.ValueOf(groups[i]))
-			}
-
-			res := stepDef.Handler.Call(values)
-			if err, ok := res[0].Interface().(error); ok {
-				fmt.Printf("             Retrying   %v\n", err)
-				return err
-			}
-			return nil
-		}
-	}
-
-	return fmt.Errorf("no method for step: %s", stepName)
-}
-
 // StepTimeout returns an appropriate timeout for the given step name.
 // Steps are categorized into fast (3 min), medium (10 min), and long (20 min).
 func StepTimeout(stepName string) time.Duration {

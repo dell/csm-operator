@@ -35,7 +35,7 @@
     # Configure CR [3] (powerstore base) for authorization
     - "Set metadata name [powerstore] namespace [${E2E_NS_POWERSTORE}] in CR spec [3]"
     - "Enable [authorization] module in CR spec [3]"
-    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${E2E_NS_AUTH}-gateway-nginx.${E2E_NS_AUTH}.svc.cluster.local] in CR spec [3]"
+    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${AUTHORIZATION_HOST}] in CR spec [3]"
     - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powerstoreAuthCRs]"
@@ -72,7 +72,7 @@
     # Configure CR [3] (powerstore base) for authorization
     - "Set metadata name [powerstore] namespace [${E2E_NS_POWERSTORE}] in CR spec [3]"
     - "Enable [authorization] module in CR spec [3]"
-    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${E2E_NS_AUTH}-gateway-nginx.${E2E_NS_AUTH}.svc.cluster.local] in CR spec [3]"
+    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${AUTHORIZATION_HOST}] in CR spec [3]"
     - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [${E2E_NS_AUTH}] for [powerstore]"
@@ -392,7 +392,7 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     # Configure CR [2] (powerflex base) for authorization
     - "Enable [authorization] module in CR spec [2]"
-    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${E2E_NS_AUTH}-gateway-nginx.${E2E_NS_AUTH}.svc.cluster.local] in CR spec [2]"
+    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${AUTHORIZATION_HOST}] in CR spec [2]"
     - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [${E2E_NS_AUTH}] for [powerflex]"
@@ -429,7 +429,7 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     # Configure CR [2] (powerflex base) for authorization
     - "Enable [authorization] module in CR spec [2]"
-    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${E2E_NS_AUTH}-gateway-nginx.${E2E_NS_AUTH}.svc.cluster.local] in CR spec [2]"
+    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${AUTHORIZATION_HOST}] in CR spec [2]"
     - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powerflexAuthCRs]"
@@ -774,7 +774,7 @@
     # Configure CR [2] (powerscale base) for authorization
     - "Set replicas to [1] in CR spec [2]"
     - "Enable [authorization] module in CR spec [2]"
-    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${E2E_NS_AUTH}-gateway-nginx.${E2E_NS_AUTH}.svc.cluster.local] in CR spec [2]"
+    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${AUTHORIZATION_HOST}] in CR spec [2]"
     - "Set [authorization] component [karavi-authorization-proxy] env [SKIP_CERTIFICATE_VALIDATION] to [true] in CR spec [2]"
     - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
@@ -813,7 +813,7 @@
     # Configure CR [2] (powerscale base) for authorization
     - "Set replicas to [1] in CR spec [2]"
     - "Enable [authorization] module in CR spec [2]"
-    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${E2E_NS_AUTH}-gateway-nginx.${E2E_NS_AUTH}.svc.cluster.local] in CR spec [2]"
+    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${AUTHORIZATION_HOST}] in CR spec [2]"
     - "Set [authorization] component [karavi-authorization-proxy] env [SKIP_CERTIFICATE_VALIDATION] to [true] in CR spec [2]"
     - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
@@ -861,7 +861,7 @@
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_n-1_nginx-controller.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powerscale.yaml"
     - "../../operatorconfig/moduleconfig/authorization/{authorization-proxy-server:n-1}/authorization-crds.yaml"
-    - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
   tags:
     - "authorization"
     - "authorizationproxyserver"
@@ -872,13 +872,14 @@
     - "Set spec version to [n-1] in CR spec [1]"
     - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powerscaleAuthCRs]"
+    # n-1 (Auth v2.4.0) uses Kubernetes secrets directly (no SecretProviderClass support)
+    - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [${E2E_NS_AUTH}] for [powerscale]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     # Configure CR [2] (powerscale base) for authorization
     - "Set replicas to [1] in CR spec [2]"
     - "Enable [authorization] module in CR spec [2]"
-    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${E2E_NS_AUTH}-ingress-nginx-controller.${E2E_NS_AUTH}.svc.cluster.local] in CR spec [2]"
+    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${AUTHORIZATION_HOST_N1}] in CR spec [2]"
     - "Set [authorization] component [karavi-authorization-proxy] env [SKIP_CERTIFICATE_VALIDATION] to [true] in CR spec [2]"
     - "Set spec version to [n-1] in CR spec [2]"
     - "Configure authorization-proxy-server with template [4] for [powerscale] for CR [1]"
@@ -1077,6 +1078,7 @@
     - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
     - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config_auth.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxReverseProxy]"
     - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${AUTHORIZATION_HOST}] in CR spec [3]"
     - "Apply custom resource [3]"
     - "Validate custom resource [3]"
     - "Validate [powermax] driver from CR [3] is installed"
@@ -1138,6 +1140,8 @@
     - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
     - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxAuthArrayConfig]"
     - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config_auth.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxReverseProxy]"
+    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${AUTHORIZATION_HOST}] in CR spec [3]"
+
     - "Apply custom resource [3]"
     - "Validate custom resource [3]"
     - "Validate [powermax] driver from CR [3] is installed"
@@ -1153,10 +1157,10 @@
 
 - scenario: "Install Powermax Driver (Minimal, With Authorization v2, n-1 version)"
   paths:
-    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_n-1_nginx-controller.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_n-1_k8s-secret.yaml"
     - "../../operatorconfig/moduleconfig/authorization/{authorization-proxy-server:n-1}/authorization-crds.yaml"
     - "testfiles/minimal-testfiles/storage_csm_powermax_reverseproxy_authorization_v2.yaml"
-    - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
   tags:
     - "authorizationproxyserver"
     - "authorization"
@@ -1165,7 +1169,8 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
-    - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powermaxAuthCRs]"
+    # n-1 (Auth v2.4.0) uses Kubernetes secrets directly (no SecretProviderClass support)
+    - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [${E2E_NS_AUTH}] for [powermax]"
     - "Set spec version to [n-1] in CR spec [1]"
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
@@ -1176,7 +1181,7 @@
     - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
     - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config_auth.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxReverseProxy]"
     - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
-    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${E2E_NS_AUTH}-ingress-nginx-controller.${E2E_NS_AUTH}.svc.cluster.local] in CR spec [3]"
+    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${AUTHORIZATION_HOST_N1}] in CR spec [3]"
     - "Set spec version to [n-1] in CR spec [3]"
     - "Apply custom resource [3]"
     - "Validate custom resource [3]"
@@ -1327,7 +1332,7 @@
     - "Apply custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powermax] for CR [1]"
-    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${E2E_NS_AUTH}-ingress-nginx-controller.${E2E_NS_AUTH}.svc.cluster.local] in CR spec [3]"
+    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${AUTHORIZATION_HOST_N1}] in CR spec [3]"
     - "Set spec version to [n-1] in CR spec [3]"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
     - "Create Secret with template [testfiles/powermax-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
@@ -1385,7 +1390,7 @@
     # Configure CR [3] (powerstore base) for authorization and customRegistry
     - "Set metadata name [powerstore] namespace [${E2E_NS_POWERSTORE}] in CR spec [3]"
     - "Enable [authorization] module in CR spec [3]"
-    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${E2E_NS_AUTH}-gateway-nginx.${E2E_NS_AUTH}.svc.cluster.local] in CR spec [3]"
+    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${AUTHORIZATION_HOST}] in CR spec [3]"
     - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/cicd] in CR spec [3]"
     - "Set spec version to [n-1] in CR spec [3]"
     - "Install Authorization CRDs [2]"

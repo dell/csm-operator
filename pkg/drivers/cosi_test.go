@@ -174,3 +174,65 @@ func csmForCosiBadVersion() csmv1.ContainerStorageModule {
 
 	return res
 }
+
+func TestPrecheckCosi_ErrorWrapping(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name              string
+		csm               csmv1.ContainerStorageModule
+		client            client.Client
+		secret            *corev1.Secret
+		expectedErrPrefix string
+	}{
+		{
+			name:              "secret error is wrapped with context",
+			csm:               cosiCSM,
+			client:            cosiClient,
+			secret:            cosiFakeSecret,
+			expectedErrPrefix: "reading secret",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.client.Create(ctx, tt.secret)
+			if err != nil {
+				assert.Nil(t, err)
+			}
+
+			err = PrecheckCosi(ctx, &tt.csm, config, tt.client)
+			if err != nil {
+				assert.Contains(t, err.Error(), tt.expectedErrPrefix, "error should contain context prefix")
+			}
+
+			// remove secret after each run
+			_ = tt.client.Delete(ctx, tt.secret)
+		})
+	}
+}
+
+func TestModifyCosiCR_ErrorWrapping(t *testing.T) {
+	tests := []struct {
+		name              string
+		yamlContent       string
+		cr                csmv1.ContainerStorageModule
+		expectedErrPrefix string
+	}{
+		{
+			name:              "parsing error is wrapped with context",
+			yamlContent:       "invalid: yaml: content: [",
+			cr:                csmForCosi("", nil, nil),
+			expectedErrPrefix: "parsing controller objects",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := ModifyCosiCR(tt.yamlContent, tt.cr, "Controller")
+			if err != nil {
+				assert.Contains(t, err.Error(), tt.expectedErrPrefix, "error should contain context prefix")
+			}
+		})
+	}
+}

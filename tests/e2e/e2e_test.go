@@ -506,10 +506,9 @@ var _ = Describe("[run-e2e-test] E2E Testing", func() {
 
 		// Count failures to decide whether to Fail() the overall test.
 		// The report itself is printed by DeferCleanup above.
-		for _, r := range results {
-			if r.Status == "FAIL" {
-				Fail(fmt.Sprintf("%d scenario(s) failed", countByStatus(results, "FAIL")))
-			}
+		// Only reachable when keepGoing is true; when false we already called Fail() above.
+		if failCount := countByStatus(results, "FAIL"); failCount > 0 {
+			Fail(fmt.Sprintf("%d scenario(s) failed", failCount))
 		}
 	})
 })

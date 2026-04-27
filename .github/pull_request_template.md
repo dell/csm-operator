@@ -33,10 +33,10 @@ List the JIRA issues impacted by this PR:
 Please describe the tests that you ran to verify your changes. Please also list any relevant details for your test configuration
 
 - [ ] E2E tests were run
-  - [ ] **PowerFlex** (`./run-e2e-test.sh --pflex`)
-  - [ ] **PowerScale** (`./run-e2e-test.sh --pscale`)
-  - [ ] **PowerStore** (`./run-e2e-test.sh --pstore`)
-  - [ ] **PowerMax** (`./run-e2e-test.sh --pmax`)
+  - [ ] **PowerFlex** (`./run-e2e-test.sh --powerflex`)
+  - [ ] **PowerScale** (`./run-e2e-test.sh --powerscale`)
+  - [ ] **PowerStore** (`./run-e2e-test.sh --powerstore`)
+  - [ ] **PowerMax** (`./run-e2e-test.sh --powermax`)
   - [ ] **Unity** (`./run-e2e-test.sh --unity`)
   - [ ] **COSI** (`./run-e2e-test.sh --cosi`)
   - [ ] **Sanity** (`./run-e2e-test.sh --sanity`)

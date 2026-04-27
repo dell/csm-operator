@@ -4712,3 +4712,132 @@ func TestResolveImage(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateSideCarApply_ImageResolutionLogic(t *testing.T) {
+	// Test the refactored image resolution logic that replaced the goto statement
+	ctx := context.Background()
+
+	sideCars := []csmv1.ContainerTemplate{
+		{
+			Name:  "test-sidecar",
+			Image: "default-image:v1.0.0",
+		},
+	}
+
+	tests := []struct {
+		name          string
+		container     *acorev1.ContainerApplyConfiguration
+		cr            csmv1.ContainerStorageModule
+		matched       VersionSpec
+		expectedImage string
+		description   string
+	}{
+		{
+			name:          "ConfigMap image takes precedence when version is set",
+			container:     acorev1.Container().WithName("test-sidecar").WithImage("old-image"),
+			cr:            csmv1.ContainerStorageModule{Spec: csmv1.ContainerStorageModuleSpec{Version: "v1.16.0"}},
+			matched:       VersionSpec{Version: "v1.16.0", Images: map[string]string{"test-sidecar": "configmap-image:v1.16.0"}},
+			expectedImage: "configmap-image:v1.16.0",
+			description:   "ConfigMap image should be used when Version is set and image exists in ConfigMap",
+		},
+		{
+			name:          "CustomRegistry applied when no ConfigMap image",
+			container:     acorev1.Container().WithName("test-sidecar").WithImage("default-image:v1.0.0"),
+			cr:            csmv1.ContainerStorageModule{Spec: csmv1.ContainerStorageModuleSpec{CustomRegistry: "my-registry"}},
+			matched:       VersionSpec{},
+			expectedImage: "my-registry/default-image:v1.0.0",
+			description:   "CustomRegistry should be applied when ConfigMap image is not available",
+		},
+		{
+			name:          "CR sidecar image used when no ConfigMap and no CustomRegistry",
+			container:     acorev1.Container().WithName("test-sidecar").WithImage("old-image"),
+			cr:            csmv1.ContainerStorageModule{},
+			matched:       VersionSpec{},
+			expectedImage: "default-image:v1.0.0",
+			description:   "CR sidecar template image should be used as fallback",
+		},
+		{
+			name:          "Empty ConfigMap version skips ConfigMap image",
+			container:     acorev1.Container().WithName("test-sidecar").WithImage("old-image"),
+			cr:            csmv1.ContainerStorageModule{},
+			matched:       VersionSpec{Version: "", Images: map[string]string{"test-sidecar": "should-not-apply:v1"}},
+			expectedImage: "default-image:v1.0.0",
+			description:   "Empty ConfigMap version should skip ConfigMap image resolution",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			UpdateSideCarApply(ctx, sideCars, tt.container, tt.cr, tt.matched)
+
+			actualImage := tt.container.Image
+			if actualImage == nil || *actualImage != tt.expectedImage {
+				var actual string
+				if actualImage != nil {
+					actual = *actualImage
+				}
+				t.Errorf("%s: expected %q, got %q", tt.description, tt.expectedImage, actual)
+			}
+		})
+	}
+}
+
+func TestUpdateSideCarApply_ImageResolutionOrder(t *testing.T) {
+	// Test the precedence order: ConfigMap > CustomRegistry > CR template > original
+	ctx := context.Background()
+
+	sideCars := []csmv1.ContainerTemplate{
+		{
+			Name:  "precedence-test",
+			Image: "cr-template-image:v1.0.0",
+		},
+	}
+
+	container := acorev1.Container().WithName("precedence-test").WithImage("original-image:old")
+
+	// Scenario: ConfigMap version set, ConfigMap has image, CustomRegistry also set
+	// Expected: ConfigMap image should win
+	cr := csmv1.ContainerStorageModule{
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Version:        "v1.16.0",
+			CustomRegistry: "my-registry",
+		},
+	}
+
+	matched := VersionSpec{
+		Version: "v1.16.0",
+		Images: map[string]string{
+			"precedence-test": "configmap-image:v1.16.0",
+		},
+	}
+
+	UpdateSideCarApply(ctx, sideCars, container, cr, matched)
+
+	if container.Image == nil || *container.Image != "configmap-image:v1.16.0" {
+		var actual string
+		if container.Image != nil {
+			actual = *container.Image
+		}
+		t.Errorf("ConfigMap image should take precedence: expected 'configmap-image:v1.16.0', got %q", actual)
+	}
+
+	// Scenario: No ConfigMap image, but CustomRegistry set
+	// Expected: CustomRegistry should be applied to the original image
+	container2 := acorev1.Container().WithName("precedence-test").WithImage("original-image:old")
+	cr2 := csmv1.ContainerStorageModule{
+		Spec: csmv1.ContainerStorageModuleSpec{
+			CustomRegistry: "my-registry",
+		},
+	}
+	matched2 := VersionSpec{}
+
+	UpdateSideCarApply(ctx, sideCars, container2, cr2, matched2)
+
+	if container2.Image == nil || *container2.Image != "my-registry/original-image:old" {
+		var actual string
+		if container2.Image != nil {
+			actual = *container2.Image
+		}
+		t.Errorf("CustomRegistry should be applied to original image: expected 'my-registry/original-image:old', got %q", actual)
+	}
+}

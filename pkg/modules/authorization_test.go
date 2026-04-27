@@ -17,6 +17,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	"math/big"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -4278,6 +4280,83 @@ func TestGetClassName(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func TestGetLatestAuthVersion(t *testing.T) {
+	tests := []struct {
+		name        string
+		versions    []string
+		expected    string
+		expectError bool
+	}{
+		{
+			name:     "single version",
+			versions: []string{"v2.5.0"},
+			expected: "v2.5.0",
+		},
+		{
+			name:     "multiple versions with semantic ordering",
+			versions: []string{"v2.3.0", "v2.5.0", "v2.4.0"},
+			expected: "v2.5.0",
+		},
+		{
+			name:     "major version differences",
+			versions: []string{"v1.0.0", "v2.0.0", "v3.0.0"},
+			expected: "v3.0.0",
+		},
+		{
+			name:     "patch version differences",
+			versions: []string{"v2.5.0", "v2.5.1", "v2.5.2"},
+			expected: "v2.5.2",
+		},
+		{
+			name:     "mixed version formats",
+			versions: []string{"v2.10.0", "v2.9.0", "v2.11.0"},
+			expected: "v2.11.0",
+		},
+		{
+			name:        "empty directory",
+			versions:    []string{},
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a temporary directory with the proper structure
+			tmpDir := t.TempDir()
+			authDir := filepath.Join(tmpDir, "moduleconfig", "authorization")
+			if err := os.MkdirAll(authDir, 0o755); err != nil {
+				t.Fatalf("failed to create auth directory: %v", err)
+			}
+
+			// Create version subdirectories
+			for _, v := range tt.versions {
+				versionDir := filepath.Join(authDir, v)
+				if err := os.MkdirAll(versionDir, 0o755); err != nil {
+					t.Fatalf("failed to create version directory: %v", err)
+				}
+			}
+
+			version, err := getLatestAuthVersion(tmpDir)
+
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("expected error but got none")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+				return
+			}
+
+			if version != tt.expected {
+				t.Errorf("expected %q, got %q", tt.expected, version)
 			}
 		})
 	}

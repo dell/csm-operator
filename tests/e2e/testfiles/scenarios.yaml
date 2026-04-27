@@ -1500,7 +1500,7 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create resource with template [testfiles/authorization-templates/csm-images.yaml] for ['']"
+    - "Create resource with template [testfiles/common-templates/csm-images.yaml] for ['']"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
     - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
     - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
@@ -2425,7 +2425,7 @@
     - "authorizationproxyserver"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create resource with template [testfiles/authorization-templates/csm-images.yaml] for ['']"
+    - "Create resource with template [testfiles/common-templates/csm-images.yaml] for ['']"
     - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powerflexAuthCRs]"
@@ -2471,7 +2471,7 @@
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create resource with template [testfiles/authorization-templates/csm-images.yaml] for ['']"
+    - "Create resource with template [testfiles/common-templates/csm-images.yaml] for ['']"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If POWERFLEX_SDC_SFTP_REPO_ENABLED: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If POWERFLEX_SDC_SFTP_REPO_ENABLED: Set up Powerflex SFTP CR [1]"
@@ -2494,7 +2494,7 @@
     - "replication"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create resource with template [testfiles/authorization-templates/csm-images.yaml] for ['']"
+    - "Create resource with template [testfiles/common-templates/csm-images.yaml] for ['']"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
     - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
     - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
@@ -2538,7 +2538,7 @@
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create resource with template [testfiles/authorization-templates/csm-images-missing-version.yaml] for ['']"
+    - "Create resource with template [testfiles/common-templates/csm-images-missing-version.yaml] for ['']"
     - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [powerstore]"
     - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
     - "Apply custom resource [1]"
@@ -2560,7 +2560,7 @@
     - "resiliency"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Create resource with template [testfiles/authorization-templates/csm-images-partial-podmon.yaml] for ['']"
+    - "Create resource with template [testfiles/common-templates/csm-images-partial-podmon.yaml] for ['']"
     - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [powerstore]"
     - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
     - "Apply custom resource [1]"
@@ -2573,6 +2573,32 @@
     - "Delete custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is not installed"
     - "Restore ConfigMap"
+
+- scenario: "Observability Upgrade with Powerscale"
+  paths:
+    - "testfiles/storage_csm_powerscale_observability_val1.yaml"
+    - "testfiles/storage_csm_powerscale_observability_val2.yaml"
+  tags:
+    - "powerscale"
+    - "observability"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is not installed"
+    - "Enable [observability] module from CR [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [observability] module from CR [1] is installed"
+    # upgrade
+    - "Upgrade from custom resource [1] to [2]"
+    - "Validate custom resource [2]"
+    - "Validate [powerscale] driver from CR [2] is installed"
+    - "Validate [observability] module from CR [2] is installed"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+    - "Delete custom resource [2]"
 
 # ---- Offline Bundle tests ----
 

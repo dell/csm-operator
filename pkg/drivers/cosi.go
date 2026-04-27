@@ -34,7 +34,7 @@ func PrecheckCosi(ctx context.Context, cr *csmv1.ContainerStorageModule, operato
 
 	version, err := operatorutils.GetVersion(ctx, cr, operatorConfig)
 	if err != nil {
-		return err
+		return fmt.Errorf("getting COSI version: %w", err)
 	}
 
 	// Check if driver version is supported by doing a stat on a config file
@@ -47,7 +47,7 @@ func PrecheckCosi(ctx context.Context, cr *csmv1.ContainerStorageModule, operato
 	log.Debugw("preCheck", "secret", secretName, "Namespace", cr.Namespace)
 	_, err = operatorutils.GetSecret(ctx, secretName, cr.GetNamespace(), ct)
 	if err != nil {
-		return fmt.Errorf("reading secret [%s] error [%s]", secretName, err)
+		return fmt.Errorf("reading secret [%s]: %w", secretName, err)
 	}
 
 	return nil
@@ -78,7 +78,7 @@ func ModifyCosiCR(yamlString string, cr csmv1.ContainerStorageModule, fileType s
 	if cr.Spec.Driver.Common != nil && (len(cr.Spec.Driver.Common.NodeSelector) > 0 || len(cr.Spec.Driver.Common.Tolerations) > 0) {
 		objects, err := operatorutils.GetCTRLObject([]byte(yamlString))
 		if err != nil {
-			return "", fmt.Errorf("parsing controller objects: %v", err)
+			return "", fmt.Errorf("parsing controller objects: %w", err)
 		}
 
 		var dp *appsv1.Deployment

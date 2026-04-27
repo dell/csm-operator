@@ -55,8 +55,8 @@ spec:
             gatewayClassName: nginx
             # additional hostnames for the proxy-server HTTPRoute
             hosts:
-              # - [namespace]-gateway-nginx.[namespace].svc.cluster.local
-            # additional annotations for the proxy-server HTTPRoute
+                # - [namespace]-gateway-nginx.[namespace].svc.cluster.local
+              # additional annotations for the proxy-server HTTPRoute
             annotations: {}
           # openTelemetryCollectorAddress: the OTLP receiving endpoint using gRPC
           openTelemetryCollectorAddress: ""
@@ -70,8 +70,8 @@ spec:
           redisPassword: ""
           # Option 2: Use a Secret Store CSI driver
           # redisSecretProviderClass:
-            # Name of the SecretProviderClass that holds the Redis secretObject.
-            # - secretProviderClassName: ""
+              # Name of the SecretProviderClass that holds the Redis secretObject.
+              # - secretProviderClassName: ""
               # Name of the Kubernetes secret (created by the Secret Store CSI driver) that contains Redis credentials.
               # redisSecretName: ""
               # Key in the secret that stores the Redis username.
@@ -112,7 +112,7 @@ spec:
             vault:
               - secret-provider-class-1
               - secret-provider-class-2
-            # conjur:
+              # conjur:
             #   - name: secret-provider-class-3
             #     paths:
             #       - usernamePath: secrets/username1
@@ -124,8 +124,8 @@ spec:
             #       - usernamePath: secrets/username3
             #         passwordPath: secrets/password3
           # secrets:
-          #   - secret-1
-          #   - secret-2
+            #   - secret-1
+            #   - secret-2
 ---
 apiVersion: v1
 kind: ConfigMap

@@ -32,6 +32,10 @@ __debug_bin*
 tests/e2e/array-info.env
 tests/e2e/array-info.yaml
 
+# E2E test artifacts
+tests/e2e/e2e-junit-report.xml
+tests/e2e/temp/
+
 # Ignore workspace file
 *code-workspace
 

@@ -229,6 +229,8 @@ spec:
       - name: external-health-monitor
         enabled: false
         args: ["--monitor-interval=60s"]
+      - name: csi-metadata-retriever
+        image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-metadata-retriever:nightly
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization

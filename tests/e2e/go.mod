@@ -4,7 +4,7 @@ go 1.26
 
 require (
 	eos2git.cec.lab.emc.com/CSM/csm-operator v1.10.1
-	github.com/onsi/ginkgo/v2 v2.28.1
+	github.com/onsi/ginkgo/v2 v2.28.2
 	github.com/onsi/gomega v1.39.1
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/mod v0.33.0
