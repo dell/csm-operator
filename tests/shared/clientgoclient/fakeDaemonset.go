@@ -47,7 +47,7 @@ func (c *FakeDaemonSets) Apply(ctx context.Context, daemonSet *applyconfiguratio
 		// if not found, we create it
 		return c.Create(ctx, result, v1.CreateOptions{})
 	} else if err != nil {
-		return nil, err
+		return result, err
 	}
 
 	// otherwise we update it

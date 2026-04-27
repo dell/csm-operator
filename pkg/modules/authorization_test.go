@@ -2718,7 +2718,7 @@ func TestUpdateConfigGlobalVars(t *testing.T) {
 					},
 				},
 			},
-			want: map[string]string{
+			want: map[string]string{ // #nosec G101 -- test data
 				"configSecretProviderClassName ": "",
 				"configSecretName":               "karavi-config-secret",
 				"configSecretPath":               "",
@@ -2853,4 +2853,130 @@ func TestRemoveVaultFromStorageService(t *testing.T) {
 	}
 
 	ctrlClient.Delete(ctx, &dp)
+}
+
+func TestValidateRedisConfig(t *testing.T) {
+	tests := []struct {
+		name      string
+		component csmv1.ContainerTemplate
+		wantOk    bool
+		wantErr   bool
+		errMsg    string
+	}{
+		{
+			name: "success - direct credentials provided",
+			component: csmv1.ContainerTemplate{
+				RedisUsername: "testuser",
+				RedisPassword: "testpass",
+			},
+			wantOk:  true,
+			wantErr: false,
+		},
+		{
+			name: "success - secret provider class provided",
+			component: csmv1.ContainerTemplate{
+				RedisSecretProviderClass: []csmv1.RedisSecretProviderClass{
+					{
+						SecretProviderClassName: "test-class",
+						RedisSecretName:         "test-secret",
+						RedisUsernameKey:        "username",
+						RedisPasswordKey:        "password",
+					},
+				},
+			},
+			wantOk:  false,
+			wantErr: false,
+		},
+		{
+			name: "error - secret provider class with empty entry",
+			component: csmv1.ContainerTemplate{
+				RedisSecretProviderClass: []csmv1.RedisSecretProviderClass{
+					{
+						SecretProviderClassName: "",
+						RedisSecretName:         "",
+						RedisUsernameKey:        "",
+						RedisPasswordKey:        "",
+					},
+				},
+			},
+			wantOk:  false,
+			wantErr: true,
+			errMsg:  "redisSecretProviderClass is incomplete",
+		},
+		{
+			name:      "error - no credentials provided",
+			component: csmv1.ContainerTemplate{},
+			wantOk:    false,
+			wantErr:   true,
+			errMsg:    "redis credentials are required",
+		},
+		{
+			name: "error - only username provided",
+			component: csmv1.ContainerTemplate{
+				RedisUsername: "testuser",
+			},
+			wantOk:  false,
+			wantErr: true,
+			errMsg:  "redisUsername and redisPassword must be provided together",
+		},
+		{
+			name: "error - only password provided",
+			component: csmv1.ContainerTemplate{
+				RedisPassword: "testpass",
+			},
+			wantOk:  false,
+			wantErr: true,
+			errMsg:  "redisUsername and redisPassword must be provided together",
+		},
+		{
+			name: "error - incomplete secret provider class",
+			component: csmv1.ContainerTemplate{
+				RedisSecretProviderClass: []csmv1.RedisSecretProviderClass{
+					{
+						SecretProviderClassName: "test-class",
+						RedisSecretName:         "",
+						RedisUsernameKey:        "",
+						RedisPasswordKey:        "",
+					},
+				},
+			},
+			wantOk:  false,
+			wantErr: true,
+			errMsg:  "redisSecretProviderClass requires all of",
+		},
+		{
+			name: "error - both direct credentials and secret provider class provided",
+			component: csmv1.ContainerTemplate{
+				RedisUsername: "testuser",
+				RedisPassword: "testpass",
+				RedisSecretProviderClass: []csmv1.RedisSecretProviderClass{
+					{
+						SecretProviderClassName: "test-class",
+						RedisSecretName:         "test-secret",
+						RedisUsernameKey:        "username",
+						RedisPasswordKey:        "password",
+					},
+				},
+			},
+			wantOk:  false,
+			wantErr: true,
+			errMsg:  "specify either redisUsername/redisPassword or redisSecretProviderClass, not both",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotOk, err := validateRedisConfig(tt.component)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("validateRedisConfig() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("validateRedisConfig() = %v, want %v", gotOk, tt.wantOk)
+			}
+			if tt.wantErr && err != nil && !strings.Contains(err.Error(), tt.errMsg) {
+				t.Errorf("validateRedisConfig() error = %v, expected to contain %v", err, tt.errMsg)
+			}
+		})
+	}
 }

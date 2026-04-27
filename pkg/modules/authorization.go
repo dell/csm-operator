@@ -122,6 +122,10 @@ const (
 	AuthRedisSentinelValues = "<AUTHORIZATION_REDIS_SENTINEL_VALUES>"
 	// AuthRedisReplicas -
 	AuthRedisReplicas = "<AUTHORIZATION_REDIS_REPLICAS>"
+	// AuthRedisUsername -
+	AuthRedisUsername = "<AUTHORIZATION_COMMANDER_USER>"
+	// AuthRedisPassword -
+	AuthRedisPassword = "<AUTHORIZATION_REDIS_PASSWORD>"
 
 	// AuthCert - for tls secret
 	AuthCert = "<BASE64_CERTIFICATE>"
@@ -213,6 +217,50 @@ var AuthorizationSupportedDrivers = map[string]SupportedDriverParam{
 		PluginIdentifier:              drivers.PowerStorePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerStoreConfigParamsVolumeMount,
 	},
+}
+
+// validateRedisConfig - validate the redis parameters
+// returns true if direct credentials are provided, false if secret provider class is used
+func validateRedisConfig(component csmv1.ContainerTemplate) (bool, error) {
+	hasUsername := component.RedisUsername != ""
+	hasPassword := component.RedisPassword != ""
+	hasDirectCredentials := hasUsername && hasPassword
+
+	// Check that both username and password are provided together (if either is provided)
+	if hasUsername != hasPassword {
+		return false, fmt.Errorf("redisUsername and redisPassword must be provided together")
+	}
+
+	// Direct credentials not provided, check for secret provider class
+	hasSecretProviderClass := len(component.RedisSecretProviderClass) > 0
+	validSecretProviderClass := false
+	for _, config := range component.RedisSecretProviderClass {
+		// Skip empty entries (all fields empty)
+		if config.SecretProviderClassName == "" && config.RedisSecretName == "" && config.RedisUsernameKey == "" && config.RedisPasswordKey == "" {
+			continue
+		}
+
+		// If any field is provided, all must be provided
+		if config.SecretProviderClassName == "" || config.RedisSecretName == "" || config.RedisUsernameKey == "" || config.RedisPasswordKey == "" {
+			return false, fmt.Errorf("redisSecretProviderClass requires all of: secretProviderClassName, redisSecretName, redisUsernameKey, and redisPasswordKey")
+		}
+		validSecretProviderClass = true
+	}
+
+	// Check for conflicting configurations
+	if hasDirectCredentials && validSecretProviderClass {
+		return false, fmt.Errorf("specify either redisUsername/redisPassword or redisSecretProviderClass, not both")
+	}
+
+	// Check that at least one method is provided
+	if !hasDirectCredentials && !validSecretProviderClass {
+		if hasSecretProviderClass {
+			return false, fmt.Errorf("redisSecretProviderClass is incomplete. All of the following must be specified: secretProviderClassName, redisSecretName, redisUsernameKey, and redisPasswordKey")
+		}
+		return false, fmt.Errorf("redis credentials are required. Either set redisUsername and redisPassword or configure redisSecretProviderClass to use a Secret Store CSI driver")
+	}
+
+	return hasDirectCredentials, nil
 }
 
 func getAuthorizationModule(cr csmv1.ContainerStorageModule) (csmv1.Module, error) {
@@ -642,6 +690,8 @@ func getAuthorizationServerDeployment(op operatorutils.OperatorConfig, cr csmv1.
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommander, component.RedisCommander)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisSentinel, component.Sentinel)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisReplicas, strconv.Itoa(component.RedisReplicas))
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisUsername, component.RedisUsername)
+			YamlString = strings.ReplaceAll(YamlString, AuthRedisPassword, component.RedisPassword)
 			YamlString = strings.ReplaceAll(YamlString, AuthCSMNameSpace, cr.Namespace)
 
 			var sentinelValues []string
@@ -651,23 +701,28 @@ func getAuthorizationServerDeployment(op operatorutils.OperatorConfig, cr csmv1.
 			sentinels := strings.Join(sentinelValues, ", ")
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisSentinelValues, sentinels)
 
+			// Validate Redis configuration
+			ok, err := validateRedisConfig(component)
+			if err != nil {
+				return YamlString, fmt.Errorf("validating redis: %w", err)
+			}
+
 			if component.RedisStorageClass == "" {
 				redisStorageClass = AuthLocalStorageClass
 			} else {
 				redisStorageClass = component.RedisStorageClass
 			}
 
-			// create redis kubernetes secret
-			for _, config := range component.RedisSecretProviderClass {
-				if config.SecretProviderClassName == "" && config.RedisSecretName == "" {
-					redisSecret := createRedisK8sSecret(defaultRedisSecretName, cr.Namespace)
-					secretYaml, err := yaml.Marshal(redisSecret)
-					if err != nil {
-						return YamlString, fmt.Errorf("failed to marshal redis kubernetes secret: %w", err)
-					}
-
-					YamlString += fmt.Sprintf("\n---\n%s", secretYaml)
+			// Create redis kubernetes secret if credentials are provided
+			// This path is used when no secret provider class is configured
+			if ok {
+				redisSecret := createRedisK8sSecret(defaultRedisSecretName, cr.Namespace, component.RedisUsername, component.RedisPassword)
+				secretYaml, err := yaml.Marshal(redisSecret)
+				if err != nil {
+					return YamlString, fmt.Errorf("failed to marshal redis kubernetes secret: %w", err)
 				}
+
+				YamlString += fmt.Sprintf("\n---\n%s", secretYaml)
 			}
 		}
 	}

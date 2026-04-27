@@ -5,8 +5,8 @@ metadata:
   namespace: <NAMESPACE>
 type: kubernetes.io/basic-auth
 stringData:
-  password: REDACTED
-  commander_user: dev
+  password: <AUTHORIZATION_REDIS_PASSWORD>
+  commander_user: <AUTHORIZATION_COMMANDER_USER>
 ---
 # Proxy service
 apiVersion: v1
