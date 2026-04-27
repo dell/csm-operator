@@ -71,6 +71,8 @@ spec:
         - name: redis
           redis: docker.io/redis:7.4.0-alpine
           commander: docker.io/rediscommander/redis-commander:latest
+          redisUsername: "test"
+          redisPassword: "test"
           redisName: redis-csm
           redisCommander: rediscommander
           sentinel: sentinel
