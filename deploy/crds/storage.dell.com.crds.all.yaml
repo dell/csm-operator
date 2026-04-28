@@ -4011,8 +4011,8 @@ spec:
                     && self.modules.exists(m, has(m.components) && m.components.exists(c,
                     has(c.envs) && c.envs.exists(e, has(e.name) && e.name == \"NGINX_PROXY_IMAGE\"))))"
                 - message: spec.driver.metrics is only supported for PowerFlex driver
-                  rule: "!has(self.driver.metrics) || self.driver.csiDriverType ==
-                    'powerflex'"
+                  rule: "!has(self.driver) || !has(self.driver.metrics) || self.driver.csiDriverType
+                    == 'powerflex'"
             status:
               description: ContainerStorageModuleStatus defines the observed state
                 of ContainerStorageModule
