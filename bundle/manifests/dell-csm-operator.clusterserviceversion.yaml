@@ -2551,6 +2551,54 @@ spec:
               or not
             displayName: Vault Skip Certificate Validation
             path: driver.initContainers[0].vaultConfigurations[0].skipCertificateValidation
+          - description: Metrics is the configuration for the driver metrics endpoint
+              and monitoring
+            displayName: Driver Metrics Configuration
+            path: driver.metrics
+          - description: Enabled enables the shared Prometheus metrics HTTP endpoint
+              on the controller
+            displayName: Metrics Enabled
+            path: driver.metrics.enabled
+          - description: GatewayMonitoring configures PowerFlex Gateway health monitoring
+            displayName: Gateway Monitoring Configuration
+            path: driver.metrics.gatewayMonitoring
+          - description: Enabled enables Gateway health monitoring on the controller
+            displayName: Gateway Monitoring Enabled
+            path: driver.metrics.gatewayMonitoring.enabled
+          - description: |-
+              LeaderElectionEnabled enables leader election so only one controller actively monitors gateways
+              When nil, defaults to true
+            displayName: Gateway Monitoring Leader Election Enabled
+            path: driver.metrics.gatewayMonitoring.leaderElectionEnabled
+          - description: PollInterval is how frequently the leader controller probes
+              each gateway endpoint
+            displayName: Gateway Monitoring Poll Interval
+            path: driver.metrics.gatewayMonitoring.pollInterval
+          - description: Port is the port on which the metrics endpoint is exposed
+            displayName: Metrics Port
+            path: driver.metrics.port
+          - description: ServiceMonitor configures optional Prometheus Operator ServiceMonitor
+              creation
+            displayName: ServiceMonitor Configuration
+            path: driver.metrics.serviceMonitor
+          - description: |-
+              Enabled creates a ServiceMonitor CR for Prometheus Operator integration
+              Requires the Prometheus Operator CRDs to be installed in the cluster
+            displayName: ServiceMonitor Enabled
+            path: driver.metrics.serviceMonitor.enabled
+          - description: |-
+              InsecureSkipVerify skips TLS certificate verification when Prometheus scrapes the metrics endpoint
+              Only applies when tlsCertSecret is set
+            displayName: ServiceMonitor Insecure Skip Verify
+            path: driver.metrics.serviceMonitor.insecureSkipVerify
+          - description: Interval is the Prometheus scrape interval for the metrics
+              endpoint
+            displayName: ServiceMonitor Scrape Interval
+            path: driver.metrics.serviceMonitor.interval
+          - description: TLSCertSecret is the name of a Kubernetes TLS Secret used
+              to serve the metrics endpoint over HTTPS
+            displayName: Metrics TLS Cert Secret
+            path: driver.metrics.tlsCertSecret
           - description: Node is the specification for Node plugin only
             displayName: Node specification
             path: driver.node
@@ -4289,7 +4337,12 @@ spec:
                 - servicemonitors
               verbs:
                 - create
+                - delete
                 - get
+                - list
+                - patch
+                - update
+                - watch
             - apiGroups:
                 - networking.k8s.io
               resources:

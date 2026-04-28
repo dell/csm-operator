@@ -244,6 +244,47 @@ spec:
             value: "sdcRepoUser" # provide username to authenticate to the SFTP repo
           - name: MODULE_SIGCHECK
             value: "0"
+    # metrics: configures the Prometheus metrics endpoint and gateway monitoring on the controller
+    metrics:
+      # enabled: Enable/Disable the shared Prometheus metrics HTTP endpoint on the controller
+      # Default value: false
+      enabled: false
+      # port: Port on which the metrics endpoint is exposed
+      # Allowed values: any valid port number
+      # Default value: 9090
+      port: 9090
+      # tlsCertSecret: Name of a Kubernetes TLS Secret to enable HTTPS on the metrics endpoint
+      # Leave empty to use plain HTTP
+      # Default value: ""
+      tlsCertSecret: ""
+      # gatewayMonitoring: configures PowerFlex Gateway health monitoring
+      gatewayMonitoring:
+        # enabled: Enable/Disable Gateway health monitoring on the controller
+        # Requires metrics.enabled to be true
+        # Default value: false
+        enabled: false
+        # leaderElectionEnabled: Enable/Disable leader election so only one controller replica probes gateways
+        # Allowed values: true, false
+        # Default value: true
+        leaderElectionEnabled: true
+        # pollInterval: How frequently the leader controller polls each gateway endpoint
+        # Allowed values: duration string (e.g., "10s", "30s", "1m")
+        # Default value: 30s
+        pollInterval: "30s"
+      # serviceMonitor: configures a Prometheus Operator ServiceMonitor for automatic scrape discovery
+      serviceMonitor:
+        # enabled: Create a ServiceMonitor CR for Prometheus Operator integration
+        # Requires the Prometheus Operator CRDs to be installed in the cluster
+        # Default value: false
+        enabled: false
+        # interval: Prometheus scrape interval
+        # Allowed values: duration string (e.g., "15s", "30s", "1m")
+        # Default value: 30s
+        interval: "30s"
+        # insecureSkipVerify: Skip TLS certificate verification when Prometheus scrapes the metrics endpoint
+        # Allowed values: true, false
+        # Default value: false
+        insecureSkipVerify: false
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization

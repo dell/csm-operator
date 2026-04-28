@@ -304,6 +304,113 @@ var (
 			fileType: "Controller",
 			expected: "X_CSI_AUTH_TYPE=OIDC",
 		},
+		{
+			name:       "metrics nil - all placeholders get defaults for Controller",
+			yamlString: "<X_CSI_METRICS_ENABLED> <X_CSI_METRICS_PORT> <X_CSI_GATEWAY_MONITORING_ENABLED> <X_CSI_GATEWAY_MONITORING_LEADER_ELECTION_ENABLED> <X_CSI_GATEWAY_MONITORING_POLL_INTERVAL>",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{},
+				},
+			},
+			fileType: "Controller",
+			expected: "false 9090 false true 30s",
+		},
+		{
+			name:       "metrics enabled for Controller",
+			yamlString: "<X_CSI_METRICS_ENABLED>",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Metrics: &csmv1.DriverMetrics{Enabled: true},
+					},
+				},
+			},
+			fileType: "Controller",
+			expected: "true",
+		},
+		{
+			name:       "metrics custom port for Controller",
+			yamlString: "<X_CSI_METRICS_PORT>",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Metrics: &csmv1.DriverMetrics{Port: 8080},
+					},
+				},
+			},
+			fileType: "Controller",
+			expected: "8080",
+		},
+		{
+			name:       "gateway monitoring enabled when metrics is also enabled",
+			yamlString: "<X_CSI_METRICS_ENABLED> <X_CSI_GATEWAY_MONITORING_ENABLED>",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Metrics: &csmv1.DriverMetrics{
+							Enabled: true,
+							GatewayMonitoring: &csmv1.GatewayMonitoringConfig{
+								Enabled: true,
+							},
+						},
+					},
+				},
+			},
+			fileType: "Controller",
+			expected: "true true",
+		},
+		{
+			name:       "gateway monitoring disabled when metrics is disabled",
+			yamlString: "<X_CSI_GATEWAY_MONITORING_ENABLED>",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Metrics: &csmv1.DriverMetrics{
+							Enabled: false,
+							GatewayMonitoring: &csmv1.GatewayMonitoringConfig{
+								Enabled: true,
+							},
+						},
+					},
+				},
+			},
+			fileType: "Controller",
+			expected: "false",
+		},
+		{
+			name:       "gateway monitoring leader election disabled",
+			yamlString: "<X_CSI_GATEWAY_MONITORING_LEADER_ELECTION_ENABLED>",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Metrics: &csmv1.DriverMetrics{
+							GatewayMonitoring: &csmv1.GatewayMonitoringConfig{
+								LeaderElectionEnabled: &falseBool,
+							},
+						},
+					},
+				},
+			},
+			fileType: "Controller",
+			expected: "false",
+		},
+		{
+			name:       "gateway monitoring custom poll interval",
+			yamlString: "<X_CSI_GATEWAY_MONITORING_POLL_INTERVAL>",
+			cr: csmv1.ContainerStorageModule{
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Driver: csmv1.Driver{
+						Metrics: &csmv1.DriverMetrics{
+							GatewayMonitoring: &csmv1.GatewayMonitoringConfig{
+								PollInterval: "60s",
+							},
+						},
+					},
+				},
+			},
+			fileType: "Controller",
+			expected: "60s",
+		},
 	}
 )
 

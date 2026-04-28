@@ -286,6 +286,16 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: X_CSI_METRICS_ENABLED
+              value: "<X_CSI_METRICS_ENABLED>"
+            - name: X_CSI_METRICS_PORT
+              value: "<X_CSI_METRICS_PORT>"
+            - name: X_CSI_GATEWAY_MONITORING_ENABLED
+              value: "<X_CSI_GATEWAY_MONITORING_ENABLED>"
+            - name: X_CSI_GATEWAY_MONITORING_LEADER_ELECTION_ENABLED
+              value: "<X_CSI_GATEWAY_MONITORING_LEADER_ELECTION_ENABLED>"
+            - name: X_CSI_GATEWAY_MONITORING_POLL_INTERVAL
+              value: "<X_CSI_GATEWAY_MONITORING_POLL_INTERVAL>"
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi

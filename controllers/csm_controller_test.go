@@ -45,7 +45,9 @@ import (
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	confmetav1 "k8s.io/client-go/applyconfigurations/meta/v1"
@@ -220,6 +222,168 @@ func TestRemoveFinalizer(t *testing.T) {
 	r := &ContainerStorageModuleReconciler{}
 	err := r.removeFinalizer(context.Background(), &csmv1.ContainerStorageModule{})
 	assert.Nil(t, err)
+}
+
+func TestSyncMetricsResources(t *testing.T) {
+	testCtx := context.Background()
+	falseBool := false
+
+	tests := []struct {
+		name         string
+		metrics      *csmv1.DriverMetrics
+		isDeleting   bool
+		preCreateSvc bool
+		wantErr      bool
+		svcExists    bool
+		smExists     bool
+	}{
+		{
+			name:      "metrics nil - no service created",
+			svcExists: false,
+		},
+		{
+			name:      "metrics disabled - no service created",
+			metrics:   &csmv1.DriverMetrics{Enabled: false},
+			svcExists: false,
+		},
+		{
+			name:      "metrics enabled - service created",
+			metrics:   &csmv1.DriverMetrics{Enabled: true},
+			svcExists: true,
+		},
+		{
+			name:      "metrics enabled with custom port",
+			metrics:   &csmv1.DriverMetrics{Enabled: true, Port: 8080},
+			svcExists: true,
+		},
+		{
+			name:      "metrics enabled with TLS cert secret",
+			metrics:   &csmv1.DriverMetrics{Enabled: true, TLSCertSecret: "my-tls-secret"}, // #nosec G101
+			svcExists: true,
+		},
+		{
+			name: "metrics enabled with ServiceMonitor",
+			metrics: &csmv1.DriverMetrics{
+				Enabled: true,
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled:            true,
+					Interval:           "15s",
+					InsecureSkipVerify: true,
+				},
+			},
+			svcExists: true,
+			smExists:  true,
+		},
+		{
+			name: "metrics enabled but ServiceMonitor disabled - no ServiceMonitor created",
+			metrics: &csmv1.DriverMetrics{
+				Enabled: true,
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled: false,
+				},
+			},
+			svcExists: true,
+			smExists:  false,
+		},
+		{
+			name: "metrics enabled with full gateway monitoring config",
+			metrics: &csmv1.DriverMetrics{
+				Enabled: true,
+				GatewayMonitoring: &csmv1.GatewayMonitoringConfig{
+					Enabled:               true,
+					LeaderElectionEnabled: &falseBool,
+					PollInterval:          "60s",
+				},
+			},
+			svcExists: true,
+		},
+		{
+			name:       "isDeleting with enabled metrics - no service created",
+			metrics:    &csmv1.DriverMetrics{Enabled: true},
+			isDeleting: true,
+			svcExists:  false,
+		},
+		{
+			name:         "metrics disabled cleans up pre-existing service",
+			metrics:      &csmv1.DriverMetrics{Enabled: false},
+			preCreateSvc: true,
+			svcExists:    false,
+		},
+		{
+			name:         "isDeleting cleans up pre-existing service",
+			metrics:      &csmv1.DriverMetrics{Enabled: true},
+			isDeleting:   true,
+			preCreateSvc: true,
+			svcExists:    false,
+		},
+		{
+			name: "metrics enabled with ServiceMonitor TLS and default interval",
+			metrics: &csmv1.DriverMetrics{
+				Enabled:       true,
+				TLSCertSecret: "my-tls",
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled: true,
+				},
+			},
+			svcExists: true,
+			smExists:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			crName := "pflex-metrics-test"
+			cr := shared.MakeCSM(crName, "test", shared.PFlexConfigVersion)
+			cr.Spec.Driver.CSIDriverType = csmv1.PowerFlex
+			cr.Spec.Driver.Metrics = tt.metrics
+
+			svcName := crName + "-metrics"
+
+			var fakeClientBuilder *fake.ClientBuilder
+			if tt.preCreateSvc {
+				existingSvc := &corev1.Service{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      svcName,
+						Namespace: "test",
+					},
+				}
+				fakeClientBuilder = fake.NewClientBuilder().WithObjects(existingSvc)
+			} else {
+				fakeClientBuilder = fake.NewClientBuilder()
+			}
+			fakeClient := fakeClientBuilder.Build()
+
+			err := syncMetricsResources(testCtx, tt.isDeleting, cr, fakeClient)
+			if tt.wantErr {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+			}
+
+			svc := &corev1.Service{}
+			getErr := fakeClient.Get(testCtx, types.NamespacedName{Name: svcName, Namespace: "test"}, svc)
+			if tt.svcExists {
+				assert.Nil(t, getErr, "metrics Service should exist after call")
+				assert.Equal(t, svcName, svc.Name)
+			} else {
+				assert.True(t, k8sErrors.IsNotFound(getErr), "metrics Service should not exist after call")
+			}
+
+			smName := crName + "-metrics-monitor"
+			sm := &unstructured.Unstructured{}
+			sm.SetGroupVersionKind(schema.GroupVersionKind{
+				Group:   "monitoring.coreos.com",
+				Version: "v1",
+				Kind:    "ServiceMonitor",
+			})
+			smGetErr := fakeClient.Get(testCtx, types.NamespacedName{Name: smName, Namespace: "test"}, sm)
+			if tt.smExists {
+				assert.Nil(t, smGetErr, "ServiceMonitor should exist after call")
+			} else {
+				assert.True(t, k8sErrors.IsNotFound(smGetErr), "ServiceMonitor should not exist after call")
+			}
+		})
+	}
 }
 
 // test a happy path scenario with deletion

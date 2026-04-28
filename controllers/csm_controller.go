@@ -48,7 +48,9 @@ import (
 	storagev1 "k8s.io/api/storage/v1"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	t1 "k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	sinformer "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
@@ -130,7 +132,7 @@ var (
 // +kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=clusterroles/finalizers,verbs=get;list;watch;update;create;delete;patch
 // +kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=subjectaccessreviews,verbs=create
 // +kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=roles,verbs=get;list;watch;update;create;delete;patch
-// +kubebuilder:rbac:groups="monitoring.coreos.com",resources=servicemonitors,verbs=get;create
+// +kubebuilder:rbac:groups="monitoring.coreos.com",resources=servicemonitors,verbs=get;list;watch;create;update;delete;patch
 // +kubebuilder:rbac:groups="",resources=deployments/finalizers,resourceNames=dell-csm-operator-controller-manager,verbs=update
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=csidrivers,verbs=get;list;watch;create;update;delete;patch
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=storageclasses,verbs=get;list;watch;create;update;delete
@@ -1106,6 +1108,13 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 		}
 	}
 
+	// Sync metrics Service and ServiceMonitor resources for supported drivers.
+	if cr.GetDriverType() == csmv1.PowerFlex {
+		if err = syncMetricsResources(ctx, false, cr, clusterClient.ClusterCTRLClient); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -1563,6 +1572,138 @@ func (r *ContainerStorageModuleReconciler) removeDriver(ctx context.Context, ins
 
 		if err := modules.PatchCSMDRCRDs(ctx, true, operatorConfig, clusterClient.ClusterCTRLClient); err != nil {
 			return fmt.Errorf("unable to remove the common CSM Disaster Recovery CRDs: %v", err)
+		}
+	}
+
+	if instance.GetDriverType() == csmv1.PowerFlex {
+		if err := syncMetricsResources(ctx, true, instance, clusterClient.ClusterCTRLClient); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// syncMetricsResources creates or deletes the metrics Service and ServiceMonitor resources.
+// When isDeleting is true or metrics are disabled the resources are removed; otherwise they are created/updated.
+func syncMetricsResources(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient client.Client) error {
+	log := logger.GetLogger(ctx)
+
+	metrics := cr.Spec.Driver.Metrics
+	metricsEnabled := metrics != nil && metrics.Enabled
+	shouldDelete := isDeleting || !metricsEnabled
+
+	port := int32(9090)
+	if metrics != nil && metrics.Port != 0 {
+		port = metrics.Port
+	}
+
+	bController := true
+	bOwnerDeletion := cr.Spec.Driver.ForceRemoveDriver != nil && !*cr.Spec.Driver.ForceRemoveDriver
+	ownerRef := metav1.OwnerReference{
+		APIVersion:         "storage.dell.com/v1",
+		Kind:               cr.Kind,
+		Name:               cr.Name,
+		UID:                cr.GetUID(),
+		Controller:         &bController,
+		BlockOwnerDeletion: &bOwnerDeletion,
+	}
+
+	svcName := cr.Name + "-metrics"
+	svc := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            svcName,
+			Namespace:       cr.Namespace,
+			Labels:          map[string]string{"app": cr.Name + "-controller"},
+			OwnerReferences: []metav1.OwnerReference{ownerRef},
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: map[string]string{"name": cr.Name + "-controller"},
+			Ports: []corev1.ServicePort{
+				{
+					Name:       "metrics",
+					Port:       port,
+					TargetPort: intstr.FromInt32(port),
+					Protocol:   corev1.ProtocolTCP,
+				},
+			},
+			Type: corev1.ServiceTypeClusterIP,
+		},
+	}
+	svc.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Service"))
+
+	if shouldDelete {
+		if err := operatorutils.DeleteObject(ctx, svc, ctrlClient); err != nil {
+			log.Warnw("Failed to delete metrics Service", "name", svcName, "error", err)
+		}
+	} else {
+		if err := operatorutils.ApplyObject(ctx, svc, ctrlClient); err != nil {
+			return fmt.Errorf("failed to sync metrics Service %s: %v", svcName, err)
+		}
+	}
+
+	smName := cr.Name + "-metrics-monitor"
+
+	interval := "30s"
+	insecureSkipVerify := false
+	serviceMonitorEnabled := !shouldDelete && metrics.ServiceMonitor != nil && metrics.ServiceMonitor.Enabled
+	if serviceMonitorEnabled {
+		if metrics.ServiceMonitor.Interval != "" {
+			interval = metrics.ServiceMonitor.Interval
+		}
+		insecureSkipVerify = metrics.ServiceMonitor.InsecureSkipVerify
+	}
+
+	endpoint := map[string]interface{}{
+		"port":     "metrics",
+		"interval": interval,
+		"path":     "/metrics",
+	}
+	if metrics != nil && metrics.TLSCertSecret != "" {
+		endpoint["scheme"] = "https"
+		endpoint["tlsConfig"] = map[string]interface{}{
+			"insecureSkipVerify": insecureSkipVerify,
+		}
+	}
+
+	sm := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "monitoring.coreos.com/v1",
+			"kind":       "ServiceMonitor",
+			"metadata": map[string]interface{}{
+				"name":      smName,
+				"namespace": cr.Namespace,
+				"labels":    map[string]interface{}{"app": cr.Name + "-controller"},
+				"ownerReferences": []interface{}{
+					map[string]interface{}{
+						"apiVersion":         "storage.dell.com/v1",
+						"kind":               cr.Kind,
+						"name":               cr.Name,
+						"uid":                string(cr.GetUID()),
+						"controller":         true,
+						"blockOwnerDeletion": bOwnerDeletion,
+					},
+				},
+			},
+			"spec": map[string]interface{}{
+				"selector": map[string]interface{}{
+					"matchLabels": map[string]interface{}{
+						"app": cr.Name + "-controller",
+					},
+				},
+				"endpoints": []interface{}{endpoint},
+			},
+		},
+	}
+
+	if !serviceMonitorEnabled {
+		if err := operatorutils.DeleteObject(ctx, sm, ctrlClient); err != nil {
+			// ServiceMonitor CRD may not be installed; log as warning rather than failing
+			log.Warnw("Failed to delete ServiceMonitor (Prometheus Operator may not be installed)", "name", smName, "error", err)
+		}
+	} else {
+		if err := operatorutils.ApplyObject(ctx, sm, ctrlClient); err != nil {
+			return fmt.Errorf("failed to sync ServiceMonitor %s: %v", smName, err)
 		}
 	}
 

@@ -1691,6 +1691,68 @@ spec:
                             type: array
                         type: object
                       type: array
+                    metrics:
+                      description: Metrics is the configuration for the driver metrics
+                        endpoint and monitoring
+                      properties:
+                        enabled:
+                          description: Enabled enables the shared Prometheus metrics
+                            HTTP endpoint on the controller
+                          type: boolean
+                        gatewayMonitoring:
+                          description: GatewayMonitoring configures PowerFlex Gateway
+                            health monitoring
+                          properties:
+                            enabled:
+                              description: Enabled enables Gateway health monitoring
+                                on the controller
+                              type: boolean
+                            leaderElectionEnabled:
+                              description: |-
+                                LeaderElectionEnabled enables leader election so only one controller actively monitors gateways
+                                When nil, defaults to true
+                              type: boolean
+                            pollInterval:
+                              description: PollInterval is how frequently the leader
+                                controller probes each gateway endpoint
+                              type: string
+                              x-kubernetes-validations:
+                                - message: pollInterval must be a non-empty string
+                                  rule: self == '' || size(self) > 0
+                          type: object
+                        port:
+                          default: 9090
+                          description: Port is the port on which the metrics endpoint
+                            is exposed
+                          format: int32
+                          type: integer
+                        serviceMonitor:
+                          description: ServiceMonitor configures optional Prometheus
+                            Operator ServiceMonitor creation
+                          properties:
+                            enabled:
+                              description: |-
+                                Enabled creates a ServiceMonitor CR for Prometheus Operator integration
+                                Requires the Prometheus Operator CRDs to be installed in the cluster
+                              type: boolean
+                            insecureSkipVerify:
+                              description: |-
+                                InsecureSkipVerify skips TLS certificate verification when Prometheus scrapes the metrics endpoint
+                                Only applies when tlsCertSecret is set
+                              type: boolean
+                            interval:
+                              description: Interval is the Prometheus scrape interval
+                                for the metrics endpoint
+                              type: string
+                              x-kubernetes-validations:
+                                - message: interval must be a non-empty string
+                                  rule: self == '' || size(self) > 0
+                          type: object
+                        tlsCertSecret:
+                          description: TLSCertSecret is the name of a Kubernetes TLS
+                            Secret used to serve the metrics endpoint over HTTPS
+                          type: string
+                      type: object
                     node:
                       description: Node is the specification for Node plugin only
                       properties:
@@ -3948,6 +4010,9 @@ spec:
                   rule: "!(has(self.version) && self.version != \"\" && has(self.modules)
                     && self.modules.exists(m, has(m.components) && m.components.exists(c,
                     has(c.envs) && c.envs.exists(e, has(e.name) && e.name == \"NGINX_PROXY_IMAGE\"))))"
+                - message: spec.driver.metrics is only supported for PowerFlex driver
+                  rule: "!has(self.driver.metrics) || self.driver.csiDriverType ==
+                    'powerflex'"
             status:
               description: ContainerStorageModuleStatus defines the observed state
                 of ContainerStorageModule

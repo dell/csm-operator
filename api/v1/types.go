@@ -240,6 +240,69 @@ type Driver struct {
 	// ForceRemoveDriver is the boolean flag used to remove driver deployment when CR is deleted
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Force Remove Driver"
 	ForceRemoveDriver *bool `json:"forceRemoveDriver,omitempty" yaml:"forceRemoveDriver"`
+
+	// Metrics is the configuration for the driver metrics endpoint and monitoring
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Driver Metrics Configuration"
+	Metrics *DriverMetrics `json:"metrics,omitempty" yaml:"metrics,omitempty"`
+}
+
+// DriverMetrics defines the metrics endpoint and monitoring configuration for a driver
+type DriverMetrics struct {
+	// Enabled enables the shared Prometheus metrics HTTP endpoint on the controller
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Metrics Enabled"
+	Enabled bool `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+
+	// Port is the port on which the metrics endpoint is exposed
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Metrics Port"
+	// +kubebuilder:default=9090
+	Port int32 `json:"port,omitempty" yaml:"port,omitempty"`
+
+	// TLSCertSecret is the name of a Kubernetes TLS Secret used to serve the metrics endpoint over HTTPS
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Metrics TLS Cert Secret"
+	TLSCertSecret string `json:"tlsCertSecret,omitempty" yaml:"tlsCertSecret,omitempty"`
+
+	// GatewayMonitoring configures PowerFlex Gateway health monitoring
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Gateway Monitoring Configuration"
+	GatewayMonitoring *GatewayMonitoringConfig `json:"gatewayMonitoring,omitempty" yaml:"gatewayMonitoring,omitempty"`
+
+	// ServiceMonitor configures optional Prometheus Operator ServiceMonitor creation
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ServiceMonitor Configuration"
+	ServiceMonitor *MetricsServiceMonitorConfig `json:"serviceMonitor,omitempty" yaml:"serviceMonitor,omitempty"`
+}
+
+// GatewayMonitoringConfig configures PowerFlex Gateway health monitoring
+type GatewayMonitoringConfig struct {
+	// Enabled enables Gateway health monitoring on the controller
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Gateway Monitoring Enabled"
+	Enabled bool `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+
+	// LeaderElectionEnabled enables leader election so only one controller actively monitors gateways
+	// When nil, defaults to true
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Gateway Monitoring Leader Election Enabled"
+	LeaderElectionEnabled *bool `json:"leaderElectionEnabled,omitempty" yaml:"leaderElectionEnabled,omitempty"`
+
+	// PollInterval is how frequently the leader controller probes each gateway endpoint
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Gateway Monitoring Poll Interval"
+	// +kubebuilder:validation:XValidation:rule="self == '' || size(self) > 0",message="pollInterval must be a non-empty string"
+	PollInterval string `json:"pollInterval,omitempty" yaml:"pollInterval,omitempty"`
+}
+
+// MetricsServiceMonitorConfig configures Prometheus Operator ServiceMonitor creation
+type MetricsServiceMonitorConfig struct {
+	// Enabled creates a ServiceMonitor CR for Prometheus Operator integration
+	// Requires the Prometheus Operator CRDs to be installed in the cluster
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ServiceMonitor Enabled"
+	Enabled bool `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+
+	// Interval is the Prometheus scrape interval for the metrics endpoint
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ServiceMonitor Scrape Interval"
+	// +kubebuilder:validation:XValidation:rule="self == '' || size(self) > 0",message="interval must be a non-empty string"
+	Interval string `json:"interval,omitempty" yaml:"interval,omitempty"`
+
+	// InsecureSkipVerify skips TLS certificate verification when Prometheus scrapes the metrics endpoint
+	// Only applies when tlsCertSecret is set
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ServiceMonitor Insecure Skip Verify"
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty"`
 }
 
 // ContainerTemplate template

@@ -15,6 +15,18 @@ spec:
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
+    metrics:
+      enabled: true
+      port: 9090
+      tlsCertSecret: ""
+      gatewayMonitoring:
+        enabled: true
+        leaderElectionEnabled: true
+        pollInterval: "30s"
+      serviceMonitor:
+        enabled: true
+        interval: "30s"
+        insecureSkipVerify: false
     common:
       image: "csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-vxflexos:nightly"
       imagePullPolicy: Always

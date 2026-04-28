@@ -85,6 +85,21 @@ const (
 	PowerFlexProbeTimeout string = "<X_CSI_PROBE_TIMEOUT>"
 
 	PowerFlexAuthType string = "<X_CSI_AUTH_TYPE>"
+
+	// CsiMetricsEnabled - master switch for the shared Prometheus metrics endpoint
+	CsiMetricsEnabled = "<X_CSI_METRICS_ENABLED>"
+
+	// CsiMetricsPort - port for the shared Prometheus metrics endpoint
+	CsiMetricsPort = "<X_CSI_METRICS_PORT>"
+
+	// CsiGatewayMonitoringEnabled - enables PowerFlex Gateway health monitoring
+	CsiGatewayMonitoringEnabled = "<X_CSI_GATEWAY_MONITORING_ENABLED>"
+
+	// CsiGatewayMonitoringLeaderElection - enables leader election for gateway monitoring
+	CsiGatewayMonitoringLeaderElection = "<X_CSI_GATEWAY_MONITORING_LEADER_ELECTION_ENABLED>"
+
+	// CsiGatewayMonitoringPollInterval - poll interval for gateway monitoring
+	CsiGatewayMonitoringPollInterval = "<X_CSI_GATEWAY_MONITORING_POLL_INTERVAL>"
 )
 
 // PrecheckPowerFlex do input validation
@@ -390,6 +405,33 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	spaceReclamationMaxConcurrent := GetDriverCommonEnv(cr, CsiSpaceReclamationMaxConcurrent, "")
 	spaceReclamationTimeOut := GetDriverCommonEnv(cr, CsiSpaceReclamationTimeOut, "")
 
+	// Metrics configuration
+	metricsEnabled := "false"
+	metricsPort := "9090"
+	gwMonitoringEnabled := "false"
+	gwMonitoringLeaderElection := "true"
+	gwMonitoringPollInterval := "30s"
+	if cr.Spec.Driver.Metrics != nil {
+		if cr.Spec.Driver.Metrics.Enabled {
+			metricsEnabled = "true"
+		}
+		if cr.Spec.Driver.Metrics.Port != 0 {
+			metricsPort = fmt.Sprintf("%d", cr.Spec.Driver.Metrics.Port)
+		}
+		if cr.Spec.Driver.Metrics.GatewayMonitoring != nil {
+			gm := cr.Spec.Driver.Metrics.GatewayMonitoring
+			if cr.Spec.Driver.Metrics.Enabled && gm.Enabled {
+				gwMonitoringEnabled = "true"
+			}
+			if gm.LeaderElectionEnabled != nil && !*gm.LeaderElectionEnabled {
+				gwMonitoringLeaderElection = "false"
+			}
+			if gm.PollInterval != "" {
+				gwMonitoringPollInterval = gm.PollInterval
+			}
+		}
+	}
+
 	// nolint:gosec
 	switch fileType {
 	case "Controller":
@@ -410,6 +452,11 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexShowHTTP, showHTTP)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexProbeTimeout, probeTimeout)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexAuthType, authType)
+		yamlString = strings.ReplaceAll(yamlString, CsiMetricsEnabled, metricsEnabled)
+		yamlString = strings.ReplaceAll(yamlString, CsiMetricsPort, metricsPort)
+		yamlString = strings.ReplaceAll(yamlString, CsiGatewayMonitoringEnabled, gwMonitoringEnabled)
+		yamlString = strings.ReplaceAll(yamlString, CsiGatewayMonitoringLeaderElection, gwMonitoringLeaderElection)
+		yamlString = strings.ReplaceAll(yamlString, CsiGatewayMonitoringPollInterval, gwMonitoringPollInterval)
 
 	case "Node":
 		if cr.Spec.Driver.Node != nil {
