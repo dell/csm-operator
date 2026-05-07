@@ -2,7 +2,7 @@ apiVersion: csm-authorization.storage.dell.com/v1
 kind: Storage
 metadata:
   name: REPLACE_STORAGE_NAME
-  namespace: authorization
+  namespace: ${E2E_NS_AUTH}
 spec:
   type: REPLACE_STORAGE_TYPE
   endpoint: https://REPLACE_ENDPOINT
@@ -20,7 +20,7 @@ apiVersion: csm-authorization.storage.dell.com/v1
 kind: CSMRole
 metadata:
   name: REPLACE_ROLE_NAME
-  namespace: authorization
+  namespace: ${E2E_NS_AUTH}
 spec:
   quota: REPLACE_QUOTA
   systemID: "REPLACE_SYSTEM_ID"
@@ -31,7 +31,7 @@ apiVersion: csm-authorization.storage.dell.com/v1
 kind: CSMTenant
 metadata:
   name: REPLACE_TENANT_NAME
-  namespace: authorization
+  namespace: ${E2E_NS_AUTH}
 spec:
   # TODO(user): Add fields here
   roles: REPLACE_TENANT_ROLES

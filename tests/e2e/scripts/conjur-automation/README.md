@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2025 Dell Inc., or its subsidiaries. All Rights Reserved.
+Copyright (c) 2025-2026 Dell Inc., or its subsidiaries. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -87,25 +87,25 @@ storageSystemCredentials:
 ```
 
 ### Install and create secrets from environment variables
-This method aligns with CSM Operator e2e by reading specific environment variables in array-info.env. Refer the sample at https://github.com/dell/csm-operator/blob/main/tests/e2e/array-info.env.sample:
+This method aligns with CSM Operator e2e by reading specific environment variables exported from array-info.yaml. Refer the sample at https://github.com/dell/csm-operator/blob/main/tests/e2e/array-info.yaml.sample:
 
 ```
-PFLEX_USER
-PFLEX_PASS
+POWERFLEX_USER
+POWERFLEX_PASS
 
-PSCALE_USER
-PSCALE_PASS
+POWERSCALE_USER
+POWERSCALE_PASS
 
-PMAX_USER
-PMAX_PASS
+POWERMAX_USER
+POWERMAX_PASS
 
-PSTORE_USER
-PSTORE_PASS
+POWERSTORE_USER
+POWERSTORE_PASS
 
 REDIS_USER
 REDIS_PASS
 
-CONFIG_OBJECT
+JWT_SIGNING_SECRET
 ```
 
 The variables in each set of two, two variables per platform, must be set prior to running this tool. If any of the two environment variables for a specific platform is not set, that secret will not be written in Conjur.

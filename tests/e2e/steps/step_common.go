@@ -1,4 +1,4 @@
-//  Copyright © 2022-2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2022-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
@@ -170,7 +171,9 @@ func checkObservabilityNoRunningPods(ctx context.Context, namespace string, k8sC
 	podsFound := ""
 	n := 0
 	for _, pod := range pods {
-		if strings.Contains(pod.Name, "topology") {
+		if strings.Contains(pod.Name, "topology") ||
+			strings.Contains(pod.Name, "metrics") ||
+			strings.Contains(pod.Name, "otel") {
 			podsFound += (pod.Name + ",")
 			n++
 		}
@@ -480,36 +483,50 @@ func checkAuthorizationProxyServerNoRunningPods(ctx context.Context, namespace s
 
 func getPortContainerizedAuth(namespace string) (string, error) {
 	port := ""
-	service := namespace + "-ingress-nginx-controller"
 	var err error
 	var b []byte
 
 	isOpenShift := os.Getenv("IS_OPENSHIFT")
 	if isOpenShift == "true" {
-		service = "router-internal-default"
+		service := "router-internal-default"
 		b, err = exec.Command(
 			"kubectl", "get",
 			"service", service,
 			"-n", "openshift-ingress",
 			"-o", `jsonpath="{.spec.ports[1].port}"`,
 		).CombinedOutput() // #nosec G204
+		if err != nil {
+			return "", fmt.Errorf("failed to get %s port in namespace: %s: %s", service, "openshift-ingress", b)
+		}
 	} else {
+		// Try v2.5.0+ Gateway API service name first
+		service := namespace + "-gateway-nginx"
 		b, err = exec.Command(
 			"kubectl", "get",
 			"service", service,
 			"-n", namespace,
-			"-o", `jsonpath="{.spec.ports[1].nodePort}"`,
+			"-o", `jsonpath="{.spec.ports[0].nodePort}"`,
 		).CombinedOutput() // #nosec G204
-	}
-	if err != nil {
-		return "", fmt.Errorf("failed to get %s port in namespace: %s: %s", service, namespace, b)
+		// If v2.5.0+ service name fails, try v2.4.0 ingress-nginx-controller
+		if err != nil {
+			service = namespace + "-ingress-nginx-controller"
+			b, err = exec.Command(
+				"kubectl", "get",
+				"service", service,
+				"-n", namespace,
+				"-o", `jsonpath="{.spec.ports[1].nodePort}"`,
+			).CombinedOutput() // #nosec G204
+			if err != nil {
+				return "", fmt.Errorf("failed to get gateway service port in namespace: %s (tried %s-gateway-nginx and %s-ingress-nginx-controller): %s", namespace, namespace, namespace, b)
+			}
+		}
 	}
 	port = strings.Replace(string(b), `"`, "", -1)
 	return port, nil
 }
 
 func execCommand(command string, args ...string) error {
-	cmd := exec.Command(command, args...)
+	cmd := exec.Command(command, args...) // #nosec G204, G702 -- this is a test automation tool
 	if isDebugEnabled() {
 		fmt.Printf("cmd: %s %s\n", command, strings.Join(args, " "))
 		cmd.Stdout = os.Stdout
@@ -528,4 +545,14 @@ func execShell(commands string) error {
 
 func isDebugEnabled() bool {
 	return os.Getenv("E2E_VERBOSE") == "true"
+}
+
+// parseIndex converts a 1-based index string (from scenario steps) to a 0-based int.
+// It returns a descriptive error instead of silently returning 0 on invalid input.
+func parseIndex(s string) (int, error) {
+	n, err := strconv.Atoi(s)
+	if err != nil {
+		return 0, fmt.Errorf("invalid numeric index %q: %w", s, err)
+	}
+	return n, nil
 }

@@ -18,8 +18,8 @@ import (
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
-	"github.com/dell/csm-operator/tests/shared"
-	"github.com/dell/csm-operator/tests/shared/crclient"
+	shared "github.com/dell/csm-operator/tests/sharedutil"
+	"github.com/dell/csm-operator/tests/sharedutil/crclient"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -28,6 +28,7 @@ import (
 var (
 	csmUnity                = csmForUnity("csm")
 	unityCSMBadVersion      = csmForUnityBadVersion()
+	unityInvalidCSMVersion  = csmForUnityInvalidVersion()
 	unityCSMBadSkipCert     = csmForUnityBadSkipCert()
 	unityCSMBadCertCnt      = csmForUnityBadCertCnt()
 	unityClient             = crclient.NewFakeClientNoInjector(objects)
@@ -52,6 +53,7 @@ var (
 		{"bad version", unityCSMBadVersion, unityClient, unitySecret, "not supported"},
 		{"invalid value for skip cert validation", unityCSMBadSkipCert, unityClient, unitySecret, "is an invalid value for X_CSI_UNITY_SKIP_CERTIFICATE_VALIDATION"},
 		{"invalid value for cert secret cnt", unityCSMBadCertCnt, unityClient, unitySecret, "is an invalid value for CERT_SECRET_COUNT"},
+		{"invalid csm version", unityInvalidCSMVersion, unityClient, unitySecret, "No custom resource configuration is available for CSM version v1.10.0"},
 	}
 
 	unityPrecheckTests = []struct {
@@ -136,12 +138,17 @@ func TestPrecheckUnity(t *testing.T) {
 		if err != nil {
 			assert.Nil(t, err)
 		}
-
 		t.Run(tt.name, func(t *testing.T) { // #nosec G601 - Run waits for the call to complete.
-			err := PrecheckUnity(ctx, &tt.csm, config, tt.ct)
+			// Use configForVersionChecks for invalid CSM version test
+			cfg := config
+			if tt.name == "invalid csm version" {
+				cfg = configForVersionChecks
+			}
+			err := PrecheckUnity(ctx, &tt.csm, cfg, tt.ct)
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
-			} else if err != nil {
+			} else {
+				fmt.Printf("err: %+v\n", err)
 				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
 			}
 		})
@@ -170,6 +177,17 @@ func csmForUnityBadVersion() csmv1.ContainerStorageModule {
 
 	// Add unity driver version
 	res.Spec.Driver.ConfigVersion = shared.BadConfigVersion
+	res.Spec.Driver.CSIDriverType = csmv1.Unity
+
+	return res
+}
+
+// makes a csm object with a invalid csm version
+func csmForUnityInvalidVersion() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.UnityConfigVersion)
+
+	// Add unity driver version
+	res.Spec.Version = shared.InvalidCSMVersion
 	res.Spec.Driver.CSIDriverType = csmv1.Unity
 
 	return res

@@ -69,20 +69,17 @@ spec:
           # openTelemetryCollectorAddress: the OTLP receiving endpoint using gRPC
           openTelemetryCollectorAddress: ""
         - name: redis
-          # Redis credentials configuration:
-          # Choose ONE of the following methods:
-          # 1. Direct credentials (redisUsername and redisPassword)
-          # 2. Secret Store CSI driver (redisSecretProviderClass)
-          # Do not use both methods at the same time.
-
-          # Direct credentials method:
+          # Redis credentials are required and can be provided in one of two ways:
+          # 1. Directly via redisUsername/redisPassword (a Kubernetes secret will be created automatically)
+          # 2. Via a Secret Store CSI driver (specify the SecretProviderClass details below)
+          #
+          # Option 1: Provide credentials directly
           redisUsername: ""
           redisPassword: ""
-
-          # Secret Store CSI driver method (uncomment to use):
+          # Option 2: Use a Secret Store CSI driver
           # redisSecretProviderClass:
-            # Name of the SecretProviderClass that holds the Redis secretObject.
-            # - secretProviderClassName: ""
+              # Name of the SecretProviderClass that holds the Redis secretObject.
+              # - secretProviderClassName: ""
               # Name of the Kubernetes secret (created by the Secret Store CSI driver) that contains Redis credentials.
               # redisSecretName: ""
               # Key in the secret that stores the Redis username.
@@ -90,7 +87,7 @@ spec:
               # Key in the secret that stores the Redis password.
               # redisPasswordKey: ""
               # Optional paths to the Conjur secrets that store the Redis username and password
-              #conjur:
+              # conjur:
               #  usernamePath: secrets/redis-username
               #  passwordPath: secrets/redis-password
           redis: redis:8.2.0-alpine
@@ -125,20 +122,20 @@ spec:
             vault:
               - secret-provider-class-1
               - secret-provider-class-2
-            # conjur:
-              # - name: secret-provider-class-3
-              #   paths:
-                  # - usernamePath: secrets/username1
-                  #   passwordPath: secrets/password1
-                  # - usernamePath: secrets/username2
-                  #   passwordPath: secrets/password2
-              # - name: secret-provider-class-4
-                # paths:
-                  # - usernamePath: secrets/username3
-                  #   passwordPath: secrets/password3
+              # conjur:
+            #   - name: secret-provider-class-3
+            #     paths:
+            #       - usernamePath: secrets/username1
+            #         passwordPath: secrets/password1
+            #       - usernamePath: secrets/username2
+            #         passwordPath: secrets/password2
+            #   - name: secret-provider-class-4
+            #     paths:
+            #       - usernamePath: secrets/username3
+            #         passwordPath: secrets/password3
           # secrets:
-          #   - secret-1
-          #   - secret-2
+            #   - secret-1
+            #   - secret-2
 ---
 apiVersion: v1
 kind: ConfigMap

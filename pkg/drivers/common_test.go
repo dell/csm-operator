@@ -17,7 +17,7 @@ import (
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
-	"github.com/dell/csm-operator/tests/shared"
+	shared "github.com/dell/csm-operator/tests/sharedutil"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -25,6 +25,11 @@ var (
 	// where to find all the yaml files
 	config = operatorutils.OperatorConfig{
 		ConfigDirectory: "../../tests/config",
+	}
+
+	// config for version checks (csm-version-mapping.yaml is in operatorconfig)
+	configForVersionChecks = operatorutils.OperatorConfig{
+		ConfigDirectory: "../../operatorconfig",
 	}
 
 	pflexCSMName   = "pflex-csm"
@@ -36,7 +41,7 @@ var (
 )
 
 // makes a csm object with tolerations
-func csmWithTolerations(driver csmv1.DriverType, version string) csmv1.ContainerStorageModule {
+func csmWithTolerations(driver csmv1.DriverType, version string, csmVersion string) csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
 	// Add tolerations, node selector to controller and node
@@ -92,6 +97,10 @@ func csmWithTolerations(driver csmv1.DriverType, version string) csmv1.Container
 
 	// Add pscale driver version
 	res.Spec.Driver.ConfigVersion = version
+	if csmVersion != "" {
+		res.Spec.Driver.ConfigVersion = ""
+		res.Spec.Version = csmVersion
+	}
 
 	// Add pscale driver type
 	res.Spec.Driver.CSIDriverType = driver
@@ -251,10 +260,11 @@ func csmWithPowerstore(driver csmv1.DriverType, version string) csmv1.ContainerS
 	// Add controller fields specific
 	nfsAclsParam := corev1.EnvVar{Name: "X_CSI_NFS_ACLS"}
 	externalAccess := corev1.EnvVar{Name: "X_CSI_POWERSTORE_EXTERNAL_ACCESS"}
+	exclusiveAccess := corev1.EnvVar{Name: "X_CSI_POWERSTORE_EXCLUSIVE_ACCESS"}
 	res.Spec.Driver.Controller = &csmv1.ContainerTemplate{}
 	if res.Spec.Driver.Controller != nil {
 		res.Spec.Driver.Controller.NodeSelector = map[string]string{"thisIs": "NodeSelector"}
-		res.Spec.Driver.Controller.Envs = []corev1.EnvVar{nfsAclsParam, healthMonitor, externalAccess}
+		res.Spec.Driver.Controller.Envs = []corev1.EnvVar{nfsAclsParam, healthMonitor, externalAccess, exclusiveAccess}
 	}
 
 	if res.Spec.Driver.CSIDriverSpec != nil {

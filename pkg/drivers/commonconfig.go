@@ -1,4 +1,4 @@
-//  Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2022-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
@@ -31,41 +32,100 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+func recordMatchedContainerImage(matched *operatorutils.VersionSpec, containerName, image string) {
+	if matched == nil || containerName == "" || image == "" {
+		return
+	}
+	if matched.Images == nil {
+		matched.Images = make(map[string]string)
+	}
+	matched.Images[containerName] = image
+}
+
 var defaultVolumeConfigName = map[csmv1.DriverType]string{
 	csmv1.PowerScaleName: "isilon-configs",
 }
 
 const (
 	ConfigParamsFile = "driver-config-params.yaml"
+	// CSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
+	CSMNameSpace = "<CSM_NAMESPACE>"
+
+	// CsiLogLevel - Defines the log level
+	CsiLogLevel = "<CSI_LOG_LEVEL>"
+
+	// CsiLogFormat - Defines the log format
+	CsiLogFormat = "<CSI_LOG_FORMAT>"
+
+	// OtelCollectorAddress - Defines the otel collector address
+	OtelCollectorAddress = "<OTEL_COLLECTOR_ADDRESS>"
+
+	// CsiLogFormat - Defines the log format for cosi
+	CosiLogLevel = "COSI_LOG_LEVEL"
+
+	// CsiLogFormat - Defines the log format for cosi
+	CosiLogFormat = "COSI_LOG_FORMAT"
+
+	// Pre-mount file system check/repair feature configuration
+	CsiFsCheckEnabled = "X_CSI_FS_CHECK_ENABLED"
+	CsiFsCheckMode    = "X_CSI_FS_CHECK_MODE"
+
+	// CsiSpaceReclamationEnabled - Enable/Disable Space Reclamation
+	CsiSpaceReclamationEnabled = "X_CSI_SPACE_RECLAMATION_ENABLED"
+
+	// CsiSpaceReclamationSchedule - Space Reclamation Schedule
+	CsiSpaceReclamationSchedule = "X_CSI_SPACE_RECLAMATION_SCHEDULE"
+
+	// CsiSpaceReclamationMaxConcurrent - Space Reclamation Max Concurrent
+	CsiSpaceReclamationMaxConcurrent = "X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT"
+
+	// CsiSpaceReclamationTimeOut - Space Reclamation Timeout
+	CsiSpaceReclamationTimeOut = "X_CSI_SPACE_RECLAMATION_TIMEOUT"
 )
 
+func EnvToPlaceholder(envName string) string {
+	return "<" + envName + ">"
+}
+
+func SubstituteEnvVar(yamlString, varName, value string) string {
+	return strings.ReplaceAll(yamlString, EnvToPlaceholder(varName), value)
+}
+
 // GetController get controller yaml
-func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, driverName csmv1.DriverType) (*operatorutils.ControllerYAML, error) {
+func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, driverName csmv1.DriverType, matched operatorutils.VersionSpec) (*operatorutils.ControllerYAML, error) {
 	log := logger.GetLogger(ctx)
-	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/controller.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
-	log.Debugw("GetController", "configMapPath", configMapPath)
-	buf, err := os.ReadFile(filepath.Clean(configMapPath))
+	driverType := cr.Spec.Driver.CSIDriverType
+	version, err := operatorutils.GetVersion(ctx, &cr, operatorConfig)
+	if err != nil {
+		return nil, err
+	}
+	controllerPath := fmt.Sprintf("%s/driverconfig/%s/%s/controller.yaml", operatorConfig.ConfigDirectory, driverName, version)
+	log.Debugw("GetController", "controllerPath", controllerPath)
+	buf, err := os.ReadFile(filepath.Clean(controllerPath))
 	if err != nil {
 		log.Errorw("GetController failed", "Error", err.Error())
 		return nil, err
 	}
 
 	YamlString := operatorutils.ModifyCommonCR(string(buf), cr)
-	if cr.Spec.Driver.CSIDriverType == "powerstore" {
+	if driverType == "powerstore" {
 		YamlString = ModifyPowerstoreCR(YamlString, cr, "Controller")
 	}
 	log.Debugw("DriverSpec ", cr.Spec)
-	if cr.Spec.Driver.CSIDriverType == "unity" {
+	switch driverType {
+	case csmv1.Unity:
 		YamlString = ModifyUnityCR(YamlString, cr, "Controller")
-	}
-	if cr.Spec.Driver.CSIDriverType == "powerflex" {
+	case csmv1.PowerFlex:
 		YamlString = ModifyPowerflexCR(YamlString, cr, "Controller")
-	}
-	if cr.Spec.Driver.CSIDriverType == "powermax" {
+	case csmv1.PowerMax:
 		YamlString = ModifyPowermaxCR(YamlString, cr, "Controller")
-	}
-	if cr.Spec.Driver.CSIDriverType == "isilon" {
+	case csmv1.PowerScale:
 		YamlString = ModifyPowerScaleCR(YamlString, cr, "Controller")
+	case csmv1.Cosi:
+		YamlString, err = ModifyCosiCR(YamlString, cr, "Controller")
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	driverYAML, err := operatorutils.GetDriverYaml(YamlString, "Deployment")
@@ -103,17 +163,62 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 		controllerYAML.Deployment.Spec.Template.Spec.NodeSelector = cr.Spec.Driver.Controller.NodeSelector
 	}
 
+	// Driver container image override priority (highest wins):
+	//
+	//   1. ConfigMap version match (spec.version) -- image resolved from the
+	//      csm-images ConfigMap via VersionSpec.Images[driverType]. This is
+	//      the "managed versioning" path where the operator picks images
+	//      automatically based on the requested version.
+	//
+	//   2. Custom registry (spec.customRegistry) -- the template image path
+	//      is re-rooted under the user-supplied registry prefix. Only valid
+	//      when spec.version is set (CEL validation enforces this).
+	//
+	//   3. Explicit image (spec.driver.common.image) -- the user provides a
+	//      fully-qualified image in the CR. This is the configVersion path
+	//      where the user manages image references directly. configVersion
+	//      is deprecated in favor of spec.version; this path remains for
+	//      backward compatibility.
+	//
+	//   4. Template default -- if none of the above apply, the image baked
+	//      into the operatorconfig YAML template is used as-is.
+	//
+	// Sidecar containers follow a similar chain via UpdateSideCarApply and
+	// are intentionally skipped here to avoid double-resolution.
+	matchedDriverImage := ""
+	if matched.Version != "" {
+		if img := matched.Images[string(cr.Spec.Driver.CSIDriverType)]; img != "" {
+			matchedDriverImage = img
+		}
+	}
+
 	containers := controllerYAML.Deployment.Spec.Template.Spec.Containers
 	newcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
 	for i, c := range containers {
-		if c.Name != nil && string(*c.Name) == "driver" {
-			// Check if Common is not nil before accessing Envs
-			if cr.Spec.Driver.Common != nil {
-				if cr.Spec.Driver.Common.Image != "" {
-					image := string(cr.Spec.Driver.Common.Image)
-					c.Image = &image
+		if c.Name != nil && (string(*c.Name) == "driver" || string(*c.Name) == "objectstorage-provisioner") {
+			if matchedDriverImage != "" {
+				// Priority 1: ConfigMap version match
+				img := matchedDriverImage
+				c.Image = &img
+				recordMatchedContainerImage(&matched, string(*c.Name), matchedDriverImage)
+				log.Infow("Matched container image override", "container", string(*c.Name), "image", matchedDriverImage)
+				// Clear after use so it isn't applied to a second container
+				matchedDriverImage = ""
+			} else if cr.Spec.CustomRegistry != "" {
+				// Priority 2: Custom registry prefix
+				resolvedImagePath := operatorutils.ResolveImage(ctx, string(*c.Image), cr)
+				c.Image = &resolvedImagePath
+			} else {
+				// Priority 3: Explicit image from CR spec (falls through to
+				// priority 4 / template default if Common.Image is empty)
+				if cr.Spec.Driver.Common != nil {
+					if cr.Spec.Driver.Common.Image != "" {
+						image := string(cr.Spec.Driver.Common.Image)
+						c.Image = &image
+					}
 				}
 			}
+
 			var commonEnvs, controllerEnvs []corev1.EnvVar
 			if cr.Spec.Driver.Common != nil {
 				commonEnvs = cr.Spec.Driver.Common.Envs
@@ -123,6 +228,8 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 			}
 			containers[i].Env = operatorutils.ReplaceAllApplyCustomEnvs(c.Env, commonEnvs, controllerEnvs)
 			c.Env = containers[i].Env
+
+			SetDriverMetrics(driverType, cr, &c)
 		}
 
 		removeContainer := false
@@ -152,7 +259,13 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 		}
 		if !removeContainer {
 			operatorutils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &c)
-			operatorutils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &c)
+			// Skip UpdateSideCarApply for the driver container — its image was
+			// already resolved above (ConfigMap / CustomRegistry / Default).
+			// Running it again would double-resolve the image, which corrupts
+			// the path when retainImageRegistryPath is true.
+			if string(*c.Name) != "driver" && string(*c.Name) != "objectstorage-provisioner" {
+				operatorutils.UpdateSideCarApply(ctx, cr.Spec.Driver.SideCars, &c, cr, matched)
+			}
 			newcontainers = append(newcontainers, c)
 		}
 
@@ -163,16 +276,16 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	for i, v := range controllerYAML.Deployment.Spec.Template.Spec.Volumes {
 		newV := new(acorev1.VolumeApplyConfiguration)
 		if *v.Name == "certs" {
-			if cr.Spec.Driver.CSIDriverType == "isilon" || cr.Spec.Driver.CSIDriverType == "powerflex" {
+			if driverType == "isilon" || driverType == "powerflex" {
 				newV, err = getApplyCertVolume(cr)
 			}
-			if cr.Spec.Driver.CSIDriverType == "unity" {
+			if driverType == "unity" {
 				newV, err = getApplyCertVolumeUnity(cr)
 			}
-			if cr.Spec.Driver.CSIDriverType == "powermax" {
+			if driverType == "powermax" {
 				newV, err = getApplyCertVolumePowermax(cr)
 			}
-			if cr.Spec.Driver.CSIDriverType == "powerstore" {
+			if driverType == "powerstore" {
 				newV, err = getApplyCertVolumePowerstore(cr)
 			}
 			if err != nil {
@@ -185,6 +298,22 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 			controllerYAML.Deployment.Spec.Template.Spec.Volumes[i].Secret.SecretName = &cr.Spec.Driver.AuthSecret
 		}
 
+	}
+
+	if driverType == csmv1.PowerFlex && isDriverMetricsTLSEnabled(cr) {
+		metricsTLSVolName := "metrics-tls"
+		metricsTLSSecretName := cr.Spec.Driver.Metrics.TLSCertSecret
+		dynamicallyAddVolume(
+			&controllerYAML.Deployment.Spec.Template.Spec.Volumes,
+			acorev1.VolumeApplyConfiguration{
+				Name: &metricsTLSVolName,
+				VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{
+					Secret: &acorev1.SecretVolumeSourceApplyConfiguration{
+						SecretName: &metricsTLSSecretName,
+					},
+				},
+			},
+		)
 	}
 
 	crUID := cr.GetUID()
@@ -206,10 +335,48 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	return &controllerYAML, nil
 }
 
+func isDriverMetricsTLSEnabled(cr csmv1.ContainerStorageModule) bool {
+	return cr.Spec.Driver.Metrics != nil && cr.Spec.Driver.Metrics.Enabled && cr.Spec.Driver.Metrics.TLSCertSecret != ""
+}
+
+func dynamicallyAddVolume(volumes *[]acorev1.VolumeApplyConfiguration, vol acorev1.VolumeApplyConfiguration) {
+	contains := slices.ContainsFunc(*volumes,
+		func(v acorev1.VolumeApplyConfiguration) bool { return *v.Name == *vol.Name },
+	)
+	if !contains {
+		*volumes = append(*volumes, vol)
+	}
+}
+
+// SetDriverMetrics mounts the TLS cert volume and sets the cert/key env vars for
+// drivers that expose a metrics endpoint secured with a user-provided secret.
+func SetDriverMetrics(driverType csmv1.DriverType, cr csmv1.ContainerStorageModule, c *acorev1.ContainerApplyConfiguration) {
+	if driverType != csmv1.PowerFlex {
+		return
+	}
+	if !isDriverMetricsTLSEnabled(cr) {
+		return
+	}
+	metricsTLSVolName := "metrics-tls"
+	metricsTLSMountPath := "/etc/metrics-tls"
+	readOnly := true
+	certEnvName := "X_CSI_METRICS_TLS_CERT_FILE"
+	certFile := "/etc/metrics-tls/tls.crt"
+	keyEnvName := "X_CSI_METRICS_TLS_KEY_FILE"
+	keyFile := "/etc/metrics-tls/tls.key"
+	dynamicallyMountVolume(c, acorev1.VolumeMountApplyConfiguration{Name: &metricsTLSVolName, MountPath: &metricsTLSMountPath, ReadOnly: &readOnly})
+	dynamicallyAddEnvironmentVariable(c, acorev1.EnvVarApplyConfiguration{Name: &certEnvName, Value: &certFile})
+	dynamicallyAddEnvironmentVariable(c, acorev1.EnvVarApplyConfiguration{Name: &keyEnvName, Value: &keyFile})
+}
+
 // GetNode get node yaml
-func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, driverType csmv1.DriverType, filename string, ct client.Client) (*operatorutils.NodeYAML, error) {
+func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, driverType csmv1.DriverType, filename string, ct client.Client, matched operatorutils.VersionSpec) (*operatorutils.NodeYAML, error) {
 	log := logger.GetLogger(ctx)
-	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/%s", operatorConfig.ConfigDirectory, driverType, cr.Spec.Driver.ConfigVersion, filename)
+	version, err := operatorutils.GetVersion(ctx, &cr, operatorConfig)
+	if err != nil {
+		return nil, err
+	}
+	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/%s", operatorConfig.ConfigDirectory, driverType, version, filename)
 	log.Debugw("GetNode", "configMapPath", configMapPath)
 	buf, err := os.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {
@@ -272,17 +439,43 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 		nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.NodeSelector = cr.Spec.Driver.Node.NodeSelector
 	}
 
+	// Driver container image override -- same priority as GetController:
+	// 1. ConfigMap version match, 2. CustomRegistry, 3. Common.Image, 4. Template default.
+	found := false
+	var image string
+	var mdmInitContainerImage string
+	for k, v := range matched.Images {
+		if k == string(cr.Spec.Driver.CSIDriverType) {
+			image = v
+			mdmInitContainerImage = v
+			found = true
+			break
+		}
+	}
+
 	containers := nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Containers
 	newcontainers := make([]acorev1.ContainerApplyConfiguration, 0)
 	for i, c := range containers {
 		if c.Name != nil && string(*c.Name) == "driver" {
-			if cr.Spec.Driver.Common != nil {
-				// With minimal, this will override the node image if the driver image is overridden.
-				if cr.Spec.Driver.Common.Image != "" {
-					image := string(cr.Spec.Driver.Common.Image)
-					c.Image = &image
+			if found {
+				// Priority 1: ConfigMap version match
+				c.Image = &image
+				recordMatchedContainerImage(&matched, string(*c.Name), image)
+			} else if cr.Spec.CustomRegistry != "" {
+				// Priority 2: Custom registry prefix
+				resolvedImagePath := operatorutils.ResolveImage(ctx, string(*c.Image), cr)
+				c.Image = &resolvedImagePath
+			} else {
+				// Priority 3: Explicit image from CR spec
+				if cr.Spec.Driver.Common != nil {
+					// With minimal, this will override the node image if the driver image is overridden.
+					if cr.Spec.Driver.Common.Image != "" {
+						image := string(cr.Spec.Driver.Common.Image)
+						c.Image = &image
+					}
 				}
 			}
+
 			var commonEnvs, nodeEnvs []corev1.EnvVar
 			if cr.Spec.Driver.Common != nil {
 				commonEnvs = cr.Spec.Driver.Common.Envs
@@ -319,7 +512,13 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 		}
 		if !removeContainer {
 			operatorutils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &containers[i])
-			operatorutils.UpdateSideCarApply(cr.Spec.Driver.SideCars, &containers[i])
+			// Skip UpdateSideCarApply for the driver container — its image was
+			// already resolved above (ConfigMap / CustomRegistry / Default).
+			// Running it again would double-resolve the image, which corrupts
+			// the path when retainImageRegistryPath is true.
+			if string(*c.Name) != "driver" && string(*c.Name) != "objectstorage-provisioner" {
+				operatorutils.UpdateSideCarApply(ctx, cr.Spec.Driver.SideCars, &containers[i], cr, matched)
+			}
 			newcontainers = append(newcontainers, c)
 		}
 	}
@@ -352,7 +551,7 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 
 	for i := range initcontainers {
 		operatorutils.ReplaceAllContainerImageApply(operatorConfig.K8sVersion, &initcontainers[i])
-		operatorutils.UpdateInitContainerApply(updatedCr.Spec.Driver.InitContainers, &initcontainers[i])
+		operatorutils.UpdateInitContainerApply(ctx, updatedCr.Spec.Driver.InitContainers, &initcontainers[i], cr, matched)
 		// mdm-container is exclusive to powerflex driver deamonset, will use the driver image as an init container
 		if *initcontainers[i].Name == "mdm-container" {
 			// driver minimial manifest may not have common section
@@ -361,6 +560,40 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 					image := string(cr.Spec.Driver.Common.Image)
 					initcontainers[i].Image = &image
 				}
+			}
+			if mdmInitContainerImage != "" {
+				initcontainers[i].Image = &mdmInitContainerImage
+				recordMatchedContainerImage(&matched, string(*initcontainers[i].Name), mdmInitContainerImage)
+				log.Debugw("MDM initcontainer image resolved from ConfigMap",
+					"mdmInitContainerImage", mdmInitContainerImage,
+				)
+			} else if updatedCr.Spec.CustomRegistry != "" {
+				resolvedImagePath := operatorutils.ResolveImage(ctx, string(*initcontainers[i].Image), cr)
+				initcontainers[i].Image = &resolvedImagePath
+				log.Debugw(fmt.Sprintf("custom registry resolved initcontianer MDM image: %s", *initcontainers[i].Image))
+			}
+		}
+		if *initcontainers[i].Name == "sdc" {
+			// Checking if sdc initcontainer image is present in config map
+			found2 := false
+			var sdcImage string
+			for k, v := range matched.Images {
+				if k == "sdc" {
+					sdcImage = v
+					found2 = true
+					break
+				}
+			}
+			if found2 {
+				initcontainers[i].Image = &sdcImage
+				recordMatchedContainerImage(&matched, string(*initcontainers[i].Name), sdcImage)
+				log.Infow("SDC initcontainer image resolved from ConfigMap",
+					"image", sdcImage,
+				)
+			} else if updatedCr.Spec.CustomRegistry != "" {
+				resolvedImagePath := operatorutils.ResolveImage(ctx, string(*initcontainers[i].Image), cr)
+				initcontainers[i].Image = &resolvedImagePath
+				log.Debugw(fmt.Sprintf("custom registry resolved initcontianer sdc image: %s", *initcontainers[i].Image))
 			}
 		}
 	}
@@ -427,7 +660,11 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 	log := logger.GetLogger(ctx)
 	var podmanLogFormat string
 	var podmanLogLevel string
-	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/driver-config-params.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
+	version, err := operatorutils.GetVersion(ctx, &cr, operatorConfig)
+	if err != nil {
+		return nil, err
+	}
+	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/driver-config-params.yaml", operatorConfig.ConfigDirectory, driverName, version)
 	log.Debugw("GetConfigMap", "configMapPath", configMapPath)
 
 	buf, err := os.ReadFile(filepath.Clean(configMapPath))
@@ -448,11 +685,11 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 
 	if cr.Spec.Driver.Common != nil {
 		for _, env := range cr.Spec.Driver.Common.Envs {
-			if env.Name == "CSI_LOG_LEVEL" {
+			if env.Name == "CSI_LOG_LEVEL" || env.Name == CosiLogLevel {
 				cmValue += fmt.Sprintf("\n%s: %s", env.Name, env.Value)
 				podmanLogLevel = env.Value
 			}
-			if env.Name == "CSI_LOG_FORMAT" {
+			if env.Name == "CSI_LOG_FORMAT" || env.Name == CosiLogFormat {
 				cmValue += fmt.Sprintf("\n%s: %s", env.Name, env.Value)
 				podmanLogFormat = env.Value
 			}
@@ -507,7 +744,11 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 // GetCSIDriver get driver
 func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, driverName csmv1.DriverType) (*storagev1.CSIDriver, error) {
 	log := logger.GetLogger(ctx)
-	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/csidriver.yaml", operatorConfig.ConfigDirectory, driverName, cr.Spec.Driver.ConfigVersion)
+	version, err := operatorutils.GetVersion(ctx, &cr, operatorConfig)
+	if err != nil {
+		return nil, err
+	}
+	configMapPath := fmt.Sprintf("%s/driverconfig/%s/%s/csidriver.yaml", operatorConfig.ConfigDirectory, driverName, version)
 	log.Debugw("GetCSIDriver", "configMapPath", configMapPath)
 	buf, err := os.ReadFile(filepath.Clean(configMapPath))
 	if err != nil {
@@ -549,4 +790,19 @@ func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 	}
 
 	return &csidriver, nil
+}
+
+func GetDriverCommonEnv(cr csmv1.ContainerStorageModule, envName, defaultValue string) string {
+	commonEnvs := defaultValue
+
+	if cr.Spec.Driver.Common != nil {
+		for _, env := range cr.Spec.Driver.Common.Envs {
+			if env.Name == envName && env.Value != "" {
+				commonEnvs = env.Value
+				break
+			}
+		}
+	}
+
+	return commonEnvs
 }

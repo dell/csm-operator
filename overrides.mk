@@ -1,4 +1,4 @@
-# Copyright © 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -10,34 +10,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# overrides file
-# this file, included from the Makefile, will overlay default values with environment variables
-#
+IMAGE_REGISTRY?="sample_registry"
+IMAGE_NAME="dell-csm-operator"
+IMAGE_TAG?=$(shell date +%Y%m%d%H%M%S)
 
-
-# DEFAULT values
-DEFAULT_MAJOR = 0
-DEFAULT_MINOR = 0
-DEFAULT_PATCH = 0
-DEFAULT_NOTES =
-
-# Override defaults with environment variables (version components)
-MAJOR ?= $(DEFAULT_MAJOR)
-MINOR ?= $(DEFAULT_MINOR)
-PATCH ?= $(DEFAULT_PATCH)
-NOTES ?= $(DEFAULT_NOTES)
+# figure out if podman or docker should be used (use podman if found)
+ifneq (, $(shell which podman 2>/dev/null))
+export BUILDER=podman
+else
+export BUILDER=docker
+endif
 
 # target to print some help regarding these overrides and how to use them
 overrides-help:
 	@echo
 	@echo "The following environment variables can be set to control the build"
 	@echo
-	@echo "MAJOR   - The major version of image to be built, default is: $(DEFAULT_MAJOR)"
-	@echo "              Current setting is: $(MAJOR)"
-	@echo "MINOR   - The minor version of image to be built, default is: $(DEFAULT_MINOR)"
-	@echo "              Current setting is: $(MINOR)"
-	@echo "PATCH   - The patch version of image to be built, defaut is: $(DEFAULT_PATCH)"
-	@echo "              Current setting is: $(PATCH)"
-	@echo "NOTES   - The release notes of image to be built, default is an empty string."
-	@echo "              Current setting is: '$(NOTES)'"
+	@echo "IMAGE_REGISTRY  - The registry to push images to."
+	@echo "                  Current setting is: $(IMAGE_REGISTRY)"
+	@echo "IMAGE_NAME      - The image name to be built."
+	@echo "                  Current setting is: $(IMAGE_NAME)"
+	@echo "IMAGE_TAG       - The image tag to be built, default is the current date."
+	@echo "                  Current setting is: $(IMAGE_TAG)"
 	@echo

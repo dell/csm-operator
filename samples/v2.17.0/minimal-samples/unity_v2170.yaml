@@ -1,0 +1,10 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: unity
+  namespace: unity
+spec:
+  version: v1.17.0
+  driver:
+    csiDriverType: "unity"
+    forceRemoveDriver: true

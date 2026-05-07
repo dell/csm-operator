@@ -305,6 +305,17 @@ rules:
     verbs:
       - create
   - apiGroups:
+      - autoscaling
+    resources:
+      - horizontalpodautoscalers
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
       - batch
     resources:
       - jobs
@@ -314,6 +325,14 @@ rules:
       - list
       - update
       - watch
+  - apiGroups:
+      - cdi.kubevirt.io
+    resources:
+      - datavolumes
+    verbs:
+      - delete
+      - get
+      - update
   - apiGroups:
       - cert-manager.io
     resources:
@@ -496,9 +515,23 @@ rules:
       - list
       - watch
   - apiGroups:
+      - dr.storage.dell.com
+    resources:
+      - volumejournals
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
       - gateway.networking.k8s.io
     resources:
-      - gateways
+      - backendtlspolicies
+      - grpcroutes
+      - referencegrants
     verbs:
       - get
       - list
@@ -506,13 +539,20 @@ rules:
   - apiGroups:
       - gateway.networking.k8s.io
     resources:
+      - backendtlspolicies/status
+      - gatewayclasses/status
       - gateways/finalizers
+      - gateways/status
+      - grpcroutes/status
       - httproutes/finalizers
+      - httproutes/status
     verbs:
       - update
   - apiGroups:
       - gateway.networking.k8s.io
     resources:
+      - gatewayclasses
+      - gateways
       - httproutes
     verbs:
       - create
@@ -522,12 +562,78 @@ rules:
       - update
       - watch
   - apiGroups:
+      - gateway.nginx.org
+    resources:
+      - authenticationfilters
+      - clientsettingspolicies
+      - observabilitypolicies
+      - proxysettingspolicies
+      - ratelimitpolicies
+      - upstreamsettingspolicies
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - gateway.nginx.org
+    resources:
+      - authenticationfilters/status
+      - clientsettingspolicies/status
+      - nginxgateways/status
+      - observabilitypolicies/status
+      - proxysettingspolicies/status
+      - ratelimitpolicies/status
+      - upstreamsettingspolicies/status
+    verbs:
+      - update
+  - apiGroups:
+      - gateway.nginx.org
+    resources:
+      - nginxgateways
+      - nginxproxies
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
+      - groupsnapshot.storage.k8s.io
+    resources:
+      - volumegroupsnapshotclasses
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - groupsnapshot.storage.k8s.io
+    resources:
+      - volumegroupsnapshotcontents
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - groupsnapshot.storage.k8s.io
+    resources:
+      - volumegroupsnapshotcontents/status
+    verbs:
+      - patch
+      - update
+  - apiGroups:
       - monitoring.coreos.com
     resources:
       - servicemonitors
     verbs:
       - create
+      - delete
       - get
+      - list
+      - patch
+      - update
+      - watch
   - apiGroups:
       - networking.k8s.io
     resources:
@@ -556,6 +662,24 @@ rules:
     resources:
       - ingresses/status
     verbs:
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
+      - objectstorage.k8s.io
+    resources:
+      - bucketaccessclasses
+      - bucketaccessclasses/status
+      - bucketaccesses
+      - bucketaccesses/status
+      - bucketclaims
+      - bucketclaims/status
+      - buckets
+      - buckets/status
+    verbs:
+      - create
+      - delete
       - get
       - list
       - update
@@ -703,19 +827,6 @@ rules:
       - volumeattachments/status
     verbs:
       - patch
-  - apiGroups:
-      - volumegroup.storage.dell.com
-    resources:
-      - dellcsivolumegroupsnapshots
-      - dellcsivolumegroupsnapshots/status
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -873,78 +984,79 @@ spec:
   template:
     metadata:
       annotations:
-        storage.dell.com/CSMVersion: v1.15.2
+        storage.dell.com/CSMVersion: v1.17.0
       labels:
         control-plane: controller-manager
     spec:
       containers:
         - args:
             - --leader-elect
+            - --metrics-bind-address=:8443
           command:
             - /manager
           env:
             - name: REFRESH_INTERVAL_MINUTES
               value: "60"
             - name: RELATED_IMAGE_dell-csm-operator
-              value: quay.io/dell/container-storage-modules/dell-csm-operator:v1.10.2
+              value: quay.io/dell/container-storage-modules/dell-csm-operator:v1.12.0
             - name: RELATED_IMAGE_csi-isilon
-              value: quay.io/dell/container-storage-modules/csi-isilon:v2.15.1
+              value: quay.io/dell/container-storage-modules/csi-isilon:v2.17.0
             - name: RELATED_IMAGE_csi-powermax
-              value: quay.io/dell/container-storage-modules/csi-powermax:v2.15.1
+              value: quay.io/dell/container-storage-modules/csi-powermax:v2.17.0
             - name: RELATED_IMAGE_csipowermax-reverseproxy
-              value: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.14.1
+              value: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.16.0
             - name: RELATED_IMAGE_csi-powerstore
-              value: quay.io/dell/container-storage-modules/csi-powerstore:v2.15.1
+              value: quay.io/dell/container-storage-modules/csi-powerstore:v2.17.0
             - name: RELATED_IMAGE_csi-unity
-              value: quay.io/dell/container-storage-modules/csi-unity:v2.15.0
+              value: quay.io/dell/container-storage-modules/csi-unity:v2.17.0
             - name: RELATED_IMAGE_csi-vxflexos
-              value: quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.2
+              value: quay.io/dell/container-storage-modules/csi-vxflexos:v2.17.0
+            - name: RELATED_IMAGE_cosi
+              value: quay.io/dell/container-storage-modules/cosi:v1.1.0
             - name: RELATED_IMAGE_sdc
-              value: quay.io/dell/storage/powerflex/sdc:4.5.4
+              value: quay.io/dell/storage/powerflex/sdc:5.0
             - name: RELATED_IMAGE_karavi-authorization-proxy
-              value: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0
+              value: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.5.0
             - name: RELATED_IMAGE_csm-authorization-proxy
-              value: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.3.0
+              value: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.5.0
             - name: RELATED_IMAGE_csm-authorization-tenant
-              value: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.3.0
+              value: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.5.0
             - name: RELATED_IMAGE_csm-authorization-role
-              value: quay.io/dell/container-storage-modules/csm-authorization-role:v2.3.0
+              value: quay.io/dell/container-storage-modules/csm-authorization-role:v2.5.0
             - name: RELATED_IMAGE_csm-authorization-storage
-              value: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.3.0
+              value: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.5.0
             - name: RELATED_IMAGE_csm-authorization-controller
-              value: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.3.0
+              value: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.5.0
             - name: RELATED_IMAGE_dell-csi-replicator
-              value: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.13.0
+              value: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.15.0
             - name: RELATED_IMAGE_dell-replication-controller-manager
-              value: quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0
+              value: quay.io/dell/container-storage-modules/dell-replication-controller:v1.15.0
             - name: RELATED_IMAGE_otel-collector
-              value: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0
+              value: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.142.0
             - name: RELATED_IMAGE_metrics-powerscale
-              value: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.10.0
+              value: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.12.0
             - name: RELATED_IMAGE_metrics-powermax
-              value: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.8.0
+              value: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.10.0
             - name: RELATED_IMAGE_metrics-powerflex
-              value: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.13.1
+              value: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.15.0
             - name: RELATED_IMAGE_metrics-powerstore
-              value: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.13.0
+              value: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.15.0
             - name: RELATED_IMAGE_podmon-node
-              value: quay.io/dell/container-storage-modules/podmon:v1.14.0
-            - name: RELATED_IMAGE_kube-rbac-proxy
-              value: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
+              value: quay.io/dell/container-storage-modules/podmon:v1.16.0
             - name: RELATED_IMAGE_attacher
-              value: registry.k8s.io/sig-storage/csi-attacher:v4.9.0
+              value: registry.k8s.io/sig-storage/csi-attacher:v4.11.0
             - name: RELATED_IMAGE_provisioner
-              value: registry.k8s.io/sig-storage/csi-provisioner:v5.3.0
+              value: registry.k8s.io/sig-storage/csi-provisioner:v6.2.0
             - name: RELATED_IMAGE_snapshotter
-              value: registry.k8s.io/sig-storage/csi-snapshotter:v8.3.0
+              value: registry.k8s.io/sig-storage/csi-snapshotter:v8.5.0
             - name: RELATED_IMAGE_registrar
-              value: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0
+              value: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0
             - name: RELATED_IMAGE_resizer
-              value: registry.k8s.io/sig-storage/csi-resizer:v1.14.0
+              value: registry.k8s.io/sig-storage/csi-resizer:v2.1.0
             - name: RELATED_IMAGE_externalhealthmonitorcontroller
-              value: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.15.0
+              value: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.17.0
             - name: RELATED_IMAGE_metadataretriever
-              value: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.11.0
+              value: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.14.0
             - name: RELATED_IMAGE_nginx
               value: quay.io/nginx/nginx-unprivileged:1.27
             - name: RELATED_IMAGE_redis-commander
@@ -952,8 +1064,10 @@ spec:
             - name: RELATED_IMAGE_opa
               value: docker.io/openpolicyagent/opa:0.70.0
             - name: RELATED_IMAGE_kube-mgmt
-              value: docker.io/openpolicyagent/kube-mgmt:8.5.11
-          image: quay.io/dell/container-storage-modules/dell-csm-operator:v1.10.2
+              value: docker.io/openpolicyagent/kube-mgmt:9.2.1
+            - name: RELATED_IMAGE_objectstorage-provisioner-sidecar
+              value: gcr.io/k8s-staging-sig-storage/objectstorage-sidecar:release-0.2
+          image: quay.io/dell/container-storage-modules/dell-csm-operator:v1.12.0
           imagePullPolicy: Always
           livenessProbe:
             httpGet:
@@ -979,5 +1093,7 @@ spec:
             allowPrivilegeEscalation: false
       securityContext:
         runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       serviceAccountName: dell-csm-operator-manager-service-account
       terminationGracePeriodSeconds: 10

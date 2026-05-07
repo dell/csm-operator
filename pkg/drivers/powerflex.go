@@ -24,6 +24,8 @@ import (
 	"github.com/dell/csm-operator/pkg/logger"
 	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 	v1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
@@ -35,6 +37,9 @@ const (
 
 	// PowerFlexConfigParamsVolumeMount -
 	PowerFlexConfigParamsVolumeMount = "vxflexos-config-params"
+
+	// PowerFlexConfigVolumeMount -
+	PowerFlexConfigVolumeMount = "vxflexos-config"
 
 	// CsiSdcEnabled - Flag to enable/disable SDC
 	CsiSdcEnabled = "<X_CSI_SDC_ENABLED>"
@@ -56,9 +61,6 @@ const (
 
 	// CsiPowerflexExternalAccess -  External Access flag
 	CsiPowerflexExternalAccess = "<X_CSI_POWERFLEX_EXTERNAL_ACCESS>"
-
-	// PowerFlexCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
-	PowerFlexCSMNameSpace string = "<CSM_NAMESPACE>"
 
 	// ScaleioBinPath - name of volume that is mounted by the CSI plugin when not running on OCP
 	ScaleioBinPath = "scaleio-path-bin"
@@ -83,6 +85,23 @@ const (
 
 	// PowerFlexProbeTimeout - will be used to control the X_CSI_PROBE_TIMEOUT variable
 	PowerFlexProbeTimeout string = "<X_CSI_PROBE_TIMEOUT>"
+
+	PowerFlexAuthType string = "<X_CSI_AUTH_TYPE>"
+
+	// CsiMetricsEnabled - master switch for the shared Prometheus metrics endpoint
+	CsiMetricsEnabled = "<X_CSI_METRICS_ENABLED>"
+
+	// CsiMetricsPort - port for the shared Prometheus metrics endpoint
+	CsiMetricsPort = "<X_CSI_METRICS_PORT>"
+
+	// CsiGatewayMonitoringEnabled - enables PowerFlex Gateway health monitoring
+	CsiGatewayMonitoringEnabled = "<X_CSI_GATEWAY_MONITORING_ENABLED>"
+
+	// CsiGatewayMonitoringLeaderElection - enables leader election for gateway monitoring
+	CsiGatewayMonitoringLeaderElection = "<X_CSI_GATEWAY_MONITORING_LEADER_ELECTION_ENABLED>"
+
+	// CsiGatewayMonitoringPollInterval - poll interval for gateway monitoring
+	CsiGatewayMonitoringPollInterval = "<X_CSI_GATEWAY_MONITORING_POLL_INTERVAL>"
 )
 
 // PrecheckPowerFlex do input validation
@@ -106,17 +125,34 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 		}
 	}
 
+	version, err := operatorutils.GetVersion(ctx, cr, operatorConfig)
+	if err != nil {
+		return err
+	}
 	// Check if driver version is supported by doing a stat on a config file
-	configFilePath := fmt.Sprintf("%s/driverconfig/%s/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, csmv1.PowerFlex, cr.Spec.Driver.ConfigVersion)
+	configFilePath := fmt.Sprintf("%s/driverconfig/%s/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, csmv1.PowerFlex, version)
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		log.Errorw("PreCheckPowerFlex failed in version check", "Error", err.Error())
-		return fmt.Errorf("%s %s not supported", csmv1.PowerFlexName, cr.Spec.Driver.ConfigVersion)
+		return fmt.Errorf("%s %s not supported", csmv1.PowerFlexName, version)
 	}
 
 	// Check if MDM is set in the secret
-	_, err := GetMDMFromSecret(ctx, cr, ct)
+	_, err = GetMDMFromSecret(ctx, cr, ct)
 	if err != nil {
 		return err
+	}
+
+	// Check that the metrics TLS cert secret exists when provided
+	if isDriverMetricsTLSEnabled(*cr) {
+		found := &corev1.Secret{}
+		secretName := cr.Spec.Driver.Metrics.TLSCertSecret
+		err := ct.Get(ctx, types.NamespacedName{Name: secretName, Namespace: cr.GetNamespace()}, found)
+		if err != nil {
+			log.Error(err, "Failed query for secret", secretName, "Namespace", cr.Namespace)
+			if errors.IsNotFound(err) {
+				return fmt.Errorf("failed to find secret %s", secretName)
+			}
+		}
 	}
 
 	return nil
@@ -239,7 +275,7 @@ func GetMDMFromSecret(ctx context.Context, cr *csmv1.ContainerStorageModule, ct 
 
 	type StorageArrayConfig struct {
 		Username                  string `json:"username"`
-		Password                  string `json:"password"`
+		Password                  string `json:"password"` //gosec:disable G117
 		SystemID                  string `json:"systemId"`
 		Endpoint                  string `json:"endpoint"`
 		SkipCertificateValidation bool   `json:"skipCertificateValidation,omitempty"`
@@ -357,6 +393,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	sftpRepoUser := ""
 	sftpEnabled := ""
 	probeTimeout := "10s"
+	authType := ""
 
 	if cr.Spec.Driver.Common != nil {
 		for _, env := range cr.Spec.Driver.Common.Envs {
@@ -368,6 +405,44 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 			}
 			if env.Name == "X_CSI_PROBE_TIMEOUT" {
 				probeTimeout = env.Value
+			}
+			if env.Name == "X_CSI_AUTH_TYPE" {
+				authType = env.Value
+			}
+		}
+	}
+
+	fsckEnabled := GetDriverCommonEnv(cr, CsiFsCheckEnabled, "false")
+	fsckMode := GetDriverCommonEnv(cr, CsiFsCheckMode, "checkOnly")
+
+	spaceReclamationEnabled := GetDriverCommonEnv(cr, CsiSpaceReclamationEnabled, "false")
+	spaceReclamationSchedule := GetDriverCommonEnv(cr, CsiSpaceReclamationSchedule, "")
+	spaceReclamationMaxConcurrent := GetDriverCommonEnv(cr, CsiSpaceReclamationMaxConcurrent, "")
+	spaceReclamationTimeOut := GetDriverCommonEnv(cr, CsiSpaceReclamationTimeOut, "")
+
+	// Metrics configuration
+	metricsEnabled := "false"
+	metricsPort := "9090"
+	gwMonitoringEnabled := "false"
+	gwMonitoringLeaderElection := "true"
+	gwMonitoringPollInterval := "30s"
+	if cr.Spec.Driver.Metrics != nil {
+		if cr.Spec.Driver.Metrics.Enabled {
+			metricsEnabled = "true"
+		}
+		if cr.Spec.Driver.Metrics.Port != 0 {
+			metricsPort = fmt.Sprintf("%d", cr.Spec.Driver.Metrics.Port)
+		}
+		if cr.Spec.Driver.Metrics.GatewayMonitoring != nil {
+			gm := cr.Spec.Driver.Metrics.GatewayMonitoring
+			if cr.Spec.Driver.Metrics.Enabled && gm.Enabled {
+				gwMonitoringEnabled = "true"
+			}
+			if gm.LeaderElectionEnabled != nil && !*gm.LeaderElectionEnabled {
+				gwMonitoringLeaderElection = "false"
+			}
+			if gm.PollInterval != "" {
+				gwMonitoringPollInterval = gm.PollInterval
 			}
 		}
 	}
@@ -387,10 +462,16 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerflexExternalAccess, powerflexExternalAccess)
-		yamlString = strings.ReplaceAll(yamlString, PowerFlexCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexShowHTTP, showHTTP)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexProbeTimeout, probeTimeout)
+		yamlString = strings.ReplaceAll(yamlString, PowerFlexAuthType, authType)
+		yamlString = strings.ReplaceAll(yamlString, CsiMetricsEnabled, metricsEnabled)
+		yamlString = strings.ReplaceAll(yamlString, CsiMetricsPort, metricsPort)
+		yamlString = strings.ReplaceAll(yamlString, CsiGatewayMonitoringEnabled, gwMonitoringEnabled)
+		yamlString = strings.ReplaceAll(yamlString, CsiGatewayMonitoringLeaderElection, gwMonitoringLeaderElection)
+		yamlString = strings.ReplaceAll(yamlString, CsiGatewayMonitoringPollInterval, gwMonitoringPollInterval)
 
 	case "Node":
 		if cr.Spec.Driver.Node != nil {
@@ -430,13 +511,21 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, CsiPrefixRenameSdc, renameSdcPrefix)
 		yamlString = strings.ReplaceAll(yamlString, CsiVxflexosMaxVolumesPerNode, maxVolumesPerNode)
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
-		yamlString = strings.ReplaceAll(yamlString, PowerFlexCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexShowHTTP, showHTTP)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexSftpRepoAddress, sftpRepoAddress)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexSftpRepoUser, sftpRepoUser)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexSdcRepoEnabled, sftpEnabled)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexProbeTimeout, probeTimeout)
+		yamlString = strings.ReplaceAll(yamlString, PowerFlexAuthType, authType)
+
+		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckEnabled, fsckEnabled)
+		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckMode, fsckMode)
+		yamlString = SubstituteEnvVar(yamlString, CsiSpaceReclamationEnabled, spaceReclamationEnabled)
+		yamlString = SubstituteEnvVar(yamlString, CsiSpaceReclamationSchedule, spaceReclamationSchedule)
+		yamlString = SubstituteEnvVar(yamlString, CsiSpaceReclamationMaxConcurrent, spaceReclamationMaxConcurrent)
+		yamlString = SubstituteEnvVar(yamlString, CsiSpaceReclamationTimeOut, spaceReclamationTimeOut)
 
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {

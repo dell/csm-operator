@@ -1,0 +1,12 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: cosi
+  namespace: dell-cosi
+spec:
+  driver:
+    csiDriverType: "cosi"
+    configVersion: v1.1.0
+    forceRemoveDriver: true
+    common:
+      image: quay.io/dell/container-storage-modules/cosi:v1.1.0

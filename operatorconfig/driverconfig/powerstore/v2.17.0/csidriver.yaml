@@ -1,0 +1,19 @@
+# Copyright © 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
+#
+# Dell Technologies, Dell and other trademarks are trademarks of Dell Inc.
+# or its subsidiaries. Other trademarks may be trademarks of their respective
+# owners.
+
+apiVersion: storage.k8s.io/v1
+kind: CSIDriver
+metadata:
+  name: csi-powerstore.dellemc.com
+  labels:
+    security.openshift.io/csi-ephemeral-volume-profile: restricted
+spec:
+  storageCapacity: false
+  podInfoOnMount: true
+  fsGroupPolicy: ReadWriteOnceWithFSType
+  volumeLifecycleModes:
+    - Persistent
+    - Ephemeral

@@ -351,9 +351,9 @@ func TestGetAuthorizationSentinelStatefulsetScaffold(t *testing.T) {
 func TestCreateRedisK8sSecret(t *testing.T) {
 	name := "name"
 	namespace := "test-namespace"
-	username := "testuser"
-	password := "testpass"
-	secret := createRedisK8sSecret(name, namespace, username, password)
+	testUser := "test"
+	testPass := "test"
+	secret := createRedisK8sSecret(name, namespace, testUser, testPass)
 
 	if secret.Name != name {
 		t.Errorf("expected secret name 'name', got %s", name)
@@ -364,10 +364,10 @@ func TestCreateRedisK8sSecret(t *testing.T) {
 	if secret.Type != corev1.SecretTypeBasicAuth {
 		t.Errorf("expected secret type BasicAuth, got %s", secret.Type)
 	}
-	if secret.StringData["commander_user"] != username {
-		t.Errorf("expected username '%s', got %s", username, secret.StringData["commander_user"])
+	if secret.StringData["commander_user"] != testUser {
+		t.Errorf("expected username '%s', got %s", testUser, secret.StringData["commander_user"])
 	}
-	if secret.StringData["password"] != password {
-		t.Errorf("expected password '%s', got %s", password, secret.StringData["password"])
+	if secret.StringData["password"] != testPass {
+		t.Errorf("expected password '%s', got %s", testPass, secret.StringData["password"])
 	}
 }

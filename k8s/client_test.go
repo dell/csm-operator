@@ -24,7 +24,7 @@ import (
 
 	"github.com/dell/csm-operator/pkg/logger"
 	"k8s.io/apimachinery/pkg/version"
-	discoveryfake "k8s.io/client-go/discovery/fake"
+	discoveryfake "k8s.io/client-go/discovery/fake" //nolint:unused
 )
 
 type testOverrides struct {
@@ -129,6 +129,110 @@ func Test_IsOpenShift(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.True(t, isOpenshift)
+			}
+		})
+	}
+}
+
+func Test_IsHarvester(t *testing.T) {
+	tests := map[string]func(t *testing.T) (bool, testOverrides){
+		"success ": func(*testing.T) (bool, testOverrides) {
+			return true, testOverrides{
+				getClientSetWrapper: func() (kubernetes.Interface, error) {
+					fakeClientSet := fake.NewSimpleClientset()
+					fakeDiscovery, ok := fakeClientSet.Discovery().(*discoveryfake.FakeDiscovery)
+					if !ok {
+						t.Fatalf("couldn't convert Discovery() to *FakeDiscovery")
+					}
+					fakeDiscovery.Resources = []*metav1.APIResourceList{
+						{
+							APIResources: []metav1.APIResource{
+								// Name doesn't really matter for the IsHarvester()
+								// implementation, but we'll mirror the group name.
+								{Name: "harvesterhci.io"},
+							},
+							GroupVersion: "harvesterhci.io/v1",
+						},
+					}
+					return fakeClientSet, nil
+				},
+			}
+		},
+		"bad config data ": func(*testing.T) (bool, testOverrides) {
+			return false, testOverrides{ignoreError: true}
+		},
+		"fail - not found ": func(*testing.T) (bool, testOverrides) {
+			return false, testOverrides{
+				getClientSetWrapper: func() (kubernetes.Interface, error) {
+					fakeClientSet := fake.NewSimpleClientset()
+					fakeDiscovery, ok := fakeClientSet.Discovery().(*discoveryfake.FakeDiscovery)
+					if !ok {
+						t.Fatalf("couldn't convert Discovery() to *FakeDiscovery")
+					}
+					fakeDiscovery.Resources = []*metav1.APIResourceList{
+						{
+							APIResources: []metav1.APIResource{
+								{Name: "harvester.k8s.io"},
+							},
+							GroupVersion: "harvester.k8s.io/v1",
+						},
+					}
+					return fakeClientSet, nil
+				},
+			}
+		},
+		"fail- bad version ": func(*testing.T) (bool, testOverrides) {
+			return false, testOverrides{
+				getClientSetWrapper: func() (kubernetes.Interface, error) {
+					fakeClientSet := fake.NewSimpleClientset()
+					fakeDiscovery, ok := fakeClientSet.Discovery().(*discoveryfake.FakeDiscovery)
+					if !ok {
+						t.Fatalf("couldn't convert Discovery() to *FakeDiscovery")
+					}
+					fakeDiscovery.Resources = []*metav1.APIResourceList{
+						{
+							APIResources: []metav1.APIResource{
+								{Name: "harvesterhci.io"},
+							},
+							GroupVersion: "harvesterhci.io////v1",
+						},
+					}
+					return fakeClientSet, nil
+				},
+			}
+		},
+		"fail - to get client set": func(*testing.T) (bool, testOverrides) {
+			return false, testOverrides{
+				getClientSetWrapper: func() (kubernetes.Interface, error) {
+					return fake.NewSimpleClientset(), errors.New("error creating clientset")
+				},
+			}
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			success, patch := tc(t)
+
+			if patch.getClientSetWrapper != nil {
+				oldGetClientSetWrapper := GetClientSetWrapper
+				defer func() { GetClientSetWrapper = oldGetClientSetWrapper }()
+				GetClientSetWrapper = patch.getClientSetWrapper
+			}
+
+			// Create a fake kubeconfig and set the KUBECONFIG environment variable.
+			err := CreateTempKubeconfig("./fake-kubeconfig")
+			assert.NoError(t, err)
+			_ = os.Setenv("KUBECONFIG", "./fake-kubeconfig")
+
+			isHarvester, err := IsHarvester()
+			if patch.ignoreError {
+				t.Log("cover real Harvester setup")
+			} else if !success {
+				assert.False(t, isHarvester)
+			} else {
+				assert.NoError(t, err)
+				assert.True(t, isHarvester)
 			}
 		})
 	}

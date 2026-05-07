@@ -244,6 +244,17 @@ rules:
     verbs:
       - create
   - apiGroups:
+      - autoscaling
+    resources:
+      - horizontalpodautoscalers
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
       - batch
     resources:
       - jobs
@@ -253,6 +264,14 @@ rules:
       - list
       - update
       - watch
+  - apiGroups:
+      - cdi.kubevirt.io
+    resources:
+      - datavolumes
+    verbs:
+      - delete
+      - get
+      - update
   - apiGroups:
       - cert-manager.io
     resources:
@@ -435,9 +454,23 @@ rules:
       - list
       - watch
   - apiGroups:
+      - dr.storage.dell.com
+    resources:
+      - volumejournals
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
       - gateway.networking.k8s.io
     resources:
-      - gateways
+      - backendtlspolicies
+      - grpcroutes
+      - referencegrants
     verbs:
       - get
       - list
@@ -445,13 +478,20 @@ rules:
   - apiGroups:
       - gateway.networking.k8s.io
     resources:
+      - backendtlspolicies/status
+      - gatewayclasses/status
       - gateways/finalizers
+      - gateways/status
+      - grpcroutes/status
       - httproutes/finalizers
+      - httproutes/status
     verbs:
       - update
   - apiGroups:
       - gateway.networking.k8s.io
     resources:
+      - gatewayclasses
+      - gateways
       - httproutes
     verbs:
       - create
@@ -461,12 +501,78 @@ rules:
       - update
       - watch
   - apiGroups:
+      - gateway.nginx.org
+    resources:
+      - authenticationfilters
+      - clientsettingspolicies
+      - observabilitypolicies
+      - proxysettingspolicies
+      - ratelimitpolicies
+      - upstreamsettingspolicies
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - gateway.nginx.org
+    resources:
+      - authenticationfilters/status
+      - clientsettingspolicies/status
+      - nginxgateways/status
+      - observabilitypolicies/status
+      - proxysettingspolicies/status
+      - ratelimitpolicies/status
+      - upstreamsettingspolicies/status
+    verbs:
+      - update
+  - apiGroups:
+      - gateway.nginx.org
+    resources:
+      - nginxgateways
+      - nginxproxies
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
+      - groupsnapshot.storage.k8s.io
+    resources:
+      - volumegroupsnapshotclasses
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - groupsnapshot.storage.k8s.io
+    resources:
+      - volumegroupsnapshotcontents
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - groupsnapshot.storage.k8s.io
+    resources:
+      - volumegroupsnapshotcontents/status
+    verbs:
+      - patch
+      - update
+  - apiGroups:
       - monitoring.coreos.com
     resources:
       - servicemonitors
     verbs:
       - create
+      - delete
       - get
+      - list
+      - patch
+      - update
+      - watch
   - apiGroups:
       - networking.k8s.io
     resources:
@@ -495,6 +601,24 @@ rules:
     resources:
       - ingresses/status
     verbs:
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
+      - objectstorage.k8s.io
+    resources:
+      - bucketaccessclasses
+      - bucketaccessclasses/status
+      - bucketaccesses
+      - bucketaccesses/status
+      - bucketclaims
+      - bucketclaims/status
+      - buckets
+      - buckets/status
+    verbs:
+      - create
+      - delete
       - get
       - list
       - update
@@ -642,16 +766,3 @@ rules:
       - volumeattachments/status
     verbs:
       - patch
-  - apiGroups:
-      - volumegroup.storage.dell.com
-    resources:
-      - dellcsivolumegroupsnapshots
-      - dellcsivolumegroupsnapshots/status
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch

@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -92,6 +92,9 @@ const (
 	// PowerStore - placeholder for constant powerstore
 	PowerStore DriverType = "powerstore"
 
+	// Cosi - placeholder for constant cosi
+	Cosi DriverType = "cosi"
+
 	// Provisioner - placeholder for constant
 	Provisioner = "provisioner"
 	// Attacher - placeholder for constant
@@ -131,6 +134,7 @@ const (
 )
 
 // Module defines the desired state of a ContainerStorageModule
+// +kubebuilder:validation:MaxProperties=10
 type Module struct {
 	// Name is name of ContainerStorageModule modules
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Name"
@@ -146,6 +150,7 @@ type Module struct {
 
 	// Components is the specification for CSM components containers
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ContainerStorageModule components specification"
+	// +kubebuilder:validation:MaxItems=20
 	Components []ContainerTemplate `json:"components,omitempty" yaml:"components,omitempty"`
 
 	// ForceRemoveModule is the boolean flag used to remove authorization proxy server deployment when CR is deleted
@@ -175,6 +180,7 @@ type PodStatus struct {
 
 // Driver of CSIDriver
 // +k8s:openapi-gen=true
+// +kubebuilder:validation:MaxProperties=20
 type Driver struct {
 	// CSIDriverType is the CSI Driver type for Dell Technologies - e.g, powermax, powerflex,...
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="CSI Driver Type"
@@ -211,6 +217,7 @@ type Driver struct {
 
 	// SideCars is the specification for CSI sidecar containers
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="CSI SideCars specification"
+	// +kubebuilder:validation:MaxItems=20
 	SideCars []ContainerTemplate `json:"sideCars,omitempty" yaml:"sideCars"`
 
 	// InitContainers is the specification for Driver InitContainers
@@ -224,7 +231,7 @@ type Driver struct {
 
 	// AuthSecret is the name of the credentials secret for the driver
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Auth Secret"
-	AuthSecret string `json:"authSecret,omitempty" yaml:"authSecret"`
+	AuthSecret string `json:"authSecret,omitempty" yaml:"authSecret"` //gosec:disable G117
 
 	// TLSCertSecret is the name of the TLS Cert secret
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="TLSCert Secret"
@@ -233,6 +240,69 @@ type Driver struct {
 	// ForceRemoveDriver is the boolean flag used to remove driver deployment when CR is deleted
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Force Remove Driver"
 	ForceRemoveDriver *bool `json:"forceRemoveDriver,omitempty" yaml:"forceRemoveDriver"`
+
+	// Metrics is the configuration for the driver metrics endpoint and monitoring
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Driver Metrics Configuration"
+	Metrics *DriverMetrics `json:"metrics,omitempty" yaml:"metrics,omitempty"`
+}
+
+// DriverMetrics defines the metrics endpoint and monitoring configuration for a driver
+type DriverMetrics struct {
+	// Enabled enables the shared Prometheus metrics HTTP endpoint on the controller
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Metrics Enabled"
+	Enabled bool `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+
+	// Port is the port on which the metrics endpoint is exposed
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Metrics Port"
+	// +kubebuilder:default=9090
+	Port int32 `json:"port,omitempty" yaml:"port,omitempty"`
+
+	// TLSCertSecret is the name of a Kubernetes TLS Secret used to serve the metrics endpoint over HTTPS
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Metrics TLS Cert Secret"
+	TLSCertSecret string `json:"tlsCertSecret,omitempty" yaml:"tlsCertSecret,omitempty"`
+
+	// GatewayMonitoring configures PowerFlex Gateway health monitoring
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Gateway Monitoring Configuration"
+	GatewayMonitoring *GatewayMonitoringConfig `json:"gatewayMonitoring,omitempty" yaml:"gatewayMonitoring,omitempty"`
+
+	// ServiceMonitor configures optional Prometheus Operator ServiceMonitor creation
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ServiceMonitor Configuration"
+	ServiceMonitor *MetricsServiceMonitorConfig `json:"serviceMonitor,omitempty" yaml:"serviceMonitor,omitempty"`
+}
+
+// GatewayMonitoringConfig configures PowerFlex Gateway health monitoring
+type GatewayMonitoringConfig struct {
+	// Enabled enables Gateway health monitoring on the controller
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Gateway Monitoring Enabled"
+	Enabled bool `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+
+	// LeaderElectionEnabled enables leader election so only one controller actively monitors gateways
+	// When nil, defaults to true
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Gateway Monitoring Leader Election Enabled"
+	LeaderElectionEnabled *bool `json:"leaderElectionEnabled,omitempty" yaml:"leaderElectionEnabled,omitempty"`
+
+	// PollInterval is how frequently the leader controller probes each gateway endpoint
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Gateway Monitoring Poll Interval"
+	// +kubebuilder:validation:XValidation:rule="self == '' || size(self) > 0",message="pollInterval must be a non-empty string"
+	PollInterval string `json:"pollInterval,omitempty" yaml:"pollInterval,omitempty"`
+}
+
+// MetricsServiceMonitorConfig configures Prometheus Operator ServiceMonitor creation
+type MetricsServiceMonitorConfig struct {
+	// Enabled creates a ServiceMonitor CR for Prometheus Operator integration
+	// Requires the Prometheus Operator CRDs to be installed in the cluster
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ServiceMonitor Enabled"
+	Enabled bool `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+
+	// Interval is the Prometheus scrape interval for the metrics endpoint
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ServiceMonitor Scrape Interval"
+	// +kubebuilder:validation:XValidation:rule="self == '' || size(self) > 0",message="interval must be a non-empty string"
+	Interval string `json:"interval,omitempty" yaml:"interval,omitempty"`
+
+	// InsecureSkipVerify skips TLS certificate verification when Prometheus scrapes the metrics endpoint
+	// Only applies when tlsCertSecret is set
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="ServiceMonitor Insecure Skip Verify"
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty"`
 }
 
 // ContainerTemplate template
@@ -259,6 +329,7 @@ type ContainerTemplate struct {
 
 	// Envs is the set of environment variables for the container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Container Environment vars"
+	// +kubebuilder:validation:MaxItems=30
 	Envs []corev1.EnvVar `json:"envs,omitempty" yaml:"envs"`
 
 	// Tolerations is the list of tolerations for the driver pods
@@ -346,9 +417,9 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server ingress configuration"
 	ProxyServerIngress []ProxyServerIngress `json:"proxyServerIngress,omitempty" yaml:"proxyServerIngress,omitempty"`
 
-	// RedisStorageClass is the authorization proxy server redis storage class for persistence
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Redis storage class"
-	RedisStorageClass string `json:"storageclass,omitempty" yaml:"storageclass,omitempty"`
+	// Gateway is the gateway configuration for the authorization proxy-server (v2.5.0+)
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Gateway configuration"
+	Gateway *ProxyServerGateway `json:"gateway,omitempty" yaml:"gateway,omitempty"`
 
 	// Vaults are the vault configurations
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Vault Configurations"
@@ -371,11 +442,11 @@ type ContainerTemplate struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Skip Certificate Validation"
 	SkipCertificateValidation bool `json:"skipCertificateValidation,omitempty" yaml:"skipCertificateValidation,omitempty"`
 
-	// RedisUsername is the username for Redis authentication
+	// RedisUsername is the username for the redis instance
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Username"
 	RedisUsername string `json:"redisUsername,omitempty" yaml:"redisUsername,omitempty"`
 
-	// RedisPassword is the password for Redis authentication
+	// RedisPassword is the password for the redis instance
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Redis Password"
 	RedisPassword string `json:"redisPassword,omitempty" yaml:"redisPassword,omitempty"`
 
@@ -413,7 +484,7 @@ type ContainerTemplate struct {
 
 	// PrivateKey is a private key used for a certificate/private-key pair
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Private key for certificate/private-key pair"
-	PrivateKey string `json:"privateKey,omitempty" yaml:"privateKey,omitempty"`
+	PrivateKey string `json:"privateKey,omitempty" yaml:"privateKey,omitempty"` //gosec:disable G117
 
 	// CertificateAuthority is a certificate authority used to validate a certificate
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Certificate authority for validating a certificate"
@@ -443,6 +514,21 @@ type ProxyServerIngress struct {
 
 	// Annotations is an unstructured key value map that stores additional annotations for the ingress
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Annotations"
+	Annotations map[string]string `json:"annotations,omitempty" yaml:"annotations,omitempty"`
+}
+
+// ProxyServerGateway is the gateway configuration for the authorization proxy-server (v2.5.0+)
+type ProxyServerGateway struct {
+	// GatewayClassName is the name of the GatewayClass for the proxy-server Gateway resource
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Gateway Class Name"
+	GatewayClassName string `json:"gatewayClassName,omitempty" yaml:"gatewayClassName,omitempty"`
+
+	// Hosts is the additional hostnames for the proxy-server HTTPRoute
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Gateway Hosts"
+	Hosts []string `json:"hosts,omitempty" yaml:"hosts,omitempty"`
+
+	// Annotations is an unstructured key value map that stores additional annotations for the proxy-server HTTPRoute
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Authorization Proxy Server Gateway Annotations"
 	Annotations map[string]string `json:"annotations,omitempty" yaml:"annotations,omitempty"`
 }
 
@@ -551,7 +637,7 @@ type Vault struct {
 
 	// ClientKey validates is the base64-encoded certificate key for connecting to vault
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Vault CLient Certificate Key"
-	ClientKey string `json:"clientKey,omitempty" yaml:"clientKey,omitempty"`
+	ClientKey string `json:"clientKey,omitempty" yaml:"clientKey,omitempty"` //gosec:disable G117
 
 	// CertificateAuthority is the base64-encoded certificate authority for validaitng the vault certificate
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Vault Certificate Authority"

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: csm-images
+  namespace: dell-csm-operator
+data:
+  versions.yaml: |
+    - version: v1.16.2
+      images:
+        attacher: registry.k8s.io/sig-storage/csi-attacher:v4.11.0
+        provisioner: registry.k8s.io/sig-storage/csi-provisioner:v6.2.0
+        snapshotter: registry.k8s.io/sig-storage/csi-snapshotter:v8.5.0
+        registrar: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0
+        resizer: registry.k8s.io/sig-storage/csi-resizer:v2.1.0
+        external-health-monitor: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.17.0
+        csi-metadata-retriever: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.13.0
+        sdc: quay.io/dell/storage/powerflex/sdc:5.0
+        sdc-monitor: quay.io/dell/storage/powerflex/sdc:5.0

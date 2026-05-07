@@ -107,7 +107,7 @@ Example configuration file:
 
 ### Install Vault and create key/value secrets via environment variables
 
-This method aligns with CSM Operator E2E tests by reading specific environment variable from the file `e2e/array-info.env` (see `e2e/array-info.env.sample` for reference):
+This method aligns with CSM Operator E2E tests by reading specific environment variables exported from `e2e/array-info.yaml` (see `e2e/array-info.yaml.sample` for reference):
 
 ```
 PFLEX_VAULT_STORAGE_PATH

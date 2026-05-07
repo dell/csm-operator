@@ -1,4 +1,4 @@
-# Copyright © 2021 - 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2021-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,64 +12,33 @@
 
 ARG BASEIMAGE
 ARG GOIMAGE
+ARG VERSION="1.12.0"
 
-# Build the manager binary
 FROM $GOIMAGE as builder
+ARG VERSION
 
-WORKDIR /workspace
+RUN mkdir -p /go/src/csm-operator
+COPY ./ /go/src/csm-operator
 
-# Copy the Go Modules manifests
-COPY go.mod go.mod
-COPY go.sum go.sum
-# cache deps before building and copying source so that we don't need to re-download as much
-# and so that source changes don't invalidate our downloaded layer
-RUN go mod download
+WORKDIR /go/src/csm-operator
+RUN make build IMAGE_VERSION=$VERSION
 
-# Copy the go source
-COPY main.go main.go
-COPY api/ api/
-COPY controllers/ controllers/
-COPY core/ core/
-COPY pkg/ pkg/
-COPY k8s/ k8s/
-
-# Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
-
-FROM registry.access.redhat.com/ubi9/ubi:latest AS final
-
-# CVE remediation: update all packages to latest security fixes
-RUN dnf upgrade -y && dnf clean all
-
-# Install required packages with security fixes
-RUN dnf install -y \
-    python3 \
-    openssh \
-    gnupg2 \
-    sqlite \
-    vim-enhanced \
-    vim-minimal \
-    gdb \
-    gnutls \
-    libcap \
-    krb5-libs \
-    && dnf clean all
-
+FROM $BASEIMAGE as final
+ARG VERSION
 ENV USER_UID=1001 \
     USER_NAME=dell-csm-operator
 WORKDIR /
-COPY --from=builder /workspace/manager .
-COPY operatorconfig/ /etc/config/dell-csm-operator
+COPY --from=builder /go/src/csm-operator/bin/manager .
+COPY --from=builder /go/src/csm-operator/operatorconfig/ /etc/config/dell-csm-operator
 LABEL vendor="Dell Technologies" \
     maintainer="Dell Technologies" \
     name="dell-csm-operator" \
     summary="Operator for installing Dell CSI Drivers and Dell CSM Modules" \
     description="Common Operator for installing various Dell CSI Drivers and Dell CSM Modules" \
-    release="1.15.2" \
-    version="1.10.2" \
+    release="1.17.0" \
+    version=$VERSION \
     license="Dell CSM Operator Apache License"
 
-# copy the licenses folder
 COPY licenses /licenses
 
 ENTRYPOINT ["/manager"]

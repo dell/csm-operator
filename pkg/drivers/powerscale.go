@@ -37,8 +37,8 @@ const (
 	// PowerScaleConfigParamsVolumeMount -
 	PowerScaleConfigParamsVolumeMount = "csi-isilon-config-params" // #nosec G101
 
-	// PowerScaleCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
-	PowerScaleCSMNameSpace string = "<CSM_NAMESPACE>"
+	// PowerScaleConfigVolumeMount -
+	PowerScaleConfigVolumeMount = "isilon-configs"
 
 	// PowerScaleDebug - will be used to control the GOISILON_DEBUG variable
 	PowerScaleDebug string = "<GOISILON_DEBUG>"
@@ -57,11 +57,15 @@ func PrecheckPowerScale(ctx context.Context, cr *csmv1.ContainerStorageModule, o
 		config = cr.Spec.Driver.AuthSecret
 	}
 
+	version, err := operatorutils.GetVersion(ctx, cr, operatorConfig)
+	if err != nil {
+		return err
+	}
 	// Check if driver version is supported by doing a stat on a config file
-	configFilePath := fmt.Sprintf("%s/driverconfig/%s/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, csmv1.PowerScaleName, cr.Spec.Driver.ConfigVersion)
+	configFilePath := fmt.Sprintf("%s/driverconfig/%s/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, csmv1.PowerScaleName, version)
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		log.Errorw("PreCheckPowerScale failed in version check", "Error", err.Error())
-		return fmt.Errorf("%s %s not supported", csmv1.PowerScaleName, cr.Spec.Driver.ConfigVersion)
+		return fmt.Errorf("%s %s not supported", csmv1.PowerScaleName, version)
 	}
 
 	// check if skip validation is enabled:
@@ -209,7 +213,7 @@ func ModifyPowerScaleCR(yamlString string, cr csmv1.ContainerStorageModule, file
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
-		yamlString = strings.ReplaceAll(yamlString, PowerScaleCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerScaleDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, PowerScaleCsiVolPrefix, csiVolPrefix) // applicable only for v2.14.0/controller.yaml
 	case "Node":
@@ -221,7 +225,7 @@ func ModifyPowerScaleCR(yamlString string, cr csmv1.ContainerStorageModule, file
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
-		yamlString = strings.ReplaceAll(yamlString, PowerScaleCSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerScaleDebug, debug)
 	}
 	return yamlString

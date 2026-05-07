@@ -1,0 +1,185 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: karavi-metrics-powerstore-controller
+  namespace: <CSM_NAMESPACE>
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: karavi-metrics-powerstore-controller
+rules:
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csinodes", "storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumes", "nodes"]
+    verbs: ["list"]
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: karavi-metrics-powerstore-controller
+subjects:
+  - kind: ServiceAccount
+    name: karavi-metrics-powerstore-controller
+    namespace: <CSM_NAMESPACE>
+roleRef:
+  kind: ClusterRole
+  name: karavi-metrics-powerstore-controller
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: karavi-metrics-powerstore-controller
+  namespace: <CSM_NAMESPACE>
+rules:
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "watch", "list", "delete", "update", "create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: karavi-metrics-powerstore-controller
+  namespace: <CSM_NAMESPACE>
+subjects:
+  - kind: ServiceAccount
+    name: karavi-metrics-powerstore-controller
+    namespace: <CSM_NAMESPACE>
+roleRef:
+  kind: Role
+  name: karavi-metrics-powerstore-controller
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/name: karavi-metrics-powerstore
+    app.kubernetes.io/instance: karavi
+  name: karavi-metrics-powerstore
+  namespace: <CSM_NAMESPACE>
+spec:
+  type: ClusterIP
+  ports:
+    - name: karavi-metrics-powerstore
+      port: 9090
+      targetPort: 9090
+  selector:
+    app.kubernetes.io/name: karavi-metrics-powerstore
+    app.kubernetes.io/instance: karavi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: karavi-metrics-powerstore-configmap
+  namespace: <CSM_NAMESPACE>
+data:
+  karavi-metrics-powerstore.yaml: |
+    COLLECTOR_ADDR: <COLLECTOR_ADDRESS>
+    PROVISIONER_NAMES: csi-powerstore.dellemc.com
+    POWERSTORE_VOLUME_IO_POLL_FREQUENCY: <POWERSTORE_VOLUME_IO_POLL_FREQUENCY>
+    POWERSTORE_VOLUME_METRICS_ENABLED: <POWERSTORE_VOLUME_METRICS_ENABLED>
+    POWERSTORE_MAX_CONCURRENT_QUERIES: <POWERSTORE_MAX_CONCURRENT_QUERIES>
+    POWERSTORE_SPACE_POLL_FREQUENCY: <POWERSTORE_SPACE_POLL_FREQUENCY>
+    POWERSTORE_ARRAY_POLL_FREQUENCY: <POWERSTORE_ARRAY_POLL_FREQUENCY>
+    POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY: <POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY>
+    POWERSTORE_TOPOLOGY_METRICS_ENABLED: <POWERSTORE_TOPOLOGY_METRICS_ENABLED>
+    POWERSTORE_TOPOLOGY_POLL_FREQUENCY: <POWERSTORE_TOPOLOGY_POLL_FREQUENCY>
+    X_CSI_POWERSTORE_API_TIMEOUT: <X_CSI_POWERSTORE_API_TIMEOUT>
+    LOG_LEVEL: <POWERSTORE_LOG_LEVEL>
+    LOG_FORMAT: <POWERSTORE_LOG_FORMAT>
+    ZIPKIN_URI: <POWERSTORE_ZIPKIN_URI>
+    ZIPKIN_SERVICE_NAME: <POWERSTORE_ZIPKINSERVICE_NAME>
+    ZIPKIN_PROBABILITY: <POWERSTORE_ZIPKIN_PROBABILITY>
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: <DriverDefaultReleaseName>-config-params
+  namespace: <CSM_NAMESPACE>
+data:
+  driver-config-params.yaml: |
+    CSI_LOG_LEVEL: debug
+    CSI_LOG_FORMAT: TEXT
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: karavi-metrics-powerstore
+  namespace: <CSM_NAMESPACE>
+  labels:
+    app.kubernetes.io/name: karavi-metrics-powerstore
+    app.kubernetes.io/instance: karavi
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: karavi-metrics-powerstore
+      app.kubernetes.io/instance: karavi
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: karavi-metrics-powerstore
+        app.kubernetes.io/instance: karavi
+        csm: <NAME>
+        csmNamespace: <CSM_NAMESPACE>
+    spec:
+      serviceAccount: karavi-metrics-powerstore-controller
+      containers:
+        - name: karavi-metrics-powerstore
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.14.0
+          resources: {}
+          env:
+            - name: POWERSTORE_METRICS_ENDPOINT
+              value: "karavi-metrics-powerstore"
+            - name: POWERSTORE_METRICS_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: TLS_ENABLED
+              value: "true"
+            - name: X_CSI_POWERSTORE_API_TIMEOUT
+              value: "<X_CSI_POWERSTORE_API_TIMEOUT>"
+          volumeMounts:
+            - name: karavi-metrics-powerstore-secret-volume
+              mountPath: "/certs"
+            - name: powerstore-config
+              mountPath: /powerstore-config
+            - name: tls-secret
+              mountPath: /etc/ssl/certs
+              readOnly: true
+            - name: karavi-metrics-powerstore-configmap
+              mountPath: /etc/config
+      volumes:
+        - name: karavi-metrics-powerstore-secret-volume
+          secret:
+            secretName: karavi-metrics-powerstore-tls
+          items:
+            - key: tls.crt
+              path: localhost.crt
+            - key: tls.key
+              path: localhost.key
+        - name: powerstore-config
+          secret:
+            secretName: powerstore-config
+        - name: tls-secret
+          secret:
+            secretName: otel-collector-tls
+            items:
+              - key: tls.crt
+                path: cert.crt
+        - name: karavi-metrics-powerstore-configmap
+          configMap:
+            name: karavi-metrics-powerstore-configmap
+        - name: powerstore-config-params
+          configMap:
+            name: powerstore-config-params
+      restartPolicy: Always
+status: {}

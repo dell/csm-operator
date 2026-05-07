@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -14,8 +14,10 @@ package operatorutils
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -38,7 +40,7 @@ import (
 
 var dMutex sync.RWMutex
 
-var checkModuleStatus = map[csmv1.ModuleType]func(context.Context, *csmv1.ContainerStorageModule, ReconcileCSM, *csmv1.ContainerStorageModuleStatus) (bool, error){
+var checkModuleStatus = map[csmv1.ModuleType]func(context.Context, *csmv1.ContainerStorageModule, ReconcileCSM, *csmv1.ContainerStorageModuleStatus, OperatorConfig) (bool, error){
 	csmv1.Observability:       observabilityStatusCheck,
 	csmv1.AuthorizationServer: authProxyStatusCheck,
 }
@@ -195,21 +197,31 @@ func getDaemonSetStatus(ctx context.Context, instance *csmv1.ContainerStorageMod
 	}, err
 }
 
-func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) (bool, error) {
+func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus, op OperatorConfig, deploymentStatusOverride ...csmv1.PodStatus) (bool, error) {
 	log := logger.GetLogger(ctx)
 	running := true
 	var err error
 	nodeStatusGood := true
 	newStatus.State = constants.Succeeded
-	controllerStatus, controllerErr := getDeploymentStatus(ctx, instance, r)
-	if controllerErr != nil {
-		log.Infof("error from getDeploymentStatus: %s", controllerErr.Error())
+
+	var controllerStatus csmv1.PodStatus
+	if len(deploymentStatusOverride) > 0 {
+		// Use the deployment status from the informer event to avoid stale cache reads
+		controllerStatus = deploymentStatusOverride[0]
+		log.Infof("using deployment status override: desired=%s, available=%s, failed=%s",
+			controllerStatus.Desired, controllerStatus.Available, controllerStatus.Failed)
+	} else {
+		var controllerErr error
+		controllerStatus, controllerErr = getDeploymentStatus(ctx, instance, r)
+		if controllerErr != nil {
+			log.Infof("error from getDeploymentStatus: %s", controllerErr.Error())
+		}
 	}
 
-	// Auth proxy has no daemonset. Putting this if/else in here and setting nodeStatusGood to true by
+	// Auth proxy and Cosi driver have no daemonset. Putting this if/else in here and setting nodeStatusGood to true by
 	// default is a little hacky but will be fixed when we refactor the status code in CSM 1.10 or 1.11
 	log.Infof("instance.GetName() is %s", instance.GetName())
-	if instance.GetName() != "" && !isAuthorizationProxyServer(instance) {
+	if instance.GetName() != "" && !isAuthorizationProxyServer(instance) && instance.Spec.Driver.CSIDriverType != csmv1.Cosi {
 		expected, nodeStatus, daemonSetErr := getDaemonSetStatus(ctx, instance, r)
 		newStatus.NodeStatus = nodeStatus
 		if daemonSetErr != nil {
@@ -231,7 +243,7 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 		for _, module := range instance.Spec.Modules {
 			moduleStatus, exists := checkModuleStatus[module.Name]
 			if exists && module.Enabled {
-				moduleRunning, err := moduleStatus(ctx, instance, r, newStatus)
+				moduleRunning, err := moduleStatus(ctx, instance, r, newStatus, op)
 				if err != nil {
 					log.Infof("status for module err msg [%s]", err.Error())
 				}
@@ -256,6 +268,17 @@ func calculateState(ctx context.Context, instance *csmv1.ContainerStorageModule,
 
 	log.Infof("setting new status to [%v]", newStatus)
 	SetStatus(ctx, r, instance, newStatus)
+	if isAuthorizationProxyServer(instance) && instance.Status.State == constants.Succeeded {
+		copyCR := instance.DeepCopy()
+		delete(copyCR.Annotations, "kubectl.kubernetes.io/last-applied-configuration")
+		copyCR.ManagedFields = nil
+		copyCR.Status = csmv1.ContainerStorageModuleStatus{}
+		out, err := json.Marshal(copyCR)
+		if err != nil {
+			log.Error(err, "error marshalling CR to annotation")
+		}
+		instance.Status.LastSuccessfulConfiguration = string(out)
+	}
 	return running, err
 }
 
@@ -270,7 +293,7 @@ func SetStatus(ctx context.Context, _ ReconcileCSM, instance *csmv1.ContainerSto
 }
 
 // UpdateStatus of csm
-func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus) error {
+func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus *csmv1.ContainerStorageModuleStatus, op OperatorConfig, deploymentStatusOverride ...csmv1.PodStatus) error {
 	dMutex.Lock()
 	defer dMutex.Unlock()
 
@@ -282,7 +305,18 @@ func UpdateStatus(ctx context.Context, instance *csmv1.ContainerStorageModule, r
 	log.Infow("Update State", "Controller",
 		newStatus.ControllerStatus, "Node", newStatus.NodeStatus)
 
-	running, merr := calculateState(ctx, instance, r, newStatus)
+	running, merr := calculateState(ctx, instance, r, newStatus, op, deploymentStatusOverride...)
+
+	// Add last successful configuration into status if deployment is running
+	// and controller has desired replicas to handle the last successful configuration change
+	replicas := instance.Spec.Driver.Replicas
+	if newStatus.ControllerStatus.Desired == strconv.Itoa(int(replicas)) && running {
+		if lastAnnotations := instance.GetAnnotations(); lastAnnotations != nil {
+			if lastApplied := lastAnnotations["storage.dell.com/PreviouslyAppliedConfiguration"]; lastApplied != "" {
+				instance.Status.LastSuccessfulConfiguration = lastApplied
+			}
+		}
+	}
 
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		log := logger.GetLogger(ctx)
@@ -343,7 +377,7 @@ func HandleValidationError(ctx context.Context, instance *csmv1.ContainerStorage
 }
 
 // HandleSuccess for csm
-func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus, oldStatus *csmv1.ContainerStorageModuleStatus) reconcile.Result {
+func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, newStatus, oldStatus *csmv1.ContainerStorageModuleStatus, op OperatorConfig) reconcile.Result {
 	dMutex.Lock()
 	defer dMutex.Unlock()
 
@@ -353,7 +387,7 @@ func HandleSuccess(ctx context.Context, instance *csmv1.ContainerStorageModule, 
 
 	// requeue will use reconcile.Result.Requeue field to track if operator should try reconcile again
 	requeue := reconcile.Result{}
-	running, err := calculateState(ctx, instance, r, newStatus)
+	running, err := calculateState(ctx, instance, r, newStatus, op)
 	log.Info("calculateState returns ", "running: ", running)
 	if err != nil {
 		log.Error("HandleSuccess Driver status ", "error: ", err.Error())
@@ -430,8 +464,37 @@ func WaitForNginxController(ctx context.Context, instance csmv1.ContainerStorage
 	return wait.PollUntilContextTimeout(ctx, time.Second, timeout, true, getNginxControllerStatus(ctx, instance, r))
 }
 
+func getGatewayControllerStatus(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM) wait.ConditionWithContextFunc {
+	return func(context.Context) (bool, error) {
+		deployment := &appsv1.Deployment{}
+		name := instance.GetNamespace() + "-nginx-gateway-fabric"
+
+		err := r.GetClient().Get(ctx, t1.NamespacedName{
+			Name:      name,
+			Namespace: instance.GetNamespace(),
+		}, deployment)
+		if err != nil {
+			return false, err
+		}
+
+		if deployment.Spec.Replicas != nil && deployment.Status.ReadyReplicas == *deployment.Spec.Replicas {
+			return true, nil
+		}
+
+		return false, nil
+	}
+}
+
+// WaitForGatewayController - polls Gateway API controller deployment status
+func WaitForGatewayController(ctx context.Context, instance csmv1.ContainerStorageModule, r ReconcileCSM, timeout time.Duration) error {
+	log := logger.GetLogger(ctx)
+	log.Infow("Polling status of Gateway API controller")
+
+	return wait.PollUntilContextTimeout(ctx, time.Second, timeout, true, getGatewayControllerStatus(ctx, instance, r))
+}
+
 // observabilityStatusCheck - calculate success state for observability module
-func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus) (bool, error) {
+func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus, op OperatorConfig) (bool, error) {
 	log := logger.GetLogger(ctx)
 	topologyEnabled := false
 	otelEnabled := false
@@ -466,7 +529,10 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 	}
 
 	namespace := instance.GetNamespace()
-	configVersion := instance.Spec.Driver.ConfigVersion
+	configVersion, err := GetVersion(ctx, instance, op)
+	if err != nil {
+		return false, err
+	}
 
 	// Override namespace to "karavi" if config version is below v2.15
 	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
@@ -477,7 +543,7 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 		client.InNamespace(namespace),
 	}
 	deploymentList := &appsv1.DeploymentList{}
-	err := r.GetClient().List(ctx, deploymentList, opts...)
+	err = r.GetClient().List(ctx, deploymentList, opts...)
 	if err != nil {
 		return false, err
 	}
@@ -554,16 +620,36 @@ func observabilityStatusCheck(ctx context.Context, instance *csmv1.ContainerStor
 }
 
 // authProxyStatusCheck - calculate success state for auth proxy
-func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus) (bool, error) {
+func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageModule, r ReconcileCSM, _ *csmv1.ContainerStorageModuleStatus, _ OperatorConfig) (bool, error) {
 	log := logger.GetLogger(ctx)
 	certEnabled := false
 	nginxEnabled := false
+	gatewayEnabled := false
+
+	// Check if authorization module version is v2.5.0 or later (Gateway API)
+	var useGatewayAPI bool
+	for _, m := range instance.Spec.Modules {
+		if m.Name == csmv1.AuthorizationServer {
+			var err error
+			useGatewayAPI, err = MinVersionCheck("v2.5.0", m.ConfigVersion)
+			if err != nil {
+				log.Errorw("error checking authorization version", "error", err)
+			}
+			break
+		}
+	}
 
 	for _, m := range instance.Spec.Modules {
 		if m.Name == csmv1.AuthorizationServer {
 			for _, c := range m.Components {
 				if c.Name == "ingress-nginx" && *c.Enabled {
 					nginxEnabled = true
+				}
+				// Check for either the new gateway component name (v2.5.0+) or the legacy
+				// nginx name (upgrade compat: users migrating from v2.4.0 may still have
+				// name: nginx in their CR; the version gate ensures gateway is used).
+				if (c.Name == "nginx-gateway-fabric" || c.Name == "nginx") && *c.Enabled && useGatewayAPI {
+					gatewayEnabled = true
 				}
 				if c.Name == "cert-manager" && *c.Enabled {
 					certEnabled = true
@@ -592,6 +678,13 @@ func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageM
 		switch deployment.Name {
 		case fmt.Sprintf("%s-ingress-nginx-controller", authNamespace):
 			if nginxEnabled {
+				if !checkFn(&deployment) {
+					log.Infof("%s component not running in auth proxy deployment", deployment.Name)
+					return false, nil
+				}
+			}
+		case fmt.Sprintf("%s-nginx-gateway-controller", authNamespace):
+			if gatewayEnabled {
 				if !checkFn(&deployment) {
 					log.Infof("%s component not running in auth proxy deployment", deployment.Name)
 					return false, nil

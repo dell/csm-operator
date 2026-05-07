@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: csm-images
+  namespace: dell-csm-operator
+data:
+  versions.yaml: |
+    - version: v1.16.1
+      images:
+        podmon: quay.io/dell/container-storage-modules/podmon:nightly

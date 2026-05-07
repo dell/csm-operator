@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"os"
@@ -40,22 +41,24 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	crzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	filters "sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/yaml"
 
-	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/controllers"
 	"github.com/dell/csm-operator/core"
 	k8sClient "github.com/dell/csm-operator/k8s"
 	"github.com/dell/csm-operator/pkg/logger"
+	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
+	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -65,14 +68,15 @@ const (
 	// Operatorconfig subfolder for deployment files
 	Operatorconfig = "operatorconfig"
 	// K8sMinimumSupportedVersion is the minimum supported version for k8s
-	K8sMinimumSupportedVersion = "1.32"
+	K8sMinimumSupportedVersion = "1.33"
 	// K8sMaximumSupportedVersion is the maximum supported version for k8s
-	K8sMaximumSupportedVersion = "1.34"
+	K8sMaximumSupportedVersion = "1.35"
 )
 
 var (
-	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	scheme         = runtime.NewScheme()
+	setupLog       = ctrl.Log.WithName("setup")
+	ManifestSemver = "dev"
 )
 
 func init() {
@@ -84,11 +88,13 @@ func init() {
 
 	utilruntime.Must(certmanagerv1.AddToScheme(scheme))
 
+	utilruntime.Must(gatewayv1.Install(scheme))
+
 	//+kubebuilder:scaffold:scheme
 }
 
 func printVersion(log *zap.SugaredLogger) {
-	log.Debugw("Operator Version", "Version", core.SemVer, "Commit ID", core.CommitSha32, "Commit SHA", string(core.CommitTime.Format(time.RFC1123)))
+	log.Debugf("Operator Version: %s, Build Time: %s", ManifestSemver, core.CommitTime.Format(time.RFC1123))
 	log.Debugf("Go Version: %s", osruntime.Version())
 	log.Debugf("Go OS/Arch: %s/%s", osruntime.GOOS, osruntime.GOARCH)
 }
@@ -111,7 +117,7 @@ var (
 	}
 
 	getK8sMinimumSupportedVersion = func() string {
-		return K8sMaximumSupportedVersion
+		return K8sMinimumSupportedVersion
 	}
 
 	getK8sMaximumSupportedVersion = func() string {
@@ -229,11 +235,13 @@ var (
 	}
 
 	initFlags = func() crzap.Options {
-		flags.metricsBindAddress = flag.String("metrics-bind-address", ":8082", "The address the metric endpoint binds to.")
+		flags.metricsBindAddress = flag.String("metrics-bind-address", ":8443", "The address the metric endpoint binds to.")
 		flags.healthProbeBindAddress = flag.String("health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 		flags.leaderElect = flag.Bool("leader-elect", false,
 			"Enable leader election for controller manager. "+
 				"Enabling this will ensure there is only one active controller manager.")
+		flags.secureMetrics = flag.Bool("metrics-secure", true,
+			"If set, the metrics endpoint is served securely via HTTPS. Use --metrics-secure=false to use HTTP instead.")
 		opts := initZapFlags()
 		flag.Parse()
 		return opts
@@ -260,6 +268,7 @@ var flags struct {
 	metricsBindAddress     *string
 	healthProbeBindAddress *string
 	leaderElect            *bool
+	secureMetrics          *bool
 	zapOpts                crzap.Options
 }
 
@@ -279,9 +288,20 @@ func main() {
 	}
 	restConfig := getConfigOrDie()
 
+	var tlsOpts []func(*tls.Config)
+	disableHTTP2 := func(c *tls.Config) {
+		c.NextProtos = []string{"http/1.1"}
+	}
+	tlsOpts = append(tlsOpts, disableHTTP2)
+
 	mgr, err := newManager(restConfig, ctrl.Options{
-		Scheme:                 scheme,
-		Metrics:                metricsserver.Options{BindAddress: *flags.metricsBindAddress},
+		Scheme: scheme,
+		Metrics: metricsserver.Options{
+			BindAddress:    *flags.metricsBindAddress,
+			SecureServing:  *flags.secureMetrics,
+			TLSOpts:        tlsOpts,
+			FilterProvider: filters.WithAuthenticationAndAuthorization,
+		},
 		HealthProbeBindAddress: *flags.healthProbeBindAddress,
 		LeaderElection:         *flags.leaderElect,
 		LeaderElectionID:       "090cae6a.dell.com",

@@ -1,4 +1,4 @@
-//  Copyright © 2022-2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2022-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"strings"
+	"time"
 
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -41,6 +43,7 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 		clientSet:  clientSet,
 	}
 	runner.addStep(`^Given an environment with k8s or openshift, and CSM operator installed$`, step.validateTestEnvironment)
+	runner.addStep(`^Given an environment with k8s or openshift, and CSM operator is not installed$`, step.validateKubernetesEnvironment)
 	runner.addStep(`^Install \[([^"]*)\]$`, step.installThirdPartyModule)
 	runner.addStep(`^Uninstall \[([^"]*)\]$`, step.uninstallThirdPartyModule)
 	runner.addStep(`^Apply custom resource \[(\d+)\]$`, step.applyCustomResource)
@@ -50,6 +53,10 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Upgrade from custom resource \[(\d+)\] to \[(\d+)\]$`, step.upgradeCustomResource)
 	runner.addStep(`^Validate custom resource \[(\d+)\]$`, step.validateCustomResourceStatus)
 	runner.addStep(`^Validate deployment from CR \[(\d+)\] has argument \[([^"]*)\] in container \[([^"]*)\]$`, step.validateContainerArg)
+	runner.addStep(`^Validate deployment from CR \[(\d+)\] has image \[([^"]*)\] in container \[([^"]*)\]$`, step.validateDeploymentContainerImage)
+	runner.addStep(`^Validate deployment from CR \[(\d+)\] has image containing \[([^"]*)\] in container \[([^"]*)\]$`, step.validateDeploymentContainerImageContains)
+	runner.addStep(`^Validate daemonset from CR \[(\d+)\] has image \[([^"]*)\] in container \[([^"]*)\]$`, step.validateDaemonSetContainerImage)
+	runner.addStep(`^Validate daemonset from CR \[(\d+)\] has image containing \[([^"]*)\] in container \[([^"]*)\]$`, step.validateDaemonSetContainerImageContains)
 	runner.addStep(`^Validate \[([^"]*)\] driver from CR \[(\d+)\] is installed$`, step.validateDriverInstalled)
 	runner.addStep(`^Validate \[([^"]*)\] driver spec from CR \[(\d+)\]$`, step.validateMinimalCSMDriverSpec)
 	runner.addStep(`^Validate \[([^"]*)\] driver from CR \[(\d+)\] is not installed$`, step.validateDriverNotInstalled)
@@ -67,14 +74,19 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Enable \[([^"]*)\] module from CR \[(\d+)\]$`, step.enableModule)
 	runner.addStep(`^Disable \[([^"]*)\] module from CR \[(\d+)\]$`, step.disableModule)
 
+	runner.addStep(`^(Enable|Disable) healthmonitor from CR \[(\d+)\]$`, step.configureHealthMonitor)
+
 	runner.addStep(`^Set \[([^"]*)\] node label$`, step.setNodeLabel)
 	runner.addStep(`^Remove \[([^"]*)\] node label$`, step.removeNodeLabel)
 
 	runner.addStep(`^Set secret for driver from CR \[(\d+)\] to \[([^"]*)\]$`, step.setDriverSecret)
 	runner.addStep(`^Create Secret with template \[([^"]*)\] name \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpSecret)
 	runner.addStep(`^Create Secret from file \[([^"]*)\] name \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpSecretFromFile)
+	runner.addStep(`^Create Secret from template \[([^"]*)\] as field \[([^"]*)\] named \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpSecretFromTemplateWithFieldName)
 	runner.addStep(`^Generate and Create SFTP Secrets from template \[([^"]*)\] private-secret \[([^"]*)\] public-secret \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]$`, step.generateAndCreateSftpSecrets)
 	runner.addStep(`^Create ConfigMap with template \[([^"]*)\] name \[([^"]*)\] in namespace \[([^"]*)\] for \[([^"]*)\]`, step.setUpConfigMap)
+	runner.addStep(`^Create resource with template \[([^\]]*)\] in namespace \[([^\]]*)\]$`, step.createResourceInNamespace)
+	runner.addStep(`^Create resource with template \[([^\]]*)\] in namespace \[([^\]]*)\] for \[([^\]]*)\]$`, step.createResourceInNamespaceWithType)
 	runner.addStep(`^Create resource with template \[([^"]*)\] for \[([^"]*)\]`, step.createResource)
 	runner.addStep(`^Create StorageClass with template \[([^"]*)\] for \[([^"]*)\]`, step.setUpStorageClass)
 	runner.addStep(`^Create \[([^"]*)\] prerequisites from CR \[(\d+)\]$`, step.createPrereqs)
@@ -87,9 +99,35 @@ func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kuberne
 	runner.addStep(`^Validate \[([^"]*)\] CRD for Authorization is installed$`, step.validateCustomResourceDefinition)
 	runner.addStep(`^Delete Authorization CRs for \[([^"]*)\]$`, step.deleteAuthorizationCRs)
 	runner.addStep(`^Delete Authorization CRDs \[(\d+)\]$`, step.deleteCustomResourceDefinition)
+	runner.addStep(`^Remove finalizers from authorization CRs in namespace \[([^"]*)\]$`, step.removeAuthorizationFinalizers)
 	runner.addStep(`^Set up Powerflex SFTP CR \[([^"]*)\]$`, step.configurePowerflexSftpInstall)
 	runner.addStep(`^Set up reverse proxy tls secret namespace \[([^"]*)\]`, step.setUpReverseProxy)
 	runner.addStep(`^Set up reverse proxy tls secret with SAN namespace \[([^"]*)\]`, step.setUpTLSSecretWithSAN)
+	runner.addStep(`^Set up PowerFlex metrics TLS secret namespace \[([^"]*)\]`, step.setUpMetricsTLSSecret)
+	runner.addStep(`^Restore ConfigMap$`, step.restoreConfigMap)
+	runner.addStep(`^Delete ConfigMap$`, step.deleteConfigMap)
+
+	// Environment variables management steps
+	runner.addStep(`^Validate \[(node|controller)\] \[([^"]*)\] env \[([^"]*)\] is \[([^"]*)\] in driver for resource \[(\d+)\]$`, step.validateEnvInDriverPod)
+	runner.addStep(`^Validate \[(common|node|controller)\] env \[([^"]*)\] is \[([^"]*)\] in CSM CR for resource \[(\d+)\]$`, step.validateEnvInCSMCR)
+	runner.addStep(`^Set \[(common|node|controller)\] env \[([^"]*)\] to \[([^"]*)\] in resource \[(\d+)\]$`, step.setEnvInSpec)
+
+	// Pre-apply CR modification steps
+	runner.addStep(`^Set forceRemoveDriver to \[([^"]*)\] in CR spec \[(\d+)\]$`, step.setForceRemoveDriverInSpec)
+	runner.addStep(`^Enable \[([^"]*)\] module in CR spec \[(\d+)\]$`, step.enableModuleInSpec)
+	runner.addStep(`^Set \[(common|node|controller)\] env \[([^"]*)\] from env \[([^"]*)\] in resource \[(\d+)\]$`, step.setEnvFromEnvVarInSpec)
+	runner.addStep(`^Set driver image to \[([^"]*)\] in CR spec \[(\d+)\]$`, step.setDriverImage)
+	runner.addStep(`^Set replicas to \[(\d+)\] in CR spec \[(\d+)\]$`, step.setReplicasInSpec)
+	runner.addStep(`^Set metadata name \[([^"]*)\] namespace \[([^"]*)\] in CR spec \[(\d+)\]$`, step.setMetadataInSpec)
+	runner.addStep(`^Set imagePullPolicy to \[([^"]*)\] in CR spec \[(\d+)\]$`, step.setImagePullPolicyInSpec)
+	runner.addStep(`^Set \[([^"]*)\] component \[([^"]*)\] image to \[([^"]*)\] in CR spec \[(\d+)\]$`, step.setModuleComponentImageInSpec)
+	runner.addStep(`^Set \[([^"]*)\] component \[([^"]*)\] env \[([^"]*)\] to \[([^"]*)\] in CR spec \[(\d+)\]$`, step.setModuleComponentEnvInSpec)
+	runner.addStep(`^Set \[([^"]*)\] component \[([^"]*)\] enabled \[([^"]*)\] in CR spec \[(\d+)\]$`, step.setModuleComponentEnabledInSpec)
+	runner.addStep(`^Set \[([^"]*)\] module configVersion to \[([^"]*)\] in CR spec \[(\d+)\]$`, step.setModuleConfigVersionInSpec)
+	runner.addStep(`^Set driver configVersion to \[([^"]*)\] in CR spec \[(\d+)\]$`, step.setDriverConfigVersionInSpec)
+	runner.addStep(`^Set spec version to \[([^"]*)\] in CR spec \[(\d+)\]$`, step.setSpecVersionInSpec)
+	runner.addStep(`^Remove \[([^"]*)\] from CR spec \[(\d+)\]$`, step.removeFieldFromSpec)
+	runner.addStep(`^Set customRegistry to \[([^"]*)\] in CR spec \[(\d+)\]$`, step.setCustomRegistryInSpec)
 }
 
 func (runner *Runner) addStep(expr string, stepFunc interface{}) {
@@ -125,7 +163,7 @@ func (runner *Runner) addStep(expr string, stepFunc interface{}) {
 // RunStep - runs a step
 func (runner *Runner) RunStep(stepName string, res Resource) error {
 	// Support conditional execution: "If config.enableSftpSDC is true: ..."
-	const conditionalPrefix = "If config.enableSftpSDC is true: "
+	const conditionalPrefix = "If POWERFLEX_SDC_SFTP_REPO_ENABLED: "
 	if len(stepName) > len(conditionalPrefix) && stepName[:len(conditionalPrefix)] == conditionalPrefix {
 		if res.Scenario.Config["enableSftpSDC"] != "true" {
 			// Skip the step if the config is not enabled
@@ -156,7 +194,7 @@ func (runner *Runner) RunStep(stepName string, res Resource) error {
 
 			res := stepDef.Handler.Call(values)
 			if err, ok := res[0].Interface().(error); ok {
-				fmt.Printf("\nerr: %+v\n", err)
+				fmt.Printf("             Retrying   %v\n", err)
 				return err
 			}
 			return nil
@@ -166,32 +204,34 @@ func (runner *Runner) RunStep(stepName string, res Resource) error {
 	return fmt.Errorf("no method for step: %s", stepName)
 }
 
-// RunStepClient - runs a step
-func (runner *Runner) RunStepClient(stepName string, res Resource) error {
-	for _, stepDef := range runner.Definitions {
-		if stepDef.Expr.MatchString(stepName) {
-			var values []reflect.Value
-			groups := stepDef.Expr.FindStringSubmatch(stepName)
-
-			typ := stepDef.Handler.Type()
-			numArgs := typ.NumIn()
-			if numArgs > len(groups) {
-				return fmt.Errorf("expected handler method to take %d but got: %d", numArgs, len(groups))
-			}
-
-			values = append(values, reflect.ValueOf(res))
-			for i := 1; i < len(groups); i++ {
-				values = append(values, reflect.ValueOf(groups[i]))
-			}
-
-			res := stepDef.Handler.Call(values)
-			if err, ok := res[0].Interface().(error); ok {
-				fmt.Printf("\nerr: %+v\n", err)
-				return err
-			}
-			return nil
+// StepTimeout returns an appropriate timeout for the given step name.
+// Steps are categorized into fast (3 min), medium (10 min), and long (20 min).
+func StepTimeout(stepName string) time.Duration {
+	// Long-running steps (20 min): upgrades, third-party installs, custom tests, auth proxy config
+	longPatterns := []string{
+		"Upgrade from custom resource",
+		"Install [",
+		"Uninstall [",
+		"Run custom test",
+		"Run [",
+		"Configure authorization-proxy-server",
+	}
+	for _, p := range longPatterns {
+		if strings.Contains(stepName, p) {
+			return 20 * time.Minute
 		}
 	}
 
-	return fmt.Errorf("no method for step: %s", stepName)
+	// Medium steps (10 min): validation/installation checks that poll
+	mediumPatterns := []string{
+		"Validate",
+	}
+	for _, p := range mediumPatterns {
+		if strings.Contains(stepName, p) {
+			return 10 * time.Minute
+		}
+	}
+
+	// Fast steps (3 min): apply, delete, create, set, enable/disable, etc.
+	return 3 * time.Minute
 }

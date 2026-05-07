@@ -3,7 +3,7 @@ kind: StorageClass
 metadata:
   # authorization expects this storage class name
   # please do not change
-  name: op-e2e-pmax
+  name: op-e2e-powermax
 parameters:
   SRP: "REPLACE_RESOURCE_POOL"
   SYMID: "REPLACE_SYSTEMID"

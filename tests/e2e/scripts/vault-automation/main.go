@@ -1,4 +1,4 @@
-// Copyright © 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+// Copyright © 2025-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -127,18 +127,19 @@ storage "file" {
 `
 
 	// env variables that align with operator e2e
-	powerflexSecretPath  = "PFLEX_VAULT_STORAGE_PATH"  // #nosec G101 -- env var, not hardcode
-	powerflexUsername    = "PFLEX_USER"                // #nosec G101 -- env var, not hardcode
-	powerflexPassword    = "PFLEX_PASS"                // #nosec G101 -- env var, not hardcode
-	powerscaleSecretPath = "PSCALE_VAULT_STORAGE_PATH" // #nosec G101 -- env var, not hardcode
-	powerscaleUsername   = "PSCALE_USER"               // #nosec G101 -- env var, not hardcode
-	powerscalePassword   = "PSCALE_PASS"               // #nosec G101 -- env var, not hardcode
-	powermaxSecretPath   = "PMAX_VAULT_STORAGE_PATH"   // #nosec G101 -- env var, not hardcode
-	powermaxUsername     = "PMAX_USER"                 // #nosec G101 -- env var, not hardcode
-	powermaxPassword     = "PMAX_PASS"                 // #nosec G101 -- env var, not hardcode
-	powerstoreSecretPath = "PSTORE_VAULT_STORAGE_PATH" // #nosec G101 -- env var, not hardcode
-	powerstoreUsername   = "PSTORE_USER"               // #nosec G101 -- env var, not hardcode
-	powerstorePassword   = "PSTORE_PASS"               // #nosec G101 -- env var, not hardcode
+	powerflexSecretPath  = "POWERFLEX_VAULT_STORAGE_PATH"  // #nosec G101 -- env var, not hardcode
+	powerflexUsername    = "POWERFLEX_USER"                // #nosec G101 -- env var, not hardcode
+	powerflexPassword    = "POWERFLEX_PASS"                // #nosec G101 -- env var, not hardcode
+	powerscaleSecretPath = "POWERSCALE_VAULT_STORAGE_PATH" // #nosec G101 -- env var, not hardcode
+	powerscaleUsername   = "POWERSCALE_USER"               // #nosec G101 -- env var, not hardcode
+	powerscalePassword   = "POWERSCALE_PASS"               // #nosec G101 -- env var, not hardcode
+	powermaxSecretPath   = "POWERMAX_VAULT_STORAGE_PATH"   // #nosec G101 -- env var, not hardcode
+	powermaxUsername     = "POWERMAX_USER"                 // #nosec G101 -- env var, not hardcode
+	powermaxPassword     = "POWERMAX_PASS"                 // #nosec G101 -- env var, not hardcode
+	powerstoreSecretPath = "POWERSTORE_VAULT_STORAGE_PATH" // #nosec G101 -- env var, not hardcode
+	powerstoreUsername   = "POWERSTORE_USER"               // #nosec G101 -- env var, not hardcode
+	powerstorePassword   = "POWERSTORE_PASS"               // #nosec G101 -- env var, not hardcode
+	configObject         = "JWT_SIGNING_SECRET"            // #nosec G101 -- env var, not hardcode
 	// timestamps to create certificates
 	notBefore = time.Now()
 	notAfter  = notBefore.Add(8766 * time.Hour)
@@ -599,7 +600,7 @@ func (s *sequence) configureVaultRole() error {
 type credentialConfig struct {
 	Path     string `yaml:"path"`
 	Username string `yaml:"username"`
-	Password string `yaml:"password"`
+	Password string `yaml:"password"` //gosec:disable G117
 }
 
 func (s *sequence) writeVaultSecret() error {
@@ -687,18 +688,41 @@ func (s *sequence) handleEnvConfig() error {
 	// add redis credentials to vault
 	err := s.putVaultSecret(redisPath, redisUsername, redisPassword)
 	if err != nil {
-		return fmt.Errorf("writing secret %s: %v", pscalePath, err)
+		return fmt.Errorf("writing secret %s: %v", redisPath, err)
+	}
+
+	// add config containing jwt secret to vault
+	configPath := "config"
+	config := os.Getenv(configObject)
+	if config != "" {
+		err := s.putVaultConfigSecret(configPath, config)
+		if err != nil {
+			return fmt.Errorf("writing config secret %s: %v", configPath, err)
+		}
 	}
 
 	return nil
 }
 
 func (s *sequence) putVaultSecret(path, username, password string) error {
-	log.Printf("Writing secret %s in %s", path, s.name)
+	log.Printf("Writing secret %s in %s", path, s.name) //gosec:disable G706 -- this is a test automation tool
 	var b bytes.Buffer
 	vaultCmd := fmt.Sprintf("vault kv put -mount=secret %s password=%s username=%s", path, password, username)
-	// #nosec G702 -- test automation tool using kubectl exec with controlled arguments
-	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", "sh", "-c", vaultCmd) // #nosec G204 -- this is a test automation tool
+	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", "sh", "-c", vaultCmd) // #nosec G204, G702 -- this is a test automation tool
+	cmd.Stdout = &b
+	cmd.Stderr = &b
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("%v: %s", err, b.String())
+	}
+	return nil
+}
+
+func (s *sequence) putVaultConfigSecret(path, config string) error {
+	log.Printf("Writing config secret %s in %s", path, s.name) //gosec:disable G706 -- this is a test automation tool
+	var b bytes.Buffer
+	vaultCmd := fmt.Sprintf("vault kv put -mount=secret %s configKey=\"%s\"", path, config)
+	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", "sh", "-c", vaultCmd) // #nosec G204, G702 -- this is a test automation tool
 	cmd.Stdout = &b
 	cmd.Stderr = &b
 	err := cmd.Run()

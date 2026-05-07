@@ -1,4 +1,4 @@
-# Copyright © 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2025-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ chmod 777 conjur-csm-authorization
 
 printf "=== Adding $CONTROL_NODE $CONJUR_HOST to /etc/hosts ===\n\n"
 
-grep "$CONTROL_NODE $CONJUR_HOST" /etc/hosts || echo "$CONTROL_NODE $CONJUR_HOST" >> /etc/hosts
+grep "$CONTROL_NODE $CONJUR_HOST" /etc/hosts || echo "$CONTROL_NODE $CONJUR_HOST" | sudo tee -a /etc/hosts > /dev/null
 
 printf "=== Initializing Conjur at https://$CONJUR_HOST:$CONJUR_PORT ===\n\n"
 
@@ -105,47 +105,47 @@ $CONTAINER_RUNTIME run --rm -it -v $PWD/conjur-csm-authorization:/home/cli docke
 
 cat <<EOF > conjur-csm-authorization/config.yaml
 - !host
-  id: system:serviceaccount:authorization:storage-service
+  id: system:serviceaccount:${E2E_NS_AUTH}:storage-service
 
 - !host
-  id: system:serviceaccount:authorization:proxy-server
+  id: system:serviceaccount:${E2E_NS_AUTH}:proxy-server
 
 - !host
-  id: system:serviceaccount:authorization:tenant-service
+  id: system:serviceaccount:${E2E_NS_AUTH}:tenant-service
 
 - !host
-  id: system:serviceaccount:authorization:redis
+  id: system:serviceaccount:${E2E_NS_AUTH}:redis
 
 - !host
-  id: system:serviceaccount:authorization:sentinel
+  id: system:serviceaccount:${E2E_NS_AUTH}:sentinel
 
 - !policy
   id: csm-authorization
   body:
     - !host
-      id: system:serviceaccount:authorization:storage-service
+      id: system:serviceaccount:${E2E_NS_AUTH}:storage-service
       annotations:
-        authn-jwt/kube/kubernetes.io/namespace: "authorization"
+        authn-jwt/kube/kubernetes.io/namespace: "${E2E_NS_AUTH}"
         authn-jwt/kube/kubernetes.io/serviceaccount/name: "storage-service"
     - !host
-      id: system:serviceaccount:authorization:proxy-server
+      id: system:serviceaccount:${E2E_NS_AUTH}:proxy-server
       annotations:
-        authn-jwt/kube/kubernetes.io/namespace: "authorization"
+        authn-jwt/kube/kubernetes.io/namespace: "${E2E_NS_AUTH}"
         authn-jwt/kube/kubernetes.io/serviceaccount/name: "proxy-server"
     - !host
-      id: system:serviceaccount:authorization:tenant-service
+      id: system:serviceaccount:${E2E_NS_AUTH}:tenant-service
       annotations:
-        authn-jwt/kube/kubernetes.io/namespace: "authorization"
+        authn-jwt/kube/kubernetes.io/namespace: "${E2E_NS_AUTH}"
         authn-jwt/kube/kubernetes.io/serviceaccount/name: "tenant-service"
     - !host
-      id: system:serviceaccount:authorization:redis
+      id: system:serviceaccount:${E2E_NS_AUTH}:redis
       annotations:
-        authn-jwt/kube/kubernetes.io/namespace: "authorization"
+        authn-jwt/kube/kubernetes.io/namespace: "${E2E_NS_AUTH}"
         authn-jwt/kube/kubernetes.io/serviceaccount/name: "redis"
     - !host
-      id: system:serviceaccount:authorization:sentinel
+      id: system:serviceaccount:${E2E_NS_AUTH}:sentinel
       annotations:
-        authn-jwt/kube/kubernetes.io/namespace: "authorization"
+        authn-jwt/kube/kubernetes.io/namespace: "${E2E_NS_AUTH}"
         authn-jwt/kube/kubernetes.io/serviceaccount/name: "sentinel"
 
 - !policy
@@ -171,11 +171,11 @@ cat <<EOF > conjur-csm-authorization/config.yaml
 
 - !permit
   role:
-    - !host csm-authorization/system:serviceaccount:authorization:storage-service
-    - !host csm-authorization/system:serviceaccount:authorization:proxy-server
-    - !host csm-authorization/system:serviceaccount:authorization:tenant-service
-    - !host csm-authorization/system:serviceaccount:authorization:redis
-    - !host csm-authorization/system:serviceaccount:authorization:sentinel
+    - !host csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:storage-service
+    - !host csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:proxy-server
+    - !host csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:tenant-service
+    - !host csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:redis
+    - !host csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:sentinel
   privilege: [ read, authenticate ]
   resource: !webservice conjur/authn-jwt/kube
 EOF
@@ -206,11 +206,11 @@ cat <<EOF > conjur-csm-authorization/secrets.yaml
     - &variables []
     - !permit
       role:
-        - !host /csm-authorization/system:serviceaccount:authorization:storage-service
-        - !host /csm-authorization/system:serviceaccount:authorization:proxy-server
-        - !host /csm-authorization/system:serviceaccount:authorization:tenant-service
-        - !host /csm-authorization/system:serviceaccount:authorization:redis
-        - !host /csm-authorization/system:serviceaccount:authorization:sentinel
+        - !host /csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:storage-service
+        - !host /csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:proxy-server
+        - !host /csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:tenant-service
+        - !host /csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:redis
+        - !host /csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:sentinel
       privilege: [ read, execute ]
       resource: *variables
 EOF
@@ -244,35 +244,35 @@ cat <<EOF > conjur-csm-authorization/secrets.yaml
       - !variable config-object
     - !permit
       role:
-        - !host /csm-authorization/system:serviceaccount:authorization:storage-service
-        - !host /csm-authorization/system:serviceaccount:authorization:proxy-server
-        - !host /csm-authorization/system:serviceaccount:authorization:tenant-service
-        - !host /csm-authorization/system:serviceaccount:authorization:redis
-        - !host /csm-authorization/system:serviceaccount:authorization:sentinel
+        - !host /csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:storage-service
+        - !host /csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:proxy-server
+        - !host /csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:tenant-service
+        - !host /csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:redis
+        - !host /csm-authorization/system:serviceaccount:${E2E_NS_AUTH}:sentinel
       privilege: [ read, execute ]
       resource: *variables
 EOF
 
   $CONTAINER_RUNTIME run --rm -it -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 policy load -b root -f /home/cli/secrets.yaml
 
-  if [[ -n "$PFLEX_USER" && -n "$PFLEX_PASS" ]]; then
-    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerflex-username -v $PFLEX_USER
-    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerflex-password -v $PFLEX_PASS
+  if [[ -n "$POWERFLEX_USER" && -n "$POWERFLEX_PASS" ]]; then
+    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerflex-username -v $POWERFLEX_USER
+    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerflex-password -v $POWERFLEX_PASS
   fi
 
-  if [[ -n "$PMAX_USER" && -n "$PMAX_PASS" ]]; then
-    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powermax-username -v $PMAX_USER
-    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powermax-password -v $PMAX_PASS
+  if [[ -n "$POWERMAX_USER" && -n "$POWERMAX_PASS" ]]; then
+    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powermax-username -v $POWERMAX_USER
+    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powermax-password -v $POWERMAX_PASS
   fi
 
-  if [[ -n "$PSCALE_USER" && -n "$PSCALE_PASS" ]]; then
-    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerscale-username -v $PSCALE_USER
-    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerscale-password -v $PSCALE_PASS
+  if [[ -n "$POWERSCALE_USER" && -n "$POWERSCALE_PASS" ]]; then
+    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerscale-username -v $POWERSCALE_USER
+    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerscale-password -v $POWERSCALE_PASS
   fi
 
-  if [[ -n "$PSTORE_USER" && -n "$PSTORE_PASS" ]]; then
-    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerstore-username -v $PSTORE_USER
-    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerstore-password -v $PSTORE_PASS
+  if [[ -n "$POWERSTORE_USER" && -n "$POWERSTORE_PASS" ]]; then
+    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerstore-username -v $POWERSTORE_USER
+    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/powerstore-password -v $POWERSTORE_PASS
   fi
 
   if [[ -n "$REDIS_USER" && -n "$REDIS_PASS" ]]; then
@@ -280,8 +280,11 @@ EOF
     $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/redis-password -v $REDIS_PASS
   fi
 
-  if [[ -n "$CONFIG_OBJECT" ]]; then
-    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/config-object -v $CONFIG_OBJECT
+  if [[ -n "$JWT_SIGNING_SECRET" ]]; then
+    # JWT_SIGNING_SECRET is often provided as a single-line env var with literal '\n' escapes.
+    # Convert it into real newlines before storing in Conjur so it can be mounted as valid YAML.
+    printf '%b' "$JWT_SIGNING_SECRET" > conjur-csm-authorization/config-object.yaml
+    $CONTAINER_RUNTIME run --rm -v $PWD/conjur-csm-authorization:/home/cli docker.io/cyberark/conjur-cli:8 variable set -i secrets/config-object -v "$(cat conjur-csm-authorization/config-object.yaml)"
   fi
 fi
 
@@ -294,7 +297,7 @@ apiVersion: secrets-store.csi.x-k8s.io/v1
 kind: SecretProviderClass
 metadata:
   name: conjur
-  namespace: authorization
+  namespace: ${E2E_NS_AUTH}
 spec:
   provider: conjur
   secretObjects:

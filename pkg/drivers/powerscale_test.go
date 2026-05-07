@@ -18,8 +18,8 @@ import (
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
-	"github.com/dell/csm-operator/tests/shared"
-	"github.com/dell/csm-operator/tests/shared/crclient"
+	shared "github.com/dell/csm-operator/tests/sharedutil"
+	"github.com/dell/csm-operator/tests/sharedutil/crclient"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,14 +27,15 @@ import (
 )
 
 var (
-	powerScaleCSM            = csmForPowerScale()
-	powerScaleCSMEmptyEnv    = csmForPowerScaleWithEmptyEnv()
-	powerScaleCSMBadSkipCert = csmForPowerScaleBadSkipCert()
-	powerScaleCSMBadCertCnt  = csmForPowerScaleBadCertCnt()
-	powerScaleCSMBadVersion  = csmForPowerScaleBadVersion()
-	objects                  = map[shared.StorageKey]runtime.Object{}
-	powerScaleClient         = crclient.NewFakeClientNoInjector(objects)
-	powerScaleSecret         = shared.MakeSecret("csm-creds", "driver-test", shared.ConfigVersion)
+	powerScaleCSM               = csmForPowerScale()
+	powerScaleInvalidCSMVersion = csmForPowerScaleInvalidVersion()
+	powerScaleCSMEmptyEnv       = csmForPowerScaleWithEmptyEnv()
+	powerScaleCSMBadSkipCert    = csmForPowerScaleBadSkipCert()
+	powerScaleCSMBadCertCnt     = csmForPowerScaleBadCertCnt()
+	powerScaleCSMBadVersion     = csmForPowerScaleBadVersion()
+	objects                     = map[shared.StorageKey]runtime.Object{}
+	powerScaleClient            = crclient.NewFakeClientNoInjector(objects)
+	powerScaleSecret            = shared.MakeSecret("csm-creds", "driver-test", shared.ConfigVersion)
 
 	powerScaleTests = []struct {
 		// every single unit test name
@@ -67,6 +68,7 @@ var (
 		{"missing secret", powerScaleCSM, powerScaleClient, powerScaleSecret, "failed to find secret"},
 		{"bad version", powerScaleCSMBadVersion, powerScaleClient, powerScaleSecret, "not supported"},
 		{"missing envs", powerScaleCSMEmptyEnv, powerScaleClient, powerScaleSecret, "failed to find secret"},
+		{"invalid csm version", powerScaleInvalidCSMVersion, powerScaleClient, powerScaleSecret, "No custom resource configuration is available for CSM version v1.10.0"},
 	}
 
 	powerScaleCommonEnvTest = []struct {
@@ -116,7 +118,12 @@ func TestPrecheckPowerScale(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range preCheckPowerScaleTest {
 		t.Run(tt.name, func(t *testing.T) { // #nosec G601 - Run waits for the call to complete.
-			err := PrecheckPowerScale(ctx, &tt.csm, config, tt.ct)
+			// Use configForVersionChecks for invalid CSM version test
+			cfg := config
+			if tt.name == "invalid csm version" {
+				cfg = configForVersionChecks
+			}
+			err := PrecheckPowerScale(ctx, &tt.csm, cfg, tt.ct)
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 			} else {
@@ -133,9 +140,13 @@ func TestPrecheckPowerScale(t *testing.T) {
 		if err != nil {
 			assert.Nil(t, err)
 		}
-
 		t.Run(tt.name, func(t *testing.T) { // #nosec G601 - Run waits for the call to complete.
-			err := PrecheckPowerScale(ctx, &tt.csm, config, tt.ct)
+			// Use configForVersionChecks for invalid CSM version test
+			cfg := config
+			if tt.name == "invalid csm version" {
+				cfg = configForVersionChecks
+			}
+			err := PrecheckPowerScale(ctx, &tt.csm, cfg, tt.ct)
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 			} else {
@@ -232,6 +243,17 @@ func csmForPowerScaleBadVersion() csmv1.ContainerStorageModule {
 
 	// Add pscale driver version
 	res.Spec.Driver.ConfigVersion = "v0"
+	res.Spec.Driver.CSIDriverType = csmv1.PowerScale
+
+	return res
+}
+
+// makes a csm object with tolerations
+func csmForPowerScaleInvalidVersion() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
+
+	// Add pscale driver version
+	res.Spec.Version = shared.InvalidCSMVersion
 	res.Spec.Driver.CSIDriverType = csmv1.PowerScale
 
 	return res
