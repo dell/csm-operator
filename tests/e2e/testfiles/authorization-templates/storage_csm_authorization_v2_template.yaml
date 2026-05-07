@@ -2,7 +2,7 @@ apiVersion: csm-authorization.storage.dell.com/v1
 kind: Storage
 metadata:
   name: REPLACE_STORAGE_NAME
-  namespace: ${E2E_NS_AUTH}
+  namespace: authorization
 spec:
   type: REPLACE_STORAGE_TYPE
   endpoint: https://REPLACE_ENDPOINT
@@ -26,7 +26,7 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: csm-authorization
   name: REPLACE_ROLE_NAME
-  namespace: ${E2E_NS_AUTH}
+  namespace: authorization
 spec:
   quota: REPLACE_QUOTA
   systemID: "REPLACE_SYSTEM_ID"
@@ -43,7 +43,7 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: csm-authorization
   name: REPLACE_TENANT_NAME
-  namespace: ${E2E_NS_AUTH}
+  namespace: authorization
 spec:
   # TODO(user): Add fields here
   roles: REPLACE_TENANT_ROLES

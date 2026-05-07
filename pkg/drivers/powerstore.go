@@ -1,4 +1,4 @@
-//  Copyright © 2023-2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ import (
 	"strconv"
 	"strings"
 
-	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
-	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
+	csmv1 "github.com/dell/csm-operator/api/v1"
+	"github.com/dell/csm-operator/pkg/logger"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -36,23 +36,11 @@ const (
 	// PowerStoreConfigParamsVolumeMount -
 	PowerStoreConfigParamsVolumeMount = "powerstore-config-params"
 
-	// PowerStoreConfigVolumeMount -
-	PowerStoreConfigVolumeMount = "powerstore-config"
-
 	// CsiPowerstoreNodeNamePrefix - Node Name Prefix
 	CsiPowerstoreNodeNamePrefix = "<X_CSI_POWERSTORE_NODE_NAME_PREFIX>"
 
 	// CsiPowerstoreMaxVolumesPerNode - Maximum Volumes Per Node
 	CsiPowerstoreMaxVolumesPerNode = "<X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE>"
-
-	// VolumeDisconnectMaxRetries - Maximum number of retry attempts for volume disconnection
-	VolumeDisconnectMaxRetries = "<X_CSI_VOLUME_DISCONNECT_MAX_RETRIES>"
-
-	// VolumeDisconnectRetryInterval - Wait time between volume disconnection retries
-	VolumeDisconnectRetryInterval = "<X_CSI_VOLUME_DISCONNECT_RETRY_INTERVAL>"
-
-	// VolumeDisconnectTimeoutSeconds - Timeout duration for each volume disconnection attempt
-	VolumeDisconnectTimeoutSeconds = "<X_CSI_VOLUME_DISCONNECT_TIMEOUT_SECONDS>"
 
 	// CsiFcPortFilterFilePath - Fc Port Filter File Path
 	CsiFcPortFilterFilePath = "<X_CSI_FC_PORTS_FILTER_FILE_PATH>"
@@ -68,15 +56,23 @@ const (
 
 	// CsiPowerstoreExternalAccess -  External Access flag
 	CsiPowerstoreExternalAccess = "<X_CSI_POWERSTORE_EXTERNAL_ACCESS>"
-
-	// CsiPowerstoreExclusiveAccess -  Exclusive Access flag
-	CsiPowerstoreExclusiveAccess = "<X_CSI_POWERSTORE_EXCLUSIVE_ACCESS>"
-
 	// CsiStorageCapacityEnabled - Storage capacity flag
 	CsiStorageCapacityEnabled = "false"
 
+	// PowerStoreCSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
+	PowerStoreCSMNameSpace string = "<CSM_NAMESPACE>"
+
 	// PowerStoreDebug - will be used to control the GOPOWERSTORE_DEBUG variable
 	PowerStoreDebug string = "<GOPOWERSTORE_DEBUG>"
+
+	// PowerStoreNfsClientPort - NFS Client Port
+	PowerStoreNfsClientPort = "<X_CSI_NFS_CLIENT_PORT>"
+
+	// PowerStoreNfsClientPort - NFS Server Port
+	PowerStoreNfsServerPort = "<X_CSI_NFS_SERVER_PORT>"
+
+	// PowerStoreNfsExportDirectory - NFS Export Directory
+	PowerStoreNfsExportDirectory = "<X_CSI_NFS_EXPORT_DIRECTORY>"
 
 	// CSMAuthEnabled - CSI Volume name Prefix
 	CSMAuthEnabled string = "<X_CSM_AUTH_ENABLED>"
@@ -86,21 +82,6 @@ const (
 
 	// PodmonArrayConnectivityTimeout - Podmon Array Connectivity Timeout
 	PodmonArrayConnectivityTimeout = "<X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT>"
-
-	// Deprecated: PowerStoreNfsClientPort - NFS Client Port
-	PowerStoreNfsClientPort = "<X_CSI_NFS_CLIENT_PORT>"
-
-	// Deprecated: PowerStoreNfsClientPort - NFS Server Port
-	PowerStoreNfsServerPort = "<X_CSI_NFS_SERVER_PORT>"
-
-	// Deprecated: PowerStoreNfsExportDirectory - NFS Export Directory
-	PowerStoreNfsExportDirectory = "<X_CSI_NFS_EXPORT_DIRECTORY>"
-
-	// CSMDREnabled - Flag to indicate if CSM-DR is enabled
-	CSMDREnabled string = "<X_CSM_DR_ENABLED>"
-
-	// CSMDRBindPort - Bind port for CSM-DR controller initialization
-	CSMDRBindPort string = "<X_CSM_DR_BIND_PORT>"
 )
 
 // PrecheckPowerStore do input validation
@@ -113,15 +94,11 @@ func PrecheckPowerStore(ctx context.Context, cr *csmv1.ContainerStorageModule, o
 		config = cr.Spec.Driver.AuthSecret
 	}
 
-	version, err := operatorutils.GetVersion(ctx, cr, operatorConfig)
-	if err != nil {
-		return err
-	}
 	// Check if driver version is supported by doing a stat on a config file
-	configFilePath := fmt.Sprintf("%s/driverconfig/powerstore/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, version)
+	configFilePath := fmt.Sprintf("%s/driverconfig/powerstore/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, cr.Spec.Driver.ConfigVersion)
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		log.Errorw("PreCheckPowerStore failed in version check", "Error", err.Error())
-		return fmt.Errorf("%s %s not supported", csmv1.PowerStore, version)
+		return fmt.Errorf("%s %s not supported", csmv1.PowerStore, cr.Spec.Driver.ConfigVersion)
 	}
 
 	// Default values
@@ -181,32 +158,18 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	chap := ""
 	healthMonitorNode := ""
 	powerstoreExternalAccess := ""
-	powerstoreExclusiveAccess := "false"
 	storageCapacity := "false"
 	maxVolumesPerNode := ""
-	volumeDisconnectMaxRetries := "5"
-	volumeDisconnectRetryInterval := "5s"
-	volumeDisconnectTimeoutSeconds := "120s"
+	nfsClientPort := "2050"
+	nfsServerPort := "2049"
+	nfsExportDirectory := "/var/lib/dell/nfs"
 	powerstoreAPITimeout := "120s"
 	podmonArrayConnectivityTimeout := "10s"
 	debug := "false"
 	authEnabled := ""
 	foundAuthEnv := false
-	enableCSMDR := GetDriverCommonEnv(cr, "X_CSM_DR_ENABLED", "true")
-	drBindPort := GetDriverCommonEnv(cr, "X_CSM_DR_BIND_PORT", "8082")
 
 	authorizationModuleFound := false
-
-	nfsClientPort := "unused"
-	nfsServerPort := "unused"
-	nfsExportDirectory := "/var/lib/dell/nfs"
-
-	fsckEnabled := GetDriverCommonEnv(cr, CsiFsCheckEnabled, "false")
-	fsckMode := GetDriverCommonEnv(cr, CsiFsCheckMode, "checkOnly")
-	spaceReclamationEnabled := GetDriverCommonEnv(cr, CsiSpaceReclamationEnabled, "false")
-	spaceReclamationSchedule := GetDriverCommonEnv(cr, CsiSpaceReclamationSchedule, "")
-	spaceReclamationMaxConcurrent := GetDriverCommonEnv(cr, CsiSpaceReclamationMaxConcurrent, "")
-	spaceReclamationTimeOut := GetDriverCommonEnv(cr, CsiSpaceReclamationTimeOut, "")
 
 	for _, mod := range cr.Spec.Modules {
 		if mod.Name == csmv1.Authorization {
@@ -219,6 +182,15 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		for _, env := range cr.Spec.Driver.Common.Envs {
 			if env.Name == "GOPOWERSTORE_DEBUG" {
 				debug = env.Value
+			}
+			if env.Name == "X_CSI_NFS_CLIENT_PORT" && env.Value != "" {
+				nfsClientPort = env.Value
+			}
+			if env.Name == "X_CSI_NFS_SERVER_PORT" && env.Value != "" {
+				nfsServerPort = env.Value
+			}
+			if env.Name == "X_CSI_NFS_EXPORT_DIRECTORY" && env.Value != "" {
+				nfsExportDirectory = env.Value
 			}
 			if env.Name == "X_CSI_POWERSTORE_API_TIMEOUT" && env.Value != "" {
 				powerstoreAPITimeout = env.Value
@@ -251,15 +223,6 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 				}
 				if env.Name == "X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE" {
 					maxVolumesPerNode = env.Value
-				}
-				if env.Name == "X_CSI_VOLUME_DISCONNECT_MAX_RETRIES" {
-					volumeDisconnectMaxRetries = env.Value
-				}
-				if env.Name == "X_CSI_VOLUME_DISCONNECT_RETRY_INTERVAL" {
-					volumeDisconnectRetryInterval = env.Value
-				}
-				if env.Name == "X_CSI_VOLUME_DISCONNECT_TIMEOUT_SECONDS" {
-					volumeDisconnectTimeoutSeconds = env.Value
 				}
 			}
 		}
@@ -313,27 +276,14 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreEnableChap, chap)
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreMaxVolumesPerNode, maxVolumesPerNode)
-		yamlString = strings.ReplaceAll(yamlString, VolumeDisconnectMaxRetries, volumeDisconnectMaxRetries)
-		yamlString = strings.ReplaceAll(yamlString, VolumeDisconnectRetryInterval, volumeDisconnectRetryInterval)
-		yamlString = strings.ReplaceAll(yamlString, VolumeDisconnectTimeoutSeconds, volumeDisconnectTimeoutSeconds)
-		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, PowerStoreCSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreDebug, debug)
-		yamlString = strings.ReplaceAll(yamlString, CSMAuthEnabled, authEnabled)
-		yamlString = strings.ReplaceAll(yamlString, PowerStoreAPITimeout, powerstoreAPITimeout)
-		yamlString = strings.ReplaceAll(yamlString, PodmonArrayConnectivityTimeout, podmonArrayConnectivityTimeout)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsClientPort, nfsClientPort)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsServerPort, nfsServerPort)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsExportDirectory, nfsExportDirectory)
-		yamlString = strings.ReplaceAll(yamlString, CSMDREnabled, enableCSMDR)
-		yamlString = strings.ReplaceAll(yamlString, CSMDRBindPort, drBindPort)
-
-		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckEnabled, fsckEnabled)
-		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckMode, fsckMode)
-		yamlString = SubstituteEnvVar(yamlString, CsiSpaceReclamationEnabled, spaceReclamationEnabled)
-		yamlString = SubstituteEnvVar(yamlString, CsiSpaceReclamationSchedule, spaceReclamationSchedule)
-		yamlString = SubstituteEnvVar(yamlString, CsiSpaceReclamationMaxConcurrent, spaceReclamationMaxConcurrent)
-		yamlString = SubstituteEnvVar(yamlString, CsiSpaceReclamationTimeOut, spaceReclamationTimeOut)
-
+		yamlString = strings.ReplaceAll(yamlString, CSMAuthEnabled, authEnabled)
+		yamlString = strings.ReplaceAll(yamlString, PowerStoreAPITimeout, powerstoreAPITimeout)
+		yamlString = strings.ReplaceAll(yamlString, PodmonArrayConnectivityTimeout, podmonArrayConnectivityTimeout)
 	case "Controller":
 		if cr.Spec.Driver.Controller != nil {
 			for _, env := range cr.Spec.Driver.Controller.Envs {
@@ -346,24 +296,18 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 				if env.Name == "X_CSI_POWERSTORE_EXTERNAL_ACCESS" {
 					powerstoreExternalAccess = env.Value
 				}
-				if env.Name == "X_CSI_POWERSTORE_EXCLUSIVE_ACCESS" {
-					powerstoreExclusiveAccess = env.Value
-				}
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiNfsAcls, nfsAcls)
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreExternalAccess, powerstoreExternalAccess)
-		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreExclusiveAccess, powerstoreExclusiveAccess)
-		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
+		yamlString = strings.ReplaceAll(yamlString, PowerStoreCSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreDebug, debug)
-		yamlString = strings.ReplaceAll(yamlString, PowerStoreAPITimeout, powerstoreAPITimeout)
-		yamlString = strings.ReplaceAll(yamlString, PodmonArrayConnectivityTimeout, podmonArrayConnectivityTimeout)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsClientPort, nfsClientPort)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsServerPort, nfsServerPort)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsExportDirectory, nfsExportDirectory)
-		yamlString = strings.ReplaceAll(yamlString, CSMDREnabled, enableCSMDR)
-		yamlString = strings.ReplaceAll(yamlString, CSMDRBindPort, drBindPort)
+		yamlString = strings.ReplaceAll(yamlString, PowerStoreAPITimeout, powerstoreAPITimeout)
+		yamlString = strings.ReplaceAll(yamlString, PodmonArrayConnectivityTimeout, podmonArrayConnectivityTimeout)
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"

@@ -15,7 +15,7 @@ package constants
 import (
 	"time"
 
-	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
+	csmv1 "github.com/dell/csm-operator/api/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
@@ -32,11 +32,6 @@ const (
 	DefaultRetryInterval = 5 * time.Second
 	MaxRetryInterval     = 10 * time.Minute
 	MaxRetryDuration     = 30 * time.Minute
-)
-
-// Minimum Version Requirement for Features
-const (
-	DisasterRecoveryMinVersion = "v2.16.0"
 )
 
 // DriverReplicas - Replica count for controller

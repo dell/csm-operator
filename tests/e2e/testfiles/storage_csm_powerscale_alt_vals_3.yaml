@@ -2,7 +2,7 @@ apiVersion: storage.dell.com/v1
 kind: ContainerStorageModule
 metadata:
   name: powerscale
-  namespace: ${E2E_NS_OPERATOR}
+  namespace: dell
 spec:
   driver:
     csiDriverType: "isilon"
@@ -11,14 +11,14 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "ReadWriteOnceWithFSType"
-    configVersion: v2.17.0
+    configVersion: v2.15.1
     authSecret: csm-creds
     replicas: 2
     dnsPolicy: ClusterFirstWithHostNet
     # Uninstall CSI Driver and/or modules when CR is deleted
     forceRemoveDriver: false
     common:
-      image: "csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-isilon:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-isilon:v2.15.1"
       imagePullPolicy: Always
       envs:
         # X_CSI_VERBOSE: Indicates what content of the OneFS REST API message should be logged in debug level logs
@@ -229,17 +229,15 @@ spec:
       - name: external-health-monitor
         enabled: false
         args: ["--monitor-interval=60s"]
-      - name: csi-metadata-retriever
-        image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-metadata-retriever:nightly
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
       # enable: Enable/Disable csm-authorization
       enabled: false
-      configVersion: v2.5.0
+      configVersion: v2.3.0
       components:
         - name: karavi-authorization-proxy
-          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-sidecar:nightly
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
@@ -256,13 +254,13 @@ spec:
       #   false: disable replication feature(do not install dell-csi-replicator sidecar)
       # Default value: false
       enabled: false
-      configVersion: v1.15.0
+      configVersion: v1.13.0
       components:
         - name: dell-csi-replicator
           # image: Image to use for dell-csi-replicator. This shouldn't be changed
           # Allowed values: string
           # Default value: None
-          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/dell-csi-replicator:nightly
+          image: quay.io/dell/container-storage-modules/dell-csi-replicator:nightly
           envs:
             # replicationPrefix: prefix to prepend to storage classes parameters
             # Allowed values: string
@@ -277,7 +275,7 @@ spec:
         - name: dell-replication-controller-manager
           # image: Defines controller image. This shouldn't be changed
           # Allowed values: string
-          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/dell-replication-controller:nightly
+          image: quay.io/dell/container-storage-modules/dell-replication-controller:nightly
           envs:
             # Replication log level
             # Allowed values: "error", "warn"/"warning", "info", "debug"
@@ -306,14 +304,14 @@ spec:
     - name: observability
       # enabled: Enable/Disable observability
       enabled: false
-      configVersion: v1.15.0
+      configVersion: v1.13.0
       components:
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
           enabled: false
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
-          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.142.0
+          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0
           envs:
             # image of nginx proxy image
             # Allowed values: string
@@ -325,7 +323,7 @@ spec:
           enabled: false
           # image: Defines PowerScale metrics image. This shouldn't be changed
           # Allowed values: string
-          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-metrics-powerscale:nightly
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:nightly
           envs:
             # POWERSCALE_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerScale
             # Allowed values: int

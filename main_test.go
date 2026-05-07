@@ -17,14 +17,13 @@ import (
 	"errors"
 	"net/http"
 	"os"
-	"strconv"
 	"testing"
 	"time"
 
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/controllers"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/k8s"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
-	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
+	"github.com/dell/csm-operator/controllers"
+	"github.com/dell/csm-operator/k8s"
+	"github.com/dell/csm-operator/pkg/logger"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -33,7 +32,6 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/events"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -47,7 +45,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/conversion"
 	"sigs.k8s.io/yaml"
 )
 
@@ -96,13 +93,13 @@ func TestGetOperatorConfig(t *testing.T) {
 						Podmon                string `json:"podmon" yaml:"podmon"`
 						CSIRevProxy           string `json:"csiReverseProxy" yaml:"csiReverseProxy"`
 					}{
-						Attacher:              "registry.k8s.io/sig-storage/csi-attacher:v4.11.0",
-						Provisioner:           "registry.k8s.io/sig-storage/csi-provisioner:v6.2.0",
-						Snapshotter:           "registry.k8s.io/sig-storage/csi-snapshotter:v8.5.0",
-						Registrar:             "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0",
-						Resizer:               "registry.k8s.io/sig-storage/csi-resizer:v2.1.0",
-						Externalhealthmonitor: "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.17.0",
-						Sdcmonitor:            "quay.io/dell/storage/powerflex/sdc:5.0",
+						Attacher:              "registry.k8s.io/sig-storage/csi-attacher:v4.9.0",
+						Provisioner:           "registry.k8s.io/sig-storage/csi-provisioner:v5.3.0",
+						Snapshotter:           "registry.k8s.io/sig-storage/csi-snapshotter:v8.3.0",
+						Registrar:             "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0",
+						Resizer:               "registry.k8s.io/sig-storage/csi-resizer:v1.14.0",
+						Externalhealthmonitor: "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.15.0",
+						Sdcmonitor:            "quay.io/dell/storage/powerflex/sdc:4.5.4",
 					},
 				},
 			},
@@ -134,13 +131,13 @@ func TestGetOperatorConfig(t *testing.T) {
 						Podmon                string `json:"podmon" yaml:"podmon"`
 						CSIRevProxy           string `json:"csiReverseProxy" yaml:"csiReverseProxy"`
 					}{
-						Attacher:              "registry.k8s.io/sig-storage/csi-attacher:v4.11.0",
-						Provisioner:           "registry.k8s.io/sig-storage/csi-provisioner:v6.2.0",
-						Snapshotter:           "registry.k8s.io/sig-storage/csi-snapshotter:v8.5.0",
-						Registrar:             "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0",
-						Resizer:               "registry.k8s.io/sig-storage/csi-resizer:v2.1.0",
-						Externalhealthmonitor: "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.17.0",
-						Sdcmonitor:            "quay.io/dell/storage/powerflex/sdc:5.0",
+						Attacher:              "registry.k8s.io/sig-storage/csi-attacher:v4.9.0",
+						Provisioner:           "registry.k8s.io/sig-storage/csi-provisioner:v5.3.0",
+						Snapshotter:           "registry.k8s.io/sig-storage/csi-snapshotter:v8.3.0",
+						Registrar:             "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0",
+						Resizer:               "registry.k8s.io/sig-storage/csi-resizer:v1.14.0",
+						Externalhealthmonitor: "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.15.0",
+						Sdcmonitor:            "quay.io/dell/storage/powerflex/sdc:4.5.4",
 					},
 				},
 			},
@@ -452,66 +449,34 @@ func TestGetk8sPath(t *testing.T) {
 	tests := []struct {
 		name           string
 		kubeVersion    string
-		currentVersion string
-		minVersion     string
-		maxVersion     string
+		currentVersion float64
+		minVersion     float64
+		maxVersion     float64
 		expectedPath   string
 	}{
 		{
 			name:           "Current version less than minimum",
-			kubeVersion:    "1.32",
-			currentVersion: "1.32",
-			minVersion:     K8sMinimumSupportedVersion,
-			maxVersion:     K8sMaximumSupportedVersion,
+			kubeVersion:    "1.29",
+			currentVersion: 1.29,
+			minVersion:     1.32,
+			maxVersion:     1.34,
 			expectedPath:   "/driverconfig/common/default.yaml",
 		},
 		{
 			name:           "Current version greater than maximum",
-			kubeVersion:    "1.36",
-			currentVersion: "1.36",
-			minVersion:     K8sMinimumSupportedVersion,
-			maxVersion:     K8sMaximumSupportedVersion,
-			expectedPath:   "/driverconfig/common/k8s-" + K8sMaximumSupportedVersion + "-values.yaml",
-		},
-		{
-			name:           "Current version within range - 1.33",
-			kubeVersion:    "1.33",
-			currentVersion: "1.33",
-			minVersion:     K8sMinimumSupportedVersion,
-			maxVersion:     K8sMaximumSupportedVersion,
-			expectedPath:   "/driverconfig/common/k8s-1.33-values.yaml",
-		},
-		{
-			name:           "Current version within range - 1.34",
-			kubeVersion:    "1.34",
-			currentVersion: "1.34",
-			minVersion:     K8sMinimumSupportedVersion,
-			maxVersion:     K8sMaximumSupportedVersion,
+			kubeVersion:    "1.35",
+			currentVersion: 1.35,
+			minVersion:     1.32,
+			maxVersion:     1.34,
 			expectedPath:   "/driverconfig/common/k8s-1.34-values.yaml",
 		},
 		{
-			name:           "Current version within range - 1.35",
-			kubeVersion:    "1.35",
-			currentVersion: "1.35",
-			minVersion:     K8sMinimumSupportedVersion,
-			maxVersion:     K8sMaximumSupportedVersion,
-			expectedPath:   "/driverconfig/common/k8s-1.35-values.yaml",
-		},
-		{
-			name:           "Current version exactly at minimum",
-			kubeVersion:    K8sMinimumSupportedVersion,
-			currentVersion: K8sMinimumSupportedVersion,
-			minVersion:     K8sMinimumSupportedVersion,
-			maxVersion:     K8sMaximumSupportedVersion,
-			expectedPath:   "/driverconfig/common/k8s-" + K8sMinimumSupportedVersion + "-values.yaml",
-		},
-		{
-			name:           "Current version exactly at maximum",
-			kubeVersion:    K8sMaximumSupportedVersion,
-			currentVersion: K8sMaximumSupportedVersion,
-			minVersion:     K8sMinimumSupportedVersion,
-			maxVersion:     K8sMaximumSupportedVersion,
-			expectedPath:   "/driverconfig/common/k8s-" + K8sMaximumSupportedVersion + "-values.yaml",
+			name:           "Current version within range",
+			kubeVersion:    "1.33",
+			currentVersion: 1.33,
+			minVersion:     1.32,
+			maxVersion:     1.34,
+			expectedPath:   "/driverconfig/common/k8s-1.33-values.yaml",
 		},
 	}
 
@@ -522,13 +487,8 @@ func TestGetk8sPath(t *testing.T) {
 			defer logger.Sync()
 			sugar := logger.Sugar()
 
-			// Convert string versions to floats for the function call
-			currentVersion, _ := strconv.ParseFloat(tt.currentVersion, 64)
-			minVersion, _ := strconv.ParseFloat(tt.minVersion, 64)
-			maxVersion, _ := strconv.ParseFloat(tt.maxVersion, 64)
-
 			// Call the function
-			actualPath := getk8sPathFn(sugar, tt.kubeVersion, currentVersion, minVersion, maxVersion)
+			actualPath := getk8sPathFn(sugar, tt.kubeVersion, tt.currentVersion, tt.minVersion, tt.maxVersion)
 
 			// Assert the results
 			assert.Equal(t, tt.expectedPath, actualPath)
@@ -586,13 +546,11 @@ func TestMain(_ *testing.T) {
 
 	initFlags = func() crzap.Options {
 		LEEnabled := false
-		secureMetricsEnabled := true
 		metricsBindAddress := ":8082"
 		healthProbeBindAddress := ":8081"
 		flags.metricsBindAddress = &metricsBindAddress
 		flags.healthProbeBindAddress = &healthProbeBindAddress
 		flags.leaderElect = &LEEnabled
-		flags.secureMetrics = &secureMetricsEnabled
 		opts := initZapFlags()
 		return opts
 	}
@@ -689,13 +647,11 @@ func TestMainGetOperatorConfigError(_ *testing.T) {
 
 	initFlags = func() crzap.Options {
 		LEEnabled := false
-		secureMetricsEnabled := true
 		metricsBindAddress := ":8082"
 		healthProbeBindAddress := ":8081"
 		flags.metricsBindAddress = &metricsBindAddress
 		flags.healthProbeBindAddress = &healthProbeBindAddress
 		flags.leaderElect = &LEEnabled
-		flags.secureMetrics = &secureMetricsEnabled
 		opts := initZapFlags()
 		return opts
 	}
@@ -781,13 +737,11 @@ func TestMainNewManagerError(_ *testing.T) {
 
 	initFlags = func() crzap.Options {
 		LEEnabled := false
-		secureMetricsEnabled := true
 		metricsBindAddress := ":8082"
 		healthProbeBindAddress := ":8081"
 		flags.metricsBindAddress = &metricsBindAddress
 		flags.healthProbeBindAddress = &healthProbeBindAddress
 		flags.leaderElect = &LEEnabled
-		flags.secureMetrics = &secureMetricsEnabled
 		opts := initZapFlags()
 		return opts
 	}
@@ -844,13 +798,11 @@ func TestMainSetupWithManagerError(_ *testing.T) {
 	}
 	initFlags = func() crzap.Options {
 		LEEnabled := false
-		secureMetricsEnabled := true
 		metricsBindAddress := ":8082"
 		healthProbeBindAddress := ":8081"
 		flags.metricsBindAddress = &metricsBindAddress
 		flags.healthProbeBindAddress = &healthProbeBindAddress
 		flags.leaderElect = &LEEnabled
-		flags.secureMetrics = &secureMetricsEnabled
 		opts := initZapFlags()
 		return opts
 	}
@@ -922,13 +874,11 @@ func TestMainAddHealthzCheckError(_ *testing.T) {
 	}
 	initFlags = func() crzap.Options {
 		LEEnabled := false
-		secureMetricsEnabled := true
 		metricsBindAddress := ":8082"
 		healthProbeBindAddress := ":8081"
 		flags.metricsBindAddress = &metricsBindAddress
 		flags.healthProbeBindAddress = &healthProbeBindAddress
 		flags.leaderElect = &LEEnabled
-		flags.secureMetrics = &secureMetricsEnabled
 		opts := initZapFlags()
 		return opts
 	}
@@ -1005,13 +955,11 @@ func TestMainAddReadyzCheckError(_ *testing.T) {
 	}
 	initFlags = func() crzap.Options {
 		LEEnabled := false
-		secureMetricsEnabled := true
 		metricsBindAddress := ":8082"
 		healthProbeBindAddress := ":8081"
 		flags.metricsBindAddress = &metricsBindAddress
 		flags.healthProbeBindAddress = &healthProbeBindAddress
 		flags.leaderElect = &LEEnabled
-		flags.secureMetrics = &secureMetricsEnabled
 		opts := initZapFlags()
 		return opts
 	}
@@ -1095,13 +1043,11 @@ func TestMainStartError(_ *testing.T) {
 	}
 	initFlags = func() crzap.Options {
 		LEEnabled := false
-		secureMetricsEnabled := true
 		metricsBindAddress := ":8082"
 		healthProbeBindAddress := ":8081"
 		flags.metricsBindAddress = &metricsBindAddress
 		flags.healthProbeBindAddress = &healthProbeBindAddress
 		flags.leaderElect = &LEEnabled
-		flags.secureMetrics = &secureMetricsEnabled
 		opts := initZapFlags()
 		return opts
 	}
@@ -1193,10 +1139,6 @@ func (m *mockManager) GetControllerOptions() config.Controller {
 	return config.Controller{}
 }
 
-func (m *mockManager) GetConverterRegistry() conversion.Registry {
-	return nil
-}
-
 type mockCluster struct{}
 
 func (m *mockCluster) GetHTTPClient() *http.Client {
@@ -1227,10 +1169,6 @@ func (m *mockCluster) GetEventRecorderFor(_ string) record.EventRecorder {
 	return nil
 }
 
-func (m *mockCluster) GetEventRecorder(_ string) events.EventRecorder {
-	return nil
-}
-
 func (m *mockCluster) GetRESTMapper() meta.RESTMapper {
 	return nil
 }
@@ -1241,42 +1179,4 @@ func (m *mockCluster) GetAPIReader() client.Reader {
 
 func (m *mockCluster) Start(_ context.Context) error {
 	return nil
-}
-
-func TestGetK8sMinimumSupportedVersion(t *testing.T) {
-	tests := []struct {
-		name     string
-		expected string
-	}{
-		{
-			name:     "Returns minimum supported version",
-			expected: K8sMinimumSupportedVersion,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := getK8sMinimumSupportedVersion()
-			assert.Equal(t, tt.expected, result)
-		})
-	}
-}
-
-func TestGetK8sMaximumSupportedVersion(t *testing.T) {
-	tests := []struct {
-		name     string
-		expected string
-	}{
-		{
-			name:     "Returns maximum supported version",
-			expected: K8sMaximumSupportedVersion,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := getK8sMaximumSupportedVersion()
-			assert.Equal(t, tt.expected, result)
-		})
-	}
 }

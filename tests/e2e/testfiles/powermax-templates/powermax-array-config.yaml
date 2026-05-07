@@ -1,4 +1,4 @@
-# Copyright © 2024-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2024 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: powermax-array-config
-  namespace: ${E2E_NS_POWERMAX}
+  namespace: powermax
 data:
   powermax-array-config.yaml: |
     # List of comma-separated port groups (ISCSI only). Example: PortGroup1, portGroup2 Required for iSCSI only

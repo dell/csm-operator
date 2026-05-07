@@ -4,7 +4,6 @@
 *.dll
 *.so
 *.dylib
-*.pem
 bin
 testbin/*
 vendor/
@@ -30,15 +29,3 @@ __debug_bin*
 
 # This file contains environment-specific information and should not be committed
 tests/e2e/array-info.env
-tests/e2e/array-info.yaml
-
-# E2E test artifacts
-tests/e2e/e2e-junit-report.xml
-tests/e2e/temp/
-
-# Ignore workspace file
-*code-workspace
-
-dell-csm-operator-bundle/
-dell-csm-operator-bundle.tar.gz
-scripts/images.*

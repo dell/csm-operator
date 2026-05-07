@@ -1,4 +1,4 @@
-# Copyright © 2024-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2024-2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ read_secret() {
 validate_zoning_powermax() {
   # read the secret and extract zone information
   secret_name="powermax-config"
-  namespace="${E2E_NS_POWERMAX:-e2e-powermax}"
+  namespace="powermax"
   secret_content=$(read_secret $secret_name $namespace)
 
   # specify the zone and region label keys
@@ -191,8 +191,8 @@ validate_zoning_powermax() {
 # validating zoning is configured on the cluster - powerflex
 validate_zoning_powerflex() {
   # read the secret and extract zone information
-  secret_name="vxflexos-config"
-  namespace="${E2E_NS_POWERFLEX:-e2e-powerflex}"
+  secret_name="test-vxflexos-config"
+  namespace="test-vxflexos"
   secret_content=$(read_secret $secret_name $namespace)
 
   # parse the secret content to extract zones

@@ -1,0 +1,13 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: powerstore
+  namespace: powerstore
+spec:
+  driver:
+    csiDriverType: "powerstore"
+    configVersion: v2.15.1
+    forceRemoveDriver: true
+  modules:
+    - name: resiliency
+      enabled: false

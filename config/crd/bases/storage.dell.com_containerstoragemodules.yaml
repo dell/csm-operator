@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.18.0
   name: containerstoragemodules.storage.dell.com
 spec:
   group: storage.dell.com
@@ -26,10 +26,6 @@ spec:
         - description: Version of CSIDriver
           jsonPath: .spec.driver.configVersion
           name: ConfigVersion
-          type: string
-        - description: CSM Version
-          jsonPath: .spec.version
-          name: Version
           type: string
         - description: State of Installation
           jsonPath: .status.state
@@ -62,12 +58,8 @@ spec:
               description: ContainerStorageModuleSpec defines the desired state of
                 ContainerStorageModule
               properties:
-                customRegistry:
-                  description: CustomRegistry is the custom registry for the image
-                  type: string
                 driver:
                   description: Driver is a CSI Drivers for Dell Technologies
-                  maxProperties: 20
                   properties:
                     authSecret:
                       description: AuthSecret is the name of the credentials secret
@@ -145,9 +137,8 @@ spec:
                               present in a Container.
                             properties:
                               name:
-                                description: |-
-                                  Name of the environment variable.
-                                  May consist of any printable ASCII characters except '='.
+                                description: Name of the environment variable. Must
+                                  be a C_IDENTIFIER.
                                 type: string
                               value:
                                 description: |-
@@ -205,43 +196,6 @@ spec:
                                       - fieldPath
                                     type: object
                                     x-kubernetes-map-type: atomic
-                                  fileKeyRef:
-                                    description: |-
-                                      FileKeyRef selects a key of the env file.
-                                      Requires the EnvFiles feature gate to be enabled.
-                                    properties:
-                                      key:
-                                        description: |-
-                                          The key within the env file. An invalid key will prevent the pod from starting.
-                                          The keys defined within a source may consist of any printable ASCII characters except '='.
-                                          During Alpha stage of the EnvFiles feature gate, the key size is limited to 128 characters.
-                                        type: string
-                                      optional:
-                                        default: false
-                                        description: |-
-                                          Specify whether the file or its key must be defined. If the file or key
-                                          does not exist, then the env var is not published.
-                                          If optional is set to true and the specified key does not exist,
-                                          the environment variable will not be set in the Pod's containers.
-
-                                          If optional is set to false and the specified key does not exist,
-                                          an error will be returned during Pod creation.
-                                        type: boolean
-                                      path:
-                                        description: |-
-                                          The path within the volume from which to select the file.
-                                          Must be relative and may not contain the '..' path or start with '..'.
-                                        type: string
-                                      volumeName:
-                                        description: The name of the volume mount
-                                          containing the env file.
-                                        type: string
-                                    required:
-                                      - key
-                                      - path
-                                      - volumeName
-                                    type: object
-                                    x-kubernetes-map-type: atomic
                                   resourceFieldRef:
                                     description: |-
                                       Selects a resource of the container: only resources limits and requests
@@ -295,30 +249,7 @@ spec:
                             required:
                               - name
                             type: object
-                          maxItems: 30
                           type: array
-                        gateway:
-                          description: Gateway is the gateway configuration for the
-                            authorization proxy-server (v2.5.0+)
-                          properties:
-                            annotations:
-                              additionalProperties:
-                                type: string
-                              description: Annotations is an unstructured key value
-                                map that stores additional annotations for the proxy-server
-                                HTTPRoute
-                              type: object
-                            gatewayClassName:
-                              description: GatewayClassName is the name of the GatewayClass
-                                for the proxy-server Gateway resource
-                              type: string
-                            hosts:
-                              description: Hosts is the additional hostnames for the
-                                proxy-server HTTPRoute
-                              items:
-                                type: string
-                              type: array
-                          type: object
                         hostname:
                           description: Hostname is the authorization proxy server
                             hostname
@@ -398,8 +329,7 @@ spec:
                           description: RedisName is the name of the redis statefulset
                           type: string
                         redisPassword:
-                          description: RedisPassword is the password for the redis
-                            instance
+                          description: RedisPassword is the password for Redis authentication
                           type: string
                         redisReplicas:
                           description: RedisReplicas is the number of replicas for
@@ -446,8 +376,7 @@ spec:
                           maxItems: 1
                           type: array
                         redisUsername:
-                          description: RedisUsername is the username for the redis
-                            instance
+                          description: RedisUsername is the username for Redis authentication
                           type: string
                         roleService:
                           description: RoleService is the image tag for the Container
@@ -516,6 +445,10 @@ spec:
                           description: StorageServiceReplicas is the number of replicas
                             for storage service deployment
                           type: integer
+                        storageclass:
+                          description: RedisStorageClass is the authorization proxy
+                            server redis storage class for persistence
+                          type: string
                         tenantService:
                           description: TenantService is the image tag for the Container
                           type: string
@@ -544,10 +477,9 @@ spec:
                               operator:
                                 description: |-
                                   Operator represents a key's relationship to the value.
-                                  Valid operators are Exists, Equal, Lt, and Gt. Defaults to Equal.
+                                  Valid operators are Exists and Equal. Defaults to Equal.
                                   Exists is equivalent to wildcard for value, so that a pod can
                                   tolerate all taints of a particular category.
-                                  Lt and Gt perform numeric comparisons (requires feature gate TaintTolerationComparisonOperators).
                                 type: string
                               tolerationSeconds:
                                 description: |-
@@ -677,9 +609,8 @@ spec:
                               present in a Container.
                             properties:
                               name:
-                                description: |-
-                                  Name of the environment variable.
-                                  May consist of any printable ASCII characters except '='.
+                                description: Name of the environment variable. Must
+                                  be a C_IDENTIFIER.
                                 type: string
                               value:
                                 description: |-
@@ -737,43 +668,6 @@ spec:
                                       - fieldPath
                                     type: object
                                     x-kubernetes-map-type: atomic
-                                  fileKeyRef:
-                                    description: |-
-                                      FileKeyRef selects a key of the env file.
-                                      Requires the EnvFiles feature gate to be enabled.
-                                    properties:
-                                      key:
-                                        description: |-
-                                          The key within the env file. An invalid key will prevent the pod from starting.
-                                          The keys defined within a source may consist of any printable ASCII characters except '='.
-                                          During Alpha stage of the EnvFiles feature gate, the key size is limited to 128 characters.
-                                        type: string
-                                      optional:
-                                        default: false
-                                        description: |-
-                                          Specify whether the file or its key must be defined. If the file or key
-                                          does not exist, then the env var is not published.
-                                          If optional is set to true and the specified key does not exist,
-                                          the environment variable will not be set in the Pod's containers.
-
-                                          If optional is set to false and the specified key does not exist,
-                                          an error will be returned during Pod creation.
-                                        type: boolean
-                                      path:
-                                        description: |-
-                                          The path within the volume from which to select the file.
-                                          Must be relative and may not contain the '..' path or start with '..'.
-                                        type: string
-                                      volumeName:
-                                        description: The name of the volume mount
-                                          containing the env file.
-                                        type: string
-                                    required:
-                                      - key
-                                      - path
-                                      - volumeName
-                                    type: object
-                                    x-kubernetes-map-type: atomic
                                   resourceFieldRef:
                                     description: |-
                                       Selects a resource of the container: only resources limits and requests
@@ -827,30 +721,7 @@ spec:
                             required:
                               - name
                             type: object
-                          maxItems: 30
                           type: array
-                        gateway:
-                          description: Gateway is the gateway configuration for the
-                            authorization proxy-server (v2.5.0+)
-                          properties:
-                            annotations:
-                              additionalProperties:
-                                type: string
-                              description: Annotations is an unstructured key value
-                                map that stores additional annotations for the proxy-server
-                                HTTPRoute
-                              type: object
-                            gatewayClassName:
-                              description: GatewayClassName is the name of the GatewayClass
-                                for the proxy-server Gateway resource
-                              type: string
-                            hosts:
-                              description: Hosts is the additional hostnames for the
-                                proxy-server HTTPRoute
-                              items:
-                                type: string
-                              type: array
-                          type: object
                         hostname:
                           description: Hostname is the authorization proxy server
                             hostname
@@ -930,8 +801,7 @@ spec:
                           description: RedisName is the name of the redis statefulset
                           type: string
                         redisPassword:
-                          description: RedisPassword is the password for the redis
-                            instance
+                          description: RedisPassword is the password for Redis authentication
                           type: string
                         redisReplicas:
                           description: RedisReplicas is the number of replicas for
@@ -978,8 +848,7 @@ spec:
                           maxItems: 1
                           type: array
                         redisUsername:
-                          description: RedisUsername is the username for the redis
-                            instance
+                          description: RedisUsername is the username for Redis authentication
                           type: string
                         roleService:
                           description: RoleService is the image tag for the Container
@@ -1048,6 +917,10 @@ spec:
                           description: StorageServiceReplicas is the number of replicas
                             for storage service deployment
                           type: integer
+                        storageclass:
+                          description: RedisStorageClass is the authorization proxy
+                            server redis storage class for persistence
+                          type: string
                         tenantService:
                           description: TenantService is the image tag for the Container
                           type: string
@@ -1076,10 +949,9 @@ spec:
                               operator:
                                 description: |-
                                   Operator represents a key's relationship to the value.
-                                  Valid operators are Exists, Equal, Lt, and Gt. Defaults to Equal.
+                                  Valid operators are Exists and Equal. Defaults to Equal.
                                   Exists is equivalent to wildcard for value, so that a pod can
                                   tolerate all taints of a particular category.
-                                  Lt and Gt perform numeric comparisons (requires feature gate TaintTolerationComparisonOperators).
                                 type: string
                               tolerationSeconds:
                                 description: |-
@@ -1228,9 +1100,8 @@ spec:
                                 present in a Container.
                               properties:
                                 name:
-                                  description: |-
-                                    Name of the environment variable.
-                                    May consist of any printable ASCII characters except '='.
+                                  description: Name of the environment variable. Must
+                                    be a C_IDENTIFIER.
                                   type: string
                                 value:
                                   description: |-
@@ -1288,43 +1159,6 @@ spec:
                                         - fieldPath
                                       type: object
                                       x-kubernetes-map-type: atomic
-                                    fileKeyRef:
-                                      description: |-
-                                        FileKeyRef selects a key of the env file.
-                                        Requires the EnvFiles feature gate to be enabled.
-                                      properties:
-                                        key:
-                                          description: |-
-                                            The key within the env file. An invalid key will prevent the pod from starting.
-                                            The keys defined within a source may consist of any printable ASCII characters except '='.
-                                            During Alpha stage of the EnvFiles feature gate, the key size is limited to 128 characters.
-                                          type: string
-                                        optional:
-                                          default: false
-                                          description: |-
-                                            Specify whether the file or its key must be defined. If the file or key
-                                            does not exist, then the env var is not published.
-                                            If optional is set to true and the specified key does not exist,
-                                            the environment variable will not be set in the Pod's containers.
-
-                                            If optional is set to false and the specified key does not exist,
-                                            an error will be returned during Pod creation.
-                                          type: boolean
-                                        path:
-                                          description: |-
-                                            The path within the volume from which to select the file.
-                                            Must be relative and may not contain the '..' path or start with '..'.
-                                          type: string
-                                        volumeName:
-                                          description: The name of the volume mount
-                                            containing the env file.
-                                          type: string
-                                      required:
-                                        - key
-                                        - path
-                                        - volumeName
-                                      type: object
-                                      x-kubernetes-map-type: atomic
                                     resourceFieldRef:
                                       description: |-
                                         Selects a resource of the container: only resources limits and requests
@@ -1379,30 +1213,7 @@ spec:
                               required:
                                 - name
                               type: object
-                            maxItems: 30
                             type: array
-                          gateway:
-                            description: Gateway is the gateway configuration for
-                              the authorization proxy-server (v2.5.0+)
-                            properties:
-                              annotations:
-                                additionalProperties:
-                                  type: string
-                                description: Annotations is an unstructured key value
-                                  map that stores additional annotations for the proxy-server
-                                  HTTPRoute
-                                type: object
-                              gatewayClassName:
-                                description: GatewayClassName is the name of the GatewayClass
-                                  for the proxy-server Gateway resource
-                                type: string
-                              hosts:
-                                description: Hosts is the additional hostnames for
-                                  the proxy-server HTTPRoute
-                                items:
-                                  type: string
-                                type: array
-                            type: object
                           hostname:
                             description: Hostname is the authorization proxy server
                               hostname
@@ -1483,8 +1294,7 @@ spec:
                             description: RedisName is the name of the redis statefulset
                             type: string
                           redisPassword:
-                            description: RedisPassword is the password for the redis
-                              instance
+                            description: RedisPassword is the password for Redis authentication
                             type: string
                           redisReplicas:
                             description: RedisReplicas is the number of replicas for
@@ -1533,8 +1343,7 @@ spec:
                             maxItems: 1
                             type: array
                           redisUsername:
-                            description: RedisUsername is the username for the redis
-                              instance
+                            description: RedisUsername is the username for Redis authentication
                             type: string
                           roleService:
                             description: RoleService is the image tag for the Container
@@ -1604,6 +1413,10 @@ spec:
                             description: StorageServiceReplicas is the number of replicas
                               for storage service deployment
                             type: integer
+                          storageclass:
+                            description: RedisStorageClass is the authorization proxy
+                              server redis storage class for persistence
+                            type: string
                           tenantService:
                             description: TenantService is the image tag for the Container
                             type: string
@@ -1632,10 +1445,9 @@ spec:
                                 operator:
                                   description: |-
                                     Operator represents a key's relationship to the value.
-                                    Valid operators are Exists, Equal, Lt, and Gt. Defaults to Equal.
+                                    Valid operators are Exists and Equal. Defaults to Equal.
                                     Exists is equivalent to wildcard for value, so that a pod can
                                     tolerate all taints of a particular category.
-                                    Lt and Gt perform numeric comparisons (requires feature gate TaintTolerationComparisonOperators).
                                   type: string
                                 tolerationSeconds:
                                   description: |-
@@ -1691,68 +1503,6 @@ spec:
                             type: array
                         type: object
                       type: array
-                    metrics:
-                      description: Metrics is the configuration for the driver metrics
-                        endpoint and monitoring
-                      properties:
-                        enabled:
-                          description: Enabled enables the shared Prometheus metrics
-                            HTTP endpoint on the controller
-                          type: boolean
-                        gatewayMonitoring:
-                          description: GatewayMonitoring configures PowerFlex Gateway
-                            health monitoring
-                          properties:
-                            enabled:
-                              description: Enabled enables Gateway health monitoring
-                                on the controller
-                              type: boolean
-                            leaderElectionEnabled:
-                              description: |-
-                                LeaderElectionEnabled enables leader election so only one controller actively monitors gateways
-                                When nil, defaults to true
-                              type: boolean
-                            pollInterval:
-                              description: PollInterval is how frequently the leader
-                                controller probes each gateway endpoint
-                              type: string
-                              x-kubernetes-validations:
-                                - message: pollInterval must be a non-empty string
-                                  rule: self == '' || size(self) > 0
-                          type: object
-                        port:
-                          default: 9090
-                          description: Port is the port on which the metrics endpoint
-                            is exposed
-                          format: int32
-                          type: integer
-                        serviceMonitor:
-                          description: ServiceMonitor configures optional Prometheus
-                            Operator ServiceMonitor creation
-                          properties:
-                            enabled:
-                              description: |-
-                                Enabled creates a ServiceMonitor CR for Prometheus Operator integration
-                                Requires the Prometheus Operator CRDs to be installed in the cluster
-                              type: boolean
-                            insecureSkipVerify:
-                              description: |-
-                                InsecureSkipVerify skips TLS certificate verification when Prometheus scrapes the metrics endpoint
-                                Only applies when tlsCertSecret is set
-                              type: boolean
-                            interval:
-                              description: Interval is the Prometheus scrape interval
-                                for the metrics endpoint
-                              type: string
-                              x-kubernetes-validations:
-                                - message: interval must be a non-empty string
-                                  rule: self == '' || size(self) > 0
-                          type: object
-                        tlsCertSecret:
-                          description: TLSCertSecret is the name of a Kubernetes TLS
-                            Secret used to serve the metrics endpoint over HTTPS
-                          type: string
-                      type: object
                     node:
                       description: Node is the specification for Node plugin only
                       properties:
@@ -1824,9 +1574,8 @@ spec:
                               present in a Container.
                             properties:
                               name:
-                                description: |-
-                                  Name of the environment variable.
-                                  May consist of any printable ASCII characters except '='.
+                                description: Name of the environment variable. Must
+                                  be a C_IDENTIFIER.
                                 type: string
                               value:
                                 description: |-
@@ -1884,43 +1633,6 @@ spec:
                                       - fieldPath
                                     type: object
                                     x-kubernetes-map-type: atomic
-                                  fileKeyRef:
-                                    description: |-
-                                      FileKeyRef selects a key of the env file.
-                                      Requires the EnvFiles feature gate to be enabled.
-                                    properties:
-                                      key:
-                                        description: |-
-                                          The key within the env file. An invalid key will prevent the pod from starting.
-                                          The keys defined within a source may consist of any printable ASCII characters except '='.
-                                          During Alpha stage of the EnvFiles feature gate, the key size is limited to 128 characters.
-                                        type: string
-                                      optional:
-                                        default: false
-                                        description: |-
-                                          Specify whether the file or its key must be defined. If the file or key
-                                          does not exist, then the env var is not published.
-                                          If optional is set to true and the specified key does not exist,
-                                          the environment variable will not be set in the Pod's containers.
-
-                                          If optional is set to false and the specified key does not exist,
-                                          an error will be returned during Pod creation.
-                                        type: boolean
-                                      path:
-                                        description: |-
-                                          The path within the volume from which to select the file.
-                                          Must be relative and may not contain the '..' path or start with '..'.
-                                        type: string
-                                      volumeName:
-                                        description: The name of the volume mount
-                                          containing the env file.
-                                        type: string
-                                    required:
-                                      - key
-                                      - path
-                                      - volumeName
-                                    type: object
-                                    x-kubernetes-map-type: atomic
                                   resourceFieldRef:
                                     description: |-
                                       Selects a resource of the container: only resources limits and requests
@@ -1974,30 +1686,7 @@ spec:
                             required:
                               - name
                             type: object
-                          maxItems: 30
                           type: array
-                        gateway:
-                          description: Gateway is the gateway configuration for the
-                            authorization proxy-server (v2.5.0+)
-                          properties:
-                            annotations:
-                              additionalProperties:
-                                type: string
-                              description: Annotations is an unstructured key value
-                                map that stores additional annotations for the proxy-server
-                                HTTPRoute
-                              type: object
-                            gatewayClassName:
-                              description: GatewayClassName is the name of the GatewayClass
-                                for the proxy-server Gateway resource
-                              type: string
-                            hosts:
-                              description: Hosts is the additional hostnames for the
-                                proxy-server HTTPRoute
-                              items:
-                                type: string
-                              type: array
-                          type: object
                         hostname:
                           description: Hostname is the authorization proxy server
                             hostname
@@ -2077,8 +1766,7 @@ spec:
                           description: RedisName is the name of the redis statefulset
                           type: string
                         redisPassword:
-                          description: RedisPassword is the password for the redis
-                            instance
+                          description: RedisPassword is the password for Redis authentication
                           type: string
                         redisReplicas:
                           description: RedisReplicas is the number of replicas for
@@ -2125,8 +1813,7 @@ spec:
                           maxItems: 1
                           type: array
                         redisUsername:
-                          description: RedisUsername is the username for the redis
-                            instance
+                          description: RedisUsername is the username for Redis authentication
                           type: string
                         roleService:
                           description: RoleService is the image tag for the Container
@@ -2195,6 +1882,10 @@ spec:
                           description: StorageServiceReplicas is the number of replicas
                             for storage service deployment
                           type: integer
+                        storageclass:
+                          description: RedisStorageClass is the authorization proxy
+                            server redis storage class for persistence
+                          type: string
                         tenantService:
                           description: TenantService is the image tag for the Container
                           type: string
@@ -2223,10 +1914,9 @@ spec:
                               operator:
                                 description: |-
                                   Operator represents a key's relationship to the value.
-                                  Valid operators are Exists, Equal, Lt, and Gt. Defaults to Equal.
+                                  Valid operators are Exists and Equal. Defaults to Equal.
                                   Exists is equivalent to wildcard for value, so that a pod can
                                   tolerate all taints of a particular category.
-                                  Lt and Gt perform numeric comparisons (requires feature gate TaintTolerationComparisonOperators).
                                 type: string
                               tolerationSeconds:
                                 description: |-
@@ -2360,9 +2050,8 @@ spec:
                                 present in a Container.
                               properties:
                                 name:
-                                  description: |-
-                                    Name of the environment variable.
-                                    May consist of any printable ASCII characters except '='.
+                                  description: Name of the environment variable. Must
+                                    be a C_IDENTIFIER.
                                   type: string
                                 value:
                                   description: |-
@@ -2420,43 +2109,6 @@ spec:
                                         - fieldPath
                                       type: object
                                       x-kubernetes-map-type: atomic
-                                    fileKeyRef:
-                                      description: |-
-                                        FileKeyRef selects a key of the env file.
-                                        Requires the EnvFiles feature gate to be enabled.
-                                      properties:
-                                        key:
-                                          description: |-
-                                            The key within the env file. An invalid key will prevent the pod from starting.
-                                            The keys defined within a source may consist of any printable ASCII characters except '='.
-                                            During Alpha stage of the EnvFiles feature gate, the key size is limited to 128 characters.
-                                          type: string
-                                        optional:
-                                          default: false
-                                          description: |-
-                                            Specify whether the file or its key must be defined. If the file or key
-                                            does not exist, then the env var is not published.
-                                            If optional is set to true and the specified key does not exist,
-                                            the environment variable will not be set in the Pod's containers.
-
-                                            If optional is set to false and the specified key does not exist,
-                                            an error will be returned during Pod creation.
-                                          type: boolean
-                                        path:
-                                          description: |-
-                                            The path within the volume from which to select the file.
-                                            Must be relative and may not contain the '..' path or start with '..'.
-                                          type: string
-                                        volumeName:
-                                          description: The name of the volume mount
-                                            containing the env file.
-                                          type: string
-                                      required:
-                                        - key
-                                        - path
-                                        - volumeName
-                                      type: object
-                                      x-kubernetes-map-type: atomic
                                     resourceFieldRef:
                                       description: |-
                                         Selects a resource of the container: only resources limits and requests
@@ -2511,30 +2163,7 @@ spec:
                               required:
                                 - name
                               type: object
-                            maxItems: 30
                             type: array
-                          gateway:
-                            description: Gateway is the gateway configuration for
-                              the authorization proxy-server (v2.5.0+)
-                            properties:
-                              annotations:
-                                additionalProperties:
-                                  type: string
-                                description: Annotations is an unstructured key value
-                                  map that stores additional annotations for the proxy-server
-                                  HTTPRoute
-                                type: object
-                              gatewayClassName:
-                                description: GatewayClassName is the name of the GatewayClass
-                                  for the proxy-server Gateway resource
-                                type: string
-                              hosts:
-                                description: Hosts is the additional hostnames for
-                                  the proxy-server HTTPRoute
-                                items:
-                                  type: string
-                                type: array
-                            type: object
                           hostname:
                             description: Hostname is the authorization proxy server
                               hostname
@@ -2615,8 +2244,7 @@ spec:
                             description: RedisName is the name of the redis statefulset
                             type: string
                           redisPassword:
-                            description: RedisPassword is the password for the redis
-                              instance
+                            description: RedisPassword is the password for Redis authentication
                             type: string
                           redisReplicas:
                             description: RedisReplicas is the number of replicas for
@@ -2665,8 +2293,7 @@ spec:
                             maxItems: 1
                             type: array
                           redisUsername:
-                            description: RedisUsername is the username for the redis
-                              instance
+                            description: RedisUsername is the username for Redis authentication
                             type: string
                           roleService:
                             description: RoleService is the image tag for the Container
@@ -2736,6 +2363,10 @@ spec:
                             description: StorageServiceReplicas is the number of replicas
                               for storage service deployment
                             type: integer
+                          storageclass:
+                            description: RedisStorageClass is the authorization proxy
+                              server redis storage class for persistence
+                            type: string
                           tenantService:
                             description: TenantService is the image tag for the Container
                             type: string
@@ -2764,10 +2395,9 @@ spec:
                                 operator:
                                   description: |-
                                     Operator represents a key's relationship to the value.
-                                    Valid operators are Exists, Equal, Lt, and Gt. Defaults to Equal.
+                                    Valid operators are Exists and Equal. Defaults to Equal.
                                     Exists is equivalent to wildcard for value, so that a pod can
                                     tolerate all taints of a particular category.
-                                    Lt and Gt perform numeric comparisons (requires feature gate TaintTolerationComparisonOperators).
                                   type: string
                                 tolerationSeconds:
                                   description: |-
@@ -2822,7 +2452,6 @@ spec:
                               type: object
                             type: array
                         type: object
-                      maxItems: 20
                       type: array
                     snapshotClass:
                       description: SnapshotClass is the specification for Snapshot
@@ -2850,7 +2479,6 @@ spec:
                     you want to deploy
                   items:
                     description: Module defines the desired state of a ContainerStorageModule
-                    maxProperties: 10
                     properties:
                       components:
                         description: Components is the specification for CSM components
@@ -2929,9 +2557,8 @@ spec:
                                   present in a Container.
                                 properties:
                                   name:
-                                    description: |-
-                                      Name of the environment variable.
-                                      May consist of any printable ASCII characters except '='.
+                                    description: Name of the environment variable.
+                                      Must be a C_IDENTIFIER.
                                     type: string
                                   value:
                                     description: |-
@@ -2990,43 +2617,6 @@ spec:
                                           - fieldPath
                                         type: object
                                         x-kubernetes-map-type: atomic
-                                      fileKeyRef:
-                                        description: |-
-                                          FileKeyRef selects a key of the env file.
-                                          Requires the EnvFiles feature gate to be enabled.
-                                        properties:
-                                          key:
-                                            description: |-
-                                              The key within the env file. An invalid key will prevent the pod from starting.
-                                              The keys defined within a source may consist of any printable ASCII characters except '='.
-                                              During Alpha stage of the EnvFiles feature gate, the key size is limited to 128 characters.
-                                            type: string
-                                          optional:
-                                            default: false
-                                            description: |-
-                                              Specify whether the file or its key must be defined. If the file or key
-                                              does not exist, then the env var is not published.
-                                              If optional is set to true and the specified key does not exist,
-                                              the environment variable will not be set in the Pod's containers.
-
-                                              If optional is set to false and the specified key does not exist,
-                                              an error will be returned during Pod creation.
-                                            type: boolean
-                                          path:
-                                            description: |-
-                                              The path within the volume from which to select the file.
-                                              Must be relative and may not contain the '..' path or start with '..'.
-                                            type: string
-                                          volumeName:
-                                            description: The name of the volume mount
-                                              containing the env file.
-                                            type: string
-                                        required:
-                                          - key
-                                          - path
-                                          - volumeName
-                                        type: object
-                                        x-kubernetes-map-type: atomic
                                       resourceFieldRef:
                                         description: |-
                                           Selects a resource of the container: only resources limits and requests
@@ -3082,30 +2672,7 @@ spec:
                                 required:
                                   - name
                                 type: object
-                              maxItems: 30
                               type: array
-                            gateway:
-                              description: Gateway is the gateway configuration for
-                                the authorization proxy-server (v2.5.0+)
-                              properties:
-                                annotations:
-                                  additionalProperties:
-                                    type: string
-                                  description: Annotations is an unstructured key
-                                    value map that stores additional annotations for
-                                    the proxy-server HTTPRoute
-                                  type: object
-                                gatewayClassName:
-                                  description: GatewayClassName is the name of the
-                                    GatewayClass for the proxy-server Gateway resource
-                                  type: string
-                                hosts:
-                                  description: Hosts is the additional hostnames for
-                                    the proxy-server HTTPRoute
-                                  items:
-                                    type: string
-                                  type: array
-                              type: object
                             hostname:
                               description: Hostname is the authorization proxy server
                                 hostname
@@ -3188,8 +2755,8 @@ spec:
                               description: RedisName is the name of the redis statefulset
                               type: string
                             redisPassword:
-                              description: RedisPassword is the password for the redis
-                                instance
+                              description: RedisPassword is the password for Redis
+                                authentication
                               type: string
                             redisReplicas:
                               description: RedisReplicas is the number of replicas
@@ -3238,8 +2805,8 @@ spec:
                               maxItems: 1
                               type: array
                             redisUsername:
-                              description: RedisUsername is the username for the redis
-                                instance
+                              description: RedisUsername is the username for Redis
+                                authentication
                               type: string
                             roleService:
                               description: RoleService is the image tag for the Container
@@ -3310,6 +2877,10 @@ spec:
                               description: StorageServiceReplicas is the number of
                                 replicas for storage service deployment
                               type: integer
+                            storageclass:
+                              description: RedisStorageClass is the authorization
+                                proxy server redis storage class for persistence
+                              type: string
                             tenantService:
                               description: TenantService is the image tag for the
                                 Container
@@ -3339,10 +2910,9 @@ spec:
                                   operator:
                                     description: |-
                                       Operator represents a key's relationship to the value.
-                                      Valid operators are Exists, Equal, Lt, and Gt. Defaults to Equal.
+                                      Valid operators are Exists and Equal. Defaults to Equal.
                                       Exists is equivalent to wildcard for value, so that a pod can
                                       tolerate all taints of a particular category.
-                                      Lt and Gt perform numeric comparisons (requires feature gate TaintTolerationComparisonOperators).
                                     type: string
                                   tolerationSeconds:
                                     description: |-
@@ -3397,7 +2967,6 @@ spec:
                                 type: object
                               type: array
                           type: object
-                        maxItems: 20
                         type: array
                       configVersion:
                         description: ConfigVersion is the configuration version of
@@ -3489,9 +3058,8 @@ spec:
                                   present in a Container.
                                 properties:
                                   name:
-                                    description: |-
-                                      Name of the environment variable.
-                                      May consist of any printable ASCII characters except '='.
+                                    description: Name of the environment variable.
+                                      Must be a C_IDENTIFIER.
                                     type: string
                                   value:
                                     description: |-
@@ -3550,43 +3118,6 @@ spec:
                                           - fieldPath
                                         type: object
                                         x-kubernetes-map-type: atomic
-                                      fileKeyRef:
-                                        description: |-
-                                          FileKeyRef selects a key of the env file.
-                                          Requires the EnvFiles feature gate to be enabled.
-                                        properties:
-                                          key:
-                                            description: |-
-                                              The key within the env file. An invalid key will prevent the pod from starting.
-                                              The keys defined within a source may consist of any printable ASCII characters except '='.
-                                              During Alpha stage of the EnvFiles feature gate, the key size is limited to 128 characters.
-                                            type: string
-                                          optional:
-                                            default: false
-                                            description: |-
-                                              Specify whether the file or its key must be defined. If the file or key
-                                              does not exist, then the env var is not published.
-                                              If optional is set to true and the specified key does not exist,
-                                              the environment variable will not be set in the Pod's containers.
-
-                                              If optional is set to false and the specified key does not exist,
-                                              an error will be returned during Pod creation.
-                                            type: boolean
-                                          path:
-                                            description: |-
-                                              The path within the volume from which to select the file.
-                                              Must be relative and may not contain the '..' path or start with '..'.
-                                            type: string
-                                          volumeName:
-                                            description: The name of the volume mount
-                                              containing the env file.
-                                            type: string
-                                        required:
-                                          - key
-                                          - path
-                                          - volumeName
-                                        type: object
-                                        x-kubernetes-map-type: atomic
                                       resourceFieldRef:
                                         description: |-
                                           Selects a resource of the container: only resources limits and requests
@@ -3642,30 +3173,7 @@ spec:
                                 required:
                                   - name
                                 type: object
-                              maxItems: 30
                               type: array
-                            gateway:
-                              description: Gateway is the gateway configuration for
-                                the authorization proxy-server (v2.5.0+)
-                              properties:
-                                annotations:
-                                  additionalProperties:
-                                    type: string
-                                  description: Annotations is an unstructured key
-                                    value map that stores additional annotations for
-                                    the proxy-server HTTPRoute
-                                  type: object
-                                gatewayClassName:
-                                  description: GatewayClassName is the name of the
-                                    GatewayClass for the proxy-server Gateway resource
-                                  type: string
-                                hosts:
-                                  description: Hosts is the additional hostnames for
-                                    the proxy-server HTTPRoute
-                                  items:
-                                    type: string
-                                  type: array
-                              type: object
                             hostname:
                               description: Hostname is the authorization proxy server
                                 hostname
@@ -3748,8 +3256,8 @@ spec:
                               description: RedisName is the name of the redis statefulset
                               type: string
                             redisPassword:
-                              description: RedisPassword is the password for the redis
-                                instance
+                              description: RedisPassword is the password for Redis
+                                authentication
                               type: string
                             redisReplicas:
                               description: RedisReplicas is the number of replicas
@@ -3798,8 +3306,8 @@ spec:
                               maxItems: 1
                               type: array
                             redisUsername:
-                              description: RedisUsername is the username for the redis
-                                instance
+                              description: RedisUsername is the username for Redis
+                                authentication
                               type: string
                             roleService:
                               description: RoleService is the image tag for the Container
@@ -3870,6 +3378,10 @@ spec:
                               description: StorageServiceReplicas is the number of
                                 replicas for storage service deployment
                               type: integer
+                            storageclass:
+                              description: RedisStorageClass is the authorization
+                                proxy server redis storage class for persistence
+                              type: string
                             tenantService:
                               description: TenantService is the image tag for the
                                 Container
@@ -3899,10 +3411,9 @@ spec:
                                   operator:
                                     description: |-
                                       Operator represents a key's relationship to the value.
-                                      Valid operators are Exists, Equal, Lt, and Gt. Defaults to Equal.
+                                      Valid operators are Exists and Equal. Defaults to Equal.
                                       Exists is equivalent to wildcard for value, so that a pod can
                                       tolerate all taints of a particular category.
-                                      Lt and Gt perform numeric comparisons (requires feature gate TaintTolerationComparisonOperators).
                                     type: string
                                   tolerationSeconds:
                                     description: |-
@@ -3962,57 +3473,8 @@ spec:
                         description: Name is name of ContainerStorageModule modules
                         type: string
                     type: object
-                  maxItems: 20
                   type: array
-                retainImageRegistryPath:
-                  description: RetainImageRegistryPath is the boolean flag used to
-                    retain image registry path
-                  type: boolean
-                version:
-                  type: string
               type: object
-              x-kubernetes-validations:
-                - message: spec.version and spec.driver.configVersion cannot both
-                    be set
-                  rule: "!(has(self.version) && self.version != \"\" && has(self.driver)
-                    && has(self.driver.configVersion) && self.driver.configVersion
-                    != \"\")"
-                - message: spec.driver.common.image is forbidden when spec.version
-                    is set
-                  rule: "!(has(self.version) && self.version != \"\" && has(self.driver)
-                    && has(self.driver.common) && has(self.driver.common.image) &&
-                    self.driver.common.image != \"\")"
-                - message: spec.driver.sideCars[*].image is forbidden when spec.version
-                    is set
-                  rule: "!(has(self.version) && self.version != \"\" && has(self.driver)
-                    && has(self.driver.sideCars) && self.driver.sideCars.exists(sc,
-                    has(sc.image) && sc.image != \"\"))"
-                - message: spec.modules[*].components[*].image is forbidden when spec.version
-                    is set
-                  rule: "!(has(self.version) && self.version != \"\" && has(self.modules)
-                    && self.modules.exists(m, has(m.components) && m.components.exists(c,
-                    has(c.image) && c.image != \"\")))"
-                - message: spec.customRegistry is forbidden when spec.version is empty
-                  rule: "!(has(self.customRegistry) && self.customRegistry != \"\"
-                    && !(has(self.version) && self.version != \"\"))"
-                - message: spec.retainImageRegistryPath is forbidden unless both spec.version
-                    and spec.customRegistry are set
-                  rule: "!(has(self.retainImageRegistryPath) && !(has(self.version)
-                    && self.version != \"\" && has(self.customRegistry) && self.customRegistry
-                    != \"\"))"
-                - message: spec.driver.initContainers[*].image is forbidden when spec.version
-                    is set
-                  rule: "!(has(self.version) && self.version != \"\" && has(self.driver)
-                    && has(self.driver.initContainers) && self.driver.initContainers.exists(ic,
-                    has(ic.image) && ic.image != \"\"))"
-                - message: env NGINX_PROXY_IMAGE is forbidden when spec.version is
-                    set
-                  rule: "!(has(self.version) && self.version != \"\" && has(self.modules)
-                    && self.modules.exists(m, has(m.components) && m.components.exists(c,
-                    has(c.envs) && c.envs.exists(e, has(e.name) && e.name == \"NGINX_PROXY_IMAGE\"))))"
-                - message: spec.driver.metrics is only supported for PowerFlex driver
-                  rule: "!has(self.driver) || !has(self.driver.metrics) || self.driver.csiDriverType
-                    == 'powerflex'"
             status:
               description: ContainerStorageModuleStatus defines the observed state
                 of ContainerStorageModule
@@ -4030,10 +3492,6 @@ spec:
                       description: Failed is the number of failed pods
                       type: string
                   type: object
-                lastSuccessfulConfiguration:
-                  description: LastSuccessfulConfiguration is configurations details
-                    only when the CSM CR goes into a successful state
-                  type: string
                 nodeStatus:
                   description: NodeStatus is the status of Controller pods
                   properties:

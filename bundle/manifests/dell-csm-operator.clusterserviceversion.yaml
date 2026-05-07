@@ -17,39 +17,56 @@ metadata:
                 "components": [
                   {
                     "enabled": true,
-                    "name": "nginx-gateway-fabric"
+                    "name": "nginx"
                   },
                   {
                     "enabled": true,
                     "name": "cert-manager"
                   },
                   {
+                    "authorizationController": "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.3.0",
                     "authorizationControllerReplicas": 1,
                     "certificate": "",
                     "controllerReconcileInterval": "5m",
                     "enabled": true,
-                    "gateway": {
-                      "annotations": {},
-                      "gatewayClassName": "nginx",
-                      "hosts": null
-                    },
                     "hostname": "csm-authorization.com",
                     "leaderElection": true,
                     "name": "proxy-server",
+                    "opa": "docker.io/openpolicyagent/opa:0.70.0",
+                    "opaKubeMgmt": "docker.io/openpolicyagent/kube-mgmt:8.5.11",
                     "openTelemetryCollectorAddress": "",
                     "privateKey": "",
+                    "proxyServerIngress": [
+                      {
+                        "annotations": {},
+                        "hosts": [],
+                        "ingressClassName": "nginx"
+                      }
+                    ],
+                    "proxyService": "quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.3.0",
                     "proxyServiceReplicas": 1,
+                    "roleService": "quay.io/dell/container-storage-modules/csm-authorization-role:v2.3.0",
                     "roleServiceReplicas": 1,
+                    "storageService": "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.3.0",
                     "storageServiceReplicas": 1,
+                    "tenantService": "quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.3.0",
                     "tenantServiceReplicas": 1
                   },
                   {
+                    "commander": "docker.io/rediscommander/redis-commander:latest",
                     "name": "redis",
+                    "redis": "redis:8.2.0-alpine",
                     "redisCommander": "rediscommander",
                     "redisName": "redis-csm",
-                    "redisPassword": "",
                     "redisReplicas": 5,
-                    "redisUsername": "",
+                    "redisSecretProviderClass": [
+                      {
+                        "redisPasswordKey": "",
+                        "redisSecretName": "",
+                        "redisUsernameKey": "",
+                        "secretProviderClassName": ""
+                      }
+                    ],
                     "sentinel": "sentinel"
                   },
                   {
@@ -71,55 +88,12 @@ metadata:
                     }
                   }
                 ],
+                "configVersion": "v2.3.0",
                 "enabled": true,
                 "forceRemoveModule": true,
                 "name": "authorization-proxy-server"
               }
-            ],
-            "version": "v1.17.0"
-          }
-        },
-        {
-          "apiVersion": "storage.dell.com/v1",
-          "kind": "ContainerStorageModule",
-          "metadata": {
-            "name": "cosi",
-            "namespace": "dell-cosi"
-          },
-          "spec": {
-            "driver": {
-              "common": {
-                "envs": [
-                  {
-                    "name": "COSI_LOG_LEVEL",
-                    "value": "INFO"
-                  },
-                  {
-                    "name": "COSI_LOG_FORMAT",
-                    "value": "TEXT"
-                  },
-                  {
-                    "name": "OTEL_COLLECTOR_ADDRESS",
-                    "value": ""
-                  }
-                ],
-                "image": "quay.io/dell/container-storage-modules/cosi:v1.1.0",
-                "imagePullPolicy": "IfNotPresent",
-                "nodeSelector": {},
-                "tolerations": []
-              },
-              "configVersion": "v1.1.0",
-              "csiDriverType": "cosi",
-              "forceRemoveDriver": true,
-              "replicas": 2,
-              "sideCars": [
-                {
-                  "image": "gcr.io/k8s-staging-sig-storage/objectstorage-sidecar:release-0.2",
-                  "imagePullPolicy": "IfNotPresent",
-                  "name": "objectstorage-provisioner-sidecar"
-                }
-              ]
-            }
+            ]
           }
         },
         {
@@ -187,8 +161,10 @@ metadata:
                     "value": "1h"
                   }
                 ],
+                "image": "quay.io/dell/container-storage-modules/csi-isilon:v2.15.1",
                 "imagePullPolicy": "IfNotPresent"
               },
+              "configVersion": "v2.15.1",
               "controller": {
                 "envs": [
                   {
@@ -254,13 +230,35 @@ metadata:
                   "args": [
                     "--volume-name-prefix=csivol"
                   ],
+                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v5.3.0",
                   "name": "provisioner"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.9.0",
+                  "name": "attacher"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0",
+                  "name": "registrar"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.14.0",
+                  "name": "resizer"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v8.3.0",
+                  "name": "snapshotter"
+                },
+                {
+                  "image": "quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.11.0",
+                  "name": "csi-metadata-retriever"
                 },
                 {
                   "args": [
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
+                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.15.0",
                   "name": "external-health-monitor"
                 }
               ]
@@ -279,9 +277,11 @@ metadata:
                         "value": "true"
                       }
                     ],
+                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
+                "configVersion": "v2.3.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -298,6 +298,7 @@ metadata:
                         "value": "powerscale"
                       }
                     ],
+                    "image": "quay.io/dell/container-storage-modules/dell-csi-replicator:v1.13.0",
                     "name": "dell-csi-replicator"
                   },
                   {
@@ -327,9 +328,11 @@ metadata:
                         "value": "false"
                       }
                     ],
+                    "image": "quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0",
                     "name": "dell-replication-controller-manager"
                   }
                 ],
+                "configVersion": "v1.13.0",
                 "enabled": false,
                 "name": "replication"
               },
@@ -338,6 +341,13 @@ metadata:
                   {
                     "certificate": "",
                     "enabled": false,
+                    "envs": [
+                      {
+                        "name": "NGINX_PROXY_IMAGE",
+                        "value": "quay.io/nginx/nginx-unprivileged:1.27"
+                      }
+                    ],
+                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0",
                     "name": "otel-collector",
                     "privateKey": ""
                   },
@@ -405,9 +415,11 @@ metadata:
                         "value": "otel-collector:55680"
                       }
                     ],
+                    "image": "quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.10.0",
                     "name": "metrics-powerscale"
                   }
                 ],
+                "configVersion": "v1.13.0",
                 "enabled": false,
                 "name": "observability"
               },
@@ -426,6 +438,7 @@ metadata:
                       "--driverPath=csi-isilon.dellemc.com",
                       "--driver-config-params=/csi-isilon-config-params/driver-config-params.yaml"
                     ],
+                    "image": "quay.io/dell/container-storage-modules/podmon:v1.14.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
@@ -447,15 +460,16 @@ metadata:
                         "value": "8083"
                       }
                     ],
+                    "image": "quay.io/dell/container-storage-modules/podmon:v1.14.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
                 ],
+                "configVersion": "v1.14.0",
                 "enabled": false,
                 "name": "resiliency"
               }
-            ],
-            "version": "v1.17.0"
+            ]
           }
         },
         {
@@ -525,38 +539,12 @@ metadata:
                   {
                     "name": "X_CSI_REVPROXY_USE_SECRET",
                     "value": "false"
-                  },
-                  {
-                    "name": "X_CSI_DYNAMIC_SG_ENABLED",
-                    "value": "false"
-                  },
-                  {
-                    "name": "X_CSI_FS_CHECK_ENABLED",
-                    "value": "false"
-                  },
-                  {
-                    "name": "X_CSI_FS_CHECK_MODE",
-                    "value": "checkOnly"
-                  },
-                  {
-                    "name": "X_CSI_SPACE_RECLAMATION_ENABLED",
-                    "value": "false"
-                  },
-                  {
-                    "name": "X_CSI_SPACE_RECLAMATION_SCHEDULE",
-                    "value": "0 2 * * 0"
-                  },
-                  {
-                    "name": "X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT",
-                    "value": "2"
-                  },
-                  {
-                    "name": "X_CSI_SPACE_RECLAMATION_TIMEOUT",
-                    "value": "3600"
                   }
                 ],
+                "image": "quay.io/dell/container-storage-modules/csi-powermax:v2.15.1",
                 "imagePullPolicy": "IfNotPresent"
               },
+              "configVersion": "v2.15.1",
               "controller": {
                 "envs": [
                   {
@@ -618,13 +606,35 @@ metadata:
                   "args": [
                     "--volume-name-prefix=csivol"
                   ],
+                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v5.3.0",
                   "name": "provisioner"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.9.0",
+                  "name": "attacher"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0",
+                  "name": "registrar"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.14.0",
+                  "name": "resizer"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v8.3.0",
+                  "name": "snapshotter"
+                },
+                {
+                  "image": "quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.11.0",
+                  "name": "csi-metadata-retriever"
                 },
                 {
                   "args": [
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
+                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.15.0",
                   "name": "external-health-monitor"
                 }
               ]
@@ -651,9 +661,11 @@ metadata:
                         "value": "true"
                       }
                     ],
+                    "image": "quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.14.1",
                     "name": "csipowermax-reverseproxy"
                   }
                 ],
+                "configVersion": "v2.14.1",
                 "name": "csireverseproxy"
               },
               {
@@ -669,9 +681,11 @@ metadata:
                         "value": "true"
                       }
                     ],
+                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
+                "configVersion": "v2.3.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -688,6 +702,7 @@ metadata:
                         "value": "powermax"
                       }
                     ],
+                    "image": "quay.io/dell/container-storage-modules/dell-csi-replicator:v1.13.0",
                     "name": "dell-csi-replicator"
                   },
                   {
@@ -717,9 +732,11 @@ metadata:
                         "value": "false"
                       }
                     ],
+                    "image": "quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0",
                     "name": "dell-replication-controller-manager"
                   }
                 ],
+                "configVersion": "v1.13.0",
                 "enabled": false,
                 "name": "replication"
               },
@@ -728,6 +745,13 @@ metadata:
                   {
                     "certificate": "",
                     "enabled": false,
+                    "envs": [
+                      {
+                        "name": "NGINX_PROXY_IMAGE",
+                        "value": "quay.io/nginx/nginx-unprivileged:1.27"
+                      }
+                    ],
+                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0",
                     "name": "otel-collector",
                     "privateKey": ""
                   },
@@ -760,11 +784,11 @@ metadata:
                       },
                       {
                         "name": "POWERMAX_CAPACITY_POLL_FREQUENCY",
-                        "value": "20"
+                        "value": "10"
                       },
                       {
                         "name": "POWERMAX_PERFORMANCE_POLL_FREQUENCY",
-                        "value": "20"
+                        "value": "10"
                       },
                       {
                         "name": "POWERMAX_LOG_LEVEL",
@@ -783,9 +807,11 @@ metadata:
                         "value": "powermax-reverseproxy-config"
                       }
                     ],
+                    "image": "quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.8.0",
                     "name": "metrics-powermax"
                   }
                 ],
+                "configVersion": "v1.13.0",
                 "enabled": false,
                 "name": "observability"
               },
@@ -804,6 +830,7 @@ metadata:
                       "--driver-config-params=/powermax-config-params/driver-config-params.yaml",
                       "--driverPath=csi-powermax.dellemc.com"
                     ],
+                    "image": "quay.io/dell/container-storage-modules/podmon:v1.14.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
@@ -825,15 +852,16 @@ metadata:
                         "value": "8083"
                       }
                     ],
+                    "image": "quay.io/dell/container-storage-modules/podmon:v1.14.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
                 ],
+                "configVersion": "v1.14.0",
                 "enabled": false,
                 "name": "resiliency"
               }
-            ],
-            "version": "v1.17.0"
+            ]
           }
         },
         {
@@ -883,34 +911,12 @@ metadata:
                   {
                     "name": "X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT",
                     "value": "10s"
-                  },
-                  {
-                    "name": "X_CSM_DR_ENABLED",
-                    "value": "true"
-                  },
-                  {
-                    "name": "X_CSM_DR_BIND_PORT",
-                    "value": "8082"
-                  },
-                  {
-                    "name": "X_CSI_SPACE_RECLAMATION_ENABLED",
-                    "value": "false"
-                  },
-                  {
-                    "name": "X_CSI_SPACE_RECLAMATION_SCHEDULE",
-                    "value": "0 2 * * 0"
-                  },
-                  {
-                    "name": "X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT",
-                    "value": "2"
-                  },
-                  {
-                    "name": "X_CSI_SPACE_RECLAMATION_TIMEOUT",
-                    "value": "3600"
                   }
                 ],
+                "image": "quay.io/dell/container-storage-modules/csi-powerstore:v2.15.1",
                 "imagePullPolicy": "IfNotPresent"
               },
+              "configVersion": "v2.15.1",
               "controller": {
                 "envs": [
                   {
@@ -932,10 +938,6 @@ metadata:
                   {
                     "name": "X_CSI_POWERSTORE_EXTERNAL_ACCESS",
                     "value": null
-                  },
-                  {
-                    "name": "X_CSI_POWERSTORE_EXCLUSIVE_ACCESS",
-                    "value": "false"
                   }
                 ],
                 "nodeSelector": null,
@@ -961,18 +963,6 @@ metadata:
                   {
                     "name": "X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE",
                     "value": "0"
-                  },
-                  {
-                    "name": "X_CSI_VOLUME_DISCONNECT_MAX_RETRIES",
-                    "value": "5"
-                  },
-                  {
-                    "name": "X_CSI_VOLUME_DISCONNECT_RETRY_INTERVAL",
-                    "value": "5s"
-                  },
-                  {
-                    "name": "X_CSI_VOLUME_DISCONNECT_TIMEOUT_SECONDS",
-                    "value": "120s"
                   }
                 ],
                 "nodeSelector": null,
@@ -984,13 +974,35 @@ metadata:
                   "args": [
                     "--volume-name-prefix=csivol"
                   ],
+                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v5.3.0",
                   "name": "provisioner"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.9.0",
+                  "name": "attacher"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0",
+                  "name": "registrar"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.14.0",
+                  "name": "resizer"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v8.3.0",
+                  "name": "snapshotter"
+                },
+                {
+                  "image": "quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.11.0",
+                  "name": "csi-metadata-retriever"
                 },
                 {
                   "args": [
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
+                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.15.0",
                   "name": "external-health-monitor"
                 }
               ]
@@ -1009,9 +1021,11 @@ metadata:
                         "value": "true"
                       }
                     ],
+                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
+                "configVersion": "v2.3.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -1030,6 +1044,7 @@ metadata:
                       "--driver-config-params=/powerstore-config-params/driver-config-params.yaml",
                       "--driverPath=csi-powerstore.dellemc.com"
                     ],
+                    "image": "quay.io/dell/container-storage-modules/podmon:v1.14.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
@@ -1051,10 +1066,12 @@ metadata:
                         "value": "8083"
                       }
                     ],
+                    "image": "quay.io/dell/container-storage-modules/podmon:v1.14.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
                 ],
+                "configVersion": "v1.14.0",
                 "enabled": false,
                 "name": "resiliency"
               },
@@ -1071,6 +1088,7 @@ metadata:
                         "value": "powerstore"
                       }
                     ],
+                    "image": "quay.io/dell/container-storage-modules/dell-csi-replicator:v1.13.0",
                     "name": "dell-csi-replicator"
                   },
                   {
@@ -1096,17 +1114,15 @@ metadata:
                         "value": "false"
                       },
                       {
-                        "name": "ENABLE_KUBEVIRT_PVC_REMAP",
-                        "value": "false"
-                      },
-                      {
                         "name": "REPLICATION_ALLOW_PVC_CREATION_ON_TARGET",
                         "value": "false"
                       }
                     ],
+                    "image": "quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0",
                     "name": "dell-replication-controller-manager"
                   }
                 ],
+                "configVersion": "v1.13.0",
                 "enabled": false,
                 "name": "replication"
               },
@@ -1115,6 +1131,13 @@ metadata:
                   {
                     "certificate": "",
                     "enabled": false,
+                    "envs": [
+                      {
+                        "name": "NGINX_PROXY_IMAGE",
+                        "value": "quay.io/nginx/nginx-unprivileged:1.27"
+                      }
+                    ],
+                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0",
                     "name": "otel-collector",
                     "privateKey": ""
                   },
@@ -1135,7 +1158,7 @@ metadata:
                       },
                       {
                         "name": "POWERSTORE_VOLUME_IO_POLL_FREQUENCY",
-                        "value": "20"
+                        "value": "10"
                       },
                       {
                         "name": "POWERSTORE_SPACE_POLL_FREQUENCY",
@@ -1182,14 +1205,15 @@ metadata:
                         "value": "otel-collector:55680"
                       }
                     ],
+                    "image": "quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.13.0",
                     "name": "metrics-powerstore"
                   }
                 ],
+                "configVersion": "v1.13.0",
                 "enabled": false,
                 "name": "observability"
               }
-            ],
-            "version": "v1.17.0"
+            ]
           }
         },
         {
@@ -1252,10 +1276,10 @@ metadata:
                     "value": "true"
                   }
                 ],
-                "image": "quay.io/dell/container-storage-modules/csi-unity:v2.17.0",
+                "image": "quay.io/dell/container-storage-modules/csi-unity:v2.15.0",
                 "imagePullPolicy": "IfNotPresent"
               },
-              "configVersion": "v2.17.0",
+              "configVersion": "v2.15.0",
               "controller": {
                 "envs": [
                   {
@@ -1293,31 +1317,35 @@ metadata:
                   "args": [
                     "--volume-name-prefix=csivol"
                   ],
-                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v6.2.0",
+                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v5.3.0",
                   "name": "provisioner"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.11.0",
+                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.9.0",
                   "name": "attacher"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0",
+                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0",
                   "name": "registrar"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-resizer:v2.1.0",
+                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.14.0",
                   "name": "resizer"
                 },
                 {
-                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v8.5.0",
+                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v8.3.0",
                   "name": "snapshotter"
+                },
+                {
+                  "image": "quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.11.0",
+                  "name": "csi-metadata-retriever"
                 },
                 {
                   "args": [
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
-                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.17.0",
+                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.15.0",
                   "name": "external-health-monitor"
                 }
               ]
@@ -1374,38 +1402,12 @@ metadata:
                   {
                     "name": "X_CSI_PROBE_TIMEOUT",
                     "value": "10s"
-                  },
-                  {
-                    "name": "X_CSI_AUTH_TYPE",
-                    "value": ""
-                  },
-                  {
-                    "name": "X_CSI_FS_CHECK_ENABLED",
-                    "value": "false"
-                  },
-                  {
-                    "name": "X_CSI_FS_CHECK_MODE",
-                    "value": "checkOnly"
-                  },
-                  {
-                    "name": "X_CSI_SPACE_RECLAMATION_ENABLED",
-                    "value": "false"
-                  },
-                  {
-                    "name": "X_CSI_SPACE_RECLAMATION_SCHEDULE",
-                    "value": "0 2 * * 0"
-                  },
-                  {
-                    "name": "X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT",
-                    "value": "2"
-                  },
-                  {
-                    "name": "X_CSI_SPACE_RECLAMATION_TIMEOUT",
-                    "value": "3600"
                   }
                 ],
+                "image": "quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.2",
                 "imagePullPolicy": "IfNotPresent"
               },
+              "configVersion": "v2.15.2",
               "controller": {
                 "envs": [
                   {
@@ -1447,6 +1449,7 @@ metadata:
                       "value": "0"
                     }
                   ],
+                  "image": "quay.io/dell/storage/powerflex/sdc:4.5.4",
                   "imagePullPolicy": "IfNotPresent",
                   "name": "sdc"
                 }
@@ -1491,7 +1494,28 @@ metadata:
                   "args": [
                     "--volume-name-prefix=csivol"
                   ],
+                  "image": "registry.k8s.io/sig-storage/csi-provisioner:v5.3.0",
                   "name": "provisioner"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-attacher:v4.9.0",
+                  "name": "attacher"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0",
+                  "name": "registrar"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-resizer:v1.14.0",
+                  "name": "resizer"
+                },
+                {
+                  "image": "registry.k8s.io/sig-storage/csi-snapshotter:v8.3.0",
+                  "name": "snapshotter"
+                },
+                {
+                  "image": "quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.11.0",
+                  "name": "csi-metadata-retriever"
                 },
                 {
                   "enabled": false,
@@ -1505,6 +1529,7 @@ metadata:
                       "value": "10.xx.xx.xx,10.xx.xx.xx"
                     }
                   ],
+                  "image": "quay.io/dell/storage/powerflex/sdc:4.5.4",
                   "name": "sdc-monitor"
                 },
                 {
@@ -1512,6 +1537,7 @@ metadata:
                     "--monitor-interval=60s"
                   ],
                   "enabled": false,
+                  "image": "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.15.0",
                   "name": "csi-external-health-monitor-controller"
                 }
               ]
@@ -1530,9 +1556,11 @@ metadata:
                         "value": "true"
                       }
                     ],
+                    "image": "quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0",
                     "name": "karavi-authorization-proxy"
                   }
                 ],
+                "configVersion": "v2.3.0",
                 "enabled": false,
                 "name": "authorization"
               },
@@ -1541,6 +1569,13 @@ metadata:
                   {
                     "certificate": "",
                     "enabled": false,
+                    "envs": [
+                      {
+                        "name": "NGINX_PROXY_IMAGE",
+                        "value": "quay.io/nginx/nginx-unprivileged:1.27"
+                      }
+                    ],
+                    "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0",
                     "name": "otel-collector",
                     "privateKey": ""
                   },
@@ -1600,9 +1635,11 @@ metadata:
                         "value": "otel-collector:55680"
                       }
                     ],
+                    "image": "quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.13.1",
                     "name": "metrics-powerflex"
                   }
                 ],
+                "configVersion": "v1.13.1",
                 "enabled": false,
                 "name": "observability"
               },
@@ -1619,6 +1656,7 @@ metadata:
                         "value": "powerflex"
                       }
                     ],
+                    "image": "quay.io/dell/container-storage-modules/dell-csi-replicator:v1.13.0",
                     "name": "dell-csi-replicator"
                   },
                   {
@@ -1648,9 +1686,11 @@ metadata:
                         "value": "false"
                       }
                     ],
+                    "image": "quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0",
                     "name": "dell-replication-controller-manager"
                   }
                 ],
+                "configVersion": "v1.13.0",
                 "enabled": false,
                 "name": "replication"
               },
@@ -1668,6 +1708,7 @@ metadata:
                       "--mode=controller",
                       "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
                     ],
+                    "image": "quay.io/dell/container-storage-modules/podmon:v1.14.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-controller"
                   },
@@ -1688,22 +1729,23 @@ metadata:
                         "value": "8083"
                       }
                     ],
+                    "image": "quay.io/dell/container-storage-modules/podmon:v1.14.0",
                     "imagePullPolicy": "IfNotPresent",
                     "name": "podmon-node"
                   }
                 ],
+                "configVersion": "v1.14.0",
                 "enabled": false,
                 "name": "resiliency"
               }
-            ],
-            "version": "v1.17.0"
+            ]
           }
         }
       ]
     capabilities: Seamless Upgrades
     categories: Storage
-    containerImage: quay.io/dell/container-storage-modules/dell-csm-operator:v1.12.0
-    createdAt: "2026-04-28T13:21:54Z"
+    containerImage: quay.io/dell/container-storage-modules/dell-csm-operator:v1.10.2
+    createdAt: "2026-04-24T14:39:08Z"
     description: Easily install and manage Dell’s CSI Drivers and CSM
     features.operators.openshift.io/disconnected: "true"
     features.operators.openshift.io/fips-compliant: "false"
@@ -1712,11 +1754,11 @@ metadata:
     features.operators.openshift.io/token-auth-aws: "false"
     features.operators.openshift.io/token-auth-azure: "false"
     features.operators.openshift.io/token-auth-gcp: "false"
-    operators.operatorframework.io/builder: operator-sdk-v1.42.2
-    operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
-    repository: https://eos2git.cec.lab.emc.com/CSM/csm-operator
+    operators.operatorframework.io/builder: operator-sdk-v1.37.0
+    operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+    repository: https://github.com/dell/csm-operator
     support: Dell Technologies
-  name: dell-csm-operator.v1.12.0
+  name: dell-csm-operator.v1.10.2
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -1728,9 +1770,6 @@ spec:
         kind: ContainerStorageModule
         name: containerstoragemodules.storage.dell.com
         specDescriptors:
-          - description: CustomRegistry is the custom registry for the image
-            displayName: Custom Registry
-            path: customRegistry
           - description: AuthSecret is the name of the credentials secret for the
               driver
             displayName: Auth Secret
@@ -1789,21 +1828,6 @@ spec:
           - description: Envs is the set of environment variables for the container
             displayName: Container Environment vars
             path: driver.common.envs
-          - description: Gateway is the gateway configuration for the authorization
-              proxy-server (v2.5.0+)
-            displayName: Authorization Proxy Server Gateway configuration
-            path: driver.common.gateway
-          - description: Annotations is an unstructured key value map that stores
-              additional annotations for the proxy-server HTTPRoute
-            displayName: Authorization Proxy Server Gateway Annotations
-            path: driver.common.gateway.annotations
-          - description: GatewayClassName is the name of the GatewayClass for the
-              proxy-server Gateway resource
-            displayName: Authorization Proxy Server Gateway Class Name
-            path: driver.common.gateway.gatewayClassName
-          - description: Hosts is the additional hostnames for the proxy-server HTTPRoute
-            displayName: Authorization Proxy Server Gateway Hosts
-            path: driver.common.gateway.hosts
           - description: Hostname is the authorization proxy server hostname
             displayName: Authorization Proxy Server Hostname
             path: driver.common.hostname
@@ -1871,7 +1895,7 @@ spec:
           - description: RedisName is the name of the redis statefulset
             displayName: Redis StatefulSet Name
             path: driver.common.redisName
-          - description: RedisPassword is the password for the redis instance
+          - description: RedisPassword is the password for Redis authentication
             displayName: Redis Password
             path: driver.common.redisPassword
           - description: RedisReplicas is the number of replicas for the redis deployment
@@ -1908,7 +1932,7 @@ spec:
               that holds the Redis secretObject
             displayName: Redis Secret Provider Class Name
             path: driver.common.redisSecretProviderClass[0].secretProviderClassName
-          - description: RedisUsername is the username for the redis instance
+          - description: RedisUsername is the username for Redis authentication
             displayName: Redis Username
             path: driver.common.redisUsername
           - description: RoleService is the image tag for the Container
@@ -1963,6 +1987,10 @@ spec:
               service deployment
             displayName: Storage Service Replicas
             path: driver.common.storageServiceReplicas
+          - description: RedisStorageClass is the authorization proxy server redis
+              storage class for persistence
+            displayName: Authorization Proxy Server Redis storage class
+            path: driver.common.storageclass
           - description: TenantService is the image tag for the Container
             displayName: Authorization Tenant Service Container Image
             path: driver.common.tenantService
@@ -2059,21 +2087,6 @@ spec:
           - description: Envs is the set of environment variables for the container
             displayName: Container Environment vars
             path: driver.controller.envs
-          - description: Gateway is the gateway configuration for the authorization
-              proxy-server (v2.5.0+)
-            displayName: Authorization Proxy Server Gateway configuration
-            path: driver.controller.gateway
-          - description: Annotations is an unstructured key value map that stores
-              additional annotations for the proxy-server HTTPRoute
-            displayName: Authorization Proxy Server Gateway Annotations
-            path: driver.controller.gateway.annotations
-          - description: GatewayClassName is the name of the GatewayClass for the
-              proxy-server Gateway resource
-            displayName: Authorization Proxy Server Gateway Class Name
-            path: driver.controller.gateway.gatewayClassName
-          - description: Hosts is the additional hostnames for the proxy-server HTTPRoute
-            displayName: Authorization Proxy Server Gateway Hosts
-            path: driver.controller.gateway.hosts
           - description: Hostname is the authorization proxy server hostname
             displayName: Authorization Proxy Server Hostname
             path: driver.controller.hostname
@@ -2141,7 +2154,7 @@ spec:
           - description: RedisName is the name of the redis statefulset
             displayName: Redis StatefulSet Name
             path: driver.controller.redisName
-          - description: RedisPassword is the password for the redis instance
+          - description: RedisPassword is the password for Redis authentication
             displayName: Redis Password
             path: driver.controller.redisPassword
           - description: RedisReplicas is the number of replicas for the redis deployment
@@ -2178,7 +2191,7 @@ spec:
               that holds the Redis secretObject
             displayName: Redis Secret Provider Class Name
             path: driver.controller.redisSecretProviderClass[0].secretProviderClassName
-          - description: RedisUsername is the username for the redis instance
+          - description: RedisUsername is the username for Redis authentication
             displayName: Redis Username
             path: driver.controller.redisUsername
           - description: RoleService is the image tag for the Container
@@ -2233,6 +2246,10 @@ spec:
               service deployment
             displayName: Storage Service Replicas
             path: driver.controller.storageServiceReplicas
+          - description: RedisStorageClass is the authorization proxy server redis
+              storage class for persistence
+            displayName: Authorization Proxy Server Redis storage class
+            path: driver.controller.storageclass
           - description: TenantService is the image tag for the Container
             displayName: Authorization Tenant Service Container Image
             path: driver.controller.tenantService
@@ -2337,21 +2354,6 @@ spec:
           - description: Envs is the set of environment variables for the container
             displayName: Container Environment vars
             path: driver.initContainers[0].envs
-          - description: Gateway is the gateway configuration for the authorization
-              proxy-server (v2.5.0+)
-            displayName: Authorization Proxy Server Gateway configuration
-            path: driver.initContainers[0].gateway
-          - description: Annotations is an unstructured key value map that stores
-              additional annotations for the proxy-server HTTPRoute
-            displayName: Authorization Proxy Server Gateway Annotations
-            path: driver.initContainers[0].gateway.annotations
-          - description: GatewayClassName is the name of the GatewayClass for the
-              proxy-server Gateway resource
-            displayName: Authorization Proxy Server Gateway Class Name
-            path: driver.initContainers[0].gateway.gatewayClassName
-          - description: Hosts is the additional hostnames for the proxy-server HTTPRoute
-            displayName: Authorization Proxy Server Gateway Hosts
-            path: driver.initContainers[0].gateway.hosts
           - description: Hostname is the authorization proxy server hostname
             displayName: Authorization Proxy Server Hostname
             path: driver.initContainers[0].hostname
@@ -2419,7 +2421,7 @@ spec:
           - description: RedisName is the name of the redis statefulset
             displayName: Redis StatefulSet Name
             path: driver.initContainers[0].redisName
-          - description: RedisPassword is the password for the redis instance
+          - description: RedisPassword is the password for Redis authentication
             displayName: Redis Password
             path: driver.initContainers[0].redisPassword
           - description: RedisReplicas is the number of replicas for the redis deployment
@@ -2456,7 +2458,7 @@ spec:
               that holds the Redis secretObject
             displayName: Redis Secret Provider Class Name
             path: driver.initContainers[0].redisSecretProviderClass[0].secretProviderClassName
-          - description: RedisUsername is the username for the redis instance
+          - description: RedisUsername is the username for Redis authentication
             displayName: Redis Username
             path: driver.initContainers[0].redisUsername
           - description: RoleService is the image tag for the Container
@@ -2511,6 +2513,10 @@ spec:
               service deployment
             displayName: Storage Service Replicas
             path: driver.initContainers[0].storageServiceReplicas
+          - description: RedisStorageClass is the authorization proxy server redis
+              storage class for persistence
+            displayName: Authorization Proxy Server Redis storage class
+            path: driver.initContainers[0].storageclass
           - description: TenantService is the image tag for the Container
             displayName: Authorization Tenant Service Container Image
             path: driver.initContainers[0].tenantService
@@ -2551,54 +2557,6 @@ spec:
               or not
             displayName: Vault Skip Certificate Validation
             path: driver.initContainers[0].vaultConfigurations[0].skipCertificateValidation
-          - description: Metrics is the configuration for the driver metrics endpoint
-              and monitoring
-            displayName: Driver Metrics Configuration
-            path: driver.metrics
-          - description: Enabled enables the shared Prometheus metrics HTTP endpoint
-              on the controller
-            displayName: Metrics Enabled
-            path: driver.metrics.enabled
-          - description: GatewayMonitoring configures PowerFlex Gateway health monitoring
-            displayName: Gateway Monitoring Configuration
-            path: driver.metrics.gatewayMonitoring
-          - description: Enabled enables Gateway health monitoring on the controller
-            displayName: Gateway Monitoring Enabled
-            path: driver.metrics.gatewayMonitoring.enabled
-          - description: |-
-              LeaderElectionEnabled enables leader election so only one controller actively monitors gateways
-              When nil, defaults to true
-            displayName: Gateway Monitoring Leader Election Enabled
-            path: driver.metrics.gatewayMonitoring.leaderElectionEnabled
-          - description: PollInterval is how frequently the leader controller probes
-              each gateway endpoint
-            displayName: Gateway Monitoring Poll Interval
-            path: driver.metrics.gatewayMonitoring.pollInterval
-          - description: Port is the port on which the metrics endpoint is exposed
-            displayName: Metrics Port
-            path: driver.metrics.port
-          - description: ServiceMonitor configures optional Prometheus Operator ServiceMonitor
-              creation
-            displayName: ServiceMonitor Configuration
-            path: driver.metrics.serviceMonitor
-          - description: |-
-              Enabled creates a ServiceMonitor CR for Prometheus Operator integration
-              Requires the Prometheus Operator CRDs to be installed in the cluster
-            displayName: ServiceMonitor Enabled
-            path: driver.metrics.serviceMonitor.enabled
-          - description: |-
-              InsecureSkipVerify skips TLS certificate verification when Prometheus scrapes the metrics endpoint
-              Only applies when tlsCertSecret is set
-            displayName: ServiceMonitor Insecure Skip Verify
-            path: driver.metrics.serviceMonitor.insecureSkipVerify
-          - description: Interval is the Prometheus scrape interval for the metrics
-              endpoint
-            displayName: ServiceMonitor Scrape Interval
-            path: driver.metrics.serviceMonitor.interval
-          - description: TLSCertSecret is the name of a Kubernetes TLS Secret used
-              to serve the metrics endpoint over HTTPS
-            displayName: Metrics TLS Cert Secret
-            path: driver.metrics.tlsCertSecret
           - description: Node is the specification for Node plugin only
             displayName: Node specification
             path: driver.node
@@ -2652,21 +2610,6 @@ spec:
           - description: Envs is the set of environment variables for the container
             displayName: Container Environment vars
             path: driver.node.envs
-          - description: Gateway is the gateway configuration for the authorization
-              proxy-server (v2.5.0+)
-            displayName: Authorization Proxy Server Gateway configuration
-            path: driver.node.gateway
-          - description: Annotations is an unstructured key value map that stores
-              additional annotations for the proxy-server HTTPRoute
-            displayName: Authorization Proxy Server Gateway Annotations
-            path: driver.node.gateway.annotations
-          - description: GatewayClassName is the name of the GatewayClass for the
-              proxy-server Gateway resource
-            displayName: Authorization Proxy Server Gateway Class Name
-            path: driver.node.gateway.gatewayClassName
-          - description: Hosts is the additional hostnames for the proxy-server HTTPRoute
-            displayName: Authorization Proxy Server Gateway Hosts
-            path: driver.node.gateway.hosts
           - description: Hostname is the authorization proxy server hostname
             displayName: Authorization Proxy Server Hostname
             path: driver.node.hostname
@@ -2734,7 +2677,7 @@ spec:
           - description: RedisName is the name of the redis statefulset
             displayName: Redis StatefulSet Name
             path: driver.node.redisName
-          - description: RedisPassword is the password for the redis instance
+          - description: RedisPassword is the password for Redis authentication
             displayName: Redis Password
             path: driver.node.redisPassword
           - description: RedisReplicas is the number of replicas for the redis deployment
@@ -2771,7 +2714,7 @@ spec:
               that holds the Redis secretObject
             displayName: Redis Secret Provider Class Name
             path: driver.node.redisSecretProviderClass[0].secretProviderClassName
-          - description: RedisUsername is the username for the redis instance
+          - description: RedisUsername is the username for Redis authentication
             displayName: Redis Username
             path: driver.node.redisUsername
           - description: RoleService is the image tag for the Container
@@ -2826,6 +2769,10 @@ spec:
               service deployment
             displayName: Storage Service Replicas
             path: driver.node.storageServiceReplicas
+          - description: RedisStorageClass is the authorization proxy server redis
+              storage class for persistence
+            displayName: Authorization Proxy Server Redis storage class
+            path: driver.node.storageclass
           - description: TenantService is the image tag for the Container
             displayName: Authorization Tenant Service Container Image
             path: driver.node.tenantService
@@ -2922,21 +2869,6 @@ spec:
           - description: Envs is the set of environment variables for the container
             displayName: Container Environment vars
             path: driver.sideCars[0].envs
-          - description: Gateway is the gateway configuration for the authorization
-              proxy-server (v2.5.0+)
-            displayName: Authorization Proxy Server Gateway configuration
-            path: driver.sideCars[0].gateway
-          - description: Annotations is an unstructured key value map that stores
-              additional annotations for the proxy-server HTTPRoute
-            displayName: Authorization Proxy Server Gateway Annotations
-            path: driver.sideCars[0].gateway.annotations
-          - description: GatewayClassName is the name of the GatewayClass for the
-              proxy-server Gateway resource
-            displayName: Authorization Proxy Server Gateway Class Name
-            path: driver.sideCars[0].gateway.gatewayClassName
-          - description: Hosts is the additional hostnames for the proxy-server HTTPRoute
-            displayName: Authorization Proxy Server Gateway Hosts
-            path: driver.sideCars[0].gateway.hosts
           - description: Hostname is the authorization proxy server hostname
             displayName: Authorization Proxy Server Hostname
             path: driver.sideCars[0].hostname
@@ -3004,7 +2936,7 @@ spec:
           - description: RedisName is the name of the redis statefulset
             displayName: Redis StatefulSet Name
             path: driver.sideCars[0].redisName
-          - description: RedisPassword is the password for the redis instance
+          - description: RedisPassword is the password for Redis authentication
             displayName: Redis Password
             path: driver.sideCars[0].redisPassword
           - description: RedisReplicas is the number of replicas for the redis deployment
@@ -3041,7 +2973,7 @@ spec:
               that holds the Redis secretObject
             displayName: Redis Secret Provider Class Name
             path: driver.sideCars[0].redisSecretProviderClass[0].secretProviderClassName
-          - description: RedisUsername is the username for the redis instance
+          - description: RedisUsername is the username for Redis authentication
             displayName: Redis Username
             path: driver.sideCars[0].redisUsername
           - description: RoleService is the image tag for the Container
@@ -3096,6 +3028,10 @@ spec:
               service deployment
             displayName: Storage Service Replicas
             path: driver.sideCars[0].storageServiceReplicas
+          - description: RedisStorageClass is the authorization proxy server redis
+              storage class for persistence
+            displayName: Authorization Proxy Server Redis storage class
+            path: driver.sideCars[0].storageclass
           - description: TenantService is the image tag for the Container
             displayName: Authorization Tenant Service Container Image
             path: driver.sideCars[0].tenantService
@@ -3202,21 +3138,6 @@ spec:
           - description: Envs is the set of environment variables for the container
             displayName: Container Environment vars
             path: modules[0].components[0].envs
-          - description: Gateway is the gateway configuration for the authorization
-              proxy-server (v2.5.0+)
-            displayName: Authorization Proxy Server Gateway configuration
-            path: modules[0].components[0].gateway
-          - description: Annotations is an unstructured key value map that stores
-              additional annotations for the proxy-server HTTPRoute
-            displayName: Authorization Proxy Server Gateway Annotations
-            path: modules[0].components[0].gateway.annotations
-          - description: GatewayClassName is the name of the GatewayClass for the
-              proxy-server Gateway resource
-            displayName: Authorization Proxy Server Gateway Class Name
-            path: modules[0].components[0].gateway.gatewayClassName
-          - description: Hosts is the additional hostnames for the proxy-server HTTPRoute
-            displayName: Authorization Proxy Server Gateway Hosts
-            path: modules[0].components[0].gateway.hosts
           - description: Hostname is the authorization proxy server hostname
             displayName: Authorization Proxy Server Hostname
             path: modules[0].components[0].hostname
@@ -3284,7 +3205,7 @@ spec:
           - description: RedisName is the name of the redis statefulset
             displayName: Redis StatefulSet Name
             path: modules[0].components[0].redisName
-          - description: RedisPassword is the password for the redis instance
+          - description: RedisPassword is the password for Redis authentication
             displayName: Redis Password
             path: modules[0].components[0].redisPassword
           - description: RedisReplicas is the number of replicas for the redis deployment
@@ -3321,7 +3242,7 @@ spec:
               that holds the Redis secretObject
             displayName: Redis Secret Provider Class Name
             path: modules[0].components[0].redisSecretProviderClass[0].secretProviderClassName
-          - description: RedisUsername is the username for the redis instance
+          - description: RedisUsername is the username for Redis authentication
             displayName: Redis Username
             path: modules[0].components[0].redisUsername
           - description: RoleService is the image tag for the Container
@@ -3376,6 +3297,10 @@ spec:
               service deployment
             displayName: Storage Service Replicas
             path: modules[0].components[0].storageServiceReplicas
+          - description: RedisStorageClass is the authorization proxy server redis
+              storage class for persistence
+            displayName: Authorization Proxy Server Redis storage class
+            path: modules[0].components[0].storageclass
           - description: TenantService is the image tag for the Container
             displayName: Authorization Tenant Service Container Image
             path: modules[0].components[0].tenantService
@@ -3476,21 +3401,6 @@ spec:
           - description: Envs is the set of environment variables for the container
             displayName: Container Environment vars
             path: modules[0].initContainer[0].envs
-          - description: Gateway is the gateway configuration for the authorization
-              proxy-server (v2.5.0+)
-            displayName: Authorization Proxy Server Gateway configuration
-            path: modules[0].initContainer[0].gateway
-          - description: Annotations is an unstructured key value map that stores
-              additional annotations for the proxy-server HTTPRoute
-            displayName: Authorization Proxy Server Gateway Annotations
-            path: modules[0].initContainer[0].gateway.annotations
-          - description: GatewayClassName is the name of the GatewayClass for the
-              proxy-server Gateway resource
-            displayName: Authorization Proxy Server Gateway Class Name
-            path: modules[0].initContainer[0].gateway.gatewayClassName
-          - description: Hosts is the additional hostnames for the proxy-server HTTPRoute
-            displayName: Authorization Proxy Server Gateway Hosts
-            path: modules[0].initContainer[0].gateway.hosts
           - description: Hostname is the authorization proxy server hostname
             displayName: Authorization Proxy Server Hostname
             path: modules[0].initContainer[0].hostname
@@ -3558,7 +3468,7 @@ spec:
           - description: RedisName is the name of the redis statefulset
             displayName: Redis StatefulSet Name
             path: modules[0].initContainer[0].redisName
-          - description: RedisPassword is the password for the redis instance
+          - description: RedisPassword is the password for Redis authentication
             displayName: Redis Password
             path: modules[0].initContainer[0].redisPassword
           - description: RedisReplicas is the number of replicas for the redis deployment
@@ -3595,7 +3505,7 @@ spec:
               that holds the Redis secretObject
             displayName: Redis Secret Provider Class Name
             path: modules[0].initContainer[0].redisSecretProviderClass[0].secretProviderClassName
-          - description: RedisUsername is the username for the redis instance
+          - description: RedisUsername is the username for Redis authentication
             displayName: Redis Username
             path: modules[0].initContainer[0].redisUsername
           - description: RoleService is the image tag for the Container
@@ -3650,6 +3560,10 @@ spec:
               service deployment
             displayName: Storage Service Replicas
             path: modules[0].initContainer[0].storageServiceReplicas
+          - description: RedisStorageClass is the authorization proxy server redis
+              storage class for persistence
+            displayName: Authorization Proxy Server Redis storage class
+            path: modules[0].initContainer[0].storageclass
           - description: TenantService is the image tag for the Container
             displayName: Authorization Tenant Service Container Image
             path: modules[0].initContainer[0].tenantService
@@ -3693,10 +3607,6 @@ spec:
           - description: Name is name of ContainerStorageModule modules
             displayName: Name
             path: modules[0].name
-          - description: RetainImageRegistryPath is the boolean flag used to retain
-              image registry path
-            displayName: Retain Image Registry Path
-            path: retainImageRegistryPath
         statusDescriptors:
           - description: Available is the number of available pods
             displayName: Available
@@ -3711,12 +3621,6 @@ spec:
           - description: Failed is the number of failed pods
             displayName: Failed
             path: controllerStatus.failed
-            x-descriptors:
-              - urn:alm:descriptor:text
-          - description: LastSuccessfulConfiguration is configurations details only
-              when the CSM CR goes into a successful state
-            displayName: LastSuccessfulConfiguration
-            path: lastSuccessfulConfiguration
             x-descriptors:
               - urn:alm:descriptor:text
           - description: Available is the number of available pods
@@ -3741,27 +3645,28 @@ spec:
               - urn:alm:descriptor:text
         version: v1
   description: "Dell Container Storage Modules (CSM) Operator is a Kubernetes Operator
-    which can be used to install and manage Dell’s CSI drivers and CSM modules. By
-    using Dell CSM Operator, enterprises can quickly and easily deploy the CSM modules
-    for CSI drivers making it easy for DevOps teams to build and optimize their Kubernetes
-    workloads using enterprise grade storage while consistently aligning with the
-    desired outcomes of the organization.\nThis operator is available as both community
-    and certified operator for Openshift and as a community operator for upstream
-    Kubernetes.\nOperator can be deployed via OperatorHub.io. using Operator Lifecycle
-    Manager (OLM)\n\n### About Dell CSM\n\nDell CSM brings powerful enterprise storage
-    features and functionality to Kubernetes for easier adoption of cloud native workloads,
-    improved productivity and scalable operations.\nCSM delivers software modules
-    for storage management that provide developers access to build automation for
-    enhanced IT needs and other critical enterprise storage features.\nCurrently,
-    the following modules are available as part of Dell CSM. *\tObservability - Delivers
-    a high-level view of the storage capacity   and performance usage via Grafana
-    dashboards to the Kubernetes users\n*\tReplication - Enables array replication
-    capabilities for Kubernetes users\n*\tAuthorization - Provides both storage and
-    Kubernetes administrators the ability   to apply RBAC for Dell CSI Drivers\n*\tResiliency
-    - Designed to make Kubernetes applications more resilient to   node failures\n\nThese
-    modules are available for various storage platforms in the Dell portfolio, such
-    as Dell PowerStore, Dell PowerMax, Dell PowerFlex, Dell PowerScale, and Dell Unity
-    XT.\n\nFor more information, visit [Dell’s Container Storage Module web page](https://www.dell.com/en-us/dt/solutions/kubernetes-containers/kubernetes-storage.htm)\n\nAdditional
+    which can be \nused to install and manage Dell’s CSI drivers and CSM modules.
+    \nBy using Dell CSM Operator, enterprises can quickly and easily deploy the \nCSM
+    modules for CSI drivers making it easy for DevOps \nteams to build and optimize
+    their Kubernetes workloads using enterprise grade storage \nwhile consistently
+    aligning with the desired outcomes of the organization.\nThis operator is available
+    as both community and certified operator for Openshift \nand as a community operator
+    for upstream Kubernetes.\nOperator can be deployed via OperatorHub.io. using Operator
+    Lifecycle Manager (OLM)\n\n### About Dell CSM\n\nDell CSM brings powerful enterprise
+    storage features and functionality to Kubernetes for \neasier adoption of cloud
+    native workloads, improved productivity and scalable operations. \n\nCSM delivers
+    software modules for storage management that provide developers access to \nbuild
+    automation for enhanced IT needs and other critical enterprise storage features.
+    \n\nCurrently, the following modules are available as part of Dell CSM. \n*\tObservability
+    - Delivers a high-level view of the storage capacity \n  and performance usage
+    via Grafana dashboards to the Kubernetes users\n*\tReplication - Enables array
+    replication capabilities for Kubernetes users\n*\tAuthorization - Provides both
+    storage and Kubernetes administrators the ability \n  to apply RBAC for Dell CSI
+    Drivers\n*\tResiliency - Designed to make Kubernetes applications more resilient
+    to \n  node failures\n\nThese modules are available for various storage platforms
+    in the Dell portfolio, \nsuch as Dell PowerStore, Dell PowerMax, Dell PowerFlex,
+    Dell PowerScale, and Dell Unity XT.\n\nFor more information, visit [Dell’s Container
+    Storage Module web page](https://www.dell.com/en-us/dt/solutions/kubernetes-containers/kubernetes-storage.htm)\n\nAdditional
     Materials\n*\t[Documentation](https://dell.github.io/csm-docs)\n*\t[CSM Solution
     Brief](https://www.delltechnologies.com/asset/en-us/products/storage/briefs-summaries/csm-solution-brief.pdf)\n"
   displayName: Dell Container Storage Modules
@@ -4022,17 +3927,6 @@ spec:
               verbs:
                 - create
             - apiGroups:
-                - autoscaling
-              resources:
-                - horizontalpodautoscalers
-              verbs:
-                - create
-                - delete
-                - get
-                - list
-                - update
-                - watch
-            - apiGroups:
                 - batch
               resources:
                 - jobs
@@ -4224,44 +4118,23 @@ spec:
                 - list
                 - watch
             - apiGroups:
-                - dr.storage.dell.com
-              resources:
-                - volumejournals
-              verbs:
-                - create
-                - delete
-                - get
-                - list
-                - patch
-                - update
-                - watch
-            - apiGroups:
                 - gateway.networking.k8s.io
               resources:
-                - backendtlspolicies
-                - grpcroutes
-                - referencegrants
-              verbs:
-                - get
-                - list
-                - watch
-            - apiGroups:
-                - gateway.networking.k8s.io
-              resources:
-                - backendtlspolicies/status
-                - gatewayclasses/status
-                - gateways/finalizers
-                - gateways/status
-                - grpcroutes/status
-                - httproutes/finalizers
-                - httproutes/status
-              verbs:
-                - update
-            - apiGroups:
-                - gateway.networking.k8s.io
-              resources:
-                - gatewayclasses
                 - gateways
+              verbs:
+                - get
+                - list
+                - watch
+            - apiGroups:
+                - gateway.networking.k8s.io
+              resources:
+                - gateways/finalizers
+                - httproutes/finalizers
+              verbs:
+                - update
+            - apiGroups:
+                - gateway.networking.k8s.io
+              resources:
                 - httproutes
               verbs:
                 - create
@@ -4271,78 +4144,12 @@ spec:
                 - update
                 - watch
             - apiGroups:
-                - gateway.nginx.org
-              resources:
-                - authenticationfilters
-                - clientsettingspolicies
-                - observabilitypolicies
-                - proxysettingspolicies
-                - ratelimitpolicies
-                - upstreamsettingspolicies
-              verbs:
-                - list
-                - watch
-            - apiGroups:
-                - gateway.nginx.org
-              resources:
-                - authenticationfilters/status
-                - clientsettingspolicies/status
-                - nginxgateways/status
-                - observabilitypolicies/status
-                - proxysettingspolicies/status
-                - ratelimitpolicies/status
-                - upstreamsettingspolicies/status
-              verbs:
-                - update
-            - apiGroups:
-                - gateway.nginx.org
-              resources:
-                - nginxgateways
-                - nginxproxies
-              verbs:
-                - create
-                - delete
-                - get
-                - list
-                - update
-                - watch
-            - apiGroups:
-                - groupsnapshot.storage.k8s.io
-              resources:
-                - volumegroupsnapshotclasses
-              verbs:
-                - get
-                - list
-                - watch
-            - apiGroups:
-                - groupsnapshot.storage.k8s.io
-              resources:
-                - volumegroupsnapshotcontents
-              verbs:
-                - get
-                - list
-                - patch
-                - update
-                - watch
-            - apiGroups:
-                - groupsnapshot.storage.k8s.io
-              resources:
-                - volumegroupsnapshotcontents/status
-              verbs:
-                - patch
-                - update
-            - apiGroups:
                 - monitoring.coreos.com
               resources:
                 - servicemonitors
               verbs:
                 - create
-                - delete
                 - get
-                - list
-                - patch
-                - update
-                - watch
             - apiGroups:
                 - networking.k8s.io
               resources:
@@ -4371,24 +4178,6 @@ spec:
               resources:
                 - ingresses/status
               verbs:
-                - get
-                - list
-                - update
-                - watch
-            - apiGroups:
-                - objectstorage.k8s.io
-              resources:
-                - bucketaccessclasses
-                - bucketaccessclasses/status
-                - bucketaccesses
-                - bucketaccesses/status
-                - bucketclaims
-                - bucketclaims/status
-                - buckets
-                - buckets/status
-              verbs:
-                - create
-                - delete
                 - get
                 - list
                 - update
@@ -4537,6 +4326,19 @@ spec:
               verbs:
                 - patch
             - apiGroups:
+                - volumegroup.storage.dell.com
+              resources:
+                - dellcsivolumegroupsnapshots
+                - dellcsivolumegroupsnapshots/status
+              verbs:
+                - create
+                - delete
+                - get
+                - list
+                - patch
+                - update
+                - watch
+            - apiGroups:
                 - ""
               resources:
                 - namespaces
@@ -4556,79 +4358,92 @@ spec:
             template:
               metadata:
                 annotations:
-                  storage.dell.com/CSMVersion: v1.17.0
+                  storage.dell.com/CSMVersion: v1.15.2
                 labels:
                   control-plane: controller-manager
               spec:
                 containers:
                   - args:
+                      - --secure-listen-address=0.0.0.0:8443
+                      - --upstream=http://127.0.0.1:8080/
+                      - --logtostderr=true
+                      - --v=10
+                    image: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
+                    name: kube-rbac-proxy
+                    ports:
+                      - containerPort: 8443
+                        name: https
+                        protocol: TCP
+                    resources: {}
+                  - args:
+                      - --health-probe-bind-address=:8081
+                      - --metrics-bind-address=127.0.0.1:8080
                       - --leader-elect
-                      - --metrics-bind-address=:8443
                     command:
                       - /manager
                     env:
                       - name: REFRESH_INTERVAL_MINUTES
                         value: "60"
                       - name: RELATED_IMAGE_dell-csm-operator
-                        value: quay.io/dell/container-storage-modules/dell-csm-operator:v1.12.0
+                        value: quay.io/dell/container-storage-modules/dell-csm-operator:v1.10.2
                       - name: RELATED_IMAGE_csi-isilon
-                        value: quay.io/dell/container-storage-modules/csi-isilon:v2.17.0
+                        value: quay.io/dell/container-storage-modules/csi-isilon:v2.15.1
                       - name: RELATED_IMAGE_csi-powermax
-                        value: quay.io/dell/container-storage-modules/csi-powermax:v2.17.0
+                        value: quay.io/dell/container-storage-modules/csi-powermax:v2.15.1
                       - name: RELATED_IMAGE_csipowermax-reverseproxy
-                        value: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.16.0
+                        value: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.14.1
                       - name: RELATED_IMAGE_csi-powerstore
-                        value: quay.io/dell/container-storage-modules/csi-powerstore:v2.17.0
+                        value: quay.io/dell/container-storage-modules/csi-powerstore:v2.15.1
                       - name: RELATED_IMAGE_csi-unity
-                        value: quay.io/dell/container-storage-modules/csi-unity:v2.17.0
+                        value: quay.io/dell/container-storage-modules/csi-unity:v2.15.0
                       - name: RELATED_IMAGE_csi-vxflexos
-                        value: quay.io/dell/container-storage-modules/csi-vxflexos:v2.17.0
-                      - name: RELATED_IMAGE_cosi
-                        value: quay.io/dell/container-storage-modules/cosi:v1.1.0
+                        value: quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.2
                       - name: RELATED_IMAGE_sdc
-                        value: quay.io/dell/storage/powerflex/sdc:5.0
+                        value: quay.io/dell/storage/powerflex/sdc:4.5.4
                       - name: RELATED_IMAGE_karavi-authorization-proxy
-                        value: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.5.0
+                        value: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0
                       - name: RELATED_IMAGE_csm-authorization-proxy
-                        value: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.5.0
+                        value: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.3.0
                       - name: RELATED_IMAGE_csm-authorization-tenant
-                        value: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.5.0
+                        value: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.3.0
                       - name: RELATED_IMAGE_csm-authorization-role
-                        value: quay.io/dell/container-storage-modules/csm-authorization-role:v2.5.0
+                        value: quay.io/dell/container-storage-modules/csm-authorization-role:v2.3.0
                       - name: RELATED_IMAGE_csm-authorization-storage
-                        value: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.5.0
+                        value: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.3.0
                       - name: RELATED_IMAGE_csm-authorization-controller
-                        value: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.5.0
+                        value: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.3.0
                       - name: RELATED_IMAGE_dell-csi-replicator
-                        value: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.15.0
+                        value: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.13.0
                       - name: RELATED_IMAGE_dell-replication-controller-manager
-                        value: quay.io/dell/container-storage-modules/dell-replication-controller:v1.15.0
+                        value: quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0
                       - name: RELATED_IMAGE_otel-collector
-                        value: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.142.0
+                        value: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0
                       - name: RELATED_IMAGE_metrics-powerscale
-                        value: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.12.0
+                        value: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.10.0
                       - name: RELATED_IMAGE_metrics-powermax
-                        value: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.10.0
+                        value: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.8.0
                       - name: RELATED_IMAGE_metrics-powerflex
-                        value: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.15.0
+                        value: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.13.1
                       - name: RELATED_IMAGE_metrics-powerstore
-                        value: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.15.0
+                        value: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.13.0
                       - name: RELATED_IMAGE_podmon-node
-                        value: quay.io/dell/container-storage-modules/podmon:v1.16.0
+                        value: quay.io/dell/container-storage-modules/podmon:v1.14.0
+                      - name: RELATED_IMAGE_kube-rbac-proxy
+                        value: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
                       - name: RELATED_IMAGE_attacher
-                        value: registry.k8s.io/sig-storage/csi-attacher:v4.11.0
+                        value: registry.k8s.io/sig-storage/csi-attacher:v4.9.0
                       - name: RELATED_IMAGE_provisioner
-                        value: registry.k8s.io/sig-storage/csi-provisioner:v6.2.0
+                        value: registry.k8s.io/sig-storage/csi-provisioner:v5.3.0
                       - name: RELATED_IMAGE_snapshotter
-                        value: registry.k8s.io/sig-storage/csi-snapshotter:v8.5.0
+                        value: registry.k8s.io/sig-storage/csi-snapshotter:v8.3.0
                       - name: RELATED_IMAGE_registrar
-                        value: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0
+                        value: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0
                       - name: RELATED_IMAGE_resizer
-                        value: registry.k8s.io/sig-storage/csi-resizer:v2.1.0
+                        value: registry.k8s.io/sig-storage/csi-resizer:v1.14.0
                       - name: RELATED_IMAGE_externalhealthmonitorcontroller
-                        value: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.17.0
+                        value: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.15.0
                       - name: RELATED_IMAGE_metadataretriever
-                        value: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.14.0
+                        value: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.11.0
                       - name: RELATED_IMAGE_nginx
                         value: quay.io/nginx/nginx-unprivileged:1.27
                       - name: RELATED_IMAGE_redis-commander
@@ -4636,10 +4451,8 @@ spec:
                       - name: RELATED_IMAGE_opa
                         value: docker.io/openpolicyagent/opa:0.70.0
                       - name: RELATED_IMAGE_kube-mgmt
-                        value: docker.io/openpolicyagent/kube-mgmt:9.2.1
-                      - name: RELATED_IMAGE_objectstorage-provisioner-sidecar
-                        value: gcr.io/k8s-staging-sig-storage/objectstorage-sidecar:release-0.2
-                    image: quay.io/dell/container-storage-modules/dell-csm-operator:v1.12.0
+                        value: docker.io/openpolicyagent/kube-mgmt:8.5.11
+                    image: quay.io/dell/container-storage-modules/dell-csm-operator:v1.10.2
                     imagePullPolicy: Always
                     livenessProbe:
                       httpGet:
@@ -4665,8 +4478,6 @@ spec:
                       allowPrivilegeEscalation: false
                 securityContext:
                   runAsNonRoot: true
-                  seccompProfile:
-                    type: RuntimeDefault
                 serviceAccountName: dell-csm-operator-manager-service-account
                 terminationGracePeriodSeconds: 10
     strategy: deployment
@@ -4687,7 +4498,6 @@ spec:
     - Powerscale
     - Powerstore
     - Unity
-    - Cosi
     - Authorization
     - Observability
     - Replication
@@ -4701,67 +4511,67 @@ spec:
   minKubeVersion: 1.24.0
   provider:
     name: Dell Technologies
-    url: https://eos2git.cec.lab.emc.com/CSM/csm-operator
+    url: https://github.com/dell/csm-operator
   relatedImages:
-    - image: quay.io/dell/container-storage-modules/dell-csm-operator:v1.12.0
+    - image: quay.io/dell/container-storage-modules/dell-csm-operator:v1.10.2
       name: dell-csm-operator
-    - image: quay.io/dell/container-storage-modules/csi-isilon:v2.17.0
+    - image: quay.io/dell/container-storage-modules/csi-isilon:v2.15.1
       name: csi-isilon
-    - image: quay.io/dell/container-storage-modules/csi-powermax:v2.17.0
+    - image: quay.io/dell/container-storage-modules/csi-powermax:v2.15.1
       name: csi-powermax
-    - image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.16.0
+    - image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.14.1
       name: csipowermax-reverseproxy
-    - image: quay.io/dell/container-storage-modules/csi-powerstore:v2.17.0
+    - image: quay.io/dell/container-storage-modules/csi-powerstore:v2.15.1
       name: csi-powerstore
-    - image: quay.io/dell/container-storage-modules/csi-unity:v2.17.0
+    - image: quay.io/dell/container-storage-modules/csi-unity:v2.15.0
       name: csi-unity
-    - image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.17.0
+    - image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.15.2
       name: csi-vxflexos
-    - image: quay.io/dell/container-storage-modules/cosi:v1.1.0
-      name: cosi
-    - image: quay.io/dell/storage/powerflex/sdc:5.0
+    - image: quay.io/dell/storage/powerflex/sdc:4.5.4
       name: sdc
-    - image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.5.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.3.0
       name: karavi-authorization-proxy
-    - image: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.5.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.3.0
       name: csm-authorization-proxy
-    - image: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.5.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.3.0
       name: csm-authorization-tenant
-    - image: quay.io/dell/container-storage-modules/csm-authorization-role:v2.5.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-role:v2.3.0
       name: csm-authorization-role
-    - image: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.5.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.3.0
       name: csm-authorization-storage
-    - image: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.5.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.3.0
       name: csm-authorization-controller
-    - image: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.15.0
+    - image: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.13.0
       name: dell-csi-replicator
-    - image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.15.0
+    - image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.13.0
       name: dell-replication-controller-manager
-    - image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.142.0
+    - image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.135.0
       name: otel-collector
-    - image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.12.0
+    - image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.10.0
       name: metrics-powerscale
-    - image: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.10.0
+    - image: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.8.0
       name: metrics-powermax
-    - image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.15.0
+    - image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.13.1
       name: metrics-powerflex
-    - image: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.15.0
+    - image: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.13.0
       name: metrics-powerstore
-    - image: quay.io/dell/container-storage-modules/podmon:v1.16.0
+    - image: quay.io/dell/container-storage-modules/podmon:v1.14.0
       name: podmon-node
-    - image: registry.k8s.io/sig-storage/csi-attacher:v4.11.0
+    - image: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16.0-202409051837.p0.g8ea2c99.assembly.stream.el9
+      name: kube-rbac-proxy
+    - image: registry.k8s.io/sig-storage/csi-attacher:v4.9.0
       name: attacher
-    - image: registry.k8s.io/sig-storage/csi-provisioner:v6.2.0
+    - image: registry.k8s.io/sig-storage/csi-provisioner:v5.3.0
       name: provisioner
-    - image: registry.k8s.io/sig-storage/csi-snapshotter:v8.5.0
+    - image: registry.k8s.io/sig-storage/csi-snapshotter:v8.3.0
       name: snapshotter
-    - image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0
+    - image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0
       name: registrar
-    - image: registry.k8s.io/sig-storage/csi-resizer:v2.1.0
+    - image: registry.k8s.io/sig-storage/csi-resizer:v1.14.0
       name: resizer
-    - image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.17.0
+    - image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.15.0
       name: externalhealthmonitorcontroller
-    - image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.14.0
+    - image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.11.0
       name: metadataretriever
     - image: quay.io/nginx/nginx-unprivileged:1.27
       name: nginx
@@ -4769,8 +4579,6 @@ spec:
       name: redis-commander
     - image: docker.io/openpolicyagent/opa:0.70.0
       name: opa
-    - image: docker.io/openpolicyagent/kube-mgmt:9.2.1
+    - image: docker.io/openpolicyagent/kube-mgmt:8.5.11
       name: kube-mgmt
-    - image: gcr.io/k8s-staging-sig-storage/objectstorage-sidecar:release-0.2
-      name: objectstorage-provisioner-sidecar
-  version: 1.12.0
+  version: 1.10.2

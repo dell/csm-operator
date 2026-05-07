@@ -33,8 +33,16 @@ Any time changes made to the operator are being checked into the main branch, sa
 ## Prerequisites
 
 - A supported environment where the Dell Container Storage Modules Operator is installed
-- Fill in `array-info.yaml` with your array credentials ([more info below](#run)). Copy `array-info.yaml.sample` as a starting template.
-- The required namespaces are automatically created (and any existing ones deleted) by `run-e2e-test.sh` before tests run. By default they are also cleaned up after tests complete; pass `--no-cleanup-ns` to keep them.
+- Fill in the environment variables in `array-info.env` ([more info below](#run)).
+- The following namespaces need to be created beforehand:
+  - `dell`
+  - `authorization`
+  - `proxy-ns`
+  - (if running sanity, powerflex, or modules suites) `test-vxflexos`
+  - (if running sanity, powerscale, or modules suites) `isilon`
+  - (if running unity suite) `unity`
+  - (if running powermax suite) `powermax`
+  - (if running powerstore suite) `powerstore`
 - For Authorization V2:
   - The following components must be installed on your cluster:
     - Secrets Store CSI Driver
@@ -47,10 +55,15 @@ Any time changes made to the operator are being checked into the main branch, sa
           vaultCACertPath: '/config/vault-ca.pem'
       ```
       where "vault" is the name of the vault service running.
-- If scenarios where `customRegistry` is provided in the test CR, make sure the images are present in the registry path provided. The custom registry tests use the `E2E_CREG_VERSION` environment variable to control the `spec.version` set on the CR, so that image tags resolve to a version that actually exists in the registry. If not set, it defaults to `v1.16.0`. Override it when a newer stable version is available in your custom registry:
-  ```bash
-  export E2E_CREG_VERSION=v1.16.2
-  ```
+
+      If you're using a SecretProviderClass to store the configuration with a JWT signing secret, you'll need to update the path to point to this configuration:
+      ```
+        objects: |
+          - objectName: "config-object"
+            secretPath: "secret/data/REPLACE_CONFIG_PATH"
+            secretKey: "configKey"
+      ```
+      where "REPLACE_CONFIG_PATH" is the path to the configuration secret inside the CSI Secret Store.
 - Dellctl needs to be installed
   - See [here](https://dell.github.io/csm-docs/docs/support/cli/#installation-instructions) for instructions
 - In addition, for drivers that do not use the secret and storageclass creation steps, any required secrets, storageclasses, etc. will need to be created beforehand as well as required namespaces.
@@ -63,9 +76,9 @@ go get github.com/onsi/gomega/...
 
 ### Array Information
 
-For PowerFlex, Unity, PowerScale, PowerStore, and Authorization system-specific information (array login credentials, system IDs, endpoints, etc.) need to be provided in e2e/array-info.yaml so that all the required resources (secrets, storageclasses, etc.) can be created by the tests. The sample file ships with all values empty; fill in only the sections for the platforms you are testing. Refer to [CSM documentation](https://dell.github.io/csm-docs/docs/) for any further questions about driver or module pre-requisites.
+For PowerFlex, Unity, PowerScale, PowerStore, and Authorization system-specific information (array login credentials, system IDs, endpoints, etc.) need to be provided in e2e/array-info.env so that all the required resources (secrets, storageclasses, etc.) can be created by the tests. Example values have been inserted; please replace these with values from your system. Refer to [CSM documentation](https://dell.github.io/csm-docs/docs/) for any further questions about driver or module pre-requisites.
 
-In the case of end-to-end tests that involve PowerFlex zoning functionality, a second PowerFlex array will be necessary with its credentials provided in the `pflex-zoning` section of e2e/array-info.yaml.
+In the case of end-to-end tests that involve PowerFlex zoning functionality, a second PowerFlex array will be necessary with its credentials provided in e2e/array-info.env.
 
 Please note that, if tests are stopped in the middle of a run, some files in `testfiles/*-templates` folders may remain in a partially modified state and break subsequent test runs. To undo these changes, you can run `git checkout -- <template file>`.
 
@@ -85,9 +98,9 @@ Notes:
 
 The tests are run by the `run-e2e-test.sh` script in the `tests/e2e` directory.
 
-- Ensure you meet all [prerequisites](https://eos2git.cec.lab.emc.com/CSM/csm-operator/blob/main/tests/README.md#prerequisites).
+- Ensure you meet all [prerequisites](https://github.com/dell/csm-operator/blob/main/tests/README.md#prerequisites).
 - Change to the `tests/e2e` directory.
-- Create a file named `array-info.yaml` and populate it with your array information. Use `array-info.yaml.sample` as a template.
+- Create a file named `array-info.env` and populate it with your array information. Use `array-info.env.sample` as a template.
 - If you do not have `dellctl` (for authorization proxy server) accessible through your `PATH` variable, pass the path to the executable to the script, like so, `run-e2e-test.sh --dellctl=/path/to/dellctl`, and they will be added to `/usr/local/bin`
 - Decide on the test suites you want to run, based on the changes made. Available test suites can be seen by running `run-e2e-test.sh -h` If multiple suites are specified, the union (not intersection) of those suites will be run.
 - Run the e2e tests by executing the `run-e2e-test.sh` script with desired options. Three examples are provided:
@@ -206,10 +219,10 @@ Note: Please be mindful when updating upgrade scenarios for Authorization Proxy 
 - Add backend Support: we will cover three case:
 
   1.  `Fully recycled old step`: If the desired steps has already been covered in another test scenario, just copy line for line. You don't need any code change
-  2.  `partially recycled old step`: In this case, a very similar test has already been cover. This means there's already an entrypoint in `steps`. You should review the `StepRunnerInit` function at [step_runner.go](https://eos2git.cec.lab.emc.com/CSM/csm-operator/blob/main/tests/e2e/steps/steps_runner.go) and trace the implementation function that matches your step. For example the step `"Validate [world] module is installed"`. The line that matches this in `StepRunnerInit` is `runner.addStep(`^Validate \[([^"]\*)\] module is installed$`, step.validateModuleInstalled)`. The implementation to trace is `step.validateModuleInstalled`. We will review the implementation function in [steps_def.go](https://eos2git.cec.lab.emc.com/CSM/csm-operator/blob/main/tests/e2e/steps/steps_def.go) to decide whether or not we need to do anything. Make the code changes if needed.
+  2.  `partially recycled old step`: In this case, a very similar test has already been cover. This means there's already an entrypoint in `steps`. You should review the `StepRunnerInit` function at [step_runner.go](https://github.com/dell/csm-operator/blob/main/tests/e2e/steps/steps_runner.go) and trace the implementation function that matches your step. For example the step `"Validate [world] module is installed"`. The line that matches this in `StepRunnerInit` is `runner.addStep(`^Validate \[([^"]\*)\] module is installed$`, step.validateModuleInstalled)`. The implementation to trace is `step.validateModuleInstalled`. We will review the implementation function in [steps_def.go](https://github.com/dell/csm-operator/blob/main/tests/e2e/steps/steps_def.go) to decide whether or not we need to do anything. Make the code changes if needed.
   3.  `new step`: New step can be simple such as `"Validate Today is Tuesday"` or a templated such as `["Validate it is [raining]"](https://example.com)`. The workflow to support these two cases is the same and only varies in the signature of the implementation function. The workflow include:
 
-      1. Implement steps in [steps_def.go](https://eos2git.cec.lab.emc.com/CSM/csm-operator/blob/main/tests/e2e/steps/steps_def.go). Define a function to implement your step. Note that the steps are stateless! If you want to define a function to test a happy path, your function should return nil if no error occurs and error otherwise. However, if you want to test an error path, your function should return nil if you get error and error otherwise. The constraints of all functions in step_def.go is as follows:
+      1. Implement steps in [steps_def.go](https://github.com/dell/csm-operator/blob/main/tests/e2e/steps/steps_def.go). Define a function to implement your step. Note that the steps are stateless! If you want to define a function to test a happy path, your function should return nil if no error occurs and error otherwise. However, if you want to test an error path, your function should return nil if you get error and error otherwise. The constraints of all functions in step_def.go is as follows:
 
          - must return `error` or `nil`
          - must take at least one argument. The first one MUST be type `Resource`(even though it may not be used). If your step has any group(a groups is anything in your step enclosed by `[]`), the remaining arguments should be the groups in the order they appear on the steps(from left to right). For example, the two new functions above will can be implemented as shown below:
@@ -244,7 +257,7 @@ Note: Please be mindful when updating upgrade scenarios for Authorization Proxy 
             }
            ```
 
-      2. Register your new steps in `StepRunnerInit` function at [step_runner.go](https://eos2git.cec.lab.emc.com/CSM/csm-operator/blob/main/tests/e2e/steps/steps_runner.go). Please pay special attention to the regex and ensure they actually match your new steps. For instance, the new steps we implemented above can be mapped to their steps in the valus file as follows:
+      2. Register your new steps in `StepRunnerInit` function at [step_runner.go](https://github.com/dell/csm-operator/blob/main/tests/e2e/steps/steps_runner.go). Please pay special attention to the regex and ensure they actually match your new steps. For instance, the new steps we implemented above can be mapped to their steps in the valus file as follows:
 
          ```go
          func StepRunnerInit(runner *Runner, ctrlClient client.Client, clientSet *kubernetes.Clientset) {

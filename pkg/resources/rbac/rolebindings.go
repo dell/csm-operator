@@ -15,7 +15,7 @@ package rbac
 import (
 	"context"
 
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
+	"github.com/dell/csm-operator/pkg/logger"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -28,7 +28,7 @@ func SyncClusterRoleBindings(ctx context.Context, rb rbacv1.ClusterRoleBinding, 
 	found := &rbacv1.ClusterRoleBinding{}
 	err := client.Get(ctx, types.NamespacedName{Name: rb.Name, Namespace: rb.Namespace}, found)
 	if err != nil && errors.IsNotFound(err) {
-		log.Infow("Creating a new ClusterRoleBinding", "Namespace", rb.Namespace, "Name", rb.Name)
+		log.Info("Creating a new ClusterRoleBinding", "Namespace", rb.Namespace, "Name", rb.Name)
 		err = client.Create(ctx, &rb)
 		if err != nil {
 			return err
@@ -37,7 +37,7 @@ func SyncClusterRoleBindings(ctx context.Context, rb rbacv1.ClusterRoleBinding, 
 		log.Info("Unknown error.", "Error", err.Error())
 		return err
 	} else {
-		log.Infow("Updating ClusterRoleBinding", "Name:", rb.Name)
+		log.Info("Updating ClusterRoleBinding", "Name:", rb.Name)
 		err = client.Update(ctx, &rb)
 		if err != nil {
 			return err

@@ -1,7 +1,7 @@
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: op-e2e-powerstore
+  name: op-e2e-pstore
 provisioner: "csi-powerstore.dellemc.com"
 parameters:
   arrayID: REPLACE_GLOBALID
