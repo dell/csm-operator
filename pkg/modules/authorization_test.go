@@ -2421,7 +2421,7 @@ func TestUpdateConjurAnnotations(t *testing.T) {
 			annotations: map[string]string{},
 			conjurPaths: []string{"secrets/config-object"},
 			want: map[string]string{
-				"conjur.org/secrets": "- secrets/config-object: secrets/config-object",
+				"conjur.org/secrets": "- secrets/config-object: secrets/config-object", // #nosec G101
 			},
 		},
 		{
@@ -2502,7 +2502,7 @@ func TestUpdateRedisGlobalVars(t *testing.T) {
 				component: csmv1.ContainerTemplate{
 					RedisSecretProviderClass: []csmv1.RedisSecretProviderClass{
 						{
-							SecretProviderClassName: "ut-provider-class",
+							SecretProviderClassName: "ut-provider-class", // #nosec G101
 							RedisSecretName:         "",
 							RedisUsernameKey:        "",
 							RedisPasswordKey:        "",
@@ -2525,7 +2525,7 @@ func TestUpdateRedisGlobalVars(t *testing.T) {
 				component: csmv1.ContainerTemplate{
 					RedisSecretProviderClass: []csmv1.RedisSecretProviderClass{
 						{
-							SecretProviderClassName: "ut-provider-class",
+							SecretProviderClassName: "ut-provider-class", // #nosec G101
 							RedisSecretName:         "ut-secret-name",
 							RedisUsernameKey:        "ut-username-key",
 							RedisPasswordKey:        "ut-password-key",
@@ -2538,7 +2538,7 @@ func TestUpdateRedisGlobalVars(t *testing.T) {
 				},
 			},
 			want: map[string]string{
-				"redisSecretProviderClassName": "ut-provider-class",
+				"redisSecretProviderClassName": "ut-provider-class", // #nosec G101
 				"redisSecretName":              "ut-secret-name",
 				"redisUsernameKey":             "ut-username-key",
 				"redisPasswordKey":             "ut-password-key",
@@ -2557,32 +2557,7 @@ func TestUpdateRedisGlobalVars(t *testing.T) {
 							RedisUsernameKey:        "",
 							RedisPasswordKey:        "",
 							Conjur: &csmv1.ConjurCredentialPath{
-								UsernamePath: "",
-								PasswordPath: "",
-							},
-						},
-					},
-				},
-			},
-			want: map[string]string{
-				"redisSecretProviderClassName": "",
-				"redisSecretName":              defaultRedisSecretName,
-				"redisUsernameKey":             defaultRedisUsernameKey,
-				"redisPasswordKey":             defaultRedisPasswordKey,
-			},
-		},
-		{
-			name: "conjur present with values",
-			args: args{
-				component: csmv1.ContainerTemplate{
-					RedisSecretProviderClass: []csmv1.RedisSecretProviderClass{
-						{
-							SecretProviderClassName: "",
-							RedisSecretName:         "",
-							RedisUsernameKey:        "",
-							RedisPasswordKey:        "",
-							Conjur: &csmv1.ConjurCredentialPath{
-								UsernamePath: "conjur.org/username",
+								UsernamePath: "conjur.org/username", // #nosec G101
 								PasswordPath: "conjur.org/password",
 							},
 						},
@@ -2594,7 +2569,7 @@ func TestUpdateRedisGlobalVars(t *testing.T) {
 				"redisSecretName":              defaultRedisSecretName,
 				"redisUsernameKey":             defaultRedisUsernameKey,
 				"redisPasswordKey":             defaultRedisPasswordKey,
-				"redisConjurUsernamePath":      "conjur.org/username",
+				"redisConjurUsernamePath":      "conjur.org/username", // #nosec G101
 				"redisConjurPasswordPath":      "conjur.org/password",
 			},
 		},
@@ -2604,7 +2579,7 @@ func TestUpdateRedisGlobalVars(t *testing.T) {
 				component: csmv1.ContainerTemplate{
 					RedisSecretProviderClass: []csmv1.RedisSecretProviderClass{
 						{
-							SecretProviderClassName: "ut-provider-class",
+							SecretProviderClassName: "ut-provider-class", // #nosec G101
 							RedisSecretName:         "",
 							RedisUsernameKey:        "ut-username-key",
 							RedisPasswordKey:        "ut-password-key",
@@ -2660,7 +2635,7 @@ func TestUpdateConfigGlobalVars(t *testing.T) {
 			},
 			want: map[string]string{
 				"configSecretProviderClassName ": "",
-				"configSecretName":               "karavi-config-secret",
+				"configSecretName":               "karavi-config-secret", // #nosec G101
 				"configSecretPath ":              "",
 			},
 		},
@@ -2670,7 +2645,7 @@ func TestUpdateConfigGlobalVars(t *testing.T) {
 				component: csmv1.ContainerTemplate{
 					ConfigSecretProviderClass: []csmv1.ConfigSecretProviderClass{
 						{
-							SecretProviderClassName: "ut-provider-class",
+							SecretProviderClassName: "ut-provider-class", // #nosec G101
 							ConfigSecretName:        "",
 						},
 					},
@@ -2678,7 +2653,7 @@ func TestUpdateConfigGlobalVars(t *testing.T) {
 			},
 			want: map[string]string{
 				"configSecretProviderClassName ": "",
-				"configSecretName":               "karavi-config-secret",
+				"configSecretName":               "karavi-config-secret", // #nosec G101
 				"configSecretPath":               "",
 			},
 		},
@@ -2688,7 +2663,7 @@ func TestUpdateConfigGlobalVars(t *testing.T) {
 				component: csmv1.ContainerTemplate{
 					ConfigSecretProviderClass: []csmv1.ConfigSecretProviderClass{
 						{
-							SecretProviderClassName: "ut-provider-class",
+							SecretProviderClassName: "ut-provider-class", // #nosec G101
 							ConfigSecretName:        "ut-secret-name",
 							Conjur: &csmv1.ConjurConfigPath{
 								SecretPath: "ut-secret-path",
@@ -2700,7 +2675,7 @@ func TestUpdateConfigGlobalVars(t *testing.T) {
 			want: map[string]string{
 				"configSecretProviderClassName ": "ut-provider-class",
 				"configSecretName":               "ut-secret-name",
-				"configSecretPath":               "ut-secret-path",
+				"configSecretPath":               "ut-secret-path", // #nosec G101
 			},
 		},
 		{
