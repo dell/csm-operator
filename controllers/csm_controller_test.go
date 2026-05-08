@@ -1969,6 +1969,8 @@ func getAuthProxyServer() []csmv1.Module {
 				{
 					Name:              "redis",
 					RedisStorageClass: "test-storage",
+					RedisUsername:     "test-user",
+					RedisPassword:     "test-password",
 				},
 			},
 		},
@@ -2004,6 +2006,8 @@ func getAuthProxyServerOCP() []csmv1.Module {
 					Enabled: &[]bool{false}[0],
 				},
 				{
+					RedisUsername:     "test-user",
+					RedisPassword:     "test-password",
 					Name:              "redis",
 					RedisStorageClass: "test-storage",
 				},

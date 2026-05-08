@@ -122,7 +122,7 @@ func TestDynamicallyMountPowermaxContent(t *testing.T) {
 			cr: csmv1.ContainerStorageModule{
 				Spec: csmv1.ContainerStorageModuleSpec{
 					Driver: csmv1.Driver{
-						AuthSecret: "powermax-config",
+						AuthSecret: "powermax-config", // #nosec G101
 						Common: &csmv1.ContainerTemplate{
 							Envs: []corev1.EnvVar{{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"}},
 						},
@@ -159,7 +159,7 @@ func TestDynamicallyMountPowermaxContent(t *testing.T) {
 			cr: csmv1.ContainerStorageModule{
 				Spec: csmv1.ContainerStorageModuleSpec{
 					Driver: csmv1.Driver{
-						AuthSecret: "powermax-config",
+						AuthSecret: "powermax-config", // #nosec G101
 						Common: &csmv1.ContainerTemplate{
 							Envs: []corev1.EnvVar{{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"}},
 						},
@@ -180,7 +180,7 @@ func TestDynamicallyMountPowermaxContent(t *testing.T) {
 			cr: csmv1.ContainerStorageModule{
 				Spec: csmv1.ContainerStorageModuleSpec{
 					Driver: csmv1.Driver{
-						AuthSecret: "powermax-config",
+						AuthSecret: "powermax-config", // #nosec G101
 						Common: &csmv1.ContainerTemplate{
 							Envs: []corev1.EnvVar{{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"}},
 						},
@@ -201,7 +201,7 @@ func TestDynamicallyMountPowermaxContent(t *testing.T) {
 			cr: csmv1.ContainerStorageModule{
 				Spec: csmv1.ContainerStorageModuleSpec{
 					Driver: csmv1.Driver{
-						AuthSecret: "powermax-config",
+						AuthSecret: "powermax-config", // #nosec G101
 					},
 				},
 			},
@@ -219,7 +219,7 @@ func TestDynamicallyMountPowermaxContent(t *testing.T) {
 			cr: csmv1.ContainerStorageModule{
 				Spec: csmv1.ContainerStorageModuleSpec{
 					Driver: csmv1.Driver{
-						AuthSecret: "powermax-config",
+						AuthSecret: "powermax-config", // #nosec G101
 						Common: &csmv1.ContainerTemplate{
 							Envs: []corev1.EnvVar{{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "true"}},
 						},

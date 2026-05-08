@@ -48,6 +48,11 @@ powerflex:
     replication: "v1.13.0"
     observability: "v1.13.1"
     resiliency: "v1.14.0"
+  v2.15.2:
+    authorization: "v2.3.0"
+    replication: "v1.13.0"
+    observability: "v1.13.1"
+    resiliency: "v1.14.0"
 powerstore:
   # List of Driver versions and modules that supports the version
   v2.13.0:

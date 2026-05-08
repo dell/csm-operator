@@ -36,7 +36,25 @@ COPY k8s/ k8s/
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
 
-FROM $BASEIMAGE as final
+FROM registry.access.redhat.com/ubi9/ubi:latest AS final
+
+# CVE remediation: update all packages to latest security fixes
+RUN dnf upgrade -y && dnf clean all
+
+# Install required packages with security fixes
+RUN dnf install -y \
+    python3 \
+    openssh \
+    gnupg2 \
+    sqlite \
+    vim-enhanced \
+    vim-minimal \
+    gdb \
+    gnutls \
+    libcap \
+    krb5-libs \
+    && dnf clean all
+
 ENV USER_UID=1001 \
     USER_NAME=dell-csm-operator
 WORKDIR /
@@ -47,8 +65,8 @@ LABEL vendor="Dell Technologies" \
     name="dell-csm-operator" \
     summary="Operator for installing Dell CSI Drivers and Dell CSM Modules" \
     description="Common Operator for installing various Dell CSI Drivers and Dell CSM Modules" \
-    release="1.15.1" \
-    version="1.10.1" \
+    release="1.15.2" \
+    version="1.10.2" \
     license="Dell CSM Operator Apache License"
 
 # copy the licenses folder
