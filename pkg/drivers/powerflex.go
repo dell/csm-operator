@@ -20,10 +20,12 @@ import (
 	"regexp"
 	"strings"
 
-	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
-	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
+	csmv1 "github.com/dell/csm-operator/api/v1"
+	"github.com/dell/csm-operator/pkg/logger"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 	v1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
@@ -138,6 +140,19 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 	_, err = GetMDMFromSecret(ctx, cr, ct)
 	if err != nil {
 		return err
+	}
+
+	// Check that the metrics TLS cert secret exists when provided
+	if isDriverMetricsTLSEnabled(*cr) {
+		found := &corev1.Secret{}
+		secretName := cr.Spec.Driver.Metrics.TLSCertSecret
+		err := ct.Get(ctx, types.NamespacedName{Name: secretName, Namespace: cr.GetNamespace()}, found)
+		if err != nil {
+			log.Error(err, "Failed query for secret", secretName, "Namespace", cr.Namespace)
+			if errors.IsNotFound(err) {
+				return fmt.Errorf("failed to find secret %s", secretName)
+			}
+		}
 	}
 
 	return nil

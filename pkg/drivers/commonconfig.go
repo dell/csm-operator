@@ -17,11 +17,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
-	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
-	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
+	csmv1 "github.com/dell/csm-operator/api/v1"
+	"github.com/dell/csm-operator/pkg/logger"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
@@ -227,6 +228,8 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 			}
 			containers[i].Env = operatorutils.ReplaceAllApplyCustomEnvs(c.Env, commonEnvs, controllerEnvs)
 			c.Env = containers[i].Env
+
+			SetDriverMetrics(driverType, cr, &c)
 		}
 
 		removeContainer := false
@@ -297,6 +300,22 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 
 	}
 
+	if driverType == csmv1.PowerFlex && isDriverMetricsTLSEnabled(cr) {
+		metricsTLSVolName := "metrics-tls"
+		metricsTLSSecretName := cr.Spec.Driver.Metrics.TLSCertSecret
+		dynamicallyAddVolume(
+			&controllerYAML.Deployment.Spec.Template.Spec.Volumes,
+			acorev1.VolumeApplyConfiguration{
+				Name: &metricsTLSVolName,
+				VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{
+					Secret: &acorev1.SecretVolumeSourceApplyConfiguration{
+						SecretName: &metricsTLSSecretName,
+					},
+				},
+			},
+		)
+	}
+
 	crUID := cr.GetUID()
 	bController := true
 	bOwnerDeletion := cr.Spec.Driver.ForceRemoveDriver != nil && !*cr.Spec.Driver.ForceRemoveDriver
@@ -314,6 +333,40 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	}
 
 	return &controllerYAML, nil
+}
+
+func isDriverMetricsTLSEnabled(cr csmv1.ContainerStorageModule) bool {
+	return cr.Spec.Driver.Metrics != nil && cr.Spec.Driver.Metrics.Enabled && cr.Spec.Driver.Metrics.TLSCertSecret != ""
+}
+
+func dynamicallyAddVolume(volumes *[]acorev1.VolumeApplyConfiguration, vol acorev1.VolumeApplyConfiguration) {
+	contains := slices.ContainsFunc(*volumes,
+		func(v acorev1.VolumeApplyConfiguration) bool { return *v.Name == *vol.Name },
+	)
+	if !contains {
+		*volumes = append(*volumes, vol)
+	}
+}
+
+// SetDriverMetrics mounts the TLS cert volume and sets the cert/key env vars for
+// drivers that expose a metrics endpoint secured with a user-provided secret.
+func SetDriverMetrics(driverType csmv1.DriverType, cr csmv1.ContainerStorageModule, c *acorev1.ContainerApplyConfiguration) {
+	if driverType != csmv1.PowerFlex {
+		return
+	}
+	if !isDriverMetricsTLSEnabled(cr) {
+		return
+	}
+	metricsTLSVolName := "metrics-tls"
+	metricsTLSMountPath := "/etc/metrics-tls"
+	readOnly := true
+	certEnvName := "X_CSI_METRICS_TLS_CERT_FILE"
+	certFile := "/etc/metrics-tls/tls.crt"
+	keyEnvName := "X_CSI_METRICS_TLS_KEY_FILE"
+	keyFile := "/etc/metrics-tls/tls.key"
+	dynamicallyMountVolume(c, acorev1.VolumeMountApplyConfiguration{Name: &metricsTLSVolName, MountPath: &metricsTLSMountPath, ReadOnly: &readOnly})
+	dynamicallyAddEnvironmentVariable(c, acorev1.EnvVarApplyConfiguration{Name: &certEnvName, Value: &certFile})
+	dynamicallyAddEnvironmentVariable(c, acorev1.EnvVarApplyConfiguration{Name: &keyEnvName, Value: &keyFile})
 }
 
 // GetNode get node yaml

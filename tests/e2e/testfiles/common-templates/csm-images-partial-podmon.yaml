@@ -7,4 +7,4 @@ data:
   versions.yaml: |
     - version: v1.16.1
       images:
-        podmon: csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:nightly
+        podmon: quay.io/dell/container-storage-modules/podmon:nightly

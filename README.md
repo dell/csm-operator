@@ -11,11 +11,11 @@ You may obtain a copy of the License at
 
 # Dell Technologies Container Storage Modules (CSM) Operator
 
-[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](https://eos2git.cec.lab.emc.com/CSM/csm/blob/main/docs/CODE_OF_CONDUCT.md)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](https://github.com/dell/csm/blob/main/docs/CODE_OF_CONDUCT.md)
 [![License](https://img.shields.io/github/license/dell/csm-operator)](LICENSE)
 [![Docker Pulls](https://img.shields.io/docker/pulls/dellemc/dell-csm-operator)](https://hub.docker.com/r/dellemc/dell-csm-operator)
 [![Go version](https://img.shields.io/github/go-mod/go-version/dell/csm-operator)](go.mod)
-[![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/dell/csm-operator?include_prereleases&label=latest&style=flat-square)](https://eos2git.cec.lab.emc.com/CSM/csm-operator/releases/latest)
+[![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/dell/csm-operator?include_prereleases&label=latest&style=flat-square)](https://github.com/dell/csm-operator/releases/latest)
 
 Dell Technologies Container Storage Modules (CSM) Operator is an open-source Kubernetes operator which can be used to install and manage various CSI Drivers and CSM Modules.
 

@@ -93,7 +93,7 @@ spec:
           value: "2"
         # X_CSI_SPACE_RECLAMATION_TIMEOUT: TimeOut in Seconds
         - name: X_CSI_SPACE_RECLAMATION_TIMEOUT
-          value: "3600"
+          value: "14400"
     sideCars:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner

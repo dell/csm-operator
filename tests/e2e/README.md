@@ -508,8 +508,8 @@ image_name=full_registry_path:tag
 
 Example:
 ```
-csi-vxflexos=csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-vxflexos:nightly
-dell-csm-operator=csm.artifactory.cec.lab.emc.com/csm-users/cicd/dell-csm-operator:nightly
+csi-vxflexos=quay.io/dell/container-storage-modules/csi-vxflexos:nightly
+dell-csm-operator=quay.io/dell/container-storage-modules/dell-csm-operator:nightly
 ```
 
 ### What the Test Validates

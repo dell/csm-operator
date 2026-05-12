@@ -17,7 +17,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/e2e/pkg/version"
+	"github.com/dell/csm-operator/tests/e2e/pkg/version"
 )
 
 // latestCSMVersion returns the latest CSM operator version, dynamically

@@ -24,23 +24,23 @@ import (
 	"sync/atomic"
 	"time"
 
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/k8s"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/drivers"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/modules"
+	"github.com/dell/csm-operator/k8s"
+	"github.com/dell/csm-operator/pkg/drivers"
+	"github.com/dell/csm-operator/pkg/modules"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/constants"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
-	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/resources/configmap"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/resources/csidriver"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/resources/daemonset"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/resources/deployment"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/resources/rbac"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/resources/serviceaccount"
+	csmv1 "github.com/dell/csm-operator/api/v1"
+	"github.com/dell/csm-operator/pkg/constants"
+	"github.com/dell/csm-operator/pkg/logger"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
+	"github.com/dell/csm-operator/pkg/resources/configmap"
+	"github.com/dell/csm-operator/pkg/resources/csidriver"
+	"github.com/dell/csm-operator/pkg/resources/daemonset"
+	"github.com/dell/csm-operator/pkg/resources/deployment"
+	"github.com/dell/csm-operator/pkg/resources/rbac"
+	"github.com/dell/csm-operator/pkg/resources/serviceaccount"
 	"go.uber.org/zap"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -143,6 +143,7 @@ var (
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshotcontents/status,verbs=get;list;watch;patch;update
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshots,verbs=get;list;watch;update;patch;create;delete
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshots/status,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups="cdi.kubevirt.io",resources=datavolumes,verbs=get;update;delete
 // +kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=*
 // +kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions/status,verbs=get;list;patch;watch
 // +kubebuilder:rbac:groups="storage.k8s.io",resources=volumeattachments/status,verbs=patch

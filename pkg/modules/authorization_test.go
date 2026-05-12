@@ -24,9 +24,9 @@ import (
 	"testing"
 	"time"
 
-	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
-	drivers "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/drivers"
-	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
+	csmv1 "github.com/dell/csm-operator/api/v1"
+	drivers "github.com/dell/csm-operator/pkg/drivers"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -47,7 +47,7 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 
-	shared "eos2git.cec.lab.emc.com/CSM/csm-operator/tests/sharedutil"
+	shared "github.com/dell/csm-operator/tests/sharedutil"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -3799,18 +3799,28 @@ func TestGetGatewayController(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name              string
-		cr                csmv1.ContainerStorageModule
-		expectError       bool
-		description       string
-		expectedClassName string
+		name               string
+		cr                 csmv1.ContainerStorageModule
+		expectError        bool
+		description        string
+		expectedClassName  string
+		expectedSecretName string
 	}{
 		{
-			name:              "Valid Authorization Module with Gateway API",
-			cr:                createAuthCRWithGatewayAPI(),
-			expectError:       false,
-			description:       "Should successfully generate Gateway API controller YAML",
-			expectedClassName: "nginx",
+			name:               "Valid Authorization Module with Gateway API",
+			cr:                 createAuthCRWithGatewayAPI(),
+			expectError:        false,
+			description:        "Should successfully generate Gateway API controller YAML",
+			expectedClassName:  "nginx",
+			expectedSecretName: "karavi-selfsigned-tls",
+		},
+		{
+			name:               "Authorization Module with Custom Certificates",
+			cr:                 createAuthCRWithGatewayAPIAndCustomCerts(),
+			expectError:        false,
+			description:        "Should generate Gateway YAML with user-provided-tls when custom certs are provided",
+			expectedClassName:  "nginx",
+			expectedSecretName: "user-provided-tls",
 		},
 		{
 			name:        "Missing Authorization Module",
@@ -3840,6 +3850,8 @@ func TestGetGatewayController(t *testing.T) {
 				assert.Contains(t, yamlString, "gatewayClassName: "+tt.expectedClassName)
 				// Verify externalTrafficPolicy is set to Cluster (matching v2.4.0 ingress-nginx behavior)
 				assert.Contains(t, yamlString, "externalTrafficPolicy: Cluster")
+				// Verify secret name selection based on custom certificates
+				assert.Contains(t, yamlString, "name: "+tt.expectedSecretName)
 			}
 		})
 	}
@@ -4036,6 +4048,13 @@ func createAuthCRWithGatewayAPI() csmv1.ContainerStorageModule {
 func createAuthCRWithLegacyVersion() csmv1.ContainerStorageModule {
 	cr := createAuthCRWithGatewayAPI()
 	cr.Spec.Modules[0].ConfigVersion = "v2.4.0"
+	return cr
+}
+
+func createAuthCRWithGatewayAPIAndCustomCerts() csmv1.ContainerStorageModule {
+	cr := createAuthCRWithGatewayAPI()
+	cr.Spec.Modules[0].Components[0].Certificate = "LS0tLS1CRUdJTi..."
+	cr.Spec.Modules[0].Components[0].PrivateKey = "LS0tLS1CRUdJTi..."
 	return cr
 }
 

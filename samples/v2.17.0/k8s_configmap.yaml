@@ -17,7 +17,7 @@ metadata:
   name: csm-images
   namespace: dell-csm-operator
 data:
-  versions.yaml: |
+  versions.yaml: |-
     - version: v1.17.0
       images:
         powerstore: quay.io/dell/container-storage-modules/csi-powerstore:v2.17.0
@@ -26,7 +26,7 @@ data:
         powermax: quay.io/dell/container-storage-modules/csi-powermax:v2.17.0
         karavi-authorization-proxy: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.5.0
         podmon: quay.io/dell/container-storage-modules/podmon:v1.16.0
-        otel-collector: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.143.1
+        otel-collector: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.150.1
         nginx-proxy: quay.io/nginx/nginx-unprivileged:1.27
         metrics-powermax: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.10.0
         metrics-powerstore: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.15.0

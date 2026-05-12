@@ -24,7 +24,7 @@ import (
 	"sync"
 	"testing"
 
-	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
+	csmv1 "github.com/dell/csm-operator/api/v1"
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/stretchr/testify/assert"
 	admissionregistration "k8s.io/api/admissionregistration/v1"
