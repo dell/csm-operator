@@ -491,6 +491,7 @@
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [powerflex-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If POWERFLEX_SDC_SFTP_REPO_ENABLED: Generate and Create SFTP Secrets from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "If POWERFLEX_SDC_SFTP_REPO_ENABLED: Set up Powerflex SFTP CR [1]"
+    - "Set up PowerFlex metrics TLS secret namespace [${E2E_NS_POWERFLEX}]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -1414,7 +1415,7 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/cicd] in CR spec [1]"
+    - "Set customRegistry to [quay.io/dell/container-storage-modules] in CR spec [1]"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
     - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
     - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
@@ -1434,7 +1435,7 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/cicd] in CR spec [1]"
+    - "Set customRegistry to [quay.io/dell/container-storage-modules] in CR spec [1]"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
     - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
     - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
@@ -1454,7 +1455,7 @@
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/cicd] in CR spec [1]"
+    - "Set customRegistry to [quay.io/dell/container-storage-modules] in CR spec [1]"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
     - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
     - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-creds] in namespace [${E2E_NS_POWERMAX}] for [powermaxUseSecret]"
@@ -1474,7 +1475,7 @@
     - "observability"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/cicd] in CR spec [1]"
+    - "Set customRegistry to [quay.io/dell/container-storage-modules] in CR spec [1]"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
     - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
     - "Create Secret with template [testfiles/powermax-templates/powermax-use-secret-template.yaml] name [powermax-creds] in namespace [${E2E_NS_POWERMAX}] for [powermaxUseSecret]"
@@ -2544,8 +2545,8 @@
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is installed"
-    - "Validate deployment from CR [1] has image [csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:v1.15.0] in container [podmon]"
-    - "Validate daemonset from CR [1] has image [csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:v1.15.0] in container [podmon]"
+    - "Validate deployment from CR [1] has image [quay.io/dell/container-storage-modules/podmon:v1.15.0] in container [podmon]"
+    - "Validate daemonset from CR [1] has image [quay.io/dell/container-storage-modules/podmon:v1.15.0] in container [podmon]"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
@@ -2566,8 +2567,8 @@
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is installed"
-    - "Validate deployment from CR [1] has image [csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:nightly] in container [podmon]"
-    - "Validate daemonset from CR [1] has image [csm.artifactory.cec.lab.emc.com/csm-users/cicd/podmon:nightly] in container [podmon]"
+    - "Validate deployment from CR [1] has image [quay.io/dell/container-storage-modules/podmon:nightly] in container [podmon]"
+    - "Validate daemonset from CR [1] has image [quay.io/dell/container-storage-modules/podmon:nightly] in container [podmon]"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"

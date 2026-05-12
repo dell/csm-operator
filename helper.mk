@@ -9,9 +9,9 @@ gen-semver:
 	go run core/semver/semver.go -f mk > semver.mk
 
 download-csm-common:
-	git clone --depth 1 git@eos2git.cec.lab.emc.com:CSM/csm.git temp-repo
+	git clone --depth 1 git@github.com:dell/csm.git temp-repo
 	cp temp-repo/config/csm-common.mk .
 	rm -rf temp-repo
 
 vendor:
-	GOPRIVATE=eos2git.cec.lab.emc.com go mod vendor
+	GOPRIVATE=github.com go mod vendor

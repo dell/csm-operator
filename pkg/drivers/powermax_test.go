@@ -18,9 +18,9 @@ import (
 	"fmt"
 	"testing"
 
-	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
-	shared "eos2git.cec.lab.emc.com/CSM/csm-operator/tests/sharedutil"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/sharedutil/crclient"
+	csmv1 "github.com/dell/csm-operator/api/v1"
+	shared "github.com/dell/csm-operator/tests/sharedutil"
+	"github.com/dell/csm-operator/tests/sharedutil/crclient"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/client-go/applyconfigurations/apps/v1"

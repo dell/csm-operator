@@ -21,10 +21,10 @@ import (
 	"testing"
 	"time"
 
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/controllers"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/k8s"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
-	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
+	"github.com/dell/csm-operator/controllers"
+	"github.com/dell/csm-operator/k8s"
+	"github.com/dell/csm-operator/pkg/logger"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -467,19 +467,19 @@ func TestGetk8sPath(t *testing.T) {
 		},
 		{
 			name:           "Current version greater than maximum",
-			kubeVersion:    "1.36",
-			currentVersion: "1.36",
+			kubeVersion:    "1.37",
+			currentVersion: "1.37",
 			minVersion:     K8sMinimumSupportedVersion,
 			maxVersion:     K8sMaximumSupportedVersion,
 			expectedPath:   "/driverconfig/common/k8s-" + K8sMaximumSupportedVersion + "-values.yaml",
 		},
 		{
-			name:           "Current version within range - 1.33",
-			kubeVersion:    "1.33",
-			currentVersion: "1.33",
+			name:           "Current version within range - 1.36",
+			kubeVersion:    "1.36",
+			currentVersion: "1.36",
 			minVersion:     K8sMinimumSupportedVersion,
 			maxVersion:     K8sMaximumSupportedVersion,
-			expectedPath:   "/driverconfig/common/k8s-1.33-values.yaml",
+			expectedPath:   "/driverconfig/common/k8s-1.36-values.yaml",
 		},
 		{
 			name:           "Current version within range - 1.34",

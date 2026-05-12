@@ -26,11 +26,11 @@ import (
 	"strings"
 	"time"
 
-	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/constants"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/modules"
-	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/e2e/pkg/version"
+	csmv1 "github.com/dell/csm-operator/api/v1"
+	"github.com/dell/csm-operator/pkg/constants"
+	"github.com/dell/csm-operator/pkg/modules"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
+	"github.com/dell/csm-operator/tests/e2e/pkg/version"
 	"golang.org/x/mod/semver"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -2721,6 +2721,36 @@ func (step *Step) setUpReverseProxy(_ Resource, namespace string) error {
 		if err != nil {
 			return fmt.Errorf("failed to create csirevproxy-tls-secret: %v", err)
 		}
+	}
+
+	return nil
+}
+
+func (step *Step) setUpMetricsTLSSecret(_ Resource, namespace string) error {
+	const secretName = "powerflex-metrics-tls"
+
+	cmd := exec.Command("kubectl", "get", "secret", secretName, "-n", namespace) // #nosec G204
+	if err := cmd.Run(); err == nil {
+		fmt.Printf("%s secret already exists, skipping creation.\n", secretName)
+		return nil
+	}
+
+	keyPath := "temp/tls.key"
+	crtPath := "temp/tls.crt"
+
+	cmd = exec.Command("openssl", "genrsa", "-out", keyPath, "2048") // #nosec G204
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to generate TLS key: %v", err)
+	}
+
+	cmd = exec.Command("openssl", "req", "-new", "-x509", "-sha256", "-key", keyPath, "-out", crtPath, "-days", "3650", "-subj", "/CN=powerflex-metrics") // #nosec G204
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to generate TLS certificate: %v", err)
+	}
+
+	cmd = exec.Command("kubectl", "create", "secret", "-n", namespace, "tls", secretName, "--cert="+crtPath, "--key="+keyPath) // #nosec G204
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to create %s secret: %v", secretName, err)
 	}
 
 	return nil

@@ -10,7 +10,7 @@ spec:
     replicas: 1
     forceRemoveDriver: true
     common:
-      image: "csm.artifactory.cec.lab.emc.com/csm-users/cicd/cosi:nightly"
+      image: "quay.io/dell/container-storage-modules/cosi:nightly"
       imagePullPolicy: Always
       # Node selector for scheduling the COSI driver pod.
       nodeSelector: {}

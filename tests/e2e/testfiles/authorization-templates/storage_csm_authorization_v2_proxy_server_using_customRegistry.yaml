@@ -5,7 +5,7 @@ metadata:
   namespace: ${E2E_NS_AUTH}
 spec:
   version: v1.17.0
-  customRegistry: "csm.artifactory.cec.lab.emc.com/csm-users/cicd"
+  customRegistry: "quay.io/dell/container-storage-modules"
   modules:
     # Authorization: enable csm-authorization proxy server for RBAC
     - name: authorization-proxy-server

@@ -16,7 +16,7 @@ spec:
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: "csm.artifactory.cec.lab.emc.com/csm-users/cicd/csi-vxflexos:nightly"
+      image: "quay.io/dell/container-storage-modules/csi-vxflexos:nightly"
       imagePullPolicy: Always
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -45,7 +45,7 @@ spec:
           - name: HOST_PID
             value: "1"
           - name: MDM
-            value: "10.x.x.x,10.x.x.x" # provide MDM value
+            value: "10.x.x.x,10.x.x.x"  # provide MDM value
       # health monitor is disabled by default, refer to driver documentation before enabling it
       # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
       - name: csi-external-health-monitor-controller
@@ -150,11 +150,11 @@ spec:
         name: sdc
         envs:
           - name: MDM
-            value: "REPLACE_MDM" # provide MDM value
+            value: "REPLACE_MDM"  # provide MDM value
           - name: REPO_ADDRESS
-            value: "REPLACE_SFTP_REPO_ADDRESS" # SFTP/private repository address. Format: "protocol://address"
+            value: "REPLACE_SFTP_REPO_ADDRESS"  # SFTP/private repository address. Format: "protocol://address"
           - name: REPO_USER
-            value: "REPLACE_SFTP_REPO_USER" # provide username to authenticate to the SFTP repo
+            value: "REPLACE_SFTP_REPO_USER"  # provide username to authenticate to the SFTP repo
           - name: MODULE_SIGCHECK
             value: "0"
   modules:
@@ -165,7 +165,7 @@ spec:
       configVersion: v2.5.0
       components:
         - name: karavi-authorization-proxy
-          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-authorization-sidecar:nightly
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"
@@ -184,7 +184,7 @@ spec:
           enabled: false
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
-          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.142.0
+          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.150.1
           envs:
             # image of nginx proxy image
             # Allowed values: string
@@ -195,7 +195,7 @@ spec:
           # enabled: Enable/Disable PowerFlex metrics
           enabled: false
           # image: Defines PowerFlex metrics image. This shouldn't be changed
-          image: csm.artifactory.cec.lab.emc.com/csm-users/cicd/csm-metrics-powerflex:nightly
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:nightly
           envs:
             # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
             # Allowed values: int

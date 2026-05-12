@@ -27,10 +27,10 @@ import (
 	"strings"
 	"time"
 
-	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
-	drivers "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/drivers"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
-	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
+	csmv1 "github.com/dell/csm-operator/api/v1"
+	drivers "github.com/dell/csm-operator/pkg/drivers"
+	"github.com/dell/csm-operator/pkg/logger"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	certificate "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	cmmetav1 "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -1818,6 +1818,17 @@ func getGatewayController(ctx context.Context, op operatorutils.OperatorConfig, 
 	YamlString = strings.ReplaceAll(YamlString, AuthNamespace, authNamespace)
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
 	YamlString = strings.ReplaceAll(YamlString, AuthCSMNameSpace, cr.Namespace)
+
+	// Dynamic secret name selection based on custom certificates (similar to v2.4.0 Ingress path)
+	for _, component := range auth.Components {
+		if component.Name == AuthProxyServerComponent {
+			if component.Certificate != "" && component.PrivateKey != "" {
+				// Use user-provided-tls when custom certificates are provided
+				YamlString = strings.ReplaceAll(YamlString, "karavi-selfsigned-tls", "user-provided-tls")
+			}
+			break
+		}
+	}
 
 	return YamlString, nil
 }

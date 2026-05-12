@@ -164,7 +164,7 @@ function checkForDellctl() {
 }
 
 function checkForGinkgo() {
-  if ! (go mod vendor && go get github.com/onsi/ginkgo/v2 && go mod vendor); then
+  if ! (go get github.com/onsi/ginkgo/v2 && go mod vendor); then
     echo "go mod vendor or go get ginkgo error"
     exit 1
   fi

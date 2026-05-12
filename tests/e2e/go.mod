@@ -1,9 +1,9 @@
-module eos2git.cec.lab.emc.com/CSM/csm-operator/tests/e2e
+module github.com/dell/csm-operator/tests/e2e
 
 go 1.26
 
 require (
-	eos2git.cec.lab.emc.com/CSM/csm-operator v1.10.1
+	github.com/dell/csm-operator v1.10.1
 	github.com/onsi/ginkgo/v2 v2.28.2
 	github.com/onsi/gomega v1.39.1
 	github.com/stretchr/testify v1.11.1
@@ -121,4 +121,4 @@ require (
 	sigs.k8s.io/structured-merge-diff/v6 v6.3.2 // indirect
 )
 
-replace eos2git.cec.lab.emc.com/CSM/csm-operator => ../../
+replace github.com/dell/csm-operator => ../../

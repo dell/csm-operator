@@ -94,16 +94,16 @@ unit-test: go-code-tester ## Run all unit tests as they are done in the GitHub a
 	./go-code-tester 90 "." "" "true" "" "" "./pkg/constants|./api/v1|./core|./tests"
 
 controller-unit-test:
-	go clean -cache && go test -v -coverprofile=c.out eos2git.cec.lab.emc.com/CSM/csm-operator/controllers
+	go clean -cache && go test -v -coverprofile=c.out github.com/dell/csm-operator/controllers
 
 driver-unit-test:
-	go clean -cache && go test -v -coverprofile=c.out eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/drivers
+	go clean -cache && go test -v -coverprofile=c.out github.com/dell/csm-operator/pkg/drivers
 
 module-unit-test:
-	go clean -cache && go test -v -coverprofile=c.out eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/modules
+	go clean -cache && go test -v -coverprofile=c.out github.com/dell/csm-operator/pkg/modules
 
 operatorutils-unit-test:
-	go clean -cache && go test -v -coverprofile=c.out eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils
+	go clean -cache && go test -v -coverprofile=c.out github.com/dell/csm-operator/pkg/operatorutils
 
 go-code-tester:
 	curl -o go-code-tester -L https://raw.githubusercontent.com/dell/common-github-actions/main/go-code-tester/entrypoint.sh \
@@ -116,8 +116,8 @@ IMAGE_VERSION ?= 0.0.0
 LDFLAGS = "-X main.ManifestSemver=$(IMAGE_VERSION)"
 
 tidy:
-	GOPRIVATE=eos2git.cec.lab.emc.com go mod tidy
-	GOPRIVATE=eos2git.cec.lab.emc.com cd tests/e2e/ && go mod tidy
+	GOPRIVATE=github.com go mod tidy
+	GOPRIVATE=github.com cd tests/e2e/ && go mod tidy
 
 build: gen-semver fmt vet ## Build manager binary.
 	go build -mod=vendor -ldflags $(LDFLAGS) -o bin/manager main.go
@@ -220,7 +220,7 @@ bundle: download-yamlfmt _bundle
 download-yamlfmt:
 	@if [ ! -f ./yamlfmt.remote ]; then \
 		echo "Downloading yamlfmt config from CSM actions..."; \
-		git clone --depth 1 git@eos2git.cec.lab.emc.com:CSM/actions.git temp-repo; \
+		git clone --depth 1 git@github.com:dell/actions.git temp-repo; \
 		cp temp-repo/.github/configs/yamlfmt/.yamlfmt ./yamlfmt.remote; \
 		rm -rf temp-repo; \
 	fi

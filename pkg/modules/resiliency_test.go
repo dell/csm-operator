@@ -18,9 +18,9 @@ import (
 	"strings"
 	"testing"
 
-	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
-	drivers "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/drivers"
-	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
+	csmv1 "github.com/dell/csm-operator/api/v1"
+	drivers "github.com/dell/csm-operator/pkg/drivers"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"

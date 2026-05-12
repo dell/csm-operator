@@ -28,7 +28,7 @@ import (
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 
-	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -47,11 +47,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/yaml"
 
-	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/controllers"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/core"
-	k8sClient "eos2git.cec.lab.emc.com/CSM/csm-operator/k8s"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/logger"
+	csmv1 "github.com/dell/csm-operator/api/v1"
+	"github.com/dell/csm-operator/controllers"
+	"github.com/dell/csm-operator/core"
+	k8sClient "github.com/dell/csm-operator/k8s"
+	"github.com/dell/csm-operator/pkg/logger"
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -68,9 +68,9 @@ const (
 	// Operatorconfig subfolder for deployment files
 	Operatorconfig = "operatorconfig"
 	// K8sMinimumSupportedVersion is the minimum supported version for k8s
-	K8sMinimumSupportedVersion = "1.33"
+	K8sMinimumSupportedVersion = "1.34"
 	// K8sMaximumSupportedVersion is the maximum supported version for k8s
-	K8sMaximumSupportedVersion = "1.35"
+	K8sMaximumSupportedVersion = "1.36"
 )
 
 var (

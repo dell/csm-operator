@@ -17,9 +17,9 @@ import (
 	"fmt"
 	"testing"
 
-	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
-	shared "eos2git.cec.lab.emc.com/CSM/csm-operator/tests/sharedutil"
-	"eos2git.cec.lab.emc.com/CSM/csm-operator/tests/sharedutil/crclient"
+	csmv1 "github.com/dell/csm-operator/api/v1"
+	shared "github.com/dell/csm-operator/tests/sharedutil"
+	"github.com/dell/csm-operator/tests/sharedutil/crclient"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -891,6 +891,89 @@ func TestRemoveVolume(t *testing.T) {
 						assert.NotEqual(t, *tt.configuration.Spec.Template.Spec.Containers[c].VolumeMounts[i].Name, volumeName)
 					}
 				}
+			}
+		})
+	}
+}
+
+func TestPrecheckPowerFlexTLSCert(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name        string
+		csm         csmv1.ContainerStorageModule
+		secrets     []*corev1.Secret
+		expectedErr string
+	}{
+		{
+			name: "metrics tls cert secret exists",
+			csm: func() csmv1.ContainerStorageModule {
+				cr := csmForPowerFlex("pflex-tls-test")
+				cr.Spec.Driver.Metrics = &csmv1.DriverMetrics{ // #nosec G101
+					Enabled:       true,
+					TLSCertSecret: "pflex-tls-cert",
+				}
+				return cr
+			}(),
+			secrets: []*corev1.Secret{
+				shared.MakeSecretWithJSON("pflex-tls-test-config", pFlexNS, configJSONFileGood),
+				shared.MakeSecret("pflex-tls-cert", pFlexNS, shared.PFlexConfigVersion),
+			},
+			expectedErr: "",
+		},
+		{
+			name: "metrics tls cert secret missing",
+			csm: func() csmv1.ContainerStorageModule {
+				cr := csmForPowerFlex("pflex-tls-test")
+				cr.Spec.Driver.Metrics = &csmv1.DriverMetrics{ // #nosec G101
+					Enabled:       true,
+					TLSCertSecret: "missing-tls-secret",
+				}
+				return cr
+			}(),
+			secrets: []*corev1.Secret{
+				shared.MakeSecretWithJSON("pflex-tls-test-config", pFlexNS, configJSONFileGood),
+			},
+			expectedErr: "failed to find secret missing-tls-secret",
+		},
+		{
+			name: "metrics disabled with tls cert secret set skips check",
+			csm: func() csmv1.ContainerStorageModule {
+				cr := csmForPowerFlex("pflex-tls-test")
+				cr.Spec.Driver.Metrics = &csmv1.DriverMetrics{ // #nosec G101
+					Enabled:       false,
+					TLSCertSecret: "missing-tls-secret",
+				}
+				return cr
+			}(),
+			secrets: []*corev1.Secret{
+				shared.MakeSecretWithJSON("pflex-tls-test-config", pFlexNS, configJSONFileGood),
+			},
+			expectedErr: "",
+		},
+		{
+			name: "metrics nil skips tls cert check",
+			csm:  csmForPowerFlex("pflex-tls-test"),
+			secrets: []*corev1.Secret{
+				shared.MakeSecretWithJSON("pflex-tls-test-config", pFlexNS, configJSONFileGood),
+			},
+			expectedErr: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			objs := make([]client.Object, 0, len(tt.secrets))
+			for _, s := range tt.secrets {
+				objs = append(objs, s)
+			}
+			ct := fake.NewClientBuilder().WithObjects(objs...).Build()
+			err := PrecheckPowerFlex(ctx, &tt.csm, config, ct)
+			if tt.expectedErr == "" {
+				assert.Nil(t, err)
+			} else {
+				assert.NotNil(t, err)
+				assert.Contains(t, err.Error(), tt.expectedErr)
 			}
 		})
 	}

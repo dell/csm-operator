@@ -21,7 +21,7 @@ metadata:
   namespace: ${E2E_NS_POWERSTORE}
 spec:
   version: v1.16.1
-  customRegistry: "csm.artifactory.cec.lab.emc.com/csm-users/cicd"
+  customRegistry: "quay.io/dell/container-storage-modules"
   driver:
     csiDriverType: "powerstore"
     csiDriverSpec:

@@ -17,9 +17,9 @@ import (
 	"strings"
 	"testing"
 
-	csmv1 "eos2git.cec.lab.emc.com/CSM/csm-operator/api/v1"
-	operatorutils "eos2git.cec.lab.emc.com/CSM/csm-operator/pkg/operatorutils"
-	shared "eos2git.cec.lab.emc.com/CSM/csm-operator/tests/sharedutil"
+	csmv1 "github.com/dell/csm-operator/api/v1"
+	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
+	shared "github.com/dell/csm-operator/tests/sharedutil"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
@@ -783,6 +783,93 @@ func TestGetController_SidecarImageCustomRegistryRetainPath(t *testing.T) {
 		}
 	}
 	assert.True(t, foundProvisioner, "expected to find provisioner container in controller deployment")
+}
+
+func TestGetController_PowerFlexMetricsTLSSecret(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name             string
+		tlsCertSecret    string
+		metricsEnabled   bool
+		expectTLSMounted bool
+	}{
+		{
+			name:             "metrics enabled with tlsCertSecret mounts secret",
+			tlsCertSecret:    "powerflex-metrics-tls",
+			metricsEnabled:   true,
+			expectTLSMounted: true,
+		},
+		{
+			name:             "metrics enabled with empty tlsCertSecret does not mount",
+			tlsCertSecret:    "",
+			metricsEnabled:   true,
+			expectTLSMounted: false,
+		},
+		{
+			name:             "metrics disabled with tlsCertSecret does not mount",
+			tlsCertSecret:    "powerflex-metrics-tls",
+			metricsEnabled:   false,
+			expectTLSMounted: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cr := csmForPowerFlex(pflexCSMName)
+			cr.Spec.Driver.Metrics = &csmv1.DriverMetrics{
+				Enabled:       tt.metricsEnabled,
+				TLSCertSecret: tt.tlsCertSecret,
+			}
+
+			controller, err := GetController(ctx, cr, config, csmv1.PowerFlex, operatorutils.VersionSpec{})
+			assert.Nil(t, err)
+
+			// Check volume existence
+			foundVol := false
+			for _, v := range controller.Deployment.Spec.Template.Spec.Volumes {
+				if v.Name != nil && *v.Name == "metrics-tls" {
+					foundVol = true
+					if tt.expectTLSMounted {
+						assert.NotNil(t, v.Secret, "metrics-tls volume should be a secret volume")
+						assert.Equal(t, tt.tlsCertSecret, *v.Secret.SecretName)
+					}
+					break
+				}
+			}
+			assert.Equal(t, tt.expectTLSMounted, foundVol, "metrics-tls volume presence mismatch")
+
+			// Check driver container volumeMount and env vars
+			foundMount := false
+			foundCertEnv := false
+			foundKeyEnv := false
+			for _, c := range controller.Deployment.Spec.Template.Spec.Containers {
+				if c.Name != nil && *c.Name == "driver" {
+					for _, vm := range c.VolumeMounts {
+						if vm.Name != nil && *vm.Name == "metrics-tls" {
+							foundMount = true
+							assert.Equal(t, "/etc/metrics-tls", *vm.MountPath)
+							assert.True(t, vm.ReadOnly != nil && *vm.ReadOnly)
+						}
+					}
+					for _, e := range c.Env {
+						if e.Name != nil && *e.Name == "X_CSI_METRICS_TLS_CERT_FILE" {
+							foundCertEnv = true
+							assert.Equal(t, "/etc/metrics-tls/tls.crt", *e.Value)
+						}
+						if e.Name != nil && *e.Name == "X_CSI_METRICS_TLS_KEY_FILE" {
+							foundKeyEnv = true
+							assert.Equal(t, "/etc/metrics-tls/tls.key", *e.Value)
+						}
+					}
+					break
+				}
+			}
+			assert.Equal(t, tt.expectTLSMounted, foundMount, "metrics-tls volumeMount presence mismatch")
+			assert.Equal(t, tt.expectTLSMounted, foundCertEnv, "X_CSI_METRICS_TLS_CERT_FILE env var presence mismatch")
+			assert.Equal(t, tt.expectTLSMounted, foundKeyEnv, "X_CSI_METRICS_TLS_KEY_FILE env var presence mismatch")
+		})
+	}
 }
 
 func TestGetNode_DriverImageCustomRegistryRetainPath(t *testing.T) {
