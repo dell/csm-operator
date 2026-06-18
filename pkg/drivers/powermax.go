@@ -79,6 +79,12 @@ const (
 	CSIPowerMaxConfigPathValue string = "/powermax-config-params/driver-config-params.yaml"
 
 	PowerMaxMountCredentialMinVersion string = "v2.14.0"
+
+	CSIPowerMaxProxyAuthTokenFile       string = "X_CSI_REVPROXY_AUTH_TOKEN_FILE"   // #nosec G101
+	CSIPowerMaxProxyAuthTokenSecretName string = "X_CSI_REVPROXY_AUTH_TOKEN_SECRET" // #nosec G101
+	CSIPowerMaxProxyAuthTokenMountPath  string = "/etc/proxy-auth-token"            // #nosec G101
+	CSIPowerMaxProxyAuthTokenVolumeName string = "proxy-auth-token"                 // #nosec G101
+	CSIPowerMaxProxyAuthTokenKey        string = "token"                            // #nosec G101
 )
 
 /*
@@ -91,6 +97,7 @@ type CustomEnv struct {
 	Value string // Value of the environment variable
 }
 
+// MountCredentialsEnvs contains environment variables for mounting credentials
 var (
 	MountCredentialsEnvs = []CustomEnv{
 		{Name: CSIPowerMaxSecretFilePath, Value: CSIPowerMaxSecretMountPath + "/" + CSIPowerMaxSecretName},
@@ -152,6 +159,7 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 	return nil
 }
 
+// UseReverseProxySecret checks if reverse proxy secret is configured in the CR
 func UseReverseProxySecret(cr *csmv1.ContainerStorageModule) bool {
 	useSecret := false
 
@@ -389,6 +397,21 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 	return yamlString
 }
 
+// GetProxyAuthTokenSecretName returns the auth token secret name from the CR env vars.
+// Users set X_CSI_REVPROXY_AUTH_TOKEN_SECRET in common.envs to enable the feature.
+func GetProxyAuthTokenSecretName(cr *csmv1.ContainerStorageModule) string {
+	if cr.Spec.Driver.Common == nil {
+		return ""
+	}
+	for _, env := range cr.Spec.Driver.Common.Envs {
+		if env.Name == CSIPowerMaxProxyAuthTokenSecretName && env.Value != "" {
+			return env.Value
+		}
+	}
+	return ""
+}
+
+// DynamicallyMountPowermaxContent dynamically mounts PowerMax secret or configMap content
 func DynamicallyMountPowermaxContent(configuration interface{}, cr csmv1.ContainerStorageModule) error {
 	var podTemplate *acorev1.PodTemplateSpecApplyConfiguration
 	switch configuration := configuration.(type) {
@@ -426,14 +449,12 @@ func DynamicallyMountPowermaxContent(configuration interface{}, cr csmv1.Contain
 				setPowermaxMountCredentialContent(&podTemplate.Spec.Containers[i])
 			}
 		}
-
-		return nil
-	}
-
-	for i, cnt := range podTemplate.Spec.Containers {
-		if *cnt.Name == "driver" {
-			SetPowermaxConfigContent(&podTemplate.Spec.Containers[i], secretName)
-			break
+	} else {
+		for i, cnt := range podTemplate.Spec.Containers {
+			if *cnt.Name == "driver" {
+				SetPowermaxConfigContent(&podTemplate.Spec.Containers[i], secretName)
+				break
+			}
 		}
 	}
 
@@ -457,8 +478,9 @@ func setPowermaxMountCredentialContent(ct *acorev1.ContainerApplyConfiguration) 
 }
 
 func dynamicallyMountVolume(ct *acorev1.ContainerApplyConfiguration, mount acorev1.VolumeMountApplyConfiguration) {
-	contains := slices.ContainsFunc(ct.VolumeMounts,
-		func(v acorev1.VolumeMountApplyConfiguration) bool { return *(v.Name) == *(mount.Name) },
+	contains := slices.ContainsFunc(
+		ct.VolumeMounts,
+		func(v acorev1.VolumeMountApplyConfiguration) bool { return *v.Name == *mount.Name },
 	)
 
 	if !contains {
@@ -466,6 +488,7 @@ func dynamicallyMountVolume(ct *acorev1.ContainerApplyConfiguration, mount acore
 	}
 }
 
+// SetPowermaxConfigContent sets PowerMax config content from secret
 func SetPowermaxConfigContent(ct *acorev1.ContainerApplyConfiguration, secretName string) {
 	userNameVariable := "X_CSI_POWERMAX_USER"
 	userNameKey := "username"
@@ -497,8 +520,9 @@ func SetPowermaxConfigContent(ct *acorev1.ContainerApplyConfiguration, secretNam
 }
 
 func dynamicallyAddEnvironmentVariable(ct *acorev1.ContainerApplyConfiguration, envVar acorev1.EnvVarApplyConfiguration) {
-	contains := slices.ContainsFunc(ct.Env,
-		func(v acorev1.EnvVarApplyConfiguration) bool { return *(v.Name) == *(envVar.Name) },
+	contains := slices.ContainsFunc(
+		ct.Env,
+		func(v acorev1.EnvVarApplyConfiguration) bool { return *v.Name == *envVar.Name },
 	)
 
 	if !contains {

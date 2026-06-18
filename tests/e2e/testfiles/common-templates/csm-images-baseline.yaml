@@ -5,7 +5,7 @@ metadata:
   namespace: dell-csm-operator
 data:
   versions.yaml: |
-    - version: v1.17.0
+    - version: v1.17.1
       images:
         powerstore: quay.io/dell/container-storage-modules/csi-powerstore:nightly
         powerflex: quay.io/dell/container-storage-modules/csi-vxflexos:nightly

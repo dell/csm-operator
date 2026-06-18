@@ -46,7 +46,7 @@ type Info struct {
 	CSMVersions []string
 
 	// configVersions maps entity name (driver or module) to
-	// CSM version → config version. E.g. configVersions["powerflex"]["v1.17.0"] = "v2.17.0".
+	// CSM version → config version. E.g. configVersions["powerflex"]["v1.17.1"] = "v2.17.0".
 	configVersions map[string]map[string]string
 
 	// moduleVersions maps driver → driver configVersion → module → module configVersion.

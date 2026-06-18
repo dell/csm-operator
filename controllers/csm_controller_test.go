@@ -2303,7 +2303,7 @@ func getReverseProxyModuleWithSecret() []csmv1.Module {
 		{
 			Name:          csmv1.ReverseProxy,
 			Enabled:       true,
-			ConfigVersion: "v2.16.0",
+			ConfigVersion: "v2.16.1",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name:    string(csmv1.ReverseProxyServer),
@@ -3508,6 +3508,24 @@ func (suite *CSMControllerTestSuite) TestSyncCSMPowerMaxReverseProxyErrors() {
 	assert.Contains(suite.T(), err.Error(), "reverse-proxy")
 }
 
+// TestSyncCSMPowerMaxReverseProxyNotSidecar covers lines 846-849 (AddReverseProxyServiceName path)
+func (suite *CSMControllerTestSuite) TestSyncCSMPowerMaxReverseProxyNotSidecar() {
+	r := suite.createReconciler()
+	suite.makeFakeCSM(csmName, suite.namespace, false, []csmv1.Module{})
+
+	modules.IsReverseProxySidecar = func() bool { return false }
+	defer func() { modules.IsReverseProxySidecar = func() bool { return false } }()
+
+	csm := shared.MakeCSM(csmName, suite.namespace, shared.PmaxConfigVersion)
+	csm.Spec.Driver.CSIDriverType = csmv1.PowerMax
+	csm.Spec.Driver.Common.Image = "image"
+	csm.Spec.Driver.AuthSecret = "powermax-creds"
+	csm.Spec.Modules = getReverseProxyModule()
+
+	err := r.SyncCSM(ctx, csm, operatorConfig, r.Client)
+	assert.Nil(suite.T(), err)
+}
+
 // TestRemoveDriverReplicationError covers lines 1481-1493
 func (suite *CSMControllerTestSuite) TestRemoveDriverReplicationError() {
 	r := suite.createReconciler()
@@ -3937,7 +3955,7 @@ func (suite *CSMControllerTestSuite) TestCheckUpgradeAuthServerVersion() {
 	r := suite.createReconciler()
 	csm := shared.MakeModuleCSM(csmName, suite.namespace, shared.AuthServerConfigVersion)
 	csm.Spec.Modules = getAuthProxyServer()
-	csm.Spec.Version = "v1.17.0"
+	csm.Spec.Version = "v1.17.1"
 	csm.Spec.Driver.CSIDriverType = ""
 	// Set annotation to simulate existing install
 	csm.ObjectMeta.Annotations = map[string]string{
@@ -4036,9 +4054,9 @@ func (suite *CSMControllerTestSuite) TestSyncCSMReverseProxyInjectDeploymentErro
 	csm.Spec.Driver.CSIDriverType = csmv1.PowerMax
 	csm.Spec.Driver.Common.Image = "image"
 
-	// Override IsReverseProxySidecar to return true
+	// Override IsReverseProxySidecar to return false (standalone mode)
 	origFn := modules.IsReverseProxySidecar
-	modules.IsReverseProxySidecar = func() bool { return true }
+	modules.IsReverseProxySidecar = func() bool { return false }
 	defer func() { modules.IsReverseProxySidecar = origFn }()
 
 	// Create temp config with container.yaml removed from reverse proxy module
@@ -4062,7 +4080,7 @@ func (suite *CSMControllerTestSuite) TestSyncCSMReverseProxyInjectDeploymentErro
 		{
 			Name:          csmv1.ReverseProxy,
 			Enabled:       true,
-			ConfigVersion: "v2.16.0",
+			ConfigVersion: "v2.16.1",
 		},
 	}
 	csm.Spec.Modules = rpModule

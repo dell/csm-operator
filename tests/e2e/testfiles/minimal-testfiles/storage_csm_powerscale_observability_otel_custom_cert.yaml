@@ -4,7 +4,7 @@ metadata:
   name: isilon
   namespace: ${E2E_NS_POWERSCALE}
 spec:
-  version: v1.17.0
+  version: v1.17.1
   driver:
     csiDriverType: "isilon"
     forceRemoveDriver: true
