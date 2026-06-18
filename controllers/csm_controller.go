@@ -99,7 +99,7 @@ const (
 	CSMFinalizerName = "finalizer.dell.emc.com"
 
 	// CSMVersion -
-	CSMVersion = "v1.17.0"
+	CSMVersion = "v1.17.1"
 
 	// RefreshEnvVar - environment variable name for watcher timed refreshes
 	RefreshEnvVar = "REFRESH_INTERVAL_MINUTES"
@@ -844,7 +844,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 
 	if cr.GetDriverType() == csmv1.PowerMax {
 		if !modules.IsReverseProxySidecar() {
-			log.Infof("DeployAsSidar is false...csi-reverseproxy should be present as deployment\n")
+			log.Infof("DeployAsSidecar is false...csi-reverseproxy should be present as deployment\n")
 			log.Infof("adding proxy service name...\n")
 			modules.AddReverseProxyServiceName(&controller.Deployment)
 
@@ -856,7 +856,7 @@ func (r *ContainerStorageModuleReconciler) SyncCSM(ctx context.Context, cr csmv1
 			if err := modules.ReverseProxyStartService(ctx, false, operatorConfig, cr, ctrlClient); err != nil {
 				return fmt.Errorf("unable to reconcile reverse-proxy service: %v", err)
 			}
-			log.Info("Injecting CSI ReverseProxy")
+			log.Info("Injecting CSI ReverseProxy into controller deployment")
 			dp, err := modules.ReverseProxyInjectDeployment(ctx, controller.Deployment, cr, operatorConfig, matched)
 			if err != nil {
 				return fmt.Errorf("unable to inject ReverseProxy into deployment: %v", err)
@@ -1767,10 +1767,6 @@ func (r *ContainerStorageModuleReconciler) PreChecks(ctx context.Context, cr *cs
 		if err != nil {
 			return fmt.Errorf("failed powermax validation: %v", err)
 		}
-
-		// To ensure that we are handling minimal manifests correctly and consistent, we must reset DeployAsSidecar to the original value.
-		// This variable will be set correctly if the reverseproxy is found in the manifests.
-		modules.ResetDeployAsSidecar()
 	case csmv1.Cosi:
 		err := drivers.PrecheckCosi(ctx, cr, operatorConfig, r.GetClient())
 		if err != nil {

@@ -179,6 +179,12 @@ func ReverseProxyServer(ctx context.Context, isDeleting bool, op operatorutils.O
 					cm := getRevProxyEnvVariable(*revProxyModule, "X_CSI_CONFIG_MAP_NAME")
 					deploymentSetReverseProxyConfigMapMounts(dp, cm)
 				}
+
+				// Mount proxy auth token secret on the standalone reverse proxy if configured
+				authTokenSecretName := drivers.GetProxyAuthTokenSecretName(&cr)
+				if authTokenSecretName != "" {
+					deploymentSetProxyAuthTokenMounts(dp, authTokenSecretName)
+				}
 			}
 		}
 		if isDeleting {
@@ -336,8 +342,7 @@ func ReverseProxyInjectDeployment(ctx context.Context, dp v1.DeploymentApplyConf
 	container := *containerPtr
 	// For minimal manifest image override with configmap where component isn't mentioned
 	if len(revProxyModule.Components) == 0 {
-		var synthetic csmv1.ContainerTemplate
-		synthetic = csmv1.ContainerTemplate{
+		var synthetic csmv1.ContainerTemplate = csmv1.ContainerTemplate{
 			Name: ReverseProxyServerComponent,
 		}
 		*container.Image = operatorutils.GetFinalImage(ctx, cr, matched, synthetic, *container.Image)
@@ -346,6 +351,28 @@ func ReverseProxyInjectDeployment(ctx context.Context, dp v1.DeploymentApplyConf
 	for _, side := range revProxyModule.Components {
 		if side.Name == ReverseProxyServerComponent {
 			*container.Image = operatorutils.GetFinalImage(ctx, cr, matched, side, *container.Image)
+			// Merge CR environment variables with template environment variables
+			for _, env := range side.Envs {
+				envName := env.Name
+				envValue := env.Value
+				// Check if this env var already exists in the template
+				found := false
+				for i, templateEnv := range container.Env {
+					if templateEnv.Name != nil && *templateEnv.Name == envName {
+						// Update existing env var
+						container.Env[i].Value = &envValue
+						found = true
+						break
+					}
+				}
+				// Add new env var if not found
+				if !found {
+					container.Env = append(container.Env, acorev1.EnvVarApplyConfiguration{
+						Name:  &envName,
+						Value: &envValue,
+					})
+				}
+			}
 		}
 	}
 	dp.Spec.Template.Spec.Containers = append(dp.Spec.Template.Spec.Containers, container)
@@ -444,6 +471,46 @@ func deploymentSetReverseProxySecretMounts(dp *appsv1.Deployment, secretName str
 					Value: env.Value,
 				})
 			}
+			break
+		}
+	}
+}
+
+// deploymentSetProxyAuthTokenMounts adds the proxy auth token secret volume, mount, and env var
+// to the standalone reverse proxy deployment (appsv1.Deployment, not apply configuration).
+func deploymentSetProxyAuthTokenMounts(dp *appsv1.Deployment, secretName string) {
+	optional := false
+	readOnly := true
+	volumeName := drivers.CSIPowerMaxProxyAuthTokenVolumeName
+	mountPath := drivers.CSIPowerMaxProxyAuthTokenMountPath
+	tokenFilePath := drivers.CSIPowerMaxProxyAuthTokenMountPath + "/" + drivers.CSIPowerMaxProxyAuthTokenKey
+
+	// Add volume
+	dp.Spec.Template.Spec.Volumes = append(dp.Spec.Template.Spec.Volumes,
+		corev1.Volume{
+			Name: volumeName,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: secretName,
+					Optional:   &optional,
+				},
+			},
+		})
+
+	// Add volume mount and env var to the reverseproxy container
+	for i, cnt := range dp.Spec.Template.Spec.Containers {
+		if cnt.Name == RevProxyServiceName {
+			dp.Spec.Template.Spec.Containers[i].VolumeMounts = append(dp.Spec.Template.Spec.Containers[i].VolumeMounts,
+				corev1.VolumeMount{
+					Name:      volumeName,
+					MountPath: mountPath,
+					ReadOnly:  readOnly,
+				})
+			dp.Spec.Template.Spec.Containers[i].Env = append(dp.Spec.Template.Spec.Containers[i].Env,
+				corev1.EnvVar{
+					Name:  drivers.CSIPowerMaxProxyAuthTokenFile,
+					Value: tokenFilePath,
+				})
 			break
 		}
 	}

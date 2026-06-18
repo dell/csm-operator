@@ -22,6 +22,7 @@ import (
 	"github.com/dell/csm-operator/pkg/drivers"
 	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	"github.com/stretchr/testify/assert"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
@@ -249,6 +250,9 @@ func TestGetRevproxyApplyCR_MinimalManifest_ModuleNameDefaulted(t *testing.T) {
 
 	// Simulate minimal manifest: no reverseproxy module present in the CR.
 	cr.Spec.Modules = []csmv1.Module{}
+
+	// Set driver configVersion to a supported version
+	cr.Spec.Driver.ConfigVersion = "v2.17.1"
 
 	mod, container, err := getRevproxyApplyCR(ctx, cr, operatorConfig)
 	assert.NoError(t, err)
@@ -486,6 +490,82 @@ func TestReverseProxyInjectDeployment(t *testing.T) {
 
 			return false, controllerYAML.Deployment, operatorConfig, customResource
 		},
+		"success - merge CR env vars with template env vars": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			// Add custom env vars to the reverse proxy module components
+			customResource.Spec.Modules[0].Components[0].Envs = append(customResource.Spec.Modules[0].Components[0].Envs,
+				corev1.EnvVar{Name: "CUSTOM_ENV_1", Value: "custom_value_1"})
+			customResource.Spec.Modules[0].Components[0].Envs = append(customResource.Spec.Modules[0].Components[0].Envs,
+				corev1.EnvVar{Name: "CUSTOM_ENV_2", Value: "custom_value_2"})
+
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax, operatorutils.VersionSpec{})
+			if err != nil {
+				panic(err)
+			}
+			deployAsSidecar = true
+
+			return true, controllerYAML.Deployment, operatorConfig, customResource
+		},
+		"success - update existing env var from CR": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			// Add an env var that might already exist in the template to test the update logic
+			customResource.Spec.Modules[0].Components[0].Envs = append(customResource.Spec.Modules[0].Components[0].Envs,
+				corev1.EnvVar{Name: "MY_CUSTOM_VAR", Value: "updated_value"})
+
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax, operatorutils.VersionSpec{})
+			if err != nil {
+				panic(err)
+			}
+			deployAsSidecar = true
+
+			return true, controllerYAML.Deployment, operatorConfig, customResource
+		},
+		"success - configMap mounts with no secret": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_reverseproxy_use_secret.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			// Set to use configMap instead of secret to test setReverseProxyConfigMapMounts path
+			customResource.Spec.Driver.Common.Envs = append(customResource.Spec.Driver.Common.Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
+			customResource.Spec.Modules[0].Components[0].Envs = append(customResource.Spec.Modules[0].Components[0].Envs,
+				corev1.EnvVar{Name: "X_CSI_REVPROXY_USE_SECRET", Value: "false"})
+
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax, operatorutils.VersionSpec{})
+			if err != nil {
+				panic(err)
+			}
+			deployAsSidecar = true
+
+			return true, controllerYAML.Deployment, operatorConfig, customResource
+		},
+		"fail - invalid config directory": func(*testing.T) (bool, applyv1.DeploymentApplyConfiguration, operatorutils.OperatorConfig, csmv1.ContainerStorageModule) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_reverseproxy.yaml")
+			if err != nil {
+				panic(err)
+			}
+
+			controllerYAML, err := drivers.GetController(ctx, customResource, operatorConfig, csmv1.PowerMax, operatorutils.VersionSpec{})
+			if err != nil {
+				panic(err)
+			}
+			deployAsSidecar = true
+
+			// Use invalid operator config to test error path
+			badOp := operatorConfig
+			badOp.ConfigDirectory = "./testdata/dir-does-not-exist"
+
+			return false, controllerYAML.Deployment, badOp, customResource
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -528,6 +608,15 @@ func TestReverseProxyStartService(t *testing.T) {
 			deployAsSidecar = true
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return true, true, tmpCR, sourceClient, operatorConfig
+		},
+		"fail - reverse proxy module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			tmpCR, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+			deployAsSidecar = false
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return false, false, tmpCR, sourceClient, operatorConfig
 		},
 	}
 	for name, tc := range tests {
@@ -644,7 +733,10 @@ func TestIsReverseProxySidecar(t *testing.T) {
 				K8sClient: fake.NewSimpleClientset(),
 			}
 
-			ReverseProxyPrecheck(ctx, operatorConfig, reverseProxy, tmpCR, &fakeReconcile)
+			err := ReverseProxyPrecheck(ctx, operatorConfig, reverseProxy, tmpCR, &fakeReconcile)
+			if err != nil {
+				t.Errorf("ReverseProxyPrecheck failed: %v", err)
+			}
 			if isSideCar != IsReverseProxySidecar() {
 				t.Errorf("Expected %v but got %v", isSideCar, IsReverseProxySidecar())
 			}
@@ -785,6 +877,58 @@ func TestResetDeployAsSidecar(t *testing.T) {
 	}
 }
 
+func TestDeploymentSetProxyAuthTokenMounts(t *testing.T) {
+	dp := &appsv1.Deployment{
+		Spec: appsv1.DeploymentSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name: RevProxyServiceName,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	deploymentSetProxyAuthTokenMounts(dp, "test-secret")
+
+	// Verify volume was added
+	foundVolume := false
+	for _, vol := range dp.Spec.Template.Spec.Volumes {
+		if vol.Name == drivers.CSIPowerMaxProxyAuthTokenVolumeName {
+			foundVolume = true
+			assert.NotNil(t, vol.VolumeSource.Secret)
+			assert.Equal(t, "test-secret", vol.VolumeSource.Secret.SecretName)
+		}
+	}
+	assert.True(t, foundVolume, "Proxy auth token volume should be added")
+
+	// Verify volume mount and env var were added to reverseproxy container
+	foundMount := false
+	foundEnv := false
+	for _, cnt := range dp.Spec.Template.Spec.Containers {
+		if cnt.Name == RevProxyServiceName {
+			for _, mount := range cnt.VolumeMounts {
+				if mount.Name == drivers.CSIPowerMaxProxyAuthTokenVolumeName {
+					foundMount = true
+					assert.Equal(t, drivers.CSIPowerMaxProxyAuthTokenMountPath, mount.MountPath)
+					assert.True(t, mount.ReadOnly)
+				}
+			}
+			for _, env := range cnt.Env {
+				if env.Name == drivers.CSIPowerMaxProxyAuthTokenFile {
+					foundEnv = true
+					assert.Equal(t, drivers.CSIPowerMaxProxyAuthTokenMountPath+"/"+drivers.CSIPowerMaxProxyAuthTokenKey, env.Value)
+				}
+			}
+		}
+	}
+	assert.True(t, foundMount, "Proxy auth token volume mount should be added")
+	assert.True(t, foundEnv, "Proxy auth token env var should be added")
+}
+
 func TestGetRevProxyVolumeComp_TLSSecretConditional(t *testing.T) {
 	tests := []struct {
 		name              string
@@ -883,7 +1027,7 @@ func TestGetRevproxyApplyCR_ConfigMapImageOverride(t *testing.T) {
 	}
 
 	matched := operatorutils.VersionSpec{
-		Version: "v2.16.0",
+		Version: "v2.16.1",
 		Images: map[string]string{
 			ReverseProxyServerComponent: "configmap-registry.io/revproxy:from-configmap",
 		},
@@ -980,7 +1124,7 @@ func TestGetRevproxyApplyCR_ConfigMapWinsOverCustomRegistry(t *testing.T) {
 	}
 
 	matched := operatorutils.VersionSpec{
-		Version: "v2.16.0",
+		Version: "v2.16.1",
 		Images: map[string]string{
 			ReverseProxyServerComponent: "configmap-registry.io/revproxy:from-configmap",
 		},

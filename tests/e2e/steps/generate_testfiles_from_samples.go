@@ -549,12 +549,12 @@ func testfileSpecs() []TestfileSpec {
 		// PowerScale (8-14)
 		{
 			OutputFilename: "storage_csm_powerscale.yaml",
-			SamplePath:     "v2.17.0/storage_csm_powerscale_v2170.yaml",
+			SamplePath:     "v2.17.0/storage_csm_powerscale_v2171.yaml",
 			Namespace:      "${E2E_NS_POWERSCALE}",
 		},
 		{
 			OutputFilename: "storage_csm_powerscale_auth.yaml",
-			SamplePath:     "v2.17.0/storage_csm_powerscale_v2170.yaml",
+			SamplePath:     "v2.17.0/storage_csm_powerscale_v2171.yaml",
 			Namespace:      "${E2E_NS_POWERSCALE}",
 			Name:           "isilon",
 			EnableModules:  []string{"authorization"},
@@ -564,7 +564,7 @@ func testfileSpecs() []TestfileSpec {
 		},
 		{
 			OutputFilename: "storage_csm_powerscale_observability.yaml",
-			SamplePath:     "v2.17.0/storage_csm_powerscale_v2170.yaml",
+			SamplePath:     "v2.17.0/storage_csm_powerscale_v2171.yaml",
 			Namespace:      "${E2E_NS_POWERSCALE}",
 			Name:           "isilon",
 			EnableModules:  []string{"observability"},
@@ -574,7 +574,7 @@ func testfileSpecs() []TestfileSpec {
 		},
 		{
 			OutputFilename: "storage_csm_powerscale_observability_auth.yaml",
-			SamplePath:     "v2.17.0/storage_csm_powerscale_v2170.yaml",
+			SamplePath:     "v2.17.0/storage_csm_powerscale_v2171.yaml",
 			Namespace:      "${E2E_NS_POWERSCALE}",
 			Name:           "isilon",
 			EnableModules:  []string{"authorization", "observability"},
@@ -587,21 +587,21 @@ func testfileSpecs() []TestfileSpec {
 		},
 		{
 			OutputFilename: "storage_csm_powerscale_replica.yaml",
-			SamplePath:     "v2.17.0/storage_csm_powerscale_v2170.yaml",
+			SamplePath:     "v2.17.0/storage_csm_powerscale_v2171.yaml",
 			Namespace:      "${E2E_NS_POWERSCALE}",
 			Name:           "isilon",
 			EnableModules:  []string{"replication"},
 		},
 		{
 			OutputFilename: "storage_csm_powerscale_resiliency.yaml",
-			SamplePath:     "v2.17.0/storage_csm_powerscale_v2170.yaml",
+			SamplePath:     "v2.17.0/storage_csm_powerscale_v2171.yaml",
 			Namespace:      "${E2E_NS_POWERSCALE}",
 			Name:           "isilon",
 			EnableModules:  []string{"resiliency"},
 		},
 		{
 			OutputFilename:      "storage_csm_powerscale_health_monitor.yaml",
-			SamplePath:          "v2.17.0/storage_csm_powerscale_v2170.yaml",
+			SamplePath:          "v2.17.0/storage_csm_powerscale_v2171.yaml",
 			Namespace:           "${E2E_NS_OPERATOR}",
 			Name:                "powerscale",
 			EnableHealthMonitor: true,
@@ -653,7 +653,7 @@ func testfileSpecs() []TestfileSpec {
 		// PowerMax (20-24)
 		{
 			OutputFilename: "storage_csm_powermax.yaml",
-			SamplePath:     "v2.17.0/storage_csm_powermax_v2170.yaml",
+			SamplePath:     "v2.17.0/storage_csm_powermax_v2171.yaml",
 			Namespace:      "${E2E_NS_POWERMAX}",
 			Name:           "powermax",
 			ComponentEnvOverrides: map[string]map[string]string{
@@ -662,7 +662,7 @@ func testfileSpecs() []TestfileSpec {
 		},
 		{
 			OutputFilename: "storage_csm_powermax_authorization.yaml",
-			SamplePath:     "v2.17.0/storage_csm_powermax_v2170.yaml",
+			SamplePath:     "v2.17.0/storage_csm_powermax_v2171.yaml",
 			Namespace:      "${E2E_NS_POWERMAX}",
 			Name:           "powermax",
 			EnableModules:  []string{"authorization"},
@@ -672,7 +672,7 @@ func testfileSpecs() []TestfileSpec {
 		},
 		{
 			OutputFilename: "storage_csm_powermax_observability.yaml",
-			SamplePath:     "v2.17.0/storage_csm_powermax_v2170.yaml",
+			SamplePath:     "v2.17.0/storage_csm_powermax_v2171.yaml",
 			Namespace:      "${E2E_NS_POWERMAX}",
 			Name:           "powermax",
 			EnableModules:  []string{"observability"},
@@ -682,7 +682,7 @@ func testfileSpecs() []TestfileSpec {
 		},
 		{
 			OutputFilename: "storage_csm_powermax_observability_authorization.yaml",
-			SamplePath:     "v2.17.0/storage_csm_powermax_v2170.yaml",
+			SamplePath:     "v2.17.0/storage_csm_powermax_v2171.yaml",
 			Namespace:      "${E2E_NS_POWERMAX}",
 			Name:           "powermax",
 			EnableModules:  []string{"authorization", "observability"},
@@ -695,7 +695,7 @@ func testfileSpecs() []TestfileSpec {
 		},
 		{
 			OutputFilename: "storage_csm_powermax_resiliency.yaml",
-			SamplePath:     "v2.17.0/storage_csm_powermax_v2170.yaml",
+			SamplePath:     "v2.17.0/storage_csm_powermax_v2171.yaml",
 			Namespace:      "${E2E_NS_POWERMAX}",
 			Name:           "powermax",
 			EnableModules:  []string{"resiliency"},
@@ -730,7 +730,7 @@ func testfileSpecs() []TestfileSpec {
 		// ── Group 2: PowerMax Reverse Proxy Variants (28-33) ──
 		{
 			OutputFilename: "storage_csm_powermax_tls.yaml",
-			SamplePath:     "v2.17.0/storage_csm_powermax_v2170.yaml",
+			SamplePath:     "v2.17.0/storage_csm_powermax_v2171.yaml",
 			Namespace:      "${E2E_NS_POWERMAX}",
 			Name:           "powermax",
 			DriverEnvOverrides: map[string]string{
@@ -742,7 +742,7 @@ func testfileSpecs() []TestfileSpec {
 		},
 		{
 			OutputFilename: "storage_csm_powermax_sidecar.yaml",
-			SamplePath:     "v2.17.0/storage_csm_powermax_v2170.yaml",
+			SamplePath:     "v2.17.0/storage_csm_powermax_v2171.yaml",
 			Namespace:      "${E2E_NS_POWERMAX}",
 			Name:           "powermax",
 			ComponentEnvOverrides: map[string]map[string]string{
@@ -751,7 +751,7 @@ func testfileSpecs() []TestfileSpec {
 		},
 		{
 			OutputFilename: "storage_csm_powermax_sidecar_tls.yaml",
-			SamplePath:     "v2.17.0/storage_csm_powermax_v2170.yaml",
+			SamplePath:     "v2.17.0/storage_csm_powermax_v2171.yaml",
 			Namespace:      "${E2E_NS_POWERMAX}",
 			Name:           "powermax",
 			DriverEnvOverrides: map[string]string{
@@ -763,7 +763,7 @@ func testfileSpecs() []TestfileSpec {
 		},
 		{
 			OutputFilename: "storage_csm_powermax_secret.yaml",
-			SamplePath:     "v2.17.0/storage_csm_powermax_v2170.yaml",
+			SamplePath:     "v2.17.0/storage_csm_powermax_v2171.yaml",
 			Namespace:      "${E2E_NS_POWERMAX}",
 			Name:           "powermax",
 			DriverEnvOverrides: map[string]string{
@@ -775,7 +775,7 @@ func testfileSpecs() []TestfileSpec {
 		},
 		{
 			OutputFilename: "storage_csm_powermax_secret_sidecar.yaml",
-			SamplePath:     "v2.17.0/storage_csm_powermax_v2170.yaml",
+			SamplePath:     "v2.17.0/storage_csm_powermax_v2171.yaml",
 			Namespace:      "${E2E_NS_POWERMAX}",
 			Name:           "powermax",
 			DriverEnvOverrides: map[string]string{
@@ -787,7 +787,7 @@ func testfileSpecs() []TestfileSpec {
 		},
 		{
 			OutputFilename: "storage_csm_powermax_secret_auth_v2.yaml",
-			SamplePath:     "v2.17.0/storage_csm_powermax_v2170.yaml",
+			SamplePath:     "v2.17.0/storage_csm_powermax_v2171.yaml",
 			Namespace:      "${E2E_NS_POWERMAX}",
 			Name:           "powermax",
 			EnableModules:  []string{"authorization"},
