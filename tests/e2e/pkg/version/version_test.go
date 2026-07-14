@@ -259,7 +259,7 @@ func TestParseSemver(t *testing.T) {
 		minor   int
 		patch   int
 	}{
-		{"v1.17.1", false, 1, 17, 1},
+		{"v1.17.2", false, 1, 17, 2},
 		{"v2.16.3", false, 2, 16, 3},
 		{"1.15.1", false, 1, 15, 1},
 		{"invalid", true, 0, 0, 0},

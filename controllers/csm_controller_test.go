@@ -3955,7 +3955,7 @@ func (suite *CSMControllerTestSuite) TestCheckUpgradeAuthServerVersion() {
 	r := suite.createReconciler()
 	csm := shared.MakeModuleCSM(csmName, suite.namespace, shared.AuthServerConfigVersion)
 	csm.Spec.Modules = getAuthProxyServer()
-	csm.Spec.Version = "v1.17.1"
+	csm.Spec.Version = "v1.17.2"
 	csm.Spec.Driver.CSIDriverType = ""
 	// Set annotation to simulate existing install
 	csm.ObjectMeta.Annotations = map[string]string{

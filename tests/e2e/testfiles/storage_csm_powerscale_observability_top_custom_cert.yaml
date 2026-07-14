@@ -141,6 +141,22 @@ spec:
         # Examples: 192, 256
         - name: X_CSI_MAX_PATH_LIMIT
           value: "192"
+        # X_CSI_ALLOWED_NETWORKS: Custom networks for PowerScale export
+        # Specify list of networks which can be used for NFS I/O traffic; CIDR format should be used.
+        # Allowed values: list of one or more networks
+        # Default value: None
+        # Provide them in the following format: "[net1, net2]"
+        # CIDR format should be used
+        # eg: "[192.168.1.0/24, 192.168.100.0/22]"
+        - name: X_CSI_ALLOWED_NETWORKS
+          value: ""
+        # X_CSI_ALLOWED_NETWORKS_MODE: Mode for multi-NIC network selection
+        # Allowed values:
+        #   single: Use first matching IP (default, backward compatible)
+        #   multi: Use all matching IPs from node labels
+        # Default value: single
+        - name: X_CSI_ALLOWED_NETWORKS_MODE
+          value: "single"
       # nodeSelector: Define node selection constraints for pods of controller deployment.
       # For the pod to be eligible to run on a node, the node must have each
       # of the indicated key-value pairs as labels.
@@ -176,6 +192,13 @@ spec:
         # eg: "[192.168.1.0/24, 192.168.100.0/22]"
         - name: X_CSI_ALLOWED_NETWORKS
           value: ""
+        # X_CSI_ALLOWED_NETWORKS_MODE: Mode for multi-NIC network selection
+        # Allowed values:
+        #   single: Use first matching IP (default, backward compatible)
+        #   multi: Use all matching IPs from node labels
+        # Default value: single
+        - name: X_CSI_ALLOWED_NETWORKS_MODE
+          value: "single"
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin- volume status, volume condition.
         # Install the 'external-health-monitor' sidecar accordingly.
         # Allowed values:
