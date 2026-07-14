@@ -252,7 +252,7 @@ func TestGetRevproxyApplyCR_MinimalManifest_ModuleNameDefaulted(t *testing.T) {
 	cr.Spec.Modules = []csmv1.Module{}
 
 	// Set driver configVersion to a supported version
-	cr.Spec.Driver.ConfigVersion = "v2.17.1"
+	cr.Spec.Driver.ConfigVersion = "v2.17.2"
 
 	mod, container, err := getRevproxyApplyCR(ctx, cr, operatorConfig)
 	assert.NoError(t, err)
