@@ -195,6 +195,13 @@ spec:
         # eg: "[192.168.1.0/24, 192.168.100.0/22]"
         - name: X_CSI_ALLOWED_NETWORKS
           value: ""
+        # X_CSI_ALLOWED_NETWORKS_MODE: Mode for multi-NIC network selection
+        # Allowed values:
+        #   single: Use first matching IP (default, backward compatible)
+        #   multi: Use all matching IPs from node labels
+        # Default value: single
+        - name: X_CSI_ALLOWED_NETWORKS_MODE
+          value: "single"
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin- volume status, volume condition.
         # Install the 'external-health-monitor' sidecar accordingly.
         # Allowed values:

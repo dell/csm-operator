@@ -18,12 +18,12 @@ metadata:
   namespace: dell-csm-operator
 data:
   versions.yaml: |-
-    - version: v1.17.1
+    - version: v1.17.2
       images:
         powerstore: quay.io/dell/container-storage-modules/csi-powerstore:v2.17.0
         powerflex: quay.io/dell/container-storage-modules/csi-vxflexos:v2.17.0
-        isilon: quay.io/dell/container-storage-modules/csi-isilon:v2.17.1
-        powermax: quay.io/dell/container-storage-modules/csi-powermax:v2.17.1
+        isilon: quay.io/dell/container-storage-modules/csi-isilon:v2.17.2
+        powermax: quay.io/dell/container-storage-modules/csi-powermax:v2.17.2
         karavi-authorization-proxy: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.5.0
         podmon: quay.io/dell/container-storage-modules/podmon:v1.16.0
         otel-collector: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.150.1
