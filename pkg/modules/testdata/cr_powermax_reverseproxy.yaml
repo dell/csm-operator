@@ -1,4 +1,4 @@
-# Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+# Copyright © 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@ metadata:
 spec:
   driver:
     csiDriverType: "powermax"
-    configVersion: v2.17.1
+    configVersion: v2.17.2
     authSecret: powermax-creds
     replicas: 1
     common:
-      image: "quay.io/dell/container-storage-modules/csi-powermax:v2.17.1"
+      image: "quay.io/dell/container-storage-modules/csi-powermax:v2.17.2"
       imagePullPolicy: IfNotPresent
   modules:
     # CSI Powermax Reverseproxy is a mandatory module

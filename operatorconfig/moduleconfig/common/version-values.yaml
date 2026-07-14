@@ -26,6 +26,11 @@ powerscale:
     replication: v1.15.0
     observability: v1.15.0
     resiliency: v1.16.0
+  v2.17.2:
+    authorization: v2.5.0
+    replication: v1.15.0
+    observability: v1.15.0
+    resiliency: v1.16.0
 powerflex:
   # List of Driver versions and modules that supports the version
   v2.15.0:
@@ -114,6 +119,12 @@ powermax:
     observability: v1.15.0
     resiliency: v1.16.0
   v2.17.1:
+    csireverseproxy: v2.16.1
+    authorization: v2.5.0
+    replication: v1.15.0
+    observability: v1.15.1
+    resiliency: v1.16.0
+  v2.17.2:
     csireverseproxy: v2.16.1
     authorization: v2.5.0
     replication: v1.15.0

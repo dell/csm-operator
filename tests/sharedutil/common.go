@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021 - 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -38,8 +38,8 @@ const (
 	BadConfigVersion           string = "v0"
 	PStoreConfigVersion        string = "v2.17.0"
 	UnityConfigVersion         string = "v2.17.0"
-	PScaleConfigVersion        string = "v2.17.1"
-	PmaxConfigVersion          string = "v2.17.1"
+	PScaleConfigVersion        string = "v2.17.2"
+	PmaxConfigVersion          string = "v2.17.2"
 	AuthServerConfigVersion    string = "v2.5.0"
 	CosiConfigVersion          string = "v1.1.0"
 	InvalidCSMVersion          string = "v1.10.0"

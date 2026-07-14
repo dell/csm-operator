@@ -4,7 +4,7 @@ metadata:
   name: vxflexos
   namespace: ${E2E_NS_POWERFLEX}
 spec:
-  version: v1.17.1
+  version: v1.17.2
   driver:
     csiDriverType: "powerflex"
     forceRemoveDriver: true
