@@ -1,3 +1,5 @@
+# Version numbers (v1.18.0, v1.17.0, v1.16.3, etc.) are NOT dynamic.
+# These must be manually updated when release versions change.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -5,7 +7,22 @@ metadata:
   namespace: dell-csm-operator
 data:
   versions.yaml: |
-    - version: v1.16.2
+    - version: v1.18.0
+      images:
+        attacher: registry.k8s.io/sig-storage/csi-attacher:v4.13.0
+        provisioner: registry.k8s.io/sig-storage/csi-provisioner:v6.3.0
+        snapshotter: registry.k8s.io/sig-storage/csi-snapshotter:v8.6.0
+        registrar: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.18.0
+        resizer: registry.k8s.io/sig-storage/csi-resizer:v2.2.1
+        external-health-monitor: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.18.0
+        csi-metadata-retriever: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.14.0
+        sdc: quay.io/dell/storage/powerflex/sdc:5.1.0.2
+        sdc-monitor: quay.io/dell/storage/powerflex/sdc:5.1.0.2
+        cert-manager-cainjector: quay.io/jetstack/cert-manager-cainjector:v1.21.1
+        cert-manager-controller: quay.io/jetstack/cert-manager-controller:v1.21.1
+        cert-manager-webhook: quay.io/jetstack/cert-manager-webhook:v1.21.1
+        objectstorage-provisioner-sidecar: gcr.io/k8s-staging-sig-storage/objectstorage-sidecar:release-0.2
+    - version: v1.17.1
       images:
         attacher: registry.k8s.io/sig-storage/csi-attacher:v4.11.0
         provisioner: registry.k8s.io/sig-storage/csi-provisioner:v6.2.0
@@ -13,6 +30,52 @@ data:
         registrar: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0
         resizer: registry.k8s.io/sig-storage/csi-resizer:v2.1.0
         external-health-monitor: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.17.0
-        csi-metadata-retriever: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.13.0
+        csi-metadata-retriever: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.14.0
         sdc: quay.io/dell/storage/powerflex/sdc:5.0
         sdc-monitor: quay.io/dell/storage/powerflex/sdc:5.0
+        cert-manager-cainjector: quay.io/jetstack/cert-manager-cainjector:v1.21.1
+        cert-manager-controller: quay.io/jetstack/cert-manager-controller:v1.21.1
+        cert-manager-webhook: quay.io/jetstack/cert-manager-webhook:v1.21.1
+        objectstorage-provisioner-sidecar: gcr.io/k8s-staging-sig-storage/objectstorage-sidecar:release-0.2
+        opa: docker.io/openpolicyagent/opa:0.70.0
+        opa-kube-mgmt: docker.io/openpolicyagent/kube-mgmt:9.2.1
+        redis: redis:8.4.0-alpine
+        commander: docker.io/rediscommander/redis-commander:latest
+    - version: v1.17.2
+      images:
+        attacher: registry.k8s.io/sig-storage/csi-attacher:v4.11.0
+        provisioner: registry.k8s.io/sig-storage/csi-provisioner:v6.2.0
+        snapshotter: registry.k8s.io/sig-storage/csi-snapshotter:v8.5.0
+        registrar: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0
+        resizer: registry.k8s.io/sig-storage/csi-resizer:v2.1.0
+        external-health-monitor: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.17.0
+        csi-metadata-retriever: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.14.0
+        sdc: quay.io/dell/storage/powerflex/sdc:5.0
+        sdc-monitor: quay.io/dell/storage/powerflex/sdc:5.0
+        cert-manager-cainjector: quay.io/jetstack/cert-manager-cainjector:v1.21.1
+        cert-manager-controller: quay.io/jetstack/cert-manager-controller:v1.21.1
+        cert-manager-webhook: quay.io/jetstack/cert-manager-webhook:v1.21.1
+        objectstorage-provisioner-sidecar: gcr.io/k8s-staging-sig-storage/objectstorage-sidecar:release-0.2
+        opa: docker.io/openpolicyagent/opa:0.70.0
+        opa-kube-mgmt: docker.io/openpolicyagent/kube-mgmt:9.2.1
+        redis: redis:8.4.0-alpine
+        commander: docker.io/rediscommander/redis-commander:latest
+    - version: v1.16.3
+      images:
+        provisioner: registry.k8s.io/sig-storage/csi-provisioner:v6.1.0
+        attacher: registry.k8s.io/sig-storage/csi-attacher:v4.10.0
+        registrar: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.15.0
+        resizer: registry.k8s.io/sig-storage/csi-resizer:v2.0.0
+        snapshotter: registry.k8s.io/sig-storage/csi-snapshotter:v8.4.0
+        csi-metadata-retriever: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.13.0
+        external-health-monitor: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.16.0
+        sdc: quay.io/dell/storage/powerflex/sdc:5.0
+        sdc-monitor: quay.io/dell/storage/powerflex/sdc:5.0
+        cert-manager-cainjector: quay.io/jetstack/cert-manager-cainjector:v1.21.1
+        cert-manager-controller: quay.io/jetstack/cert-manager-controller:v1.21.1
+        cert-manager-webhook: quay.io/jetstack/cert-manager-webhook:v1.21.1
+        objectstorage-provisioner-sidecar: gcr.io/k8s-staging-sig-storage/objectstorage-sidecar:release-0.2
+        opa: docker.io/openpolicyagent/opa:0.70.0
+        opa-kube-mgmt: docker.io/openpolicyagent/kube-mgmt:8.5.11
+        redis: redis:8.2.0-alpine
+        commander: docker.io/rediscommander/redis-commander:latest

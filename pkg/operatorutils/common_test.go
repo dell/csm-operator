@@ -99,3 +99,108 @@ func TestMockClient_Delete(t *testing.T) {
 	assert.NoError(t, err)
 	mockClient.AssertCalled(t, "Delete", ctx, obj, mock.Anything)
 }
+
+func TestPositiveDurationOrDefault(t *testing.T) {
+	tests := []struct {
+		name         string
+		input        string
+		defaultValue string
+		expected     string
+	}{
+		{
+			name:         "valid positive duration returned as-is",
+			input:        "45s",
+			defaultValue: "30s",
+			expected:     "45s",
+		},
+		{
+			name:         "empty string returns default",
+			input:        "",
+			defaultValue: "30s",
+			expected:     "30s",
+		},
+		{
+			name:         "non-duration string returns default",
+			input:        "not-a-duration",
+			defaultValue: "30s",
+			expected:     "30s",
+		},
+		{
+			name:         "negative duration returns default",
+			input:        "-10s",
+			defaultValue: "30s",
+			expected:     "30s",
+		},
+		{
+			name:         "zero duration returns default",
+			input:        "0s",
+			defaultValue: "30s",
+			expected:     "30s",
+		},
+		{
+			name:         "whitespace-padded valid duration is accepted",
+			input:        "  60s  ",
+			defaultValue: "30s",
+			expected:     "60s",
+		},
+		{
+			name:         "valid minutes duration returned as-is",
+			input:        "5m",
+			defaultValue: "30s",
+			expected:     "5m",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := PositiveDurationOrDefault(tt.input, tt.defaultValue)
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
+
+func TestPositiveDurationOrEmpty(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "valid positive duration returned as-is",
+			input:    "15s",
+			expected: "15s",
+		},
+		{
+			name:     "empty string returns empty",
+			input:    "",
+			expected: "",
+		},
+		{
+			name:     "invalid string returns empty",
+			input:    "not-a-timeout",
+			expected: "",
+		},
+		{
+			name:     "negative duration returns empty",
+			input:    "-5s",
+			expected: "",
+		},
+		{
+			name:     "zero duration returns empty",
+			input:    "0s",
+			expected: "",
+		},
+		{
+			name:     "whitespace-padded valid duration is accepted",
+			input:    "  30s  ",
+			expected: "30s",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := PositiveDurationOrEmpty(tt.input)
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}

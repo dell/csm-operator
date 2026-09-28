@@ -19,7 +19,7 @@ metadata:
   namespace: powermax
 spec:
   # Add fields here
-  version: v1.17.2
+  version: v1.18.0
   driver:
     csiDriverType: "powermax"
     csiDriverSpec:
@@ -77,6 +77,27 @@ spec:
         # Default value: "" <empty> defaults to auto if nothing is specified
         - name: X_CSI_TRANSPORT_PROTOCOL
           value: ""
+        # hostManagementMode: Controls how the driver manages host objects.
+        # "create" (default) creates new hosts; "adopt" discovers BFS hosts by WWPN.
+        - name: X_CSI_POWERMAX_HOST_MGMT_MODE
+          value: "create"
+        # Specifies who owns NVMe/TCP fabric sessions.
+        # Allowed values:
+        #   "driver" - the driver discovers targets and connects (default)
+        #   "host"   - the host owns the sessions; the driver uses the existing
+        #              ones and never creates, replaces or terminates a session
+        # Applies to every managed array; there is no per-array override.
+        # Default value: "driver"
+        - name: X_CSI_POWERMAX_NVMETCP_CONN_MODE
+          value: "driver"
+        # hostAdoptionMinOverlapRatio: Controls the minimum overlap ratio for host adoption validation.
+        # Allowed values: 0.0 to 1.0
+        #   - 0.5 (default) - Directional relaxation with >50% majority for larger HBA counts
+        #   - 0.75 - Stricter threshold for regulated environments
+        #   - 1.0 - Strict match (100% coverage required for all HBA counts)
+        # Note: For 2-WWPN systems, 100% coverage is always required regardless of this setting.
+        - name: X_CSI_POWERMAX_HOST_ADOPTION_MIN_OVERLAP_RATIO
+          value: "0.5"
         # X_CSI_K8S_CLUSTER_PREFIX: Define a prefix that is appended onto
         # all resources created in the Array
         # This should be unique per K8s/CSI deployment
@@ -118,7 +139,7 @@ spec:
           value: ""
         # CSI driver log level
         # Allowed values: "error", "warn"/"warning", "info", "debug"
-        # Default value: "debug"
+        # Default value: "info"
         - name: "CSI_LOG_LEVEL"
           value: "info"
         # X_CSI_POWERMAX_SKIP_CERTIFICATE_VALIDATION: It determines if driver is going to skip verification
@@ -133,10 +154,10 @@ spec:
         - name: "X_CSI_POWERMAX_SKIP_CERTIFICATE_VALIDATION"
           value: "true"
         # CSI driver log format
-        # Allowed values: "TEXT" or "JSON"
-        # Default value: "TEXT"
+        # Allowed values: "text" or "json"
+        # Default value: "json"
         - name: "CSI_LOG_FORMAT"
-          value: "TEXT"
+          value: "json"
         # X_CSI_POWERMAX_DEBUG: Enable/disable debug logs from gopowermax library.
         - name: "X_CSI_POWERMAX_DEBUG"
           value: "true"
@@ -156,19 +177,6 @@ spec:
         # Default value: "false"
         - name: "X_CSI_DYNAMIC_SG_ENABLED"
           value: "false"
-        # X_CSI_REVPROXY_AUTH_TOKEN_SECRET: Name of the Kubernetes Secret containing the shared
-        # auth token used to authenticate requests between the CSI driver and the reverse proxy.
-        # Both driver and reverse proxy containers will mount this secret and use its "token" key.
-        #
-        # Note:
-        # - Sidecar deployments: Auth token is optional (trusted boundary)
-        # - Standalone deployments: Auth token is mandatory (enforced by reverse proxy startup validation)
-        #
-        # Leave empty or remove to disable proxy auth token authentication.
-        # Default value: "" <empty>
-        # Example: "proxy-auth-token-secret-name" (name of the Kubernetes Secret)
-        #- name: "X_CSI_REVPROXY_AUTH_TOKEN_SECRET"
-        #  value: "proxy-auth-token-secret-name"
         # X_CSI_FS_CHECK_ENABLED: Enable/Disable file system check on volumes before mounting
         # Allowed values:
         #   "true"  - Enable file system check
@@ -199,6 +207,44 @@ spec:
         # X_CSI_SPACE_RECLAMATION_TIMEOUT: TimeOut in Seconds
         - name: X_CSI_SPACE_RECLAMATION_TIMEOUT
           value: "14400"
+        # X_CSI_CSIADDONS_REPLICATION_ENABLED: Enable/Disable CSI Addons replication
+        # Allowed values:
+        #   "true"  - Enable CSI Addons replication
+        #   "false" - Disable CSI Addons replication
+        # Default value: "false"
+        - name: X_CSI_CSIADDONS_REPLICATION_ENABLED
+          value: "false"
+        # X_CSI_POWERMAX_METRO_SITE_FAILURE_HANDLING_ENABLED: Enable/Disable SRDF/Metro
+        # site-failure handling. When enabled, the driver detects the winning array
+        # during a site failure, defers I/O operations on the offline array, and
+        # reconciles them automatically after the array recovers.
+        # Allowed values:
+        #   "true"  - Enable Metro site-failure handling
+        #   "false" - Disable Metro site-failure handling (default)
+        # Default value: "false"
+        - name: X_CSI_POWERMAX_METRO_SITE_FAILURE_HANDLING_ENABLED
+          value: "false"
+        # X_CSI_POWERMAX_METRO_QUEUE_WARNING_THRESHOLD: Number of deferred operations
+        # that triggers a warning log. Leave empty to use the default (75).
+        # Default value: "" (uses driver default of 75)
+        - name: X_CSI_POWERMAX_METRO_QUEUE_WARNING_THRESHOLD
+          value: ""
+        # X_CSI_POWERMAX_METRO_QUEUE_HARD_LIMIT: Maximum number of deferred operations
+        # before new operations are rejected. Leave empty to use the default (100).
+        # Default value: "" (uses driver default of 100)
+        - name: X_CSI_POWERMAX_METRO_QUEUE_HARD_LIMIT
+          value: ""
+        # X_CSI_POWERMAX_METRO_RECONCILIATION_BACKOFF: Base backoff duration (seconds)
+        # for the reconciliation retry loop. Leave empty to use the default (30s).
+        # Default value: "" (uses driver default of 30s)
+        - name: X_CSI_POWERMAX_METRO_RECONCILIATION_BACKOFF
+          value: ""
+        # X_CSI_DRIVER_INSTANCE_UID: Unique identifier for this driver instance.
+        # Used for ownership isolation in the VolumeJournal CRD for Metro site-failure handling.
+        # Automatically set from the pod UID by the operator.
+        # Default value: "" (operator sets this automatically)
+        - name: X_CSI_DRIVER_INSTANCE_UID
+          value: ""
     controller:
       envs:
         # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin- volume usage, volume condition
@@ -208,6 +254,12 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
+        # X_CSI_DRIVER_INSTANCE_UID: Unique identifier for this driver instance.
+        # Used for ownership isolation in the VolumeJournal CRD for Metro site-failure handling.
+        # Automatically set from the pod UID by the operator.
+        # Default value: "" (operator sets this automatically)
+        - name: X_CSI_DRIVER_INSTANCE_UID
+          value: ""
       # nodeSelector: Define node selection constraints for controller pods.
       # For the pod to be eligible to run on a node, the node must have each
       # of the indicated key-value pairs as labels.
@@ -304,11 +356,59 @@ spec:
       - name: external-health-monitor
         enabled: false
         args: ["--monitor-interval=60s"]
+      - name: snapshotter
+        args: ["--feature-gates=CSIVolumeGroupSnapshot=false"]
         # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
         # Configure only when the storageCapacity is set as "true"
         # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
         # - name: provisioner
         #  args: ["--capacity-poll-interval=5m"]
+    # metrics: Configures the built-in Prometheus metrics endpoint on the driver.
+    metrics:
+      # enabled: Set to true to expose the metrics endpoint on the driver pods.
+      # Default value: false
+      enabled: false
+      # port: Port on which the metrics endpoint is exposed. Default for PowerMax: 8443.
+      port: 8443
+      # tlsCertSecret: Name of a Kubernetes TLS Secret (tls.crt / tls.key) used to serve metrics over HTTPS.
+      # When set the operator mounts the secret and configures HTTPS automatically.
+      # Leave unset to serve metrics over plain HTTP.
+      tlsCertSecret: ""
+      # collection: Controls metrics collection cadence and cache behavior inside the driver.
+      collection:
+        # interval: How often metrics are collected from PowerMax arrays.
+        # Default value: 30s
+        interval: 30s
+        # cacheTTL: How long collected metric responses are cached.
+        # Default value: 25s
+        cacheTTL: 25s
+      # array: Controls array-facing metrics collection request behavior.
+      array:
+        # rateLimit: Max allowed PowerMax API requests per second during metrics collection.
+        # Default value: 100
+        rateLimit: 100
+        # timeout: Per-request timeout for PowerMax API calls made during metrics collection.
+        # Default value: 30s
+        timeout: 30s
+        circuitBreaker:
+          # threshold: Number of consecutive failures before the circuit opens.
+          # Default value: 3
+          threshold: 3
+          # resetTimeout: How long the circuit stays open before allowing a test request (half-open).
+          # Default value: 30s
+          resetTimeout: 30s
+      # serviceMonitor: Creates a Prometheus Operator ServiceMonitor targeting the controller pods.
+      serviceMonitor:
+        enabled: false
+        interval: 30s
+        scrapeTimeout: 10s
+        insecureSkipVerify: false
+      # podMonitor: Creates a Prometheus Operator PodMonitor targeting the node pods.
+      podMonitor:
+        enabled: false
+        interval: 30s
+        scrapeTimeout: 10s
+        insecureSkipVerify: false
   modules:
     # CSI Powermax Reverseproxy is a mandatory module for Powermax
     - name: csireverseproxy
@@ -355,6 +455,44 @@ spec:
       #   false: disable replication feature(do not install dell-csi-replicator sidecar)
       # Default value: false
       enabled: false
+      metrics:
+        # enabled: Enable/Disable replication metrics endpoint on the dell-csi-replicator sidecar
+        # Default value: false
+        enabled: false
+        # port: Port for the replication metrics endpoint
+        # Default value: 8445
+        port: 8445
+        # tlsCertSecret: Name of the TLS secret for replication metrics. Leave empty to disable TLS.
+        # Default value: ""
+        tlsCertSecret: ""
+        collection:
+          # interval: How frequently replication metrics are collected
+          # Default value: "30s"
+          interval: "30s"
+        serviceMonitor:
+          # enabled: Enable/Disable ServiceMonitor for Prometheus Operator
+          # Default value: false
+          enabled: false
+          # interval: Scrape interval for the ServiceMonitor
+          # Default value: "30s"
+          interval: "30s"
+          # scrapeTimeout: Scrape timeout for the ServiceMonitor
+          # Default value: ""
+          scrapeTimeout: ""
+          # insecureSkipVerify: Skip TLS verification for ServiceMonitor
+          # Default value: false
+          insecureSkipVerify: false
+        prometheusRule:
+          enabled: true
+          # rpoThresholdSeconds: Replication lag threshold in seconds for REP-01 and REP-02 alerts.
+          # Default: 300 (5 minutes).
+          rpoThresholdSeconds: 300
+          # srdfMinBandwidth: Minimum acceptable SRDF bandwidth in bytes/sec for REP-07 alert.
+          # Default: 10485760 (10 MB/s).
+          srdfMinBandwidth: 10485760
+          # srdfLagSeconds: SRDF replication lag threshold in seconds for REP-12 alert.
+          # Default: 300 (5 minutes).
+          srdfLagSeconds: 300
       components:
         - name: dell-csi-replicator
           envs:
@@ -372,9 +510,14 @@ spec:
           envs:
             # Replication log level
             # Allowed values: "error", "warn"/"warning", "info", "debug"
-            # Default value: "debug"
+            # Default value: "info"
             - name: "REPLICATION_CTRL_LOG_LEVEL"
-              value: "debug"
+              value: "info"
+            # Replication log format
+            # Allowed values: "text", "json"
+            # Default value: "json"
+            - name: "REPLICATION_CTRL_LOG_FORMAT"
+              value: "json"
             # replicas: Defines number of controller replicas
             # Allowed values: int
             # Default value: 1
@@ -469,15 +612,15 @@ spec:
             - name: "POWERMAX_PERFORMANCE_POLL_FREQUENCY"
               value: "300"
             # PowerMax metrics log level
-            # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
-            # Default value: "INFO"
+            # Valid values: trace, debug, info, warn, error, fatal, panic
+            # Default value: "info"
             - name: "POWERMAX_LOG_LEVEL"
-              value: "INFO"
+              value: "info"
             # PowerMax Metrics Output logs in the specified format
-            # Valid values: TEXT, JSON
-            # Default value: "TEXT"
+            # Valid values: text, json
+            # Default value: "json"
             - name: "POWERMAX_LOG_FORMAT"
-              value: "TEXT"
+              value: "json"
             # otel collector address
             # Allowed values: String
             # Default value: "otel-collector:55680"
@@ -486,6 +629,44 @@ spec:
             # configMap name which has all array/endpoint related info
             - name: "X_CSI_CONFIG_MAP_NAME"
               value: "powermax-reverseproxy-config"
+      # metrics: Configure the observability self-metrics endpoint on the karavi-metrics-powermax
+      metrics:
+        # enabled: Enable/Disable observability self-metrics endpoint
+        # Allowed values: true, false
+        # Default value: false
+        enabled: false
+        # port: Port used by observability self-metrics endpoint
+        # Allowed values: 1-65535
+        # Default value: 8443
+        port: 8443
+        # tlsCertSecret: Name of secret containing TLS certificate and key for observability self-metrics
+        # Allowed values: Kubernetes secret name, empty string
+        # Default value: ""
+        tlsCertSecret: ""
+        # serviceMonitor: Configure ServiceMonitor for observability self-metrics
+        serviceMonitor:
+          # enabled: Enable/Disable ServiceMonitor creation for observability self-metrics
+          # Allowed values: true, false
+          # Default value: false
+          enabled: false
+          # interval: Prometheus scrape interval for observability self-metrics
+          # Allowed values: duration string (for example: 15s, 30s, 1m)
+          # Default value: "30s"
+          interval: "30s"
+          # scrapeTimeout: Prometheus scrape timeout for observability self-metrics
+          # Allowed values: duration string, empty string
+          # Default value: ""
+          scrapeTimeout: ""
+          # insecureSkipVerify: Skip TLS certificate verification while scraping observability self-metrics
+          # Allowed values: true, false
+          # Default value: false
+          insecureSkipVerify: false
+        # prometheusRule: Configure Prometheus Operator PrometheusRule for observability alerts
+        prometheusRule:
+          # enabled: Enable/Disable PrometheusRule creation for observability alerts
+          # Allowed values: true, false
+          # Default value: false
+          enabled: false
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature
       # Allowed values:
@@ -516,6 +697,12 @@ spec:
             # Default value: 8083
             - name: "X_CSI_PODMON_API_PORT"
               value: "8083"
+              # podmonAPIToken: Shared secret token for authenticating podmon API requests
+              # Security note: podmon API uses HTTP; use this only on trusted cluster-internal networks.
+              # Example (literal value):
+              # - name: "X_CSI_PODMON_API_TOKEN"
+              #   value: "<strong-random-token>"
+              # Note: valueFrom.secretKeyRef is not currently supported for this token
           args:
             - "--labelvalue=csi-powermax"
             - "--arrayConnectivityPollRate=60"
@@ -527,3 +714,60 @@ spec:
             - "--mode=node"
             - "--driver-config-params=/powermax-config-params/driver-config-params.yaml"
             - "--driverPath=csi-powermax.dellemc.com"
+      # metrics: Configure resiliency module metrics endpoint
+      # The operator automatically creates Service/ServiceMonitor/PodMonitor resources for podmon metrics.
+      metrics:
+        # enabled: Enable/Disable resiliency module metrics endpoint
+        # Allowed values: true, false
+        # Default value: false
+        enabled: false
+        # port: Port used by resiliency module metrics endpoint
+        # Allowed values: 1-65535
+        # Default value: 8444
+        port: 8444
+        # tlsCertSecret: Name of a Kubernetes TLS Secret (tls.crt / tls.key) used to serve metrics over HTTPS.
+        # When set the operator mounts the secret and configures HTTPS automatically.
+        # Leave unset to serve metrics over plain HTTP.
+        tlsCertSecret: ""
+        # collection: Controls metrics collection cadence inside the resiliency module.
+        collection:
+          # interval: Interval at which metrics are collected
+          # Allowed values: Go duration string (e.g., 30s, 1m)
+          # Default value: 30s
+          interval: 30s
+        # serviceMonitor: Creates a Prometheus Operator ServiceMonitor targeting the controller pods.
+        serviceMonitor:
+          # enabled: Enable/Disable ServiceMonitor for resiliency metrics
+          # Allowed values: true, false
+          # Default value: false
+          enabled: false
+          # interval: Interval at which metrics should be scraped
+          # Allowed values: Go duration string (e.g., 30s, 1m)
+          # Default value: 30s
+          interval: 30s
+          # scrapeTimeout: Timeout after which the scrape is ended
+          # Allowed values: Go duration string (e.g., 10s)
+          # Default value: ""
+          scrapeTimeout: ""
+          # insecureSkipVerify: Skip TLS verification when scraping metrics endpoint
+          # Allowed values: true, false
+          # Default value: false
+          insecureSkipVerify: false
+        # podMonitor: Creates a Prometheus Operator PodMonitor targeting the node pods.
+        podMonitor:
+          # enabled: Enable/Disable PodMonitor for resiliency metrics
+          # Allowed values: true, false
+          # Default value: false
+          enabled: false
+          # interval: Interval at which metrics should be scraped
+          # Allowed values: Go duration string (e.g., 30s, 1m)
+          # Default value: 30s
+          interval: 30s
+          # scrapeTimeout: Timeout after which the scrape is ended
+          # Allowed values: Go duration string (e.g., 10s)
+          # Default value: ""
+          scrapeTimeout: ""
+          # insecureSkipVerify: Skip TLS verification when scraping metrics endpoint
+          # Allowed values: true, false
+          # Default value: false
+          insecureSkipVerify: false

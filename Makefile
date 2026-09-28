@@ -35,7 +35,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION = 1.31
+ENVTEST_K8S_VERSION = 1.37
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -119,7 +119,11 @@ tidy:
 	GOPRIVATE=github.com go mod tidy
 	GOPRIVATE=github.com cd tests/e2e/ && go mod tidy
 
-build: gen-semver fmt vet ## Build manager binary.
+build: gen-semver fmt vet ## Build manager binary and E2E tests.
+	go build -mod=vendor -ldflags $(LDFLAGS) -o bin/manager main.go
+	cd tests/e2e && go build -mod=vendor ./...
+
+build-binary:
 	go build -mod=vendor -ldflags $(LDFLAGS) -o bin/manager main.go
 
 run: generate gen-semver fmt vet static-manifests ## Run a controller from your host.
@@ -135,6 +139,19 @@ static-manager: manifests kustomize ## Creates the operator manifests in deploy 
 	$(KUSTOMIZE) build config/install > deploy/operator.yaml
 
 static-manifests: static-crd static-manager
+
+##@ Samples
+
+CSM_VERSION ?= v1.18.0
+OCP_VERSION ?=
+
+.PHONY: samples
+samples: kustomize ## Pre-render bundle.yaml for a CSM release (and optional OCP release).
+	## Usage: make samples CSM_VERSION=v1.18.0 [OCP_VERSION=1.12.2]
+	$(KUSTOMIZE) build samples/$(CSM_VERSION) > samples/$(CSM_VERSION)/bundle.yaml
+ifdef OCP_VERSION
+	$(KUSTOMIZE) build samples/$(CSM_VERSION)/ocp/$(OCP_VERSION) > samples/$(CSM_VERSION)/ocp/$(OCP_VERSION)/bundle.yaml
+endif
 
 install: static-crd ## Install CRDs into the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | kubectl apply -f -
@@ -211,10 +228,17 @@ LABEL com.redhat.delivery.operator.bundle=true' bundle.Dockerfile
 
 .PHONY: bundle
 bundle: download-yamlfmt _bundle
-	@echo "Formatting modified YAML files..."
+	@echo "Formatting all YAML files in bundle, config, and deploy directories..."
+	@find bundle config deploy -type f \( -name "*.yaml" -o -name "*.yml" \) -print0 | xargs -0 -r yamlfmt -conf yamlfmt.merged
+	
+	@echo "Formatting any changed YAML files..."
+	@git diff --name-only --relative | while IFS= read -r f; do \
+		case "$$f" in \
+			*.yaml|*.yml) yamlfmt -conf yamlfmt.merged "$$f" ;; \
+		esac; \
+	done
 
-	@git diff --name-only | grep -E '\.ya?ml$$' | xargs -r yamlfmt -conf yamlfmt.merged || echo "No modified YAML files to format"
-	@rm -f yamlfmt.merged yamlfmt
+	@rm -f yamlfmt.merged ./yamlfmt.remote
 	@echo "Bundle formatting complete."
 
 download-yamlfmt:
@@ -235,7 +259,7 @@ download-yamlfmt:
 	fi
 
 .PHONY: bundle-build
-bundle-build: gen-semver download-csm-common ## Build the bundle image.
+bundle-build: gen-semver copy-csm-common ## Build the bundle image.
 	$(eval include csm-common.mk)
 	podman build --pull -f bundle.Dockerfile -t $(BUNDLE_IMG) --build-arg BASEIMAGE=$(CSM_BASEIMAGE) .
 

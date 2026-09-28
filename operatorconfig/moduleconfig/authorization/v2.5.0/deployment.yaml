@@ -153,9 +153,14 @@ spec:
             - name: NAMESPACE
               value: <NAMESPACE>
           volumeMounts:
+            - name: config-volume
+              mountPath: /etc/karavi-authorization/config
             - name: csm-config-params
               mountPath: /etc/karavi-authorization/csm-config-params
       volumes:
+        - name: config-volume
+          secret:
+            secretName: karavi-config-secret
         - name: csm-config-params
           configMap:
             name: csm-config-params
@@ -413,6 +418,18 @@ spec:
           ports:
             - containerPort: 50052
               name: grpc
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/karavi-authorization/config
+            - name: csm-config-params
+              mountPath: /etc/karavi-authorization/csm-config-params
+      volumes:
+        - name: config-volume
+          secret:
+            secretName: karavi-config-secret
+        - name: csm-config-params
+          configMap:
+            name: csm-config-params
 ---
 apiVersion: v1
 kind: Service

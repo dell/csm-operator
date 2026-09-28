@@ -69,7 +69,7 @@ func PrecheckUnity(ctx context.Context, cr *csmv1.ContainerStorageModule, operat
 		return err
 	}
 	// Check if driver version is supported by doing a stat on a config file
-	configFilePath := fmt.Sprintf("%s/driverconfig/unity/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, version)
+	configFilePath := fmt.Sprintf("%s/driverconfig/unity/%s/driver-config-params.yaml", operatorConfig.ConfigDirectory, version)
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		log.Errorw("PreCheckUnity failed in version check", "Error", err.Error(), "Namespace", cr.Namespace)
 		return fmt.Errorf("%s %s not supported", csmv1.Unity, version)
@@ -123,7 +123,7 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 	// Parameters to initialise CR values
 	healthMonitorNode := "false"
 	healthMonitorController := "false"
-	storageCapacity := "false"
+	storageCapacity := "true"
 	allowedNetworks := ""
 	// GOUNITY_DEBUG defaults to false
 	debug := "false"
@@ -171,8 +171,14 @@ func ModifyUnityCR(yamlString string, cr csmv1.ContainerStorageModule, fileType 
 		yamlString = strings.ReplaceAll(yamlString, UnityDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, UnityHTTP, showHTTP)
 	case "CSIDriverSpec":
-		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
-			storageCapacity = "true"
+		// Note: StorageCapacity is a bool with omitempty. Go's zero-value for bool is false,
+		// so we cannot distinguish between "user omitted the field" and "user explicitly set false"
+		// without changing the type to *bool. The chosen behavior is: default to "true" (matching
+		// the pre-placeholder hardcoded template), and only override to "false" when the user sets
+		// csiDriverSpec.storageCapacity: false explicitly. Users who set a csiDriverSpec block
+		// without specifying storageCapacity must include storageCapacity: true to preserve the default.
+		if cr.Spec.Driver.CSIDriverSpec != nil && !cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
+			storageCapacity = "false"
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiStorageCapacityEnabled, storageCapacity)
 

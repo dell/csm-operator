@@ -8,5 +8,15 @@
         "skipCertificateValidation": true,
         "nasName": "nas-server" ,
         "nfsAcls": "0777"
+    },
+    {
+        "username": "admin",
+        "password": "password",
+        "globalID": "unique-ipv6" ,
+        "blockProtocol": "auto",
+        "endpoint": "https://[2001:db8::1]/api/rest",
+        "skipCertificateValidation": true,
+        "nasName": "nas-server" ,
+        "nfsAcls": "0777"
     }
 ]

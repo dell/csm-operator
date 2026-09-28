@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: <DriverDefaultReleaseName>-metrics-monitor
+  namespace: <DriverDefaultReleaseNamespace>
+  labels:
+    app: <DriverDefaultReleaseName>-controller
+spec:
+  selector:
+    matchLabels:
+      app: <DriverDefaultReleaseName>-controller
+  namespaceSelector:
+    matchNames:
+      - <DriverDefaultReleaseNamespace>
+  endpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: ""
+      path: /metrics

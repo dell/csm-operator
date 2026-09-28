@@ -1,5 +1,8 @@
-//  Copyright © 2021 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+// Copyright © 2021-2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
+// Dell Technologies, Dell and other trademarks are trademarks of Dell Inc.
+// or its subsidiaries. Other trademarks may be trademarks of their respective
+// owners.
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
 //  You may obtain a copy of the License at
@@ -24,7 +27,7 @@ import (
 
 	"github.com/dell/csm-operator/pkg/logger"
 	"k8s.io/apimachinery/pkg/version"
-	discoveryfake "k8s.io/client-go/discovery/fake" //nolint:unused
+	discoveryfake "k8s.io/client-go/discovery/fake"
 )
 
 type testOverrides struct {

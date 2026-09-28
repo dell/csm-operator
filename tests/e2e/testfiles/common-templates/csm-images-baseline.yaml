@@ -1,3 +1,5 @@
+# Version numbers (v1.18.0, v1.17.0, v1.16.3, etc.) are NOT dynamic.
+# These must be manually updated when release versions change.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -5,45 +7,47 @@ metadata:
   namespace: dell-csm-operator
 data:
   versions.yaml: |
-    - version: v1.17.2
+    - version: v1.18.0
       images:
-        powerstore: quay.io/dell/container-storage-modules/csi-powerstore:v2.17.0
-        powerflex: quay.io/dell/container-storage-modules/csi-vxflexos:v2.17.0
-        isilon: quay.io/dell/container-storage-modules/csi-isilon:v2.17.2
-        powermax: quay.io/dell/container-storage-modules/csi-powermax:v2.17.2
-        unity: quay.io/dell/container-storage-modules/csi-unity:v2.17.0
-        cosi: quay.io/dell/container-storage-modules/cosi:v1.1.0
-        karavi-authorization-proxy: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.5.0
-        podmon: quay.io/dell/container-storage-modules/podmon:v1.16.0
-        podmon-controller: quay.io/dell/container-storage-modules/podmon:v1.16.0
-        podmon-node: quay.io/dell/container-storage-modules/podmon:v1.16.0
-        otel-collector: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.150.1
-        nginx-proxy: quay.io/nginx/nginx-unprivileged:1.27
-        metrics-powermax: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.10.1
-        metrics-powerstore: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.15.0
-        metrics-powerflex: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.15.0
-        metrics-powerscale: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.12.0
-        dell-csi-replicator: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.15.0
-        dell-replication-controller-manager: quay.io/dell/container-storage-modules/dell-replication-controller:v1.15.0
-        csipowermax-reverseproxy: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.16.1
-        cert-manager-cainjector: quay.io/jetstack/cert-manager-cainjector:v1.11.0
-        cert-manager-controller: quay.io/jetstack/cert-manager-controller:v1.11.0
-        cert-manager-webhook: quay.io/jetstack/cert-manager-webhook:v1.11.0
-        authorization-controller: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.5.0
-        proxy-service: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.5.0
-        tenant-service: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.5.0
-        role-service: quay.io/dell/container-storage-modules/csm-authorization-role:v2.5.0
-        storage-service: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.5.0
+        powerstore: quay.io/dell/container-storage-modules/csi-powerstore:nightly
+        powerflex: quay.io/dell/container-storage-modules/csi-vxflexos:nightly
+        isilon: quay.io/dell/container-storage-modules/csi-isilon:nightly
+        cosi: quay.io/dell/container-storage-modules/cosi:nightly
+        powermax: quay.io/dell/container-storage-modules/csi-powermax:nightly
+        unity: quay.io/dell/container-storage-modules/csi-unity:nightly
+        karavi-authorization-proxy: quay.io/dell/container-storage-modules/csm-authorization-sidecar:nightly
+        podmon: quay.io/dell/container-storage-modules/podmon:nightly
+        podmon-controller: quay.io/dell/container-storage-modules/podmon:nightly
+        podmon-node: quay.io/dell/container-storage-modules/podmon:nightly
+        otel-collector: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.160.0
+        nginx-proxy: quay.io/nginx/nginx-unprivileged:1.30.4
+        metrics-powermax: quay.io/dell/container-storage-modules/csm-metrics-powermax:nightly
+        metrics-powerstore: quay.io/dell/container-storage-modules/csm-metrics-powerstore:nightly
+        metrics-powerflex: quay.io/dell/container-storage-modules/csm-metrics-powerflex:nightly
+        metrics-powerscale: quay.io/dell/container-storage-modules/csm-metrics-powerscale:nightly
+        dell-csi-replicator: quay.io/dell/container-storage-modules/dell-csi-replicator:nightly
+        dell-replication-controller-manager: quay.io/dell/container-storage-modules/dell-replication-controller:nightly
+        csipowermax-reverseproxy: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:nightly
+        objectstorage-provisioner-sidecar: gcr.io/k8s-staging-sig-storage/objectstorage-sidecar:release-0.2
+        cert-manager-cainjector: quay.io/jetstack/cert-manager-cainjector:v1.21.1
+        cert-manager-controller: quay.io/jetstack/cert-manager-controller:v1.21.1
+        cert-manager-webhook: quay.io/jetstack/cert-manager-webhook:v1.21.1
+        authorization-controller: quay.io/dell/container-storage-modules/csm-authorization-controller:nightly
+        proxy-service: quay.io/dell/container-storage-modules/csm-authorization-proxy:nightly
+        tenant-service: quay.io/dell/container-storage-modules/csm-authorization-tenant:nightly
+        role-service: quay.io/dell/container-storage-modules/csm-authorization-role:nightly
+        storage-service: quay.io/dell/container-storage-modules/csm-authorization-storage:nightly
         opa: docker.io/openpolicyagent/opa:0.70.0
-        opa-kube-mgmt: docker.io/openpolicyagent/kube-mgmt:9.2.1
-        redis: redis:8.4.0-alpine
+        opa-kube-mgmt: docker.io/openpolicyagent/kube-mgmt:11.0.12
+        redis: redis:8.10.1-alpine
         commander: docker.io/rediscommander/redis-commander:latest
-        attacher: registry.k8s.io/sig-storage/csi-attacher:v4.11.0
-        provisioner: registry.k8s.io/sig-storage/csi-provisioner:v6.2.0
-        snapshotter: registry.k8s.io/sig-storage/csi-snapshotter:v8.5.0
-        registrar: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0
-        resizer: registry.k8s.io/sig-storage/csi-resizer:v2.1.0
-        external-health-monitor: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.17.0
-        csi-metadata-retriever: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.14.0
-        sdc: quay.io/dell/storage/powerflex/sdc:5.0
-        sdc-monitor: quay.io/dell/storage/powerflex/sdc:5.0
+        attacher: registry.k8s.io/sig-storage/csi-attacher:v4.13.0
+        provisioner: registry.k8s.io/sig-storage/csi-provisioner:v6.3.0
+        snapshotter: registry.k8s.io/sig-storage/csi-snapshotter:v8.6.0
+        registrar: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.18.0
+        resizer: registry.k8s.io/sig-storage/csi-resizer:v2.2.1
+        external-health-monitor: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.18.0
+        csi-metadata-retriever: quay.io/dell/container-storage-modules/csi-metadata-retriever:nightly
+        sdc: quay.io/dell/storage/powerflex/sdc:5.1.0.2
+        sdc-monitor: quay.io/dell/storage/powerflex/sdc:5.1.0.2
+        csi-addons: quay.io/csiaddons/k8s-sidecar:v0.15.0

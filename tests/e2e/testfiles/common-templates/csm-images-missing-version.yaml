@@ -1,3 +1,5 @@
+# Version numbers (v9.9.9, etc.) are NOT dynamic.
+# These must be manually updated when release versions change.
 apiVersion: v1
 kind: ConfigMap
 metadata:

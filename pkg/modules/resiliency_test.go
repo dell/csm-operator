@@ -486,8 +486,6 @@ func checkApplyContainersResiliency(containers []acorev1.ContainerApplyConfigura
 }
 
 func TestResiliencyPrecheck_ClusterClientCreationError_NoOp(t *testing.T) {
-	type fakeControllerRuntimeClientWrapper func(clusterConfigData []byte) (ctrlClient.Client, error)
-
 	cr, err := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
 	if err != nil {
 		t.Fatal(err)
@@ -523,8 +521,6 @@ func TestResiliencyPrecheck_ClusterClientCreationError_NoOp(t *testing.T) {
 }
 
 func TestResiliencyPrecheck_K8sClientCreationError_NoOp(t *testing.T) {
-	type fakeControllerRuntimeClientWrapper func(clusterConfigData []byte) (ctrlClient.Client, error)
-
 	cr, err := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
 	if err != nil {
 		t.Fatal(err)
@@ -634,6 +630,39 @@ func TestResiliencyInjectDaemonset_SidecarPresent(t *testing.T) {
 	assert.True(t, foundSidecar, "expected resiliency sidecar to be present in daemonset")
 }
 
+func TestResiliencyInjectDaemonset_DoesNotInjectEmptyPodmonToken(t *testing.T) {
+	ctx := context.Background()
+	cr, err := getCustomResource("./testdata/cr_powerstore_resiliency.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	nodeYAML, err := drivers.GetNode(ctx, cr, operatorConfig, csmv1.PowerStore, "node.yaml", ctrlClientFake.NewClientBuilder().Build(), operatorutils.VersionSpec{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ds, err := ResiliencyInjectDaemonset(ctx, nodeYAML.DaemonSetApplyConfig, cr, operatorConfig, string(csmv1.PowerStore), operatorutils.VersionSpec{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.NotNil(t, ds)
+
+	for _, c := range ds.Spec.Template.Spec.Containers {
+		if c.Name == nil || *c.Name != "driver" {
+			continue
+		}
+		for _, env := range c.Env {
+			if env.Name != nil && *env.Name == XCSIPodmonAPIToken {
+				t.Fatalf("did not expect %s to be injected when token value is empty", XCSIPodmonAPIToken)
+			}
+		}
+		return
+	}
+
+	t.Fatal("driver container not found in daemonset")
+}
+
 // matched.Version is non-empty and matched.Images has an entry for the container name -> image is overridden from matched.
 func TestModifyPodmon_UsesMatchedImageWhenVersionSet(t *testing.T) {
 	name := "podmon"
@@ -660,7 +689,7 @@ func TestModifyPodmon_UsesMatchedImageWhenVersionSet(t *testing.T) {
 		WithImage(originalImage)
 
 	// Act
-	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{})
+	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{}, csmv1.Module{})
 
 	// Assert
 	if container.Image == nil {
@@ -694,7 +723,7 @@ func TestModifyPodmon_SkipsMatchedWhenVersionEmpty(t *testing.T) {
 		WithName(name).
 		WithImage(originalImage)
 
-	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{})
+	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{}, csmv1.Module{})
 
 	if container.Image == nil {
 		t.Fatalf("container.Image should not be nil after modifyPodmon")
@@ -730,7 +759,7 @@ func TestModifyPodmon_ComponentOverridesImageAndPullPolicy(t *testing.T) {
 		WithImage(originalImage).
 		WithImagePullPolicy(corev1.PullIfNotPresent) // initial policy
 
-	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{})
+	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{}, csmv1.Module{})
 
 	// Image should be from ConfigMap (matched.Images takes precedence over component override)
 	if container.Image == nil {
@@ -767,7 +796,7 @@ func TestModifyPodmon_ReplacesEnvAndArgs(t *testing.T) {
 		// NOTE: intentionally NOT calling WithArgs("--old")
 
 	// Act
-	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{})
+	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{}, csmv1.Module{})
 
 	// Assert env replacement
 	found := false
@@ -806,7 +835,7 @@ func TestModifyPodmon_CustomRegistryOnly(t *testing.T) {
 		WithName(name).
 		WithImage(originalImage)
 
-	modifyPodmon(ctx, component, container, matched, cr)
+	modifyPodmon(ctx, component, container, matched, cr, csmv1.Module{})
 
 	if container.Image == nil {
 		t.Fatalf("container.Image should not be nil")
@@ -838,7 +867,7 @@ func TestModifyPodmon_SparseConfigMapWithCustomRegistry(t *testing.T) {
 		WithName(name).
 		WithImage(originalImage)
 
-	modifyPodmon(ctx, component, container, matched, cr)
+	modifyPodmon(ctx, component, container, matched, cr, csmv1.Module{})
 
 	if container.Image == nil {
 		t.Fatalf("container.Image should not be nil")
@@ -864,7 +893,7 @@ func TestModifyPodmon_ComponentImageNoConfigMapNoRegistry(t *testing.T) {
 		WithName(name).
 		WithImage(originalImage)
 
-	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{})
+	modifyPodmon(ctx, component, container, matched, csmv1.ContainerStorageModule{}, csmv1.Module{})
 
 	if container.Image == nil {
 		t.Fatalf("container.Image should not be nil")
@@ -897,7 +926,7 @@ func TestModifyPodmon_ConfigMapWinsOverCustomRegistry(t *testing.T) {
 		WithName(name).
 		WithImage(originalImage)
 
-	modifyPodmon(ctx, component, container, matched, cr)
+	modifyPodmon(ctx, component, container, matched, cr, csmv1.Module{})
 
 	if container.Image == nil {
 		t.Fatalf("container.Image should not be nil")
@@ -1037,4 +1066,484 @@ func TestSetResiliencyArgs_SyntheticUnsupportedMode_NoChange(t *testing.T) {
 	if got != image {
 		t.Errorf("image unexpectedly changed for unsupported mode: got=%s want=%s", got, image)
 	}
+}
+
+func TestModifyResiliencyCR(t *testing.T) {
+	tests := []struct {
+		name           string
+		yamlString     string
+		module         csmv1.Module
+		expectedOutput string
+	}{
+		{
+			name:       "metrics enabled with custom port",
+			yamlString: "env:\n  - name: X_CSI_METRICS_ENABLED\n    value: \"<X_CSI_METRICS_ENABLED>\"\n  - name: X_CSI_METRICS_PORT\n    value: \"<X_CSI_METRICS_PORT>\"",
+			module: csmv1.Module{
+				Metrics: &csmv1.ModuleMetrics{
+					Enabled: true,
+					Port:    9999,
+				},
+			},
+			expectedOutput: "env:\n  - name: X_CSI_METRICS_ENABLED\n    value: \"true\"\n  - name: X_CSI_METRICS_PORT\n    value: \"9999\"",
+		},
+		{
+			name:       "metrics enabled with default port",
+			yamlString: "env:\n  - name: X_CSI_METRICS_ENABLED\n    value: \"<X_CSI_METRICS_ENABLED>\"\n  - name: X_CSI_METRICS_PORT\n    value: \"<X_CSI_METRICS_PORT>\"",
+			module: csmv1.Module{
+				Metrics: &csmv1.ModuleMetrics{
+					Enabled: true,
+					Port:    0,
+				},
+			},
+			expectedOutput: "env:\n  - name: X_CSI_METRICS_ENABLED\n    value: \"true\"\n  - name: X_CSI_METRICS_PORT\n    value: \"8444\"",
+		},
+		{
+			name:       "metrics disabled",
+			yamlString: "env:\n  - name: X_CSI_METRICS_ENABLED\n    value: \"<X_CSI_METRICS_ENABLED>\"\n  - name: X_CSI_METRICS_PORT\n    value: \"<X_CSI_METRICS_PORT>\"",
+			module: csmv1.Module{
+				Metrics: &csmv1.ModuleMetrics{
+					Enabled: false,
+				},
+			},
+			expectedOutput: "env:\n  - name: X_CSI_METRICS_ENABLED\n    value: \"false\"\n  - name: X_CSI_METRICS_PORT\n    value: \"8444\"",
+		},
+		{
+			name:       "nil metrics config",
+			yamlString: "env:\n  - name: X_CSI_METRICS_ENABLED\n    value: \"<X_CSI_METRICS_ENABLED>\"\n  - name: X_CSI_METRICS_PORT\n    value: \"<X_CSI_METRICS_PORT>\"",
+			module: csmv1.Module{
+				Metrics: nil,
+			},
+			expectedOutput: "env:\n  - name: X_CSI_METRICS_ENABLED\n    value: \"false\"\n  - name: X_CSI_METRICS_PORT\n    value: \"8444\"",
+		},
+		{
+			name:       "no placeholders in yaml",
+			yamlString: "env:\n  - name: OTHER_VAR\n    value: \"value\"",
+			module: csmv1.Module{
+				Metrics: &csmv1.ModuleMetrics{
+					Enabled: true,
+				},
+			},
+			expectedOutput: "env:\n  - name: OTHER_VAR\n    value: \"value\"",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ModifyResiliencyCR(tt.yamlString, tt.module)
+			if got != tt.expectedOutput {
+				t.Errorf("ModifyResiliencyCR() = %v, want %v", got, tt.expectedOutput)
+			}
+		})
+	}
+}
+
+func TestDynamicallyMountVolume(t *testing.T) {
+	mountName := "test-mount"
+	mount := acorev1.VolumeMountApplyConfiguration{
+		Name: &mountName,
+	}
+
+	tests := []struct {
+		name         string
+		container    *acorev1.ContainerApplyConfiguration
+		mount        acorev1.VolumeMountApplyConfiguration
+		wantMountLen int
+	}{
+		{
+			name:         "add mount to container with no existing mounts",
+			container:    &acorev1.ContainerApplyConfiguration{},
+			mount:        mount,
+			wantMountLen: 1,
+		},
+		{
+			name: "add mount to container with existing mounts",
+			container: &acorev1.ContainerApplyConfiguration{
+				VolumeMounts: []acorev1.VolumeMountApplyConfiguration{
+					{Name: func() *string { s := "existing-mount"; return &s }()},
+				},
+			},
+			mount:        mount,
+			wantMountLen: 2,
+		},
+		{
+			name: "don't add duplicate mount",
+			container: &acorev1.ContainerApplyConfiguration{
+				VolumeMounts: []acorev1.VolumeMountApplyConfiguration{
+					{Name: func() *string { s := "test-mount"; return &s }()},
+				},
+			},
+			mount:        mount,
+			wantMountLen: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dynamicallyMountVolume(tt.container, tt.mount)
+			if tt.container.VolumeMounts == nil {
+				t.Errorf("expected VolumeMounts to be non-nil")
+			} else {
+				assert.Equal(t, tt.wantMountLen, len(tt.container.VolumeMounts))
+			}
+		})
+	}
+}
+
+// TestModifyPodmon_MetricsPort_AddsPort tests that when metrics port is specified in component,
+// the function adds the port to the container with a name that satisfies the Kubernetes
+// 15-character limit for container port names.
+func TestModifyPodmon_MetricsPort_AddsPort(t *testing.T) {
+	ctx := context.Background()
+	name := "podmon"
+	component := csmv1.ContainerTemplate{
+		Ports: []corev1.ContainerPort{
+			{
+				Name:          "res-metrics",
+				ContainerPort: 8444,
+				Protocol:      corev1.ProtocolTCP,
+			},
+		},
+	}
+
+	module := csmv1.Module{
+		Metrics: &csmv1.ModuleMetrics{
+			Enabled: true,
+		},
+	}
+
+	container := acorev1.Container().
+		WithName(name).
+		WithImage("registry.example/podmon:v1.0")
+
+	modifyPodmon(ctx, component, container, operatorutils.VersionSpec{}, csmv1.ContainerStorageModule{}, module)
+
+	if len(container.Ports) != 1 {
+		t.Fatalf("expected 1 port, got %d", len(container.Ports))
+	}
+	if container.Ports[0].Name == nil || *container.Ports[0].Name != "res-metrics" {
+		t.Fatalf("expected port name 'res-metrics', got %v", container.Ports[0].Name)
+	}
+	if len(*container.Ports[0].Name) > 15 {
+		t.Fatalf("port name %q exceeds 15 characters", *container.Ports[0].Name)
+	}
+}
+
+// TestModifyPodmon_TLSVolumeMount_AddsMount tests that when TLS volume mount is specified
+// in component, the function adds the mount to the container.
+func TestModifyPodmon_TLSVolumeMount_AddsMount(t *testing.T) {
+	ctx := context.Background()
+	name := "podmon"
+	component := csmv1.ContainerTemplate{
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				Name:      "resiliency-metrics-tls",
+				MountPath: "/etc/metrics-tls",
+			},
+		},
+	}
+
+	container := acorev1.Container().
+		WithName(name).
+		WithImage("registry.example/podmon:v1.0")
+
+	modifyPodmon(ctx, component, container, operatorutils.VersionSpec{}, csmv1.ContainerStorageModule{}, csmv1.Module{})
+
+	if len(container.VolumeMounts) != 1 {
+		t.Fatalf("expected 1 volume mount, got %d", len(container.VolumeMounts))
+	}
+	if container.VolumeMounts[0].Name == nil || *container.VolumeMounts[0].Name != "resiliency-metrics-tls" {
+		t.Fatalf("expected volume mount name 'resiliency-metrics-tls', got %v", container.VolumeMounts[0].Name)
+	}
+}
+
+// TestModifyPodmon_MetricsEnabledWithTLS_AddsTLSMount tests that when metrics are enabled
+// with TLS cert secret, the function dynamically adds TLS volume mount.
+func TestModifyPodmon_MetricsEnabledWithTLS_AddsTLSMount(t *testing.T) {
+	ctx := context.Background()
+	name := "podmon"
+	component := csmv1.ContainerTemplate{}
+
+	module := csmv1.Module{
+		// #nosec G101 - test file
+		Metrics: &csmv1.ModuleMetrics{
+			Enabled:       true,
+			TLSCertSecret: "metrics-tls-secret",
+		},
+	}
+
+	container := acorev1.Container().
+		WithName(name).
+		WithImage("registry.example/podmon:v1.0")
+
+	modifyPodmon(ctx, component, container, operatorutils.VersionSpec{}, csmv1.ContainerStorageModule{}, module)
+
+	if container.VolumeMounts == nil {
+		t.Fatalf("container.VolumeMounts should not be nil")
+	}
+	if len(container.VolumeMounts) != 1 {
+		t.Fatalf("expected 1 volume mount, got %d", len(container.VolumeMounts))
+	}
+	if container.VolumeMounts[0].Name == nil || *container.VolumeMounts[0].Name != "resiliency-metrics-tls" {
+		t.Fatalf("expected volume mount name 'resiliency-metrics-tls', got %v", container.VolumeMounts[0].Name)
+	}
+}
+
+// TestModifyPodmon_NonMetricsPort_IgnoresPort tests that when a non-metrics port is
+// specified, the function ignores it.
+func TestModifyPodmon_NonMetricsPort_IgnoresPort(t *testing.T) {
+	ctx := context.Background()
+	name := "podmon"
+	component := csmv1.ContainerTemplate{
+		Ports: []corev1.ContainerPort{
+			{
+				Name:          "health",
+				ContainerPort: 8080,
+				Protocol:      corev1.ProtocolTCP,
+			},
+		},
+	}
+
+	container := acorev1.Container().
+		WithName(name).
+		WithImage("registry.example/podmon:v1.0")
+
+	modifyPodmon(ctx, component, container, operatorutils.VersionSpec{}, csmv1.ContainerStorageModule{}, csmv1.Module{})
+
+	// Non-metrics ports should not be added
+	if len(container.Ports) > 0 {
+		t.Fatalf("expected no ports to be added for non-metrics port, got %d", len(container.Ports))
+	}
+}
+
+// TestModifyPodmon_NonTLSVolumeMount_IgnoresMount tests that when a non-TLS volume mount
+// is specified, the function ignores it.
+func TestModifyPodmon_NonTLSVolumeMount_IgnoresMount(t *testing.T) {
+	ctx := context.Background()
+	name := "podmon"
+	component := csmv1.ContainerTemplate{
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				Name:      "data",
+				MountPath: "/data",
+			},
+		},
+	}
+
+	container := acorev1.Container().
+		WithName(name).
+		WithImage("registry.example/podmon:v1.0")
+
+	modifyPodmon(ctx, component, container, operatorutils.VersionSpec{}, csmv1.ContainerStorageModule{}, csmv1.Module{})
+
+	// Non-TLS volume mounts should not be added
+	if len(container.VolumeMounts) > 0 {
+		t.Fatalf("expected no volume mounts to be added for non-TLS mount, got %d", len(container.VolumeMounts))
+	}
+}
+
+// TestModifyPodmon_MetricsDisabled_NoTLSMount tests that when metrics are disabled,
+// the function does not add TLS volume mount even if TLSCertSecret is set.
+func TestModifyPodmon_MetricsDisabled_NoTLSMount(t *testing.T) {
+	ctx := context.Background()
+	name := "podmon"
+	component := csmv1.ContainerTemplate{}
+
+	module := csmv1.Module{
+		// #nosec G101 - test file
+		Metrics: &csmv1.ModuleMetrics{
+			Enabled:       false,
+			TLSCertSecret: "metrics-tls-secret",
+		},
+	}
+
+	container := acorev1.Container().
+		WithName(name).
+		WithImage("registry.example/podmon:v1.0")
+
+	modifyPodmon(ctx, component, container, operatorutils.VersionSpec{}, csmv1.ContainerStorageModule{}, module)
+
+	// TLS mount should not be added when metrics are disabled
+	if len(container.VolumeMounts) > 0 {
+		t.Fatalf("expected no volume mounts when metrics are disabled, got %d", len(container.VolumeMounts))
+	}
+}
+
+// TestModifyPodmon_NoTLSCertSecret_NoDynamicMount tests that when metrics are enabled
+// but TLSCertSecret is not set, the function does not dynamically add TLS volume mount.
+func TestModifyPodmon_NoTLSCertSecret_NoDynamicMount(t *testing.T) {
+	ctx := context.Background()
+	name := "podmon"
+	component := csmv1.ContainerTemplate{}
+
+	module := csmv1.Module{
+		Metrics: &csmv1.ModuleMetrics{
+			Enabled: true,
+		},
+	}
+
+	container := acorev1.Container().
+		WithName(name).
+		WithImage("registry.example/podmon:v1.0")
+
+	modifyPodmon(ctx, component, container, operatorutils.VersionSpec{}, csmv1.ContainerStorageModule{}, module)
+
+	// TLS mount should not be added when TLSCertSecret is not set
+	if len(container.VolumeMounts) > 0 {
+		t.Fatalf("expected no volume mounts when TLSCertSecret is not set, got %d", len(container.VolumeMounts))
+	}
+}
+
+// TestModifyPodmon_ImagePullPolicy_UpdatesPolicy tests that when ImagePullPolicy is
+// specified in component, the function updates the container's pull policy.
+func TestModifyPodmon_ImagePullPolicy_UpdatesPolicy(t *testing.T) {
+	ctx := context.Background()
+	name := "podmon"
+	component := csmv1.ContainerTemplate{
+		ImagePullPolicy: corev1.PullAlways,
+	}
+
+	container := acorev1.Container().
+		WithName(name).
+		WithImage("registry.example/podmon:v1.0").
+		WithImagePullPolicy(corev1.PullIfNotPresent)
+
+	modifyPodmon(ctx, component, container, operatorutils.VersionSpec{}, csmv1.ContainerStorageModule{}, csmv1.Module{})
+
+	if container.ImagePullPolicy == nil {
+		t.Fatalf("container.ImagePullPolicy should not be nil")
+	}
+	if *container.ImagePullPolicy != corev1.PullAlways {
+		t.Fatalf("expected pull policy %v, got %v", corev1.PullAlways, *container.ImagePullPolicy)
+	}
+}
+
+// TestModifyPodmon_ExistingVolumeMounts_AppendsTLSMount tests that when the container
+// already has volume mounts, the function appends the TLS mount.
+func TestModifyPodmon_ExistingVolumeMounts_AppendsTLSMount(t *testing.T) {
+	ctx := context.Background()
+	name := "podmon"
+	component := csmv1.ContainerTemplate{}
+
+	// #nosec G101 - test file
+	module := csmv1.Module{
+		Metrics: &csmv1.ModuleMetrics{
+			Enabled:       true,
+			TLSCertSecret: "metrics-tls-secret",
+		},
+	}
+
+	container := acorev1.Container().
+		WithName(name).
+		WithImage("registry.example/podmon:v1.0")
+
+	// Add an existing volume mount
+	existingMount := acorev1.VolumeMountApplyConfiguration{
+		Name:      ptrTo("existing-mount"),
+		MountPath: ptrTo("/existing"),
+	}
+	container.VolumeMounts = []acorev1.VolumeMountApplyConfiguration{existingMount}
+
+	modifyPodmon(ctx, component, container, operatorutils.VersionSpec{}, csmv1.ContainerStorageModule{}, module)
+
+	if container.VolumeMounts == nil {
+		t.Fatalf("container.VolumeMounts should not be nil")
+	}
+	if len(container.VolumeMounts) != 2 {
+		t.Fatalf("expected 2 volume mounts, got %d", len(container.VolumeMounts))
+	}
+}
+
+// TestModifyPodmon_ExistingPorts_AppendsMetricsPort tests that when the container
+// already has ports, the function appends the metrics port.
+func TestModifyPodmon_ExistingPorts_AppendsMetricsPort(t *testing.T) {
+	ctx := context.Background()
+	name := "podmon"
+	component := csmv1.ContainerTemplate{
+		Ports: []corev1.ContainerPort{
+			{
+				Name:          "res-metrics",
+				ContainerPort: 8444,
+				Protocol:      corev1.ProtocolTCP,
+			},
+		},
+	}
+
+	module := csmv1.Module{
+		Metrics: &csmv1.ModuleMetrics{
+			Enabled: true,
+		},
+	}
+
+	container := acorev1.Container().
+		WithName(name).
+		WithImage("registry.example/podmon:v1.0")
+
+	// Add an existing port
+	protocolTCP := corev1.ProtocolTCP
+	existingPort := acorev1.ContainerPortApplyConfiguration{
+		ContainerPort: ptrToInt32(8080),
+		Name:          ptrTo("health"),
+		Protocol:      &protocolTCP,
+	}
+	container.Ports = []acorev1.ContainerPortApplyConfiguration{existingPort}
+
+	modifyPodmon(ctx, component, container, operatorutils.VersionSpec{}, csmv1.ContainerStorageModule{}, module)
+
+	if container.Ports == nil {
+		t.Fatalf("container.Ports should not be nil")
+	}
+	if len(container.Ports) != 2 {
+		t.Fatalf("expected 2 ports, got %d", len(container.Ports))
+	}
+}
+
+// TestModifyPodmon_CustomMetricsPort verifies that a custom metrics port in the module is applied to the container's metrics port.
+func TestModifyPodmon_CustomMetricsPort(t *testing.T) {
+	ctx := context.Background()
+	name := "podmon"
+	component := csmv1.ContainerTemplate{}
+
+	module := csmv1.Module{
+		Metrics: &csmv1.ModuleMetrics{
+			Enabled: true,
+			Port:    9090,
+		},
+	}
+
+	container := acorev1.Container().
+		WithName(name).
+		WithImage("registry.example/podmon:v1.0")
+
+	protocolTCP := corev1.ProtocolTCP
+	container.Ports = []acorev1.ContainerPortApplyConfiguration{
+		{
+			ContainerPort: ptrToInt32(8444),
+			Name:          ptrTo("res-metrics"),
+			Protocol:      &protocolTCP,
+		},
+	}
+
+	modifyPodmon(ctx, component, container, operatorutils.VersionSpec{}, csmv1.ContainerStorageModule{}, module)
+
+	if container.Ports == nil {
+		t.Fatalf("container.Ports should not be nil")
+	}
+	if len(container.Ports) != 1 {
+		t.Fatalf("expected 1 port, got %d", len(container.Ports))
+	}
+	if container.Ports[0].ContainerPort == nil {
+		t.Fatalf("container.Ports[0].ContainerPort should not be nil")
+	}
+	if *container.Ports[0].ContainerPort != 9090 {
+		t.Fatalf("expected res-metrics port 9090, got %d", *container.Ports[0].ContainerPort)
+	}
+}
+
+// Helper functions for tests
+func ptrTo(s string) *string {
+	return &s
+}
+
+func ptrToInt32(i int32) *int32 {
+	return &i
 }

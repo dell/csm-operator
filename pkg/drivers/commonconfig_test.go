@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
+	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	ctrlClientFake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -119,25 +120,29 @@ func TestGetConfigMap(t *testing.T) {
 	}
 }
 
-func TestGetUpgradeInfo(t *testing.T) {
+func TestGetConfigMap_PreservesTemplateCSILogFormatDefault(t *testing.T) {
 	ctx := context.Background()
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.csm.Spec.Driver.ConfigVersion != "" {
-				// Use configForVersionChecks for invalid CSM version test
-				cfg := config
-				if tt.csm.Spec.Version == shared.InvalidCSMVersion {
-					cfg = configForVersionChecks
-				}
-				_, err := GetUpgradeInfo(ctx, cfg, tt.driverName, tt.csm.Spec.Driver.ConfigVersion)
-				if tt.expectedErr == "" {
-					assert.Nil(t, err)
-				} else {
-					assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
-				}
-			}
-		})
+	cr := csmWithPowerScale(csmv1.PowerScaleName, shared.PScaleConfigVersion)
+
+	configMap, err := GetConfigMap(ctx, cr, config, csmv1.PowerScaleName)
+	assert.NoError(t, err)
+	if assert.Contains(t, configMap.Data, ConfigParamsFile) {
+		assert.Contains(t, configMap.Data[ConfigParamsFile], "CSI_LOG_FORMAT: \"json\"")
 	}
+}
+
+func TestSetConfigParam(t *testing.T) {
+	input := `CSI_LOG_LEVEL: "info"
+CSI_LOG_FORMAT: "json"`
+
+	result := setConfigParam(input, "CSI_LOG_FORMAT", "text")
+	assert.Equal(t, `CSI_LOG_LEVEL: "info"
+CSI_LOG_FORMAT: text`, result)
+
+	input2 := `CSI_LOG_LEVEL: "info"`
+	result2 := setConfigParam(input2, "CSI_LOG_FORMAT", "json")
+	assert.Equal(t, `CSI_LOG_LEVEL: "info"
+CSI_LOG_FORMAT: json`, result2)
 }
 
 func TestGetController(t *testing.T) {
@@ -740,6 +745,7 @@ func TestGetController_SidecarImageCustomRegistryRetainPath(t *testing.T) {
 				Registrar             string `json:"registrar" yaml:"registrar"`
 				Resizer               string `json:"resizer" yaml:"resizer"`
 				Externalhealthmonitor string `json:"externalhealthmonitorcontroller" yaml:"externalhealthmonitorcontroller"`
+				Metadataretriever     string `json:"metadataretriever" yaml:"metadataretriever"`
 				Sdc                   string `json:"sdc" yaml:"sdc"`
 				Sdcmonitor            string `json:"sdcmonitor" yaml:"sdcmonitor"`
 				Podmon                string `json:"podmon" yaml:"podmon"`
@@ -930,6 +936,7 @@ func TestGetNode_SDCImageCustomRegistryRetainPath(t *testing.T) {
 				Registrar             string `json:"registrar" yaml:"registrar"`
 				Resizer               string `json:"resizer" yaml:"resizer"`
 				Externalhealthmonitor string `json:"externalhealthmonitorcontroller" yaml:"externalhealthmonitorcontroller"`
+				Metadataretriever     string `json:"metadataretriever" yaml:"metadataretriever"`
 				Sdc                   string `json:"sdc" yaml:"sdc"`
 				Sdcmonitor            string `json:"sdcmonitor" yaml:"sdcmonitor"`
 				Podmon                string `json:"podmon" yaml:"podmon"`
@@ -1031,6 +1038,231 @@ func TestSubstituteEnvVar(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := SubstituteEnvVar(tt.yamlString, tt.varName, tt.value)
 			assert.Equal(t, tt.expected, result, "SubstituteEnvVar should correctly substitute placeholders")
+		})
+	}
+}
+
+func TestSubstituteOptionalYAMLLine(t *testing.T) {
+	tests := []struct {
+		name        string
+		yamlString  string
+		placeholder string
+		value       string
+		expected    string
+	}{
+		{
+			name: "replace placeholder when value is non-empty",
+			yamlString: strings.Join([]string{
+				"args:",
+				"  - \"--csi-address=$(ADDRESS)\"",
+				"  <OPTIONAL_ARG_PLACEHOLDER>",
+				"  - \"--timeout=120s\"",
+			}, "\n"),
+			placeholder: "<OPTIONAL_ARG_PLACEHOLDER>",
+			value:       "- \"--http-endpoint=:8081\"",
+			expected: strings.Join([]string{
+				"args:",
+				"  - \"--csi-address=$(ADDRESS)\"",
+				"  - \"--http-endpoint=:8081\"",
+				"  - \"--timeout=120s\"",
+			}, "\n"),
+		},
+		{
+			name: "remove full placeholder line when value is empty",
+			yamlString: strings.Join([]string{
+				"args:",
+				"  - \"--csi-address=$(ADDRESS)\"",
+				"  <OPTIONAL_ARG_PLACEHOLDER>",
+				"  - \"--timeout=120s\"",
+			}, "\n"),
+			placeholder: "<OPTIONAL_ARG_PLACEHOLDER>",
+			value:       "",
+			expected: strings.Join([]string{
+				"args:",
+				"  - \"--csi-address=$(ADDRESS)\"",
+				"  - \"--timeout=120s\"",
+			}, "\n"),
+		},
+		{
+			name:        "yaml remains unchanged when placeholder is absent",
+			yamlString:  "args:\n  - \"--csi-address=$(ADDRESS)\"",
+			placeholder: "<OPTIONAL_ARG_PLACEHOLDER>",
+			value:       "",
+			expected:    "args:\n  - \"--csi-address=$(ADDRESS)\"",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := SubstituteOptionalYAMLLine(tt.yamlString, tt.placeholder, tt.value)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+// TestSetDriverMetrics_PowerScaleName verifies that SetDriverMetrics handles
+// both the "isilon" (csmv1.PowerScale) and "powerscale" (csmv1.PowerScaleName)
+// driver type aliases correctly.  The controller remaps "isilon" → "powerscale"
+// before calling GetNode, so the "powerscale" alias must be accepted in order
+// for the TLS volume mount to be added to the node DaemonSet containers.
+func TestSetDriverMetrics_PowerScaleName(t *testing.T) {
+	tlsSecret := "powerscale-metrics-tls"
+
+	tests := []struct {
+		name             string
+		driverType       csmv1.DriverType
+		tlsCertSecret    string
+		metricsEnabled   bool
+		expectTLSMounted bool
+	}{
+		{
+			name:             "powerscale alias with TLS enabled mounts secret",
+			driverType:       csmv1.PowerScaleName, // "powerscale" — used by GetNode
+			tlsCertSecret:    tlsSecret,
+			metricsEnabled:   true,
+			expectTLSMounted: true,
+		},
+		{
+			name:             "isilon alias with TLS enabled mounts secret",
+			driverType:       csmv1.PowerScale, // "isilon" — used by GetController
+			tlsCertSecret:    tlsSecret,
+			metricsEnabled:   true,
+			expectTLSMounted: true,
+		},
+		{
+			name:             "powerscale alias TLS disabled — no mount",
+			driverType:       csmv1.PowerScaleName,
+			tlsCertSecret:    tlsSecret,
+			metricsEnabled:   false,
+			expectTLSMounted: false,
+		},
+		{
+			name:             "powermax with TLS enabled mounts secret",
+			driverType:       csmv1.PowerMax,
+			tlsCertSecret:    tlsSecret,
+			metricsEnabled:   true,
+			expectTLSMounted: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cr := csmWithPowerScale(csmv1.PowerScale, shared.PScaleConfigVersion)
+			cr.Spec.Driver.Metrics = &csmv1.DriverMetrics{
+				Enabled:       tt.metricsEnabled,
+				TLSCertSecret: tt.tlsCertSecret,
+			}
+
+			// Build a bare container (the driver container prototype)
+			containerName := "driver"
+			c := acorev1.Container().WithName(containerName)
+
+			SetDriverMetrics(tt.driverType, cr, c)
+
+			foundMount := false
+			for _, vm := range c.VolumeMounts {
+				if vm.Name != nil && *vm.Name == "metrics-tls" {
+					foundMount = true
+					assert.Equal(t, "/etc/metrics-tls", *vm.MountPath, "TLS volume mount path mismatch")
+					assert.True(t, vm.ReadOnly != nil && *vm.ReadOnly, "TLS volume mount should be read-only")
+					break
+				}
+			}
+			assert.Equal(t, tt.expectTLSMounted, foundMount,
+				"metrics-tls VolumeMount presence mismatch for driverType=%q", tt.driverType)
+		})
+	}
+}
+
+// TestGetNode_PowerScaleMetricsTLS verifies that the node DaemonSet produced by
+// GetNode for PowerScale (called with driverType = csmv1.PowerScaleName) includes
+// the metrics-tls volume in the DaemonSet spec AND the corresponding volumeMount
+// in the driver container when TLS is enabled.
+// This is a regression test for the bug where the controller remapped "isilon" →
+// "powerscale" before calling GetNode, causing SetDriverMetrics to skip the node
+// pod because it only checked for csmv1.PowerScale ("isilon").
+func TestGetNode_PowerScaleMetricsTLS(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name             string
+		tlsCertSecret    string
+		metricsEnabled   bool
+		expectTLSMounted bool
+	}{
+		{
+			name:             "TLS enabled — volume and mount added to node",
+			tlsCertSecret:    "powerscale-metrics-tls",
+			metricsEnabled:   true,
+			expectTLSMounted: true,
+		},
+		{
+			name:             "TLS disabled (empty secret) — no volume or mount",
+			tlsCertSecret:    "",
+			metricsEnabled:   true,
+			expectTLSMounted: false,
+		},
+		{
+			name:             "metrics disabled with TLS secret — no volume or mount",
+			tlsCertSecret:    "powerscale-metrics-tls",
+			metricsEnabled:   false,
+			expectTLSMounted: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cr := csmWithPowerScale(csmv1.PowerScale, shared.PScaleConfigVersion)
+			cr.Spec.Driver.Metrics = &csmv1.DriverMetrics{
+				Enabled:       tt.metricsEnabled,
+				TLSCertSecret: tt.tlsCertSecret,
+			}
+
+			// Call GetNode with driverType = csmv1.PowerScaleName ("powerscale"), which
+			// is exactly what getDriverConfig in csm_controller.go passes after the
+			// "isilon" → "powerscale" remap.
+			node, err := GetNode(
+				ctx,
+				cr,
+				config,
+				csmv1.PowerScaleName,
+				"node.yaml",
+				ctrlClientFake.NewClientBuilder().Build(),
+				operatorutils.VersionSpec{},
+			)
+			assert.Nil(t, err, "GetNode should not return an error")
+
+			// Check metrics-tls volume in DaemonSet spec
+			foundVol := false
+			for _, v := range node.DaemonSetApplyConfig.Spec.Template.Spec.Volumes {
+				if v.Name != nil && *v.Name == "metrics-tls" {
+					foundVol = true
+					if tt.expectTLSMounted {
+						assert.NotNil(t, v.Secret, "metrics-tls should be a secret volume")
+						assert.Equal(t, tt.tlsCertSecret, *v.Secret.SecretName)
+					}
+					break
+				}
+			}
+			assert.Equal(t, tt.expectTLSMounted, foundVol,
+				"metrics-tls volume presence in DaemonSet spec mismatch")
+
+			// Check metrics-tls volumeMount in the driver container
+			foundMount := false
+			for _, c := range node.DaemonSetApplyConfig.Spec.Template.Spec.Containers {
+				if c.Name != nil && *c.Name == "driver" {
+					for _, vm := range c.VolumeMounts {
+						if vm.Name != nil && *vm.Name == "metrics-tls" {
+							foundMount = true
+							assert.Equal(t, "/etc/metrics-tls", *vm.MountPath)
+							assert.True(t, vm.ReadOnly != nil && *vm.ReadOnly)
+						}
+					}
+					break
+				}
+			}
+			assert.Equal(t, tt.expectTLSMounted, foundMount,
+				"metrics-tls VolumeMount in driver container presence mismatch")
 		})
 	}
 }

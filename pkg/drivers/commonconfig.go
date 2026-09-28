@@ -1,14 +1,16 @@
-//  Copyright © 2022-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
+// Copyright (c) Dell Inc. All Rights Reserved.
 //
-//  Licensed under the Apache License, Version 2.0 (the "License");
-//  you may not use this file except in compliance with the License.
-//  You may obtain a copy of the License at
-//       http://www.apache.org/licenses/LICENSE-2.0
-//  Unless required by applicable law or agreed to in writing, software
-//  distributed under the License is distributed on an "AS IS" BASIS,
-//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//  See the License for the specific language governing permissions and
-//  limitations under the License.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package drivers
 
@@ -89,6 +91,27 @@ func EnvToPlaceholder(envName string) string {
 
 func SubstituteEnvVar(yamlString, varName, value string) string {
 	return strings.ReplaceAll(yamlString, EnvToPlaceholder(varName), value)
+}
+
+func SubstituteOptionalYAMLLine(yamlString, placeholder, value string) string {
+	if value != "" {
+		return strings.ReplaceAll(yamlString, placeholder, value)
+	}
+
+	if !strings.Contains(yamlString, placeholder) {
+		return yamlString
+	}
+
+	lines := strings.SplitAfter(yamlString, "\n")
+	var b strings.Builder
+	for _, line := range lines {
+		if strings.Contains(strings.TrimSpace(line), placeholder) {
+			continue
+		}
+		b.WriteString(line)
+	}
+
+	return b.String()
 }
 
 // GetController get controller yaml
@@ -230,6 +253,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 			c.Env = containers[i].Env
 
 			SetDriverMetrics(driverType, cr, &c)
+			SetDriverMetricsPort(driverType, cr, &c)
 		}
 
 		removeContainer := false
@@ -300,7 +324,7 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 
 	}
 
-	if driverType == csmv1.PowerFlex && isDriverMetricsTLSEnabled(cr) {
+	if operatorutils.SupportsDriverMetrics(driverType) && isDriverMetricsTLSEnabled(cr) {
 		metricsTLSVolName := "metrics-tls"
 		metricsTLSSecretName := cr.Spec.Driver.Metrics.TLSCertSecret
 		dynamicallyAddVolume(
@@ -335,6 +359,11 @@ func GetController(ctx context.Context, cr csmv1.ContainerStorageModule, operato
 	return &controllerYAML, nil
 }
 
+// isDriverMetricsTLSEnabled checks if metrics TLS is specifically enabled in the CR.
+// This function checks the user configuration to determine if the metrics endpoint
+// should be served over HTTPS using a TLS certificate secret.
+// Note: This should be used in conjunction with operatorutils.SupportsDriverMetrics()
+// which checks if the driver type supports metrics feature at all.
 func isDriverMetricsTLSEnabled(cr csmv1.ContainerStorageModule) bool {
 	return cr.Spec.Driver.Metrics != nil && cr.Spec.Driver.Metrics.Enabled && cr.Spec.Driver.Metrics.TLSCertSecret != ""
 }
@@ -348,10 +377,23 @@ func dynamicallyAddVolume(volumes *[]acorev1.VolumeApplyConfiguration, vol acore
 	}
 }
 
+func dynamicallyUpsertEnvironmentVariable(ct *acorev1.ContainerApplyConfiguration, envVar acorev1.EnvVarApplyConfiguration) {
+	for i, existing := range ct.Env {
+		if *existing.Name == *envVar.Name {
+			ct.Env[i] = envVar
+			return
+		}
+	}
+	ct.Env = append(ct.Env, envVar)
+}
+
 // SetDriverMetrics mounts the TLS cert volume and sets the cert/key env vars for
 // drivers that expose a metrics endpoint secured with a user-provided secret.
+// Both "isilon" (csmv1.PowerScale) and "powerscale" (csmv1.PowerScaleName) are
+// accepted because the controller remaps the CSIDriverType from "isilon" to
+// "powerscale" before calling GetNode, so both aliases must be handled here.
 func SetDriverMetrics(driverType csmv1.DriverType, cr csmv1.ContainerStorageModule, c *acorev1.ContainerApplyConfiguration) {
-	if driverType != csmv1.PowerFlex {
+	if !operatorutils.SupportsDriverMetrics(driverType) {
 		return
 	}
 	if !isDriverMetricsTLSEnabled(cr) {
@@ -365,8 +407,26 @@ func SetDriverMetrics(driverType csmv1.DriverType, cr csmv1.ContainerStorageModu
 	keyEnvName := "X_CSI_METRICS_TLS_KEY_FILE"
 	keyFile := "/etc/metrics-tls/tls.key"
 	dynamicallyMountVolume(c, acorev1.VolumeMountApplyConfiguration{Name: &metricsTLSVolName, MountPath: &metricsTLSMountPath, ReadOnly: &readOnly})
-	dynamicallyAddEnvironmentVariable(c, acorev1.EnvVarApplyConfiguration{Name: &certEnvName, Value: &certFile})
-	dynamicallyAddEnvironmentVariable(c, acorev1.EnvVarApplyConfiguration{Name: &keyEnvName, Value: &keyFile})
+	dynamicallyUpsertEnvironmentVariable(c, acorev1.EnvVarApplyConfiguration{Name: &certEnvName, Value: &certFile})
+	dynamicallyUpsertEnvironmentVariable(c, acorev1.EnvVarApplyConfiguration{Name: &keyEnvName, Value: &keyFile})
+}
+
+// SetDriverMetricsPort updates the driver's metrics container port when a custom metrics
+// port is configured in the CR. This is applied even when metrics are disabled so hostNetwork
+// deployments can avoid port conflicts in constrained test environments.
+func SetDriverMetricsPort(driverType csmv1.DriverType, cr csmv1.ContainerStorageModule, c *acorev1.ContainerApplyConfiguration) {
+	if !operatorutils.SupportsDriverMetrics(driverType) {
+		return
+	}
+	if cr.Spec.Driver.Metrics == nil || cr.Spec.Driver.Metrics.Port == 0 {
+		return
+	}
+	customPort := cr.Spec.Driver.Metrics.Port
+	for i := range c.Ports {
+		if c.Ports[i].Name != nil && *c.Ports[i].Name == "metrics" {
+			c.Ports[i].ContainerPort = &customPort
+		}
+	}
 }
 
 // GetNode get node yaml
@@ -485,6 +545,9 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 			}
 			containers[i].Env = operatorutils.ReplaceAllApplyCustomEnvs(c.Env, commonEnvs, nodeEnvs)
 			c.Env = containers[i].Env
+
+			SetDriverMetrics(driverType, cr, &c)
+			SetDriverMetricsPort(driverType, cr, &c)
 		}
 		removeContainer := false
 		if string(*c.Name) == "sdc-monitor" {
@@ -628,38 +691,28 @@ func GetNode(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfi
 
 	}
 
+	if operatorutils.SupportsDriverMetrics(cr.Spec.Driver.CSIDriverType) && isDriverMetricsTLSEnabled(cr) {
+		metricsTLSVolName := "metrics-tls"
+		metricsTLSSecretName := cr.Spec.Driver.Metrics.TLSCertSecret
+		dynamicallyAddVolume(
+			&nodeYaml.DaemonSetApplyConfig.Spec.Template.Spec.Volumes,
+			acorev1.VolumeApplyConfiguration{
+				Name: &metricsTLSVolName,
+				VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{
+					Secret: &acorev1.SecretVolumeSourceApplyConfiguration{
+						SecretName: &metricsTLSSecretName,
+					},
+				},
+			},
+		)
+	}
+
 	return &nodeYaml, nil
-}
-
-// GetUpgradeInfo -
-func GetUpgradeInfo(ctx context.Context, operatorConfig operatorutils.OperatorConfig, driverType csmv1.DriverType, oldVersion string) (string, error) {
-	log := logger.GetLogger(ctx)
-	upgradeInfoPath := fmt.Sprintf("%s/driverconfig/%s/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, driverType, oldVersion)
-	log.Debugw("GetUpgradeInfo", "upgradeInfoPath", upgradeInfoPath)
-
-	buf, err := os.ReadFile(filepath.Clean(upgradeInfoPath))
-	if err != nil {
-		log.Errorw("GetUpgradeInfo failed", "Error", err.Error())
-		return "", err
-	}
-	YamlString := string(buf)
-
-	var upgradePath operatorutils.UpgradePaths
-	err = yaml.Unmarshal([]byte(YamlString), &upgradePath)
-	if err != nil {
-		log.Errorw("GetUpgradeInfo yaml marshall failed", "Error", err.Error())
-		return "", err
-	}
-
-	// Example return value: "v2.2.0"
-	return upgradePath.MinUpgradePath, nil
 }
 
 // GetConfigMap get configmap
 func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operatorConfig operatorutils.OperatorConfig, driverName csmv1.DriverType) (*corev1.ConfigMap, error) {
 	log := logger.GetLogger(ctx)
-	var podmanLogFormat string
-	var podmanLogLevel string
 	version, err := operatorutils.GetVersion(ctx, &cr, operatorConfig)
 	if err != nil {
 		return nil, err
@@ -675,7 +728,6 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 	YamlString := operatorutils.ModifyCommonCR(string(buf), cr)
 
 	var configMap corev1.ConfigMap
-	cmValue := ""
 	var configMapData map[string]string
 	err = yaml.Unmarshal([]byte(YamlString), &configMap)
 	if err != nil {
@@ -683,26 +735,15 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 		return nil, err
 	}
 
+	cmValue := configMap.Data[ConfigParamsFile]
+
 	if cr.Spec.Driver.Common != nil {
 		for _, env := range cr.Spec.Driver.Common.Envs {
 			if env.Name == "CSI_LOG_LEVEL" || env.Name == CosiLogLevel {
-				cmValue += fmt.Sprintf("\n%s: %s", env.Name, env.Value)
-				podmanLogLevel = env.Value
+				cmValue = setConfigParam(cmValue, env.Name, env.Value)
 			}
 			if env.Name == "CSI_LOG_FORMAT" || env.Name == CosiLogFormat {
-				cmValue += fmt.Sprintf("\n%s: %s", env.Name, env.Value)
-				podmanLogFormat = env.Value
-			}
-		}
-	}
-
-	for _, m := range cr.Spec.Modules {
-		if m.Name == csmv1.Resiliency {
-			if m.Enabled {
-				cmValue += fmt.Sprintf("\n%s: %s", "PODMON_CONTROLLER_LOG_LEVEL", podmanLogLevel)
-				cmValue += fmt.Sprintf("\n%s: %s", "PODMON_CONTROLLER_LOG_FORMAT", podmanLogFormat)
-				cmValue += fmt.Sprintf("\n%s: %s", "PODMON_NODE_LOG_LEVEL", podmanLogLevel)
-				cmValue += fmt.Sprintf("\n%s: %s", "PODMON_NODE_LOG_FORMAT", podmanLogFormat)
+				cmValue = setConfigParam(cmValue, env.Name, env.Value)
 			}
 		}
 	}
@@ -711,7 +752,7 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 		if cr.Spec.Driver.Common != nil {
 			for _, env := range cr.Spec.Driver.Common.Envs {
 				if env.Name == "INTERFACE_NAMES" {
-					cmValue += fmt.Sprintf("\n%s: ", "interfaceNames")
+					cmValue = setConfigParam(cmValue, "interfaceNames", "")
 					for _, v := range strings.Split(env.Value, ",") {
 						cmValue += fmt.Sprintf("\n  %s ", v)
 					}
@@ -724,7 +765,7 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 		if cr.Spec.Driver.Common != nil {
 			for _, env := range cr.Spec.Driver.Common.Envs {
 				if env.Name == "AZ_RECONCILE_INTERVAL" {
-					cmValue += fmt.Sprintf("\n%s: %s", env.Name, env.Value)
+					cmValue = setConfigParam(cmValue, env.Name, env.Value)
 				}
 			}
 		}
@@ -739,6 +780,39 @@ func GetConfigMap(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 		configMap.Data = ModifyUnityConfigMap(ctx, cr)
 	}
 	return &configMap, nil
+}
+
+// setConfigParam updates or appends a top-level key in driver-config-params.yaml.
+//
+// Example:
+//
+//	input:
+//	  CSI_LOG_LEVEL: "info"
+//	  CSI_LOG_FORMAT: "json"
+//
+//	update: key=CSI_LOG_FORMAT, value=json
+//
+//	result:
+//	  CSI_LOG_LEVEL: "info"
+//	  CSI_LOG_FORMAT: "json"
+func setConfigParam(configData, key, value string) string {
+	updatedLine := fmt.Sprintf("%s: %s", key, value)
+	if configData == "" {
+		return updatedLine
+	}
+	keyPrefix := key + ":"
+	lines := strings.Split(configData, "\n")
+	for i, line := range lines {
+		if !strings.HasPrefix(strings.TrimSpace(line), keyPrefix) {
+			continue
+		}
+		// Replace the existing top-level entry for this key.
+		lines[i] = updatedLine
+		return strings.Join(lines, "\n")
+	}
+
+	// If the key is not already present, append it as a new top-level entry.
+	return configData + "\n" + updatedLine
 }
 
 // GetCSIDriver get driver
@@ -762,7 +836,7 @@ func GetCSIDriver(ctx context.Context, cr csmv1.ContainerStorageModule, operator
 	switch cr.Spec.Driver.CSIDriverType {
 	case "powerstore":
 		YamlString = ModifyPowerstoreCR(YamlString, cr, "CSIDriverSpec")
-	case "isilon":
+	case "isilon", "powerscale":
 		YamlString = ModifyPowerScaleCR(YamlString, cr, "CSIDriverSpec")
 	case "powermax":
 		YamlString = ModifyPowermaxCR(YamlString, cr, "CSIDriverSpec")

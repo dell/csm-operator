@@ -499,7 +499,7 @@ func getPortContainerizedAuth(namespace string) (string, error) {
 			return "", fmt.Errorf("failed to get %s port in namespace: %s: %s", service, "openshift-ingress", b)
 		}
 	} else {
-		// Try v2.5.0+ Gateway API service name first
+		// Try gateway-nginx (LoadBalancer with NodePort) first for v2.5.0+
 		service := namespace + "-gateway-nginx"
 		b, err = exec.Command(
 			"kubectl", "get",
@@ -507,9 +507,10 @@ func getPortContainerizedAuth(namespace string) (string, error) {
 			"-n", namespace,
 			"-o", `jsonpath="{.spec.ports[0].nodePort}"`,
 		).CombinedOutput() // #nosec G204
-		// If v2.5.0+ service name fails, try v2.4.0 ingress-nginx-controller
+		// If gateway-nginx fails, try v2.4.0 ingress-nginx-controller
 		if err != nil {
 			service = namespace + "-ingress-nginx-controller"
+			// For ingress-nginx-controller, use HTTPS port (index 1) instead of HTTP (index 0)
 			b, err = exec.Command(
 				"kubectl", "get",
 				"service", service,
@@ -528,7 +529,9 @@ func getPortContainerizedAuth(namespace string) (string, error) {
 func execCommand(command string, args ...string) error {
 	cmd := exec.Command(command, args...) // #nosec G204, G702 -- this is a test automation tool
 	if isDebugEnabled() {
-		fmt.Printf("cmd: %s %s\n", command, strings.Join(args, " "))
+		// Mask sensitive data in command output
+		maskedArgs := maskSensitiveArgs(args)
+		fmt.Printf("cmd: %s %s\n", command, strings.Join(maskedArgs, " "))
 		cmd.Stdout = os.Stdout
 	}
 	cmd.Stderr = os.Stderr
@@ -537,6 +540,55 @@ func execCommand(command string, args ...string) error {
 		return fmt.Errorf("cmd err: %v", err)
 	}
 	return nil
+}
+
+// execCommandWithOutput runs a command and returns its combined output, masking sensitive args when debugging is enabled.
+func execCommandWithOutput(command string, args ...string) (string, error) {
+	cmd := exec.Command(command, args...) // #nosec G204, G702 -- this is a test automation tool
+	if isDebugEnabled() {
+		// Mask sensitive data in command output
+		maskedArgs := maskSensitiveArgs(args)
+		fmt.Printf("cmd: %s %s\n", command, strings.Join(maskedArgs, " "))
+	}
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return string(out), fmt.Errorf("cmd err: %v, output: %s", err, string(out))
+	}
+	return string(out), nil
+}
+
+// execCommandWithStdin runs a command with data from stdin, masking sensitive args when debugging is enabled.
+func execCommandWithStdin(stdin, command string, args ...string) error {
+	cmd := exec.Command(command, args...) // #nosec G204, G702 -- this is a test automation tool
+	cmd.Stdin = strings.NewReader(stdin)
+	if isDebugEnabled() {
+		// Mask sensitive data in command output
+		maskedArgs := maskSensitiveArgs(args)
+		fmt.Printf("cmd: %s %s\n", command, strings.Join(maskedArgs, " "))
+		cmd.Stdout = os.Stdout
+	}
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("cmd err: %v", err)
+	}
+	return nil
+}
+
+// maskSensitiveArgs masks sensitive data in command arguments
+func maskSensitiveArgs(args []string) []string {
+	maskedArgs := make([]string, len(args))
+	for i, arg := range args {
+		// Mask --from-literal=config= arguments (contains secret content)
+		if strings.HasPrefix(arg, "--from-literal=config=") {
+			maskedArgs[i] = "--from-literal=config=<REDACTED>"
+		} else if strings.Contains(arg, "password") || strings.Contains(arg, "Password") {
+			maskedArgs[i] = "<REDACTED>"
+		} else {
+			maskedArgs[i] = arg
+		}
+	}
+	return maskedArgs
 }
 
 func execShell(commands string) error {

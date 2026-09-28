@@ -42,13 +42,16 @@ func (c *FakeDaemonSets) Apply(ctx context.Context, daemonSet *applyconfiguratio
 
 	_ = json.Unmarshal(data, result)
 
-	_, err = c.Get(ctx, *daemonSet.Name, v1.GetOptions{})
+	existing, err := c.Get(ctx, *daemonSet.Name, v1.GetOptions{})
 	if errors.IsNotFound(err) {
 		// if not found, we create it
 		return c.Create(ctx, result, v1.CreateOptions{})
 	} else if err != nil {
 		return result, err
 	}
+
+	// Preserve existing Status since ApplyConfigurations do not carry Status
+	result.Status = existing.Status
 
 	// otherwise we update it
 	err = c.FakeClient.Update(ctx, result)

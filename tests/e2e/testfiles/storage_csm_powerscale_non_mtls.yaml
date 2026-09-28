@@ -1,0 +1,90 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: powerscale
+  namespace: ${E2E_NS_POWERSCALE}
+spec:
+  version: ${CSM_VERSION_LATEST}
+  driver:
+    csiDriverType: "isilon"
+    csiDriverSpec:
+      fSGroupPolicy: "ReadWriteOnceWithFSType"
+      storageCapacity: true
+    authSecret: isilon-creds
+    replicas: 2
+    dnsPolicy: ClusterFirstWithHostNet
+    forceRemoveDriver: true
+    common:
+      imagePullPolicy: IfNotPresent
+      envs:
+        - name: X_CSI_VERBOSE
+          value: "1"
+        - name: X_CSI_ISI_PORT
+          value: "8080"
+        - name: X_CSI_ISI_PATH
+          value: "/ifs/data/csi"
+        - name: X_CSI_ISI_NO_PROBE_ON_START
+          value: "false"
+        - name: X_CSI_ISI_AUTOPROBE
+          value: "true"
+        - name: X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION
+          value: "true"
+        - name: X_CSI_ISI_AUTH_TYPE
+          value: "1"
+        - name: KUBELET_CONFIG_DIR
+          value: /var/lib/kubelet
+        - name: CERT_SECRET_COUNT
+          value: "1"
+        - name: CSI_LOG_LEVEL
+          value: info
+        - name: CSI_LOG_FORMAT
+          value: json
+        - name: GOISILON_DEBUG
+          value: "false"
+        - name: AZ_RECONCILE_INTERVAL
+          value: 1h
+        - name: X_CSI_CUSTOM_TOPOLOGY_ENABLED
+          value: "false"
+        - name: X_CSI_MAX_VOLUMES_PER_NODE
+          value: "0"
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
+          # NO mTLS environment variables - this is the non-mTLS configuration
+    sideCars:
+      - name: provisioner
+        args: ["--volume-name-prefix=csipscale"]
+      - name: csi-metadata-retriever
+      - name: external-health-monitor
+        enabled: false
+        args: ["--monitor-interval=60s"]
+    controller:
+      envs:
+        - name: X_CSI_ISI_QUOTA_ENABLED
+          value: "true"
+        - name: X_CSI_ISI_ACCESS_ZONE
+          value: "System"
+        - name: X_CSI_ISI_VOLUME_PATH_PERMISSIONS
+          value: "0777"
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
+        - name: X_CSI_ISI_IGNORE_UNRESOLVABLE_HOSTS
+          value: "false"
+        - name: X_CSI_MAX_PATH_LIMIT
+          value: "192"
+        - name: X_CSI_ALLOWED_NETWORKS
+          value: ""
+        - name: X_CSI_ALLOWED_NETWORKS_MODE
+          value: single
+    node:
+      envs:
+        - name: X_CSI_MAX_VOLUMES_PER_NODE
+          value: "0"
+        - name: X_CSI_ALLOWED_NETWORKS
+          value: ""
+        - name: X_CSI_ALLOWED_NETWORKS_MODE
+          value: single
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
+        - name: X_CSI_MAX_PATH_LIMIT
+          value: "192"
+  modules: []

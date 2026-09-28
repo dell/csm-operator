@@ -17,11 +17,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/dell/csm-operator/tests/e2e/pkg/version"
+	"github.com/dell/csm-operator/pkg/version"
 )
 
 // latestCSMVersion returns the latest CSM operator version, dynamically
-// resolved from csm-version-mapping.yaml via the version package.
+// resolved from csm-releases.yaml via the version package.
 // Requires version.Init to have been called first (done in BeforeSuite).
 func latestCSMVersion() string {
 	if info := version.GetInfo(); info != nil {
@@ -62,7 +62,7 @@ func CleanupMinimalTestfiles(dir string) {
 // before applying it.
 //
 // Files use spec.version instead of driver.configVersion; the operator
-// resolves driver and module versions via csm-version-mapping.yaml.
+// resolves driver and module versions via csm-releases.yaml.
 func minimalTestfiles() map[string]string {
 	m := make(map[string]string, 6)
 
@@ -89,6 +89,7 @@ spec:
     # resiliency test will fail with 2 replicas.
     replicas: 1
     csiDriverType: "powerstore"
+    forceRemoveDriver: true
   modules:
     - name: authorization
       enabled: false

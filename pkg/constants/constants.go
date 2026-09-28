@@ -1,14 +1,14 @@
-//  Copyright © 2021 - 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+// Copyright © 2021-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
-//  Licensed under the Apache License, Version 2.0 (the "License");
-//  you may not use this file except in compliance with the License.
-//  You may obtain a copy of the License at
-//       http://www.apache.org/licenses/LICENSE-2.0
-//  Unless required by applicable law or agreed to in writing, software
-//  distributed under the License is distributed on an "AS IS" BASIS,
-//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//  See the License for the specific language governing permissions and
-//  limitations under the License.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//      http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package constants
 
@@ -29,6 +29,7 @@ const (
 	InvalidConfig        = csmv1.CSMStateType("InvalidConfig")
 	NoState              = csmv1.CSMStateType("")
 	Updating             = csmv1.CSMStateType("Updating")
+	Pending              = csmv1.CSMStateType("Pending")
 	DefaultRetryInterval = 5 * time.Second
 	MaxRetryInterval     = 10 * time.Minute
 	MaxRetryDuration     = 30 * time.Minute
@@ -83,3 +84,51 @@ var CsmNamespaceLabel = "csmNamespace"
 
 // NotFoundMsg - error message
 var NotFoundMsg = "not found"
+
+// Metrics Constants
+const (
+	// CsiMetricsEnabled - master switch for the shared Prometheus metrics endpoint
+	CsiMetricsEnabled = "<X_CSI_METRICS_ENABLED>"
+
+	// CsiMetricsPort - port for the shared Prometheus metrics endpoint
+	CsiMetricsPort = "<X_CSI_METRICS_PORT>"
+
+	// CsiMetricsLeaderElectionEnabled - leader election for metrics
+	CsiMetricsLeaderElectionEnabled = "<X_CSI_METRICS_LEADER_ELECTION_ENABLED>"
+
+	// CsiMetricsLeaderElectionLeaseDuration - leader election lease duration
+	CsiMetricsLeaderElectionLeaseDuration = "<X_CSI_METRICS_LEADER_ELECTION_LEASE_DURATION>"
+
+	// CsiMetricsLeaderElectionRenewDeadline - leader election renew deadline
+	CsiMetricsLeaderElectionRenewDeadline = "<X_CSI_METRICS_LEADER_ELECTION_RENEW_DEADLINE>"
+
+	// CsiMetricsLeaderElectionRetryPeriod - leader election retry period
+	CsiMetricsLeaderElectionRetryPeriod = "<X_CSI_METRICS_LEADER_ELECTION_RETRY_PERIOD>"
+
+	// CsiMetricsTLSCertFile - TLS cert file path
+	CsiMetricsTLSCertFile = "<X_CSI_METRICS_TLS_CERT_FILE>"
+
+	// CsiMetricsTLSKeyFile - TLS key file path
+	CsiMetricsTLSKeyFile = "<X_CSI_METRICS_TLS_KEY_FILE>"
+
+	// CsiMetricsCollectionInterval - interval for metrics collection
+	CsiMetricsCollectionInterval = "<X_CSI_METRICS_COLLECTION_INTERVAL>"
+
+	// CsiMetricsCollectionCacheTTL - cache TTL for metrics collection
+	CsiMetricsCollectionCacheTTL = "<X_CSI_METRICS_COLLECTION_CACHE_TTL>"
+
+	// CsiMetricsArrayRateLimit - rate limit for metrics array requests
+	CsiMetricsArrayRateLimit = "<X_CSI_METRICS_ARRAY_RATE_LIMIT>"
+
+	// CsiMetricsArrayTimeout - timeout for metrics array requests
+	CsiMetricsArrayTimeout = "<X_CSI_METRICS_ARRAY_TIMEOUT>"
+
+	// CsiMetricsArrayCBThreshold - metrics array circuit breaker failure threshold
+	CsiMetricsArrayCBThreshold = "<X_CSI_METRICS_ARRAY_CB_THRESHOLD>"
+
+	// CsiMetricsArrayCBResetTimeout - metrics array circuit breaker reset timeout
+	CsiMetricsArrayCBResetTimeout = "<X_CSI_METRICS_ARRAY_CB_RESET_TIMEOUT>"
+
+	// CsiIsiTLSHandshakeTimeout - TLS handshake timeout for NFS mTLS
+	CsiIsiTLSHandshakeTimeout = "<X_CSI_ISI_TLS_HANDSHAKE_TIMEOUT_SECONDS>"
+)

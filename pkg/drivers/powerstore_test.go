@@ -1,4 +1,4 @@
-// Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+// Copyright © 2023-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,26 +18,26 @@ import (
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
+	"github.com/dell/csm-operator/pkg/constants"
 	shared "github.com/dell/csm-operator/tests/sharedutil"
 	"github.com/dell/csm-operator/tests/sharedutil/crclient"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 var (
-	powerStoreCSM               = csmForPowerStore("csm")
-	powerStoreCSMBadVersion     = csmForPowerStoreBadVersion()
+	powerStoreCSM               = csmForPowerStore()
 	powerStoreInvalidCSMVersion = csmForPowerStoreInvalidVersion()
-	powerStoreCSMBadCertCnt     = csmForPowerStoreBadCertCnt()
 	powerStoreCSMEmptyEnv       = csmForPowerStoreWithEmptyEnv()
 	powerStoreCSMBadSkipCert    = csmForPowerStoreBadSkipCert()
-	powerStoreSkipCertFalse     = csmForPowerStoreSkipCertFalse()
-	powerStoreClient            = crclient.NewFakeClientNoInjector(objects)
-	configJSONFileGoodPStore    = fmt.Sprintf("%s/driverconfig/%s/config.json", config.ConfigDirectory, csmv1.PowerStore)
-	powerStoreSecret            = shared.MakeSecretWithJSON("csm-config", "driver-test", configJSONFileGoodPStore)
-	fakeSecretPstore            = shared.MakeSecret("fake-secret", "fake-ns", shared.PStoreConfigVersion)
+	powerStoreCSMBadCertCnt     = csmForPowerStoreBadCertCnt()
+	powerStoreCSMBadVersion     = csmForPowerStoreBadVersion()
+	powerStoreObjects           = map[shared.StorageKey]runtime.Object{}
+	powerStoreClient            = crclient.NewFakeClientNoInjector(powerStoreObjects)
+	powerStoreSecret            = shared.MakeSecret("powerstore-config", "driver-test", shared.ConfigVersion)
 
 	powerStoreTests = []struct {
 		// every single unit test name
@@ -45,54 +45,32 @@ var (
 		// csm object
 		csm csmv1.ContainerStorageModule
 		// client
-		ct client.Client
-		// secret
+		ct  client.Client
 		sec *corev1.Secret
 		// expected error
 		expectedErr string
 	}{
 		{"happy path", powerStoreCSM, powerStoreClient, powerStoreSecret, ""},
+		{"invalid value for skip cert validation", powerStoreCSMBadSkipCert, powerStoreClient, powerStoreSecret, "invalid value for X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION"},
+		{"invalid value for cert secret cnt", powerStoreCSMBadCertCnt, powerStoreClient, powerStoreSecret, "invalid value for CERT_SECRET_COUNT"},
+	}
+
+	preCheckPowerStoreTest = []struct {
+		// every single unit test name
+		name string
+		// csm object
+		csm csmv1.ContainerStorageModule
+		// client
+		ct client.Client
+		// secret
+		sec *corev1.Secret
+		// expected error
+		expectedErr string
+	}{
+		{"missing secret", powerStoreCSM, powerStoreClient, powerStoreSecret, "failed to find secret"},
 		{"bad version", powerStoreCSMBadVersion, powerStoreClient, powerStoreSecret, "not supported"},
+		{"missing envs", powerStoreCSMEmptyEnv, powerStoreClient, powerStoreSecret, "failed to find secret"},
 		{"invalid csm version", powerStoreInvalidCSMVersion, powerStoreClient, powerStoreSecret, "No custom resource configuration is available for CSM version v1.10.0"},
-	}
-
-	powerStoreCertsVolumeTests = []struct {
-		// every single unit test name
-		name string
-		// csm object
-		csm csmv1.ContainerStorageModule
-		// client
-		ct client.Client
-		// secret
-		sec *corev1.Secret
-		// expected error
-		expectedErr string
-	}{
-		{"invalid value for skip cert validation", powerStoreCSMBadSkipCert, powerStoreClient, powerStoreSecret, "is an invalid value for X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION"},
-		{"invalid value for cert secret cnt", powerStoreCSMBadCertCnt, powerStoreClient, powerStoreSecret, "is an invalid value for CERT_SECRET_COUNT"},
-		{"skip cert false", powerStoreSkipCertFalse, powerStoreClient, powerStoreSecret, ""},
-		{"common is nil", powerStoreCSMCommonNil, powerStoreClient, powerStoreSecret, ""},
-		{"common env is empty", powerStoreCSMCommonEnvEmpty, powerStoreClient, powerStoreSecret, ""},
-	}
-
-	powerStorePrecheckTests = []struct {
-		// every single unit test name
-		name string
-		// csm object
-		csm csmv1.ContainerStorageModule
-		// client
-		ct client.Client
-		// secret
-		sec *corev1.Secret
-		// expected error
-		expectedErr string
-	}{
-		{"missing secret", powerStoreCSM, powerStoreClient, fakeSecretPstore, "failed to find secret"},
-		{"bad version", powerStoreCSMBadVersion, powerStoreClient, fakeSecretPstore, "not supported"},
-		{"missing envs", powerStoreCSMEmptyEnv, powerStoreClient, fakeSecretPstore, "failed to find secret"},
-		{"invalid skip cert validation", csmForPowerStoreBadSkipCert(), powerStoreClient, fakeSecretPstore, "invalid value for X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION"},
-		{"invalid cert secret count", csmForPowerStoreBadCertCnt(), powerStoreClient, fakeSecretPstore, "invalid value for CERT_SECRET_COUNT"},
-		{"valid skip cert validation", csmForPowerStoreGoodSkipCert(), powerStoreClient, fakeSecretPstore, "failed to find secret csm-creds"},
 	}
 
 	powerStoreCommonEnvTest = []struct {
@@ -114,283 +92,191 @@ var (
 			expected:   "true",
 		},
 		{
-			name:     "when auth module is enabled",
-			csm:      enableAuthModule(),
-			ct:       powerStoreClient,
-			sec:      powerStoreSecret,
-			fileType: "Node",
+			name:       "update metrics enabled and default port for Controller",
+			yamlString: "<X_CSI_METRICS_ENABLED> <X_CSI_METRICS_PORT>",
+			csm:        csmForPowerStoreMetrics(),
+			ct:         powerStoreClient,
+			sec:        powerStoreSecret,
+			fileType:   "Controller",
+			expected:   "true 8443",
 		},
 		{
-			name:     "when auth module is disabled",
-			csm:      disableAuthModule(),
-			ct:       powerStoreClient,
-			sec:      powerStoreSecret,
-			fileType: "Node",
+			name:       "update metrics tls paths for Node",
+			yamlString: constants.CsiMetricsTLSCertFile + " " + constants.CsiMetricsTLSKeyFile,
+			csm:        csmForPowerStoreMetricsTLS(),
+			ct:         powerStoreClient,
+			sec:        powerStoreSecret,
+			fileType:   "Node",
+			expected:   "/etc/metrics-tls/tls.crt /etc/metrics-tls/tls.key",
 		},
 		{
-			name:     "when node object is nil",
-			csm:      getNilNodeObject(),
-			ct:       powerStoreClient,
-			sec:      powerStoreSecret,
-			fileType: "Node",
+			name:       "CSIDriverSpec with storage capacity enabled",
+			yamlString: "<X_CSI_STORAGE_CAPACITY_ENABLED>",
+			csm:        csmForPowerStoreWithStorageCapacity(),
+			ct:         powerStoreClient,
+			sec:        powerStoreSecret,
+			fileType:   "CSIDriverSpec",
+			expected:   "true",
 		},
 		{
-			name:     "when node object is not nil and Env. is nil",
-			csm:      getNilEnvObject(),
-			ct:       powerStoreClient,
-			sec:      powerStoreSecret,
-			fileType: "Node",
+			name:       "CSIDriverSpec with storage capacity disabled",
+			yamlString: "<X_CSI_STORAGE_CAPACITY_ENABLED>",
+			csm:        csmForPowerStoreWithStorageCapacityDisabled(),
+			ct:         powerStoreClient,
+			sec:        powerStoreSecret,
+			fileType:   "CSIDriverSpec",
+			expected:   "false",
 		},
 		{
-			name:     "when auth module env. is set to true",
-			csm:      setAuthModuleEnv("true"),
-			ct:       powerStoreClient,
-			sec:      powerStoreSecret,
-			fileType: "Node",
+			name:       "CSIDriverSpec nil: should use default false",
+			yamlString: "<X_CSI_STORAGE_CAPACITY_ENABLED>",
+			csm:        csmForPowerStore(),
+			ct:         powerStoreClient,
+			sec:        powerStoreSecret,
+			fileType:   "CSIDriverSpec",
+			expected:   "false",
 		},
 		{
-			name:     "update existing auth module env. to false",
-			csm:      setAuthModuleEnv("false"),
-			ct:       powerStoreClient,
-			sec:      powerStoreSecret,
-			fileType: "Node",
+			name:       "metrics with custom port for Controller",
+			yamlString: "<X_CSI_METRICS_PORT>",
+			csm:        csmForPowerStoreMetricsWithPort(),
+			ct:         powerStoreClient,
+			sec:        powerStoreSecret,
+			fileType:   "Controller",
+			expected:   "9090",
 		},
 		{
-			name:       "update GOPOWERSTORE_DEBUG value for Node",
-			yamlString: "<GOPOWERSTORE_DEBUG>",
-			csm:        gopowerstoreDebug("true"),
+			name:       "metrics disabled for Node",
+			yamlString: "<X_CSI_METRICS_ENABLED> <X_CSI_METRICS_PORT>",
+			csm:        csmForPowerStore(),
+			ct:         powerStoreClient,
+			sec:        powerStoreSecret,
+			fileType:   "Node",
+			expected:   "false 8443",
+		},
+		{
+			name:       "metrics with leader election enabled for Controller",
+			yamlString: constants.CsiMetricsLeaderElectionEnabled,
+			csm:        csmForPowerStoreMetricsWithLeaderElection(),
+			ct:         powerStoreClient,
+			sec:        powerStoreSecret,
+			fileType:   "Controller",
+			expected:   "true",
+		},
+		{
+			name:       "nfs auto-select enabled for Node",
+			yamlString: CsiPowerstoreNfsAutoSelect,
+			csm:        csmForPowerStoreNfsAutoSelect("true"),
 			ct:         powerStoreClient,
 			sec:        powerStoreSecret,
 			fileType:   "Node",
 			expected:   "true",
 		},
 		{
-			name: "update Powerstore API and Podmon connectivity timeout for Node",
-			yamlString: `
-			- name: X_CSI_POWERSTORE_API_TIMEOUT
-		      value: "<X_CSI_POWERSTORE_API_TIMEOUT>"
-		    - name: X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT
-		      value: "<X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT>"`,
-			csm:      csmForPowerStore("csm"),
-			ct:       powerStoreClient,
-			sec:      powerStoreSecret,
-			fileType: "Node",
-			expected: `
-			- name: X_CSI_POWERSTORE_API_TIMEOUT
-		      value: "120s"
-		    - name: X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT
-		      value: "10s"`,
-		},
-		{
-			name: "update Powerstore API and Podmon connectivity timeout for Controller",
-			yamlString: `
-			- name: X_CSI_POWERSTORE_API_TIMEOUT
-		      value: "<X_CSI_POWERSTORE_API_TIMEOUT>"
-		    - name: X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT
-		      value: "<X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT>"`,
-			csm:      csmForPowerStore("csm"),
-			ct:       powerStoreClient,
-			sec:      powerStoreSecret,
-			fileType: "Controller",
-			expected: `
-			- name: X_CSI_POWERSTORE_API_TIMEOUT
-		      value: "120s"
-		    - name: X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT
-		      value: "10s"`,
-		},
-		{
-			name:       "Node: fsck enabled and mode substituted from Common.Envs",
-			yamlString: "FS_CHECK_ENABLED=<X_CSI_FS_CHECK_ENABLED> FS_CHECK_MODE=<X_CSI_FS_CHECK_MODE>",
-			csm:        csmForPowerstoreFsck("true", "checkAndRepair"),
-			ct:         powerStoreClient,
-			sec:        powerStoreSecret,
-			fileType:   "Node",
-			expected:   "FS_CHECK_ENABLED=true FS_CHECK_MODE=checkAndRepair",
-		},
-		{
-			name:       "Node: fsck default values when Common.Envs has no fsck entries",
-			yamlString: "FS_CHECK_ENABLED=<X_CSI_FS_CHECK_ENABLED> FS_CHECK_MODE=<X_CSI_FS_CHECK_MODE>",
-			csm:        csmForPowerStore("csm"),
-			ct:         powerStoreClient,
-			sec:        powerStoreSecret,
-			fileType:   "Node",
-			expected:   "FS_CHECK_ENABLED=false FS_CHECK_MODE=checkOnly",
-		},
-		{
-			name:       "Node: fsck disabled with checkOnly mode",
-			yamlString: "FS_CHECK_ENABLED=<X_CSI_FS_CHECK_ENABLED> FS_CHECK_MODE=<X_CSI_FS_CHECK_MODE>",
-			csm:        csmForPowerstoreFsck("false", "checkOnly"),
-			ct:         powerStoreClient,
-			sec:        powerStoreSecret,
-			fileType:   "Node",
-			expected:   "FS_CHECK_ENABLED=false FS_CHECK_MODE=checkOnly",
-		},
-		{
-			name:       "Controller: fsck placeholders are not substituted",
-			yamlString: "FS_CHECK_ENABLED=<X_CSI_FS_CHECK_ENABLED> FS_CHECK_MODE=<X_CSI_FS_CHECK_MODE>",
-			csm:        csmForPowerstoreFsck("true", "checkAndRepair"),
+			name:       "nfs auto-select enabled for Controller",
+			yamlString: CsiPowerstoreNfsAutoSelect,
+			csm:        csmForPowerStoreNfsAutoSelect("true"),
 			ct:         powerStoreClient,
 			sec:        powerStoreSecret,
 			fileType:   "Controller",
-			expected:   "FS_CHECK_ENABLED=<X_CSI_FS_CHECK_ENABLED> FS_CHECK_MODE=<X_CSI_FS_CHECK_MODE>",
+			expected:   "true",
 		},
 		{
-			name:       "Node: space reclamation values substituted from Common.Envs",
-			yamlString: "ENABLED=<X_CSI_SPACE_RECLAMATION_ENABLED> SCHEDULE=<X_CSI_SPACE_RECLAMATION_SCHEDULE> MAX_CONCURRENT=<X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT> TIMEOUT=<X_CSI_SPACE_RECLAMATION_TIMEOUT>",
-			csm:        csmForPowerstoreSpaceReclamation("true", "@hourly", "5", "300s"),
+			name:       "nfs auto-select default false when not set",
+			yamlString: CsiPowerstoreNfsAutoSelect,
+			csm:        csmForPowerStore(),
 			ct:         powerStoreClient,
 			sec:        powerStoreSecret,
 			fileType:   "Node",
-			expected:   "ENABLED=true SCHEDULE=@hourly MAX_CONCURRENT=5 TIMEOUT=300s",
-		},
-		{
-			name:       "Node: space reclamation default values when Common.Envs has no space reclamation entries",
-			yamlString: "ENABLED=<X_CSI_SPACE_RECLAMATION_ENABLED> SCHEDULE=<X_CSI_SPACE_RECLAMATION_SCHEDULE> MAX_CONCURRENT=<X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT> TIMEOUT=<X_CSI_SPACE_RECLAMATION_TIMEOUT>",
-			csm:        csmForPowerStore("csm"),
-			ct:         powerStoreClient,
-			sec:        powerStoreSecret,
-			fileType:   "Node",
-			expected:   "ENABLED=false SCHEDULE= MAX_CONCURRENT= TIMEOUT=",
-		},
-		{
-			name:       "Controller: space reclamation placeholders are not substituted",
-			yamlString: "ENABLED=<X_CSI_SPACE_RECLAMATION_ENABLED> SCHEDULE=<X_CSI_SPACE_RECLAMATION_SCHEDULE> MAX_CONCURRENT=<X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT> TIMEOUT=<X_CSI_SPACE_RECLAMATION_TIMEOUT>",
-			csm:        csmForPowerstoreSpaceReclamation("true", "@hourly", "5", "300s"),
-			ct:         powerStoreClient,
-			sec:        powerStoreSecret,
-			fileType:   "Controller",
-			expected:   "ENABLED=<X_CSI_SPACE_RECLAMATION_ENABLED> SCHEDULE=<X_CSI_SPACE_RECLAMATION_SCHEDULE> MAX_CONCURRENT=<X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT> TIMEOUT=<X_CSI_SPACE_RECLAMATION_TIMEOUT>",
+			expected:   "false",
 		},
 	}
 )
 
-func csmForPowerStoreGoodSkipCert() csmv1.ContainerStorageModule {
-	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
-
-	// Valid environment variables
-	envCertCount := corev1.EnvVar{
-		Name:  "CERT_SECRET_COUNT",
-		Value: "1", // Ensures the loop runs at least once
+func TestGetApplyCertVolumePowerstore(t *testing.T) {
+	for _, tt := range powerStoreTests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := getApplyCertVolumePowerstore(tt.csm)
+			if tt.expectedErr == "" {
+				assert.Nil(t, err)
+			} else {
+				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
+			}
+		})
 	}
-	envSkipCertValidation := corev1.EnvVar{
-		Name:  "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION",
-		Value: "true", // Valid boolean string
+}
+
+func TestPrecheckPowerStoreTLSCert(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name        string
+		csm         csmv1.ContainerStorageModule
+		secrets     []*corev1.Secret
+		expectedErr string
+	}{
+		{
+			name: "metrics tls cert secret exists",
+			csm:  csmForPowerStoreMetricsTLS(),
+			secrets: []*corev1.Secret{
+				shared.MakeSecret("powerstore-config", "driver-test", shared.ConfigVersion),
+				shared.MakeSecret("powerstore-metrics-tls", "driver-test", shared.ConfigVersion),
+			},
+			expectedErr: "",
+		},
+		{
+			name: "metrics tls cert secret missing",
+			csm:  csmForPowerStoreMetricsTLS(),
+			secrets: []*corev1.Secret{
+				shared.MakeSecret("powerstore-config", "driver-test", shared.ConfigVersion),
+			},
+			expectedErr: "failed to find metrics TLS secret powerstore-metrics-tls",
+		},
+		{
+			name: "metrics disabled with tls cert secret set skips check",
+			csm: func() csmv1.ContainerStorageModule {
+				cr := csmForPowerStore()
+				cr.Spec.Driver.Metrics = &csmv1.DriverMetrics{
+					Enabled:       false,
+					TLSCertSecret: "powerstore-metrics-tls",
+				}
+				return cr
+			}(),
+			secrets: []*corev1.Secret{
+				shared.MakeSecret("powerstore-config", "driver-test", shared.ConfigVersion),
+			},
+			expectedErr: "",
+		},
 	}
 
-	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envCertCount, envSkipCertValidation}
-	res.Spec.Driver.AuthSecret = "csm-creds"
-	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
-	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
-
-	return res
-}
-
-func csmForPowerStoreMultipleCertSecrets() csmv1.ContainerStorageModule {
-	res := shared.MakeCSM("csm", "driver-test", shared.PStoreConfigVersion)
-	// Add log level to cover some code in GetConfigMap
-	envVarLogLevel1 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "2"}
-	envVarLogLevel2 := corev1.EnvVar{Name: "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION", Value: "false"}
-	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2}
-	// Add powerstore driver version
-	res.Spec.Driver.ConfigVersion = shared.PStoreConfigVersion
-	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
-	return res
-}
-
-func csmForPowerStoreWithEmptyEnv() csmv1.ContainerStorageModule {
-	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
-
-	res.Spec.Driver.Common.Envs = []corev1.EnvVar{}
-	res.Spec.Driver.AuthSecret = "csm-creds"
-
-	// Add pscale driver version
-	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
-	res.Spec.Driver.CSIDriverType = csmv1.PowerScale
-
-	return res
-}
-
-var powerStoreCSMCommonEnvEmpty = csmv1.ContainerStorageModule{
-	ObjectMeta: metav1.ObjectMeta{
-		Name: "test-csm",
-	},
-	Spec: csmv1.ContainerStorageModuleSpec{
-		Driver: csmv1.Driver{
-			Common: &csmv1.ContainerTemplate{
-				Envs: []corev1.EnvVar{
-					{},
-				},
-			},
-		},
-	},
-}
-
-var powerStoreCSMSkipCertInvalid = csmv1.ContainerStorageModule{
-	ObjectMeta: metav1.ObjectMeta{
-		Name:      "powerstore",
-		Namespace: "default",
-	},
-	Spec: csmv1.ContainerStorageModuleSpec{
-		Driver: csmv1.Driver{
-			ConfigVersion: "v1",
-			Common: &csmv1.ContainerTemplate{
-				Envs: []corev1.EnvVar{
-					{
-						Name:  "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION",
-						Value: "notabool",
-					},
-				},
-			},
-		},
-	},
-}
-
-func csmForPowerStoreSkipCertFalse() csmv1.ContainerStorageModule {
-	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
-
-	// Add log level to cover some code in GetConfigMap
-	envVarLogLevel1 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "2"}
-	envVarLogLevel2 := corev1.EnvVar{Name: "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION", Value: "false"}
-	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2}
-
-	// Add powerstore driver version
-	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
-	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
-
-	return res
-}
-
-func csmForPowerStoreSkipCertTrue() csmv1.ContainerStorageModule {
-	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
-
-	// Add valid env vars
-	envVarCertCount := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "2"}
-	envVarSkipCert := corev1.EnvVar{Name: "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION", Value: "true"}
-	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarCertCount, envVarSkipCert}
-
-	// Set PowerStore driver type and config version
-	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
-	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
-
-	return res
-}
-
-var powerStoreCSMCommonNil = csmv1.ContainerStorageModule{
-	ObjectMeta: metav1.ObjectMeta{
-		Name: "test-csm",
-	},
-	Spec: csmv1.ContainerStorageModuleSpec{
-		Driver: csmv1.Driver{
-			Common: nil,
-		},
-	},
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			objs := make([]client.Object, 0, len(tt.secrets))
+			for _, s := range tt.secrets {
+				objs = append(objs, s)
+			}
+			ct := fake.NewClientBuilder().WithObjects(objs...).Build()
+			err := PrecheckPowerStore(ctx, &tt.csm, config, ct)
+			if tt.expectedErr == "" {
+				assert.Nil(t, err)
+			} else {
+				assert.NotNil(t, err)
+				assert.Contains(t, err.Error(), tt.expectedErr)
+			}
+		})
+	}
 }
 
 func TestPrecheckPowerStore(t *testing.T) {
 	ctx := context.Background()
-	for _, tt := range powerStorePrecheckTests {
+	for _, tt := range preCheckPowerStoreTest {
 		t.Run(tt.name, func(t *testing.T) { // #nosec G601 - Run waits for the call to complete.
-			err := PrecheckPowerStore(ctx, &tt.csm, config, tt.ct)
+			// Use configForVersionChecks for invalid CSM version test
+			cfg := config
+			if tt.name == "invalid csm version" {
+				cfg = configForVersionChecks
+			}
+			err := PrecheckPowerStore(ctx, &tt.csm, cfg, tt.ct)
 			if tt.expectedErr == "" {
 				assert.Nil(t, err)
 			} else {
@@ -399,7 +285,9 @@ func TestPrecheckPowerStore(t *testing.T) {
 		})
 	}
 
+	// grab the first secret
 	for _, tt := range powerStoreTests {
+		// create secret for each run
 		err := tt.ct.Create(ctx, tt.sec)
 		if err != nil {
 			assert.Nil(t, err)
@@ -438,110 +326,38 @@ func TestModifyPowerstoreCR(t *testing.T) {
 	}
 }
 
-// makes a csm object with a bad version
-func csmForPowerStoreBadVersion() csmv1.ContainerStorageModule {
-	res := shared.MakeCSM("csm", "driver-test", shared.PStoreConfigVersion)
+// makes a csm object with tolerations
+func csmForPowerStore() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
-	// Add pstore driver version
-	res.Spec.Driver.ConfigVersion = shared.BadConfigVersion
+	// Add log level to cover some code in GetConfigMap
+	envVarLogLevel1 := corev1.EnvVar{Name: "CERT_SECRET_COUNT", Value: "0"}
+	envVarLogLevel2 := corev1.EnvVar{Name: "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION", Value: "false"}
+	envVarLogLevel3 := corev1.EnvVar{Name: "GOPOWERSTORE_DEBUG", Value: "false"}
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2, envVarLogLevel3}
+	res.Spec.Driver.AuthSecret = "powerstore-config"
+
+	// Add powerstore driver version
+	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
 	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
 
 	return res
 }
 
-// makes a csm object with a invalid csm version
-func csmForPowerStoreInvalidVersion() csmv1.ContainerStorageModule {
-	res := shared.MakeCSM("csm", "driver-test", shared.PStoreConfigVersion)
+func csmForPowerStoreWithEmptyEnv() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
-	// Add pstore driver version
-	res.Spec.Version = shared.InvalidCSMVersion
+	res.Spec.Driver.Common.Envs = []corev1.EnvVar{}
+	res.Spec.Driver.AuthSecret = "powerstore-config"
+
+	// Add powerstore driver version
+	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
 	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
 
 	return res
 }
 
-// makes a csm object
-func csmForPowerStore(customCSMName string) csmv1.ContainerStorageModule {
-	res := shared.MakeCSM(customCSMName, "driver-test", shared.PStoreConfigVersion)
-	res.Spec.Driver.AuthSecret = "csm-config"
-
-	// Add pstore driver version
-	res.Spec.Driver.ConfigVersion = shared.PStoreConfigVersion
-	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
-
-	return res
-}
-
-func gopowerstoreDebug(debug string) csmv1.ContainerStorageModule {
-	cr := csmForPowerStore("csm")
-	cr.Spec.Driver.Common.Envs = []corev1.EnvVar{
-		{Name: "GOPOWERSTORE_DEBUG", Value: debug},
-	}
-
-	return cr
-}
-
-func enableAuthModule() csmv1.ContainerStorageModule {
-	cr := csmForPowerStore("csm")
-	cr.Spec.Modules = []csmv1.Module{
-		{
-			Name:    csmv1.Authorization,
-			Enabled: true,
-		},
-	}
-	cr.Spec.Driver.Node.Envs = append(cr.Spec.Driver.Node.Envs, corev1.EnvVar{Name: "X_CSM_AUTH_ENABLED", Value: "true"})
-	return cr
-}
-
-func disableAuthModule() csmv1.ContainerStorageModule {
-	cr := csmForPowerStore("csm")
-	cr.Spec.Modules = []csmv1.Module{
-		{
-			Name:    csmv1.Authorization,
-			Enabled: false,
-		},
-	}
-	return cr
-}
-
-func getNilNodeObject() csmv1.ContainerStorageModule {
-	cr := csmForPowerStore("csm")
-	cr.Spec.Driver.Node = nil
-	return cr
-}
-
-func getNilEnvObject() csmv1.ContainerStorageModule {
-	cr := csmForPowerStore("csm")
-	cr.Spec.Driver.Node.Envs = nil
-	return cr
-}
-
-func setAuthModuleEnv(value string) csmv1.ContainerStorageModule {
-	cr := csmForPowerStore("csm")
-	cr.Spec.Driver.Node.Envs = append(cr.Spec.Driver.Node.Envs, corev1.EnvVar{Name: "X_CSM_AUTH_ENABLED", Value: value})
-	return cr
-}
-
-func csmForPowerstoreSpaceReclamation(enabled, schedule, maxConcurrent, timeout string) csmv1.ContainerStorageModule {
-	cr := csmForPowerStore("csm")
-	cr.Spec.Driver.Common.Envs = append(cr.Spec.Driver.Common.Envs,
-		corev1.EnvVar{Name: "X_CSI_SPACE_RECLAMATION_ENABLED", Value: enabled},
-		corev1.EnvVar{Name: "X_CSI_SPACE_RECLAMATION_SCHEDULE", Value: schedule},
-		corev1.EnvVar{Name: "X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT", Value: maxConcurrent},
-		corev1.EnvVar{Name: "X_CSI_SPACE_RECLAMATION_TIMEOUT", Value: timeout},
-	)
-	return cr
-}
-
-func csmForPowerstoreFsck(enabled, mode string) csmv1.ContainerStorageModule {
-	cr := csmForPowerStore("csm")
-	cr.Spec.Driver.Common.Envs = append(cr.Spec.Driver.Common.Envs,
-		corev1.EnvVar{Name: "X_CSI_FS_CHECK_ENABLED", Value: enabled},
-		corev1.EnvVar{Name: "X_CSI_FS_CHECK_MODE", Value: mode},
-	)
-	return cr
-}
-
+// makes a csm object with tolerations
 func csmForPowerStoreBadSkipCert() csmv1.ContainerStorageModule {
 	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
 
@@ -550,7 +366,7 @@ func csmForPowerStoreBadSkipCert() csmv1.ContainerStorageModule {
 	envVarLogLevel2 := corev1.EnvVar{Name: "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION", Value: "NotABool"}
 	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2}
 
-	// Add pscale driver version
+	// Add powerstore driver version
 	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
 	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
 
@@ -566,23 +382,107 @@ func csmForPowerStoreBadCertCnt() csmv1.ContainerStorageModule {
 	envVarLogLevel2 := corev1.EnvVar{Name: "X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION", Value: "true"}
 	res.Spec.Driver.Common.Envs = []corev1.EnvVar{envVarLogLevel1, envVarLogLevel2}
 
-	// Add pscale driver version
+	// Add powerstore driver version
 	res.Spec.Driver.ConfigVersion = shared.ConfigVersion
 	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
 
 	return res
 }
 
-func TestGetApplyCertVolumePowerStore(t *testing.T) {
-	for _, tt := range powerStoreCertsVolumeTests {
-		t.Run(tt.name, func(t *testing.T) {
-			_, err := getApplyCertVolumePowerstore(tt.csm)
-			t.Logf("Expected error: %q, Actual error: %v", tt.expectedErr, err)
-			if tt.expectedErr == "" {
-				assert.Nil(t, err)
-			} else {
-				assert.Containsf(t, err.Error(), tt.expectedErr, "expected error containing %q, got %s", tt.expectedErr, err)
-			}
-		})
+// makes a csm object with tolerations
+func csmForPowerStoreBadVersion() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
+
+	// Add powerstore driver version
+	res.Spec.Driver.ConfigVersion = "v0"
+	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
+
+	return res
+}
+
+// makes a csm object with tolerations
+func csmForPowerStoreInvalidVersion() csmv1.ContainerStorageModule {
+	res := shared.MakeCSM("csm", "driver-test", shared.ConfigVersion)
+
+	// Add powerstore driver version
+	res.Spec.Version = shared.InvalidCSMVersion
+	res.Spec.Driver.CSIDriverType = csmv1.PowerStore
+
+	return res
+}
+
+func gopowerstoreDebug(debug string) csmv1.ContainerStorageModule {
+	cr := csmForPowerStore()
+	cr.Spec.Driver.Common.Envs = []corev1.EnvVar{
+		{Name: "GOPOWERSTORE_DEBUG", Value: debug},
 	}
+
+	return cr
+}
+
+func csmForPowerStoreMetrics() csmv1.ContainerStorageModule {
+	cr := csmForPowerStore()
+	cr.Spec.Driver.Metrics = &csmv1.DriverMetrics{Enabled: true}
+	return cr
+}
+
+func csmForPowerStoreMetricsTLS() csmv1.ContainerStorageModule {
+	cr := csmForPowerStore()
+	cr.Spec.Driver.Metrics = &csmv1.DriverMetrics{
+		Enabled:       true,
+		TLSCertSecret: "powerstore-metrics-tls",
+	}
+	return cr
+}
+
+func csmForPowerStoreWithStorageCapacity() csmv1.ContainerStorageModule {
+	cr := csmForPowerStore()
+	cr.Spec.Driver.CSIDriverSpec = &csmv1.CSIDriverSpec{
+		StorageCapacity: true,
+	}
+	return cr
+}
+
+func csmForPowerStoreWithStorageCapacityDisabled() csmv1.ContainerStorageModule {
+	cr := csmForPowerStore()
+	cr.Spec.Driver.CSIDriverSpec = &csmv1.CSIDriverSpec{
+		StorageCapacity: false,
+	}
+	return cr
+}
+
+func csmForPowerStoreMetricsWithPort() csmv1.ContainerStorageModule {
+	cr := csmForPowerStore()
+	customPort := int32(9090)
+	cr.Spec.Driver.Metrics = &csmv1.DriverMetrics{
+		Enabled: true,
+		Port:    customPort,
+	}
+	return cr
+}
+
+func csmForPowerStoreMetricsWithLeaderElection() csmv1.ContainerStorageModule {
+	cr := csmForPowerStore()
+	leaderElectionEnabled := true
+	cr.Spec.Driver.Metrics = &csmv1.DriverMetrics{
+		Enabled: true,
+		LeaderElection: &csmv1.LeaderElectionConfig{
+			Enabled: &leaderElectionEnabled,
+		},
+	}
+	return cr
+}
+
+func csmForPowerStoreNfsAutoSelect(value string) csmv1.ContainerStorageModule {
+	cr := csmForPowerStore()
+	nfsAutoSelectEnv := corev1.EnvVar{Name: "X_CSI_POWERSTORE_NFS_AUTO_SELECT", Value: value}
+	if cr.Spec.Driver.Node == nil {
+		cr.Spec.Driver.Node = &csmv1.ContainerTemplate{}
+	}
+	cr.Spec.Driver.Node.Envs = append(cr.Spec.Driver.Node.Envs, nfsAutoSelectEnv)
+	if cr.Spec.Driver.Controller == nil {
+		cr.Spec.Driver.Controller = &csmv1.ContainerTemplate{}
+	}
+	cr.Spec.Driver.Controller.Envs = append(cr.Spec.Driver.Controller.Envs, nfsAutoSelectEnv)
+	return cr
 }

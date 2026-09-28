@@ -14,7 +14,7 @@ BUNDLE_IMAGE_TAG_BASE_COMMUNITY ?= dell-csm-community-operator-bundle
 CATALOG_IMAGE_TAG_BASE_COMMUNITY ?= dell-csm-community-operator-catalog
 
 # Bundle Version is the semantic version(required by operator-sdk)
-BUNDLE_VERSION ?= 1.12.2
+BUNDLE_VERSION ?= 1.13.0
 
 # Registry where images will be pushed (use by operator-sdk to set the newName)
 REGISTRY ?= quay.io/dell/container-storage-modules
@@ -23,7 +23,7 @@ REGISTRY ?= quay.io/dell/container-storage-modules
 IMAGE_TAG_BASE ?= dell-csm-operator
 
 # Operator Version is the semantic version(required by operator-sdk)
-VERSION ?= v1.12.2
+VERSION ?= v1.13.0
 
 # Operator image name
 IMG ?= "$(REGISTRY)/$(IMAGE_TAG_BASE):$(VERSION)"
@@ -36,7 +36,7 @@ BUNDLE_IMG ?= "$(REGISTRY)/$(BUNDLE_IMAGE_TAG_BASE_COMMUNITY):$(VERSION)"
 # The image tag given to the resulting catalog image (e.g. make catalog-build CATALOG_IMG=example.com/operator-catalog:v1.11.0).
 CATALOG_IMG ?= "$(REGISTRY)/$(CATALOG_IMAGE_TAG_BASE_COMMUNITY):$(VERSION)"
 
-images: download-csm-common vendor gen-semver
+images: copy-csm-common vendor gen-semver
 	$(eval include csm-common.mk)
 	@echo "Building: $(IMAGE_REGISTRY)/$(IMAGE_NAME):$(IMAGE_TAG)"
 	$(BUILDER) build --pull $(NOCACHE) -t "$(IMAGE_REGISTRY)/$(IMAGE_NAME):$(IMAGE_TAG)" --build-arg GOIMAGE=$(DEFAULT_GOIMAGE) --build-arg BASEIMAGE=$(CSM_BASEIMAGE) .

@@ -200,6 +200,15 @@ rules:
       - apiregistration.k8s.io
     resources:
       - apiservices
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - apiregistration.k8s.io
+    resources:
       - customresourcedefinitions
     verbs:
       - get
@@ -284,6 +293,8 @@ rules:
     resources:
       - certificaterequests/finalizers
       - certificates/finalizers
+      - clusterissuers/finalizers
+      - issuers/finalizers
     verbs:
       - update
   - apiGroups:
@@ -414,6 +425,17 @@ rules:
       - list
       - watch
   - apiGroups:
+      - csiaddons.openshift.io
+    resources:
+      - csiaddonsnodes
+    verbs:
+      - create
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
       - csm-authorization.storage.dell.com
     resources:
       - csmroles
@@ -466,10 +488,19 @@ rules:
       - update
       - watch
   - apiGroups:
+      - dr.storage.dell.com
+    resources:
+      - volumejournals/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
       - gateway.networking.k8s.io
     resources:
       - backendtlspolicies
       - grpcroutes
+      - listenersets
       - referencegrants
     verbs:
       - get
@@ -485,6 +516,7 @@ rules:
       - grpcroutes/status
       - httproutes/finalizers
       - httproutes/status
+      - listenersets/finalizers
     verbs:
       - update
   - apiGroups:
@@ -562,8 +594,17 @@ rules:
       - patch
       - update
   - apiGroups:
+      - metrics.k8s.io
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+  - apiGroups:
       - monitoring.coreos.com
     resources:
+      - podmonitors
+      - prometheusrules
       - servicemonitors
     verbs:
       - create
@@ -660,6 +701,45 @@ rules:
       - get
       - patch
       - update
+  - apiGroups:
+      - replication.storage.openshift.io
+    resources:
+      - volumegroupreplicationclasses
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - replication.storage.openshift.io
+    resources:
+      - volumegroupreplicationcontents
+      - volumegroupreplicationcontents/status
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - replication.storage.openshift.io
+    resources:
+      - volumegroupreplicationcontents/finalizers
+      - volumegroupreplications/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - replication.storage.openshift.io
+    resources:
+      - volumegroupreplications
+      - volumegroupreplications/status
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
   - apiGroups:
       - route.openshift.io
     resources:
@@ -766,3 +846,11 @@ rules:
       - volumeattachments/status
     verbs:
       - patch
+  - apiGroups:
+      - storage.k8s.io
+    resources:
+      - volumeattributesclasses
+    verbs:
+      - get
+      - list
+      - watch

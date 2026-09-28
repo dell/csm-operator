@@ -33,8 +33,24 @@ var (
 	XCSIPodmonArrayConnectivityPollRate = "X_CSI_PODMON_ARRAY_CONNECTIVITY_POLL_RATE"
 	// XCSIPodmonAPIPort -
 	XCSIPodmonAPIPort = "X_CSI_PODMON_API_PORT"
+	// XCSIPodmonAPIToken -
+	XCSIPodmonAPIToken = "X_CSI_PODMON_API_TOKEN" // #nosec G101
 	// XCSIPodmonEnabled -
 	XCSIPodmonEnabled = "X_CSI_PODMON_ENABLED"
+	// DefaultModuleMetricsPort -
+	DefaultModuleMetricsPort = "8444"
+	// DefaultMetricsCollectionInterval -
+	DefaultMetricsCollectionInterval = "30s"
+	// ModuleMetricsEnabledPlaceholder -
+	ModuleMetricsEnabledPlaceholder = "<X_CSI_METRICS_ENABLED>"
+	// ModuleMetricsPortPlaceholder -
+	ModuleMetricsPortPlaceholder = "<X_CSI_METRICS_PORT>"
+	// ModuleMetricsCollectionIntervalPlaceholder -
+	ModuleMetricsCollectionIntervalPlaceholder = "<X_CSI_METRICS_COLLECTION_INTERVAL>"
+	// ModuleMetricsTLSCertFilePlaceholder -
+	ModuleMetricsTLSCertFilePlaceholder = "<X_CSI_METRICS_TLS_CERT_FILE>"
+	// ModuleMetricsTLSKeyFilePlaceholder -
+	ModuleMetricsTLSKeyFilePlaceholder = "<X_CSI_METRICS_TLS_KEY_FILE>"
 )
 
 const (
@@ -185,8 +201,59 @@ func getResiliencyEnv(resiliencyModule csmv1.Module, _ csmv1.DriverType) string 
 	return ""
 }
 
+func getResiliencyTokenEnv(resiliencyModule csmv1.Module, _ csmv1.DriverType) string {
+	for _, component := range resiliencyModule.Components {
+		if component.Name == operatorutils.PodmonNodeComponent {
+			for _, env := range component.Envs {
+				if env.Name == XCSIPodmonAPIToken {
+					return env.Value
+				}
+			}
+		}
+	}
+	return ""
+}
+
+// ModifyResiliencyCR performs string substitution on resiliency config templates
+// for module metrics configuration
+func ModifyResiliencyCR(yamlString string, module csmv1.Module) string {
+	// Determine metrics values
+	metricsEnabled := "false"
+	metricsPort := DefaultModuleMetricsPort
+	collectionInterval := DefaultMetricsCollectionInterval
+	tlsCertFile := ""
+	tlsKeyFile := ""
+
+	if module.Metrics != nil {
+		if module.Metrics.Enabled {
+			metricsEnabled = "true"
+		}
+		if module.Metrics.Port != 0 {
+			metricsPort = fmt.Sprintf("%d", module.Metrics.Port)
+		}
+		if module.Metrics.Collection != nil {
+			if module.Metrics.Collection.Interval != "" {
+				collectionInterval = module.Metrics.Collection.Interval
+			}
+		}
+		if module.Metrics.TLSCertSecret != "" {
+			tlsCertFile = "/etc/metrics-tls/tls.crt"
+			tlsKeyFile = "/etc/metrics-tls/tls.key"
+		}
+	}
+
+	// Substitute placeholders
+	result := strings.ReplaceAll(yamlString, ModuleMetricsEnabledPlaceholder, metricsEnabled)
+	result = strings.ReplaceAll(result, ModuleMetricsPortPlaceholder, metricsPort)
+	result = strings.ReplaceAll(result, ModuleMetricsCollectionIntervalPlaceholder, collectionInterval)
+	result = strings.ReplaceAll(result, ModuleMetricsTLSCertFilePlaceholder, tlsCertFile)
+	result = strings.ReplaceAll(result, ModuleMetricsTLSKeyFilePlaceholder, tlsKeyFile)
+
+	return result
+}
+
 // Apply resiliency module from the manifest file to the podmon sidecar
-func modifyPodmon(ctx context.Context, component csmv1.ContainerTemplate, container *acorev1.ContainerApplyConfiguration, matched operatorutils.VersionSpec, cr csmv1.ContainerStorageModule) {
+func modifyPodmon(ctx context.Context, component csmv1.ContainerTemplate, container *acorev1.ContainerApplyConfiguration, matched operatorutils.VersionSpec, cr csmv1.ContainerStorageModule, module csmv1.Module) {
 	matchedImageApplied := false
 	if matched.Version != "" {
 		containerName := *container.Name
@@ -215,9 +282,74 @@ func modifyPodmon(ctx context.Context, component csmv1.ContainerTemplate, contai
 	emptyEnv := make([]corev1.EnvVar, 0)
 	container.Env = operatorutils.ReplaceAllApplyCustomEnvs(container.Env, emptyEnv, component.Envs)
 	container.Args = operatorutils.ReplaceAllArgs(container.Args, component.Args)
+
+	// Handle metrics port
+	if module.Metrics != nil && module.Metrics.Enabled {
+		for _, port := range component.Ports {
+			if port.Name == "res-metrics" {
+				if container.Ports == nil {
+					container.Ports = []acorev1.ContainerPortApplyConfiguration{}
+				}
+				containerPort := port.ContainerPort
+				container.Ports = append(container.Ports, acorev1.ContainerPortApplyConfiguration{
+					ContainerPort: &containerPort,
+					Name:          &port.Name,
+					Protocol:      &port.Protocol,
+				})
+			}
+		}
+	}
+
+	// Apply custom metrics port override to existing podmon ports as well.
+	// This is applied even when module metrics are disabled so hostNetwork
+	// podmon sidecars can avoid port collisions during e2e runs.
+	if module.Metrics != nil && module.Metrics.Port != 0 {
+		customPort := module.Metrics.Port
+		for i := range container.Ports {
+			if container.Ports[i].Name == nil {
+				continue
+			}
+			if *container.Ports[i].Name == "res-metrics" || *container.Ports[i].Name == "metrics" {
+				container.Ports[i].ContainerPort = &customPort
+			}
+		}
+	}
+
+	// Handle metrics TLS volume mount
+	if len(component.VolumeMounts) > 0 {
+		for _, mount := range component.VolumeMounts {
+			if mount.Name == "resiliency-metrics-tls" {
+				if container.VolumeMounts == nil {
+					container.VolumeMounts = []acorev1.VolumeMountApplyConfiguration{}
+				}
+				readOnly := true
+				container.VolumeMounts = append(container.VolumeMounts, acorev1.VolumeMountApplyConfiguration{
+					Name:      &mount.Name,
+					MountPath: &mount.MountPath,
+					ReadOnly:  &readOnly,
+				})
+			}
+		}
+	}
+
+	// Unconditionally mount TLS volume if metrics is enabled with TLS cert secret
+	// This ensures the volume mount is added even if not in the component template
+	if module.Metrics != nil && module.Metrics.Enabled && module.Metrics.TLSCertSecret != "" {
+		metricsTLSVolName := "resiliency-metrics-tls"
+		metricsTLSMountPath := "/etc/metrics-tls"
+		readOnly := true
+		dynamicallyMountVolume(container, acorev1.VolumeMountApplyConfiguration{
+			Name:      &metricsTLSVolName,
+			MountPath: &metricsTLSMountPath,
+			ReadOnly:  &readOnly,
+		})
+	}
 }
 
 func setResiliencyArgs(ctx context.Context, m csmv1.Module, mode string, container *acorev1.ContainerApplyConfiguration, matched operatorutils.VersionSpec, cr csmv1.ContainerStorageModule) {
+	// Note: Module metrics placeholders are now substituted via ModifyResiliencyCR()
+	// before YAML unmarshaling, so no need to apply metrics env vars here
+
 	// handle minimal manifest (no components listed) for override with configmap
 	if len(m.Components) == 0 {
 		var synthetic csmv1.ContainerTemplate
@@ -233,14 +365,14 @@ func setResiliencyArgs(ctx context.Context, m csmv1.Module, mode string, contain
 		default:
 			return
 		}
-		modifyPodmon(ctx, synthetic, container, matched, cr)
+		modifyPodmon(ctx, synthetic, container, matched, cr, m)
 	}
 	for _, component := range m.Components {
 		if component.Name == operatorutils.PodmonControllerComponent && mode == controllerMode {
-			modifyPodmon(ctx, component, container, matched, cr)
+			modifyPodmon(ctx, component, container, matched, cr, m)
 		}
 		if component.Name == operatorutils.PodmonNodeComponent && mode == "node" {
-			modifyPodmon(ctx, component, container, matched, cr)
+			modifyPodmon(ctx, component, container, matched, cr, m)
 		}
 	}
 }
@@ -277,7 +409,11 @@ func getResiliencyApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, 
 		return nil, nil, err
 	}
 
-	YamlString := operatorutils.ModifyCommonCR(string(buf), cr)
+	// Substitute module metrics placeholders BEFORE ModifyCommonCR
+	YamlString := ModifyResiliencyCR(string(buf), resiliencyModule)
+
+	// Then apply common CR modifications
+	YamlString = operatorutils.ModifyCommonCR(YamlString, cr)
 
 	var container acorev1.ContainerApplyConfiguration
 	err = yaml.Unmarshal([]byte(YamlString), &container)
@@ -299,6 +435,23 @@ func ResiliencyInjectDeployment(ctx context.Context, dp applyv1.DeploymentApplyC
 	podmon := *podmonPtr
 	// prepend podmon container in controller-pod
 	dp.Spec.Template.Spec.Containers = append([]acorev1.ContainerApplyConfiguration{podmon}, dp.Spec.Template.Spec.Containers...)
+
+	// Add TLS secret volume if metrics is enabled with TLS cert secret
+	if resiliencyModule.Metrics != nil && resiliencyModule.Metrics.Enabled && resiliencyModule.Metrics.TLSCertSecret != "" {
+		metricsTLSVolName := "resiliency-metrics-tls"
+		metricsTLSSecretName := resiliencyModule.Metrics.TLSCertSecret
+		dynamicallyAddVolume(
+			&dp.Spec.Template.Spec.Volumes,
+			acorev1.VolumeApplyConfiguration{
+				Name: &metricsTLSVolName,
+				VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{
+					Secret: &acorev1.SecretVolumeSourceApplyConfiguration{
+						SecretName: &metricsTLSSecretName,
+					},
+				},
+			},
+		)
+	}
 
 	if driverType == string(csmv1.PowerScale) {
 		driverType = string(csmv1.PowerScaleName)
@@ -323,6 +476,12 @@ func ResiliencyInjectDeployment(ctx context.Context, dp applyv1.DeploymentApplyC
 						acorev1.EnvVarApplyConfiguration{Name: &XCSIPodmonAPIPort, Value: &podmonAPIPort},
 					)
 				}
+				podmonAPIToken := getResiliencyTokenEnv(*resiliencyModule, cr.Spec.Driver.CSIDriverType)
+				if podmonAPIToken != "" {
+					dp.Spec.Template.Spec.Containers[i].Env = append(dp.Spec.Template.Spec.Containers[i].Env,
+						acorev1.EnvVarApplyConfiguration{Name: &XCSIPodmonAPIToken, Value: &podmonAPIToken},
+					)
+				}
 				break
 			}
 		}
@@ -341,7 +500,25 @@ func ResiliencyInjectDaemonset(ctx context.Context, ds applyv1.DaemonSetApplyCon
 	// prepend podmon container in node-pod
 	ds.Spec.Template.Spec.Containers = append([]acorev1.ContainerApplyConfiguration{podmon}, ds.Spec.Template.Spec.Containers...)
 
+	// Add TLS secret volume if metrics is enabled with TLS cert secret
+	if resiliencyModule.Metrics != nil && resiliencyModule.Metrics.Enabled && resiliencyModule.Metrics.TLSCertSecret != "" {
+		metricsTLSVolName := "resiliency-metrics-tls"
+		metricsTLSSecretName := resiliencyModule.Metrics.TLSCertSecret
+		dynamicallyAddVolume(
+			&ds.Spec.Template.Spec.Volumes,
+			acorev1.VolumeApplyConfiguration{
+				Name: &metricsTLSVolName,
+				VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{
+					Secret: &acorev1.SecretVolumeSourceApplyConfiguration{
+						SecretName: &metricsTLSSecretName,
+					},
+				},
+			},
+		)
+	}
+
 	podmonAPIPort := getResiliencyEnv(*resiliencyModule, cr.Spec.Driver.CSIDriverType)
+	podmonAPIToken := getResiliencyTokenEnv(*resiliencyModule, cr.Spec.Driver.CSIDriverType)
 	enabled := "true"
 	podmonArrayConnectivityPollRate := getPollRateFromArgs(podmon.Args)
 	for i, cnt := range ds.Spec.Template.Spec.Containers {
@@ -351,9 +528,35 @@ func ResiliencyInjectDaemonset(ctx context.Context, ds applyv1.DaemonSetApplyCon
 				acorev1.EnvVarApplyConfiguration{Name: &XCSIPodmonAPIPort, Value: &podmonAPIPort},
 				acorev1.EnvVarApplyConfiguration{Name: &XCSIPodmonEnabled, Value: &enabled},
 			)
+			if podmonAPIToken != "" {
+				ds.Spec.Template.Spec.Containers[i].Env = append(ds.Spec.Template.Spec.Containers[i].Env,
+					acorev1.EnvVarApplyConfiguration{Name: &XCSIPodmonAPIToken, Value: &podmonAPIToken},
+				)
+			}
+
 			break
 		}
 	}
 
 	return &ds, nil
+}
+
+// dynamicallyMountVolume adds a volume mount to a container if it doesn't already exist
+func dynamicallyMountVolume(ct *acorev1.ContainerApplyConfiguration, mount acorev1.VolumeMountApplyConfiguration) {
+	contains := false
+	if ct.VolumeMounts != nil {
+		for _, v := range ct.VolumeMounts {
+			if v.Name != nil && mount.Name != nil && *v.Name == *mount.Name {
+				contains = true
+				break
+			}
+		}
+	}
+
+	if !contains {
+		if ct.VolumeMounts == nil {
+			ct.VolumeMounts = []acorev1.VolumeMountApplyConfiguration{}
+		}
+		ct.VolumeMounts = append(ct.VolumeMounts, mount)
+	}
 }

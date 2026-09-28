@@ -1,4 +1,4 @@
-//  Copyright © 2024 - 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2024-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"sync"
@@ -27,6 +28,7 @@ import (
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	admissionregistration "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -886,6 +888,7 @@ func TestReplaceAllContainerImageApply(t *testing.T) {
 			Registrar             string "json:\"registrar\" yaml:\"registrar\""
 			Resizer               string "json:\"resizer\" yaml:\"resizer\""
 			Externalhealthmonitor string "json:\"externalhealthmonitorcontroller\" yaml:\"externalhealthmonitorcontroller\""
+			Metadataretriever     string "json:\"metadataretriever\" yaml:\"metadataretriever\""
 			Sdc                   string "json:\"sdc\" yaml:\"sdc\""
 			Sdcmonitor            string "json:\"sdcmonitor\" yaml:\"sdcmonitor\""
 			Podmon                string "json:\"podmon\" yaml:\"podmon\""
@@ -2706,7 +2709,7 @@ func TestGetModuleDefaultVersion(t *testing.T) {
 			moduleType:       csmv1.Observability,
 			path:             "../../operatorconfig",
 			expectedVersion:  "",
-			expectedErrorMsg: "does not exist in file ../../operatorconfig/moduleconfig/common/version-values.yaml",
+			expectedErrorMsg: "does not exist in file ../../operatorconfig/common/csm-releases.yaml",
 		},
 		{
 			name:             "invalid module",
@@ -2715,7 +2718,7 @@ func TestGetModuleDefaultVersion(t *testing.T) {
 			moduleType:       "invalid",
 			path:             "../../operatorconfig",
 			expectedVersion:  "",
-			expectedErrorMsg: "does not exist in file ../../operatorconfig/moduleconfig/common/version-values.yaml",
+			expectedErrorMsg: "does not exist in file ../../operatorconfig/common/csm-releases.yaml",
 		},
 		{
 			name:             "invalide driver",
@@ -2724,33 +2727,28 @@ func TestGetModuleDefaultVersion(t *testing.T) {
 			moduleType:       csmv1.Observability,
 			path:             "../../operatorconfig",
 			expectedVersion:  "",
-			expectedErrorMsg: "does not exist in file ../../operatorconfig/moduleconfig/common/version-values.yaml",
+			expectedErrorMsg: "does not exist in file ../../operatorconfig/common/csm-releases.yaml",
 		},
 		{
-			name:             "GetModuleDefaultVersion when yamlUnmarshal returns an error",
+			name:             "GetModuleDefaultVersion when csm-releases.yaml is malformed",
 			driverConfig:     "v2.13.0",
 			driverType:       csmv1.PowerScale,
 			moduleType:       csmv1.Observability,
-			path:             "../../operatorconfig",
+			path:             "malformed",
 			expectedVersion:  "",
-			expectedErrorMsg: "mock error from yamlUnmarshal",
+			expectedErrorMsg: "unmarshal csm releases file",
 		},
 	}
 
-	// Save the original function so we can revert after each test case
-	defaultYamlUnmarshal := yamlUnmarshal
+	// Write a malformed csm-releases.yaml for the "malformed" path case.
+	malformedDir := filepath.Join("malformed", "common")
+	require.NoError(t, os.MkdirAll(malformedDir, 0o755))
+	defer os.RemoveAll("malformed")
+	require.NoError(t, os.WriteFile(filepath.Join(malformedDir, "csm-releases.yaml"), []byte("not: [valid: yaml: mapping"), 0o644))
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// if test name contains yamlUnmarshal, we will use a different yamlUnmarshal function to mock an error
-			if strings.Contains(tt.name, "yamlUnmarshal") {
-				yamlUnmarshal = func(_ []byte, _ interface{}) error {
-					return fmt.Errorf("mock error from yamlUnmarshal")
-				}
-			}
 			version, err := GetModuleDefaultVersion(tt.driverConfig, tt.driverType, tt.moduleType, tt.path)
-			// Revert to the original function
-			yamlUnmarshal = defaultYamlUnmarshal
 			if tt.expectedErrorMsg != "" {
 				if err == nil {
 					t.Errorf("expected error containing %q, but got nil", tt.expectedErrorMsg)
@@ -2774,6 +2772,7 @@ func TestVersionParser(t *testing.T) {
 		driverConfig  string
 		expectedMajor int
 		expectedMinor int
+		expectedPatch int
 		expectedError string
 	}{
 		{
@@ -2781,6 +2780,7 @@ func TestVersionParser(t *testing.T) {
 			driverConfig:  "v2.14.0",
 			expectedMajor: 2,
 			expectedMinor: 14,
+			expectedPatch: 0,
 			expectedError: "",
 		},
 		{
@@ -2788,6 +2788,7 @@ func TestVersionParser(t *testing.T) {
 			driverConfig:  "v2.12",
 			expectedMajor: -1,
 			expectedMinor: -1,
+			expectedPatch: -1,
 			expectedError: "not in correct version format",
 		},
 		{
@@ -2795,6 +2796,7 @@ func TestVersionParser(t *testing.T) {
 			driverConfig:  "2.14.0",
 			expectedMajor: 2,
 			expectedMinor: 14,
+			expectedPatch: 0,
 			expectedError: "",
 		},
 	}
@@ -2802,7 +2804,7 @@ func TestVersionParser(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			fmt.Println("test case: ", tt.name)
-			majorVersion, minorVersion, err := versionParser(tt.driverConfig)
+			majorVersion, minorVersion, patchVersion, err := versionParser(tt.driverConfig)
 			if tt.expectedError != "" {
 				if err == nil {
 					t.Errorf("expected error containing %q, but got nil", tt.expectedError)
@@ -2819,6 +2821,10 @@ func TestVersionParser(t *testing.T) {
 
 			if minorVersion != tt.expectedMinor {
 				t.Errorf("expected minor version %d, but got %d", tt.expectedMinor, minorVersion)
+			}
+
+			if patchVersion != tt.expectedPatch {
+				t.Errorf("expected patch version %d, but got %d", tt.expectedPatch, patchVersion)
 			}
 		})
 	}
@@ -2915,7 +2921,11 @@ func TestGetConfigData(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, configData, secret.Data["data"])
 
-	// TODO: Add a test case for checking for a secret that isn't there
+	// Test case for secret that isn't there
+	nonExistentClusterID := "non-existent-cluster"
+	configData, err = getConfigData(ctx, nonExistentClusterID, ctrlClient)
+	assert.NotNil(t, err, "Should return error when secret is not found")
+	assert.Equal(t, []byte("error"), configData, "Should return error data when secret is not found")
 }
 
 func TestGetCSMNamespaces(t *testing.T) {
@@ -3081,23 +3091,34 @@ func TestGetSecret(t *testing.T) {
 }
 
 func TestDetermineUnitTestRun(t *testing.T) {
-	// Test case: UNIT_TEST environment variable is not set
+	// Save original value
+	origUnitTest := os.Getenv("UNIT_TEST")
+	defer func() {
+		if origUnitTest == "" {
+			os.Unsetenv("UNIT_TEST")
+		} else {
+			os.Setenv("UNIT_TEST", origUnitTest)
+		}
+	}()
+
 	ctx := context.Background()
 
+	// Test case: UNIT_TEST environment variable is not set
+	os.Unsetenv("UNIT_TEST")
 	result := DetermineUnitTestRun(ctx)
 	if result {
-		t.Errorf("Expected false, but got %v", result)
+		t.Errorf("Expected false when UNIT_TEST not set, but got %v", result)
 	}
 
 	// Test case: UNIT_TEST environment variable is set to "true"
-	t.Setenv("UNIT_TEST", "true")
+	os.Setenv("UNIT_TEST", "true")
 	result = DetermineUnitTestRun(ctx)
 	if !result {
-		t.Errorf("Expected true, but got %v", result)
+		t.Errorf("Expected true when UNIT_TEST=true, but got %v", result)
 	}
 
 	// Test case: UNIT_TEST environment variable is set to "false"
-	t.Setenv("UNIT_TEST", "false")
+	os.Setenv("UNIT_TEST", "false")
 	result = DetermineUnitTestRun(ctx)
 	if result {
 		t.Errorf("Expected false, but got %v", result)
@@ -3169,19 +3190,18 @@ func TestIsValidUpgrade(t *testing.T) {
 func TestGetUpgradeInfo(t *testing.T) {
 	ctx := context.Background()
 
-	// Test case: corrupted upgrade path file
-	oldVersion := "v2.3.0"
+	// Test case: corrupted csm-releases.yaml
+	oldVersion := "v2.4.0"
 
-	// Create a malformed upgrade path file
+	// Create a malformed csm-releases.yaml
 	tempDir := t.TempDir()
-	configDir := fmt.Sprintf("%s/moduleconfig/authorization/%s", tempDir, oldVersion)
-	defer os.RemoveAll(configDir)
+	commonDir := fmt.Sprintf("%s/common", tempDir)
 
-	err := os.MkdirAll(configDir, 0o700)
+	err := os.MkdirAll(commonDir, 0o700)
 	assert.NoError(t, err)
 
-	err = os.WriteFile(fmt.Sprintf("%s/upgrade-path.yaml", configDir),
-		[]byte("not a real yaml file"), 0o600)
+	err = os.WriteFile(fmt.Sprintf("%s/csm-releases.yaml", commonDir),
+		[]byte("not: [valid: yaml: mapping"), 0o600)
 	assert.NoError(t, err)
 
 	csmComponentType := csmv1.Authorization
@@ -3419,35 +3439,55 @@ func Test_getUpgradeInfo(t *testing.T) {
 		expectedErr string
 	}{
 		{
-			name: "yamlUnmarshal returns error",
+			name: "known authorization module version resolves minUpgradeFrom",
 			args: args{
 				ctx: context.Background(),
 				operatorConfig: OperatorConfig{
 					ConfigDirectory: "../../operatorconfig",
 				},
 				csmCompType: csmv1.Authorization,
-				oldVersion:  "v2.3.0",
+				oldVersion:  "v2.4.0",
+			},
+			want:        "v2.2.0",
+			expectedErr: "",
+		},
+		{
+			name: "unknown module version returns error",
+			args: args{
+				ctx: context.Background(),
+				operatorConfig: OperatorConfig{
+					ConfigDirectory: "../../operatorconfig",
+				},
+				csmCompType: csmv1.Authorization,
+				oldVersion:  "v99.99.99",
 			},
 			want:        "",
-			expectedErr: "mock yamlUnmarshal error",
+			expectedErr: "no upgrade path found for authorization-proxy-server v99.99.99 in file ../../operatorconfig/common/csm-releases.yaml",
+		},
+		{
+			name: "invalid config directory returns error",
+			args: args{
+				ctx: context.Background(),
+				operatorConfig: OperatorConfig{
+					ConfigDirectory: "invalid/path",
+				},
+				csmCompType: csmv1.Authorization,
+				oldVersion:  "v2.4.0",
+			},
+			want:        "",
+			expectedErr: "read csm releases file invalid/path/common/csm-releases.yaml",
 		},
 	}
 
-	// Save the original function so we can revert after this test
-	defaultYamlUnmarshal := yamlUnmarshal
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// if test name contains yamlUnmarshal, we will use a different yamlUnmarshal function to mock an error
-			if strings.Contains(tt.name, "yamlUnmarshal") {
-				yamlUnmarshal = func(_ []byte, _ interface{}) error {
-					return fmt.Errorf("mock yamlUnmarshal error")
-				}
-			}
 			got, err := getUpgradeInfo(tt.args.ctx, tt.args.operatorConfig, tt.args.csmCompType, tt.args.oldVersion)
-			// Revert to the original function
-			yamlUnmarshal = defaultYamlUnmarshal
-			if (err != nil) && err.Error() != tt.expectedErr {
-				t.Errorf("getUpgradeInfo() returned error = %v, but expected error to be: %v", err, tt.expectedErr)
+			if tt.expectedErr == "" {
+				assert.NoError(t, err)
+			} else {
+				if err == nil || !strings.Contains(err.Error(), tt.expectedErr) {
+					t.Errorf("getUpgradeInfo() returned error = %v, but expected error to contain: %v", err, tt.expectedErr)
+				}
 				return
 			}
 			if got != tt.want {
@@ -3609,7 +3649,7 @@ func TestGetVersion(t *testing.T) {
 				ConfigDirectory: "invalid/path",
 			},
 			want:        "",
-			expectedErr: "failed to read file invalid/path/common/csm-version-mapping.yaml",
+			expectedErr: "failed to read file invalid/path/common/csm-releases.yaml",
 		},
 		{
 			name: "invalid_platform",
@@ -3618,7 +3658,7 @@ func TestGetVersion(t *testing.T) {
 				ConfigDirectory: "../../operatorconfig",
 			},
 			want:        "",
-			expectedErr: "Unsupported platform invalid",
+			expectedErr: "unsupported platform invalid",
 		},
 		{
 			name: "invalid_version",
@@ -3660,6 +3700,130 @@ func TestGetVersion(t *testing.T) {
 			}
 			if got != tc.want {
 				t.Errorf("GetVersion() = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestGetLatestCSMVersion(t *testing.T) {
+	ctx := context.Background()
+
+	cases := []struct {
+		name        string
+		driverType  csmv1.DriverType
+		op          OperatorConfig
+		wantErr     bool
+		errContains string
+		validate    func(t *testing.T, version string)
+	}{
+		{
+			name:       "powerflex returns latest version",
+			driverType: csmv1.PowerFlex,
+			op: OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			},
+			wantErr: false,
+			validate: func(t *testing.T, version string) {
+				// Verify version is valid semver format (vX.Y.Z)
+				assert.Regexp(t, `^v\d+\.\d+\.\d+$`, version)
+				// Verify version is not empty
+				assert.NotEmpty(t, version)
+			},
+		},
+		{
+			name:       "powerstore returns latest version",
+			driverType: csmv1.PowerStore,
+			op: OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			},
+			wantErr: false,
+			validate: func(t *testing.T, version string) {
+				assert.Regexp(t, `^v\d+\.\d+\.\d+$`, version)
+				assert.NotEmpty(t, version)
+			},
+		},
+		{
+			name:       "powerscale (isilon) returns latest version",
+			driverType: csmv1.PowerScale,
+			op: OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			},
+			wantErr: false,
+			validate: func(t *testing.T, version string) {
+				assert.Regexp(t, `^v\d+\.\d+\.\d+$`, version)
+				assert.NotEmpty(t, version)
+			},
+		},
+		{
+			name:       "powermax returns latest version",
+			driverType: csmv1.PowerMax,
+			op: OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			},
+			wantErr: false,
+			validate: func(t *testing.T, version string) {
+				assert.Regexp(t, `^v\d+\.\d+\.\d+$`, version)
+				assert.NotEmpty(t, version)
+			},
+		},
+		{
+			name:       "unity returns latest version",
+			driverType: csmv1.Unity,
+			op: OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			},
+			wantErr: false,
+			validate: func(t *testing.T, version string) {
+				assert.Regexp(t, `^v\d+\.\d+\.\d+$`, version)
+				assert.NotEmpty(t, version)
+			},
+		},
+		{
+			name:       "cosi returns latest version",
+			driverType: csmv1.Cosi,
+			op: OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			},
+			wantErr: false,
+			validate: func(t *testing.T, version string) {
+				// COSI uses a different version scheme (v1.X.0)
+				assert.Regexp(t, `^v\d+\.\d+\.\d+$`, version)
+				assert.NotEmpty(t, version)
+			},
+		},
+		{
+			name:       "invalid driver type returns error",
+			driverType: "nonexistent",
+			op: OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			},
+			wantErr:     true,
+			errContains: "no version mapping found for driver type nonexistent",
+		},
+		{
+			name:       "invalid config directory returns error",
+			driverType: csmv1.PowerFlex,
+			op: OperatorConfig{
+				ConfigDirectory: "invalid/path",
+			},
+			wantErr:     true,
+			errContains: "failed to read version mapping file",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			version, err := GetLatestCSMVersion(ctx, tc.driverType, tc.op)
+			if tc.wantErr {
+				assert.Error(t, err)
+				if tc.errContains != "" {
+					assert.Contains(t, err.Error(), tc.errContains)
+				}
+			} else {
+				assert.NoError(t, err)
+				if tc.validate != nil {
+					tc.validate(t, version)
+				}
 			}
 		})
 	}
@@ -3920,7 +4084,7 @@ func TestResolveVersionFromConfigMap(t *testing.T) {
 		{
 			name: "valid_flow_returns_matched_version",
 			clientObjs: []client.Object{
-				makeImagesConfigMap("csm-ns", map[string]string{
+				makeImagesConfigMap("dell-csm-operator", map[string]string{
 					"versions.yaml": marshalVersionsYAML(t, valid),
 				}),
 			},
@@ -3936,7 +4100,7 @@ func TestResolveVersionFromConfigMap(t *testing.T) {
 		{
 			name: "invalid_images_value_fails_validation",
 			clientObjs: []client.Object{
-				makeImagesConfigMap("csm-ns", map[string]string{
+				makeImagesConfigMap("dell-csm-operator", map[string]string{
 					"versions.yaml": marshalVersionsYAML(t, invalid),
 				}),
 			},
@@ -3953,7 +4117,7 @@ func TestResolveVersionFromConfigMap(t *testing.T) {
 		{
 			name: "version_not_found_in_versions_yaml",
 			clientObjs: []client.Object{
-				makeImagesConfigMap("csm-ns", map[string]string{
+				makeImagesConfigMap("dell-csm-operator", map[string]string{
 					"versions.yaml": marshalVersionsYAML(t, []VersionSpec{
 						{Version: "v2.0.0", Images: map[string]string{"driver": "x", "sidecar": "y"}},
 					}),

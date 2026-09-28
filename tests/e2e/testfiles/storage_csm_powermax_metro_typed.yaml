@@ -1,0 +1,38 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: powermax
+  namespace: ${E2E_NS_POWERMAX}
+spec:
+  version: ${CSM_VERSION_LATEST}
+  driver:
+    csiDriverType: "powermax"
+    authSecret: powermax-creds
+    replicas: 2
+    dnsPolicy: ClusterFirstWithHostNet
+    forceRemoveDriver: true
+    metroSiteFailureHandling:
+      enabled: true
+      stateCheckTimeoutSeconds: 30
+      queueWarningThreshold: 75
+      queueHardLimit: 100
+      reconciliationBackoffSeconds: 5
+    common:
+      imagePullPolicy: Always
+      envs:
+        - name: X_CSI_POWERMAX_SKIP_CERTIFICATE_VALIDATION
+          value: "true"
+    metrics:
+      enabled: true
+      port: 8443
+      tlsCertSecret: ""
+      serviceMonitor:
+        enabled: false
+      podMonitor:
+        enabled: false
+      prometheusRule:
+        enabled: true
+  modules:
+    - name: csireverseproxy
+      components:
+        - name: csipowermax-reverseproxy

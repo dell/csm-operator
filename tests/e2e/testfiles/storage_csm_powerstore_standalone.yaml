@@ -1,0 +1,18 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: powerstore
+  namespace: ${E2E_NS_POWERSTORE}
+spec:
+  version: ${CSM_VERSION_LATEST}
+  driver:
+    csiDriverType: "powerstore"
+    authSecret: powerstore-config
+    replicas: 2
+    dnsPolicy: ClusterFirstWithHostNet
+    forceRemoveDriver: true
+    common:
+      imagePullPolicy: Always
+      envs:
+        - name: X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION
+          value: "true"

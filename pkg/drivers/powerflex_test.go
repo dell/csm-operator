@@ -44,6 +44,7 @@ var (
 	configJSONFileDuplSysID    = fmt.Sprintf("%s/driverconfig/%s/config-duplicate-sysid.json", config.ConfigDirectory, csmv1.PowerFlex)
 	configJSONFileEmpty        = fmt.Sprintf("%s/driverconfig/%s/config-empty.json", config.ConfigDirectory, csmv1.PowerFlex)
 	configJSONFileBad          = fmt.Sprintf("%s/driverconfig/%s/config-bad.json", config.ConfigDirectory, csmv1.PowerFlex)
+	configJSONFileNoMDM        = fmt.Sprintf("%s/driverconfig/%s/config-no-mdm.json", config.ConfigDirectory, csmv1.PowerFlex)
 	powerFlexSecret            = shared.MakeSecretWithJSON(pflexCredsName, pFlexNS, configJSONFileGood)
 	fakeSecret                 = shared.MakeSecret("fake-secret", "fake-ns", shared.PFlexConfigVersion)
 
@@ -73,6 +74,7 @@ var (
 		{"duplicate system id", csmForPowerFlex("dupl-sysid"), powerFlexClient, shared.MakeSecretWithJSON("dupl-sysid-config", pFlexNS, configJSONFileDuplSysID), "Duplicate SystemID"},
 		{"empty config", csmForPowerFlex("empty"), powerFlexClient, shared.MakeSecretWithJSON("empty-config", pFlexNS, configJSONFileEmpty), "Arrays details are not provided"},
 		{"bad config", csmForPowerFlex("bad"), powerFlexClient, shared.MakeSecretWithJSON("bad-config", pFlexNS, configJSONFileBad), "unable to parse"},
+		{"no MDM in secret with SDC enabled", csmForPowerFlex("no-mdm-secret"), powerFlexClient, shared.MakeSecretWithJSON("no-mdm-secret-config", pFlexNS, configJSONFileNoMDM), "no MDM addresses found in secret"},
 		{"Auth and Replication enabled with valid prefix", csmForPowerFlex("auth-repl-valid-prefix"), powerFlexClient, shared.MakeSecretWithJSON("auth-repl-valid-prefix-config", pFlexNS, configJSONFileGood), ""},
 		{"Auth and Replication enabled with invalid prefix", csmForPowerFlex("auth-repl-invalid-prefix"), powerFlexClient, shared.MakeSecretWithJSON("auth-repl-invalid-prefix-config", pFlexNS, configJSONFileGood), "volume name prefix"},
 		{"invalid csm version", powerFlexInvalidCSMVersion, powerFlexClient, powerFlexSecret, "No custom resource configuration is available for CSM version v1.10.0"},
@@ -123,6 +125,7 @@ var (
 								{Name: "X_CSI_SDC_SFTP_REPO_ENABLED", Value: "true"},
 								{Name: "REPO_ADDRESS", Value: "sftp://0.0.0.0"},
 								{Name: "REPO_USER", Value: "sftpuser"},
+								{Name: "HOST_DRV_CFG_PATH", Value: "/custom/path/to/sdc"},
 								{Name: "X_CSI_MAX_VOLUMES_PER_NODE", Value: "100"},
 								{Name: "X_CSI_FS_CHECK_ENABLED", Value: "false"},
 								{Name: "X_CSI_FS_CHECK_MODE", Value: "checkOnly"},
@@ -173,8 +176,8 @@ var (
 			expected: "CSI_SPACE_RECLAMATION_ENABLED=true CSI_SPACE_RECLAMATION_SCHEDULE=0 2 * * 0 CSI_SPACE_RECLAMATION_MAX_CONCURRENT=1 CSI_SPACE_RECLAMATION_TIMEOUT=1h",
 		},
 		{
-			name:       "CSIDriverSpec case with storage capacity",
-			yamlString: "CSI_STORAGE_CAPACITY_ENABLED=OLD CSI_VXFLEXOS_QUOTA_ENABLED=OLD",
+			name:       "CSIDriverSpec case with storage capacity enabled",
+			yamlString: "<X_CSI_STORAGE_CAPACITY_ENABLED>",
 			cr: csmv1.ContainerStorageModule{
 				Spec: csmv1.ContainerStorageModuleSpec{
 					Driver: csmv1.Driver{
@@ -185,11 +188,11 @@ var (
 				},
 			},
 			fileType: "CSIDriverSpec",
-			expected: "CSI_STORAGE_CAPACITY_ENABLED=OLD CSI_VXFLEXOS_QUOTA_ENABLED=OLD",
+			expected: "true",
 		},
 		{
-			name:       "CSIDriverSpec case without storage capacity",
-			yamlString: "CSI_STORAGE_CAPACITY_ENABLED=OLD CSI_VXFLEXOS_QUOTA_ENABLED=OLD",
+			name:       "CSIDriverSpec case with storage capacity disabled",
+			yamlString: "<X_CSI_STORAGE_CAPACITY_ENABLED>",
 			cr: csmv1.ContainerStorageModule{
 				Spec: csmv1.ContainerStorageModuleSpec{
 					Driver: csmv1.Driver{
@@ -200,7 +203,7 @@ var (
 				},
 			},
 			fileType: "CSIDriverSpec",
-			expected: "CSI_STORAGE_CAPACITY_ENABLED=OLD CSI_VXFLEXOS_QUOTA_ENABLED=OLD",
+			expected: "false",
 		},
 		{
 			name:       "update GOSCALEIO_SHOWHTTP value for Controller",
@@ -974,6 +977,426 @@ func TestPrecheckPowerFlexTLSCert(t *testing.T) {
 			} else {
 				assert.NotNil(t, err)
 				assert.Contains(t, err.Error(), tt.expectedErr)
+			}
+		})
+	}
+}
+
+func TestSetSDCinitContainers(t *testing.T) {
+	ctx := context.Background()
+	customHostDrvCfgPath := "/custom/path/to/sdc"
+	defaultHostDrvCfgPath := "/opt/emc/scaleio/sdc/bin"
+
+	tests := []struct {
+		name            string
+		cr              csmv1.ContainerStorageModule
+		secret          *corev1.Secret
+		expectedPath    string
+		expectedInit    int
+		expectedSide    int
+		sdcEnabled      bool
+		expectMDMInject bool // true for pre-v1.18.0 backward compatibility
+	}{
+		{
+			name: "SDC enabled with existing init container - v1.18.0+ no MDM injection",
+			cr: csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-csm",
+					Namespace: pFlexNS,
+				},
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Version: "v1.18.0",
+					Driver: csmv1.Driver{
+						Node: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{Name: "X_CSI_SDC_ENABLED", Value: "true"},
+							},
+						},
+						InitContainers: []csmv1.ContainerTemplate{
+							{
+								Name: "sdc",
+								Envs: []corev1.EnvVar{
+									{Name: "HOST_DRV_CFG_PATH", Value: customHostDrvCfgPath},
+								},
+							},
+						},
+					},
+				},
+			},
+			secret:          shared.MakeSecretWithJSON("test-csm-config", pFlexNS, configJSONFileGood),
+			expectedPath:    customHostDrvCfgPath,
+			expectedInit:    1,
+			expectedSide:    0,
+			sdcEnabled:      true,
+			expectMDMInject: false,
+		},
+		{
+			name: "SDC enabled with no init containers - v1.18.0+ add sdc init container without MDM",
+			cr: csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-csm",
+					Namespace: pFlexNS,
+				},
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Version: "v1.18.0",
+					Driver: csmv1.Driver{
+						Node: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{Name: "X_CSI_SDC_ENABLED", Value: "true"},
+							},
+						},
+						InitContainers: []csmv1.ContainerTemplate{},
+					},
+				},
+			},
+			secret:          shared.MakeSecretWithJSON("test-csm-config", pFlexNS, configJSONFileGood),
+			expectedPath:    defaultHostDrvCfgPath,
+			expectedInit:    1,
+			expectedSide:    0,
+			sdcEnabled:      true,
+			expectMDMInject: false,
+		},
+		{
+			name: "SDC disabled - v1.18.0+ should not add/update sdc init container",
+			cr: csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-csm",
+					Namespace: pFlexNS,
+				},
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Version: "v1.18.0",
+					Driver: csmv1.Driver{
+						Node: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{Name: "X_CSI_SDC_ENABLED", Value: "false"},
+							},
+						},
+						InitContainers: []csmv1.ContainerTemplate{
+							{
+								Name: "sdc",
+								Envs: []corev1.EnvVar{
+									{Name: "HOST_DRV_CFG_PATH", Value: customHostDrvCfgPath},
+								},
+							},
+						},
+					},
+				},
+			},
+			secret:          shared.MakeSecretWithJSON("test-csm-config", pFlexNS, configJSONFileGood),
+			expectedPath:    "",
+			expectedInit:    1,
+			expectedSide:    0,
+			sdcEnabled:      false,
+			expectMDMInject: false,
+		},
+		{
+			name: "SDC enabled with existing sdc-monitor sidecar - v1.18.0+ no MDM injection",
+			cr: csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-csm",
+					Namespace: pFlexNS,
+				},
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Version: "v1.18.0",
+					Driver: csmv1.Driver{
+						Node: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{Name: "X_CSI_SDC_ENABLED", Value: "true"},
+							},
+						},
+						InitContainers: []csmv1.ContainerTemplate{
+							{
+								Name: "sdc",
+								Envs: []corev1.EnvVar{
+									{Name: "HOST_DRV_CFG_PATH", Value: customHostDrvCfgPath},
+								},
+							},
+						},
+						SideCars: []csmv1.ContainerTemplate{
+							{
+								Name: "sdc-monitor",
+								Envs: []corev1.EnvVar{},
+							},
+						},
+					},
+				},
+			},
+			secret:          shared.MakeSecretWithJSON("test-csm-config", pFlexNS, configJSONFileGood),
+			expectedPath:    customHostDrvCfgPath,
+			expectedInit:    1,
+			expectedSide:    1,
+			sdcEnabled:      true,
+			expectMDMInject: false,
+		},
+		{
+			name: "SDC enabled with no sidecars - v1.18.0+ no sdc-monitor sidecar added",
+			cr: csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-csm",
+					Namespace: pFlexNS,
+				},
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Version: "v1.18.0",
+					Driver: csmv1.Driver{
+						Node: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{Name: "X_CSI_SDC_ENABLED", Value: "true"},
+							},
+						},
+						InitContainers: []csmv1.ContainerTemplate{
+							{
+								Name: "sdc",
+								Envs: []corev1.EnvVar{
+									{Name: "HOST_DRV_CFG_PATH", Value: customHostDrvCfgPath},
+								},
+							},
+						},
+						SideCars: []csmv1.ContainerTemplate{},
+					},
+				},
+			},
+			secret:          shared.MakeSecretWithJSON("test-csm-config", pFlexNS, configJSONFileGood),
+			expectedPath:    customHostDrvCfgPath,
+			expectedInit:    1,
+			expectedSide:    0,
+			sdcEnabled:      true,
+			expectMDMInject: false,
+		},
+		{
+			name: "SDC enabled with custom HOST_DRV_CFG_PATH - v1.18.0+ no MDM injection",
+			cr: csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-csm",
+					Namespace: pFlexNS,
+				},
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Version: "v1.18.0",
+					Driver: csmv1.Driver{
+						Node: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{Name: "X_CSI_SDC_ENABLED", Value: "true"},
+							},
+						},
+						InitContainers: []csmv1.ContainerTemplate{
+							{
+								Name: "sdc",
+								Envs: []corev1.EnvVar{
+									{Name: "HOST_DRV_CFG_PATH", Value: customHostDrvCfgPath},
+								},
+							},
+						},
+					},
+				},
+			},
+			secret:          shared.MakeSecretWithJSON("test-csm-config", pFlexNS, configJSONFileGood),
+			expectedPath:    customHostDrvCfgPath,
+			expectedInit:    1,
+			expectedSide:    0,
+			sdcEnabled:      true,
+			expectMDMInject: false,
+		},
+		{
+			name: "SDC enabled with default HOST_DRV_CFG_PATH - v1.18.0+ no MDM injection",
+			cr: csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-csm",
+					Namespace: pFlexNS,
+				},
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Version: "v1.18.0",
+					Driver: csmv1.Driver{
+						Node: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{Name: "X_CSI_SDC_ENABLED", Value: "true"},
+							},
+						},
+						InitContainers: []csmv1.ContainerTemplate{
+							{
+								Name: "sdc",
+								Envs: []corev1.EnvVar{
+									{Name: "HOST_DRV_CFG_PATH", Value: defaultHostDrvCfgPath},
+								},
+							},
+						},
+					},
+				},
+			},
+			secret:          shared.MakeSecretWithJSON("test-csm-config", pFlexNS, configJSONFileGood),
+			expectedPath:    defaultHostDrvCfgPath,
+			expectedInit:    1,
+			expectedSide:    0,
+			sdcEnabled:      true,
+			expectMDMInject: false,
+		},
+		// Backward compatibility tests for pre-v1.18.0 (MDM injection enabled)
+		{
+			name: "Pre-v1.18.0 backward compatibility - SDC enabled with existing init container - inject MDM",
+			cr: csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-csm",
+					Namespace: pFlexNS,
+				},
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Version: "v1.17.0",
+					Driver: csmv1.Driver{
+						Node: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{Name: "X_CSI_SDC_ENABLED", Value: "true"},
+							},
+						},
+						InitContainers: []csmv1.ContainerTemplate{
+							{
+								Name: "sdc",
+								Envs: []corev1.EnvVar{
+									{Name: "HOST_DRV_CFG_PATH", Value: customHostDrvCfgPath},
+								},
+							},
+						},
+					},
+				},
+			},
+			secret:          shared.MakeSecretWithJSON("test-csm-config", pFlexNS, configJSONFileGood),
+			expectedPath:    customHostDrvCfgPath,
+			expectedInit:    1,
+			expectedSide:    1,
+			sdcEnabled:      true,
+			expectMDMInject: true,
+		},
+		{
+			name: "Pre-v1.18.0 backward compatibility - SDC enabled with no init containers - add sdc with MDM",
+			cr: csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-csm",
+					Namespace: pFlexNS,
+				},
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Version: "v1.17.0",
+					Driver: csmv1.Driver{
+						Node: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{Name: "X_CSI_SDC_ENABLED", Value: "true"},
+							},
+						},
+						InitContainers: []csmv1.ContainerTemplate{},
+					},
+				},
+			},
+			secret:          shared.MakeSecretWithJSON("test-csm-config", pFlexNS, configJSONFileGood),
+			expectedPath:    defaultHostDrvCfgPath,
+			expectedInit:    1,
+			expectedSide:    1,
+			sdcEnabled:      true,
+			expectMDMInject: true,
+		},
+		{
+			name: "Pre-v1.18.0 backward compatibility - SDC enabled with existing sdc-monitor sidecar - inject MDM",
+			cr: csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-csm",
+					Namespace: pFlexNS,
+				},
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Version: "v1.17.0",
+					Driver: csmv1.Driver{
+						Node: &csmv1.ContainerTemplate{
+							Envs: []corev1.EnvVar{
+								{Name: "X_CSI_SDC_ENABLED", Value: "true"},
+							},
+						},
+						InitContainers: []csmv1.ContainerTemplate{
+							{
+								Name: "sdc",
+								Envs: []corev1.EnvVar{
+									{Name: "HOST_DRV_CFG_PATH", Value: customHostDrvCfgPath},
+								},
+							},
+						},
+						SideCars: []csmv1.ContainerTemplate{
+							{
+								Name: "sdc-monitor",
+								Envs: []corev1.EnvVar{},
+							},
+						},
+					},
+				},
+			},
+			secret:          shared.MakeSecretWithJSON("test-csm-config", pFlexNS, configJSONFileGood),
+			expectedPath:    customHostDrvCfgPath,
+			expectedInit:    1,
+			expectedSide:    1,
+			sdcEnabled:      true,
+			expectMDMInject: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ct := fake.NewClientBuilder().WithObjects(tt.secret).Build()
+			result, err := SetSDCinitContainers(ctx, tt.cr, ct)
+			assert.Nil(t, err)
+			assert.Equal(t, tt.expectedInit, len(result.Spec.Driver.InitContainers))
+			assert.Equal(t, tt.expectedSide, len(result.Spec.Driver.SideCars))
+
+			if tt.sdcEnabled {
+				// Check init container
+				if len(result.Spec.Driver.InitContainers) > 0 {
+					initContainer := result.Spec.Driver.InitContainers[0]
+					assert.Equal(t, "sdc", initContainer.Name)
+
+					if tt.expectMDMInject {
+						// Pre-v1.18.0: MDM MUST be injected for backward compatibility
+						foundMDM := false
+						for _, env := range initContainer.Envs {
+							if env.Name == "MDM" {
+								foundMDM = true
+								assert.NotEmpty(t, env.Value, "MDM env var should have a value")
+								break
+							}
+						}
+						assert.True(t, foundMDM, "MDM env var must be injected into sdc init container for pre-v1.18.0")
+					} else {
+						// v1.18.0+: MDM must NOT be injected (FR-004)
+						for _, env := range initContainer.Envs {
+							assert.NotEqual(t, "MDM", env.Name, "MDM env var must not be injected into sdc init container for v1.18.0+")
+						}
+					}
+
+					// Check HOST_DRV_CFG_PATH env var (still managed by operator)
+					if tt.expectedPath != "" {
+						foundPath := false
+						for _, env := range initContainer.Envs {
+							if env.Name == "HOST_DRV_CFG_PATH" {
+								assert.Equal(t, tt.expectedPath, env.Value)
+								foundPath = true
+								break
+							}
+						}
+						assert.True(t, foundPath, "HOST_DRV_CFG_PATH env var should be present")
+					}
+				}
+
+				// Check sidecars for MDM
+				for _, sidecar := range result.Spec.Driver.SideCars {
+					if sidecar.Name == "sdc-monitor" {
+						if tt.expectMDMInject {
+							// Pre-v1.18.0: MDM MUST be injected for backward compatibility
+							foundMDM := false
+							for _, env := range sidecar.Envs {
+								if env.Name == "MDM" {
+									foundMDM = true
+									assert.NotEmpty(t, env.Value, "MDM env var should have a value in sdc-monitor sidecar")
+									break
+								}
+							}
+							assert.True(t, foundMDM, "MDM env var must be injected into sdc-monitor sidecar for pre-v1.18.0")
+						} else {
+							// v1.18.0+: MDM must NOT be injected (FR-004)
+							for _, env := range sidecar.Envs {
+								assert.NotEqual(t, "MDM", env.Name, "MDM env var must not be injected into sdc-monitor sidecar for v1.18.0+")
+							}
+						}
+					}
+				}
 			}
 		})
 	}

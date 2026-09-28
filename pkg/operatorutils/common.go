@@ -14,7 +14,9 @@ package operatorutils
 
 import (
 	"context"
+	"strings"
 	"sync/atomic"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 	"k8s.io/client-go/kubernetes"
@@ -29,6 +31,7 @@ type ReconcileCSM interface {
 	reconcile.Reconciler
 	GetClient() crclient.Client
 	GetK8sClient() kubernetes.Interface
+	GetConfig() OperatorConfig
 	GetUpdateCount() int32
 	IncrUpdateCount()
 }
@@ -38,6 +41,7 @@ type FakeReconcileCSM struct {
 	reconcile.Reconciler
 	crclient.Client
 	K8sClient   kubernetes.Interface
+	Config      OperatorConfig
 	updateCount int32
 }
 
@@ -70,6 +74,11 @@ func (r *FakeReconcileCSM) GetK8sClient() kubernetes.Interface {
 	return r.K8sClient
 }
 
+// GetConfig - Returns the operator config
+func (r *FakeReconcileCSM) GetConfig() OperatorConfig {
+	return r.Config
+}
+
 func (m *MockClient) Get(ctx context.Context, key crclient.ObjectKey, obj crclient.Object, opts ...crclient.GetOption) error {
 	if m.GetFunc != nil {
 		return m.GetFunc(ctx, key, obj, opts...)
@@ -97,4 +106,34 @@ func (m *MockClient) Delete(ctx context.Context, obj crclient.Object, opts ...cr
 		return nil
 	}
 	return args.Error(0)
+}
+
+// PositiveDurationOrDefault returns defaultValue when v is empty or not a valid
+// positive duration. This is useful for validating duration strings before
+// passing them to systems that require valid durations (e.g., Prometheus CRDs).
+func PositiveDurationOrDefault(v, defaultValue string) string {
+	v = strings.TrimSpace(v)
+	if v == "" {
+		return defaultValue
+	}
+	d, err := time.ParseDuration(v)
+	if err != nil || d <= 0 {
+		return defaultValue
+	}
+	return v
+}
+
+// PositiveDurationOrEmpty returns an empty string when v is not a valid positive
+// duration. This is useful for optional duration fields where invalid values
+// should be omitted rather than defaulted.
+func PositiveDurationOrEmpty(v string) string {
+	v = strings.TrimSpace(v)
+	if v == "" {
+		return ""
+	}
+	d, err := time.ParseDuration(v)
+	if err != nil || d <= 0 {
+		return ""
+	}
+	return v
 }

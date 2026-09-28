@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.21.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   creationTimestamp: null
   name: containerstoragemodules.storage.dell.com
 spec:
@@ -23,10 +23,6 @@ spec:
         - description: Type of CSIDriver
           jsonPath: .spec.driver.csiDriverType
           name: CSIDriverType
-          type: string
-        - description: Version of CSIDriver
-          jsonPath: .spec.driver.configVersion
-          name: ConfigVersion
           type: string
         - description: CSM Version
           jsonPath: .spec.version
@@ -296,7 +292,7 @@ spec:
                             required:
                               - name
                             type: object
-                          maxItems: 30
+                          maxItems: 50
                           type: array
                         gateway:
                           description: Gateway is the gateway configuration for the
@@ -355,6 +351,46 @@ spec:
                           description: OpenTelemetryCollectorAddress is the address
                             of the OTLP receiving endpoint using gRPC
                           type: string
+                        ports:
+                          description: Ports is the list of ports for the container
+                          items:
+                            description: ContainerPort represents a network port in
+                              a single container.
+                            properties:
+                              containerPort:
+                                description: |-
+                                  Number of port to expose on the pod's IP address.
+                                  This must be a valid port number, 0 < x < 65536.
+                                format: int32
+                                type: integer
+                              hostIP:
+                                description: What host IP to bind the external port
+                                  to.
+                                type: string
+                              hostPort:
+                                description: |-
+                                  Number of port to expose on the host.
+                                  If specified, this must be a valid port number, 0 < x < 65536.
+                                  If HostNetwork is specified, this must match ContainerPort.
+                                  Most containers do not need this.
+                                format: int32
+                                type: integer
+                              name:
+                                description: |-
+                                  If specified, this must be an IANA_SVC_NAME and unique within the pod. Each
+                                  named port in a pod must have a unique name. Name for the port that can be
+                                  referred to by services.
+                                type: string
+                              protocol:
+                                default: TCP
+                                description: |-
+                                  Protocol for port. Must be UDP, TCP, or SCTP.
+                                  Defaults to "TCP".
+                                type: string
+                            required:
+                              - containerPort
+                            type: object
+                          type: array
                         privateKey:
                           description: PrivateKey is a private key used for a certificate/private-key
                             pair
@@ -601,10 +637,76 @@ spec:
                                 type: boolean
                             type: object
                           type: array
+                        volumeMounts:
+                          description: VolumeMounts is the list of volume mounts for
+                            the container
+                          items:
+                            description: VolumeMount describes a mounting of a Volume
+                              within a container.
+                            properties:
+                              mountPath:
+                                description: |-
+                                  Path within the container at which the volume should be mounted.  Must
+                                  not contain ':'.
+                                type: string
+                              mountPropagation:
+                                description: |-
+                                  mountPropagation determines how mounts are propagated from the host
+                                  to container and the other way around.
+                                  When not set, MountPropagationNone is used.
+                                  This field is beta in 1.10.
+                                  When RecursiveReadOnly is set to IfPossible or to Enabled, MountPropagation must be None or unspecified
+                                  (which defaults to None).
+                                type: string
+                              name:
+                                description: This must match the Name of a Volume.
+                                type: string
+                              readOnly:
+                                description: |-
+                                  Mounted read-only if true, read-write otherwise (false or unspecified).
+                                  Defaults to false.
+                                type: boolean
+                              recursiveReadOnly:
+                                description: |-
+                                  RecursiveReadOnly specifies whether read-only mounts should be handled
+                                  recursively.
+
+                                  If ReadOnly is false, this field has no meaning and must be unspecified.
+
+                                  If ReadOnly is true, and this field is set to Disabled, the mount is not made
+                                  recursively read-only.  If this field is set to IfPossible, the mount is made
+                                  recursively read-only, if it is supported by the container runtime.  If this
+                                  field is set to Enabled, the mount is made recursively read-only if it is
+                                  supported by the container runtime, otherwise the pod will not be started and
+                                  an error will be generated to indicate the reason.
+
+                                  If this field is set to IfPossible or Enabled, MountPropagation must be set to
+                                  None (or be unspecified, which defaults to None).
+
+                                  If this field is not specified, it is treated as an equivalent of Disabled.
+                                type: string
+                              subPath:
+                                description: |-
+                                  Path within the volume from which the container's volume should be mounted.
+                                  Defaults to "" (volume's root).
+                                type: string
+                              subPathExpr:
+                                description: |-
+                                  Expanded path within the volume from which the container's volume should be mounted.
+                                  Behaves similarly to SubPath but environment variable references $(VAR_NAME) are expanded using the container's environment.
+                                  Defaults to "" (volume's root).
+                                  SubPathExpr and SubPath are mutually exclusive.
+                                type: string
+                            required:
+                              - mountPath
+                              - name
+                            type: object
+                          type: array
                       type: object
                     configVersion:
-                      description: ConfigVersion is the configuration version of the
-                        driver
+                      description: |-
+                        ConfigVersion is the configuration version of the driver
+                        Deprecated: Use spec.version instead. This field will be removed in a future release.
                       type: string
                     controller:
                       description: Controller is the specification for Controller
@@ -828,7 +930,7 @@ spec:
                             required:
                               - name
                             type: object
-                          maxItems: 30
+                          maxItems: 50
                           type: array
                         gateway:
                           description: Gateway is the gateway configuration for the
@@ -887,6 +989,46 @@ spec:
                           description: OpenTelemetryCollectorAddress is the address
                             of the OTLP receiving endpoint using gRPC
                           type: string
+                        ports:
+                          description: Ports is the list of ports for the container
+                          items:
+                            description: ContainerPort represents a network port in
+                              a single container.
+                            properties:
+                              containerPort:
+                                description: |-
+                                  Number of port to expose on the pod's IP address.
+                                  This must be a valid port number, 0 < x < 65536.
+                                format: int32
+                                type: integer
+                              hostIP:
+                                description: What host IP to bind the external port
+                                  to.
+                                type: string
+                              hostPort:
+                                description: |-
+                                  Number of port to expose on the host.
+                                  If specified, this must be a valid port number, 0 < x < 65536.
+                                  If HostNetwork is specified, this must match ContainerPort.
+                                  Most containers do not need this.
+                                format: int32
+                                type: integer
+                              name:
+                                description: |-
+                                  If specified, this must be an IANA_SVC_NAME and unique within the pod. Each
+                                  named port in a pod must have a unique name. Name for the port that can be
+                                  referred to by services.
+                                type: string
+                              protocol:
+                                default: TCP
+                                description: |-
+                                  Protocol for port. Must be UDP, TCP, or SCTP.
+                                  Defaults to "TCP".
+                                type: string
+                            required:
+                              - containerPort
+                            type: object
+                          type: array
                         privateKey:
                           description: PrivateKey is a private key used for a certificate/private-key
                             pair
@@ -1131,6 +1273,71 @@ spec:
                                 description: SkipCertificateValidation validates the
                                   vault server certificate or not
                                 type: boolean
+                            type: object
+                          type: array
+                        volumeMounts:
+                          description: VolumeMounts is the list of volume mounts for
+                            the container
+                          items:
+                            description: VolumeMount describes a mounting of a Volume
+                              within a container.
+                            properties:
+                              mountPath:
+                                description: |-
+                                  Path within the container at which the volume should be mounted.  Must
+                                  not contain ':'.
+                                type: string
+                              mountPropagation:
+                                description: |-
+                                  mountPropagation determines how mounts are propagated from the host
+                                  to container and the other way around.
+                                  When not set, MountPropagationNone is used.
+                                  This field is beta in 1.10.
+                                  When RecursiveReadOnly is set to IfPossible or to Enabled, MountPropagation must be None or unspecified
+                                  (which defaults to None).
+                                type: string
+                              name:
+                                description: This must match the Name of a Volume.
+                                type: string
+                              readOnly:
+                                description: |-
+                                  Mounted read-only if true, read-write otherwise (false or unspecified).
+                                  Defaults to false.
+                                type: boolean
+                              recursiveReadOnly:
+                                description: |-
+                                  RecursiveReadOnly specifies whether read-only mounts should be handled
+                                  recursively.
+
+                                  If ReadOnly is false, this field has no meaning and must be unspecified.
+
+                                  If ReadOnly is true, and this field is set to Disabled, the mount is not made
+                                  recursively read-only.  If this field is set to IfPossible, the mount is made
+                                  recursively read-only, if it is supported by the container runtime.  If this
+                                  field is set to Enabled, the mount is made recursively read-only if it is
+                                  supported by the container runtime, otherwise the pod will not be started and
+                                  an error will be generated to indicate the reason.
+
+                                  If this field is set to IfPossible or Enabled, MountPropagation must be set to
+                                  None (or be unspecified, which defaults to None).
+
+                                  If this field is not specified, it is treated as an equivalent of Disabled.
+                                type: string
+                              subPath:
+                                description: |-
+                                  Path within the volume from which the container's volume should be mounted.
+                                  Defaults to "" (volume's root).
+                                type: string
+                              subPathExpr:
+                                description: |-
+                                  Expanded path within the volume from which the container's volume should be mounted.
+                                  Behaves similarly to SubPath but environment variable references $(VAR_NAME) are expanded using the container's environment.
+                                  Defaults to "" (volume's root).
+                                  SubPathExpr and SubPath are mutually exclusive.
+                                type: string
+                            required:
+                              - mountPath
+                              - name
                             type: object
                           type: array
                       type: object
@@ -1380,7 +1587,7 @@ spec:
                               required:
                                 - name
                               type: object
-                            maxItems: 30
+                            maxItems: 50
                             type: array
                           gateway:
                             description: Gateway is the gateway configuration for
@@ -1439,6 +1646,46 @@ spec:
                             description: OpenTelemetryCollectorAddress is the address
                               of the OTLP receiving endpoint using gRPC
                             type: string
+                          ports:
+                            description: Ports is the list of ports for the container
+                            items:
+                              description: ContainerPort represents a network port
+                                in a single container.
+                              properties:
+                                containerPort:
+                                  description: |-
+                                    Number of port to expose on the pod's IP address.
+                                    This must be a valid port number, 0 < x < 65536.
+                                  format: int32
+                                  type: integer
+                                hostIP:
+                                  description: What host IP to bind the external port
+                                    to.
+                                  type: string
+                                hostPort:
+                                  description: |-
+                                    Number of port to expose on the host.
+                                    If specified, this must be a valid port number, 0 < x < 65536.
+                                    If HostNetwork is specified, this must match ContainerPort.
+                                    Most containers do not need this.
+                                  format: int32
+                                  type: integer
+                                name:
+                                  description: |-
+                                    If specified, this must be an IANA_SVC_NAME and unique within the pod. Each
+                                    named port in a pod must have a unique name. Name for the port that can be
+                                    referred to by services.
+                                  type: string
+                                protocol:
+                                  default: TCP
+                                  description: |-
+                                    Protocol for port. Must be UDP, TCP, or SCTP.
+                                    Defaults to "TCP".
+                                  type: string
+                              required:
+                                - containerPort
+                              type: object
+                            type: array
                           privateKey:
                             description: PrivateKey is a private key used for a certificate/private-key
                               pair
@@ -1690,12 +1937,133 @@ spec:
                                   type: boolean
                               type: object
                             type: array
+                          volumeMounts:
+                            description: VolumeMounts is the list of volume mounts
+                              for the container
+                            items:
+                              description: VolumeMount describes a mounting of a Volume
+                                within a container.
+                              properties:
+                                mountPath:
+                                  description: |-
+                                    Path within the container at which the volume should be mounted.  Must
+                                    not contain ':'.
+                                  type: string
+                                mountPropagation:
+                                  description: |-
+                                    mountPropagation determines how mounts are propagated from the host
+                                    to container and the other way around.
+                                    When not set, MountPropagationNone is used.
+                                    This field is beta in 1.10.
+                                    When RecursiveReadOnly is set to IfPossible or to Enabled, MountPropagation must be None or unspecified
+                                    (which defaults to None).
+                                  type: string
+                                name:
+                                  description: This must match the Name of a Volume.
+                                  type: string
+                                readOnly:
+                                  description: |-
+                                    Mounted read-only if true, read-write otherwise (false or unspecified).
+                                    Defaults to false.
+                                  type: boolean
+                                recursiveReadOnly:
+                                  description: |-
+                                    RecursiveReadOnly specifies whether read-only mounts should be handled
+                                    recursively.
+
+                                    If ReadOnly is false, this field has no meaning and must be unspecified.
+
+                                    If ReadOnly is true, and this field is set to Disabled, the mount is not made
+                                    recursively read-only.  If this field is set to IfPossible, the mount is made
+                                    recursively read-only, if it is supported by the container runtime.  If this
+                                    field is set to Enabled, the mount is made recursively read-only if it is
+                                    supported by the container runtime, otherwise the pod will not be started and
+                                    an error will be generated to indicate the reason.
+
+                                    If this field is set to IfPossible or Enabled, MountPropagation must be set to
+                                    None (or be unspecified, which defaults to None).
+
+                                    If this field is not specified, it is treated as an equivalent of Disabled.
+                                  type: string
+                                subPath:
+                                  description: |-
+                                    Path within the volume from which the container's volume should be mounted.
+                                    Defaults to "" (volume's root).
+                                  type: string
+                                subPathExpr:
+                                  description: |-
+                                    Expanded path within the volume from which the container's volume should be mounted.
+                                    Behaves similarly to SubPath but environment variable references $(VAR_NAME) are expanded using the container's environment.
+                                    Defaults to "" (volume's root).
+                                    SubPathExpr and SubPath are mutually exclusive.
+                                  type: string
+                              required:
+                                - mountPath
+                                - name
+                              type: object
+                            type: array
                         type: object
+                      maxItems: 20
                       type: array
                     metrics:
                       description: Metrics is the configuration for the driver metrics
                         endpoint and monitoring
                       properties:
+                        array:
+                          description: Array configures array-facing metrics collection
+                            controls
+                          properties:
+                            circuitBreaker:
+                              description: CircuitBreaker configures metrics collection
+                                circuit breaker controls
+                              properties:
+                                resetTimeout:
+                                  description: ResetTimeout is how long to wait before
+                                    retrying after opening the circuit
+                                  type: string
+                                  x-kubernetes-validations:
+                                    - message: resetTimeout must be a non-empty string
+                                      rule: self == '' || size(self) > 0
+                                threshold:
+                                  description: Threshold opens the circuit after this
+                                    many consecutive failures
+                                  format: int32
+                                  minimum: 1
+                                  type: integer
+                              type: object
+                            rateLimit:
+                              description: RateLimit sets the max allowed array requests
+                                per collection window
+                              format: int32
+                              minimum: 1
+                              type: integer
+                            timeout:
+                              description: Timeout sets the timeout for metrics array
+                                requests
+                              type: string
+                              x-kubernetes-validations:
+                                - message: timeout must be a non-empty string
+                                  rule: self == '' || size(self) > 0
+                          type: object
+                        collection:
+                          description: Collection configures driver metrics collection
+                            cadence and cache behavior
+                          properties:
+                            cacheTTL:
+                              description: CacheTTL is how long collected metric responses
+                                are cached
+                              type: string
+                              x-kubernetes-validations:
+                                - message: cacheTTL must be a non-empty string
+                                  rule: self == '' || size(self) > 0
+                            interval:
+                              description: Interval is how frequently metrics are
+                                collected from the array
+                              type: string
+                              x-kubernetes-validations:
+                                - message: interval must be a non-empty string
+                                  rule: self == '' || size(self) > 0
+                          type: object
                         enabled:
                           description: Enabled enables the shared Prometheus metrics
                             HTTP endpoint on the controller
@@ -1721,12 +2089,274 @@ spec:
                                 - message: pollInterval must be a non-empty string
                                   rule: self == '' || size(self) > 0
                           type: object
+                        leaderElection:
+                          description: |-
+                            LeaderElection configures leader election for array-level metrics collection
+                            Only the leader controller will collect array-level metrics to avoid duplicate API calls
+                          properties:
+                            enabled:
+                              description: |-
+                                Enabled enables leader election for array-level metrics collection
+                                Only the leader controller will collect array-level metrics to avoid duplicate API calls
+                                When nil, defaults to false
+                              type: boolean
+                            leaseDuration:
+                              description: |-
+                                LeaseDuration is the duration that non-leader candidates will wait to acquire the lease
+                                Default value: 60s
+                              type: string
+                            renewDeadline:
+                              description: |-
+                                RenewDeadline is the duration that the acting leader will retry refreshing leadership before giving up
+                                Default value: 40s
+                              type: string
+                            retryPeriod:
+                              description: |-
+                                RetryPeriod is the duration the LeaderElector clients should wait between tries of actions
+                                Default value: 5s
+                              type: string
+                          type: object
+                        podMonitor:
+                          description: PodMonitor configures optional Prometheus Operator
+                            PodMonitor creation for node pods
+                          properties:
+                            enabled:
+                              description: |-
+                                Enabled creates a PodMonitor CR for Prometheus Operator integration targeting node pods
+                                Requires the Prometheus Operator CRDs to be installed in the cluster
+                              type: boolean
+                            insecureSkipVerify:
+                              description: |-
+                                InsecureSkipVerify skips TLS certificate verification when Prometheus scrapes the node metrics endpoint
+                                Only applies when tlsCertSecret is set
+                              type: boolean
+                            interval:
+                              description: Interval is the Prometheus scrape interval
+                                for the node metrics endpoint
+                              type: string
+                              x-kubernetes-validations:
+                                - message: interval must be a non-empty string
+                                  rule: self == '' || size(self) > 0
+                            scrapeTimeout:
+                              description: |-
+                                ScrapeTimeout is the Prometheus scrape timeout for the node metrics endpoint
+                                Default value: "" (unset; Prometheus uses its global scrape_timeout)
+                              type: string
+                              x-kubernetes-validations:
+                                - message: scrapeTimeout must be a non-empty string
+                                  rule: self == '' || size(self) > 0
+                          type: object
                         port:
-                          default: 9090
                           description: Port is the port on which the metrics endpoint
                             is exposed
                           format: int32
                           type: integer
+                        prometheusRule:
+                          description: PrometheusRule configures optional Prometheus
+                            Operator alert rule creation for supported drivers
+                          properties:
+                            apiErrorRateThreshold:
+                              default: 10
+                              description: |-
+                                APIErrorRateThreshold is the whole-percent API error threshold that triggers an alert for drivers exposing request success and failure metrics.
+                                PowerScale uses this field.
+                              format: int32
+                              type: integer
+                            apiErrorRateWindow:
+                              default: 5m
+                              description: |-
+                                APIErrorRateWindow is the lookback window used when evaluating the API error ratio alert expression.
+                                PowerScale uses this field.
+                              type: string
+                            applianceCriticalThreshold:
+                              default: 90
+                              description: |-
+                                ApplianceCriticalThreshold is the whole-percent appliance utilization threshold that triggers a critical alert for drivers exposing appliance metrics.
+                                PowerStore uses this field.
+                              format: int32
+                              type: integer
+                            applianceWarningThreshold:
+                              default: 80
+                              description: |-
+                                ApplianceWarningThreshold is the whole-percent appliance utilization threshold that triggers a warning alert for drivers exposing appliance metrics.
+                                PowerStore uses this field.
+                              format: int32
+                              type: integer
+                            cpuWarningThreshold:
+                              default: 80
+                              description: |-
+                                CPUWarningThreshold is the whole-percent CPU utilization threshold that triggers a warning alert for driver pods.
+                                PowerScale uses this field.
+                              format: int32
+                              type: integer
+                            dataReductionDegradedThreshold:
+                              default: "1.5"
+                              description: |-
+                                DataReductionDegradedThreshold is the data-reduction ratio below which a degradation alert fires.
+                                PowerFlex uses this field (PF-16). Stored as a decimal string to avoid controller-gen float64 rejection. Default: "1.5".
+                              pattern: ^[0-9]+(\.[0-9]+)?$
+                              type: string
+                            driverCrashLoopRestartThreshold:
+                              default: 3
+                              description: |-
+                                DriverCrashLoopRestartThreshold is the restart count threshold used to detect crash looping within the configured window.
+                                PowerScale uses this field.
+                              format: int32
+                              type: integer
+                            driverCrashLoopWindow:
+                              default: 15m
+                              description: |-
+                                DriverCrashLoopWindow is the lookback window used when evaluating crash loop restart deltas.
+                                PowerScale uses this field.
+                              type: string
+                            enabled:
+                              default: true
+                              description: Enabled creates a PrometheusRule CR for
+                                Prometheus Operator integration.
+                              type: boolean
+                            memoryWarningThreshold:
+                              default: 2147483648
+                              description: |-
+                                MemoryWarningThreshold is the driver memory usage threshold in bytes that triggers a warning alert.
+                                PowerScale uses this field.
+                              format: int64
+                              type: integer
+                            nfsV3LatencyWarningSeconds:
+                              default: 10
+                              description: |-
+                                NFSv3LatencyWarningSeconds is the NFSv3 p99 latency threshold in seconds that triggers a warning alert.
+                                PowerScale uses this field.
+                              format: int32
+                              type: integer
+                            nfsV4LatencyWarningSeconds:
+                              default: 10
+                              description: |-
+                                NFSv4LatencyWarningSeconds is the NFSv4 p99 latency threshold in seconds that triggers a warning alert.
+                                PowerScale uses this field.
+                              format: int32
+                              type: integer
+                            nodepoolCriticalThreshold:
+                              default: 90
+                              description: |-
+                                NodepoolCriticalThreshold is the whole-percent node pool utilization threshold that triggers a critical alert for drivers exposing node pool metrics.
+                                PowerScale uses this field.
+                              format: int32
+                              type: integer
+                            nodepoolWarningThreshold:
+                              default: 80
+                              description: |-
+                                NodepoolWarningThreshold is the whole-percent node pool utilization threshold that triggers a warning alert for drivers exposing node pool metrics.
+                                PowerScale uses this field.
+                              format: int32
+                              type: integer
+                            poolCapacityCriticalPercent:
+                              default: 90
+                              description: |-
+                                PoolCapacityCriticalPercent is the storage pool utilization percentage that triggers a critical alert.
+                                PowerFlex uses this field (PF-14). Default: 90.
+                              format: int32
+                              maximum: 100
+                              minimum: 1
+                              type: integer
+                            poolCapacityWarningPercent:
+                              default: 80
+                              description: |-
+                                PoolCapacityWarningPercent is the storage pool utilization percentage that triggers a warning alert.
+                                PowerFlex uses this field (PF-13). Default: 80.
+                              format: int32
+                              maximum: 99
+                              minimum: 1
+                              type: integer
+                            quotaCriticalThreshold:
+                              default: 90
+                              description: |-
+                                QuotaCriticalThreshold is the whole-percent quota utilization threshold that triggers a critical alert for drivers exposing quota metrics.
+                                PowerScale uses this field.
+                              format: int32
+                              type: integer
+                            quotaWarningThreshold:
+                              default: 80
+                              description: |-
+                                QuotaWarningThreshold is the whole-percent quota utilization threshold that triggers a warning alert for drivers exposing quota metrics.
+                                PowerScale uses this field.
+                              format: int32
+                              type: integer
+                            rcgBandwidthWarningKBps:
+                              default: 10240
+                              description: |-
+                                RCGBandwidthWarningKBps is the RCG transmit bandwidth in KB/s below which a degradation alert fires.
+                                PowerFlex uses this field (PF-21). Default: 10240.
+                              format: int64
+                              minimum: 1
+                              type: integer
+                            rcgLagWarningSeconds:
+                              default: 300
+                              description: |-
+                                RCGLagWarningSeconds is the persistent RCG replication lag in seconds that triggers a warning alert.
+                                PowerFlex uses this field (PF-20). Default: 300.
+                              format: int64
+                              minimum: 1
+                              type: integer
+                            rcgLatencyWarningSeconds:
+                              default: "5.0"
+                              description: |-
+                                RCGLatencyWarningSeconds is the RCG transmit latency in seconds that triggers a warning alert.
+                                PowerFlex uses this field (PF-22). Stored as a decimal string to avoid controller-gen float64 rejection. Default: "5.0".
+                              pattern: ^[0-9]+(\.[0-9]+)?$
+                              type: string
+                            restartCountThreshold:
+                              default: 3
+                              description: |-
+                                RestartCountThreshold is the pod restart count within the 15-minute window that triggers a crash-loop alert.
+                                PowerFlex uses this field (PF-10). Default: 3.
+                              format: int32
+                              minimum: 1
+                              type: integer
+                            srpSnapshotCapacityWarning:
+                              default: 80
+                              description: |-
+                                SRPSnapshotCapacityWarning is the whole-percent SRP snapshot capacity threshold that triggers
+                                a warning alert. PowerMax uses this field (PM-15). SRP-level monitoring is the permanent
+                                solution (per-SG snapshot metric is not required per product management decision).
+                              format: int32
+                              maximum: 100
+                              minimum: 1
+                              type: integer
+                            storageGroupCapacityCritical:
+                              default: 90
+                              description: |-
+                                StorageGroupCapacityCritical is the whole-percent Storage Group utilization threshold that
+                                triggers a critical alert. PowerMax uses this field (PM-14).
+                              format: int32
+                              maximum: 100
+                              minimum: 1
+                              type: integer
+                            storageGroupCapacityWarning:
+                              default: 80
+                              description: |-
+                                StorageGroupCapacityWarning is the whole-percent Storage Group utilization threshold that
+                                triggers a warning alert. PowerMax uses this field (PM-13).
+                              format: int32
+                              maximum: 99
+                              minimum: 1
+                              type: integer
+                            thinRatioWarningThreshold:
+                              default: "0.8"
+                              description: |-
+                                ThinRatioWarningThreshold is the thin-provisioning over-commitment ratio threshold that triggers a warning alert.
+                                PowerFlex uses this field (PF-15). Stored as a decimal string to avoid controller-gen float64 rejection. Default: "0.8".
+                              pattern: ^[0-9]+(\.[0-9]+)?$
+                              type: string
+                            volumeOperationFailureThreshold:
+                              default: 3
+                              description: |-
+                                VolumeOperationFailureThreshold is the minimum number of operation failures within a 5-minute
+                                window that triggers a volume-operation alert. All eight volume-operation alerts use this threshold.
+                                PowerFlex uses this field (PF-01..08); PowerMax uses this field (PM-01..08); PowerStore uses this field. Default: 3.
+                              format: int32
+                              minimum: 1
+                              type: integer
+                          type: object
                         serviceMonitor:
                           description: ServiceMonitor configures optional Prometheus
                             Operator ServiceMonitor creation
@@ -1748,11 +2378,65 @@ spec:
                               x-kubernetes-validations:
                                 - message: interval must be a non-empty string
                                   rule: self == '' || size(self) > 0
+                            scrapeTimeout:
+                              description: |-
+                                ScrapeTimeout is the Prometheus scrape timeout for the metrics endpoint
+                                Default value: "" (unset; Prometheus uses its global scrape_timeout)
+                              type: string
+                              x-kubernetes-validations:
+                                - message: scrapeTimeout must be a non-empty string
+                                  rule: self == '' || size(self) > 0
                           type: object
                         tlsCertSecret:
                           description: TLSCertSecret is the name of a Kubernetes TLS
                             Secret used to serve the metrics endpoint over HTTPS
                           type: string
+                      type: object
+                    metroSiteFailureHandling:
+                      description: MetroSiteFailureHandling configures PowerMax Metro
+                        site-failure handling
+                      properties:
+                        enabled:
+                          default: false
+                          description: Enabled enables Metro site-failure handling
+                            for PowerMax
+                          type: boolean
+                        queueHardLimit:
+                          default: 100
+                          description: |-
+                            QueueHardLimit is the maximum number of deferred operations. New deferrals are rejected when this limit is reached
+                            Must be 50–10000.
+                          format: int32
+                          maximum: 10000
+                          minimum: 50
+                          type: integer
+                        queueWarningThreshold:
+                          default: 75
+                          description: |-
+                            QueueWarningThreshold is the number of pending deferred operations that triggers a Kubernetes warning event
+                            Must be 10–10000.
+                          format: int32
+                          maximum: 10000
+                          minimum: 10
+                          type: integer
+                        reconciliationBackoffSeconds:
+                          default: 5
+                          description: |-
+                            ReconciliationBackoffSeconds is the base backoff (seconds) for retry on reconciliation failures
+                            Actual delay = base * 2^retry, capped at 5 minutes. Must be 1–60.
+                          format: int32
+                          maximum: 60
+                          minimum: 1
+                          type: integer
+                        stateCheckTimeoutSeconds:
+                          default: 15
+                          description: |-
+                            StateCheckTimeoutSeconds is the context timeout for CheckMetroState RDF group queries
+                            Must be 5–120.
+                          format: int32
+                          maximum: 120
+                          minimum: 5
+                          type: integer
                       type: object
                     node:
                       description: Node is the specification for Node plugin only
@@ -1975,7 +2659,7 @@ spec:
                             required:
                               - name
                             type: object
-                          maxItems: 30
+                          maxItems: 50
                           type: array
                         gateway:
                           description: Gateway is the gateway configuration for the
@@ -2034,6 +2718,46 @@ spec:
                           description: OpenTelemetryCollectorAddress is the address
                             of the OTLP receiving endpoint using gRPC
                           type: string
+                        ports:
+                          description: Ports is the list of ports for the container
+                          items:
+                            description: ContainerPort represents a network port in
+                              a single container.
+                            properties:
+                              containerPort:
+                                description: |-
+                                  Number of port to expose on the pod's IP address.
+                                  This must be a valid port number, 0 < x < 65536.
+                                format: int32
+                                type: integer
+                              hostIP:
+                                description: What host IP to bind the external port
+                                  to.
+                                type: string
+                              hostPort:
+                                description: |-
+                                  Number of port to expose on the host.
+                                  If specified, this must be a valid port number, 0 < x < 65536.
+                                  If HostNetwork is specified, this must match ContainerPort.
+                                  Most containers do not need this.
+                                format: int32
+                                type: integer
+                              name:
+                                description: |-
+                                  If specified, this must be an IANA_SVC_NAME and unique within the pod. Each
+                                  named port in a pod must have a unique name. Name for the port that can be
+                                  referred to by services.
+                                type: string
+                              protocol:
+                                default: TCP
+                                description: |-
+                                  Protocol for port. Must be UDP, TCP, or SCTP.
+                                  Defaults to "TCP".
+                                type: string
+                            required:
+                              - containerPort
+                            type: object
+                          type: array
                         privateKey:
                           description: PrivateKey is a private key used for a certificate/private-key
                             pair
@@ -2280,6 +3004,71 @@ spec:
                                 type: boolean
                             type: object
                           type: array
+                        volumeMounts:
+                          description: VolumeMounts is the list of volume mounts for
+                            the container
+                          items:
+                            description: VolumeMount describes a mounting of a Volume
+                              within a container.
+                            properties:
+                              mountPath:
+                                description: |-
+                                  Path within the container at which the volume should be mounted.  Must
+                                  not contain ':'.
+                                type: string
+                              mountPropagation:
+                                description: |-
+                                  mountPropagation determines how mounts are propagated from the host
+                                  to container and the other way around.
+                                  When not set, MountPropagationNone is used.
+                                  This field is beta in 1.10.
+                                  When RecursiveReadOnly is set to IfPossible or to Enabled, MountPropagation must be None or unspecified
+                                  (which defaults to None).
+                                type: string
+                              name:
+                                description: This must match the Name of a Volume.
+                                type: string
+                              readOnly:
+                                description: |-
+                                  Mounted read-only if true, read-write otherwise (false or unspecified).
+                                  Defaults to false.
+                                type: boolean
+                              recursiveReadOnly:
+                                description: |-
+                                  RecursiveReadOnly specifies whether read-only mounts should be handled
+                                  recursively.
+
+                                  If ReadOnly is false, this field has no meaning and must be unspecified.
+
+                                  If ReadOnly is true, and this field is set to Disabled, the mount is not made
+                                  recursively read-only.  If this field is set to IfPossible, the mount is made
+                                  recursively read-only, if it is supported by the container runtime.  If this
+                                  field is set to Enabled, the mount is made recursively read-only if it is
+                                  supported by the container runtime, otherwise the pod will not be started and
+                                  an error will be generated to indicate the reason.
+
+                                  If this field is set to IfPossible or Enabled, MountPropagation must be set to
+                                  None (or be unspecified, which defaults to None).
+
+                                  If this field is not specified, it is treated as an equivalent of Disabled.
+                                type: string
+                              subPath:
+                                description: |-
+                                  Path within the volume from which the container's volume should be mounted.
+                                  Defaults to "" (volume's root).
+                                type: string
+                              subPathExpr:
+                                description: |-
+                                  Expanded path within the volume from which the container's volume should be mounted.
+                                  Behaves similarly to SubPath but environment variable references $(VAR_NAME) are expanded using the container's environment.
+                                  Defaults to "" (volume's root).
+                                  SubPathExpr and SubPath are mutually exclusive.
+                                type: string
+                            required:
+                              - mountPath
+                              - name
+                            type: object
+                          type: array
                       type: object
                     replicas:
                       default: 2
@@ -2512,7 +3301,7 @@ spec:
                               required:
                                 - name
                               type: object
-                            maxItems: 30
+                            maxItems: 50
                             type: array
                           gateway:
                             description: Gateway is the gateway configuration for
@@ -2571,6 +3360,46 @@ spec:
                             description: OpenTelemetryCollectorAddress is the address
                               of the OTLP receiving endpoint using gRPC
                             type: string
+                          ports:
+                            description: Ports is the list of ports for the container
+                            items:
+                              description: ContainerPort represents a network port
+                                in a single container.
+                              properties:
+                                containerPort:
+                                  description: |-
+                                    Number of port to expose on the pod's IP address.
+                                    This must be a valid port number, 0 < x < 65536.
+                                  format: int32
+                                  type: integer
+                                hostIP:
+                                  description: What host IP to bind the external port
+                                    to.
+                                  type: string
+                                hostPort:
+                                  description: |-
+                                    Number of port to expose on the host.
+                                    If specified, this must be a valid port number, 0 < x < 65536.
+                                    If HostNetwork is specified, this must match ContainerPort.
+                                    Most containers do not need this.
+                                  format: int32
+                                  type: integer
+                                name:
+                                  description: |-
+                                    If specified, this must be an IANA_SVC_NAME and unique within the pod. Each
+                                    named port in a pod must have a unique name. Name for the port that can be
+                                    referred to by services.
+                                  type: string
+                                protocol:
+                                  default: TCP
+                                  description: |-
+                                    Protocol for port. Must be UDP, TCP, or SCTP.
+                                    Defaults to "TCP".
+                                  type: string
+                              required:
+                                - containerPort
+                              type: object
+                            type: array
                           privateKey:
                             description: PrivateKey is a private key used for a certificate/private-key
                               pair
@@ -2822,6 +3651,71 @@ spec:
                                   type: boolean
                               type: object
                             type: array
+                          volumeMounts:
+                            description: VolumeMounts is the list of volume mounts
+                              for the container
+                            items:
+                              description: VolumeMount describes a mounting of a Volume
+                                within a container.
+                              properties:
+                                mountPath:
+                                  description: |-
+                                    Path within the container at which the volume should be mounted.  Must
+                                    not contain ':'.
+                                  type: string
+                                mountPropagation:
+                                  description: |-
+                                    mountPropagation determines how mounts are propagated from the host
+                                    to container and the other way around.
+                                    When not set, MountPropagationNone is used.
+                                    This field is beta in 1.10.
+                                    When RecursiveReadOnly is set to IfPossible or to Enabled, MountPropagation must be None or unspecified
+                                    (which defaults to None).
+                                  type: string
+                                name:
+                                  description: This must match the Name of a Volume.
+                                  type: string
+                                readOnly:
+                                  description: |-
+                                    Mounted read-only if true, read-write otherwise (false or unspecified).
+                                    Defaults to false.
+                                  type: boolean
+                                recursiveReadOnly:
+                                  description: |-
+                                    RecursiveReadOnly specifies whether read-only mounts should be handled
+                                    recursively.
+
+                                    If ReadOnly is false, this field has no meaning and must be unspecified.
+
+                                    If ReadOnly is true, and this field is set to Disabled, the mount is not made
+                                    recursively read-only.  If this field is set to IfPossible, the mount is made
+                                    recursively read-only, if it is supported by the container runtime.  If this
+                                    field is set to Enabled, the mount is made recursively read-only if it is
+                                    supported by the container runtime, otherwise the pod will not be started and
+                                    an error will be generated to indicate the reason.
+
+                                    If this field is set to IfPossible or Enabled, MountPropagation must be set to
+                                    None (or be unspecified, which defaults to None).
+
+                                    If this field is not specified, it is treated as an equivalent of Disabled.
+                                  type: string
+                                subPath:
+                                  description: |-
+                                    Path within the volume from which the container's volume should be mounted.
+                                    Defaults to "" (volume's root).
+                                  type: string
+                                subPathExpr:
+                                  description: |-
+                                    Expanded path within the volume from which the container's volume should be mounted.
+                                    Behaves similarly to SubPath but environment variable references $(VAR_NAME) are expanded using the container's environment.
+                                    Defaults to "" (volume's root).
+                                    SubPathExpr and SubPath are mutually exclusive.
+                                  type: string
+                              required:
+                                - mountPath
+                                - name
+                              type: object
+                            type: array
                         type: object
                       maxItems: 20
                       type: array
@@ -2851,7 +3745,7 @@ spec:
                     you want to deploy
                   items:
                     description: Module defines the desired state of a ContainerStorageModule
-                    maxProperties: 10
+                    maxProperties: 11
                     properties:
                       components:
                         description: Components is the specification for CSM components
@@ -3083,7 +3977,7 @@ spec:
                                 required:
                                   - name
                                 type: object
-                              maxItems: 30
+                              maxItems: 50
                               type: array
                             gateway:
                               description: Gateway is the gateway configuration for
@@ -3142,6 +4036,46 @@ spec:
                               description: OpenTelemetryCollectorAddress is the address
                                 of the OTLP receiving endpoint using gRPC
                               type: string
+                            ports:
+                              description: Ports is the list of ports for the container
+                              items:
+                                description: ContainerPort represents a network port
+                                  in a single container.
+                                properties:
+                                  containerPort:
+                                    description: |-
+                                      Number of port to expose on the pod's IP address.
+                                      This must be a valid port number, 0 < x < 65536.
+                                    format: int32
+                                    type: integer
+                                  hostIP:
+                                    description: What host IP to bind the external
+                                      port to.
+                                    type: string
+                                  hostPort:
+                                    description: |-
+                                      Number of port to expose on the host.
+                                      If specified, this must be a valid port number, 0 < x < 65536.
+                                      If HostNetwork is specified, this must match ContainerPort.
+                                      Most containers do not need this.
+                                    format: int32
+                                    type: integer
+                                  name:
+                                    description: |-
+                                      If specified, this must be an IANA_SVC_NAME and unique within the pod. Each
+                                      named port in a pod must have a unique name. Name for the port that can be
+                                      referred to by services.
+                                    type: string
+                                  protocol:
+                                    default: TCP
+                                    description: |-
+                                      Protocol for port. Must be UDP, TCP, or SCTP.
+                                      Defaults to "TCP".
+                                    type: string
+                                required:
+                                  - containerPort
+                                type: object
+                              type: array
                             privateKey:
                               description: PrivateKey is a private key used for a
                                 certificate/private-key pair
@@ -3397,12 +4331,78 @@ spec:
                                     type: boolean
                                 type: object
                               type: array
+                            volumeMounts:
+                              description: VolumeMounts is the list of volume mounts
+                                for the container
+                              items:
+                                description: VolumeMount describes a mounting of a
+                                  Volume within a container.
+                                properties:
+                                  mountPath:
+                                    description: |-
+                                      Path within the container at which the volume should be mounted.  Must
+                                      not contain ':'.
+                                    type: string
+                                  mountPropagation:
+                                    description: |-
+                                      mountPropagation determines how mounts are propagated from the host
+                                      to container and the other way around.
+                                      When not set, MountPropagationNone is used.
+                                      This field is beta in 1.10.
+                                      When RecursiveReadOnly is set to IfPossible or to Enabled, MountPropagation must be None or unspecified
+                                      (which defaults to None).
+                                    type: string
+                                  name:
+                                    description: This must match the Name of a Volume.
+                                    type: string
+                                  readOnly:
+                                    description: |-
+                                      Mounted read-only if true, read-write otherwise (false or unspecified).
+                                      Defaults to false.
+                                    type: boolean
+                                  recursiveReadOnly:
+                                    description: |-
+                                      RecursiveReadOnly specifies whether read-only mounts should be handled
+                                      recursively.
+
+                                      If ReadOnly is false, this field has no meaning and must be unspecified.
+
+                                      If ReadOnly is true, and this field is set to Disabled, the mount is not made
+                                      recursively read-only.  If this field is set to IfPossible, the mount is made
+                                      recursively read-only, if it is supported by the container runtime.  If this
+                                      field is set to Enabled, the mount is made recursively read-only if it is
+                                      supported by the container runtime, otherwise the pod will not be started and
+                                      an error will be generated to indicate the reason.
+
+                                      If this field is set to IfPossible or Enabled, MountPropagation must be set to
+                                      None (or be unspecified, which defaults to None).
+
+                                      If this field is not specified, it is treated as an equivalent of Disabled.
+                                    type: string
+                                  subPath:
+                                    description: |-
+                                      Path within the volume from which the container's volume should be mounted.
+                                      Defaults to "" (volume's root).
+                                    type: string
+                                  subPathExpr:
+                                    description: |-
+                                      Expanded path within the volume from which the container's volume should be mounted.
+                                      Behaves similarly to SubPath but environment variable references $(VAR_NAME) are expanded using the container's environment.
+                                      Defaults to "" (volume's root).
+                                      SubPathExpr and SubPath are mutually exclusive.
+                                    type: string
+                                required:
+                                  - mountPath
+                                  - name
+                                type: object
+                              type: array
                           type: object
                         maxItems: 20
                         type: array
                       configVersion:
-                        description: ConfigVersion is the configuration version of
-                          the module
+                        description: |-
+                          ConfigVersion is the configuration version of the module
+                          Deprecated: Use spec.version instead. This field will be removed in a future release.
                         type: string
                       enabled:
                         description: Enabled is used to indicate whether or not to
@@ -3643,7 +4643,7 @@ spec:
                                 required:
                                   - name
                                 type: object
-                              maxItems: 30
+                              maxItems: 50
                               type: array
                             gateway:
                               description: Gateway is the gateway configuration for
@@ -3702,6 +4702,46 @@ spec:
                               description: OpenTelemetryCollectorAddress is the address
                                 of the OTLP receiving endpoint using gRPC
                               type: string
+                            ports:
+                              description: Ports is the list of ports for the container
+                              items:
+                                description: ContainerPort represents a network port
+                                  in a single container.
+                                properties:
+                                  containerPort:
+                                    description: |-
+                                      Number of port to expose on the pod's IP address.
+                                      This must be a valid port number, 0 < x < 65536.
+                                    format: int32
+                                    type: integer
+                                  hostIP:
+                                    description: What host IP to bind the external
+                                      port to.
+                                    type: string
+                                  hostPort:
+                                    description: |-
+                                      Number of port to expose on the host.
+                                      If specified, this must be a valid port number, 0 < x < 65536.
+                                      If HostNetwork is specified, this must match ContainerPort.
+                                      Most containers do not need this.
+                                    format: int32
+                                    type: integer
+                                  name:
+                                    description: |-
+                                      If specified, this must be an IANA_SVC_NAME and unique within the pod. Each
+                                      named port in a pod must have a unique name. Name for the port that can be
+                                      referred to by services.
+                                    type: string
+                                  protocol:
+                                    default: TCP
+                                    description: |-
+                                      Protocol for port. Must be UDP, TCP, or SCTP.
+                                      Defaults to "TCP".
+                                    type: string
+                                required:
+                                  - containerPort
+                                type: object
+                              type: array
                             privateKey:
                               description: PrivateKey is a private key used for a
                                 certificate/private-key pair
@@ -3957,8 +4997,252 @@ spec:
                                     type: boolean
                                 type: object
                               type: array
+                            volumeMounts:
+                              description: VolumeMounts is the list of volume mounts
+                                for the container
+                              items:
+                                description: VolumeMount describes a mounting of a
+                                  Volume within a container.
+                                properties:
+                                  mountPath:
+                                    description: |-
+                                      Path within the container at which the volume should be mounted.  Must
+                                      not contain ':'.
+                                    type: string
+                                  mountPropagation:
+                                    description: |-
+                                      mountPropagation determines how mounts are propagated from the host
+                                      to container and the other way around.
+                                      When not set, MountPropagationNone is used.
+                                      This field is beta in 1.10.
+                                      When RecursiveReadOnly is set to IfPossible or to Enabled, MountPropagation must be None or unspecified
+                                      (which defaults to None).
+                                    type: string
+                                  name:
+                                    description: This must match the Name of a Volume.
+                                    type: string
+                                  readOnly:
+                                    description: |-
+                                      Mounted read-only if true, read-write otherwise (false or unspecified).
+                                      Defaults to false.
+                                    type: boolean
+                                  recursiveReadOnly:
+                                    description: |-
+                                      RecursiveReadOnly specifies whether read-only mounts should be handled
+                                      recursively.
+
+                                      If ReadOnly is false, this field has no meaning and must be unspecified.
+
+                                      If ReadOnly is true, and this field is set to Disabled, the mount is not made
+                                      recursively read-only.  If this field is set to IfPossible, the mount is made
+                                      recursively read-only, if it is supported by the container runtime.  If this
+                                      field is set to Enabled, the mount is made recursively read-only if it is
+                                      supported by the container runtime, otherwise the pod will not be started and
+                                      an error will be generated to indicate the reason.
+
+                                      If this field is set to IfPossible or Enabled, MountPropagation must be set to
+                                      None (or be unspecified, which defaults to None).
+
+                                      If this field is not specified, it is treated as an equivalent of Disabled.
+                                    type: string
+                                  subPath:
+                                    description: |-
+                                      Path within the volume from which the container's volume should be mounted.
+                                      Defaults to "" (volume's root).
+                                    type: string
+                                  subPathExpr:
+                                    description: |-
+                                      Expanded path within the volume from which the container's volume should be mounted.
+                                      Behaves similarly to SubPath but environment variable references $(VAR_NAME) are expanded using the container's environment.
+                                      Defaults to "" (volume's root).
+                                      SubPathExpr and SubPath are mutually exclusive.
+                                    type: string
+                                required:
+                                  - mountPath
+                                  - name
+                                type: object
+                              type: array
                           type: object
+                        maxItems: 20
                         type: array
+                      metrics:
+                        description: Metrics configures module-level metrics (e.g.,
+                          for resiliency podmon)
+                        properties:
+                          collection:
+                            description: Collection configures metrics collection
+                              cadence and cache behavior
+                            properties:
+                              cacheTTL:
+                                description: CacheTTL is how long collected metric
+                                  responses are cached
+                                type: string
+                                x-kubernetes-validations:
+                                  - message: cacheTTL must be a non-empty string
+                                    rule: self == '' || size(self) > 0
+                              interval:
+                                description: Interval is how frequently metrics are
+                                  collected from the array
+                                type: string
+                                x-kubernetes-validations:
+                                  - message: interval must be a non-empty string
+                                    rule: self == '' || size(self) > 0
+                            type: object
+                          enabled:
+                            description: Enabled enables the module metrics endpoint
+                            type: boolean
+                          podMonitor:
+                            description: PodMonitor configures optional Prometheus
+                              Operator PodMonitor creation for node pods
+                            properties:
+                              enabled:
+                                description: |-
+                                  Enabled creates a PodMonitor CR for Prometheus Operator integration targeting node pods
+                                  Requires the Prometheus Operator CRDs to be installed in the cluster
+                                type: boolean
+                              insecureSkipVerify:
+                                description: |-
+                                  InsecureSkipVerify skips TLS certificate verification when Prometheus scrapes the node metrics endpoint
+                                  Only applies when tlsCertSecret is set
+                                type: boolean
+                              interval:
+                                description: Interval is the Prometheus scrape interval
+                                  for the node metrics endpoint
+                                type: string
+                                x-kubernetes-validations:
+                                  - message: interval must be a non-empty string
+                                    rule: self == '' || size(self) > 0
+                              scrapeTimeout:
+                                description: |-
+                                  ScrapeTimeout is the Prometheus scrape timeout for the node metrics endpoint
+                                  Default value: "" (unset; Prometheus uses its global scrape_timeout)
+                                type: string
+                                x-kubernetes-validations:
+                                  - message: scrapeTimeout must be a non-empty string
+                                    rule: self == '' || size(self) > 0
+                            type: object
+                          port:
+                            description: Port is the port on which the metrics endpoint
+                              is exposed
+                            format: int32
+                            type: integer
+                          prometheusRule:
+                            description: PrometheusRule configures Prometheus Operator
+                              alert rule creation for supported modules.
+                            properties:
+                              authFailureRateThreshold:
+                                default: 10
+                                description: |-
+                                  AuthFailureRateThreshold is the percentage threshold (0-100) for the high CSM Authorization failure-rate alert (P4.AUTH.2).
+                                  The value is divided by 100 when substituted into Prometheus expressions.
+                                  This field is only read when set under spec.modules[name=authorization].metrics.prometheusRule.
+                                format: int32
+                                maximum: 100
+                                minimum: 1
+                                type: integer
+                              authLatencyQuantile:
+                                default: 95
+                                description: |-
+                                  AuthLatencyQuantile is the quantile percentage (0-100) used for the high CSM Authorization latency alert (P4.AUTH.7).
+                                  The value is divided by 100 when substituted into Prometheus expressions (e.g., 95 for 95th percentile).
+                                  This field is only read when set under spec.modules[name=authorization].metrics.prometheusRule.
+                                format: int32
+                                maximum: 100
+                                minimum: 1
+                                type: integer
+                              authLatencyThresholdSeconds:
+                                default: 2
+                                description: |-
+                                  AuthLatencyThresholdSeconds is the latency threshold in seconds for the high CSM Authorization latency alert (P4.AUTH.7).
+                                  This field is only read when set under spec.modules[name=authorization].metrics.prometheusRule.
+                                format: int32
+                                minimum: 1
+                                type: integer
+                              connectivitySuccessRatio:
+                                default: 90
+                                description: |-
+                                  ConnectivitySuccessRatio is the minimum percentage of successful array connectivity checks
+                                  below which the RES-02 CSMResiliencyConnectivityLost alert fires.
+                                  This field is only read when set under spec.modules[name=resiliency].metrics.prometheusRule.
+                                  Setting it under spec.driver.metrics.prometheusRule has no effect on resiliency alerts.
+                                format: int32
+                                maximum: 100
+                                minimum: 1
+                                type: integer
+                              enabled:
+                                default: true
+                                description: Enabled creates a PrometheusRule CR for
+                                  Prometheus Operator integration.
+                                type: boolean
+                              rpoThresholdSeconds:
+                                default: 300
+                                description: |-
+                                  RPOThresholdSeconds is the replication lag threshold in seconds used by the
+                                  CSMReplicationLagExceeded (REP-01) and CSMReplicationRPOViolation (REP-02) alerts.
+                                  Applies when the CSM Replication module is enabled. Default: 300 (5 minutes).
+                                format: int32
+                                maximum: 86400
+                                minimum: 30
+                                type: integer
+                              srdfLagSeconds:
+                                default: 300
+                                description: |-
+                                  SRDFLagSeconds is the SRDF replication lag threshold in seconds for the
+                                  PowerMaxSRDFLagExceeded (REP-12) alert.
+                                  Applies when the CSM Replication module is enabled with PowerMax SRDF.
+                                  Default: 300 (5 minutes).
+                                format: int32
+                                maximum: 86400
+                                minimum: 30
+                                type: integer
+                              srdfMinBandwidth:
+                                default: 10485760
+                                description: |-
+                                  SRDFMinBandwidth is the minimum acceptable SRDF replication bandwidth in bytes per second.
+                                  Used by the PowerMaxSRDFBandwidthDegraded (REP-07) alert.
+                                  Applies when the CSM Replication module is enabled with PowerMax SRDF.
+                                  Default: 10485760 (10 MB/s).
+                                format: int64
+                                maximum: 1073741824
+                                minimum: 1
+                                type: integer
+                            type: object
+                          serviceMonitor:
+                            description: ServiceMonitor configures optional Prometheus
+                              Operator ServiceMonitor creation
+                            properties:
+                              enabled:
+                                description: |-
+                                  Enabled creates a ServiceMonitor CR for Prometheus Operator integration
+                                  Requires the Prometheus Operator CRDs to be installed in the cluster
+                                type: boolean
+                              insecureSkipVerify:
+                                description: |-
+                                  InsecureSkipVerify skips TLS certificate verification when Prometheus scrapes the metrics endpoint
+                                  Only applies when tlsCertSecret is set
+                                type: boolean
+                              interval:
+                                description: Interval is the Prometheus scrape interval
+                                  for the metrics endpoint
+                                type: string
+                                x-kubernetes-validations:
+                                  - message: interval must be a non-empty string
+                                    rule: self == '' || size(self) > 0
+                              scrapeTimeout:
+                                description: |-
+                                  ScrapeTimeout is the Prometheus scrape timeout for the metrics endpoint
+                                  Default value: "" (unset; Prometheus uses its global scrape_timeout)
+                                type: string
+                                x-kubernetes-validations:
+                                  - message: scrapeTimeout must be a non-empty string
+                                    rule: self == '' || size(self) > 0
+                            type: object
+                          tlsCertSecret:
+                            description: |-
+                              TLSCertSecret is the name of a Kubernetes TLS Secret (tls.crt / tls.key) used to serve metrics over HTTPS
+                              When set the operator mounts the secret and configures HTTPS automatically
+                            type: string
+                        type: object
                       name:
                         description: Name is name of ContainerStorageModule modules
                         type: string
@@ -3969,6 +5253,18 @@ spec:
                   description: RetainImageRegistryPath is the boolean flag used to
                     retain image registry path
                   type: boolean
+                upgrade:
+                  description: |-
+                    Upgrade is the upgrade policy for the CSM CR.
+                    When set to "auto", the operator will automatically upgrade the CSM resource
+                    to the latest supported version.
+                    If the auto upgrade fails, the operator will automatically rollback to the
+                    previous version.
+                  enum:
+                    - auto
+                    - manual
+                    - ""
+                  type: string
                 version:
                   type: string
               type: object
@@ -4011,9 +5307,36 @@ spec:
                   rule: "!(has(self.version) && self.version != \"\" && has(self.modules)
                     && self.modules.exists(m, has(m.components) && m.components.exists(c,
                     has(c.envs) && c.envs.exists(e, has(e.name) && e.name == \"NGINX_PROXY_IMAGE\"))))"
-                - message: spec.driver.metrics is only supported for PowerFlex driver
+                - message: spec.driver.metrics is only supported for PowerFlex, PowerScale,
+                    PowerStore, and PowerMax drivers
                   rule: "!has(self.driver) || !has(self.driver.metrics) || self.driver.csiDriverType
-                    == 'powerflex'"
+                    == 'powerflex' || self.driver.csiDriverType == 'isilon' || self.driver.csiDriverType
+                    == 'powerstore' || self.driver.csiDriverType == 'powermax'"
+                - message: spec.driver.common.image is forbidden when spec.driver.configVersion
+                    is set
+                  rule: "!(has(self.driver) && has(self.driver.configVersion) && self.driver.configVersion
+                    != \"\" && has(self.driver.common) && has(self.driver.common.image)
+                    && self.driver.common.image != \"\")"
+                - message: spec.driver.sideCars[*].image is forbidden when spec.driver.configVersion
+                    is set
+                  rule: "!(has(self.driver) && has(self.driver.configVersion) && self.driver.configVersion
+                    != \"\" && has(self.driver.sideCars) && self.driver.sideCars.exists(sc,
+                    has(sc.image) && sc.image != \"\"))"
+                - message: spec.driver.initContainers[*].image is forbidden when spec.driver.configVersion
+                    is set
+                  rule: "!(has(self.driver) && has(self.driver.configVersion) && self.driver.configVersion
+                    != \"\" && has(self.driver.initContainers) && self.driver.initContainers.exists(ic,
+                    has(ic.image) && ic.image != \"\"))"
+                - message: spec.modules[*].components[*].image is forbidden when spec.driver.configVersion
+                    is set
+                  rule: "!(has(self.driver) && has(self.driver.configVersion) && self.driver.configVersion
+                    != \"\" && has(self.modules) && self.modules.exists(m, has(m.components)
+                    && m.components.exists(c, has(c.image) && c.image != \"\")))"
+                - message: spec.modules[*].initContainer[*].image is forbidden when
+                    spec.driver.configVersion is set
+                  rule: "!(has(self.driver) && has(self.driver.configVersion) && self.driver.configVersion
+                    != \"\" && has(self.modules) && self.modules.exists(m, has(m.initContainer)
+                    && m.initContainer.exists(ic, has(ic.image) && ic.image != \"\")))"
             status:
               description: ContainerStorageModuleStatus defines the observed state
                 of ContainerStorageModule

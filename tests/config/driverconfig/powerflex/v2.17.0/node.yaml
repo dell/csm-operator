@@ -128,6 +128,8 @@ spec:
               value: <X_CSI_RENAME_SDC_ENABLED>
             - name: X_CSI_RENAME_SDC_PREFIX
               value: <X_CSI_RENAME_SDC_PREFIX>
+            - name: X_CSI_TRIM_SDC_NAME_ENABLED
+              value: <X_CSI_TRIM_SDC_NAME_ENABLED>
             - name: X_CSI_MAX_VOLUMES_PER_NODE
               value: <X_CSI_MAX_VOLUMES_PER_NODE>
             - name: X_CSI_POWERFLEX_KUBE_NODE_NAME

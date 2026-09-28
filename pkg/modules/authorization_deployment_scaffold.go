@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Dell Inc., or its subsidiaries. All Rights Reserved.
+// Copyright (c) 2025-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -331,6 +331,12 @@ func getAuthorizationRedisStatefulsetScaffold(crName, name, namespace, image, re
 								echo "masterauth $REDIS_PASSWORD" >> /etc/redis/redis.conf
 								echo "requirepass $REDIS_PASSWORD" >> /etc/redis/redis.conf
 
+								# Announce this pod's stable DNS name so Sentinel tracks hostnames, not IPs
+								MY_FQDN="$(hostname).$AUTHORIZATION_REDIS_NAME.$NAMESPACE.svc.cluster.local"
+								echo "replica-announce-ip $MY_FQDN" >> /etc/redis/redis.conf
+								echo "replica-announce-port 6379" >> /etc/redis/redis.conf
+								echo "Announcing as $MY_FQDN"
+
 								MASTER_FOUND="false"
 								MAX_RETRIES=5
 
@@ -350,7 +356,7 @@ func getAuthorizationRedisStatefulsetScaffold(crName, name, namespace, image, re
 											echo "Sentinel reports master at $MASTER_HOST:$MASTER_PORT"
 
 											# configure replicaof directive for replica pods only
-											if [ "$(hostname -f)" != "$MASTER_HOST" ]; then
+											if [ "$MY_FQDN" != "$MASTER_HOST" ]; then
 												echo "replicaof $MASTER_HOST $MASTER_PORT" >> /etc/redis/redis.conf
 											fi
 
@@ -449,12 +455,12 @@ func getAuthorizationRedisStatefulsetScaffold(crName, name, namespace, image, re
 }
 
 // getAuthorizationRediscommanderDeploymentScaffold returns a redis commander deployment for authorization v2
-func getAuthorizationRediscommanderDeploymentScaffold(crName, name, namespace, image, redisSecretName, redisUsernameKey, redisPasswordKey, sentinelName, checksum string, sentinelReplicas int) appsv1.Deployment {
+func getAuthorizationRediscommanderDeploymentScaffold(crName, name, namespace, image, redisSecretName, redisUsernameKey, redisPasswordKey, sentinelName, checksum string, sentinelReplicas int, ipFamily string) appsv1.Deployment {
 	runAsNonRoot := true
 	readOnlyRootFilesystem := false
 	allowPrivilegeEscalation := false
 	var replicas int32 = 1
-	return appsv1.Deployment{
+	deployment := appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
 			APIVersion: "apps/v1",
@@ -574,14 +580,58 @@ func getAuthorizationRediscommanderDeploymentScaffold(crName, name, namespace, i
 									},
 								},
 							},
-							VolumeMounts: []corev1.VolumeMount{},
 						},
 					},
-					Volumes: []corev1.Volume{},
 				},
 			},
 		},
 	}
+
+	if ipFamily == "ipv6" || ipFamily == "dual" {
+		podSpec := &deployment.Spec.Template.Spec
+		podSpec.InitContainers = []corev1.Container{{
+			Name:            "dns-init",
+			Image:           image,
+			ImagePullPolicy: "Always",
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("10m"),
+					corev1.ResourceMemory: resource.MustParse("16Mi"),
+				},
+				Limits: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("100m"),
+					corev1.ResourceMemory: resource.MustParse("64Mi"),
+				},
+			},
+			SecurityContext: &corev1.SecurityContext{
+				RunAsNonRoot:             &runAsNonRoot,
+				ReadOnlyRootFilesystem:   &readOnlyRootFilesystem,
+				AllowPrivilegeEscalation: &allowPrivilegeEscalation,
+				Capabilities: &corev1.Capabilities{
+					Drop: []corev1.Capability{
+						"ALL",
+					},
+				},
+			},
+			Command: []string{
+				"sh",
+				"-c",
+				"cat << 'EOF' > /init/dns-fix.js\nconst dns = require('dns');\nconst o = dns.lookup;\ndns.lookup = function(h, opt, cb) {\n  if (typeof opt === 'function') { cb = opt; opt = {}; }\n  else if (typeof opt === 'number') { opt = { family: opt }; }\n  else if (!opt) { opt = {}; }\n  if (!opt.family || opt.family === 4) { opt = Object.assign({}, opt, { family: 0 }); }\n  return o.call(this, h, opt, cb);\n};\nEOF\n",
+			},
+			VolumeMounts: []corev1.VolumeMount{{Name: "init-vol", MountPath: "/init"}},
+		}}
+		podSpec.Containers[0].Env = append([]corev1.EnvVar{
+			{Name: "ADDRESS", Value: "::"},
+			{Name: "SENTINEL_NAME", Value: "mymaster"},
+			{Name: "NODE_OPTIONS", Value: "-r /init/dns-fix.js"},
+		}, podSpec.Containers[0].Env...)
+		podSpec.Containers[0].VolumeMounts = []corev1.VolumeMount{{Name: "init-vol", MountPath: "/init"}}
+		podSpec.Volumes = []corev1.Volume{{
+			Name:         "init-vol",
+			VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},
+		}}
+	}
+	return deployment
 }
 
 // getAuthorizationSentinelStatefulsetScaffold returns sentinel statefulset for authorization v2
@@ -777,7 +827,7 @@ func buildSentinelList(replicas int, sentinelName, namespace string) string {
 		sentinel := fmt.Sprintf("%s-%d.%s.%s.svc.cluster.local:5000", sentinelName, i, sentinelName, namespace)
 		sentinels = append(sentinels, sentinel)
 	}
-	return strings.Join(sentinels, ", ")
+	return strings.Join(sentinels, ",")
 }
 
 // createRedisK8sSecret creates a k8s secret for redis

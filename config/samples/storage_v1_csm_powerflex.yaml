@@ -4,7 +4,7 @@ metadata:
   name: vxflexos
   namespace: vxflexos
 spec:
-  version: v1.17.2
+  version: v1.18.0
   driver:
     csiDriverType: "powerflex"
     csiDriverSpec:
@@ -29,17 +29,15 @@ spec:
         - name: X_CSI_VXFLEXOS_ENABLESNAPSHOTCGDELETE
           value: "false"
         # Log level for CSI driver, passed to logrus.
-        # Options are "PANIC", "FATAL", "ERROR", "WARN", "INFO",
-        # "DEBUG", and "TRACE".
+        # Options are "panic", "fatal", "error", "warn", "info",
+        # "debug", and "trace".
         - name: CSI_LOG_LEVEL
-          value: "INFO"
-        # GOSCALEIO_DEBUG: Enable/disable debug logs from goscaleio library.
-        # Default value: false
-        - name: GOSCALEIO_DEBUG
-          value: "false"
-        # GOSCALEIO_SHOWHTTP: Enable/disable HTTP requests and responses from goscaleio library
-        - name: GOSCALEIO_SHOWHTTP
-          value: "false"
+          value: "info"
+        # CSI driver log format
+        # Allowed values: "text" or "json"
+        # Default value: "json"
+        - name: CSI_LOG_FORMAT
+          value: "json"
         # Specify kubelet config dir path.
         # Ensure that the config.yaml file is present at this path.
         # Default value: /var/lib/kubelet
@@ -98,14 +96,14 @@ spec:
       # 'csivol' represents a string prepended to each volume created by the CSI driver
       - name: provisioner
         args: ["--volume-name-prefix=csivol"]
+      - name: snapshotter
+        args: ["--feature-gates=CSIVolumeGroupSnapshot=false"]
         # sdc-monitor is disabled by default, due to high CPU usage
       - name: sdc-monitor
         enabled: false
         envs:
           - name: HOST_PID
             value: "1"
-          - name: MDM
-            value: "10.xx.xx.xx,10.xx.xx.xx"  # do not add mdm value here if it is present in secret
             # health monitor is disabled by default, refer to driver documentation before enabling it
             # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
             # Default monitor-interval: 60s
@@ -191,6 +189,13 @@ spec:
         # Examples: "rhel-sdc", "sdc-test"
         - name: X_CSI_RENAME_SDC_PREFIX
           value: ""
+        # X_CSI_TRIM_SDC_NAME_ENABLED: Enable/Disable truncation of SDC name to 31 characters (PowerFlex limit)
+        # Allowed values:
+        #   true: enable truncation when SDC name exceeds 31 characters
+        #   false: disable truncation (may cause PowerFlex API error if name > 31 chars)
+        # Default value: false
+        - name: X_CSI_TRIM_SDC_NAME_ENABLED
+          value: "false"
         # X_CSI_MAX_VOLUMES_PER_NODE: Defines the maximum PowerFlex volumes that can be created per node
         # Allowed values: Any value greater than or equal to 0
         # If value is zero Container Orchestrator shall decide how many volumes of this type can be published by the controller to the node.
@@ -234,14 +239,114 @@ spec:
       - imagePullPolicy: IfNotPresent
         name: sdc
         envs:
-          - name: MDM
-            value: "10.xx.xx.xx,10.xx.xx.xx"  # provide MDM value
+          # HOST_DRV_CFG_PATH: Specifies the host path where the SDC drv_cfg utility is installed on the node.
+          # Defaults to "/opt/emc/scaleio/sdc/bin". Override this if host uses a different installation path.
+          - name: HOST_DRV_CFG_PATH
+            value: "/opt/emc/scaleio/sdc/bin"
           - name: REPO_ADDRESS
             value: "sftp://0.0.0.0"  # SFTP/private repository address. Format: "protocol://address"
           - name: REPO_USER
             value: "sdcRepoUser"  # provide username to authenticate to the SFTP repo
           - name: MODULE_SIGCHECK
             value: "0"
+    # metrics: configures the Prometheus metrics endpoint and gateway monitoring on the controller
+    metrics:
+      # enabled: Enable/Disable the shared Prometheus metrics HTTP endpoint on the controller
+      # Default value: false
+      enabled: false
+      # port: Port on which the metrics endpoint is exposed
+      # Allowed values: any valid port number
+      # Default value: 9090
+      port: 9090
+      # tlsCertSecret: Name of a Kubernetes TLS Secret to enable HTTPS on the metrics endpoint
+      # Leave empty to use plain HTTP
+      # Default value: ""
+      tlsCertSecret: ""
+      # gatewayMonitoring: configures PowerFlex Gateway health monitoring (PowerFlex specific)
+      gatewayMonitoring:
+        # enabled: Enable/Disable Gateway health monitoring on the controller
+        # Requires metrics.enabled to be true
+        # Default value: false
+        enabled: false
+        # leaderElectionEnabled: Enable/Disable leader election so only one controller replica probes gateways
+        # Allowed values: true, false
+        # Default value: true
+        leaderElectionEnabled: true
+        # pollInterval: How frequently the leader controller polls each gateway endpoint
+        # Allowed values: duration string (e.g., "10s", "30s", "1m")
+        # Default value: 30s
+        pollInterval: "30s"
+      # serviceMonitor: configures a Prometheus Operator ServiceMonitor for automatic scrape discovery
+      serviceMonitor:
+        # enabled: Create a ServiceMonitor CR for Prometheus Operator integration
+        # Requires the Prometheus Operator CRDs to be installed in the cluster
+        # Default value: false
+        enabled: false
+        # interval: Prometheus scrape interval
+        # Allowed values: duration string (e.g., "15s", "30s", "1m")
+        # Default value: 30s
+        interval: "30s"
+        # scrapeTimeout: Prometheus scrape timeout for the metrics endpoint
+        # Default value: "" (unset)
+        scrapeTimeout: ""
+        # insecureSkipVerify: Skip TLS certificate verification when Prometheus scrapes the metrics endpoint
+        # Allowed values: true, false
+        # Default value: false
+        insecureSkipVerify: false
+      # podMonitor: configures a Prometheus Operator PodMonitor for node pods
+      podMonitor:
+        # enabled: Create a PodMonitor CR for Prometheus Operator integration
+        # Requires the Prometheus Operator CRDs to be installed in the cluster
+        # Default value: false
+        enabled: false
+        # interval: Prometheus scrape interval for node pods
+        # Allowed values: duration string (e.g., "15s", "30s", "1m")
+        # Default value: 30s
+        interval: "30s"
+        # scrapeTimeout: Prometheus scrape timeout for the node metrics endpoint
+        # Default value: "" (unset)
+        scrapeTimeout: ""
+        # insecureSkipVerify: Skip TLS certificate verification when Prometheus scrapes node metrics
+        # Allowed values: true, false
+        # Default value: false
+        insecureSkipVerify: false
+      # prometheusRule: Creates a Prometheus Operator PrometheusRule containing PowerFlex CSI alert rules.
+      prometheusRule:
+        # enabled: Enable/Disable PrometheusRule creation for driver alerts
+        # Requires the Prometheus Operator CRDs to be installed in the cluster
+        # Allowed values: true, false
+        # Default value: false
+        enabled: false
+        # restartCountThreshold: Pod restart count within a 15-minute window that triggers a crash-loop alert (PF-10)
+        # Default value: 3
+        restartCountThreshold: 3
+        # cpuWarningThreshold: Warning threshold for driver CPU utilization in whole percent (PF-11)
+        # Default value: 80
+        cpuWarningThreshold: 80
+        # memoryWarningThreshold: Warning threshold for driver memory usage in bytes; 2147483648 = 2 GiB (PF-12)
+        # Default value: 2147483648
+        memoryWarningThreshold: 2147483648
+        # poolCapacityWarningPercent: Warning threshold for storage pool utilization in whole percent (PF-13)
+        # Default value: 80
+        poolCapacityWarningPercent: 80
+        # poolCapacityCriticalPercent: Critical threshold for storage pool utilization in whole percent (PF-14)
+        # Default value: 90
+        poolCapacityCriticalPercent: 90
+        # thinRatioWarningThreshold: Thin-provisioning over-commitment ratio that triggers a warning alert (PF-15)
+        # Default value: "0.8"
+        thinRatioWarningThreshold: "0.8"
+        # dataReductionDegradedThreshold: Data reduction ratio below which a degradation alert fires (PF-16)
+        # Default value: "1.5"
+        dataReductionDegradedThreshold: "1.5"
+        # rcgLagWarningSeconds: Persistent RCG replication lag in seconds that triggers a warning alert (PF-20)
+        # Default value: 300
+        rcgLagWarningSeconds: 300
+        # rcgBandwidthWarningKBps: RCG transmit bandwidth in KB/s below which a degradation alert fires (PF-21)
+        # Default value: 10240
+        rcgBandwidthWarningKBps: 10240
+        # rcgLatencyWarningSeconds: RCG transmit latency in seconds that triggers a warning alert (PF-22)
+        # Default value: "5.0"
+        rcgLatencyWarningSeconds: "5.0"
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
@@ -334,20 +439,58 @@ spec:
             - name: "POWERFLEX_TOPOLOGY_METRICS_POLL_FREQUENCY"
               value: "30"
             # PowerFlex metrics log level
-            # Valid values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
-            # Default value: "INFO"
+            # Valid values: trace, debug, info, warn, error, fatal, panic
+            # Default value: "info"
             - name: "POWERFLEX_LOG_LEVEL"
-              value: "INFO"
+              value: "info"
             # PowerFlex Metrics Output logs in the specified format
-            # Valid values: TEXT, JSON
-            # Default value: "TEXT"
+            # Valid values: text, json
+            # Default value: "json"
             - name: "POWERFLEX_LOG_FORMAT"
-              value: "TEXT"
+              value: "json"
             # Otel collector address
             # Allowed values: String
             # Default value: "otel-collector:55680"
             - name: "COLLECTOR_ADDRESS"
               value: "otel-collector:55680"
+      # metrics: Configure the observability self-metrics endpoint on the karavi-metrics-powerflex
+      metrics:
+        # enabled: Enable/Disable observability self-metrics endpoint
+        # Allowed values: true, false
+        # Default value: false
+        enabled: false
+        # port: Port used by observability self-metrics endpoint
+        # Allowed values: 1-65535
+        # Default value: 8443
+        port: 8443
+        # tlsCertSecret: Name of secret containing TLS certificate and key for observability self-metrics
+        # Allowed values: Kubernetes secret name, empty string
+        # Default value: ""
+        tlsCertSecret: ""
+        # serviceMonitor: Configure ServiceMonitor for observability self-metrics
+        serviceMonitor:
+          # enabled: Enable/Disable ServiceMonitor creation for observability self-metrics
+          # Allowed values: true, false
+          # Default value: false
+          enabled: false
+          # interval: Prometheus scrape interval for observability self-metrics
+          # Allowed values: duration string (for example: 15s, 30s, 1m)
+          # Default value: "30s"
+          interval: "30s"
+          # scrapeTimeout: Prometheus scrape timeout for observability self-metrics
+          # Allowed values: duration string, empty string
+          # Default value: ""
+          scrapeTimeout: ""
+          # insecureSkipVerify: Skip TLS certificate verification while scraping observability self-metrics
+          # Allowed values: true, false
+          # Default value: false
+          insecureSkipVerify: false
+        # prometheusRule: Configure Prometheus Operator PrometheusRule for observability alerts
+        prometheusRule:
+          # enabled: Enable/Disable PrometheusRule creation for observability alerts
+          # Allowed values: true, false
+          # Default value: false
+          enabled: false
     # Replication: allows to configure replication
     # Replication CRDs must be installed before installing driver
     - name: replication
@@ -357,6 +500,17 @@ spec:
       #   false: disable replication feature(do not install dell-csi-replicator sidecar)
       # Default value: false
       enabled: false
+      metrics:
+        enabled: false
+        port: 8445
+        tlsCertSecret: ""
+        collection:
+          interval: "30s"
+        serviceMonitor:
+          enabled: false
+          interval: "30s"
+          scrapeTimeout: ""
+          insecureSkipVerify: false
       components:
         - name: dell-csi-replicator
           envs:
@@ -373,9 +527,14 @@ spec:
           envs:
             # Replication log level
             # Allowed values: "error", "warn"/"warning", "info", "debug"
-            # Default value: "debug"
+            # Default value: "info"
             - name: "REPLICATION_CTRL_LOG_LEVEL"
-              value: "debug"
+              value: "info"
+            # Replication log format
+            # Allowed values: "text", "json"
+            # Default value: "json"
+            - name: "REPLICATION_CTRL_LOG_FORMAT"
+              value: "json"
             # replicas: Defines number of controller replicas
             # Allowed values: int
             # Default value: 1
@@ -433,6 +592,12 @@ spec:
             # Default value: 8083
             - name: "X_CSI_PODMON_API_PORT"
               value: "8083"
+              # podmonAPIToken: Shared secret token for authenticating podmon API requests
+              # Security note: podmon API uses HTTP; use this only on trusted cluster-internal networks.
+              # Example (literal value):
+              # - name: "X_CSI_PODMON_API_TOKEN"
+              #   value: "<strong-random-token>"
+              # Note: valueFrom.secretKeyRef is not currently supported for this token
           args:
             - "--labelvalue=csi-vxflexos"
             - "--leaderelection=false"
@@ -443,3 +608,60 @@ spec:
             - "--csisock=unix:/var/lib/kubelet/plugins/vxflexos.emc.dell.com/csi_sock"
             - "--mode=node"
             - "--driver-config-params=/vxflexos-config-params/driver-config-params.yaml"
+      # metrics: Configure resiliency module metrics endpoint
+      # The operator automatically creates Service/ServiceMonitor/PodMonitor resources for podmon metrics.
+      metrics:
+        # enabled: Enable/Disable resiliency module metrics endpoint
+        # Allowed values: true, false
+        # Default value: false
+        enabled: false
+        # port: Port used by resiliency module metrics endpoint
+        # Allowed values: 1-65535
+        # Default value: 8444
+        port: 8444
+        # tlsCertSecret: Name of a Kubernetes TLS Secret (tls.crt / tls.key) used to serve metrics over HTTPS.
+        # When set the operator mounts the secret and configures HTTPS automatically.
+        # Leave unset to serve metrics over plain HTTP.
+        tlsCertSecret: ""
+        # collection: Controls metrics collection cadence inside the resiliency module.
+        collection:
+          # interval: Interval at which metrics are collected
+          # Allowed values: Go duration string (e.g., 30s, 1m)
+          # Default value: 30s
+          interval: 30s
+        # serviceMonitor: Creates a Prometheus Operator ServiceMonitor targeting the controller pods.
+        serviceMonitor:
+          # enabled: Enable/Disable ServiceMonitor for resiliency metrics
+          # Allowed values: true, false
+          # Default value: false
+          enabled: false
+          # interval: Interval at which metrics should be scraped
+          # Allowed values: Go duration string (e.g., 30s, 1m)
+          # Default value: 30s
+          interval: 30s
+          # scrapeTimeout: Timeout after which the scrape is ended
+          # Allowed values: Go duration string (e.g., 10s)
+          # Default value: ""
+          scrapeTimeout: ""
+          # insecureSkipVerify: Skip TLS verification when scraping metrics endpoint
+          # Allowed values: true, false
+          # Default value: false
+          insecureSkipVerify: false
+        # podMonitor: Creates a Prometheus Operator PodMonitor targeting the node pods.
+        podMonitor:
+          # enabled: Enable/Disable PodMonitor for resiliency metrics
+          # Allowed values: true, false
+          # Default value: false
+          enabled: false
+          # interval: Interval at which metrics should be scraped
+          # Allowed values: Go duration string (e.g., 30s, 1m)
+          # Default value: 30s
+          interval: 30s
+          # scrapeTimeout: Timeout after which the scrape is ended
+          # Allowed values: Go duration string (e.g., 10s)
+          # Default value: ""
+          scrapeTimeout: ""
+          # insecureSkipVerify: Skip TLS verification when scraping metrics endpoint
+          # Allowed values: true, false
+          # Default value: false
+          insecureSkipVerify: false

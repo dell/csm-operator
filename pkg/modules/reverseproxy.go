@@ -1,14 +1,16 @@
-//  Copyright © 2023-2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+// Copyright (c) Dell Inc. All Rights Reserved.
 //
-//  Licensed under the Apache License, Version 2.0 (the "License");
-//  you may not use this file except in compliance with the License.
-//  You may obtain a copy of the License at
-//       http://www.apache.org/licenses/LICENSE-2.0
-//  Unless required by applicable law or agreed to in writing, software
-//  distributed under the License is distributed on an "AS IS" BASIS,
-//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//  See the License for the specific language governing permissions and
-//  limitations under the License.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package modules
 
@@ -25,6 +27,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	v1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
@@ -155,8 +158,26 @@ func ReverseProxyServer(ctx context.Context, isDeleting bool, op operatorutils.O
 		if ctrlObj.GetName() == RevProxyServiceName && ctrlObj.GetObjectKind().GroupVersionKind().Kind == "Deployment" {
 			dp := ctrlObj.(*appsv1.Deployment)
 
+			// Add owner references for garbage collection
+			bController := true
+			bOwnerDeletion := cr.Spec.Driver.ForceRemoveDriver != nil && !*cr.Spec.Driver.ForceRemoveDriver
+			kind := cr.Kind
+			v1 := "storage.dell.com/v1"
+			dp.OwnerReferences = []metav1.OwnerReference{
+				{
+					APIVersion:         v1,
+					Controller:         &bController,
+					BlockOwnerDeletion: &bOwnerDeletion,
+					Kind:               kind,
+					Name:               cr.Name,
+					UID:                cr.GetUID(),
+				},
+			}
+			// Set up owner references for garbage collection.
+			// When the CSM CR is deleted, the reverse proxy deployment will be automatically deleted as a dependent resource.
+
 			// Mount Credential support is only introduced in CSM v2.14.0. Prior to this version, we will not try to dynamically
-			// add the necessary fields for either approach.
+			// add the necessary fields for either approach. This feature allows mounting credentials as volumes instead of environment variables.
 			version, err := operatorutils.GetVersion(ctx, &cr, op)
 			if err != nil {
 				return err
@@ -268,6 +289,13 @@ func getReverseProxyService(ctx context.Context, op operatorutils.OperatorConfig
 	yamlString = strings.ReplaceAll(yamlString, ReverseProxyPort, proxyPort)
 	yamlString = strings.ReplaceAll(yamlString, operatorutils.DefaultReleaseNamespace, cr.Namespace)
 	yamlString = strings.ReplaceAll(yamlString, ReverseProxyCSMNameSpace, cr.Namespace)
+
+	// Update service selector based on deployment mode
+	// For standalone deployment (deployAsSidecar=false), use name: csipowermax-reverseproxy
+	// For sidecar deployment (deployAsSidecar=true), use app: <driver>-controller
+	if !IsReverseProxySidecar() {
+		yamlString = strings.ReplaceAll(yamlString, "app: <DriverDefaultReleaseName>-controller", "name: csipowermax-reverseproxy")
+	}
 
 	return yamlString, nil
 }
@@ -533,7 +561,7 @@ func setReverseProxyConfigMapMounts(dp *v1.DeploymentApplyConfiguration, revProx
 			contains := slices.ContainsFunc(dp.Spec.Template.Spec.Containers[i].VolumeMounts,
 				func(v acorev1.VolumeMountApplyConfiguration) bool {
 					// Cast to pull out value instead of comparing addresses.
-					return *(v.Name) == *(volumeMount.Name)
+					return *v.Name == *volumeMount.Name
 				},
 			)
 

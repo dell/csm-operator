@@ -45,13 +45,16 @@ func (c *FakeDeployments) Apply(ctx context.Context, deployment *applyconfigurat
 
 	_ = json.Unmarshal(data, result)
 
-	_, err = c.Get(ctx, *deployment.Name, v1.GetOptions{})
+	existing, err := c.Get(ctx, *deployment.Name, v1.GetOptions{})
 	if errors.IsNotFound(err) {
 		// if not found, we create it
 		return c.Create(ctx, result, v1.CreateOptions{})
 	} else if err != nil {
 		return result, err
 	}
+
+	// Preserve existing Status since ApplyConfigurations do not carry Status
+	result.Status = existing.Status
 
 	// otherwise we update it
 	err = c.FakeClient.Update(ctx, result)

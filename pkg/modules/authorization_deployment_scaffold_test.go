@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Dell Inc., or its subsidiaries. All Rights Reserved.
+// Copyright (c) 2025-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -262,7 +262,7 @@ func TestGetAuthorizationRediscommanderDeploymentScaffold(t *testing.T) {
 	hash := sha256.Sum256([]byte("data"))
 	checksum := hex.EncodeToString(hash[:])
 
-	deploy := getAuthorizationRediscommanderDeploymentScaffold(crName, name, namespace, image, redisSecretName, redisUsernameKey, redisPasswordKey, sentinelName, checksum, replicas)
+	deploy := getAuthorizationRediscommanderDeploymentScaffold(crName, name, namespace, image, redisSecretName, redisUsernameKey, redisPasswordKey, sentinelName, checksum, replicas, "")
 
 	envVars := deploy.Spec.Template.Spec.Containers[0].Env
 	found := false
@@ -275,6 +275,51 @@ func TestGetAuthorizationRediscommanderDeploymentScaffold(t *testing.T) {
 	fmt.Println(envVars)
 	if !found {
 		t.Errorf("expected mocked SENTINELS env var, but not found")
+	}
+	if len(deploy.Spec.Template.Spec.InitContainers) != 0 {
+		t.Errorf("expected no IPv6 init container for default IP family")
+	}
+}
+
+func TestGetAuthorizationRediscommanderDeploymentScaffoldIPv6(t *testing.T) {
+	deploy := getAuthorizationRediscommanderDeploymentScaffold(
+		"test-cr", "redis-commander", "default", "rediscommander:latest", "redis-secret", "username", "password", "sentinel", "checksum", 3, "ipv6",
+	)
+
+	if len(deploy.Spec.Template.Spec.InitContainers) != 1 {
+		t.Fatalf("expected IPv6 DNS init container, got %d", len(deploy.Spec.Template.Spec.InitContainers))
+	}
+	if deploy.Spec.Template.Spec.InitContainers[0].Name != "dns-init" {
+		t.Errorf("expected dns-init container")
+	}
+	if len(deploy.Spec.Template.Spec.Containers[0].VolumeMounts) != 1 {
+		t.Fatalf("expected IPv6 init volume mount, got %d", len(deploy.Spec.Template.Spec.Containers[0].VolumeMounts))
+	}
+	for _, env := range deploy.Spec.Template.Spec.Containers[0].Env {
+		if env.Name == "ADDRESS" && env.Value == "::" {
+			return
+		}
+	}
+	t.Errorf("expected IPv6 ADDRESS environment variable")
+}
+
+func TestGetAuthorizationRediscommanderIPv6InitContainerSecurityAndResources(t *testing.T) {
+	deploy := getAuthorizationRediscommanderDeploymentScaffold(
+		"test-cr", "redis-commander", "default", "rediscommander:latest", "redis-secret", "username", "password", "sentinel", "checksum", 3, "dual",
+	)
+
+	initContainer := deploy.Spec.Template.Spec.InitContainers[0]
+	if initContainer.SecurityContext == nil {
+		t.Fatal("expected IPv6 DNS init container security context")
+	}
+	if initContainer.SecurityContext.RunAsNonRoot == nil || !*initContainer.SecurityContext.RunAsNonRoot {
+		t.Fatal("expected IPv6 DNS init container to run as non-root")
+	}
+	if initContainer.SecurityContext.AllowPrivilegeEscalation == nil || *initContainer.SecurityContext.AllowPrivilegeEscalation {
+		t.Fatal("expected IPv6 DNS init container privilege escalation to be disabled")
+	}
+	if initContainer.Resources.Limits == nil || initContainer.Resources.Limits.Cpu().IsZero() || initContainer.Resources.Limits.Memory().IsZero() {
+		t.Fatal("expected IPv6 DNS init container CPU and memory limits")
 	}
 }
 

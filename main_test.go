@@ -57,6 +57,21 @@ func TestPrintVersion(_ *testing.T) {
 }
 
 func TestGetOperatorConfig(t *testing.T) {
+	// Load the real bundled default images too: when getConfigDir() points at
+	// a non-existent path, getOperatorConfig falls back to reading from the
+	// "operatorconfig" directory shipped in the image, so several of the
+	// error-path cases below still resolve real default images rather than
+	// an empty struct.
+	prodConfigBytes, err := os.ReadFile("operatorconfig/driverconfig/common/sidecar-images.yaml")
+	if err != nil {
+		t.Fatalf("failed to read operatorconfig/driverconfig/common/sidecar-images.yaml: %v", err)
+	}
+	var prodSidecarImages operatorutils.SidecarImagesConfig
+	if err := yaml.Unmarshal(prodConfigBytes, &prodSidecarImages); err != nil {
+		t.Fatalf("failed to unmarshal operatorconfig/driverconfig/common/sidecar-images.yaml: %v", err)
+	}
+	prodK8sConfig := prodSidecarImages.ResolveK8sImages("")
+
 	tests := []struct {
 		name                            string
 		isOpenShift                     func(_ *zap.SugaredLogger) (bool, error)
@@ -73,7 +88,7 @@ func TestGetOperatorConfig(t *testing.T) {
 			name:                    "Openshift environment",
 			isOpenShift:             func(_ *zap.SugaredLogger) (bool, error) { return true, nil },
 			getKubeAPIServerVersion: func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, nil },
-			getConfigDir:            func() string { return "testdata" },
+			getConfigDir:            func() string { return "operatorconfig" },
 			getK8sPathFn: func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
 				return "/default.yaml"
 			},
@@ -82,36 +97,15 @@ func TestGetOperatorConfig(t *testing.T) {
 			yamlUnmarshal:                   yaml.Unmarshal,
 			expectedConfig: operatorutils.OperatorConfig{
 				IsOpenShift:     true,
-				ConfigDirectory: "testdata",
-				K8sVersion: operatorutils.K8sImagesConfig{
-					Images: struct {
-						Attacher              string `json:"attacher" yaml:"attacher"`
-						Provisioner           string `json:"provisioner" yaml:"provisioner"`
-						Snapshotter           string `json:"snapshotter" yaml:"snapshotter"`
-						Registrar             string `json:"registrar" yaml:"registrar"`
-						Resizer               string `json:"resizer" yaml:"resizer"`
-						Externalhealthmonitor string `json:"externalhealthmonitorcontroller" yaml:"externalhealthmonitorcontroller"`
-						Sdc                   string `json:"sdc" yaml:"sdc"`
-						Sdcmonitor            string `json:"sdcmonitor" yaml:"sdcmonitor"`
-						Podmon                string `json:"podmon" yaml:"podmon"`
-						CSIRevProxy           string `json:"csiReverseProxy" yaml:"csiReverseProxy"`
-					}{
-						Attacher:              "registry.k8s.io/sig-storage/csi-attacher:v4.11.0",
-						Provisioner:           "registry.k8s.io/sig-storage/csi-provisioner:v6.2.0",
-						Snapshotter:           "registry.k8s.io/sig-storage/csi-snapshotter:v8.5.0",
-						Registrar:             "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0",
-						Resizer:               "registry.k8s.io/sig-storage/csi-resizer:v2.1.0",
-						Externalhealthmonitor: "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.17.0",
-						Sdcmonitor:            "quay.io/dell/storage/powerflex/sdc:5.0",
-					},
-				},
+				ConfigDirectory: "operatorconfig",
+				K8sVersion:      prodK8sConfig,
 			},
 		},
 		{
 			name:                    "Kubernetes environment",
 			isOpenShift:             func(_ *zap.SugaredLogger) (bool, error) { return false, nil },
 			getKubeAPIServerVersion: func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, nil },
-			getConfigDir:            func() string { return "testdata" },
+			getConfigDir:            func() string { return "operatorconfig" },
 			getK8sPathFn: func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
 				return "/default.yaml"
 			},
@@ -120,29 +114,8 @@ func TestGetOperatorConfig(t *testing.T) {
 			yamlUnmarshal:                   yaml.Unmarshal,
 			expectedConfig: operatorutils.OperatorConfig{
 				IsOpenShift:     false,
-				ConfigDirectory: "testdata",
-				K8sVersion: operatorutils.K8sImagesConfig{
-					Images: struct {
-						Attacher              string `json:"attacher" yaml:"attacher"`
-						Provisioner           string `json:"provisioner" yaml:"provisioner"`
-						Snapshotter           string `json:"snapshotter" yaml:"snapshotter"`
-						Registrar             string `json:"registrar" yaml:"registrar"`
-						Resizer               string `json:"resizer" yaml:"resizer"`
-						Externalhealthmonitor string `json:"externalhealthmonitorcontroller" yaml:"externalhealthmonitorcontroller"`
-						Sdc                   string `json:"sdc" yaml:"sdc"`
-						Sdcmonitor            string `json:"sdcmonitor" yaml:"sdcmonitor"`
-						Podmon                string `json:"podmon" yaml:"podmon"`
-						CSIRevProxy           string `json:"csiReverseProxy" yaml:"csiReverseProxy"`
-					}{
-						Attacher:              "registry.k8s.io/sig-storage/csi-attacher:v4.11.0",
-						Provisioner:           "registry.k8s.io/sig-storage/csi-provisioner:v6.2.0",
-						Snapshotter:           "registry.k8s.io/sig-storage/csi-snapshotter:v8.5.0",
-						Registrar:             "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0",
-						Resizer:               "registry.k8s.io/sig-storage/csi-resizer:v2.1.0",
-						Externalhealthmonitor: "registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.17.0",
-						Sdcmonitor:            "quay.io/dell/storage/powerflex/sdc:5.0",
-					},
-				},
+				ConfigDirectory: "operatorconfig",
+				K8sVersion:      prodK8sConfig,
 			},
 		},
 		{
@@ -159,140 +132,63 @@ func TestGetOperatorConfig(t *testing.T) {
 			expectedConfig: operatorutils.OperatorConfig{
 				IsOpenShift:     false,
 				ConfigDirectory: "operatorconfig",
-				K8sVersion: operatorutils.K8sImagesConfig{
-					Images: struct {
-						Attacher              string `json:"attacher" yaml:"attacher"`
-						Provisioner           string `json:"provisioner" yaml:"provisioner"`
-						Snapshotter           string `json:"snapshotter" yaml:"snapshotter"`
-						Registrar             string `json:"registrar" yaml:"registrar"`
-						Resizer               string `json:"resizer" yaml:"resizer"`
-						Externalhealthmonitor string `json:"externalhealthmonitorcontroller" yaml:"externalhealthmonitorcontroller"`
-						Sdc                   string `json:"sdc" yaml:"sdc"`
-						Sdcmonitor            string `json:"sdcmonitor" yaml:"sdcmonitor"`
-						Podmon                string `json:"podmon" yaml:"podmon"`
-						CSIRevProxy           string `json:"csiReverseProxy" yaml:"csiReverseProxy"`
-					}{},
-				},
+				K8sVersion:      prodK8sConfig,
 			},
 		},
 		{
-			name:                    "Fail get openshift",
-			isOpenShift:             func(_ *zap.SugaredLogger) (bool, error) { return false, errors.New("error") },
-			getKubeAPIServerVersion: func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, errors.New("error") },
-			getConfigDir:            func() string { return "/bad/path/does/not/exist" },
-			getK8sPathFn: func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
-				return "/default.yaml"
-			},
+			name:                            "Fail get openshift (non-fatal) then fail version detection",
+			isOpenShift:                     func(_ *zap.SugaredLogger) (bool, error) { return false, errors.New("error") },
+			getKubeAPIServerVersion:         func() (*version.Info, error) { return nil, errors.New("version detection failed") },
+			getConfigDir:                    func() string { return "/bad/path/does/not/exist" },
+			getK8sPathFn:                    func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string { return "/default.yaml" },
 			getK8sMinimumSupportedVersionFn: getK8sMinimumSupportedVersion,
 			getK8sMaximumSupportedVersionFn: getK8sMaximumSupportedVersion,
 			yamlUnmarshal:                   yaml.Unmarshal,
-			expectedConfig: operatorutils.OperatorConfig{
-				IsOpenShift:     false,
-				ConfigDirectory: "operatorconfig",
-				K8sVersion: operatorutils.K8sImagesConfig{
-					Images: struct {
-						Attacher              string `json:"attacher" yaml:"attacher"`
-						Provisioner           string `json:"provisioner" yaml:"provisioner"`
-						Snapshotter           string `json:"snapshotter" yaml:"snapshotter"`
-						Registrar             string `json:"registrar" yaml:"registrar"`
-						Resizer               string `json:"resizer" yaml:"resizer"`
-						Externalhealthmonitor string `json:"externalhealthmonitorcontroller" yaml:"externalhealthmonitorcontroller"`
-						Sdc                   string `json:"sdc" yaml:"sdc"`
-						Sdcmonitor            string `json:"sdcmonitor" yaml:"sdcmonitor"`
-						Podmon                string `json:"podmon" yaml:"podmon"`
-						CSIRevProxy           string `json:"csiReverseProxy" yaml:"csiReverseProxy"`
-					}{},
-				},
-			},
+			wantErr:                         true,
+			expectedConfig:                  operatorutils.OperatorConfig{},
 		},
 		{
-			name:                    "Fail get kube api version",
-			isOpenShift:             func(_ *zap.SugaredLogger) (bool, error) { return false, nil },
-			getKubeAPIServerVersion: func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, errors.New("error") },
-			getConfigDir:            func() string { return "/bad/path/does/not/exist" },
-			getK8sPathFn: func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
-				return "/default.yaml"
-			},
+			name:                            "Fail get kube api version",
+			isOpenShift:                     func(_ *zap.SugaredLogger) (bool, error) { return false, nil },
+			getKubeAPIServerVersion:         func() (*version.Info, error) { return nil, errors.New("version detection failed") },
+			getConfigDir:                    func() string { return "/bad/path/does/not/exist" },
+			getK8sPathFn:                    func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string { return "/default.yaml" },
 			getK8sMinimumSupportedVersionFn: getK8sMinimumSupportedVersion,
 			getK8sMaximumSupportedVersionFn: getK8sMaximumSupportedVersion,
 			yamlUnmarshal:                   yaml.Unmarshal,
-			expectedConfig: operatorutils.OperatorConfig{
-				IsOpenShift:     false,
-				ConfigDirectory: "operatorconfig",
-				K8sVersion: operatorutils.K8sImagesConfig{
-					Images: struct {
-						Attacher              string `json:"attacher" yaml:"attacher"`
-						Provisioner           string `json:"provisioner" yaml:"provisioner"`
-						Snapshotter           string `json:"snapshotter" yaml:"snapshotter"`
-						Registrar             string `json:"registrar" yaml:"registrar"`
-						Resizer               string `json:"resizer" yaml:"resizer"`
-						Externalhealthmonitor string `json:"externalhealthmonitorcontroller" yaml:"externalhealthmonitorcontroller"`
-						Sdc                   string `json:"sdc" yaml:"sdc"`
-						Sdcmonitor            string `json:"sdcmonitor" yaml:"sdcmonitor"`
-						Podmon                string `json:"podmon" yaml:"podmon"`
-						CSIRevProxy           string `json:"csiReverseProxy" yaml:"csiReverseProxy"`
-					}{},
-				},
-			},
+			wantErr:                         true,
+			expectedConfig:                  operatorutils.OperatorConfig{},
 		},
 		{
-			name:                    "Fail parse K8sMinimumSupportedVersion",
-			isOpenShift:             func(_ *zap.SugaredLogger) (bool, error) { return false, nil },
-			getKubeAPIServerVersion: func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, errors.New("error") },
-			getConfigDir:            func() string { return "/bad/path/does/not/exist" },
-			getK8sPathFn: func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
-				return "/default.yaml"
-			},
-			getK8sMinimumSupportedVersionFn: func() string { return "test" },
+			name:                            "Fail parse K8sMinimumSupportedVersion",
+			isOpenShift:                     func(_ *zap.SugaredLogger) (bool, error) { return false, nil },
+			getKubeAPIServerVersion:         func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, nil },
+			getConfigDir:                    func() string { return "operatorconfig" },
+			getK8sPathFn:                    func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string { return "/default.yaml" },
+			getK8sMinimumSupportedVersionFn: func() string { return "not-a-float" },
 			getK8sMaximumSupportedVersionFn: getK8sMaximumSupportedVersion,
 			yamlUnmarshal:                   yaml.Unmarshal,
+			wantErr:                         false,
 			expectedConfig: operatorutils.OperatorConfig{
 				IsOpenShift:     false,
 				ConfigDirectory: "operatorconfig",
-				K8sVersion: operatorutils.K8sImagesConfig{
-					Images: struct {
-						Attacher              string `json:"attacher" yaml:"attacher"`
-						Provisioner           string `json:"provisioner" yaml:"provisioner"`
-						Snapshotter           string `json:"snapshotter" yaml:"snapshotter"`
-						Registrar             string `json:"registrar" yaml:"registrar"`
-						Resizer               string `json:"resizer" yaml:"resizer"`
-						Externalhealthmonitor string `json:"externalhealthmonitorcontroller" yaml:"externalhealthmonitorcontroller"`
-						Sdc                   string `json:"sdc" yaml:"sdc"`
-						Sdcmonitor            string `json:"sdcmonitor" yaml:"sdcmonitor"`
-						Podmon                string `json:"podmon" yaml:"podmon"`
-						CSIRevProxy           string `json:"csiReverseProxy" yaml:"csiReverseProxy"`
-					}{},
-				},
+				K8sVersion:      prodK8sConfig,
 			},
 		},
 		{
-			name:                    "Fail parse K8sMaximumSupportedVersion",
-			isOpenShift:             func(_ *zap.SugaredLogger) (bool, error) { return false, nil },
-			getKubeAPIServerVersion: func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, errors.New("error") },
-			getConfigDir:            func() string { return "/bad/path/does/not/exist" },
-			getK8sPathFn: func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
-				return "/default.yaml"
-			},
+			name:                            "Fail parse K8sMaximumSupportedVersion",
+			isOpenShift:                     func(_ *zap.SugaredLogger) (bool, error) { return false, nil },
+			getKubeAPIServerVersion:         func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, nil },
+			getConfigDir:                    func() string { return "operatorconfig" },
+			getK8sPathFn:                    func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string { return "/default.yaml" },
 			getK8sMinimumSupportedVersionFn: getK8sMinimumSupportedVersion,
-			getK8sMaximumSupportedVersionFn: func() string { return "test" },
+			getK8sMaximumSupportedVersionFn: func() string { return "not-a-float" },
 			yamlUnmarshal:                   yaml.Unmarshal,
+			wantErr:                         false,
 			expectedConfig: operatorutils.OperatorConfig{
 				IsOpenShift:     false,
 				ConfigDirectory: "operatorconfig",
-				K8sVersion: operatorutils.K8sImagesConfig{
-					Images: struct {
-						Attacher              string `json:"attacher" yaml:"attacher"`
-						Provisioner           string `json:"provisioner" yaml:"provisioner"`
-						Snapshotter           string `json:"snapshotter" yaml:"snapshotter"`
-						Registrar             string `json:"registrar" yaml:"registrar"`
-						Resizer               string `json:"resizer" yaml:"resizer"`
-						Externalhealthmonitor string `json:"externalhealthmonitorcontroller" yaml:"externalhealthmonitorcontroller"`
-						Sdc                   string `json:"sdc" yaml:"sdc"`
-						Sdcmonitor            string `json:"sdcmonitor" yaml:"sdcmonitor"`
-						Podmon                string `json:"podmon" yaml:"podmon"`
-						CSIRevProxy           string `json:"csiReverseProxy" yaml:"csiReverseProxy"`
-					}{},
-				},
+				K8sVersion:      prodK8sConfig,
 			},
 		},
 		{
@@ -309,20 +205,7 @@ func TestGetOperatorConfig(t *testing.T) {
 			expectedConfig: operatorutils.OperatorConfig{
 				IsOpenShift:     false,
 				ConfigDirectory: "operatorconfig",
-				K8sVersion: operatorutils.K8sImagesConfig{
-					Images: struct {
-						Attacher              string `json:"attacher" yaml:"attacher"`
-						Provisioner           string `json:"provisioner" yaml:"provisioner"`
-						Snapshotter           string `json:"snapshotter" yaml:"snapshotter"`
-						Registrar             string `json:"registrar" yaml:"registrar"`
-						Resizer               string `json:"resizer" yaml:"resizer"`
-						Externalhealthmonitor string `json:"externalhealthmonitorcontroller" yaml:"externalhealthmonitorcontroller"`
-						Sdc                   string `json:"sdc" yaml:"sdc"`
-						Sdcmonitor            string `json:"sdcmonitor" yaml:"sdcmonitor"`
-						Podmon                string `json:"podmon" yaml:"podmon"`
-						CSIRevProxy           string `json:"csiReverseProxy" yaml:"csiReverseProxy"`
-					}{},
-				},
+				K8sVersion:      prodK8sConfig,
 			},
 		},
 		{
@@ -348,6 +231,7 @@ func TestGetOperatorConfig(t *testing.T) {
 						Registrar             string `json:"registrar" yaml:"registrar"`
 						Resizer               string `json:"resizer" yaml:"resizer"`
 						Externalhealthmonitor string `json:"externalhealthmonitorcontroller" yaml:"externalhealthmonitorcontroller"`
+						Metadataretriever     string `json:"metadataretriever" yaml:"metadataretriever"`
 						Sdc                   string `json:"sdc" yaml:"sdc"`
 						Sdcmonitor            string `json:"sdcmonitor" yaml:"sdcmonitor"`
 						Podmon                string `json:"podmon" yaml:"podmon"`
@@ -355,6 +239,32 @@ func TestGetOperatorConfig(t *testing.T) {
 					}{},
 				},
 			},
+		},
+		{
+			name:        "getKubeAPIServerVersion returns nil pointer (ECS01E-1835 regression test)",
+			isOpenShift: func(_ *zap.SugaredLogger) (bool, error) { return false, nil },
+			getKubeAPIServerVersion: func() (*version.Info, error) {
+				return nil, errors.New("discovery client failed: broken aggregated APIService")
+			},
+			getConfigDir:                    func() string { return "operatorconfig" },
+			getK8sPathFn:                    func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string { return "" },
+			getK8sMinimumSupportedVersionFn: getK8sMinimumSupportedVersion,
+			getK8sMaximumSupportedVersionFn: getK8sMaximumSupportedVersion,
+			yamlUnmarshal:                   yaml.Unmarshal,
+			wantErr:                         true,
+			expectedConfig:                  operatorutils.OperatorConfig{},
+		},
+		{
+			name:                            "getKubeAPIServerVersion returns (nil, nil) — defensive guard",
+			isOpenShift:                     func(_ *zap.SugaredLogger) (bool, error) { return false, nil },
+			getKubeAPIServerVersion:         func() (*version.Info, error) { return nil, nil },
+			getConfigDir:                    func() string { return "operatorconfig" },
+			getK8sPathFn:                    func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string { return "" },
+			getK8sMinimumSupportedVersionFn: getK8sMinimumSupportedVersion,
+			getK8sMaximumSupportedVersionFn: getK8sMaximumSupportedVersion,
+			yamlUnmarshal:                   yaml.Unmarshal,
+			wantErr:                         true,
+			expectedConfig:                  operatorutils.OperatorConfig{},
 		},
 	}
 
@@ -387,7 +297,9 @@ func TestGetOperatorConfig(t *testing.T) {
 
 			// Create a logger
 			logger, _ := zap.NewProduction()
-			defer logger.Sync()
+			defer func() {
+				_ = logger.Sync()
+			}()
 			sugar := logger.Sugar()
 
 			// Call the function
@@ -455,7 +367,7 @@ func TestGetk8sPath(t *testing.T) {
 		currentVersion string
 		minVersion     string
 		maxVersion     string
-		expectedPath   string
+		expectedKey    string
 	}{
 		{
 			name:           "Current version less than minimum",
@@ -463,15 +375,23 @@ func TestGetk8sPath(t *testing.T) {
 			currentVersion: "1.32",
 			minVersion:     K8sMinimumSupportedVersion,
 			maxVersion:     K8sMaximumSupportedVersion,
-			expectedPath:   "/driverconfig/common/default.yaml",
+			expectedKey:    "",
 		},
 		{
 			name:           "Current version greater than maximum",
+			kubeVersion:    "1.38",
+			currentVersion: "1.38",
+			minVersion:     K8sMinimumSupportedVersion,
+			maxVersion:     K8sMaximumSupportedVersion,
+			expectedKey:    K8sMaximumSupportedVersion,
+		},
+		{
+			name:           "Current version within range - 1.37",
 			kubeVersion:    "1.37",
 			currentVersion: "1.37",
 			minVersion:     K8sMinimumSupportedVersion,
 			maxVersion:     K8sMaximumSupportedVersion,
-			expectedPath:   "/driverconfig/common/k8s-" + K8sMaximumSupportedVersion + "-values.yaml",
+			expectedKey:    "1.37",
 		},
 		{
 			name:           "Current version within range - 1.36",
@@ -479,15 +399,15 @@ func TestGetk8sPath(t *testing.T) {
 			currentVersion: "1.36",
 			minVersion:     K8sMinimumSupportedVersion,
 			maxVersion:     K8sMaximumSupportedVersion,
-			expectedPath:   "/driverconfig/common/k8s-1.36-values.yaml",
+			expectedKey:    "1.36",
 		},
 		{
-			name:           "Current version within range - 1.34",
+			name:           "Current version less than minimum - 1.34",
 			kubeVersion:    "1.34",
 			currentVersion: "1.34",
 			minVersion:     K8sMinimumSupportedVersion,
 			maxVersion:     K8sMaximumSupportedVersion,
-			expectedPath:   "/driverconfig/common/k8s-1.34-values.yaml",
+			expectedKey:    "",
 		},
 		{
 			name:           "Current version within range - 1.35",
@@ -495,7 +415,7 @@ func TestGetk8sPath(t *testing.T) {
 			currentVersion: "1.35",
 			minVersion:     K8sMinimumSupportedVersion,
 			maxVersion:     K8sMaximumSupportedVersion,
-			expectedPath:   "/driverconfig/common/k8s-1.35-values.yaml",
+			expectedKey:    "1.35",
 		},
 		{
 			name:           "Current version exactly at minimum",
@@ -503,7 +423,7 @@ func TestGetk8sPath(t *testing.T) {
 			currentVersion: K8sMinimumSupportedVersion,
 			minVersion:     K8sMinimumSupportedVersion,
 			maxVersion:     K8sMaximumSupportedVersion,
-			expectedPath:   "/driverconfig/common/k8s-" + K8sMinimumSupportedVersion + "-values.yaml",
+			expectedKey:    K8sMinimumSupportedVersion,
 		},
 		{
 			name:           "Current version exactly at maximum",
@@ -511,7 +431,7 @@ func TestGetk8sPath(t *testing.T) {
 			currentVersion: K8sMaximumSupportedVersion,
 			minVersion:     K8sMinimumSupportedVersion,
 			maxVersion:     K8sMaximumSupportedVersion,
-			expectedPath:   "/driverconfig/common/k8s-" + K8sMaximumSupportedVersion + "-values.yaml",
+			expectedKey:    K8sMaximumSupportedVersion,
 		},
 	}
 
@@ -519,7 +439,9 @@ func TestGetk8sPath(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a logger
 			logger, _ := zap.NewProduction()
-			defer logger.Sync()
+			defer func() {
+				_ = logger.Sync()
+			}()
 			sugar := logger.Sugar()
 
 			// Convert string versions to floats for the function call
@@ -528,10 +450,10 @@ func TestGetk8sPath(t *testing.T) {
 			maxVersion, _ := strconv.ParseFloat(tt.maxVersion, 64)
 
 			// Call the function
-			actualPath := getk8sPathFn(sugar, tt.kubeVersion, currentVersion, minVersion, maxVersion)
+			actualKey := getk8sPathFn(sugar, tt.kubeVersion, currentVersion, minVersion, maxVersion)
 
 			// Assert the results
-			assert.Equal(t, tt.expectedPath, actualPath)
+			assert.Equal(t, tt.expectedKey, actualKey)
 		})
 	}
 }
@@ -547,6 +469,7 @@ func TestMain(_ *testing.T) {
 	originalInitFlags := initFlags
 	originalInitZapFlags := initZapFlags
 	originalSetupSignalHandler := setupSignalHandler
+	originalGetClusterID := getClusterID
 	defer func() {
 		isOpenShift = originalIsOpenShift
 		getKubeAPIServerVersion = originalGetKubeAPIServerVersion
@@ -556,11 +479,12 @@ func TestMain(_ *testing.T) {
 		initFlags = originalInitFlags
 		initZapFlags = originalInitZapFlags
 		setupSignalHandler = originalSetupSignalHandler
+		getClusterID = originalGetClusterID
 	}()
 
 	isOpenShift = func(_ *zap.SugaredLogger) (bool, error) { return true, nil }
 	getKubeAPIServerVersion = func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, nil }
-	getConfigDir = func() string { return "testdata" }
+	getConfigDir = func() string { return "operatorconfig" }
 	getk8sPathFn = func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
 		return "/default.yaml"
 	}
@@ -620,6 +544,10 @@ func TestMain(_ *testing.T) {
 		return &kubernetes.Clientset{}
 	}
 
+	getClusterID = func(_ kubernetes.Interface) string {
+		return "test-cluster-id"
+	}
+
 	go func() {
 		main()
 		mainCh <- struct{}{}
@@ -639,6 +567,7 @@ func TestMainGetOperatorConfigError(_ *testing.T) {
 	originalSetupSignalHandler := setupSignalHandler
 	originalYamlUnmarshal := yamlUnmarshal
 	originalOsExit := osExit
+	originalGetClusterID := getClusterID
 	defer func() {
 		isOpenShift = originalIsOpenShift
 		getKubeAPIServerVersion = originalGetKubeAPIServerVersion
@@ -650,14 +579,16 @@ func TestMainGetOperatorConfigError(_ *testing.T) {
 		setupSignalHandler = originalSetupSignalHandler
 		yamlUnmarshal = originalYamlUnmarshal
 		osExit = originalOsExit
+		getClusterID = originalGetClusterID
 	}()
 
 	isOpenShift = func(_ *zap.SugaredLogger) (bool, error) { return true, nil }
 	getKubeAPIServerVersion = func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, nil }
-	getConfigDir = func() string { return "testdata" }
+	getConfigDir = func() string { return "operatorconfig" }
 	getk8sPathFn = func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
 		return "/default.yaml"
 	}
+	getClusterID = func(_ kubernetes.Interface) string { return "test-cluster-id" }
 	getSetupWithManagerFn = func(_ *controllers.ContainerStorageModuleReconciler) func(_ ctrl.Manager, _ workqueue.TypedRateLimiter[reconcile.Request], _ int) error {
 		return func(_ ctrl.Manager, _ workqueue.TypedRateLimiter[reconcile.Request], _ int) error {
 			return nil
@@ -740,6 +671,7 @@ func TestMainNewManagerError(_ *testing.T) {
 	originalInitZapFlags := initZapFlags
 	originalSetupSignalHandler := setupSignalHandler
 	originalOsExit := osExit
+	originalGetClusterID := getClusterID
 	defer func() {
 		isOpenShift = originalIsOpenShift
 		getKubeAPIServerVersion = originalGetKubeAPIServerVersion
@@ -750,14 +682,16 @@ func TestMainNewManagerError(_ *testing.T) {
 		initZapFlags = originalInitZapFlags
 		setupSignalHandler = originalSetupSignalHandler
 		osExit = originalOsExit
+		getClusterID = originalGetClusterID
 	}()
 
 	isOpenShift = func(_ *zap.SugaredLogger) (bool, error) { return true, nil }
 	getKubeAPIServerVersion = func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, nil }
-	getConfigDir = func() string { return "testdata" }
+	getConfigDir = func() string { return "operatorconfig" }
 	getk8sPathFn = func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
 		return "/default.yaml"
 	}
+	getClusterID = func(_ kubernetes.Interface) string { return "test-cluster-id" }
 	getSetupWithManagerFn = func(_ *controllers.ContainerStorageModuleReconciler) func(_ ctrl.Manager, _ workqueue.TypedRateLimiter[reconcile.Request], _ int) error {
 		return func(_ ctrl.Manager, _ workqueue.TypedRateLimiter[reconcile.Request], _ int) error {
 			return nil
@@ -816,6 +750,7 @@ func TestMainSetupWithManagerError(_ *testing.T) {
 	originalOsExit := osExit
 	originalInitFlags := initFlags
 	originalInitZapFlags := initZapFlags
+	originalGetClusterID := getClusterID
 	defer func() {
 		isOpenShift = originalIsOpenShift
 		getKubeAPIServerVersion = originalGetKubeAPIServerVersion
@@ -825,14 +760,16 @@ func TestMainSetupWithManagerError(_ *testing.T) {
 		osExit = originalOsExit
 		initFlags = originalInitFlags
 		initZapFlags = originalInitZapFlags
+		getClusterID = originalGetClusterID
 	}()
 
 	isOpenShift = func(_ *zap.SugaredLogger) (bool, error) { return true, nil }
 	getKubeAPIServerVersion = func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, nil }
-	getConfigDir = func() string { return "testdata" }
+	getConfigDir = func() string { return "operatorconfig" }
 	getk8sPathFn = func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
 		return "/default.yaml"
 	}
+	getClusterID = func(_ kubernetes.Interface) string { return "test-cluster-id" }
 	getSetupWithManagerFn = func(_ *controllers.ContainerStorageModuleReconciler) func(_ ctrl.Manager, _ workqueue.TypedRateLimiter[reconcile.Request], _ int) error {
 		return func(_ ctrl.Manager, _ workqueue.TypedRateLimiter[reconcile.Request], _ int) error {
 			return errors.New("error")
@@ -893,6 +830,7 @@ func TestMainAddHealthzCheckError(_ *testing.T) {
 	originalInitFlags := initFlags
 	originalInitZapFlags := initZapFlags
 	originalGetControllerWatchCh := getControllerWatchCh
+	originalGetClusterID := getClusterID
 	defer func() {
 		isOpenShift = originalIsOpenShift
 		getKubeAPIServerVersion = originalGetKubeAPIServerVersion
@@ -903,14 +841,16 @@ func TestMainAddHealthzCheckError(_ *testing.T) {
 		initFlags = originalInitFlags
 		initZapFlags = originalInitZapFlags
 		getControllerWatchCh = originalGetControllerWatchCh
+		getClusterID = originalGetClusterID
 	}()
 
 	isOpenShift = func(_ *zap.SugaredLogger) (bool, error) { return true, nil }
 	getKubeAPIServerVersion = func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, nil }
-	getConfigDir = func() string { return "testdata" }
+	getConfigDir = func() string { return "operatorconfig" }
 	getk8sPathFn = func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
 		return "/default.yaml"
 	}
+	getClusterID = func(_ kubernetes.Interface) string { return "test-cluster-id" }
 	getSetupWithManagerFn = func(_ *controllers.ContainerStorageModuleReconciler) func(_ ctrl.Manager, _ workqueue.TypedRateLimiter[reconcile.Request], _ int) error {
 		return func(_ ctrl.Manager, _ workqueue.TypedRateLimiter[reconcile.Request], _ int) error {
 			return nil
@@ -976,6 +916,7 @@ func TestMainAddReadyzCheckError(_ *testing.T) {
 	originalInitFlags := initFlags
 	originalInitZapFlags := initZapFlags
 	originalGetControllerWatchCh := getControllerWatchCh
+	originalGetClusterID := getClusterID
 	defer func() {
 		isOpenShift = originalIsOpenShift
 		getKubeAPIServerVersion = originalGetKubeAPIServerVersion
@@ -986,14 +927,16 @@ func TestMainAddReadyzCheckError(_ *testing.T) {
 		initFlags = originalInitFlags
 		initZapFlags = originalInitZapFlags
 		getControllerWatchCh = originalGetControllerWatchCh
+		getClusterID = originalGetClusterID
 	}()
 
 	isOpenShift = func(_ *zap.SugaredLogger) (bool, error) { return true, nil }
 	getKubeAPIServerVersion = func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, nil }
-	getConfigDir = func() string { return "testdata" }
+	getConfigDir = func() string { return "operatorconfig" }
 	getk8sPathFn = func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
 		return "/default.yaml"
 	}
+	getClusterID = func(_ kubernetes.Interface) string { return "test-cluster-id" }
 	getSetupWithManagerFn = func(_ *controllers.ContainerStorageModuleReconciler) func(_ ctrl.Manager, _ workqueue.TypedRateLimiter[reconcile.Request], _ int) error {
 		return func(_ ctrl.Manager, _ workqueue.TypedRateLimiter[reconcile.Request], _ int) error {
 			return nil
@@ -1061,6 +1004,7 @@ func TestMainStartError(_ *testing.T) {
 	originalInitZapFlags := initZapFlags
 	originalGetControllerWatchCh := getControllerWatchCh
 	originalSetupSignalHandler := setupSignalHandler
+	originalGetClusterID := getClusterID
 	defer func() {
 		isOpenShift = originalIsOpenShift
 		getKubeAPIServerVersion = originalGetKubeAPIServerVersion
@@ -1072,14 +1016,16 @@ func TestMainStartError(_ *testing.T) {
 		initZapFlags = originalInitZapFlags
 		getControllerWatchCh = originalGetControllerWatchCh
 		setupSignalHandler = originalSetupSignalHandler
+		getClusterID = originalGetClusterID
 	}()
 
 	isOpenShift = func(_ *zap.SugaredLogger) (bool, error) { return true, nil }
 	getKubeAPIServerVersion = func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "31"}, nil }
-	getConfigDir = func() string { return "testdata" }
+	getConfigDir = func() string { return "operatorconfig" }
 	getk8sPathFn = func(_ *zap.SugaredLogger, _ string, _, _, _ float64) string {
 		return "/default.yaml"
 	}
+	getClusterID = func(_ kubernetes.Interface) string { return "test-cluster-id" }
 	getSetupWithManagerFn = func(_ *controllers.ContainerStorageModuleReconciler) func(_ ctrl.Manager, _ workqueue.TypedRateLimiter[reconcile.Request], _ int) error {
 		return func(_ ctrl.Manager, _ workqueue.TypedRateLimiter[reconcile.Request], _ int) error {
 			return nil

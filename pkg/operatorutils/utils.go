@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import (
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	"github.com/dell/csm-operator/pkg/logger"
+	"github.com/dell/csm-operator/pkg/version"
 	goYAML "gopkg.in/yaml.v3"
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
@@ -39,6 +40,7 @@ import (
 	storagev1 "k8s.io/api/storage/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
+	k8smeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	t1 "k8s.io/apimachinery/pkg/types"
@@ -71,11 +73,50 @@ type K8sImagesConfig struct {
 		Registrar             string `json:"registrar" yaml:"registrar"`
 		Resizer               string `json:"resizer" yaml:"resizer"`
 		Externalhealthmonitor string `json:"externalhealthmonitorcontroller" yaml:"externalhealthmonitorcontroller"`
+		Metadataretriever     string `json:"metadataretriever" yaml:"metadataretriever"`
 		Sdc                   string `json:"sdc" yaml:"sdc"`
 		Sdcmonitor            string `json:"sdcmonitor" yaml:"sdcmonitor"`
 		Podmon                string `json:"podmon" yaml:"podmon"`
 		CSIRevProxy           string `json:"csiReverseProxy" yaml:"csiReverseProxy"`
 	} `json:"images" yaml:"images"`
+}
+
+// SidecarImagesConfig is the consolidated sidecar image version matrix read
+// from driverconfig/common/sidecar-images.yaml. It holds one default image
+// set plus sparse per-k8s-minor-version overrides, replacing the former
+// default.yaml + one k8s-<major.minor>-values.yaml file per version.
+type SidecarImagesConfig struct {
+	Default   K8sImagesConfig            `json:"default" yaml:"default"`
+	Overrides map[string]K8sImagesConfig `json:"overrides" yaml:"overrides"`
+}
+
+// ResolveK8sImages merges the default image set with the override (if any)
+// registered for k8sVersion (e.g. "1.34"). Only non-empty override fields
+// replace the corresponding default field, so an override only needs to
+// specify the images that actually differ from the default.
+func (s SidecarImagesConfig) ResolveK8sImages(k8sVersion string) K8sImagesConfig {
+	result := s.Default
+	override, ok := s.Overrides[k8sVersion]
+	if !ok {
+		return result
+	}
+	merge := func(dst *string, src string) {
+		if src != "" {
+			*dst = src
+		}
+	}
+	merge(&result.Images.Attacher, override.Images.Attacher)
+	merge(&result.Images.Provisioner, override.Images.Provisioner)
+	merge(&result.Images.Snapshotter, override.Images.Snapshotter)
+	merge(&result.Images.Registrar, override.Images.Registrar)
+	merge(&result.Images.Resizer, override.Images.Resizer)
+	merge(&result.Images.Externalhealthmonitor, override.Images.Externalhealthmonitor)
+	merge(&result.Images.Metadataretriever, override.Images.Metadataretriever)
+	merge(&result.Images.Sdc, override.Images.Sdc)
+	merge(&result.Images.Sdcmonitor, override.Images.Sdcmonitor)
+	merge(&result.Images.Podmon, override.Images.Podmon)
+	merge(&result.Images.CSIRevProxy, override.Images.CSIRevProxy)
+	return result
 }
 
 // OperatorConfig -
@@ -92,11 +133,6 @@ type RbacYAML struct {
 	ClusterRoleBinding rbacv1.ClusterRoleBinding
 	Role               rbacv1.Role
 	RoleBinding        rbacv1.RoleBinding
-}
-
-// UpgradePaths a list of versions eligible to upgrade the current version
-type UpgradePaths struct {
-	MinUpgradePath string `json:"minUpgradePath" yaml:"minUpgradePath"`
 }
 
 // ControllerYAML -
@@ -181,8 +217,6 @@ const (
 	CSMImages = "csm-images"
 )
 
-var configMapPath string
-
 // SplitYaml divides a big bytes of yaml files in individual yaml files.
 func SplitYaml(gaintYAML []byte) ([][]byte, error) {
 	decoder := goYAML.NewDecoder(bytes.NewReader(gaintYAML))
@@ -236,7 +270,11 @@ func UpdateContainerApply(ctx context.Context, toBeApplied []csmv1.ContainerTemp
 			}
 
 			if ctr.ImagePullPolicy != "" {
-				*c.ImagePullPolicy = ctr.ImagePullPolicy
+				if c.ImagePullPolicy != nil {
+					*c.ImagePullPolicy = ctr.ImagePullPolicy
+				} else {
+					c.ImagePullPolicy = &ctr.ImagePullPolicy
+				}
 			}
 			emptyEnv := make([]corev1.EnvVar, 0)
 			c.Env = ReplaceAllApplyCustomEnvs(c.Env, emptyEnv, ctr.Envs)
@@ -700,7 +738,7 @@ func GetModuleComponentObj(CtrlBuf []byte) ([]crclient.Object, error) {
 			}
 			ctrlObjects = append(ctrlObjects, &hr)
 
-		case "NginxGateway", "NginxProxy":
+		case "NginxGateway", "NginxProxy", "ServiceMonitor":
 			var obj unstructured.Unstructured
 			if err := yamlUnmarshal(raw, &obj.Object); err != nil {
 				return ctrlObjects, err
@@ -810,13 +848,16 @@ func DeleteObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.
 	if err != nil && k8serror.IsNotFound(err) {
 		log.Infow("Object not found to delete", "Name:", name, "Kind:", kind, "Namespace:", obj.GetNamespace())
 		return nil
+	} else if err != nil && k8smeta.IsNoMatchError(err) {
+		log.Infow("CRD not found for object, skipping deletion", "Name:", name, "Kind:", kind, "Namespace:", obj.GetNamespace())
+		return nil
 	} else if err != nil {
 		log.Errorw("error to find object in deleteObj", "Error", err.Error(), "Name:", name, "Kind:", kind)
 		return err
 	}
 
 	log.Infow("Deleting object", "Name:", name, "Kind:", kind)
-	err = ctrlClient.Delete(ctx, obj)
+	err = ctrlClient.Delete(ctx, obj, client.PropagationPolicy(metav1.DeletePropagationBackground))
 	if err != nil && !k8serror.IsNotFound(err) {
 		return err
 	}
@@ -836,18 +877,32 @@ func ApplyObject(ctx context.Context, obj crclient.Object, ctrlClient crclient.C
 	if err != nil && k8serror.IsNotFound(err) {
 		log.Infow("Creating a new Object", "Name:", name, "Kind:", kind)
 		err = ctrlClient.Create(ctx, obj)
+		if err != nil && k8smeta.IsNoMatchError(err) {
+			// CRD not found, skip this object
+			log.Warnw("CRD not found for object, skipping creation", "Name:", name, "Kind:", kind, "Error", err.Error())
+			return nil
+		}
 		if err != nil {
 			return err
 		}
 
+	} else if err != nil && k8smeta.IsNoMatchError(err) {
+		// CRD not found, skip this object
+		log.Warnw("CRD not found for object, skipping", "Name:", name, "Kind:", kind, "Error", err.Error())
+		return nil
 	} else if err != nil {
 		log.Errorw("Unknown error.", "Error", err.Error())
 		return err
 	} else {
 		log.Infow("Updating a new Object", "Name:", name, "Kind:", kind)
 		// Copy data/changes from obj to k8s object that already exists on the cluster
+		// Preserve server-generated metadata (resourceVersion, UID) so the Update succeeds.
+		existingResourceVersion := k8sObj.GetResourceVersion()
+		existingUID := k8sObj.GetUID()
 		if jsonBytes, err := json.Marshal(obj); err == nil {
 			if err := json.Unmarshal(jsonBytes, &k8sObj); err == nil {
+				k8sObj.SetResourceVersion(existingResourceVersion)
+				k8sObj.SetUID(existingUID)
 				obj = k8sObj
 			}
 		}
@@ -875,10 +930,19 @@ func ApplyCTRLObject(ctx context.Context, obj crclient.Object, ctrlClient crclie
 	if err != nil && k8serror.IsNotFound(err) {
 		log.Infow("Creating a new Object", "Name:", name, "Kind:", kind)
 		err = ctrlClient.Create(ctx, obj)
+		if err != nil && k8smeta.IsNoMatchError(err) {
+			// CRD not found, skip this object
+			log.Warnw("CRD not found for object, skipping creation", "Name:", name, "Kind:", kind, "Error", err.Error())
+			return nil
+		}
 		if err != nil {
 			return err
 		}
 
+	} else if err != nil && k8smeta.IsNoMatchError(err) {
+		// CRD not found, skip this object
+		log.Warnw("CRD not found for object, skipping", "Name:", name, "Kind:", kind, "Error", err.Error())
+		return nil
 	} else if err != nil {
 		log.Errorw("Unknown error.", "Error", err.Error())
 		return err
@@ -897,53 +961,81 @@ func LogEndReconcile() {
 	fmt.Println("################End Reconcile##############")
 }
 
-// GetModuleDefaultVersion -
+// GetModuleDefaultVersion looks up the module configVersion bundled with a
+// given driver configVersion, from the single csm-releases.yaml source of
+// truth (via the shared pkg/version package).
 func GetModuleDefaultVersion(driverConfigVersion string, driverType csmv1.DriverType, moduleType csmv1.ModuleType, path string) (string, error) {
-	configMapPath := fmt.Sprintf("%s/moduleconfig/common/version-values.yaml", path)
-	buf, err := os.ReadFile(filepath.Clean(configMapPath))
-	if err != nil {
-		return "", err
-	}
-
-	support := map[csmv1.DriverType]map[string]map[csmv1.ModuleType]string{}
-	err = yamlUnmarshal(buf, &support)
+	releasesPath := filepath.Join(path, "common", "csm-releases.yaml")
+	info, err := version.Load(releasesPath)
 	if err != nil {
 		return "", err
 	}
 
 	dType := driverType
-	if driverType == "isilon" {
-		dType = "powerscale"
+	if driverType == csmv1.PowerScale {
+		// use powerscale instead of isilon as the folder name is powerscale
+		dType = csmv1.PowerScaleName
 	}
 
-	if driver, ok := support[dType]; ok {
-		if modules, ok := driver[driverConfigVersion]; ok {
-			if moduleVer, ok := modules[moduleType]; ok {
-				return moduleVer, nil
-			}
-			return "", fmt.Errorf(" %s module for %s driver  does not exist in file %s", moduleType, dType, configMapPath)
-		}
-		return "", fmt.Errorf("version %s of %s driver does not exist in file %s", driverConfigVersion, dType, configMapPath)
-
+	if moduleVer := info.ModuleVersion(string(dType), driverConfigVersion, string(moduleType)); moduleVer != "" {
+		return moduleVer, nil
 	}
 
-	return "", fmt.Errorf("%s driver does not exist in file %s", dType, configMapPath)
+	return "", fmt.Errorf("%s module for %s driver at version %s does not exist in file %s", moduleType, dType, driverConfigVersion, releasesPath)
 }
 
-func versionParser(version string) (int, int, error) {
+func versionParser(version string) (int, int, int, error) {
 	// strip v off of version string
 	versionNoV := strings.TrimLeft(version, "v")
 	// split by .
 	versionPieces := strings.Split(versionNoV, ".")
 	if len(versionPieces) != 3 {
 		err := fmt.Errorf("version %+v not in correct version format, breaks down as: %+v", version, versionPieces)
-		return -1, -1, err
+		return -1, -1, -1, err
 	}
 
 	majorVersion, _ := strconv.Atoi(versionPieces[0])
 	minorVersion, _ := strconv.Atoi(versionPieces[1])
+	patchVersion, _ := strconv.Atoi(versionPieces[2])
 
-	return majorVersion, minorVersion, nil
+	return majorVersion, minorVersion, patchVersion, nil
+}
+
+// compareVersions performs strict less-than comparison of two semantic versions.
+// Returns -1 if v1 < v2, 0 if v1 == v2, 1 if v1 > v2.
+func compareVersions(v1, v2 string) (int, error) {
+	major1, minor1, patch1, err := versionParser(v1)
+	if err != nil {
+		return 0, err
+	}
+
+	major2, minor2, patch2, err := versionParser(v2)
+	if err != nil {
+		return 0, err
+	}
+
+	if major1 != major2 {
+		if major1 < major2 {
+			return -1, nil
+		}
+		return 1, nil
+	}
+
+	if minor1 != minor2 {
+		if minor1 < minor2 {
+			return -1, nil
+		}
+		return 1, nil
+	}
+
+	if patch1 != patch2 {
+		if patch1 < patch2 {
+			return -1, nil
+		}
+		return 1, nil
+	}
+
+	return 0, nil
 }
 
 // MinVersionCheck checks if the provided version meets or exceeds the minimum required version.
@@ -958,23 +1050,11 @@ func versionParser(version string) (int, int, error) {
 //	bool: True if the version meets or exceeds the minimum required version, false otherwise.
 //	error: Any error encountered during version parsing.
 func MinVersionCheck(minVersion string, version string) (bool, error) {
-	minMajorVersion, minMinorVersion, err := versionParser(minVersion)
+	cmp, err := compareVersions(version, minVersion)
 	if err != nil {
 		return false, err
 	}
-
-	majorVersion, minorVersion, err := versionParser(version)
-	if err != nil {
-		return false, err
-	}
-
-	// compare each part according to minimum driver version
-	if majorVersion > minMajorVersion {
-		return true, nil
-	} else if majorVersion == minMajorVersion && minorVersion >= minMinorVersion {
-		return true, nil
-	}
-	return false, nil
+	return cmp >= 0, nil
 }
 
 func getConfigData(ctx context.Context, clusterID string, ctrlClient crclient.Client) ([]byte, error) {
@@ -1173,33 +1253,32 @@ func IsValidUpgrade[T CSMComponentType](ctx context.Context, oldVersion, newVers
 func getUpgradeInfo[T CSMComponentType](ctx context.Context, operatorConfig OperatorConfig, csmCompType T, oldVersion string) (string, error) {
 	log := logger.GetLogger(ctx)
 
-	csmCompConfigDir := ""
-	switch any(csmCompType).(type) {
-	case csmv1.DriverType:
-		csmCompConfigDir = "driverconfig"
-	case csmv1.ModuleType:
-		csmCompConfigDir = "moduleconfig"
+	entity := string(csmCompType)
+	if entity == string(csmv1.Authorization) {
+		// The authorization module's upgrade path is tracked under the
+		// authorization-proxy-server entity in csm-releases.yaml (the
+		// module and the standalone auth server share one version lineage).
+		entity = string(csmv1.AuthorizationServer)
 	}
 
-	upgradeInfoPath := fmt.Sprintf("%s/%s/%s/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, csmCompConfigDir, csmCompType, oldVersion)
-	log.Debugw("getUpgradeInfo", "upgradeInfoPath", upgradeInfoPath)
+	releasesPath := filepath.Join(operatorConfig.ConfigDirectory, "common", "csm-releases.yaml")
+	log.Debugw("getUpgradeInfo", "releasesPath", releasesPath, "entity", entity, "oldVersion", oldVersion)
 
-	buf, err := os.ReadFile(filepath.Clean(upgradeInfoPath))
+	info, err := version.Load(releasesPath)
 	if err != nil {
 		log.Errorw("getUpgradeInfo failed", "Error", err.Error())
 		return "", err
 	}
-	YamlString := string(buf)
 
-	var upgradePath UpgradePaths
-	err = yamlUnmarshal([]byte(YamlString), &upgradePath)
-	if err != nil {
-		log.Errorw("getUpgradeInfo yaml marshall failed", "Error", err.Error())
+	minUpgradePath := info.MinUpgradeFrom(entity, oldVersion)
+	if minUpgradePath == "" {
+		err := fmt.Errorf("no upgrade path found for %s %s in file %s", entity, oldVersion, releasesPath)
+		log.Errorw("getUpgradeInfo failed", "Error", err.Error())
 		return "", err
 	}
 
 	// Example return value: "v2.2.0"
-	return upgradePath.MinUpgradePath, nil
+	return minUpgradePath, nil
 }
 
 // GetCSMNamespaces returns the list of namespaces in the cluster that currently contain a CSM object
@@ -1316,16 +1395,10 @@ func GetEnvironmentVariable(varName string) (string, error) {
 func GetVersion(ctx context.Context, cr *csmv1.ContainerStorageModule, op OperatorConfig) (string, error) {
 	if cr.Spec.Version != "" {
 		log := logger.GetLogger(ctx)
-		file := fmt.Sprintf("%s/common/csm-version-mapping.yaml", op.ConfigDirectory)
-		buf, err := os.ReadFile(filepath.Clean(file))
+		releasesPath := filepath.Join(op.ConfigDirectory, "common", "csm-releases.yaml")
+		info, err := version.Load(releasesPath)
 		if err != nil {
-			return "", fmt.Errorf("failed to read file %s: %s", file, err.Error())
-		}
-
-		support := map[csmv1.DriverType]map[string]string{}
-		err = yamlUnmarshal(buf, &support)
-		if err != nil {
-			return "", err
+			return "", fmt.Errorf("failed to read file %s: %s", releasesPath, err.Error())
 		}
 
 		driverType := cr.Spec.Driver.CSIDriverType
@@ -1343,21 +1416,18 @@ func GetVersion(ctx context.Context, cr *csmv1.ContainerStorageModule, op Operat
 			}
 		}
 
-		if csmVersion, ok := support[driverType]; ok {
-			if configVersion, ok := csmVersion[cr.Spec.Version]; ok {
-				return configVersion, nil
-			}
-
-			// Collect all the supported CSM versions to include in the error message
-			var keys []string
-			for k := range csmVersion {
-				keys = append(keys, k)
-			}
-			log.Errorf("No custom resource configuration is available for CSM version %s. Supported CSM versions are: [%s]", cr.Spec.Version, strings.Join(keys, ", "))
-			return "", fmt.Errorf("No custom resource configuration is available for CSM version %s. Supported CSM versions are: [%s]", cr.Spec.Version, strings.Join(keys, ", "))
+		supportedVersions, ok := info.SupportedCSMVersions(string(driverType))
+		if !ok {
+			log.Errorf("Unsupported platform %s", driverType)
+			return "", fmt.Errorf("unsupported platform %s", driverType)
 		}
-		log.Errorf("Unsupported platform %s", driverType)
-		return "", fmt.Errorf("Unsupported platform %s", driverType)
+
+		if configVersion := info.ConfigVersion(string(driverType), cr.Spec.Version); configVersion != "" {
+			return configVersion, nil
+		}
+
+		log.Errorf("No custom resource configuration is available for CSM version %s. Supported CSM versions are: [%s]", cr.Spec.Version, strings.Join(supportedVersions, ", "))
+		return "", fmt.Errorf("No custom resource configuration is available for CSM version %s. Supported CSM versions are: [%s]", cr.Spec.Version, strings.Join(supportedVersions, ", "))
 	}
 	configVersion := cr.Spec.Driver.ConfigVersion
 	if configVersion == "" {
@@ -1369,6 +1439,40 @@ func GetVersion(ctx context.Context, cr *csmv1.ContainerStorageModule, op Operat
 		}
 	}
 	return configVersion, nil
+}
+
+// GetLatestCSMVersion returns the latest CSM version available in the version mapping
+// for the given driver type. It reads csm-releases.yaml and returns the latest CSM version
+// that supports the specified driver.
+func GetLatestCSMVersion(ctx context.Context, driverType csmv1.DriverType, op OperatorConfig) (string, error) {
+	log := logger.GetLogger(ctx)
+
+	// Load csm-releases.yaml using the version package
+	csmReleasesPath := filepath.Join(op.ConfigDirectory, "common", "csm-releases.yaml")
+	info, err := version.Load(csmReleasesPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read version mapping file %s: %w", csmReleasesPath, err)
+	}
+
+	dt := driverType
+	if dt == csmv1.PowerScale {
+		dt = csmv1.PowerScaleName
+	}
+
+	// Check if the driver type exists in the version mapping
+	_, ok := info.SupportedCSMVersions(string(dt))
+	if !ok {
+		return "", fmt.Errorf("no version mapping found for driver type %s", dt)
+	}
+
+	// Get the latest CSM version
+	latestVersion := info.CSMVersion(version.Latest)
+	if latestVersion == "" {
+		return "", fmt.Errorf("no CSM versions available")
+	}
+
+	log.Infof("Latest CSM version for driver %s: %s", dt, latestVersion)
+	return latestVersion, nil
 }
 
 // ResolveVersionFromConfigMap returns the configmap if it exists
@@ -1388,41 +1492,35 @@ func ResolveVersionFromConfigMap(ctx context.Context, ctrlClient client.Client, 
 	return matched, nil
 }
 
+// FetchConfigMap looks up the csm-images ConfigMap in the operator namespace
+// (dell-csm-operator). If the ConfigMap is not found, it returns a zero-value
+// ConfigMap so that callers (e.g. GetFinalImage) fall back to the shipped
+// default image templates. Any other error (RBAC, API server) is returned to
+// the caller so it is not silently swallowed.
 func FetchConfigMap(ctx context.Context, ctrlClient client.Client) (corev1.ConfigMap, error) {
 	var cm corev1.ConfigMap
 	log := logger.GetLogger(ctx)
 
-	// list all configmaps in all namespaces
-	cmList := &corev1.ConfigMapList{}
-	if err := ctrlClient.List(ctx, cmList); err != nil {
-		return cm, fmt.Errorf("error listing configmaps %v", err)
-	}
-
-	found := false
-	var namespace string
-	for _, cmns := range cmList.Items {
-		if cmns.Name == CSMImages {
-			log.Info(fmt.Sprintf("Using ConfigMap %s/%s to resolve image mappings for specified version. ", cmns.Namespace, cmns.Name))
-			namespace = cmns.Namespace
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		// Preserve previous behavior: return zero value cm and nil error.
-		return cm, nil
-	}
-
-	// Fetch the ConfigMap from its namespace
+	operatorNS := DefaultOperatorNamespace
 	configMapName := types.NamespacedName{
 		Name:      CSMImages,
-		Namespace: namespace,
+		Namespace: operatorNS,
 	}
 	if err := ctrlClient.Get(ctx, configMapName, &cm); err != nil {
-		log.Error(err, "Failed to fetch ConfigMap", "ConfigMap", CSMImages)
-		return cm, fmt.Errorf("error fetching configmaps %v", err)
+		if k8serror.IsNotFound(err) {
+			log.Infow("csm-images ConfigMap not found in operator namespace, using default image resolution",
+				"namespace", operatorNS)
+			return cm, nil
+		}
+		log.Errorw("Failed to fetch csm-images ConfigMap",
+			"namespace", operatorNS,
+			"error", err.Error())
+		return cm, fmt.Errorf("error fetching ConfigMap %s/%s: %w", operatorNS, CSMImages, err)
 	}
+
+	log.Infow("Using csm-images ConfigMap to resolve image mappings",
+		"namespace", operatorNS,
+		"name", CSMImages)
 	return cm, nil
 }
 
@@ -1577,4 +1675,14 @@ func GetFinalImage(ctx context.Context, cr csmv1.ContainerStorageModule, matched
 	}
 	finalImage = GetImageField(YamlString)
 	return finalImage
+}
+
+// SupportsDriverMetrics returns true if the driver supports built-in metrics.
+// Both "isilon" and "powerscale" aliases are accepted for PowerScale.
+func SupportsDriverMetrics(driverType csmv1.DriverType) bool {
+	return driverType == csmv1.PowerFlex ||
+		driverType == csmv1.PowerScale ||
+		driverType == csmv1.PowerScaleName ||
+		driverType == csmv1.PowerMax ||
+		driverType == csmv1.PowerStore
 }

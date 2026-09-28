@@ -1,0 +1,30 @@
+# Copyright © 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#      http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# PVC for SYMID-pinned volume provisioning.
+# References the SYMID-pinned StorageClass (op-e2e-powermax, defined in
+# powermax-storageclass-template.yaml) which carries an explicit SYMID
+# parameter. Even though the zone this PVC targets contains multiple
+# pooled arrays (see powermax-multiaz-pool-secret-template.yaml), the
+# explicit SYMID parameter must direct provisioning to that single named
+# array only, bypassing capacity-based pool selection entirely.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: symid-pinned-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: op-e2e-powermax

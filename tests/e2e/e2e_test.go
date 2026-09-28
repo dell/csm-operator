@@ -13,7 +13,9 @@
 package e2e
 
 import (
+	"context"
 	"fmt"
+	"net"
 	"os"
 	"sort"
 	"strings"
@@ -21,10 +23,11 @@ import (
 	"time"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
-	"github.com/dell/csm-operator/tests/e2e/pkg/version"
+	"github.com/dell/csm-operator/pkg/version"
 	"github.com/dell/csm-operator/tests/e2e/scripts/junit"
 	step "github.com/dell/csm-operator/tests/e2e/steps"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -35,7 +38,7 @@ import (
 )
 
 const (
-	interval         = time.Second * 10
+	interval         = time.Second * 5
 	valuesFileEnvVar = "E2E_SCENARIOS_FILE"
 )
 
@@ -44,7 +47,7 @@ var (
 	tagsSpecified []string
 	stepRunner    *step.Runner
 	beautify      string
-	moduleTags    = []string{"authorization", "replication", "observability", "authorizationproxyserver", "resiliency", "zoning"}
+	moduleTags    = []string{"authorization", "replication", "observability", "authorizationproxyserver", "resiliency", "zoning", "csiaddons"}
 	platformTags  = []string{"powerflex", "powerscale", "powermax", "powerstore", "unity", "cosi"}
 	// optInTags are module tags that require an explicit --flag to run.
 	// Unlike standard modules (which run when no module filter is given),
@@ -63,6 +66,9 @@ var (
 	// combo scenarios from running when only --obs is passed without --auth
 	// or --auth-proxy.
 	exclusiveModuleTags = []string{"authorization", "authorizationproxyserver"}
+	// exclusiveTags are opt-in feature tags. A scenario carrying one of these
+	// tags is skipped unless the tag is explicitly included in tagsSpecified.
+	exclusiveTags = []string{"metro-snapshot-restore"}
 )
 
 func Contains(slice []string, str string) bool {
@@ -80,13 +86,19 @@ func Contains(slice []string, str string) bool {
 //   - Only platforms specified  → scenario must match a platform
 //   - Only modules specified    → scenario must match a module
 //   - Both specified            → scenario must match at least one platform AND at least one module
+//
+// Custom tags (e.g. "rollback-upgrade" from --add-tag) that are neither a
+// platform nor a module tag are ANDed individually: the scenario must
+// contain every custom tag to match.
 func ContainsTag(scenarioTags []string, tagsSpecified []string) bool {
-	var platformsSpec, modulesSpec []string
+	var platformsSpec, modulesSpec, customSpec []string
 	for _, tag := range tagsSpecified {
 		if Contains(platformTags, tag) {
 			platformsSpec = append(platformsSpec, tag)
-		} else {
+		} else if Contains(moduleTags, tag) {
 			modulesSpec = append(modulesSpec, tag)
+		} else {
+			customSpec = append(customSpec, tag)
 		}
 	}
 
@@ -150,7 +162,24 @@ func ContainsTag(scenarioTags []string, tagsSpecified []string) bool {
 		}
 	}
 
-	if platformMatch && moduleMatch {
+	// Custom tags (from --add-tag) must ALL be present in the scenario.
+	customMatch := true
+	for _, c := range customSpec {
+		if !Contains(scenarioTags, c) {
+			customMatch = false
+			break
+		}
+	}
+
+	// Exclusive tags must be explicitly requested, regardless of other matches.
+	for _, tag := range scenarioTags {
+		if Contains(exclusiveTags, tag) && !Contains(tagsSpecified, tag) {
+			By(fmt.Sprintf("Exclusive tag %s not requested, skipping", tag))
+			return false
+		}
+	}
+
+	if platformMatch && moduleMatch && customMatch {
 		return true
 	}
 	By(fmt.Sprintf("No matching tags for scenario"))
@@ -203,11 +232,18 @@ func continueOnFailure() bool {
 
 // pollStep retries a step function until it succeeds or the timeout expires.
 // Unlike Eventually().Should(BeNil()), it returns an error instead of panicking.
+// If a step returns an error starting with "SKIP:", it is treated as a skip
+// and returned immediately without retries.
 func pollStep(runner *step.Runner, stepName string, test step.Resource,
-	timeout, poll time.Duration) error {
+	timeout, poll time.Duration,
+) error {
 	// Skip retries for offline-bundle tests
 	if strings.EqualFold(os.Getenv("OFFLINE_BUNDLE"), "true") {
 		if err := runner.RunStep(stepName, test); err != nil {
+			// Check if this is a skip error
+			if strings.HasPrefix(err.Error(), "SKIP:") {
+				return err
+			}
 			return fmt.Errorf("offline-bundle test step %q failed: %v", stepName, err)
 		}
 		return nil
@@ -220,6 +256,9 @@ func pollStep(runner *step.Runner, stepName string, test step.Resource,
 	// try once immediately
 	if err := runner.RunStep(stepName, test); err == nil {
 		return nil
+	} else if strings.HasPrefix(err.Error(), "SKIP:") {
+		// Skip errors should not be retried
+		return err
 	}
 
 	var lastErr error
@@ -229,6 +268,10 @@ func pollStep(runner *step.Runner, stepName string, test step.Resource,
 			return fmt.Errorf("step %q timed out after %s: %v", stepName, timeout, lastErr)
 		case <-ticker.C:
 			if err := runner.RunStep(stepName, test); err != nil {
+				// Check if this is a skip error
+				if strings.HasPrefix(err.Error(), "SKIP:") {
+					return err
+				}
 				lastErr = err
 			} else {
 				return nil
@@ -301,7 +344,7 @@ func TestE2E(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	tagEnvVars := []string{"AUTHORIZATION", "REPLICATION", "OBSERVABILITY", "AUTHORIZATIONPROXYSERVER", "RESILIENCY", "POWERFLEX", "POWERSCALE", "POWERMAX", "POWERSTORE", "UNITY", "SANITY", "ZONING", "COSI", "OFFLINE_BUNDLE"}
+	tagEnvVars := []string{"AUTHORIZATION", "REPLICATION", "OBSERVABILITY", "AUTHORIZATIONPROXYSERVER", "RESILIENCY", "POWERFLEX", "POWERSCALE", "POWERMAX", "POWERSTORE", "UNITY", "SANITY", "ZONING", "COSI", "OFFLINE_BUNDLE", "CSIADDONS"}
 	By("Getting test environment variables")
 	valuesFile := os.Getenv(valuesFileEnvVar)
 	Expect(valuesFile).NotTo(BeEmpty(), "Missing environment variable required for tests. E2E_SCENARIOS_FILE must be set.")
@@ -329,11 +372,8 @@ var _ = BeforeSuite(func() {
 
 	By(fmt.Sprint(tagsSpecified))
 
-	By("Loading CSM version info from csm-version-mapping.yaml and version-values.yaml")
-	if err := version.Init(
-		"../../operatorconfig/common/csm-version-mapping.yaml",
-		"../../operatorconfig/moduleconfig/common/version-values.yaml",
-	); err != nil {
+	By("Loading CSM version info from csm-releases.yaml")
+	if err := version.Init("../../operatorconfig/common/csm-releases.yaml"); err != nil {
 		framework.Failf("Failed to load version info: %v", err)
 	}
 	vInfo := version.GetInfo()
@@ -341,6 +381,46 @@ var _ = BeforeSuite(func() {
 		vInfo.CSMVersion(version.Latest),
 		vInfo.CSMVersion(version.NMinusOne),
 		vInfo.CSMVersion(version.NMinusTwo))
+
+	// Export CSM versions as environment variables so CR YAML templates
+	// can use ${CSM_VERSION_LATEST}, ${CSM_VERSION_N1}, and ${CSM_VERSION_N2} instead of
+	// hardcoding version strings.
+	os.Setenv("CSM_VERSION_LATEST", vInfo.CSMVersion(version.Latest))
+	os.Setenv("CSM_VERSION_N1", vInfo.CSMVersion(version.NMinusOne))
+	os.Setenv("CSM_VERSION_N2", vInfo.CSMVersion(version.NMinusTwo))
+
+	// Set authorization host based on cluster type and version
+	// 1.16.x and earlier: use ingress-nginx-controller
+	// 1.17.0 and later: use gateway-nginx
+	isOpenShift := os.Getenv("IS_OPENSHIFT") == "true"
+	authNamespace := os.Getenv("E2E_NS_AUTH")
+	if authNamespace == "" {
+		authNamespace = "e2e-authorization"
+	}
+
+	getAuthorizationHost := func(csmVersion string) string {
+		if isOpenShift {
+			return "router-internal-default.openshift-ingress.svc.cluster.local"
+		}
+		// Extract major.minor from version (e.g., v1.17.0 -> 1.17)
+		pv, err := version.ParseSemver(csmVersion)
+		if err != nil {
+			return fmt.Sprintf("%s-gateway-nginx.%s.svc.cluster.local", authNamespace, authNamespace)
+		}
+		// 1.16.x and earlier use ingress-nginx-controller, 1.17+ use gateway-nginx
+		if pv.Major == 1 && pv.Minor < 17 {
+			return fmt.Sprintf("%s-ingress-nginx-controller.%s.svc.cluster.local", authNamespace, authNamespace)
+		}
+		return fmt.Sprintf("%s-gateway-nginx.%s.svc.cluster.local", authNamespace, authNamespace)
+	}
+
+	os.Setenv("AUTHORIZATION_HOST", getAuthorizationHost(vInfo.CSMVersion(version.Latest)))
+	os.Setenv("AUTHORIZATION_HOST_N1", getAuthorizationHost(vInfo.CSMVersion(version.NMinusOne)))
+	os.Setenv("AUTHORIZATION_HOST_N2", getAuthorizationHost(vInfo.CSMVersion(version.NMinusTwo)))
+
+	fmt.Printf("  AUTHORIZATION_HOST: %s (version: %s)\n", os.Getenv("AUTHORIZATION_HOST"), vInfo.CSMVersion(version.Latest))
+	fmt.Printf("  AUTHORIZATION_HOST_N1: %s (version: %s)\n", os.Getenv("AUTHORIZATION_HOST_N1"), vInfo.CSMVersion(version.NMinusOne))
+	fmt.Printf("  AUTHORIZATION_HOST_N2: %s (version: %s)\n", os.Getenv("AUTHORIZATION_HOST_N2"), vInfo.CSMVersion(version.NMinusTwo))
 
 	By("Generating minimal testfiles")
 	if err := step.GenerateMinimalTestfiles("testfiles/minimal-testfiles"); err != nil {
@@ -371,6 +451,19 @@ var _ = BeforeSuite(func() {
 
 	stepRunner = &step.Runner{}
 	step.StepRunnerInit(stepRunner, ctrlClient, clientSet)
+
+	// Detect cluster IP family for Authorization E2E and export placeholder used in CR YAML.
+	// Respect a pre-set value from the environment (e.g., pipeline), otherwise choose a
+	// conservative default: ipv6-only -> ipv6; anything else (dual or ipv4-only) -> ipv4.
+	if os.Getenv("E2E_AUTH_IP_FAMILY") == "" {
+		fam := detectClusterIPFamily(clientSet)
+		set := "ipv4" // default safe choice on dual-stack and ipv4-only clusters
+		if fam == "ipv6" {
+			set = "ipv6"
+		}
+		os.Setenv("E2E_AUTH_IP_FAMILY", set)
+	}
+	By(fmt.Sprintf("E2E_AUTH_IP_FAMILY=%s", os.Getenv("E2E_AUTH_IP_FAMILY")))
 
 	beautify = "    "
 })
@@ -483,16 +576,28 @@ var _ = Describe("[run-e2e-test] E2E Testing", func() {
 
 			if scenarioErr != nil {
 				errMsg := scenarioErr.Error()
-				content := fmt.Sprintf("%sFAILED  %s  [%s]", beautify, scenario.Scenario, scenarioElapsed)
-				By(fmt.Sprintf("%s %s %s", padDashes(content), content, padDashes(content)))
-				By(fmt.Sprintf("    Error: %s", errMsg))
-				results = append(results, scenarioResult{
-					Name: scenario.Scenario, Status: "FAIL",
-					Elapsed: scenarioElapsed, Error: errMsg,
-				})
 
-				if !keepGoing {
-					Fail(fmt.Sprintf("scenario %q failed: %s", scenario.Scenario, errMsg))
+				// Check if this is a skip error (e.g., tlshd not available for mTLS tests)
+				if strings.HasPrefix(errMsg, "SKIP:") {
+					content := fmt.Sprintf("%sSKIPPED  %s  [%s]", beautify, scenario.Scenario, scenarioElapsed)
+					By(fmt.Sprintf("%s %s %s", padDashes(content), content, padDashes(content)))
+					By(fmt.Sprintf("    Reason: %s", strings.TrimPrefix(errMsg, "SKIP: ")))
+					results = append(results, scenarioResult{
+						Name: scenario.Scenario, Status: "SKIP",
+						Elapsed: scenarioElapsed, Error: errMsg,
+					})
+				} else {
+					content := fmt.Sprintf("%sFAILED  %s  [%s]", beautify, scenario.Scenario, scenarioElapsed)
+					By(fmt.Sprintf("%s %s %s", padDashes(content), content, padDashes(content)))
+					By(fmt.Sprintf("    Error: %s", errMsg))
+					results = append(results, scenarioResult{
+						Name: scenario.Scenario, Status: "FAIL",
+						Elapsed: scenarioElapsed, Error: errMsg,
+					})
+
+					if !keepGoing {
+						Fail(fmt.Sprintf("scenario %q failed: %s", scenario.Scenario, errMsg))
+					}
 				}
 			} else {
 				content := fmt.Sprintf("%sSUCCEEDED  %s  [%s]", beautify, scenario.Scenario, scenarioElapsed)
@@ -522,4 +627,67 @@ func countByStatus(results []scenarioResult, status string) int {
 		}
 	}
 	return n
+}
+
+// detectClusterIPFamily inspects core Services and Node PodCIDRs to infer the cluster IP family.
+// Returns one of: "ipv4", "ipv6", "dual"; returns empty string if detection fails.
+func detectClusterIPFamily(cs *kubernetes.Clientset) string {
+	has4, has6 := false, false
+
+	if cs != nil {
+		// Default service "kubernetes" ClusterIP(s)
+		if svc, err := cs.CoreV1().Services("default").Get(context.TODO(), "kubernetes", metav1.GetOptions{}); err == nil && svc != nil {
+			ips := append([]string{}, svc.Spec.ClusterIPs...)
+			if svc.Spec.ClusterIP != "" {
+				ips = append(ips, svc.Spec.ClusterIP)
+			}
+			for _, s := range ips {
+				ip := net.ParseIP(s)
+				if ip == nil {
+					continue
+				}
+				if ip.To4() != nil {
+					has4 = true
+				} else {
+					has6 = true
+				}
+			}
+		}
+
+		// Node PodCIDR(s)
+		if nodes, err := cs.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{}); err == nil {
+			for i := range nodes.Items {
+				n := &nodes.Items[i]
+				if n.Spec.PodCIDR != "" {
+					if ip, _, err := net.ParseCIDR(n.Spec.PodCIDR); err == nil && ip != nil {
+						if ip.To4() != nil {
+							has4 = true
+						} else {
+							has6 = true
+						}
+					}
+				}
+				for _, c := range n.Spec.PodCIDRs {
+					if ip, _, err := net.ParseCIDR(c); err == nil && ip != nil {
+						if ip.To4() != nil {
+							has4 = true
+						} else {
+							has6 = true
+						}
+					}
+				}
+			}
+		}
+	}
+
+	switch {
+	case has4 && has6:
+		return "dual"
+	case has6:
+		return "ipv6"
+	case has4:
+		return "ipv4"
+	default:
+		return ""
+	}
 }

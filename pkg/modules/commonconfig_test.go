@@ -1,10 +1,14 @@
-// Copyright (c) 2022-2026 Dell Inc., or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021-2026 Dell Inc. All Rights Reserved.
 //
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//  http://www.apache.org/licenses/LICENSE-2.0
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//       http://www.apache.org/licenses/LICENSE-2.0
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
 
 package modules
 
@@ -23,6 +27,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -166,6 +171,14 @@ func TestCommonCertManager(t *testing.T) {
 			}
 			return true, false, tmpCR, sourceClient, operatorConfig, matched
 		},
+		"fail - invalid config directory for CRDs": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
+			customResource := CsmAuthorizationCR()
+			tmpCR := customResource
+			badOperatorConfig.ConfigDirectory = "invalid-dir"
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+			return false, false, tmpCR, sourceClient, badOperatorConfig, operatorutils.VersionSpec{}
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -265,7 +278,7 @@ func (c customClient) Get(_ context.Context, _ client.ObjectKey, _ client.Object
 	return nil
 }
 
-func TestApplyDeleteObjects(t *testing.T) {
+func TestApplyOrDeleteObjects(t *testing.T) {
 	ctx := context.TODO()
 
 	cluster := operatorutils.ClusterConfig{
@@ -312,7 +325,7 @@ data:
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := applyDeleteObjects(ctx, cluster.ClusterCTRLClient, tt.yamlString, tt.isDeleting)
+			err := applyOrDeleteObjects(ctx, cluster.ClusterCTRLClient, tt.yamlString, tt.isDeleting)
 			if tt.expectedErr == "" {
 				if err != nil {
 					t.Errorf("removeDriverFromCluster() returned error = %v, but no error was expected", err)
@@ -346,8 +359,8 @@ func TestCommonCertManager_CRDsArePreservedOnDelete(t *testing.T) {
 	assert.NoError(t, err, "CRD must remain present after uninstall")
 }
 
-// Success apply path in applyDeleteObjects.
-func TestApplyDeleteObjects_SuccessApply(t *testing.T) {
+// Success apply path in applyOrDeleteObjects.
+func TestApplyOrDeleteObjects_SuccessApply(t *testing.T) {
 	ctx := context.TODO()
 	cli := fake.NewClientBuilder().Build()
 
@@ -360,7 +373,7 @@ data:
   k: v
 `
 
-	err := applyDeleteObjects(ctx, cli, yml, false)
+	err := applyOrDeleteObjects(ctx, cli, yml, false)
 	assert.NoError(t, err)
 
 	cm := &corev1.ConfigMap{}
@@ -369,8 +382,8 @@ data:
 	assert.Equal(t, "v", cm.Data["k"])
 }
 
-// Success delete path in applyDeleteObjects.
-func TestApplyDeleteObjects_SuccessDelete(t *testing.T) {
+// Success delete path in applyOrDeleteObjects.
+func TestApplyOrDeleteObjects_SuccessDelete(t *testing.T) {
 	ctx := context.TODO()
 	cli := fake.NewClientBuilder().Build()
 
@@ -389,7 +402,7 @@ data:
   k: v
 `
 
-	err := applyDeleteObjects(ctx, cli, yml, true)
+	err := applyOrDeleteObjects(ctx, cli, yml, true)
 	assert.NoError(t, err)
 
 	got := &corev1.ConfigMap{}
@@ -397,8 +410,8 @@ data:
 	assert.Error(t, err)
 }
 
-// Multi-document YAML path in applyDeleteObjects (apply & delete).
-func TestApplyDeleteObjects_MultiDocYAML(t *testing.T) {
+// Multi-document YAML path in applyOrDeleteObjects (apply & delete).
+func TestApplyOrDeleteObjects_MultiDocYAML(t *testing.T) {
 	ctx := context.TODO()
 	cli := fake.NewClientBuilder().Build()
 
@@ -420,13 +433,13 @@ stringData:
   s1: v1
 `
 
-	err := applyDeleteObjects(ctx, cli, yml, false)
+	err := applyOrDeleteObjects(ctx, cli, yml, false)
 	assert.NoError(t, err)
 
 	assert.NoError(t, cli.Get(ctx, client.ObjectKey{Name: "ut-cm-1", Namespace: "default"}, &corev1.ConfigMap{}))
 	assert.NoError(t, cli.Get(ctx, client.ObjectKey{Name: "ut-secret-1", Namespace: "default"}, &corev1.Secret{}))
 
-	err = applyDeleteObjects(ctx, cli, yml, true)
+	err = applyOrDeleteObjects(ctx, cli, yml, true)
 	assert.NoError(t, err)
 
 	assert.Error(t, cli.Get(ctx, client.ObjectKey{Name: "ut-cm-1", Namespace: "default"}, &corev1.ConfigMap{}))
@@ -570,6 +583,20 @@ func TestGetCertManager_NeitherConfigMapNorRegistry(t *testing.T) {
 	assert.NotContains(t, yaml, CertManagerWebhook, "webhook placeholder should be replaced")
 }
 
+func TestReadAuthorizationModuleConfigFile(t *testing.T) {
+	ctx := context.TODO()
+	cr := CsmAuthorizationCR()
+
+	module := csmv1.Module{
+		Name: csmv1.AuthorizationServer,
+	}
+
+	data, err := ReadAuthorizationModuleConfigFile(ctx, module, cr, operatorConfig, "prometheusrule.yaml")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, data, "should read prometheusrule.yaml file")
+	assert.Contains(t, string(data), "AuthorizationServiceDown", "should contain AuthorizationServiceDown alert")
+}
+
 func TestGetCertManager_AllKeysFromConfigMapWithCustomRegistry(t *testing.T) {
 	ctx := context.TODO()
 	cr := CsmAuthorizationCR()
@@ -616,4 +643,48 @@ func TestGetCertManager_EmptyVersionFallsThrough(t *testing.T) {
 
 	// Should fall through to defaults.
 	assert.Contains(t, yaml, CertManagerCaInjectorImage)
+}
+
+func TestDynamicallyAddVolume(t *testing.T) {
+	volName := "test-volume"
+	vol := acorev1.VolumeApplyConfiguration{
+		Name: &volName,
+	}
+
+	tests := []struct {
+		name    string
+		volumes []acorev1.VolumeApplyConfiguration
+		vol     acorev1.VolumeApplyConfiguration
+		wantLen int
+	}{
+		{
+			name:    "add volume to empty slice",
+			volumes: []acorev1.VolumeApplyConfiguration{},
+			vol:     vol,
+			wantLen: 1,
+		},
+		{
+			name: "add volume to non-empty slice",
+			volumes: []acorev1.VolumeApplyConfiguration{
+				{Name: func() *string { s := "existing-volume"; return &s }()},
+			},
+			vol:     vol,
+			wantLen: 2,
+		},
+		{
+			name: "don't add duplicate volume",
+			volumes: []acorev1.VolumeApplyConfiguration{
+				{Name: func() *string { s := "test-volume"; return &s }()},
+			},
+			vol:     vol,
+			wantLen: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dynamicallyAddVolume(&tt.volumes, tt.vol)
+			assert.Equal(t, tt.wantLen, len(tt.volumes))
+		})
+	}
 }

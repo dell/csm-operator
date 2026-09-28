@@ -266,3 +266,43 @@ func gounityValues(debug, showHTTP string) csmv1.ContainerStorageModule {
 
 	return cr
 }
+
+func TestModifyUnityCRStorageCapacity(t *testing.T) {
+	tests := []struct {
+		name             string
+		cr               csmv1.ContainerStorageModule
+		expectedCapacity string
+	}{
+		{
+			name:             "CSIDriverSpec is nil: should use default true",
+			cr:               csmForUnity("csm"),
+			expectedCapacity: "true",
+		},
+		{
+			name: "CSIDriverSpec present with StorageCapacity true: should output true",
+			cr: func() csmv1.ContainerStorageModule {
+				res := csmForUnity("csm")
+				res.Spec.Driver.CSIDriverSpec = &csmv1.CSIDriverSpec{StorageCapacity: true}
+				return res
+			}(),
+			expectedCapacity: "true",
+		},
+		{
+			name: "CSIDriverSpec present with StorageCapacity false: should output false",
+			cr: func() csmv1.ContainerStorageModule {
+				res := csmForUnity("csm")
+				res.Spec.Driver.CSIDriverSpec = &csmv1.CSIDriverSpec{StorageCapacity: false}
+				return res
+			}(),
+			expectedCapacity: "false",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			yamlString := CsiStorageCapacityEnabled
+			result := ModifyUnityCR(yamlString, tt.cr, "CSIDriverSpec")
+			assert.Equal(t, tt.expectedCapacity, result)
+		})
+	}
+}

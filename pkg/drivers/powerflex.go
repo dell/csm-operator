@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
+	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/logger"
 	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	corev1 "k8s.io/api/core/v1"
@@ -53,6 +54,9 @@ const (
 	// CsiPrefixRenameSdc - String to rename SDC
 	CsiPrefixRenameSdc = "<X_CSI_RENAME_SDC_PREFIX>"
 
+	// CsiTrimSdcNameEnabled - Flag to enable/disable truncation of SDC name to 31 chars
+	CsiTrimSdcNameEnabled = "<X_CSI_TRIM_SDC_NAME_ENABLED>"
+
 	// CsiVxflexosMaxVolumesPerNode - Max volumes that the controller could schedule on a node
 	CsiVxflexosMaxVolumesPerNode = "<X_CSI_MAX_VOLUMES_PER_NODE>"
 
@@ -74,25 +78,19 @@ const (
 	// PowerFlexShowHTTP - will be used to control the GOSCALEIO_SHOWHTTP variable
 	PowerFlexShowHTTP string = "<GOSCALEIO_SHOWHTTP>"
 
-	// PowerFlexShowHTTP - will be used to control the GOSCALEIO_SHOWHTTP variable
+	// PowerFlexSftpRepoAddress - will be used to control the X_CSI_SFTP_REPO_ADDRESS variable
 	PowerFlexSftpRepoAddress string = "<X_CSI_SFTP_REPO_ADDRESS>"
 
-	// PowerFlexShowHTTP - will be used to control the GOSCALEIO_SHOWHTTP variable
+	// PowerFlexSftpRepoUser - will be used to control the X_CSI_SFTP_REPO_USER variable
 	PowerFlexSftpRepoUser string = "<X_CSI_SFTP_REPO_USER>"
 
-	// PowerFlexSdcRepoEnabled - will be used to control the GOSCALEIO_SHOWHTTP variable
+	// PowerFlexSdcRepoEnabled - will be used to control the X_CSI_SDC_SFTP_REPO_ENABLED variable
 	PowerFlexSdcRepoEnabled string = "<X_CSI_SDC_SFTP_REPO_ENABLED>"
 
 	// PowerFlexProbeTimeout - will be used to control the X_CSI_PROBE_TIMEOUT variable
 	PowerFlexProbeTimeout string = "<X_CSI_PROBE_TIMEOUT>"
 
 	PowerFlexAuthType string = "<X_CSI_AUTH_TYPE>"
-
-	// CsiMetricsEnabled - master switch for the shared Prometheus metrics endpoint
-	CsiMetricsEnabled = "<X_CSI_METRICS_ENABLED>"
-
-	// CsiMetricsPort - port for the shared Prometheus metrics endpoint
-	CsiMetricsPort = "<X_CSI_METRICS_PORT>"
 
 	// CsiGatewayMonitoringEnabled - enables PowerFlex Gateway health monitoring
 	CsiGatewayMonitoringEnabled = "<X_CSI_GATEWAY_MONITORING_ENABLED>"
@@ -102,6 +100,12 @@ const (
 
 	// CsiGatewayMonitoringPollInterval - poll interval for gateway monitoring
 	CsiGatewayMonitoringPollInterval = "<X_CSI_GATEWAY_MONITORING_POLL_INTERVAL>"
+
+	// PowerFlexHostDrvCfgPath - will be used to control the HOST_DRV_CFG_PATH variable for SDC configuration
+	PowerFlexHostDrvCfgPath string = "<X_CSI_HOST_DRV_CFG_PATH>"
+
+	// Default Value for SDC drv_cfg path
+	SdcDrvCfgPath = "/opt/emc/scaleio/sdc/bin"
 )
 
 // PrecheckPowerFlex do input validation
@@ -130,16 +134,31 @@ func PrecheckPowerFlex(ctx context.Context, cr *csmv1.ContainerStorageModule, op
 		return err
 	}
 	// Check if driver version is supported by doing a stat on a config file
-	configFilePath := fmt.Sprintf("%s/driverconfig/%s/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, csmv1.PowerFlex, version)
+	configFilePath := fmt.Sprintf("%s/driverconfig/%s/%s/driver-config-params.yaml", operatorConfig.ConfigDirectory, csmv1.PowerFlex, version)
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		log.Errorw("PreCheckPowerFlex failed in version check", "Error", err.Error())
 		return fmt.Errorf("%s %s not supported", csmv1.PowerFlexName, version)
 	}
 
-	// Check if MDM is set in the secret
-	_, err = GetMDMFromSecret(ctx, cr, ct)
-	if err != nil {
-		return err
+	// Check if MDM is set in the secret (required for all versions when SDC is enabled)
+	sdcEnabled := true
+	if cr.Spec.Driver.Node != nil {
+		for _, env := range cr.Spec.Driver.Node.Envs {
+			if env.Name == "X_CSI_SDC_ENABLED" && env.Value == "false" {
+				sdcEnabled = false
+				break
+			}
+		}
+	}
+	if sdcEnabled {
+		mdmVal, err := GetMDMFromSecret(ctx, cr, ct)
+		if err != nil {
+			return err
+		}
+		if mdmVal == "" {
+			secretName := cr.Name + "-config"
+			return fmt.Errorf("precheck: no MDM addresses found in secret [%s]; ensure the 'mdm' field is set for each array entry in the config data", secretName)
+		}
 	}
 
 	// Check that the metrics TLS cert secret exists when provided
@@ -183,7 +202,7 @@ func getVolumeNamePrefix(sideCars []csmv1.ContainerTemplate) string {
 }
 
 func SetSDCinitContainers(ctx context.Context, cr csmv1.ContainerStorageModule, ct client.Client) (csmv1.ContainerStorageModule, error) {
-	mdmVar, _ := GetMDMFromSecret(ctx, &cr, ct)
+	log := logger.GetLogger(ctx)
 
 	// Check if SDC is enabled
 	sdcEnabled := true
@@ -196,70 +215,132 @@ func SetSDCinitContainers(ctx context.Context, cr csmv1.ContainerStorageModule, 
 		}
 	}
 
-	// Update init containers
+	// Get HOST_DRV_CFG_PATH from CR's SDC initContainer
+	hostDrvCfgPath := GetHostDrvCfgPath(cr)
+
+	// Check if this is v1.18.0+ (CSM v2.18.0+) where MDM is no longer injected as env var
+	// For older versions, we maintain backward compatibility by keeping MDM injection
+	skipMDMInjection := false
+	if cr.Spec.Version != "" {
+		// v1.18.0 is the first version where MDM is conveyed via mdm-container (ECS01-634)
+		isV118OrLater, err := operatorutils.MinVersionCheck("v1.18.0", cr.Spec.Version)
+		if err == nil && isV118OrLater {
+			skipMDMInjection = true
+		}
+	}
+
+	// Get MDM from secret for backward compatibility with older versions
+	var mdmVar string
+	if !skipMDMInjection {
+		var err error
+		mdmVar, err = GetMDMFromSecret(ctx, &cr, ct)
+		if err != nil {
+			log.Warnw("Failed to get MDM from secret in SetSDCinitContainers", "error", err)
+		}
+	}
+
 	var newInitContainers []csmv1.ContainerTemplate
 	for _, initcontainer := range cr.Spec.Driver.InitContainers {
 		if initcontainer.Name == "sdc" && sdcEnabled {
-			// Ensure MDM env variable is set
-			mdmUpdated := false
-			for i, env := range initcontainer.Envs {
-				if env.Name == "MDM" {
-					initcontainer.Envs[i].Value = mdmVar
-					mdmUpdated = true
-					break
+			if skipMDMInjection {
+				// v1.18.0+: Filter out MDM env var if present (ECS01-634)
+				// MDM is conveyed via /data/node_mdms.txt written by mdm-container
+				var filteredEnvs []corev1.EnvVar
+				for _, env := range initcontainer.Envs {
+					if env.Name != "MDM" {
+						filteredEnvs = append(filteredEnvs, env)
+					}
+				}
+				initcontainer.Envs = filteredEnvs
+			} else {
+				// Pre-v1.18.0: Maintain backward compatibility - inject MDM from secret
+				mdmUpdated := false
+				for i, env := range initcontainer.Envs {
+					if env.Name == "MDM" {
+						initcontainer.Envs[i].Value = mdmVar
+						mdmUpdated = true
+						break
+					}
+				}
+				if !mdmUpdated && mdmVar != "" {
+					initcontainer.Envs = append(initcontainer.Envs, corev1.EnvVar{
+						Name:  "MDM",
+						Value: mdmVar,
+					})
 				}
 			}
-			// If MDM not found, update it from secret
-			if !mdmUpdated {
-				initcontainer.Envs = append(initcontainer.Envs, corev1.EnvVar{
-					Name:  "MDM",
-					Value: mdmVar,
-				})
+
+			// Update HOST_DRV_CFG_PATH env variable if already set by user
+			for i, env := range initcontainer.Envs {
+				if env.Name == "HOST_DRV_CFG_PATH" {
+					initcontainer.Envs[i].Value = hostDrvCfgPath
+					break
+				}
 			}
 		}
 		newInitContainers = append(newInitContainers, initcontainer)
 	}
 
-	// If there is no init containers and SDC is enabled, add a sdc init container
+	// If there are no init containers and SDC is enabled, add a default sdc init container
 	if len(newInitContainers) == 0 && sdcEnabled {
+		envs := []corev1.EnvVar{
+			{Name: "HOST_DRV_CFG_PATH", Value: hostDrvCfgPath},
+		}
+		// For pre-v1.18.0, also add MDM env var
+		if !skipMDMInjection && mdmVar != "" {
+			envs = append([]corev1.EnvVar{{Name: "MDM", Value: mdmVar}}, envs...)
+		}
 		newInitContainers = append(newInitContainers, csmv1.ContainerTemplate{
 			Name: "sdc",
-			Envs: []corev1.EnvVar{{Name: "MDM", Value: mdmVar}},
+			Envs: envs,
 		})
 	}
 	cr.Spec.Driver.InitContainers = newInitContainers
 
-	// Update sidecar containers
-	for i := range cr.Spec.Driver.SideCars {
-		if cr.Spec.Driver.SideCars[i].Name == "sdc-monitor" {
-			// Ensure MDM env variable is set
-			mdmUpdated := false
-			for j, env := range cr.Spec.Driver.SideCars[i].Envs {
-				if env.Name == "MDM" {
-					cr.Spec.Driver.SideCars[i].Envs[j].Value = mdmVar
-					mdmUpdated = true
-					break
+	// Handle sdc-monitor sidecar
+	var newSideCars []csmv1.ContainerTemplate
+	for _, sidecar := range cr.Spec.Driver.SideCars {
+		if sidecar.Name == "sdc-monitor" {
+			if skipMDMInjection {
+				// v1.18.0+: Filter out MDM env var if present (ECS01-634)
+				var filteredEnvs []corev1.EnvVar
+				for _, env := range sidecar.Envs {
+					if env.Name != "MDM" {
+						filteredEnvs = append(filteredEnvs, env)
+					}
+				}
+				sidecar.Envs = filteredEnvs
+			} else {
+				// Pre-v1.18.0: Maintain backward compatibility - inject MDM from secret
+				mdmUpdated := false
+				for i, env := range sidecar.Envs {
+					if env.Name == "MDM" {
+						sidecar.Envs[i].Value = mdmVar
+						mdmUpdated = true
+						break
+					}
+				}
+				if !mdmUpdated && mdmVar != "" {
+					sidecar.Envs = append(sidecar.Envs, corev1.EnvVar{
+						Name:  "MDM",
+						Value: mdmVar,
+					})
 				}
 			}
-			// If MDM not found, update it from secret
-			if !mdmUpdated {
-				cr.Spec.Driver.SideCars[i].Envs = append(cr.Spec.Driver.SideCars[i].Envs, corev1.EnvVar{
-					Name:  "MDM",
-					Value: mdmVar,
-				})
-			}
 		}
+		newSideCars = append(newSideCars, sidecar)
 	}
 
-	// If no sidecars are present, add a new "sdc-monitor" sidecar with MDM
-	if len(cr.Spec.Driver.SideCars) == 0 {
-		cr.Spec.Driver.SideCars = []csmv1.ContainerTemplate{
+	// For pre-v1.18.0: If no sidecars are present, add sdc-monitor with MDM
+	if !skipMDMInjection && len(cr.Spec.Driver.SideCars) == 0 && mdmVar != "" {
+		newSideCars = []csmv1.ContainerTemplate{
 			{
 				Name: "sdc-monitor",
 				Envs: []corev1.EnvVar{{Name: "MDM", Value: mdmVar}},
 			},
 		}
 	}
+	cr.Spec.Driver.SideCars = newSideCars
 
 	return cr, nil
 }
@@ -355,17 +436,17 @@ func ValidateIPAddress(ipAdd string) (string, bool) {
 	if len(trimIP) < 1 {
 		return "", false
 	}
-	newIP := ""
+	validIPs := make([]string, 0, len(trimIP))
 	for i := range trimIP {
 		trimIP[i] = strings.TrimSpace(trimIP[i])
 		istrueip := IsIpv4Regex(trimIP[i])
 		if istrueip {
-			newIP = strings.Join(trimIP[:], ",")
+			validIPs = append(validIPs, trimIP[i])
 		} else {
-			return newIP, false
+			return "", false
 		}
 	}
-	return newIP, true
+	return strings.Join(validIPs, ","), true
 }
 
 var ipRegex, _ = regexp.Compile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
@@ -375,12 +456,30 @@ func IsIpv4Regex(ipAddress string) bool {
 	return ipRegex.MatchString(ipAddress)
 }
 
+// GetHostDrvCfgPath - Get HOST_DRV_CFG_PATH from CR's SDC initContainer
+// Returns the configured path from the CR or the default path if not configured
+func GetHostDrvCfgPath(cr csmv1.ContainerStorageModule) string {
+	// Get HOST_DRV_CFG_PATH from SDC initContainer (always provided in CR)
+	for _, initContainer := range cr.Spec.Driver.InitContainers {
+		if initContainer.Name == "sdc" {
+			for _, env := range initContainer.Envs {
+				if env.Name == "HOST_DRV_CFG_PATH" && env.Value != "" {
+					return env.Value
+				}
+			}
+		}
+	}
+	// Default value if not configured
+	return SdcDrvCfgPath
+}
+
 // ModifyPowerflexCR - Set environment variables provided in CR
 func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileType string) string {
 	sdcEnabled := "true"
 	approveSdcEnabled := ""
 	renameSdcEnabled := ""
 	renameSdcPrefix := ""
+	trimSdcNameEnabled := ""
 	maxVolumesPerNode := ""
 	storageCapacity := "false"
 	enableQuota := ""
@@ -392,6 +491,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	sftpRepoAddress := "sftp://0.0.0.0"
 	sftpRepoUser := ""
 	sftpEnabled := ""
+	hostDrvCfgPath := GetHostDrvCfgPath(cr)
 	probeTimeout := "10s"
 	authType := ""
 
@@ -423,6 +523,8 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 	// Metrics configuration
 	metricsEnabled := "false"
 	metricsPort := "9090"
+	metricsTLSCertFile := ""
+	metricsTLSKeyFile := ""
 	gwMonitoringEnabled := "false"
 	gwMonitoringLeaderElection := "true"
 	gwMonitoringPollInterval := "30s"
@@ -433,6 +535,12 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		if cr.Spec.Driver.Metrics.Port != 0 {
 			metricsPort = fmt.Sprintf("%d", cr.Spec.Driver.Metrics.Port)
 		}
+		// TLS configuration
+		if isDriverMetricsTLSEnabled(cr) {
+			metricsTLSCertFile = "/etc/metrics-tls/tls.crt"
+			metricsTLSKeyFile = "/etc/metrics-tls/tls.key"
+		}
+		// Gateway monitoring (PowerFlex specific)
 		if cr.Spec.Driver.Metrics.GatewayMonitoring != nil {
 			gm := cr.Spec.Driver.Metrics.GatewayMonitoring
 			if cr.Spec.Driver.Metrics.Enabled && gm.Enabled {
@@ -467,8 +575,10 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexShowHTTP, showHTTP)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexProbeTimeout, probeTimeout)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexAuthType, authType)
-		yamlString = strings.ReplaceAll(yamlString, CsiMetricsEnabled, metricsEnabled)
-		yamlString = strings.ReplaceAll(yamlString, CsiMetricsPort, metricsPort)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsEnabled, metricsEnabled)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsPort, metricsPort)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsTLSCertFile, metricsTLSCertFile)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsTLSKeyFile, metricsTLSKeyFile)
 		yamlString = strings.ReplaceAll(yamlString, CsiGatewayMonitoringEnabled, gwMonitoringEnabled)
 		yamlString = strings.ReplaceAll(yamlString, CsiGatewayMonitoringLeaderElection, gwMonitoringLeaderElection)
 		yamlString = strings.ReplaceAll(yamlString, CsiGatewayMonitoringPollInterval, gwMonitoringPollInterval)
@@ -487,6 +597,9 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 				}
 				if env.Name == "X_CSI_RENAME_SDC_PREFIX" {
 					renameSdcPrefix = env.Value
+				}
+				if env.Name == "X_CSI_TRIM_SDC_NAME_ENABLED" {
+					trimSdcNameEnabled = env.Value
 				}
 				if env.Name == "X_CSI_MAX_VOLUMES_PER_NODE" {
 					maxVolumesPerNode = env.Value
@@ -509,6 +622,7 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, CsiApproveSdcEnabled, approveSdcEnabled)
 		yamlString = strings.ReplaceAll(yamlString, CsiRenameSdcEnabled, renameSdcEnabled)
 		yamlString = strings.ReplaceAll(yamlString, CsiPrefixRenameSdc, renameSdcPrefix)
+		yamlString = strings.ReplaceAll(yamlString, CsiTrimSdcNameEnabled, trimSdcNameEnabled)
 		yamlString = strings.ReplaceAll(yamlString, CsiVxflexosMaxVolumesPerNode, maxVolumesPerNode)
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
 		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
@@ -517,8 +631,13 @@ func ModifyPowerflexCR(yamlString string, cr csmv1.ContainerStorageModule, fileT
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexSftpRepoAddress, sftpRepoAddress)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexSftpRepoUser, sftpRepoUser)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexSdcRepoEnabled, sftpEnabled)
+		yamlString = strings.ReplaceAll(yamlString, PowerFlexHostDrvCfgPath, hostDrvCfgPath)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexProbeTimeout, probeTimeout)
 		yamlString = strings.ReplaceAll(yamlString, PowerFlexAuthType, authType)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsEnabled, metricsEnabled)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsPort, metricsPort)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsTLSCertFile, metricsTLSCertFile)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsTLSKeyFile, metricsTLSKeyFile)
 
 		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckEnabled, fsckEnabled)
 		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckMode, fsckMode)

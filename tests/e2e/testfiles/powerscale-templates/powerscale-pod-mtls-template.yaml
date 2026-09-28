@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pscale-pvc-mtls
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: isilon-mtls
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pscale-pod-mtls
+spec:
+  containers:
+    - name: test-container
+      image: busybox:latest
+      command: ["/bin/sh"]
+      args: ["-c", "while true; do echo 'mTLS mount test' > /data/test.txt && cat /data/test.txt && sleep 30; done"]
+      volumeMounts:
+        - name: pscale-vol
+          mountPath: /data
+  volumes:
+    - name: pscale-vol
+      persistentVolumeClaim:
+        claimName: pscale-pvc-mtls
+  restartPolicy: Always

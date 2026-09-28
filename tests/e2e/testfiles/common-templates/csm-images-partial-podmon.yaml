@@ -1,3 +1,5 @@
+# Version numbers (v1.18.0, etc.) are NOT dynamic.
+# These must be manually updated when release versions change.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -5,6 +7,6 @@ metadata:
   namespace: dell-csm-operator
 data:
   versions.yaml: |
-    - version: v1.16.1
+    - version: v1.18.0
       images:
         podmon: quay.io/dell/container-storage-modules/podmon:nightly

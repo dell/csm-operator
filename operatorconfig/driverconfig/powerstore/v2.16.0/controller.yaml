@@ -255,14 +255,30 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/run/csi
+        - name: csi-metadata-retriever
+          image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.13.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--timeout=120s"
+            - "--v=5"
+            - "--leader-election"
+            - "--leader-election-renew-deadline=10s"
+            - "--leader-election-lease-duration=15s"
+            - "--leader-election-retry-period=5s"
+          command: ["/csi-metadata-retriever"]
+          env:
+            - name: ADDRESS
+              value: /var/run/csi/csi.sock
+            - name: CSI_RETRIEVER_ENDPOINT
+              value: /var/run/csi/csi_retriever.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/run/csi
         - name: driver
           image: quay.io/dell/container-storage-modules/csi-powerstore:v2.16.0
           imagePullPolicy: IfNotPresent
-          command:
-            - sh
-            - -c
-            - |
-              sleep 20 && /csi-powerstore
+          command: ["/csi-powerstore"]
           args:
             - "--array-config=/powerstore-config/config"
             - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
@@ -271,6 +287,8 @@ spec:
               value:
             - name: CSI_ENDPOINT
               value: /var/run/csi/csi.sock
+            - name: CSI_RETRIEVER_ENDPOINT
+              value: /var/run/csi/csi_retriever.sock
             - name: SSL_CERT_DIR
               value: /certs
             - name: X_CSI_MODE

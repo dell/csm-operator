@@ -1,0 +1,847 @@
+#
+#
+# Copyright © 2023-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#      http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: powerstore
+  namespace: powerstore
+spec:
+  version: v1.18.0
+  driver:
+    csiDriverType: "powerstore"
+    csiDriverSpec:
+      # in OCP <= 4.16 and K8s <= 1.29, fsGroupPolicy is an immutable field
+      # fsGroupPolicy: Defines if the underlying volume supports changing ownership and permission of the volume before being mounted.
+      # Allowed values: ReadWriteOnceWithFSType, File , None
+      # Default value: ReadWriteOnceWithFSType
+      fSGroupPolicy: "ReadWriteOnceWithFSType"
+      # storageCapacity: Helps the scheduler to schedule the pod on a node satisfying the topology constraints, only if the requested capacity is available on the storage array
+      # Allowed values:
+      #   true: enable storage capacity tracking
+      #   false: disable storage capacity tracking
+      storageCapacity: true
+    # authSecret: This is the secret used to validate the default PowerStore secret used for installation
+    # Allowed values: <metadataName specified in the Manifest>-config
+    # For example: If the metadataName is set to powerstore, authSecret value should be set to powerstore-config
+    authSecret: powerstore-config
+    # IPv6 Endpoint Configuration:
+    # When configuring PowerStore array endpoints in the secret, IPv6 addresses must be bracketed.
+    # IPv4 examples: https://10.0.0.1/api/rest, https://my-array.example.com/api/rest
+    # IPv6 examples: https://[2001:db8::1]/api/rest, https://[2001:db8::1]:443/api/rest
+    # Portless IPv6 endpoints will default to port 443 (e.g., https://[2001:db8::1] defaults to https://[2001:db8::1]:443)
+    # Controller count
+    # Allowed values: n, where n > 0
+    # Default value: 2
+    replicas: 2
+    dnsPolicy: ClusterFirstWithHostNet
+    forceRemoveDriver: true
+    common:
+      imagePullPolicy: IfNotPresent
+      envs:
+        - name: X_CSI_POWERSTORE_NODE_NAME_PREFIX
+          value: "csi-node"
+        - name: X_CSI_FC_PORTS_FILTER_FILE_PATH
+          value: "/etc/fc-ports-filter"
+        # Specify kubelet config dir path.
+        # Ensure that the config.yaml file is present at this path.
+        # Default value: /var/lib/kubelet
+        - name: KUBELET_CONFIG_DIR
+          value: /var/lib/kubelet
+        - name: CSI_LOG_LEVEL
+          value: info
+        # CSI driver log format
+        # Allowed values: "text" or "json"
+        # Default value: "json"
+        - name: CSI_LOG_FORMAT
+          value: json
+        # GOPOWERSTORE_DEBUG: Enable/disable debug logs from gopowerstore library.
+        # Default value: false
+        - name: "GOPOWERSTORE_DEBUG"
+          value: "false"
+        # CERT_SECRET_COUNT: Represents number of certificate secrets, which user is going to create for
+        # ssl authentication. (powerstore-cert-0..powerstore-cert-n)
+        # This field is only verified if X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION is set to false
+        # Allowed values: n, where n > 0
+        # Default value: None
+        - name: CERT_SECRET_COUNT
+          value: "1"
+        # X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION: Specifies if the driver is going to validate certs.
+        # If it is set to false, then a secret powerstore-certs has to be created with an X.509 certificate of CA which signed the certificate.
+        # Allowed values:
+        #   true: skip certificate verification
+        #   false: verify certificates
+        # Default value: true
+        - name: X_CSI_POWERSTORE_SKIP_CERTIFICATE_VALIDATION
+          value: "true"
+        # X_CSI_POWERSTORE_API_TIMEOUT: Defines the timeout for PowerStore REST API calls.
+        # Allowed values: Number followed by unit (s,m,h)
+        # Examples: 10s, 1m, 1h
+        # Default value: 120s
+        - name: X_CSI_POWERSTORE_API_TIMEOUT
+          value: "120s"
+        # X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT: Defines the timeout (in seconds) for podmon array connectivity timeout check
+        # Allowed values: Number followed by unit (s,m,h)
+        # Examples: 10s, 1m, 1h
+        # Default value: 10s
+        - name: "X_CSI_PODMON_ARRAY_CONNECTIVITY_TIMEOUT"
+          value: "10s"
+        # X_CSM_DR_ENABLED: Enable/Disable CSM Disaster Recovery.
+        # Allowed values:
+        #   true: enable CSM Disaster Recovery
+        #   false: disable CSM Disaster Recovery
+        # Default value: true
+        - name: "X_CSM_DR_ENABLED"
+          value: "true"
+        # X_CSM_DR_BIND_PORT: Bind port for CSM-DR controller initialization.
+        # Allowed values: valid port number (e.g., "8082")
+        # Default value: "8082"
+        - name: "X_CSM_DR_BIND_PORT"
+          value: "8082"
+        # X_CSI_ALERT_MONITOR_ENABLED: Enable/Disable the alert monitor service that polls PowerStore for volume alerts.
+        # When enabled, the monitor service queries PowerStore for alerts and records them as Kubernetes events on PersistentVolumes.
+        # Allowed values:
+        #   true: enable alert monitor service
+        #   false: disable alert monitor service
+        # Default value: true
+        - name: X_CSI_ALERT_MONITOR_ENABLED
+          value: "true"
+        # X_CSI_ALERT_MONITOR_POLL_INTERVAL: Defines the polling interval for the alert monitor service.
+        # Allowed values: Number followed by unit (s,m,h)
+        # Examples: 30s, 1m, 5m
+        # Default value: 5m
+        - name: X_CSI_ALERT_MONITOR_POLL_INTERVAL
+          value: "5m"
+        # X_CSI_FS_CHECK_ENABLED: Enable/Disable automatic file system check before mount.
+        # Allowed values:
+        #   true: enable file system check
+        #   false: disable file system check
+        # Default value: false
+        - name: X_CSI_FS_CHECK_ENABLED
+          value: "false"
+        # X_CSI_FS_CHECK_MODE: Controls the file system check mode.
+        # Allowed values: "checkOnly", "checkAndRepair"
+        # Default value: "checkOnly"
+        - name: X_CSI_FS_CHECK_MODE
+          value: "checkOnly"
+        # X_CSI_SPACE_RECLAMATION_ENABLED: Enable/Disable space reclamation
+        # Allowed values:
+        #    true: enable space reclamation.
+        #    false: disable space reclamation.
+        # Default value: false
+        - name: X_CSI_SPACE_RECLAMATION_ENABLED
+          value: "false"
+        # X_CSI_SPACE_RECLAMATION_SCHEDULE: Cron expression for reclamation schedule
+        - name: X_CSI_SPACE_RECLAMATION_SCHEDULE
+          value: "0 2 * * 0"
+        # X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT: Max number of concurrent reclamation operations per node
+        - name: X_CSI_SPACE_RECLAMATION_MAX_CONCURRENT
+          value: "2"
+        # X_CSI_SPACE_RECLAMATION_TIMEOUT: TimeOut in Seconds
+        - name: X_CSI_SPACE_RECLAMATION_TIMEOUT
+          value: "14400"
+        # X_CSI_CSIADDONS_REPLICATION_ENABLED: Enable/Disable CSI Addons replication
+        # Allowed values:
+        #   "true"  - Enable CSI Addons replication
+        #   "false" - Disable CSI Addons replication
+        # Default value: "false"
+        - name: X_CSI_CSIADDONS_REPLICATION_ENABLED
+          value: "false"
+    sideCars:
+      # 'csivol' represents a string prepended to each volume created by the CSI driver
+      - name: provisioner
+        args: ["--volume-name-prefix=csivol"]
+      # health monitor is disabled by default, refer to driver documentation before enabling it
+      - name: external-health-monitor
+        enabled: false
+        args:
+          - "--monitor-interval=60s"
+          - "--http-endpoint=:8080"
+      - name: snapshotter
+        args: ["--feature-gates=CSIVolumeGroupSnapshot=false"]
+    # metrics: Configure driver metrics endpoint
+    # The operator automatically wires the TLS secret and creates Service/ServiceMonitor/PodMonitor resources.
+    metrics:
+      # enabled: Enable/Disable driver metrics endpoint
+      # Allowed values: true, false
+      # Default value: false
+      enabled: false
+      # port: Port used by driver metrics endpoint
+      # Allowed values: 1-65535
+      # Default value: 8443
+      port: 8443
+      # tlsCertSecret: Name of a Kubernetes TLS Secret (tls.crt / tls.key) used to serve metrics over HTTPS.
+      # When set the operator mounts the secret and configures HTTPS automatically.
+      # Leave unset to serve metrics over plain HTTP.
+      tlsCertSecret: ""
+      # leaderElection: Configure leader election for array-level metrics collection.
+      # Only the leader controller will collect array-level metrics to avoid duplicate API calls.
+      leaderElection:
+        # enabled: Enable leader election for array-level metrics collection
+        # Allowed values: true, false
+        # Default value: false
+        enabled: false
+        # leaseDuration: Duration that non-leader candidates will wait to acquire the lease
+        # Allowed values: Go duration string (e.g., 60s, 1m)
+        # Default value: 60s
+        leaseDuration: 60s
+        # renewDeadline: Duration that the acting leader will retry refreshing leadership before giving up
+        # Allowed values: Go duration string (e.g., 40s, 1m)
+        # Default value: 40s
+        renewDeadline: 40s
+        # retryPeriod: Duration the LeaderElector clients should wait between tries of actions
+        # Allowed values: Go duration string (e.g., 5s, 10s)
+        # Default value: 5s
+        retryPeriod: 5s
+      # collection: Controls metrics collection cadence and cache behavior inside the driver.
+      # cacheTTL must be greater than array.circuitBreaker.resetTimeout to prevent serving empty data.
+      collection:
+        # interval: How frequently metrics are collected from the array
+        # Allowed values: Go duration string (e.g., 30s, 1m)
+        # Default value: 30s
+        interval: 30s
+        # cacheTTL: How long collected metric responses are cached
+        # Allowed values: Go duration string (e.g., 25s, 1m)
+        # Default value: 25s
+        cacheTTL: 25s
+      # array: Controls array-facing metrics collection request behavior.
+      array:
+        # rateLimit: Max allowed PowerStore API requests per second during metrics collection
+        # Allowed values: Positive integer
+        # Default value: 100
+        rateLimit: 100
+        # timeout: Per-request timeout for PowerStore API calls made during metrics collection
+        # Allowed values: Go duration string (e.g., 30s, 1m)
+        # Default value: 30s
+        timeout: 30s
+        circuitBreaker:
+          # threshold: Number of consecutive failures before the circuit opens
+          # Allowed values: Positive integer
+          # Default value: 3
+          threshold: 3
+          # resetTimeout: How long the circuit stays open before allowing a test request (half-open)
+          # Allowed values: Go duration string (e.g., 30s, 1m)
+          # Default value: 30s
+          resetTimeout: 30s
+      # serviceMonitor: Creates a Prometheus Operator ServiceMonitor targeting the controller pods.
+      serviceMonitor:
+        # enabled: Enable/Disable ServiceMonitor for driver metrics
+        # Allowed values: true, false
+        # Default value: false
+        enabled: false
+        # interval: Interval at which metrics should be scraped
+        # Allowed values: Go duration string (e.g., 30s, 1m)
+        # Default value: 30s
+        interval: 30s
+        # scrapeTimeout: Timeout after which the scrape is ended
+        # Allowed values: Go duration string (e.g., 10s)
+        # Default value: ""
+        scrapeTimeout: ""
+        # insecureSkipVerify: Skip TLS verification when scraping metrics endpoint
+        # Allowed values: true, false
+        # Default value: false
+        insecureSkipVerify: false
+      # podMonitor: Creates a Prometheus Operator PodMonitor targeting the node pods.
+      podMonitor:
+        # enabled: Enable/Disable PodMonitor for driver metrics
+        # Allowed values: true, false
+        # Default value: false
+        enabled: false
+        # interval: Interval at which metrics should be scraped
+        # Allowed values: Go duration string (e.g., 30s, 1m)
+        # Default value: 30s
+        interval: 30s
+        # scrapeTimeout: Timeout after which the scrape is ended
+        # Allowed values: Go duration string (e.g., 10s)
+        # Default value: ""
+        scrapeTimeout: ""
+        # insecureSkipVerify: Skip TLS verification when scraping metrics endpoint
+        # Allowed values: true, false
+        # Default value: false
+        insecureSkipVerify: false
+      # prometheusRule: Creates a Prometheus Operator PrometheusRule with alert rules for driver metrics.
+      prometheusRule:
+        # enabled: Enable/Disable PrometheusRule for driver alerts
+        # Allowed values: true, false
+        # Default value: true (auto-deploys alert rules when metrics is enabled)
+        enabled: true
+        # applianceWarningThreshold: Whole-percent appliance utilization threshold that triggers a warning alert
+        # Allowed values: 0-100
+        # Default value: 80
+        applianceWarningThreshold: 80
+        # applianceCriticalThreshold: Whole-percent appliance utilization threshold that triggers a critical alert
+        # Allowed values: 0-100
+        # Default value: 90
+        applianceCriticalThreshold: 90
+        # apiErrorRateThreshold: Whole-percent API error threshold that triggers an alert
+        # Allowed values: 0-100
+        # Default value: 10
+        apiErrorRateThreshold: 10
+        # apiErrorRateWindow: Lookback window used when evaluating the API error ratio alert expression
+        # Allowed values: Go duration string (e.g., 5m, 10m)
+        # Default value: 5m
+        apiErrorRateWindow: 5m
+        # cpuWarningThreshold: Whole-percent CPU utilization threshold that triggers a warning alert for driver pods
+        # Allowed values: 0-100
+        # Default value: 80
+        cpuWarningThreshold: 80
+        # memoryWarningThreshold: Memory usage threshold in bytes that triggers a warning alert for driver pods
+        # Allowed values: Positive integer (bytes)
+        # Default value: 2147483648 (2Gi)
+        memoryWarningThreshold: 2147483648
+        # driverCrashLoopRestartThreshold: Restart count threshold used to detect crash looping within the configured window
+        # Allowed values: Positive integer
+        # Default value: 3
+        driverCrashLoopRestartThreshold: 3
+        # driverCrashLoopWindow: Lookback window used when evaluating the crash loop restart count
+        # Allowed values: Go duration string (e.g., 10m, 15m)
+        # Default value: 15m
+        driverCrashLoopWindow: 15m
+        # volumeOperationFailureThreshold: Minimum number of volume operation failures in a 5-minute window
+        # that triggers a warning alert (PST-01 to PST-08). Set to 0 to alert on any single failure.
+        # Allowed values: Non-negative integer
+        # Default value: 3
+        volumeOperationFailureThreshold: 3
+    # Uncomment the following to configure how often external-provisioner polls the driver to detect changed capacity
+    # Configure only when the storageCapacity is set as "true"
+    # Allowed values: 1m,2m,3m,...,10m,...,60m etc. Default value: 5m
+    # - name: provisioner
+    #  args: ["--capacity-poll-interval=5m"]
+
+    controller:
+      envs:
+        # X_CSI_MULTI_NAS_FAILURE_THRESHOLD: Number of consecutive FS creation failures after which a NAS is put into cooldown.
+        # If a NAS is in cooldown, it will not be considered for new FS creation attempts for cooldown period amount of time.
+        # Allowed values: n, where n >= 0
+        # Default value: "5"
+        - name: X_CSI_MULTI_NAS_FAILURE_THRESHOLD
+          value: "5"
+        # X_CSI_MULTI_NAS_COOLDOWN_PERIOD: Duration for which a NAS remains in cooldown once the threshold is reached.
+        # During this period, the NAS will not be considered for new FS creation attempts.
+        # Allowed values: Number followed by unit (s,m,h) e.g. 60s,1m,2m,3m,...,1h etc
+        # Default value: "5m"
+        - name: X_CSI_MULTI_NAS_COOLDOWN_PERIOD
+          value: "5m"
+        # X_CSI_NFS_ACLS: enables setting permissions on NFS mount directory
+        # This value will be the default value if a storage class and array config in secret
+        # do not contain the NFS ACL (nfsAcls) parameter specified
+        # Permissions can be specified in two formats:
+        #   1) Unix mode (NFSv3)
+        #   2) NFSv4 ACLs (NFSv4)
+        #      NFSv4 ACLs are supported on NFSv4 share only.
+        # Allowed values:
+        #   1) Unix mode: valid octal mode number
+        #      Examples: "0777", "777", "0755"
+        #   2) NFSv4 acls: valid NFSv4 acls, seperated by comma
+        #      Examples: "A::OWNER@:RWX,A::GROUP@:RWX", "A::OWNER@:rxtncy"
+        # Optional: true
+        # Default value: "0777"
+        # nfsAcls: "0777"
+        - name: X_CSI_NFS_ACLS
+          value: "0777"
+        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from Controller plugin - volume condition.
+        # Install the 'external-health-monitor' sidecar accordingly.
+        # Allowed values:
+        #   true: enable checking of health condition of CSI volumes
+        #   false: disable checking of health condition of CSI volumes
+        # Default value: false
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
+        # X_CSI_POWERSTORE_EXTERNAL_ACCESS: Allows to specify additional entries for hostAccess of NFS volumes. Both single IP address and subnet are valid entries.
+        # Allowed Values: x.x.x.x/xx, x.x.x.x, fd00::/64, or <IPv6_ADDRESS>/128
+        # Default Value:
+        - name: X_CSI_POWERSTORE_EXTERNAL_ACCESS
+          value:
+        # X_CSI_POWERSTORE_EXCLUSIVE_ACCESS: controls whether only X_CSI_POWERSTORE_EXTERNAL_ACCESS entries are added to the NFS export.
+        # If set to true → only IP/CIDR specified in X_CSI_POWERSTORE_EXTERNAL_ACCESS will be included (node IP excluded).
+        # If set to false (default) → both node IP and X_CSI_POWERSTORE_EXTERNAL_ACCESS entry will be added to the export.
+        # Default Value: "false"
+        - name: X_CSI_POWERSTORE_EXCLUSIVE_ACCESS
+          value: "false"
+        # X_CSI_POWERSTORE_NFS_AUTO_SELECT: enables NFS source IP auto-discovery via kernel routing query (ER-K8S-JA18622-001-powerstore-nfs-auto-selection).
+        # When enabled, the driver discovers which node IP can reach the NAS server's file interface
+        # and automatically adds it to the NFS export, eliminating the need for manual host configuration.
+        # When exclusiveAccess is true, nfsAutoSelect is ignored (exclusiveAccess takes precedence).
+        # Default Value: "false"
+        - name: X_CSI_POWERSTORE_NFS_AUTO_SELECT
+          value: "false"
+      # nodeSelector: Define node selection constraints for controller pods.
+      # For the pod to be eligible to run on a node, the node must have each
+      # of the indicated key-value pairs as labels.
+      # Leave as blank to consider all nodes
+      # Allowed values: map of key-value pairs
+      # Default value: None
+      nodeSelector:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      #  node-role.kubernetes.io/control-plane: ""
+
+      # tolerations: Define tolerations for the controllers, if required.
+      # Leave as blank to install controller on worker nodes
+      # Default value: None
+      tolerations:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      # - key: "node-role.kubernetes.io/control-plane"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+    node:
+      envs:
+        # Set to "true" to enable ISCSI CHAP Authentication
+        # CHAP password will be autogenerated by driver
+        - name: "X_CSI_POWERSTORE_ENABLE_CHAP"
+          value: "false"
+        # X_CSI_POWERSTORE_NFS_AUTO_SELECT: enables NFS source IP auto-discovery via kernel routing query (ER-K8S-JA18622-001-powerstore-nfs-auto-selection).
+        # When enabled, the driver discovers which node IP can reach the NAS server's file interface
+        # and automatically adds it to the NFS export, eliminating the need for manual host configuration.
+        # When exclusiveAccess is true, nfsAutoSelect is ignored (exclusiveAccess takes precedence).
+        # Default Value: "false"
+        - name: X_CSI_POWERSTORE_NFS_AUTO_SELECT
+          value: "false"
+        # X_CSI_HEALTH_MONITOR_ENABLED: Enable/Disable health monitor of CSI volumes from node plugin - volume usage
+        # Allowed values:
+        #   true: enable checking of health condition of CSI volumes
+        #   false: disable checking of health condition of CSI volumes
+        # Default value: false
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
+        # X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE: Defines the maximum PowerStore volumes that can be created per node
+        # Allowed values: Any value greater than or equal to 0
+        # Default value: "0"
+        - name: X_CSI_POWERSTORE_MAX_VOLUMES_PER_NODE
+          value: "0"
+        # X_CSI_VOLUME_DISCONNECT_MAX_RETRIES: Defines the maximum number of retry attempts for volume disconnection.
+        # Allowed values: Positive integers
+        # Optional: true
+        # Examples: 3, 5, 10
+        # Default value: 5
+        - name: X_CSI_VOLUME_DISCONNECT_MAX_RETRIES
+          value: "5"
+        # X_CSI_VOLUME_DISCONNECT_RETRY_INTERVAL: Defines the wait time between volume disconnection retries.
+        # Allowed values: Number followed by unit (s, m, h)
+        # Optional: true
+        # Examples: 5s, 30s, 1m
+        # Default value: 5s
+        - name: X_CSI_VOLUME_DISCONNECT_RETRY_INTERVAL
+          value: "5s"
+        # X_CSI_VOLUME_DISCONNECT_TIMEOUT_SECONDS: Defines the timeout duration for each volume disconnection attempt.
+        # Allowed values: Number followed by unit (s, m, h)
+        # Optional: true
+        # Examples: 60s, 2m, 1h
+        # Default value: 120s
+        - name: X_CSI_VOLUME_DISCONNECT_TIMEOUT_SECONDS
+          value: "120s"
+      # nodeSelector: Define node selection constraints for node pods.
+      # For the pod to be eligible to run on a node, the node must have each
+      # of the indicated key-value pairs as labels.
+      # Leave as blank to consider all nodes
+      # Allowed values: map of key-value pairs
+      # Default value: None
+      nodeSelector:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      #  node-role.kubernetes.io/control-plane: ""
+
+      # tolerations: Define tolerations for the controllers, if required.
+      # Leave as blank to install controller on worker nodes
+      # Default value: None
+      tolerations:
+      # Uncomment if nodes you wish to use have the node-role.kubernetes.io/control-plane taint
+      # - key: "node-role.kubernetes.io/control-plane"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+      # Uncomment if CSM for Resiliency and CSI Driver pods monitor is enabled
+      # - key: "offline.powerstore.storage.dell.com"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+      # - key: "powerstore.podmon.storage.dell.com"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
+  modules:
+    # Authorization: enable csm-authorization for RBAC
+    - name: authorization
+      # enable: Enable/Disable csm-authorization
+      # Default value: false
+      enabled: false
+      components:
+        - name: karavi-authorization-proxy
+          envs:
+            # proxyHost: hostname of the csm-authorization server
+            # Default value: none
+            - name: "PROXY_HOST"
+              value: "csm-authorization.com"
+            # skipCertificateValidation: Enable/Disable certificate validation of the csm-authorization server
+            # Default value: "true"
+            - name: "SKIP_CERTIFICATE_VALIDATION"
+              value: "true"
+    - name: resiliency
+      # enabled: Enable/Disable Resiliency feature
+      # Allowed values:
+      #   true: enable Resiliency feature(deploy podmon sidecar)
+      #   false: disable Resiliency feature(do not deploy podmon sidecar)
+      # Default value: false
+      enabled: false
+      components:
+        - name: podmon-controller
+          imagePullPolicy: IfNotPresent
+          # Metrics environment variables will be set dynamically based on the metrics section below
+          args:
+            - "--labelvalue=csi-powerstore"
+            - "--arrayConnectivityPollRate=60"
+            - "--skipArrayConnectionValidation=false"
+            - "--driverPodLabelValue=dell-storage"
+            - "--ignoreVolumelessPods=false"
+            - "--arrayConnectivityConnectionLossThreshold=3"
+            # Below 4 args should not be modified.
+            - "--csisock=unix:/var/run/csi/csi.sock"
+            - "--mode=controller"
+            - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
+            - "--driverPath=csi-powerstore.dellemc.com"
+        - name: podmon-node
+          imagePullPolicy: IfNotPresent
+          envs:
+            # podmonAPIPort: Defines the port to be used within the kubernetes cluster
+            # Allowed values: Any valid and free port (string)
+            # Default value: 8083
+            - name: "X_CSI_PODMON_API_PORT"
+              value: "8083"
+              # podmonAPIToken: Shared secret token for authenticating podmon API requests
+              # Security note: podmon API uses HTTP; use this only on trusted cluster-internal networks.
+              # Example (literal value):
+              # - name: "X_CSI_PODMON_API_TOKEN"
+              #   value: "<strong-random-token>"
+              # Note: valueFrom.secretKeyRef is not currently supported for this token
+          # Metrics environment variables will be set dynamically based on the metrics section below
+          args:
+            - "--labelvalue=csi-powerstore"
+            - "--arrayConnectivityPollRate=60"
+            - "--leaderelection=false"
+            - "--driverPodLabelValue=dell-storage"
+            - "--ignoreVolumelessPods=false"
+            # Below 4 args should not be modified.
+            - "--csisock=unix:/var/lib/kubelet/plugins/csi-powerstore.dellemc.com/csi_sock"
+            - "--mode=node"
+            - "--driver-config-params=/powerstore-config-params/driver-config-params.yaml"
+            - "--driverPath=csi-powerstore.dellemc.com"
+      # metrics: Configure resiliency module metrics endpoint
+      # The operator automatically creates Service/ServiceMonitor/PodMonitor resources for podmon metrics.
+      metrics:
+        # enabled: Enable/Disable resiliency module metrics endpoint
+        # Allowed values: true, false
+        # Default value: false
+        enabled: false
+        # port: Port used by resiliency module metrics endpoint
+        # Allowed values: 1-65535
+        # Default value: 8444
+        port: 8444
+        # tlsCertSecret: Name of a Kubernetes TLS Secret (tls.crt / tls.key) used to serve metrics over HTTPS.
+        # When set the operator mounts the secret and configures HTTPS automatically.
+        # Leave unset to serve metrics over plain HTTP.
+        tlsCertSecret: ""
+        # serviceMonitor: Creates a Prometheus Operator ServiceMonitor targeting the controller pods.
+        serviceMonitor:
+          # enabled: Enable/Disable ServiceMonitor for resiliency metrics
+          # Allowed values: true, false
+          # Default value: false
+          enabled: false
+          # interval: Interval at which metrics should be scraped
+          # Allowed values: Go duration string (e.g., 30s, 1m)
+          # Default value: 30s
+          interval: 30s
+          # scrapeTimeout: Timeout after which the scrape is ended
+          # Allowed values: Go duration string (e.g., 10s)
+          # Default value: ""
+          scrapeTimeout: ""
+          # insecureSkipVerify: Skip TLS verification when scraping metrics endpoint
+          # Allowed values: true, false
+          # Default value: false
+          insecureSkipVerify: false
+        # podMonitor: Creates a Prometheus Operator PodMonitor targeting the node pods.
+        podMonitor:
+          # enabled: Enable/Disable PodMonitor for resiliency metrics
+          # Allowed values: true, false
+          # Default value: false
+          enabled: false
+          # interval: Interval at which metrics should be scraped
+          # Allowed values: Go duration string (e.g., 30s, 1m)
+          # Default value: 30s
+          interval: 30s
+          # scrapeTimeout: Timeout after which the scrape is ended
+          # Allowed values: Go duration string (e.g., 10s)
+          # Default value: ""
+          scrapeTimeout: ""
+          # insecureSkipVerify: Skip TLS verification when scraping metrics endpoint
+          # Allowed values: true, false
+          # Default value: false
+          insecureSkipVerify: false
+        # prometheusRule: Creates a Prometheus Operator PrometheusRule containing resiliency alert rules.
+        prometheusRule:
+          # enabled: Enable/Disable PrometheusRule creation for resiliency alerts
+          # Allowed values: true, false
+          # Default value: true
+          enabled: true
+          # connectivitySuccessRatio: Minimum percentage of successful array connectivity checks
+          # below which the CSMResiliencyConnectivityLost alert fires.
+          # Allowed values: 0-100
+          # Default value: 90
+          connectivitySuccessRatio: 90
+    # Replication: allows to configure replication
+    # Replication CRDs must be installed before installing driver
+    - name: replication
+      # enabled: Enable/Disable replication feature
+      # Allowed values:
+      #   true: enable replication feature(install dell-csi-replicator sidecar)
+      #   false: disable replication feature(do not install dell-csi-replicator sidecar)
+      # Default value: false
+      enabled: false
+      # metrics: Configure Prometheus metrics for the replication sidecar (dell-csi-replicator)
+      metrics:
+        # enabled: Enable/Disable replication metrics endpoint
+        # Allowed values: true, false
+        # Default value: false
+        enabled: false
+        # port: Port used by replication metrics endpoint
+        # Allowed values: 1-65535
+        # Default value: 8445
+        port: 8445
+        # tlsCertSecret: Name of a Kubernetes TLS Secret (tls.crt / tls.key) used to serve replication metrics over HTTPS
+        # Leave empty to serve metrics over plain HTTP
+        # Default value: ""
+        tlsCertSecret: ""
+        # collection: Controls replication metrics collection cadence
+        collection:
+          # interval: How frequently replication metrics are collected
+          # Allowed values: Go duration string (e.g., 30s, 1m)
+          # Default value: 30s
+          interval: "30s"
+        # serviceMonitor: Creates a Prometheus Operator ServiceMonitor for the replication metrics endpoint
+        serviceMonitor:
+          # enabled: Enable/Disable ServiceMonitor for replication metrics
+          # Allowed values: true, false
+          # Default value: false
+          enabled: false
+          # interval: Interval at which replication metrics should be scraped
+          # Allowed values: Go duration string (e.g., 30s, 1m)
+          # Default value: 30s
+          interval: "30s"
+          # scrapeTimeout: Timeout after which the scrape is ended
+          # Allowed values: Go duration string (e.g., 10s)
+          # Default value: ""
+          scrapeTimeout: ""
+          # insecureSkipVerify: Skip TLS verification when scraping replication metrics endpoint
+          # Allowed values: true, false
+          # Default value: false
+          insecureSkipVerify: false
+        prometheusRule:
+          enabled: true
+          # rpoThresholdSeconds: Replication lag threshold in seconds for REP-01 and REP-02 alerts.
+          # Default: 300 (5 minutes).
+          rpoThresholdSeconds: 300
+      components:
+        - name: dell-csi-replicator
+          envs:
+            # replicationPrefix: prefix to prepend to storage classes parameters
+            # Allowed values: string
+            # Default value: replication.storage.dell.com
+            - name: "X_CSI_REPLICATION_PREFIX"
+              value: "replication.storage.dell.com"
+            # replicationContextPrefix: prefix to use for naming of resources created by replication feature
+            # Allowed values: string
+            - name: "X_CSI_REPLICATION_CONTEXT_PREFIX"
+              value: "powerstore"
+        - name: dell-replication-controller-manager
+          envs:
+            # Replication log level
+            # Allowed values: "error", "warn"/"warning", "info", "debug"
+            # Default value: "info"
+            - name: "REPLICATION_CTRL_LOG_LEVEL"
+              value: "info"
+            # Replication log format
+            # Allowed values: "text", "json"
+            # Default value: "json"
+            - name: "REPLICATION_CTRL_LOG_FORMAT"
+              value: "json"
+            # replicas: Defines number of controller replicas
+            # Allowed values: int
+            # Default value: 1
+            - name: "REPLICATION_CTRL_REPLICAS"
+              value: "1"
+            # retryIntervalMin: Initial retry interval of failed reconcile request.
+            # It doubles with each failure, upto retry-interval-max
+            # Allowed values: time
+            - name: "RETRY_INTERVAL_MIN"
+              value: "1s"
+            # RETRY_INTERVAL_MAX: Maximum retry interval of failed reconcile request
+            # Allowed values: time
+            - name: "RETRY_INTERVAL_MAX"
+              value: "5m"
+            # DISABLE_PVC_REMAP: Disable PVC remapping for replication in single cluster configuration
+            # Allowed values:
+            #   true: Disable replication feature(install dell-csi-replicator sidecar)
+            #   false: disable replication feature(do not install dell-csi-replicator sidecar)
+            # Default value: false
+            - name: "DISABLE_PVC_REMAP"
+              value: "false"
+            # ENABLE_KUBEVIRT_PVC_REMAP: Enable KubeVirt PVC remapping functionality
+            # When enabled, the replication controller will handle DataVolume dependencies
+            # during PVC remap for KubeVirt-backed PVCs.
+            # Allowed values:
+            #   true: enable KubeVirt PVC remap handling
+            #   false: disable KubeVirt PVC remap handling
+            # Default value: false
+            - name: "ENABLE_KUBEVIRT_PVC_REMAP"
+              value: "false"
+            # REPLICATION_ALLOW_PVC_CREATION_ON_TARGET: It Creates PVC on target cluster using replicated PV.
+            # Allowed values:
+            #   true: It creates a PVC on target cluster against replicated PV
+            #   false: simply updates claimref on replicated PV on target cluster without actually creating a PVC
+            # Default value: false
+            - name: "REPLICATION_ALLOW_PVC_CREATION_ON_TARGET"
+              value: "false"
+    # observability: allows to configure observability
+    - name: observability
+      # enabled: Enable/Disable observability
+      # Default value: false
+      enabled: false
+      components:
+        - name: otel-collector
+          # enabled: Enable/Disable OpenTelemetry Collector
+          # Default value: false
+          enabled: false
+          # certificate: base64-encoded certificate for cert/private-key pair -- add cert here to use custom certificates
+          #  for self-signed certs, leave empty string
+          # Allowed values: string
+          certificate: ""
+          # privateKey: base64-encoded private key for cert/private-key pair -- add private key here to use custom certificates
+          #  for self-signed certs, leave empty string
+          # Allowed values: string
+          privateKey: ""
+        - name: cert-manager
+          # enabled: Enable/Disable cert-manager
+          # Allowed values:
+          #   true: enable deployment of cert-manager
+          #   false: disable deployment of cert-manager only if it's already deployed
+          # Default value: false
+          enabled: false
+        - name: metrics-powerstore
+          # enabled: Enable/Disable PowerStore metrics
+          # Default value: false
+          enabled: false
+          envs:
+            # POWERSTORE_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerStore
+            # Allowed values: int
+            # Default value: 10
+            - name: "POWERSTORE_MAX_CONCURRENT_QUERIES"
+              value: "10"
+            # POWERSTORE_VOLUME_METRICS_ENABLED: enable/disable collection of volume metrics
+            # Allowed values: true, false
+            # Default value: true
+            - name: "POWERSTORE_VOLUME_METRICS_ENABLED"
+              value: "true"
+            # POWERSTORE_VOLUME_IO_POLL_FREQUENCY: set polling frequency to get volume IO metrics
+            # Allowed values: String
+            # Default value: true
+            - name: "POWERSTORE_VOLUME_IO_POLL_FREQUENCY"
+              value: "20"
+            # POWERSTORE_SPACE_POLL_FREQUENCY: set polling frequency to get cluster capacity metrics data
+            # Allowed values: int
+            # Default value: 300
+            - name: "POWERSTORE_SPACE_POLL_FREQUENCY"
+              value: "300"
+            # POWERSTORE_ARRAY_POLL_FREQUENCY: set polling frequency to get array capacity metrics data
+            # Allowed values: int
+            # Default value: 300
+            - name: "POWERSTORE_ARRAY_POLL_FREQUENCY"
+              value: "300"
+            # POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY: set polling frequency to get file system capacity metrics data
+            # Allowed values: int
+            # Default value: 20
+            - name: "POWERSTORE_FILE_SYSTEM_POLL_FREQUENCY"
+              value: "20"
+            # POWERSTORE_TOPOLOGY_METRICS_ENABLED : enable/disable collection of topology metrics
+            # Allowed values: true, false
+            # Default value: true
+            - name: "POWERSTORE_TOPOLOGY_METRICS_ENABLED"
+              value: "true"
+            # POWERSTORE_TOPOLOGY_POLL_FREQUENCY : set polling frequency to get topology metrics
+            # Allowed values: int
+            # Default value: 30
+            - name: "POWERSTORE_TOPOLOGY_POLL_FREQUENCY"
+              value: "30"
+            # PowerStore metrics log level
+            # Valid values: trace, debug, info, warn, error, fatal, panic
+            # Default value: "info"
+            - name: "POWERSTORE_LOG_LEVEL"
+              value: "info"
+            # PowerStore Metrics Output logs in the specified format
+            # Valid values: text, json
+            # Default value: "json"
+            - name: "POWERSTORE_LOG_FORMAT"
+              value: "json"
+            # ZIPKIN_URI : URI of a Zipkin instance where tracing data can be forwarded
+            # Allowed values : String
+            # Default value: Empty
+            - name: "ZIPKIN_URI"
+              value: ""
+            # ZIPKIN_SERVICE_NAME : Service name used for Zipkin tracing dataService name used for Zipkin tracing data
+            # Allowed values : String
+            # Default value: "metrics-powerStore"
+            - name: "ZIPKIN_SERVICE_NAME"
+              value: "metrics-powerstore"
+            # ZIPKIN_PROBABILITY : Percentage of trace information to send to Zipkin (Valid range: 0.0 to 1.0)
+            # Allowed values : float
+            # Default value: "0.0"
+            - name: "ZIPKIN_PROBABILITY"
+              value: "0.0"
+            # Otel collector address
+            # Allowed values: String
+            # Default value: "otel-collector:55680"
+            - name: "COLLECTOR_ADDRESS"
+              value: "otel-collector:55680"
+      # metrics: Configure observability self-metrics endpoint
+      metrics:
+        # enabled: Enable/Disable observability self-metrics endpoint
+        # Allowed values: true, false
+        # Default value: false
+        enabled: false
+        # port: Port used by observability self-metrics endpoint
+        # Allowed values: 1-65535
+        # Default value: 8443
+        port: 8443
+        # tlsCertSecret: Name of secret containing TLS certificate and key for observability self-metrics
+        # Allowed values: Kubernetes secret name, empty string
+        # Default value: ""
+        tlsCertSecret: ""
+        # serviceMonitor: Configure ServiceMonitor for observability self-metrics
+        serviceMonitor:
+          # enabled: Enable/Disable ServiceMonitor creation for observability self-metrics
+          # Allowed values: true, false
+          # Default value: false
+          enabled: false
+          # interval: Prometheus scrape interval for observability self-metrics
+          # Allowed values: duration string (for example: 15s, 30s, 1m)
+          # Default value: "30s"
+          interval: "30s"
+          # scrapeTimeout: Prometheus scrape timeout for observability self-metrics
+          # Allowed values: duration string, empty string
+          # Default value: ""
+          scrapeTimeout: ""
+          # insecureSkipVerify: Skip TLS certificate verification while scraping observability self-metrics
+          # Allowed values: true, false
+          # Default value: false
+          insecureSkipVerify: false
+        # prometheusRule: Configure Prometheus Operator PrometheusRule for observability alerts
+        prometheusRule:
+          # enabled: Enable/Disable PrometheusRule creation for observability alerts
+          # Allowed values: true, false
+          # Default value: false
+          enabled: true

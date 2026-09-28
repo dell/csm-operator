@@ -251,9 +251,6 @@ func TestGetRevproxyApplyCR_MinimalManifest_ModuleNameDefaulted(t *testing.T) {
 	// Simulate minimal manifest: no reverseproxy module present in the CR.
 	cr.Spec.Modules = []csmv1.Module{}
 
-	// Set driver configVersion to a supported version
-	cr.Spec.Driver.ConfigVersion = "v2.17.2"
-
 	mod, container, err := getRevproxyApplyCR(ctx, cr, operatorConfig)
 	assert.NoError(t, err)
 	assert.NotNil(t, mod)
@@ -1027,7 +1024,7 @@ func TestGetRevproxyApplyCR_ConfigMapImageOverride(t *testing.T) {
 	}
 
 	matched := operatorutils.VersionSpec{
-		Version: "v2.16.1",
+		Version: "v2.16.0",
 		Images: map[string]string{
 			ReverseProxyServerComponent: "configmap-registry.io/revproxy:from-configmap",
 		},
@@ -1124,7 +1121,7 @@ func TestGetRevproxyApplyCR_ConfigMapWinsOverCustomRegistry(t *testing.T) {
 	}
 
 	matched := operatorutils.VersionSpec{
-		Version: "v2.16.1",
+		Version: "v2.16.0",
 		Images: map[string]string{
 			ReverseProxyServerComponent: "configmap-registry.io/revproxy:from-configmap",
 		},

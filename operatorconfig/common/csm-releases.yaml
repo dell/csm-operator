@@ -1,0 +1,364 @@
+# csm-releases.yaml -- single source of truth for CSM Operator version tracking.
+#
+# Replaces (and merges) the former csm-version-mapping.yaml,
+# moduleconfig/common/version-values.yaml, and the per-version
+# driverconfig/{driver}/{version}/upgrade-path.yaml and
+# moduleconfig/{module}/{version}/upgrade-path.yaml files.
+#
+# Keyed by CSM release version (spec.Version on the ContainerStorageModule CR).
+# Each entity (driver or the standalone authorization-proxy-server module) under
+# a release has:
+#   version         -- the operatorconfig driver/module version directory to use
+#                       (e.g. operatorconfig/driverconfig/powerflex/<version>/)
+#   minUpgradeFrom  -- the oldest version of this entity that can be
+#                       upgraded directly into version (used by IsValidUpgrade)
+#   modules         -- (drivers only) the module versions bundled with this
+#                       driver version, keyed by module name
+#
+# This file is generated/updated by .github/scripts/driver-version-update.sh and
+# .github/scripts/module-version-update.sh when a new CSM release is cut;
+# .github/scripts/sidecar-version-update.sh reads it to select driver versions.
+# Edit by hand only for out-of-band fixes.
+v1.18.0:
+  powerflex:
+    version: v2.18.0
+    minUpgradeFrom: v2.16.0
+    modules:
+      authorization: v2.6.0
+      replication: v1.16.0
+      observability: v1.16.0
+      resiliency: v1.17.0
+  powermax:
+    version: v2.18.0
+    minUpgradeFrom: v2.16.0
+    modules:
+      csireverseproxy: v2.17.0
+      authorization: v2.6.0
+      replication: v1.16.0
+      observability: v1.16.0
+      resiliency: v1.17.0
+      csi-addons-replication: v1.0.0
+  powerscale:
+    version: v2.18.0
+    minUpgradeFrom: v2.16.0
+    modules:
+      authorization: v2.6.0
+      replication: v1.16.0
+      observability: v1.16.0
+      resiliency: v1.17.0
+  powerstore:
+    version: v2.18.0
+    minUpgradeFrom: v2.16.0
+    modules:
+      resiliency: v1.17.0
+      authorization: v2.6.0
+      observability: v1.16.0
+      replication: v1.16.0
+      csi-addons-replication: v1.0.0
+  unity:
+    version: v2.18.0
+    minUpgradeFrom: v2.16.0
+  cosi:
+    version: v1.2.0
+    minUpgradeFrom: v1.0.0
+  authorization-proxy-server:
+    version: v2.6.0
+    minUpgradeFrom: v2.4.0
+v1.17.2:
+  powerflex:
+    version: v2.17.0
+    minUpgradeFrom: v2.15.0
+    modules:
+      authorization: v2.5.0
+      replication: v1.15.0
+      observability: v1.15.0
+      resiliency: v1.16.0
+  powermax:
+    version: v2.17.2
+    minUpgradeFrom: v2.15.0
+    modules:
+      csireverseproxy: v2.16.1
+      authorization: v2.5.0
+      replication: v1.15.0
+      observability: v1.15.1
+      resiliency: v1.16.0
+  powerscale:
+    version: v2.17.2
+    minUpgradeFrom: v2.15.0
+    modules:
+      authorization: v2.5.0
+      replication: v1.15.0
+      observability: v1.15.0
+      resiliency: v1.16.0
+  powerstore:
+    version: v2.17.0
+    minUpgradeFrom: v2.15.0
+    modules:
+      resiliency: v1.16.0
+      authorization: v2.5.0
+      observability: v1.15.0
+      replication: v1.15.0
+  unity:
+    version: v2.17.0
+    minUpgradeFrom: v2.15.0
+  cosi:
+    version: v1.1.0
+    minUpgradeFrom: v1.0.0
+  authorization-proxy-server:
+    version: v2.5.0
+    minUpgradeFrom: v2.2.0
+v1.17.1:
+  powerflex:
+    version: v2.17.0
+    minUpgradeFrom: v2.15.0
+    modules:
+      authorization: v2.5.0
+      replication: v1.15.0
+      observability: v1.15.0
+      resiliency: v1.16.0
+  powermax:
+    version: v2.17.1
+    minUpgradeFrom: v2.15.0
+    modules:
+      csireverseproxy: v2.16.1
+      authorization: v2.5.0
+      replication: v1.15.0
+      observability: v1.15.1
+      resiliency: v1.16.0
+  powerscale:
+    version: v2.17.1
+    minUpgradeFrom: v2.15.0
+    modules:
+      authorization: v2.5.0
+      replication: v1.15.0
+      observability: v1.15.0
+      resiliency: v1.16.0
+  powerstore:
+    version: v2.17.0
+    minUpgradeFrom: v2.15.0
+    modules:
+      resiliency: v1.16.0
+      authorization: v2.5.0
+      observability: v1.15.0
+      replication: v1.15.0
+  unity:
+    version: v2.17.0
+    minUpgradeFrom: v2.15.0
+  cosi:
+    version: v1.1.0
+    minUpgradeFrom: v1.0.0
+  authorization-proxy-server:
+    version: v2.5.0
+    minUpgradeFrom: v2.2.0
+v1.17.0:
+  powerflex:
+    version: v2.17.0
+    minUpgradeFrom: v2.15.0
+    modules:
+      authorization: v2.5.0
+      replication: v1.15.0
+      observability: v1.15.0
+      resiliency: v1.16.0
+  powermax:
+    version: v2.17.0
+    minUpgradeFrom: v2.15.0
+    modules:
+      csireverseproxy: v2.16.0
+      authorization: v2.5.0
+      replication: v1.15.0
+      observability: v1.15.0
+      resiliency: v1.16.0
+  powerscale:
+    version: v2.17.0
+    minUpgradeFrom: v2.15.0
+    modules:
+      authorization: v2.5.0
+      replication: v1.15.0
+      observability: v1.15.0
+      resiliency: v1.16.0
+  powerstore:
+    version: v2.17.0
+    minUpgradeFrom: v2.15.0
+    modules:
+      resiliency: v1.16.0
+      authorization: v2.5.0
+      observability: v1.15.0
+      replication: v1.15.0
+  unity:
+    version: v2.17.0
+    minUpgradeFrom: v2.15.0
+  cosi:
+    version: v1.1.0
+    minUpgradeFrom: v1.0.0
+  authorization-proxy-server:
+    version: v2.5.0
+    minUpgradeFrom: v2.2.0
+v1.16.3:
+  powerflex:
+    version: v2.16.1
+    minUpgradeFrom: v2.14.0
+    modules:
+      authorization: v2.4.0
+      replication: v1.14.0
+      observability: v1.14.0
+      resiliency: v1.15.0
+  powermax:
+    version: v2.16.2
+    minUpgradeFrom: v2.14.0
+    modules:
+      csireverseproxy: v2.15.2
+      authorization: v2.4.0
+      replication: v1.14.0
+      observability: v1.14.0
+      resiliency: v1.15.0
+  powerscale:
+    version: v2.16.0
+    minUpgradeFrom: v2.14.0
+    modules:
+      authorization: v2.4.0
+      replication: v1.14.0
+      observability: v1.14.0
+      resiliency: v1.15.0
+  powerstore:
+    version: v2.16.0
+    minUpgradeFrom: v2.14.0
+    modules:
+      resiliency: v1.15.0
+      authorization: v2.4.0
+      observability: v1.14.0
+      replication: v1.14.0
+  unity:
+    version: v2.16.0
+    minUpgradeFrom: v2.14.0
+  authorization-proxy-server:
+    version: v2.4.0
+    minUpgradeFrom: v2.2.0
+v1.16.2:
+  powerflex:
+    version: v2.16.0
+    minUpgradeFrom: v2.14.0
+    modules:
+      authorization: v2.4.0
+      replication: v1.14.0
+      observability: v1.14.0
+      resiliency: v1.15.0
+  powermax:
+    version: v2.16.1
+    minUpgradeFrom: v2.14.0
+    modules:
+      csireverseproxy: v2.15.1
+      authorization: v2.4.0
+      replication: v1.14.0
+      observability: v1.14.0
+      resiliency: v1.15.0
+  powerscale:
+    version: v2.16.0
+    minUpgradeFrom: v2.14.0
+    modules:
+      authorization: v2.4.0
+      replication: v1.14.0
+      observability: v1.14.0
+      resiliency: v1.15.0
+  powerstore:
+    version: v2.16.0
+    minUpgradeFrom: v2.14.0
+    modules:
+      resiliency: v1.15.0
+      authorization: v2.4.0
+      observability: v1.14.0
+      replication: v1.14.0
+  unity:
+    version: v2.16.0
+    minUpgradeFrom: v2.14.0
+  cosi:
+    version: v1.0.0
+    minUpgradeFrom: v1.0.0
+  authorization-proxy-server:
+    version: v2.4.0
+    minUpgradeFrom: v2.2.0
+v1.16.1:
+  powerflex:
+    version: v2.16.0
+    minUpgradeFrom: v2.14.0
+    modules:
+      authorization: v2.4.0
+      replication: v1.14.0
+      observability: v1.14.0
+      resiliency: v1.15.0
+  powermax:
+    version: v2.16.0
+    minUpgradeFrom: v2.14.0
+    modules:
+      csireverseproxy: v2.15.0
+      authorization: v2.4.0
+      replication: v1.14.0
+      observability: v1.14.0
+      resiliency: v1.15.0
+  powerscale:
+    version: v2.16.0
+    minUpgradeFrom: v2.14.0
+    modules:
+      authorization: v2.4.0
+      replication: v1.14.0
+      observability: v1.14.0
+      resiliency: v1.15.0
+  powerstore:
+    version: v2.16.0
+    minUpgradeFrom: v2.14.0
+    modules:
+      resiliency: v1.15.0
+      authorization: v2.4.0
+      observability: v1.14.0
+      replication: v1.14.0
+  unity:
+    version: v2.16.0
+    minUpgradeFrom: v2.14.0
+  cosi:
+    version: v1.0.0
+    minUpgradeFrom: v1.0.0
+  authorization-proxy-server:
+    version: v2.4.0
+    minUpgradeFrom: v2.2.0
+v1.16.0:
+  powerflex:
+    version: v2.16.0
+    minUpgradeFrom: v2.14.0
+    modules:
+      authorization: v2.4.0
+      replication: v1.14.0
+      observability: v1.14.0
+      resiliency: v1.15.0
+  powermax:
+    version: v2.16.0
+    minUpgradeFrom: v2.14.0
+    modules:
+      csireverseproxy: v2.15.0
+      authorization: v2.4.0
+      replication: v1.14.0
+      observability: v1.14.0
+      resiliency: v1.15.0
+  powerscale:
+    version: v2.16.0
+    minUpgradeFrom: v2.14.0
+    modules:
+      authorization: v2.4.0
+      replication: v1.14.0
+      observability: v1.14.0
+      resiliency: v1.15.0
+  powerstore:
+    version: v2.16.0
+    minUpgradeFrom: v2.14.0
+    modules:
+      resiliency: v1.15.0
+      authorization: v2.4.0
+      observability: v1.14.0
+      replication: v1.14.0
+  unity:
+    version: v2.16.0
+    minUpgradeFrom: v2.14.0
+  cosi:
+    version: v1.0.0
+    minUpgradeFrom: v1.0.0
+  authorization-proxy-server:
+    version: v2.4.0
+    minUpgradeFrom: v2.2.0
