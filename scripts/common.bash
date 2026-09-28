@@ -117,8 +117,8 @@ function check_or_create_namespace() {
 }
 
 # Get the kubernetes major and minor version numbers.
-kMajorVersion=$(kubectl version -o="yaml" | grep -A8 'serverVersion:' | grep 'major'| egrep -o '[0-9]+')
-kMinorVersion=$(kubectl version -o="yaml" | grep -A8 'serverVersion:' | grep 'minor'| egrep -o '[0-9]+')
+kMajorVersion=$(kubectl version -o="yaml" | grep -A8 'serverVersion:' | grep -i 'major'| egrep -o '[0-9]+')
+kMinorVersion=$(kubectl version -o="yaml" | grep -A8 'serverVersion:' | grep -i 'minor'| egrep -o '[0-9]+')
 kubectl get crd | grep securitycontextconstraints.security.openshift.io --quiet
 if [ $? -ne 0 ]; then
   isOpenShift=false

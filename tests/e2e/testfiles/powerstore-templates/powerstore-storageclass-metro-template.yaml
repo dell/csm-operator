@@ -1,0 +1,15 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: op-e2e-powerstore-metro
+provisioner: "csi-powerstore.dellemc.com"
+parameters:
+  arrayID: REPLACE_GLOBALID
+  csi.storage.k8s.io/fstype: "ext4"
+  # Metro replication parameters
+  replication.storage.dell.com/isReplicationEnabled: "true"
+  replication.storage.dell.com/mode: "METRO"
+  replication.storage.dell.com/remoteSystem: "REPLACE_METRO_REMOTE_SYSTEM"
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+volumeBindingMode: Immediate

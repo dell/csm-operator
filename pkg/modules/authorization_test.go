@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2026 Dell Inc., or its subsidiaries. All Rights Reserved.
+// Copyright (c) 2022-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -58,8 +58,7 @@ var (
 	authCRName = "auth"
 	authNS     = "auth-test"
 
-	trueBool  = true
-	falseBool = false
+	trueBool = true
 )
 
 func TestCheckAnnotationAuth(t *testing.T) {
@@ -620,17 +619,17 @@ func TestAuthorizationPreCheck(t *testing.T) {
 
 			return true, auth, tmpCR, client
 		},
-		"success - v2.3.0": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
+		"success - v2.4.0": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource := csmPowerScaleWithAuthCR()
 			namespace := customResource.Namespace
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
-			auth.ConfigVersion = "v2.3.0"
+			auth.ConfigVersion = "v2.4.0"
 
-			karaviAuthconfig := getSecret(namespace, "karavi-authorization-config")
+			// v2.4.0+ no longer requires karavi-authorization-config (uses driver secret)
 			proxyAuthzTokens := getSecret(namespace, "proxy-authz-tokens")
 
-			client := ctrlClientFake.NewClientBuilder().WithObjects(karaviAuthconfig, proxyAuthzTokens).Build()
+			client := ctrlClientFake.NewClientBuilder().WithObjects(proxyAuthzTokens).Build()
 
 			return true, auth, tmpCR, client
 		},
@@ -716,14 +715,29 @@ func TestAuthorizationPreCheck(t *testing.T) {
 
 			return false, auth, tmpCR, client
 		},
+		"success - empty configVersion derives from spec.version for authorization server >= v2.2.0": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
+			customResource := csmPowerScaleWithAuthCR()
+			namespace := customResource.Namespace
+			tmpCR := customResource
+			auth := tmpCR.Spec.Modules[0]
+			auth.ConfigVersion = "" // Empty - should derive from spec.version
+			auth.Name = csmv1.AuthorizationServer
+			tmpCR.Spec.Version = shared.CSMVersion // >= v2.2.0 for auth
+
+			proxyAuthzTokens := getSecret(namespace, "proxy-authz-tokens")
+
+			client := ctrlClientFake.NewClientBuilder().WithObjects(proxyAuthzTokens).Build()
+
+			return true, auth, tmpCR, client
+		},
 		"success - auto-add SKIP_CERTIFICATE_VALIDATION when missing": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client) {
 			customResource := csmPowerScaleWithAuthCR()
 			namespace := customResource.Namespace
 			tmpCR := customResource
 			auth := tmpCR.Spec.Modules[0]
 
-			// Use v2.3.0 so karavi-authorization-config is still required (driver secret not used)
-			auth.ConfigVersion = "v2.3.0"
+			// Use v2.4.0 (oldest supported version)
+			auth.ConfigVersion = "v2.4.0"
 
 			// Remove SKIP_CERTIFICATE_VALIDATION from the karavi-authorization-proxy component envs
 			for i, comp := range auth.Components {
@@ -746,13 +760,11 @@ func TestAuthorizationPreCheck(t *testing.T) {
 				}
 			}
 
-			// Seed only the required secrets for v2.3.0:
+			// Seed only the required secrets for v2.4.0+:
 			// - proxy-authz-tokens
-			// - karavi-authorization-config
 			// DO NOT seed proxy-server-root-certificate so success proves that SKIP_CERTIFICATE_VALIDATION=true was auto-added.
-			karaviAuthconfig := getSecret(namespace, "karavi-authorization-config")
 			proxyAuthzTokens := getSecret(namespace, "proxy-authz-tokens")
-			client := ctrlClientFake.NewClientBuilder().WithObjects(karaviAuthconfig, proxyAuthzTokens).Build()
+			client := ctrlClientFake.NewClientBuilder().WithObjects(proxyAuthzTokens).Build()
 
 			// Expect success: auto-added SKIP_CERTIFICATE_VALIDATION=true -> no cert required
 			return true, auth, tmpCR, client
@@ -850,6 +862,45 @@ func TestAuthorizationServerPreCheck(t *testing.T) {
 
 			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
 				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviTLS).Build()
+				return clusterClient, nil
+			}
+
+			return false, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+		"success - metrics TLS secret found": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			tmpCR := CsmAuthorizationCR()
+			tmpCR.Spec.Modules[0].Metrics = &csmv1.ModuleMetrics{
+				Enabled:       true,
+				TLSCertSecret: "proxy-server-metrics-tls",
+			}
+			auth := tmpCR.Spec.Modules[0]
+
+			karaviConfig := getSecret(tmpCR.Namespace, "karavi-config-secret")
+			karaviTLS := getSecret(tmpCR.Namespace, "karavi-selfsigned-tls")
+			metricsTLS := getSecret(tmpCR.Namespace, "proxy-server-metrics-tls")
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviTLS, metricsTLS).Build()
+
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
+				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviTLS, metricsTLS).Build()
+				return clusterClient, nil
+			}
+
+			return true, auth, tmpCR, sourceClient, fakeControllerRuntimeClient
+		},
+		"fail - metrics TLS secret not found": func(*testing.T) (bool, csmv1.Module, csmv1.ContainerStorageModule, ctrlClient.Client, fakeControllerRuntimeClientWrapper) {
+			tmpCR := CsmAuthorizationCR()
+			tmpCR.Spec.Modules[0].Metrics = &csmv1.ModuleMetrics{
+				Enabled:       true,
+				TLSCertSecret: "proxy-server-metrics-tls",
+			}
+			auth := tmpCR.Spec.Modules[0]
+
+			karaviConfig := getSecret(tmpCR.Namespace, "karavi-config-secret")
+			karaviTLS := getSecret(tmpCR.Namespace, "karavi-selfsigned-tls")
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviTLS).Build()
+
+			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
+				clusterClient := ctrlClientFake.NewClientBuilder().WithObjects(karaviConfig, karaviTLS).Build()
 				return clusterClient, nil
 			}
 
@@ -1155,12 +1206,24 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 					"role-service":             "quay.io/dell/container-storage-modules/csm-authorization-role:v2.5.0",
 					"storage-service":          "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.5.0",
 					"opa":                      "docker.io/openpolicyagent/opa:0.70.0",
-					"opa-kube-mgmt":            "docker.io/openpolicyagent/kube-mgmt:9.2.1",
+					"opa-kube-mgmt":            "docker.io/openpolicyagent/kube-mgmt:11.0.12",
 					"authorization-controller": "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.5.0",
 				},
 			}
 
 			return true, false, tmpCR, sourceClient, operatorConfig, matched
+		},
+		"fail - authorization module not found": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, operatorutils.VersionSpec) {
+			tmpCR := CsmAuthorizationCR()
+			// Remove authorization module
+			tmpCR.Spec.Modules = []csmv1.Module{}
+			err := certmanagerv1.AddToScheme(scheme.Scheme)
+			if err != nil {
+				panic(err)
+			}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+
+			return false, false, tmpCR, sourceClient, operatorConfig, operatorutils.VersionSpec{}
 		},
 	}
 	for name, tc := range tests {
@@ -2007,7 +2070,7 @@ func TestAuthorizationIngress(t *testing.T) {
 			}
 
 			// Register Gateway API scheme for tests
-			_ = gatewayv1.AddToScheme(scheme.Scheme)
+			_ = gatewayv1.Install(scheme.Scheme)
 
 			fakeReconcile := operatorutils.FakeReconcileCSM{
 				Client:    sourceClient,
@@ -2216,7 +2279,7 @@ func TestNginxIngressController(t *testing.T) {
 			success, isDeleting, cr, sourceClient, op := tc(t)
 
 			// Register Gateway API scheme for tests
-			_ = gatewayv1.AddToScheme(scheme.Scheme)
+			_ = gatewayv1.Install(scheme.Scheme)
 
 			err := NginxIngressController(context.TODO(), isDeleting, op, cr, sourceClient)
 			if success {
@@ -3439,6 +3502,33 @@ func TestGetAuthApplyCR(t *testing.T) {
 			t.Fatalf("expected exactly one SKIP_CERTIFICATE_VALIDATION env var to be present, got %d", count)
 		}
 	})
+
+	t.Run("empty configVersion derives from spec.version for authorization server >= v2.2.0", func(t *testing.T) {
+		ctx := context.Background()
+
+		cr := csmPowerScaleWithAuthCR()
+		cr.Spec.Version = shared.CSMVersion // >= v2.2.0 for auth
+		if len(cr.Spec.Modules) == 0 {
+			t.Fatalf("expected CR to have modules")
+		}
+		cr.Spec.Modules[0].ConfigVersion = "" // Empty - should derive from spec.version
+		// Keep the module name as Authorization (not AuthorizationServer) to maintain proper component structure
+
+		client := ctrlClientFake.NewClientBuilder().WithObjects().Build()
+		authModule, container, _, err := getAuthApplyCR(ctx, cr, operatorConfig, client)
+		if err != nil {
+			t.Fatalf("getAuthApplyCR returned error: %v", err)
+		}
+		if authModule == nil || container == nil {
+			t.Fatalf("expected non-nil authModule and container")
+		}
+
+		// The function should have successfully derived configVersion from spec.version
+		// and not failed with an error about missing configVersion
+		if container.Image == nil {
+			t.Fatalf("expected container.Image to be set")
+		}
+	})
 }
 
 // TestGetAuthApplyCR_SparseConfigMapWithCustomRegistry verifies that when a
@@ -3598,13 +3688,13 @@ func TestGetVersionSpecificDefaultImages(t *testing.T) {
 			expectedController:     "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.3.0",
 		},
 		{
-			name:                   "empty version defaults to v2.5.0",
+			name:                   "empty version defaults to v2.6.0",
 			configVersion:          "",
-			expectedProxyService:   "quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.5.0",
-			expectedTenantService:  "quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.5.0",
-			expectedRoleService:    "quay.io/dell/container-storage-modules/csm-authorization-role:v2.5.0",
-			expectedStorageService: "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.5.0",
-			expectedController:     "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.5.0",
+			expectedProxyService:   "quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.6.0",
+			expectedTenantService:  "quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.6.0",
+			expectedRoleService:    "quay.io/dell/container-storage-modules/csm-authorization-role:v2.6.0",
+			expectedStorageService: "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.6.0",
+			expectedController:     "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.6.0",
 		},
 		{
 			name:            "invalid config directory returns error",
@@ -3805,6 +3895,7 @@ func TestGetGatewayController(t *testing.T) {
 		description        string
 		expectedClassName  string
 		expectedSecretName string
+		expectedIPFamily   string
 	}{
 		{
 			name:               "Valid Authorization Module with Gateway API",
@@ -3813,6 +3904,7 @@ func TestGetGatewayController(t *testing.T) {
 			description:        "Should successfully generate Gateway API controller YAML",
 			expectedClassName:  "nginx",
 			expectedSecretName: "karavi-selfsigned-tls",
+			expectedIPFamily:   "",
 		},
 		{
 			name:               "Authorization Module with Custom Certificates",
@@ -3821,6 +3913,34 @@ func TestGetGatewayController(t *testing.T) {
 			description:        "Should generate Gateway YAML with user-provided-tls when custom certs are provided",
 			expectedClassName:  "nginx",
 			expectedSecretName: "user-provided-tls",
+			expectedIPFamily:   "",
+		},
+		{
+			name:               "Authorization Module with IPv4-only ipFamily",
+			cr:                 createAuthCRWithIPv4Family(),
+			expectError:        false,
+			description:        "Should generate Gateway YAML with ipFamily: ipv4 for IPv4-only clusters",
+			expectedClassName:  "nginx",
+			expectedSecretName: "karavi-selfsigned-tls",
+			expectedIPFamily:   "ipv4",
+		},
+		{
+			name:               "Authorization Module with dual ipFamily",
+			cr:                 createAuthCRWithDualFamily(),
+			expectError:        false,
+			description:        "Should generate Gateway YAML with ipFamily: dual for dual-stack clusters",
+			expectedClassName:  "nginx",
+			expectedSecretName: "karavi-selfsigned-tls",
+			expectedIPFamily:   "dual",
+		},
+		{
+			name:               "Authorization Module with invalid ipFamily is ignored",
+			cr:                 createAuthCRWithInvalidFamily(),
+			expectError:        false,
+			description:        "Should ignore invalid ipFamily value and omit ipFamily line",
+			expectedClassName:  "nginx",
+			expectedSecretName: "karavi-selfsigned-tls",
+			expectedIPFamily:   "",
 		},
 		{
 			name:        "Missing Authorization Module",
@@ -3852,6 +3972,14 @@ func TestGetGatewayController(t *testing.T) {
 				assert.Contains(t, yamlString, "externalTrafficPolicy: Cluster")
 				// Verify secret name selection based on custom certificates
 				assert.Contains(t, yamlString, "name: "+tt.expectedSecretName)
+				// Verify ipFamily configuration
+				if tt.expectedIPFamily != "" {
+					assert.Contains(t, yamlString, "ipFamily: "+tt.expectedIPFamily, "Should contain ipFamily setting")
+					assert.NotContains(t, yamlString, "<NGINX_IP_FAMILY>", "Placeholder should be replaced")
+				} else {
+					assert.NotContains(t, yamlString, "ipFamily:", "Should not contain ipFamily line when not configured")
+					assert.NotContains(t, yamlString, "<NGINX_IP_FAMILY>", "Placeholder should be removed")
+				}
 			}
 		})
 	}
@@ -3881,7 +4009,7 @@ func TestAuthorizationHTTPRoute(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Register Gateway API scheme
 			s := scheme.Scheme
-			_ = gatewayv1.AddToScheme(s)
+			_ = gatewayv1.Install(s)
 
 			fakeClient := ctrlClientFake.NewClientBuilder().WithScheme(s).Build()
 
@@ -3935,7 +4063,7 @@ func TestAuthorizationIngressWithGatewayAPI(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Register Gateway API scheme
 			s := scheme.Scheme
-			_ = gatewayv1.AddToScheme(s)
+			_ = gatewayv1.Install(s)
 
 			fakeClient := ctrlClientFake.NewClientBuilder().WithScheme(s).Build()
 
@@ -4058,6 +4186,54 @@ func createAuthCRWithGatewayAPIAndCustomCerts() csmv1.ContainerStorageModule {
 	return cr
 }
 
+func createAuthCRWithIPv4Family() csmv1.ContainerStorageModule {
+	cr := createAuthCRWithGatewayAPI()
+	cr.Spec.Modules[0].ConfigVersion = "v2.6.0"
+	cr.Spec.Modules[0].Components[0].Envs = append(cr.Spec.Modules[0].Components[0].Envs,
+		corev1.EnvVar{Name: "X_CSI_AUTHORIZATION_IP_FAMILY", Value: "ipv4"})
+	return cr
+}
+
+func TestGetAuthorizationIPFamily(t *testing.T) {
+	tests := []struct {
+		name string
+		cr   csmv1.ContainerStorageModule
+		want string
+	}{
+		{name: "ipv4 keeps default behavior", cr: createAuthCRWithIPv4Family(), want: ""},
+		{name: "ipv6 enables IPv6 behavior", cr: func() csmv1.ContainerStorageModule {
+			cr := createAuthCRWithGatewayAPI()
+			cr.Spec.Modules[0].Components[0].Envs = append(cr.Spec.Modules[0].Components[0].Envs,
+				corev1.EnvVar{Name: "X_CSI_AUTHORIZATION_IP_FAMILY", Value: " IPv6 "})
+			return cr
+		}(), want: "ipv6"},
+		{name: "dual enables IPv6 behavior", cr: createAuthCRWithDualFamily(), want: "dual"},
+		{name: "invalid keeps default behavior", cr: createAuthCRWithInvalidFamily(), want: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, getAuthorizationIPFamily(tt.cr.Spec.Modules[0]))
+		})
+	}
+}
+
+func createAuthCRWithDualFamily() csmv1.ContainerStorageModule {
+	cr := createAuthCRWithGatewayAPI()
+	cr.Spec.Modules[0].ConfigVersion = "v2.6.0"
+	cr.Spec.Modules[0].Components[0].Envs = append(cr.Spec.Modules[0].Components[0].Envs,
+		corev1.EnvVar{Name: "X_CSI_AUTHORIZATION_IP_FAMILY", Value: "dual"})
+	return cr
+}
+
+func createAuthCRWithInvalidFamily() csmv1.ContainerStorageModule {
+	cr := createAuthCRWithGatewayAPI()
+	cr.Spec.Modules[0].ConfigVersion = "v2.6.0"
+	cr.Spec.Modules[0].Components[0].Envs = append(cr.Spec.Modules[0].Components[0].Envs,
+		corev1.EnvVar{Name: "X_CSI_AUTHORIZATION_IP_FAMILY", Value: "bogus"})
+	return cr
+}
+
 func createCRWithoutAuthModule() csmv1.ContainerStorageModule {
 	return csmv1.ContainerStorageModule{
 		ObjectMeta: metav1.ObjectMeta{
@@ -4105,7 +4281,7 @@ func TestGatewayController(t *testing.T) {
 			require.NoError(t, rbacv1.AddToScheme(scheme))
 			require.NoError(t, appsv1.AddToScheme(scheme))
 			require.NoError(t, csmv1.AddToScheme(scheme))
-			require.NoError(t, gatewayv1.AddToScheme(scheme))
+			require.NoError(t, gatewayv1.Install(scheme))
 			require.NoError(t, certmanagerv1.AddToScheme(scheme))
 
 			fakeClient := ctrlClientFake.NewClientBuilder().WithScheme(scheme).Build()
@@ -4441,4 +4617,438 @@ func TestGetHosts(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDeleteAuthCrds(t *testing.T) {
+	tests := []struct {
+		name          string
+		cr            csmv1.ContainerStorageModule
+		configVersion string
+		wantErr       bool
+	}{
+		{
+			name: "v1 authorization - no-op",
+			cr: csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-csm",
+					Namespace: "test-ns",
+				},
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Modules: []csmv1.Module{
+						{
+							Name:          csmv1.AuthorizationServer,
+							ConfigVersion: "v1.0.0",
+						},
+					},
+				},
+			},
+			configVersion: "v1.0.0",
+			wantErr:       false,
+		},
+		{
+			name: "no authorization module - returns error",
+			cr: csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-csm",
+					Namespace: "test-ns",
+				},
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Modules: []csmv1.Module{},
+				},
+			},
+			configVersion: "v2.3.0",
+			wantErr:       true,
+		},
+		{
+			name: "v2 authorization - valid",
+			cr: csmv1.ContainerStorageModule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-csm",
+					Namespace: "test-ns",
+				},
+				Spec: csmv1.ContainerStorageModuleSpec{
+					Modules: []csmv1.Module{
+						{
+							Name:          csmv1.AuthorizationServer,
+							ConfigVersion: "v2.4.0",
+						},
+					},
+				},
+			},
+			configVersion: "v2.4.0",
+			wantErr:       false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Set config version if specified
+			if tt.configVersion != "" && len(tt.cr.Spec.Modules) > 0 {
+				tt.cr.Spec.Modules[0].ConfigVersion = tt.configVersion
+			}
+
+			ctx := context.Background()
+			op := operatorutils.OperatorConfig{
+				ConfigDirectory: "../../operatorconfig",
+			}
+			ctrlClient := ctrlClientFake.NewClientBuilder().Build()
+
+			err := DeleteAuthCrds(ctx, op, tt.cr, ctrlClient)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestCleanupAuthorizationCRDInstances(t *testing.T) {
+	ctx := context.Background()
+	namespace := "test-cleanup-ns"
+
+	tests := []struct {
+		name string
+	}{
+		{
+			name: "cleanup with no instances",
+		},
+		{
+			name: "cleanup with empty client",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(_ *testing.T) {
+			ctrlClient := ctrlClientFake.NewClientBuilder().Build()
+
+			// This function now checks if auth CRs exist and returns an error if they do
+			// We're mainly testing that it doesn't panic and returns nil when no instances exist
+			err := checkAuthorizationCRDInstances(ctx, ctrlClient, namespace)
+			if err != nil {
+				t.Errorf("checkAuthorizationCRDInstances() returned error = %v, but expected nil for empty client", err)
+			}
+		})
+	}
+}
+
+func TestInstallWithCerts_ModuleNotFound_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	// CR without authorization module
+	cr := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-csm",
+			Namespace: "test-ns",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Modules: []csmv1.Module{},
+		},
+	}
+
+	op := operatorutils.OperatorConfig{
+		ConfigDirectory: "../../operatorconfig",
+	}
+	ctrlClient := ctrlClientFake.NewClientBuilder().Build()
+
+	err := InstallWithCerts(ctx, false, op, cr, ctrlClient)
+	assert.Error(t, err)
+}
+
+func TestAuthCrdDeploy_ModuleNotFound_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	// CR without authorization module
+	cr := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-csm",
+			Namespace: "test-ns",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Modules: []csmv1.Module{},
+		},
+	}
+
+	op := operatorutils.OperatorConfig{
+		ConfigDirectory: "../../operatorconfig",
+	}
+	ctrlClient := ctrlClientFake.NewClientBuilder().Build()
+
+	err := AuthCrdDeploy(ctx, op, cr, ctrlClient)
+	assert.Error(t, err)
+}
+
+func TestCreateIngress_ModuleNotFound_ReturnsError(t *testing.T) {
+	// CR without authorization module
+	cr := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-csm",
+			Namespace: "test-ns",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Modules: []csmv1.Module{},
+		},
+	}
+
+	_, err := createIngress(false, cr)
+	assert.Error(t, err)
+}
+
+func TestNginxIngressController_ModuleNotFound_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	// CR without authorization module
+	cr := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-csm",
+			Namespace: "test-ns",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Modules: []csmv1.Module{},
+		},
+	}
+
+	op := operatorutils.OperatorConfig{
+		ConfigDirectory: "../../operatorconfig",
+	}
+	ctrlClient := ctrlClientFake.NewClientBuilder().Build()
+
+	err := NginxIngressController(ctx, false, op, cr, ctrlClient)
+	assert.Error(t, err)
+}
+
+func TestInstallPolicies_ModuleNotFound_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	// CR without authorization module
+	cr := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-csm",
+			Namespace: "test-ns",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Modules: []csmv1.Module{},
+		},
+	}
+
+	op := operatorutils.OperatorConfig{
+		ConfigDirectory: "../../operatorconfig",
+	}
+	ctrlClient := ctrlClientFake.NewClientBuilder().Build()
+
+	err := InstallPolicies(ctx, false, op, cr, ctrlClient)
+	assert.Error(t, err)
+}
+
+func TestCreateHTTPRoute_ModuleNotFound_ReturnsError(t *testing.T) {
+	// CR without authorization module
+	cr := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-csm",
+			Namespace: "test-ns",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Modules: []csmv1.Module{},
+		},
+	}
+
+	_, err := createHTTPRoute(cr)
+	assert.Error(t, err)
+}
+
+func TestAuthorizationHTTPRoute_ModuleNotFound_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	// CR without authorization module
+	cr := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-csm",
+			Namespace: "test-ns",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Modules: []csmv1.Module{},
+		},
+	}
+
+	ctrlClient := ctrlClientFake.NewClientBuilder().Build()
+
+	r := &operatorutils.FakeReconcileCSM{
+		Client:    ctrlClient,
+		K8sClient: fake.NewSimpleClientset(),
+	}
+
+	err := authorizationHTTPRoute(ctx, false, cr, r, ctrlClient)
+	assert.Error(t, err)
+}
+
+func TestApplyAuthMetricsToProxyServerDeployment(t *testing.T) {
+	tests := []struct {
+		name       string
+		module     csmv1.Module
+		deployment appsv1.Deployment
+		assertions func(*testing.T, appsv1.Deployment)
+	}{
+		{
+			name:       "metrics nil leaves proxy-server unchanged",
+			module:     csmv1.Module{},
+			deployment: authorizationMetricsTestDeployment(AuthProxyServerComponent),
+			assertions: func(t *testing.T, deployment appsv1.Deployment) {
+				container := deployment.Spec.Template.Spec.Containers[0]
+				assert.Empty(t, container.Env)
+				assert.Empty(t, container.Ports)
+				assert.Empty(t, container.VolumeMounts)
+				assert.Empty(t, deployment.Spec.Template.Spec.Volumes)
+			},
+		},
+		{
+			name: "metrics disabled leaves proxy-server unchanged",
+			module: csmv1.Module{Metrics: &csmv1.ModuleMetrics{
+				Enabled: false,
+			}},
+			deployment: authorizationMetricsTestDeployment(AuthProxyServerComponent),
+			assertions: func(t *testing.T, deployment appsv1.Deployment) {
+				container := deployment.Spec.Template.Spec.Containers[0]
+				assert.Empty(t, container.Env)
+				assert.Empty(t, container.Ports)
+				assert.Empty(t, container.VolumeMounts)
+				assert.Empty(t, deployment.Spec.Template.Spec.Volumes)
+			},
+		},
+		{
+			name: "metrics enabled without TLS adds env vars and metrics port",
+			module: csmv1.Module{Metrics: &csmv1.ModuleMetrics{
+				Enabled: true,
+			}},
+			deployment: authorizationMetricsTestDeployment(AuthProxyServerComponent),
+			assertions: func(t *testing.T, deployment appsv1.Deployment) {
+				container := deployment.Spec.Template.Spec.Containers[0]
+				value, found := authorizationMetricsTestEnvValue(container, "X_CSI_METRICS_ENABLED")
+				require.True(t, found)
+				assert.Equal(t, "true", value)
+				value, found = authorizationMetricsTestEnvValue(container, "X_CSI_METRICS_PORT")
+				require.True(t, found)
+				assert.Equal(t, fmt.Sprintf(":%d", DefaultAuthProxyMetricsPort), value)
+				assert.True(t, authorizationMetricsTestHasPort(container, "metrics", DefaultAuthProxyMetricsPort))
+				_, found = authorizationMetricsTestEnvValue(container, "X_CSI_METRICS_TLS_CERT_FILE")
+				assert.False(t, found)
+				_, found = authorizationMetricsTestEnvValue(container, "X_CSI_METRICS_TLS_KEY_FILE")
+				assert.False(t, found)
+				assert.Empty(t, container.VolumeMounts)
+				assert.Empty(t, deployment.Spec.Template.Spec.Volumes)
+			},
+		},
+		{
+			name: "metrics enabled with TLS adds env vars port volume mount and volume",
+			module: csmv1.Module{Metrics: &csmv1.ModuleMetrics{
+				Enabled:       true,
+				TLSCertSecret: "proxy-server-metrics-tls",
+			}},
+			deployment: authorizationMetricsTestDeployment(AuthProxyServerComponent),
+			assertions: func(t *testing.T, deployment appsv1.Deployment) {
+				container := deployment.Spec.Template.Spec.Containers[0]
+				value, found := authorizationMetricsTestEnvValue(container, "X_CSI_METRICS_ENABLED")
+				require.True(t, found)
+				assert.Equal(t, "true", value)
+				value, found = authorizationMetricsTestEnvValue(container, "X_CSI_METRICS_PORT")
+				require.True(t, found)
+				assert.Equal(t, fmt.Sprintf(":%d", DefaultAuthProxyMetricsPort), value)
+				value, found = authorizationMetricsTestEnvValue(container, "X_CSI_METRICS_TLS_CERT_FILE")
+				require.True(t, found)
+				assert.Equal(t, AuthProxyMetricsTLSMountPath+"/tls.crt", value)
+				value, found = authorizationMetricsTestEnvValue(container, "X_CSI_METRICS_TLS_KEY_FILE")
+				require.True(t, found)
+				assert.Equal(t, AuthProxyMetricsTLSMountPath+"/tls.key", value)
+				assert.True(t, authorizationMetricsTestHasPort(container, "metrics", DefaultAuthProxyMetricsPort))
+				assert.True(t, authorizationMetricsTestHasVolumeMount(container, AuthProxyMetricsTLSVolumeName, AuthProxyMetricsTLSMountPath))
+				assert.True(t, authorizationMetricsTestHasSecretVolume(deployment.Spec.Template.Spec, AuthProxyMetricsTLSVolumeName, "proxy-server-metrics-tls"))
+			},
+		},
+		{
+			name: "metrics enabled with custom port uses custom value",
+			module: csmv1.Module{Metrics: &csmv1.ModuleMetrics{
+				Enabled: true,
+				Port:    9090,
+			}},
+			deployment: authorizationMetricsTestDeployment(AuthProxyServerComponent),
+			assertions: func(t *testing.T, deployment appsv1.Deployment) {
+				container := deployment.Spec.Template.Spec.Containers[0]
+				value, found := authorizationMetricsTestEnvValue(container, "X_CSI_METRICS_PORT")
+				require.True(t, found)
+				assert.Equal(t, ":9090", value)
+				assert.True(t, authorizationMetricsTestHasPort(container, "metrics", 9090))
+			},
+		},
+		{
+			name: "missing proxy-server container is a no-op",
+			module: csmv1.Module{Metrics: &csmv1.ModuleMetrics{
+				Enabled: true,
+			}},
+			deployment: authorizationMetricsTestDeployment("sidecar"),
+			assertions: func(t *testing.T, deployment appsv1.Deployment) {
+				container := deployment.Spec.Template.Spec.Containers[0]
+				assert.Equal(t, "sidecar", container.Name)
+				assert.Empty(t, container.Env)
+				assert.Empty(t, container.Ports)
+				assert.Empty(t, deployment.Spec.Template.Spec.Volumes)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			deployment := tt.deployment.DeepCopy()
+			applyAuthMetricsToProxyServerDeployment(deployment, tt.module)
+			tt.assertions(t, *deployment)
+		})
+	}
+}
+
+func authorizationMetricsTestDeployment(containerName string) appsv1.Deployment {
+	return appsv1.Deployment{
+		Spec: appsv1.DeploymentSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{Name: containerName},
+					},
+				},
+			},
+		},
+	}
+}
+
+func authorizationMetricsTestEnvValue(container corev1.Container, name string) (string, bool) {
+	for _, env := range container.Env {
+		if env.Name == name {
+			return env.Value, true
+		}
+	}
+	return "", false
+}
+
+func authorizationMetricsTestHasPort(container corev1.Container, name string, port int32) bool {
+	for _, containerPort := range container.Ports {
+		if containerPort.Name == name && containerPort.ContainerPort == port && containerPort.Protocol == corev1.ProtocolTCP {
+			return true
+		}
+	}
+	return false
+}
+
+func authorizationMetricsTestHasVolumeMount(container corev1.Container, name string, mountPath string) bool {
+	for _, volumeMount := range container.VolumeMounts {
+		if volumeMount.Name == name && volumeMount.MountPath == mountPath {
+			return true
+		}
+	}
+	return false
+}
+
+func authorizationMetricsTestHasSecretVolume(spec corev1.PodSpec, name string, secretName string) bool {
+	for _, volume := range spec.Volumes {
+		if volume.Name == name && volume.Secret != nil && volume.Secret.SecretName == secretName {
+			return true
+		}
+	}
+	return false
 }

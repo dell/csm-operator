@@ -4,7 +4,7 @@ metadata:
   name: powermax
   namespace: ${E2E_NS_POWERMAX}
 spec:
-  version: v1.17.2
+  version: ${CSM_VERSION_LATEST}
   driver:
     csiDriverType: "powermax"
     common:
@@ -24,6 +24,6 @@ spec:
         - name: karavi-authorization-proxy
           envs:
             - name: "PROXY_HOST"
-              value: "${E2E_NS_AUTH}-gateway-nginx.${E2E_NS_AUTH}.svc.cluster.local"
+              value: "${AUTHORIZATION_HOST}"
             - name: "SKIP_CERTIFICATE_VALIDATION"
               value: "true"

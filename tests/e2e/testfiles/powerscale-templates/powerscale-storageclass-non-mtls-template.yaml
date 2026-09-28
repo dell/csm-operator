@@ -1,0 +1,15 @@
+# Non-mTLS StorageClass for backward compatibility testing
+# Uses the same IsiPath as the mTLS StorageClass to ensure path exists
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: isilon-non-mtls
+provisioner: csi-isilon.dellemc.com
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+parameters:
+  AccessZone: System
+  IsiPath: /ifs/data
+  RootClientEnabled: "false"
+  # NFSTransportSecurity is omitted, so this StorageClass does not enable TLS or mTLS
+volumeBindingMode: Immediate

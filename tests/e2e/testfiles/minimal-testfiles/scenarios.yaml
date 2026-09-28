@@ -7,6 +7,7 @@
     - "testfiles/minimal-testfiles/storage_csm_powerstore.yaml"
   tags:
     - "powerstore"
+    - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [powerstore]"
@@ -40,6 +41,7 @@
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powerstoreAuthCRs]"
     - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powerstore] for CR [1]"
     - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [powerstore]"
@@ -77,6 +79,7 @@
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [${E2E_NS_AUTH}] for [powerstore]"
     - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powerstore] for CR [1]"
     - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [powerstore]"
@@ -138,6 +141,7 @@
   tags:
     - "observability"
     - "powerstore"
+    - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Enable [observability] module in CR spec [1]"
@@ -189,15 +193,15 @@
     - "Delete custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is not installed"
 
-- scenario: "Install PowerStore Driver with ConfigVersion (Minimal, n-2 version)"
+# Test PowerStore driver with n-2 version (uses spec.version instead of deprecated configVersion)
+- scenario: "Install PowerStore Driver (Minimal, n-2 version)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powerstore.yaml"
   tags:
     - "powerstore"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Remove [spec.version] from CR spec [1]"
-    - "Set driver configVersion to [n-2] in CR spec [1]"
+    - "Set spec version to [n-2] in CR spec [1]"
     - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [powerstore]"
     - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
     - "Apply custom resource [1]"
@@ -207,6 +211,210 @@
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
     - "Validate [powerstore] driver from CR [1] is not installed"
+
+# ---- PowerStore minimal rollback/upgrade tests ----
+# All scenarios use a single path. InSpec steps set the version to n-1 or n-2
+# before the initial apply, then set it back to n for the upgrade.
+
+- scenario: "Rollback/Upgrade - PowerStore sequential upgrade (Minimal, n-1 to n)"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_powerstore.yaml"
+  tags:
+    - "powerstore"
+    - "rollback-upgrade"
+    - "sanity"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set spec version to [n-1] in CR spec [1]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    # Upgrade from n-1 to n
+    - "Set spec version to [n] in CR spec [1]"
+    - "Apply custom resource [1]"
+    - "Validate pre-upgrade snapshot exists on CR [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Validate snapshot deleted on CR [1]"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+
+- scenario: "Rollback/Upgrade - PowerStore version skip upgrade (Minimal, n-2 to n)"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_powerstore.yaml"
+  tags:
+    - "powerstore"
+    - "rollback-upgrade"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set spec version to [n-2] in CR spec [1]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    # Upgrade from n-2 to n (version skip)
+    - "Set spec version to [n] in CR spec [1]"
+    - "Apply custom resource [1]"
+    - "Validate pre-upgrade snapshot exists on CR [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Validate snapshot deleted on CR [1]"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+
+- scenario: "Rollback/Upgrade - PowerStore auto-rollback on upgrade failure (Minimal, n-1 to n)"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_powerstore.yaml"
+  tags:
+    - "powerstore"
+    - "rollback-upgrade"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set spec version to [n-1] in CR spec [1]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    # Shorten the grace period so the test doesn't wait 10 minutes
+    - "Set operator failure grace period to [1m]"
+    # Inject a bad image to force upgrade failure
+    - "Set ConfigMap image [powerstore] to [quay.io/dell/container-storage-modules/csi-powerstore:DOES-NOT-EXIST]"
+    - "Set spec version to [n] in CR spec [1]"
+    - "Apply custom resource [1]"
+    - "Validate pre-upgrade snapshot exists on CR [1]"
+    # Operator should auto-rollback to the n-1 spec
+    - "Validate rollback completed on CR [1] with version [n-1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    # cleanup: restore ConfigMap and grace period
+    - "Restore ConfigMap"
+    - "Set operator failure grace period to [5m]"
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+
+- scenario: "Rollback/Upgrade - PowerStore upgrade with Resiliency (Minimal, n-1 to n)"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_powerstore.yaml"
+  tags:
+    - "powerstore"
+    - "resiliency"
+    - "rollback-upgrade"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set spec version to [n-1] in CR spec [1]"
+    - "Enable [resiliency] module in CR spec [1]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Validate [resiliency] module from CR [1] is installed"
+    # Upgrade from n-1 to n by updating the version in-place;
+    # resiliency stays enabled because we modify the same CR.
+    - "Set spec version to [n] in CR spec [1]"
+    - "Apply custom resource [1]"
+    - "Validate pre-upgrade snapshot exists on CR [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Validate [resiliency] module from CR [1] is installed"
+    - "Validate snapshot deleted on CR [1]"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+
+- scenario: "Rollback/Upgrade - PowerStore auto-rollback preserves Resiliency (Minimal, n-1 to n)"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_powerstore.yaml"
+  tags:
+    - "powerstore"
+    - "resiliency"
+    - "rollback-upgrade"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set spec version to [n-1] in CR spec [1]"
+    - "Enable [resiliency] module in CR spec [1]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Validate [resiliency] module from CR [1] is installed"
+    # Shorten the grace period for faster failure detection
+    - "Set operator failure grace period to [1m]"
+    # Inject a bad image to force upgrade failure
+    - "Set ConfigMap image [powerstore] to [quay.io/dell/container-storage-modules/csi-powerstore:DOES-NOT-EXIST]"
+    - "Set spec version to [n] in CR spec [1]"
+    - "Apply custom resource [1]"
+    - "Validate pre-upgrade snapshot exists on CR [1]"
+    # Operator should auto-rollback; resiliency should still be running
+    - "Validate rollback completed on CR [1] with version [n-1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Validate [resiliency] module from CR [1] is installed"
+    # cleanup
+    - "Restore ConfigMap"
+    - "Set operator failure grace period to [5m]"
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+
+- scenario: "Rollback/Upgrade - PowerStore version skip upgrade with Resiliency (Minimal, n-2 to n)"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_powerstore.yaml"
+  tags:
+    - "powerstore"
+    - "resiliency"
+    - "rollback-upgrade"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set spec version to [n-2] in CR spec [1]"
+    - "Enable [resiliency] module in CR spec [1]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Validate [resiliency] module from CR [1] is installed"
+    # Upgrade from n-2 to n (version skip) with resiliency
+    - "Set spec version to [n] in CR spec [1]"
+    - "Apply custom resource [1]"
+    - "Validate pre-upgrade snapshot exists on CR [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    - "Validate [resiliency] module from CR [1] is installed"
+    - "Validate snapshot deleted on CR [1]"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+
+- scenario: "Rollback/Upgrade - PowerStore auto-rollback on version skip upgrade failure (Minimal, n-2 to n)"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_powerstore.yaml"
+  tags:
+    - "powerstore"
+    - "rollback-upgrade"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set spec version to [n-2] in CR spec [1]"
+    - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstore]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    # Shorten the grace period so the test doesn't wait 10 minutes
+    - "Set operator failure grace period to [1m]"
+    # Inject a bad image to force upgrade failure
+    - "Set ConfigMap image [powerstore] to [quay.io/dell/container-storage-modules/csi-powerstore:DOES-NOT-EXIST]"
+    - "Set spec version to [n] in CR spec [1]"
+    - "Apply custom resource [1]"
+    - "Validate pre-upgrade snapshot exists on CR [1]"
+    # Operator should auto-rollback to the n-2 spec
+    - "Validate rollback completed on CR [1] with version [n-2]"
+    - "Validate custom resource [1]"
+    - "Validate [powerstore] driver from CR [1] is installed"
+    # cleanup: restore ConfigMap and grace period
+    - "Restore ConfigMap"
+    - "Set operator failure grace period to [5m]"
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
 
 # ---- Unity minimal tests ----
 
@@ -233,6 +441,7 @@
     - "testfiles/minimal-testfiles/storage_csm_unity.yaml"
   tags:
     - "unity"
+    - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Set forceRemoveDriver to [false] in CR spec [1]"
@@ -263,7 +472,7 @@
     - "Create Secret with template [testfiles/unity-templates/unity-secret-template.yaml] name [unity-creds] in namespace [${E2E_NS_UNITY}] for [unity]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
-    - "Validate [1] CSM has forceRemoveDriver set to true"
+    - "Validate [1] CSM has forceRemoveDriver set to false"
     - "Validate [unity] driver from CR [1] is installed"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
@@ -282,6 +491,7 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "If POWERFLEX_SDC_SFTP_REPO_ENABLED: Configure Powerflex SFTP from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex] CR [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -296,6 +506,7 @@
     - "testfiles/minimal-testfiles/storage_csm_powerflex.yaml"
   tags:
     - "powerflex"
+    - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Set forceRemoveDriver to [remove] in CR spec [1]"
@@ -303,7 +514,7 @@
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
-    - "Validate [1] CSM has forceRemoveDriver set to true"
+    - "Validate [1] CSM has forceRemoveDriver set to false"
     - "Validate [powerflex] driver from CR [1] is installed"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
@@ -363,6 +574,7 @@
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
+    - "If POWERFLEX_SDC_SFTP_REPO_ENABLED: Configure Powerflex SFTP from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex] CR [1]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is installed"
@@ -397,6 +609,7 @@
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [${E2E_NS_AUTH}] for [powerflex]"
     - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powerflex] for CR [1]"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
@@ -434,6 +647,7 @@
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powerflexAuthCRs]"
     - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powerflex] for CR [1]"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
@@ -509,20 +723,194 @@
     - "Delete custom resource [1]"
     - "Validate [powerflex] driver from CR [1] is not installed"
 
+# ── PowerFlex + Authorization V2 Rollback/Upgrade (Minimal) [ECS01G-1108] [ECS01G-1114] ──
+# All scenarios use a single path. InSpec steps set the version to n-1 or n-2
+# before the initial apply, enable authorization module, then set it back to n for the upgrade.
+
+- scenario: "Rollback/Upgrade - PowerFlex with Authorization V2 sequential upgrade (Minimal, n-1 to n)"
+  paths:
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_n-1_k8s-secret.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_k8s_secret.yaml"
+    - "testfiles/minimal-testfiles/storage_csm_powerflex.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/{authorization-proxy-server:n-1}/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/{authorization-proxy-server}/authorization-crds.yaml"
+  tags:
+    - "authorization"
+    - "authorizationproxyserver"
+    - "powerflex"
+    - "rollback-upgrade"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [5]"
+    - "Create [authorization-proxy-server] prerequisites from CR [1]"
+    - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [${E2E_NS_AUTH}] for [powerflex]"
+    - "If POWERFLEX_SDC_SFTP_REPO_ENABLED: Configure Powerflex SFTP from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex] CR [3]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [authorization-proxy-server] module from CR [1] is installed"
+    - "Configure authorization-proxy-server with template [4] for [powerflex] for CR [1]"
+    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflexAuthSidecar]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflexAuth]"
+    # Configure CR [3] (powerflex base) for authorization with n-1 version
+    - "Set metadata name [vxflexos] namespace [${E2E_NS_POWERFLEX}] in CR spec [3]"
+    - "Set spec version to [n-1] in CR spec [3]"
+    - "Enable [authorization] module in CR spec [3]"
+    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${AUTHORIZATION_HOST}] in CR spec [3]"
+    - "Apply custom resource [3]"
+    - "Validate custom resource [3]"
+    - "Validate [powerflex] driver from CR [3] is installed"
+    - "Validate [authorization] module from CR [3] is installed"
+    # upgrade
+    - "Install Authorization CRDs [6]"
+    - "Upgrade from custom resource [1] to [2]"
+    - "Validate [authorization-proxy-server] module from CR [2] is installed"
+    - "Configure authorization-proxy-server with template [4] for [powerflex] for CR [2]"
+    - "Set spec version to [n] in CR spec [3]"
+    - "Apply custom resource [3]"
+    - "Validate pre-upgrade snapshot exists on CR [3]"
+    - "Validate custom resource [3]"
+    - "Validate [powerflex] driver from CR [3] is installed"
+    - "Validate [authorization] module from CR [3] is installed"
+    - "Validate snapshot deleted on CR [3]"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [3]"
+    - "Delete custom resource [3]"
+    - "Validate [powerflex] driver from CR [3] is not installed"
+    - "Delete Authorization CRs for [powerflex]"
+    - "Delete custom resource [1]"
+    - "Validate [authorization] module pods from CR [1] is not installed"
+    - "Delete Authorization CRDs [6]"
+
+- scenario: "Rollback/Upgrade - PowerFlex with Authorization V2 version skip upgrade (Minimal, n-2 to n)"
+  paths:
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_n-2_k8s-secret.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_k8s_secret.yaml"
+    - "testfiles/minimal-testfiles/storage_csm_powerflex.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/{authorization-proxy-server:n-2}/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/{authorization-proxy-server}/authorization-crds.yaml"
+  tags:
+    - "authorization"
+    - "authorizationproxyserver"
+    - "powerflex"
+    - "rollback-upgrade"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [5]"
+    - "Create [authorization-proxy-server] prerequisites from CR [1]"
+    - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [${E2E_NS_AUTH}] for [powerflex]"
+    - "If POWERFLEX_SDC_SFTP_REPO_ENABLED: Configure Powerflex SFTP from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex] CR [3]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [authorization-proxy-server] module from CR [1] is installed"
+    - "Configure authorization-proxy-server with template [4] for [powerflex] for CR [1]"
+    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflexAuthSidecar]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflexAuth]"
+    # Configure CR [3] (powerflex base) for authorization with n-2 version
+    - "Set metadata name [vxflexos] namespace [${E2E_NS_POWERFLEX}] in CR spec [3]"
+    - "Set spec version to [n-2] in CR spec [3]"
+    - "Enable [authorization] module in CR spec [3]"
+    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${AUTHORIZATION_HOST}] in CR spec [3]"
+    - "Apply custom resource [3]"
+    - "Validate custom resource [3]"
+    - "Validate [powerflex] driver from CR [3] is installed"
+    - "Validate [authorization] module from CR [3] is installed"
+    # upgrade from n-2 to n (version skip)
+    - "Install Authorization CRDs [6]"
+    - "Upgrade from custom resource [1] to [2]"
+    - "Validate [authorization-proxy-server] module from CR [2] is installed"
+    - "Configure authorization-proxy-server with template [4] for [powerflex] for CR [2]"
+    - "Set spec version to [n] in CR spec [3]"
+    - "Apply custom resource [3]"
+    - "Validate pre-upgrade snapshot exists on CR [3]"
+    - "Validate custom resource [3]"
+    - "Validate [powerflex] driver from CR [3] is installed"
+    - "Validate [authorization] module from CR [3] is installed"
+    - "Validate snapshot deleted on CR [3]"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [3]"
+    - "Delete custom resource [3]"
+    - "Validate [powerflex] driver from CR [3] is not installed"
+    - "Delete Authorization CRs for [powerflex]"
+    - "Delete custom resource [1]"
+    - "Validate [authorization] module pods from CR [1] is not installed"
+    - "Delete Authorization CRDs [6]"
+
+- scenario: "Rollback/Upgrade - PowerFlex with Authorization V2 auto-rollback on upgrade failure (Minimal, n-1 to n)"
+  paths:
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_n-1_k8s-secret.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server_k8s_secret.yaml"
+    - "testfiles/minimal-testfiles/storage_csm_powerflex.yaml"
+    - "testfiles/authorization-templates/storage_csm_authorization_v2_template_k8s_secret.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/{authorization-proxy-server:n-1}/authorization-crds.yaml"
+    - "../../operatorconfig/moduleconfig/authorization/{authorization-proxy-server}/authorization-crds.yaml"
+  tags:
+    - "authorization"
+    - "authorizationproxyserver"
+    - "powerflex"
+    - "rollback-upgrade"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Install Authorization CRDs [5]"
+    - "Create [authorization-proxy-server] prerequisites from CR [1]"
+    - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [${E2E_NS_AUTH}] for [powerflex]"
+    - "If POWERFLEX_SDC_SFTP_REPO_ENABLED: Configure Powerflex SFTP from template [testfiles/powerflex-templates/powerflex-sftp-secret-private.crt] private-secret [sdcsftprepo-private-secret] public-secret [sdcsftprepo-public-secret] in namespace [${E2E_NS_POWERFLEX}] for [powerflex] CR [3]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [authorization-proxy-server] module from CR [1] is installed"
+    - "Configure authorization-proxy-server with template [4] for [powerflex] for CR [1]"
+    - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
+    - "Create Secret with template [testfiles/powerflex-templates/csm-authorization-config.json] name [karavi-authorization-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflexAuthSidecar]"
+    - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflexAuth]"
+    # Configure CR [3] (powerflex base) for authorization with n-1 version
+    - "Set metadata name [vxflexos] namespace [${E2E_NS_POWERFLEX}] in CR spec [3]"
+    - "Set spec version to [n-1] in CR spec [3]"
+    - "Enable [authorization] module in CR spec [3]"
+    - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${AUTHORIZATION_HOST}] in CR spec [3]"
+    - "Apply custom resource [3]"
+    - "Validate custom resource [3]"
+    - "Validate [powerflex] driver from CR [3] is installed"
+    - "Validate [authorization] module from CR [3] is installed"
+    # upgrade with bad image to trigger rollback
+    - "Install Authorization CRDs [6]"
+    - "Upgrade from custom resource [1] to [2]"
+    - "Validate [authorization-proxy-server] module from CR [2] is installed"
+    - "Configure authorization-proxy-server with template [4] for [powerflex] for CR [2]"
+    - "Set operator failure grace period to [1m]"
+    - "Set ConfigMap image [powerflex] to [quay.io/dell/container-storage-modules/csi-vxflexos:DOES-NOT-EXIST]"
+    - "Set spec version to [n] in CR spec [3]"
+    - "Apply custom resource [3]"
+    - "Validate pre-upgrade snapshot exists on CR [3]"
+    - "Validate rollback completed on CR [3] with version [n-1]"
+    - "Restore ConfigMap"
+    - "Validate custom resource [3]"
+    - "Validate [powerflex] driver from CR [3] is installed"
+    - "Validate [authorization] module from CR [3] is installed"
+    - "Set operator failure grace period to [10m]"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [3]"
+    - "Delete custom resource [3]"
+    - "Validate [powerflex] driver from CR [3] is not installed"
+    - "Delete Authorization CRs for [powerflex]"
+    - "Delete custom resource [1]"
+    - "Validate [authorization] module pods from CR [1] is not installed"
+    - "Delete Authorization CRDs [6]"
+
 # ---- PowerScale minimal tests ----
 
-# Test PowerScale driver with configVersion v2.16.0 (bypasses ConfigMap, uses default operator images)
-- scenario: "Install PowerScale Driver with ConfigVersion"
+# Test PowerScale driver with n-1 version (uses spec.version instead of deprecated configVersion)
+- scenario: "Install PowerScale Driver (n-1 version)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powerscale.yaml"
   tags:
     - "powerscale"
-    - "configversion"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Set replicas to [1] in CR spec [1]"
-    - "Remove [spec.version] from CR spec [1]"
-    - "Set driver configVersion to [n-1] in CR spec [1]"
+    - "Set spec version to [n-1] in CR spec [1]"
     - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
     - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [powerscale]"
@@ -559,7 +947,6 @@
     - "testfiles/minimal-testfiles/storage_csm_powerscale.yaml"
   tags:
     - "powerscale"
-    - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Set forceRemoveDriver to [remove] in CR spec [1]"
@@ -568,7 +955,7 @@
     - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
-    - "Validate [1] CSM has forceRemoveDriver set to true"
+    - "Validate [1] CSM has forceRemoveDriver set to false"
     - "Validate [powerscale] driver from CR [1] is installed"
     # cleanup
     - "Enable forceRemoveDriver on CR [1]"
@@ -580,7 +967,6 @@
     - "testfiles/minimal-testfiles/storage_csm_powerscale.yaml"
   tags:
     - "powerscale"
-    - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Set forceRemoveDriver to [false] in CR spec [1]"
@@ -606,7 +992,6 @@
   tags:
     - "powerscale"
     - "resiliency"
-    - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
@@ -632,6 +1017,7 @@
   tags:
     - "powerscale"
     - "resiliency"
+    - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Enable [resiliency] module in CR spec [1]"
@@ -701,7 +1087,6 @@
     - "testfiles/minimal-testfiles/storage_csm_powerscale.yaml"
   tags:
     - "powerscale"
-    - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
@@ -780,6 +1165,7 @@
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [${E2E_NS_AUTH}] for [powerscale]"
     - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powerscale] for CR [1]"
     - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
@@ -819,6 +1205,7 @@
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powerscaleAuthCRs]"
     - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powerscale] for CR [1]"
     - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
@@ -868,13 +1255,12 @@
     - "powerscale"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    # Configure CR [1] (authorization proxy server) for n-1 version
-    - "Set spec version to [n-1] in CR spec [1]"
     - "Install Authorization CRDs [3]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     # n-1 (Auth v2.4.0) uses Kubernetes secrets directly (no SecretProviderClass support)
     - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [${E2E_NS_AUTH}] for [powerscale]"
     - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     # Configure CR [2] (powerscale base) for authorization
     - "Set replicas to [1] in CR spec [2]"
@@ -899,6 +1285,103 @@
     - "Validate [authorization] module pods from CR [1] is not installed"
     - "Delete Authorization CRDs [3]"
 
+# ---- PowerScale minimal rollback/upgrade tests with Replication ----
+
+- scenario: "Rollback/Upgrade - PowerScale sequential upgrade with Replication (Minimal, n-1 to n)"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_powerscale.yaml"
+  tags:
+    - "powerscale"
+    - "replication"
+    - "rollback-upgrade"
+    - "sanity"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set spec version to [n-1] in CR spec [1]"
+    - "Enable [replication] module in CR spec [1]"
+    - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [replication] module from CR [1] is installed"
+    # Upgrade from n-1 to n
+    - "Set spec version to [n] in CR spec [1]"
+    - "Apply custom resource [1]"
+    - "Validate pre-upgrade snapshot exists on CR [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [replication] module from CR [1] is installed"
+    - "Validate snapshot deleted on CR [1]"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+
+- scenario: "Rollback/Upgrade - PowerScale version skip upgrade with Replication (Minimal, n-2 to n)"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_powerscale.yaml"
+  tags:
+    - "powerscale"
+    - "replication"
+    - "rollback-upgrade"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set spec version to [n-2] in CR spec [1]"
+    - "Enable [replication] module in CR spec [1]"
+    - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [replication] module from CR [1] is installed"
+    # Upgrade from n-2 to n (version skip)
+    - "Set spec version to [n] in CR spec [1]"
+    - "Apply custom resource [1]"
+    - "Validate pre-upgrade snapshot exists on CR [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [replication] module from CR [1] is installed"
+    - "Validate snapshot deleted on CR [1]"
+    # cleanup
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+
+- scenario: "Rollback/Upgrade - PowerScale auto-rollback preserves Replication (Minimal, n-1 to n)"
+  paths:
+    - "testfiles/minimal-testfiles/storage_csm_powerscale.yaml"
+  tags:
+    - "powerscale"
+    - "replication"
+    - "rollback-upgrade"
+  steps:
+    - "Given an environment with k8s or openshift, and CSM operator installed"
+    - "Set spec version to [n-1] in CR spec [1]"
+    - "Enable [replication] module in CR spec [1]"
+    - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
+    - "Create Secret with template [testfiles/powerscale-templates/powerscale-secret-template.yaml] name [isilon-creds] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
+    - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [replication] module from CR [1] is installed"
+    # Shorten the grace period for faster failure detection
+    - "Set operator failure grace period to [1m]"
+    # Inject bad images to force upgrade failure
+    - "Set ConfigMap image [isilon] to [quay.io/dell/container-storage-modules/csi-isilon:DOES-NOT-EXIST]"
+    - "Set ConfigMap image [dell-replication-controller-manager] to [quay.io/dell/container-storage-modules/dell-replication-controller:DOES-NOT-EXIST]"
+    - "Set spec version to [n] in CR spec [1]"
+    - "Apply custom resource [1]"
+    - "Validate pre-upgrade snapshot exists on CR [1]"
+    # Operator should auto-rollback; replication should still be running
+    - "Validate rollback completed on CR [1] with version [n-1]"
+    - "Validate custom resource [1]"
+    - "Validate [powerscale] driver from CR [1] is installed"
+    - "Validate [replication] module from CR [1] is installed"
+    # cleanup
+    - "Restore ConfigMap"
+    - "Set operator failure grace period to [5m]"
+    - "Enable forceRemoveDriver on CR [1]"
+    - "Delete custom resource [1]"
+
 # ---- PowerMax minimal tests ----
 
 - scenario: "Install PowerMax Driver (Minimal, Standalone)"
@@ -906,6 +1389,7 @@
     - "testfiles/minimal-testfiles/storage_csm_powermax.yaml"
   tags:
     - "powermax"
+    - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
@@ -998,7 +1482,7 @@
     - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
-    - "Validate [1] CSM has forceRemoveDriver set to true"
+    - "Validate [1] CSM has forceRemoveDriver set to false"
     - "Validate [powermax] driver from CR [1] is installed"
     - "Enable forceRemoveDriver on CR [1]"
     - "Delete custom resource [1]"
@@ -1036,6 +1520,7 @@
   tags:
     - "powermax"
     - "observability"
+    - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Enable [observability] module in CR spec [1]"
@@ -1070,6 +1555,7 @@
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [${E2E_NS_AUTH}] for [powermax]"
     - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powermax] for CR [1]"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
@@ -1132,6 +1618,7 @@
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powermaxAuthCRs]"
     - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powermax] for CR [1]"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
@@ -1171,8 +1658,8 @@
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     # n-1 (Auth v2.4.0) uses Kubernetes secrets directly (no SecretProviderClass support)
     - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [${E2E_NS_AUTH}] for [powermax]"
-    - "Set spec version to [n-1] in CR spec [1]"
     - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powermax] for CR [1]"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
@@ -1291,15 +1778,15 @@
     - "Delete custom resource [1]"
     - "Validate [powermax] driver from CR [1] is not installed"
 
-- scenario: "Install PowerMax Driver with ConfigVersion (Minimal, n-2 version)"
+# Test PowerMax driver with n-2 version (uses spec.version instead of deprecated configVersion)
+- scenario: "Install PowerMax Driver (Minimal, n-2 version)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powermax.yaml"
   tags:
     - "powermax"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
-    - "Remove [spec.version] from CR spec [1]"
-    - "Set driver configVersion to [n-2] in CR spec [1]"
+    - "Set spec version to [n-2] in CR spec [1]"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
     - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
     - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
@@ -1328,8 +1815,8 @@
     - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Create Secret from file [testfiles/authorization-templates/storage_csm_authorization_k8s_secret.yaml] name [secret-1] in namespace [${E2E_NS_AUTH}] for [powermax]"
-    - "Set spec version to [n-1] in CR spec [1]"
     - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powermax] for CR [1]"
     - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${AUTHORIZATION_HOST_N1}] in CR spec [3]"
@@ -1360,6 +1847,7 @@
     - "testfiles/minimal-testfiles/storage_csm_cosi.yaml"
   tags:
     - "cosi"
+    - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Create Secret from template [testfiles/cosi-templates/cosi-secret.yaml] as field [config.yaml] named [cosi-config] in namespace [${E2E_NS_COSI}] for [cosi]"
@@ -1373,7 +1861,7 @@
 
 # ---- CustomRegistry image precedence tests ----
 
-- scenario: "Install PowerStore Driver (Minimal, With CustomRegistry and Authorization v2)"
+- scenario: "Install PowerStore Driver (Minimal, n-1 With CustomRegistry and Authorization v2)"
   paths:
     - "testfiles/authorization-templates/storage_csm_authorization_v2_proxy_server.yaml"
     - "../../operatorconfig/moduleconfig/authorization/{authorization-proxy-server}/authorization-crds.yaml"
@@ -1381,27 +1869,32 @@
     - "testfiles/authorization-templates/storage_csm_authorization_v2_template.yaml"
     - "testfiles/common-templates/cm-sidecars-only.yaml"
   tags:
+    - "custom-registry"
     - "authorizationproxyserver"
     - "authorization"
     - "powerstore"
+    - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Delete ConfigMap"
+    - "Apply custom resource [5]"
     # Configure CR [3] (powerstore base) for authorization and customRegistry
     - "Set metadata name [powerstore] namespace [${E2E_NS_POWERSTORE}] in CR spec [3]"
     - "Enable [authorization] module in CR spec [3]"
     - "Set [authorization] component [karavi-authorization-proxy] env [PROXY_HOST] to [${AUTHORIZATION_HOST}] in CR spec [3]"
-    - "Set customRegistry to [quay.io/dell/container-storage-modules] in CR spec [3]"
+    - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/svc_npcsmbot/release] in CR spec [3]"
     - "Set spec version to [n-1] in CR spec [3]"
     - "Install Authorization CRDs [2]"
     - "Create [authorization-proxy-server] prerequisites from CR [1]"
     - "Create resource with template [testfiles/authorization-templates/storage_csm_authorization_secret_provider_class.yaml] for [powerstoreAuthCRs]"
+    - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/svc_npcsmbot/release] in CR spec [1]"
+    - "Set spec version to [n-1] in CR spec [1]"
     - "Apply custom resource [1]"
+    - "Validate custom resource [1]"
     - "Validate [authorization-proxy-server] module from CR [1] is installed"
     - "Configure authorization-proxy-server with template [4] for [powerstore] for CR [1]"
     - "Create StorageClass with template [testfiles/powerstore-templates/powerstore-storageclass-template.yaml] for [powerstore]"
     - "Create Secret with template [testfiles/powerstore-templates/powerstore-secret-template-auth.yaml] name [powerstore-config] in namespace [${E2E_NS_POWERSTORE}] for [powerstoreAuth]"
-    - "Apply custom resource [5]"
     - "Apply custom resource [3]"
     - "Validate custom resource [3]"
     - "Validate [powerstore] driver from CR [3] is installed"
@@ -1421,13 +1914,15 @@
     - "testfiles/minimal-testfiles/storage_csm_powerflex.yaml"
     - "testfiles/common-templates/cm-sidecars-only.yaml"
   tags:
+    - "custom-registry"
     - "powerflex"
     - "resiliency"
+    - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Delete ConfigMap"
     - "Enable [resiliency] module in CR spec [1]"
-    - "Set customRegistry to [quay.io/dell/container-storage-modules] in CR spec [1]"
+    - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/svc_npcsmbot/release] in CR spec [1]"
     - "Set spec version to [n-1] in CR spec [1]"
     - "Create StorageClass with template [testfiles/powerflex-templates/powerflex-storageclass-template.yaml] for [powerflex]"
     - "Create Secret with template [testfiles/powerflex-templates/powerflex-secret-template.yaml] name [vxflexos-config] in namespace [${E2E_NS_POWERFLEX}] for [powerflex]"
@@ -1447,13 +1942,15 @@
     - "testfiles/minimal-testfiles/storage_csm_powerscale.yaml"
     - "testfiles/common-templates/cm-sidecars-only.yaml"
   tags:
+    - "custom-registry"
     - "powerscale"
     - "replication"
+    - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Delete ConfigMap"
     - "Enable [replication] module in CR spec [1]"
-    - "Set customRegistry to [quay.io/dell/container-storage-modules] in CR spec [1]"
+    - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/svc_npcsmbot/release] in CR spec [1]"
     - "Set spec version to [n-1] in CR spec [1]"
     - "Create Secret with template [testfiles/minimal-testfiles/empty-secret.yaml] name [isilon-certs-0] in namespace [${E2E_NS_POWERSCALE}] for [powerscale]"
     - "Create StorageClass with template [testfiles/powerscale-templates/powerscale-storageclass-template.yaml] for [powerscale]"
@@ -1472,20 +1969,24 @@
 - scenario: "Install PowerMax Driver (Minimal, With CustomRegistry and Replication)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_powermax.yaml"
+    - "testfiles/common-templates/cm-sidecars-only.yaml"
   tags:
+    - "custom-registry"
     - "powermax"
     - "replication"
+    - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Delete ConfigMap"
     - "Enable [replication] module in CR spec [1]"
-    - "Set customRegistry to [quay.io/dell/container-storage-modules] in CR spec [1]"
+    - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/svc_npcsmbot/release] in CR spec [1]"
     - "Set spec version to [n-1] in CR spec [1]"
     - "Create StorageClass with template [testfiles/powermax-templates/powermax-storageclass-template.yaml] for [powermax]"
     - "Create resource with template [testfiles/powermax-templates/powermax-secret-template.yaml] for [powermaxCreds]"
     - "Create ConfigMap with template [testfiles/powermax-templates/powermax_reverse_proxy_config.yaml] name [powermax-reverseproxy-config] in namespace [${E2E_NS_POWERMAX}] for [powermaxAuthSidecar]"
     - "Create resource with template [testfiles/powermax-templates/powermax-array-config.yaml] for [powermaxArrayConfig]"
     - "Set up reverse proxy tls secret namespace [${E2E_NS_POWERMAX}]"
+    - "Apply custom resource [2]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [powermax] driver from CR [1] is installed"
@@ -1499,15 +2000,19 @@
 - scenario: "Install Unity Driver (Minimal, With CustomRegistry)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_unity.yaml"
+    - "testfiles/common-templates/cm-sidecars-only.yaml"
   tags:
+    - "custom-registry"
     - "unity"
+    - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Delete ConfigMap"
     - "Create StorageClass with template [testfiles/unity-templates/unity-storageclass-template.yaml] for [unity]"
     - "Create Secret with template [testfiles/unity-templates/unity-secret-template.yaml] name [unity-creds] in namespace [${E2E_NS_UNITY}] for [unity]"
-    - "Set customRegistry to [quay.io/dell/container-storage-modules] in CR spec [1]"
+    - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/svc_npcsmbot/release] in CR spec [1]"
     - "Set spec version to [n-1] in CR spec [1]"
+    - "Apply custom resource [2]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [unity] driver from CR [1] is installed"
@@ -1520,14 +2025,18 @@
 - scenario: "Install COSI Driver (Minimal, With CustomRegistry)"
   paths:
     - "testfiles/minimal-testfiles/storage_csm_cosi.yaml"
+    - "testfiles/common-templates/cm-sidecars-only.yaml"
   tags:
     - "cosi"
+    - "custom-registry"
+    - "sanity"
   steps:
     - "Given an environment with k8s or openshift, and CSM operator installed"
     - "Delete ConfigMap"
     - "Create Secret from template [testfiles/cosi-templates/cosi-secret.yaml] as field [config.yaml] named [cosi-config] in namespace [${E2E_NS_COSI}] for [cosi]"
-    - "Set customRegistry to [quay.io/dell/container-storage-modules] in CR spec [1]"
+    - "Set customRegistry to [csm.artifactory.cec.lab.emc.com/csm-users/svc_npcsmbot/release] in CR spec [1]"
     - "Set spec version to [n-1] in CR spec [1]"
+    - "Apply custom resource [2]"
     - "Apply custom resource [1]"
     - "Validate custom resource [1]"
     - "Validate [cosi] driver from CR [1] is installed"

@@ -1,4 +1,4 @@
-//  Copyright © 2023-2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2023-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
+	"github.com/dell/csm-operator/pkg/constants"
 	"github.com/dell/csm-operator/pkg/logger"
 	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	corev1 "k8s.io/api/core/v1"
@@ -72,8 +73,11 @@ const (
 	// CsiPowerstoreExclusiveAccess -  Exclusive Access flag
 	CsiPowerstoreExclusiveAccess = "<X_CSI_POWERSTORE_EXCLUSIVE_ACCESS>"
 
+	// CsiPowerstoreNfsAutoSelect -  NFS Auto Select flag
+	CsiPowerstoreNfsAutoSelect = "<X_CSI_POWERSTORE_NFS_AUTO_SELECT>"
+
 	// CsiStorageCapacityEnabled - Storage capacity flag
-	CsiStorageCapacityEnabled = "false"
+	CsiStorageCapacityEnabled = "<X_CSI_STORAGE_CAPACITY_ENABLED>"
 
 	// PowerStoreDebug - will be used to control the GOPOWERSTORE_DEBUG variable
 	PowerStoreDebug string = "<GOPOWERSTORE_DEBUG>"
@@ -99,8 +103,20 @@ const (
 	// CSMDREnabled - Flag to indicate if CSM-DR is enabled
 	CSMDREnabled string = "<X_CSM_DR_ENABLED>"
 
+	// PowerStoreMetricsPollInterval - Poll interval for metrics collection
+	PowerStoreMetricsPollInterval string = "<X_CSI_METRICS_POLL_INTERVAL>"
+
 	// CSMDRBindPort - Bind port for CSM-DR controller initialization
 	CSMDRBindPort string = "<X_CSM_DR_BIND_PORT>"
+
+	// CsiPowerstoreCSIAddonsReplEnabled - CSI Addons Replication Enabled flag
+	CsiPowerstoreCSIAddonsReplEnabled = "<X_CSI_CSIADDONS_REPLICATION_ENABLED>"
+
+	// CsiMonitorEnabled - Monitor service enabled flag
+	CsiMonitorEnabled string = "<X_CSI_ALERT_MONITOR_ENABLED>"
+
+	// CsiMonitorPollInterval - Monitor service poll interval
+	CsiMonitorPollInterval string = "<X_CSI_ALERT_MONITOR_POLL_INTERVAL>"
 )
 
 // PrecheckPowerStore do input validation
@@ -118,7 +134,7 @@ func PrecheckPowerStore(ctx context.Context, cr *csmv1.ContainerStorageModule, o
 		return err
 	}
 	// Check if driver version is supported by doing a stat on a config file
-	configFilePath := fmt.Sprintf("%s/driverconfig/powerstore/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, version)
+	configFilePath := fmt.Sprintf("%s/driverconfig/powerstore/%s/driver-config-params.yaml", operatorConfig.ConfigDirectory, version)
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		log.Errorw("PreCheckPowerStore failed in version check", "Error", err.Error())
 		return fmt.Errorf("%s %s not supported", csmv1.PowerStore, version)
@@ -168,6 +184,20 @@ func PrecheckPowerStore(ctx context.Context, cr *csmv1.ContainerStorageModule, o
 		}
 	}
 
+	// Check for metrics TLS secret if metrics is enabled with TLS
+	if isDriverMetricsTLSEnabled(*cr) {
+		found := &corev1.Secret{}
+		secretName := cr.Spec.Driver.Metrics.TLSCertSecret
+		err := ct.Get(ctx, types.NamespacedName{Name: secretName, Namespace: cr.GetNamespace()}, found)
+		if err != nil {
+			log.Error(err, "Failed query for metrics TLS secret", secretName, "Namespace", cr.Namespace)
+			if errors.IsNotFound(err) {
+				return fmt.Errorf("failed to find metrics TLS secret %s", secretName)
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -182,6 +212,7 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	healthMonitorNode := ""
 	powerstoreExternalAccess := ""
 	powerstoreExclusiveAccess := "false"
+	nfsAutoSelect := "false"
 	storageCapacity := "false"
 	maxVolumesPerNode := ""
 	volumeDisconnectMaxRetries := "5"
@@ -194,6 +225,9 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	foundAuthEnv := false
 	enableCSMDR := GetDriverCommonEnv(cr, "X_CSM_DR_ENABLED", "true")
 	drBindPort := GetDriverCommonEnv(cr, "X_CSM_DR_BIND_PORT", "8082")
+	csiAddonsReplEnabled := GetDriverCommonEnv(cr, "X_CSI_CSIADDONS_REPLICATION_ENABLED", "false")
+	monitorEnabled := GetDriverCommonEnv(cr, "X_CSI_ALERT_MONITOR_ENABLED", "true")
+	monitorPollInterval := GetDriverCommonEnv(cr, "X_CSI_ALERT_MONITOR_POLL_INTERVAL", "5m")
 
 	authorizationModuleFound := false
 
@@ -207,6 +241,71 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 	spaceReclamationSchedule := GetDriverCommonEnv(cr, CsiSpaceReclamationSchedule, "")
 	spaceReclamationMaxConcurrent := GetDriverCommonEnv(cr, CsiSpaceReclamationMaxConcurrent, "")
 	spaceReclamationTimeOut := GetDriverCommonEnv(cr, CsiSpaceReclamationTimeOut, "")
+
+	// Metrics configuration
+	metricsEnabled := "false"
+	metricsPort := "8443"
+	metricsTLSCertFile := ""
+	metricsTLSKeyFile := ""
+	metricsLeaderElectionEnabled := "false"
+	metricsLeaderElectionLeaseDuration := "60s"
+	metricsLeaderElectionRenewDeadline := "40s"
+	metricsLeaderElectionRetryPeriod := "5s"
+	metricsPollInterval := "30s"
+	metricsCollectionCacheTTL := "25s"
+	metricsArrayRateLimit := "100"
+	metricsArrayTimeout := "30s"
+	metricsArrayCBThreshold := "3"
+	metricsArrayCBResetTimeout := "30s"
+
+	if cr.Spec.Driver.Metrics != nil {
+		if cr.Spec.Driver.Metrics.Enabled {
+			metricsEnabled = "true"
+		}
+		if cr.Spec.Driver.Metrics.Port != 0 {
+			metricsPort = fmt.Sprintf("%d", cr.Spec.Driver.Metrics.Port)
+		}
+		if isDriverMetricsTLSEnabled(cr) {
+			metricsTLSCertFile = "/etc/metrics-tls/tls.crt"
+			metricsTLSKeyFile = "/etc/metrics-tls/tls.key"
+		}
+		if cr.Spec.Driver.Metrics.LeaderElection != nil {
+			if cr.Spec.Driver.Metrics.LeaderElection.Enabled != nil {
+				if *cr.Spec.Driver.Metrics.LeaderElection.Enabled {
+					metricsLeaderElectionEnabled = "true"
+				}
+			}
+			if cr.Spec.Driver.Metrics.LeaderElection.LeaseDuration != "" {
+				metricsLeaderElectionLeaseDuration = cr.Spec.Driver.Metrics.LeaderElection.LeaseDuration
+			}
+			if cr.Spec.Driver.Metrics.LeaderElection.RenewDeadline != "" {
+				metricsLeaderElectionRenewDeadline = cr.Spec.Driver.Metrics.LeaderElection.RenewDeadline
+			}
+			if cr.Spec.Driver.Metrics.LeaderElection.RetryPeriod != "" {
+				metricsLeaderElectionRetryPeriod = cr.Spec.Driver.Metrics.LeaderElection.RetryPeriod
+			}
+		}
+		if cr.Spec.Driver.Metrics.Collection != nil {
+			if cr.Spec.Driver.Metrics.Collection.Interval != "" {
+				metricsPollInterval = cr.Spec.Driver.Metrics.Collection.Interval
+			}
+			if cr.Spec.Driver.Metrics.Collection.CacheTTL != "" {
+				metricsCollectionCacheTTL = cr.Spec.Driver.Metrics.Collection.CacheTTL
+			}
+		}
+		if cr.Spec.Driver.Metrics.Array != nil {
+			if cr.Spec.Driver.Metrics.Array.RateLimit != 0 {
+				metricsArrayRateLimit = strconv.Itoa(int(cr.Spec.Driver.Metrics.Array.RateLimit))
+			}
+			if cr.Spec.Driver.Metrics.Array.Timeout != "" {
+				metricsArrayTimeout = cr.Spec.Driver.Metrics.Array.Timeout
+			}
+			if cr.Spec.Driver.Metrics.Array.CircuitBreaker != nil {
+				metricsArrayCBThreshold = metricsPositiveIntOrDefault(cr.Spec.Driver.Metrics.Array.CircuitBreaker.Threshold, 3)
+				metricsArrayCBResetTimeout = metricsDurationOrDefault(cr.Spec.Driver.Metrics.Array.CircuitBreaker.ResetTimeout, "30s")
+			}
+		}
+	}
 
 	for _, mod := range cr.Spec.Modules {
 		if mod.Name == csmv1.Authorization {
@@ -261,6 +360,9 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 				if env.Name == "X_CSI_VOLUME_DISCONNECT_TIMEOUT_SECONDS" {
 					volumeDisconnectTimeoutSeconds = env.Value
 				}
+				if env.Name == "X_CSI_POWERSTORE_NFS_AUTO_SELECT" {
+					nfsAutoSelect = env.Value
+				}
 			}
 		}
 
@@ -312,6 +414,7 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, CsiFcPortFilterFilePath, fcPortFilter)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreEnableChap, chap)
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorNode)
+		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreNfsAutoSelect, nfsAutoSelect)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreMaxVolumesPerNode, maxVolumesPerNode)
 		yamlString = strings.ReplaceAll(yamlString, VolumeDisconnectMaxRetries, volumeDisconnectMaxRetries)
 		yamlString = strings.ReplaceAll(yamlString, VolumeDisconnectRetryInterval, volumeDisconnectRetryInterval)
@@ -326,6 +429,21 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsExportDirectory, nfsExportDirectory)
 		yamlString = strings.ReplaceAll(yamlString, CSMDREnabled, enableCSMDR)
 		yamlString = strings.ReplaceAll(yamlString, CSMDRBindPort, drBindPort)
+
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsEnabled, metricsEnabled)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsPort, metricsPort)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsTLSCertFile, metricsTLSCertFile)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsTLSKeyFile, metricsTLSKeyFile)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsLeaderElectionEnabled, metricsLeaderElectionEnabled)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsLeaderElectionLeaseDuration, metricsLeaderElectionLeaseDuration)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsLeaderElectionRenewDeadline, metricsLeaderElectionRenewDeadline)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsLeaderElectionRetryPeriod, metricsLeaderElectionRetryPeriod)
+		yamlString = strings.ReplaceAll(yamlString, PowerStoreMetricsPollInterval, metricsPollInterval)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsCollectionCacheTTL, metricsCollectionCacheTTL)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsArrayRateLimit, metricsArrayRateLimit)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsArrayTimeout, metricsArrayTimeout)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsArrayCBThreshold, metricsArrayCBThreshold)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsArrayCBResetTimeout, metricsArrayCBResetTimeout)
 
 		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckEnabled, fsckEnabled)
 		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckMode, fsckMode)
@@ -349,12 +467,19 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 				if env.Name == "X_CSI_POWERSTORE_EXCLUSIVE_ACCESS" {
 					powerstoreExclusiveAccess = env.Value
 				}
+				if env.Name == "X_CSI_POWERSTORE_NFS_AUTO_SELECT" {
+					nfsAutoSelect = env.Value
+				}
+				if env.Name == "X_CSI_CSIADDONS_REPLICATION_ENABLED" {
+					csiAddonsReplEnabled = env.Value
+				}
 			}
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiNfsAcls, nfsAcls)
 		yamlString = strings.ReplaceAll(yamlString, CsiHealthMonitorEnabled, healthMonitorController)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreExternalAccess, powerstoreExternalAccess)
 		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreExclusiveAccess, powerstoreExclusiveAccess)
+		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreNfsAutoSelect, nfsAutoSelect)
 		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreDebug, debug)
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreAPITimeout, powerstoreAPITimeout)
@@ -364,6 +489,24 @@ func ModifyPowerstoreCR(yamlString string, cr csmv1.ContainerStorageModule, file
 		yamlString = strings.ReplaceAll(yamlString, PowerStoreNfsExportDirectory, nfsExportDirectory)
 		yamlString = strings.ReplaceAll(yamlString, CSMDREnabled, enableCSMDR)
 		yamlString = strings.ReplaceAll(yamlString, CSMDRBindPort, drBindPort)
+		yamlString = strings.ReplaceAll(yamlString, CsiPowerstoreCSIAddonsReplEnabled, csiAddonsReplEnabled)
+		yamlString = strings.ReplaceAll(yamlString, CsiMonitorEnabled, monitorEnabled)
+		yamlString = strings.ReplaceAll(yamlString, CsiMonitorPollInterval, monitorPollInterval)
+
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsEnabled, metricsEnabled)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsPort, metricsPort)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsTLSCertFile, metricsTLSCertFile)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsTLSKeyFile, metricsTLSKeyFile)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsLeaderElectionEnabled, metricsLeaderElectionEnabled)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsLeaderElectionLeaseDuration, metricsLeaderElectionLeaseDuration)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsLeaderElectionRenewDeadline, metricsLeaderElectionRenewDeadline)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsLeaderElectionRetryPeriod, metricsLeaderElectionRetryPeriod)
+		yamlString = strings.ReplaceAll(yamlString, PowerStoreMetricsPollInterval, metricsPollInterval)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsCollectionCacheTTL, metricsCollectionCacheTTL)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsArrayRateLimit, metricsArrayRateLimit)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsArrayTimeout, metricsArrayTimeout)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsArrayCBThreshold, metricsArrayCBThreshold)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsArrayCBResetTimeout, metricsArrayCBResetTimeout)
 	case "CSIDriverSpec":
 		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
 			storageCapacity = "true"

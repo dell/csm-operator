@@ -1,0 +1,14 @@
+# Non-mTLS PVC for backward compatibility testing
+# Uses isilon-non-mtls StorageClass which has the same IsiPath as the mTLS StorageClass
+# to ensure the path exists on the PowerScale array.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pscale-pvc-non-mtls
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: isilon-non-mtls

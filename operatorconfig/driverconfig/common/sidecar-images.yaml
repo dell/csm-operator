@@ -1,0 +1,53 @@
+# sidecar-images.yaml -- single source of truth for CSI sidecar image
+# versions across supported Kubernetes versions.
+#
+# Replaces the former default.yaml plus one k8s-<major.minor>-values.yaml
+# file per supported (and previously-supported) Kubernetes minor version.
+# Most sidecar images do not change between adjacent k8s minor versions, so
+# instead of duplicating the full image list per version, this file has a
+# single "default" image set plus sparse "overrides" for the k8s minor
+# versions where a specific image genuinely needs to be pinned differently.
+#
+# Resolution (see main.go getOperatorConfig/ResolveK8sImages):
+#   - k8s version <  K8sMinimumSupportedVersion -> default only
+#   - k8s version >  K8sMaximumSupportedVersion -> default merged with the
+#     override (if any) for K8sMaximumSupportedVersion
+#   - otherwise                                 -> default merged with the
+#     override (if any) for the running k8s minor version
+#
+# IT IS RECOMMENDED YOU DO NOT CHANGE THE IMAGES TO BE DOWNLOADED.
+default:
+  images:
+    # "images.attacher" defines the container images used for the csi attacher
+    # container.
+    attacher: registry.k8s.io/sig-storage/csi-attacher:v4.13.0
+    # "images.provisioner" defines the container images used for the csi provisioner
+    # container.
+    provisioner: registry.k8s.io/sig-storage/csi-provisioner:v6.3.0
+    # "images.snapshotter" defines the container image used for the csi snapshotter
+    snapshotter: registry.k8s.io/sig-storage/csi-snapshotter:v8.6.0
+    # "images.registrar" defines the container images used for the csi registrar
+    # container.
+    registrar: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.18.0
+    # "images.resizer" defines the container images used for the csi resizer
+    # container.
+    resizer: registry.k8s.io/sig-storage/csi-resizer:v2.2.1
+    # "images.externalhealthmonitorcontroller" defines the container images used for the csi external health monitor controller
+    # container.
+    externalhealthmonitorcontroller: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.18.0
+    # "images.sdcmonitor" defines the container images used to monitor sdc container
+    sdcmonitor: quay.io/dell/storage/powerflex/sdc:5.1.0.2
+    # "images.metadataretriever" defines the container images used for csi metadata retriever
+    metadataretriever: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.15.0
+    # "images.csiReverseProxy" defines the container images used for csi reverse proxy
+    csiReverseProxy: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.17.0
+# overrides is keyed by the target Kubernetes minor version in the form
+# "<major>.<minor>" (e.g. "1.34"). Add an entry only when a specific k8s
+# minor version needs one or more sidecar images that differ from the default set above.
+overrides:
+  "1.34":
+    images:
+      csiReverseProxy: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.15.2
+  "1.35":
+    images:
+      csiReverseProxy: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.15.2

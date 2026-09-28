@@ -1,0 +1,122 @@
+# Copyright © 2022-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#     http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# CSM Authorization Prometheus Alert Rules.
+# Threshold placeholders (<Alert*>) are substituted at runtime by the CSM Operator
+# from the MetricsPrometheusRuleConfig spec fields.  To add or modify alerts for a new
+# authorization version, copy this file into the new version directory and edit as needed.
+
+- alert: AuthorizationServiceDown
+  expr: dell_csm_auth_up == 0 or absent(dell_csm_auth_up)
+  for: 5m
+  labels:
+    severity: critical
+    platform: csm-authorization
+    component: authorization
+  annotations:
+    summary: CSM Authorization proxy-server is down
+    description: The CSM Authorization proxy-server has been down for more than 5
+      minutes.
+    runbook_url: ""
+
+- alert: HighAuthorizationFailureRate
+  expr: sum by (storage_type, tenant) (rate(dell_csm_auth_request_total{status="failure"}[5m]))
+    / sum by (storage_type, tenant) (rate(dell_csm_auth_request_total[5m])) > <AlertAuthFailureRateThreshold>
+  for: 5m
+  labels:
+    severity: warning
+    platform: csm-authorization
+    component: authorization
+  annotations:
+    summary: High CSM Authorization request failure rate
+    description: CSM Authorization failure rate is {{ $value | humanizePercentage
+      }} (above threshold).
+    runbook_url: ""
+
+- alert: TokenValidationFailure
+  expr: increase(dell_csm_auth_token_validation_total{result="failure"}[5m]) > 0
+  for: 1m
+  labels:
+    severity: warning
+    platform: csm-authorization
+    component: authorization
+  annotations:
+    summary: CSM Authorization token validation failures
+    description: Token validation failures occurred in the last 5 minutes.
+    runbook_url: ""
+
+- alert: UnauthorizedAccessAttempts
+  expr: increase(dell_csm_auth_role_access_total{decision="deny",storage_type!="powerscale"}[5m])
+    > 0
+  for: 1m
+  labels:
+    severity: warning
+    platform: csm-authorization
+    component: authorization
+  annotations:
+    summary: Unauthorized access attempts detected
+    description: Unauthorized access attempts occurred in the last 5 minutes. PowerScale
+      is excluded because its role-access path is handled separately.
+    runbook_url: ""
+
+- alert: CredentialShieldingBreach
+  expr: increase(dell_csm_auth_credential_shield_total{status="failure"}[5m]) > 0
+  for: 1m
+  labels:
+    severity: critical
+    platform: csm-authorization
+    component: authorization
+  annotations:
+    summary: CSM Authorization credential shielding breach
+    description: Credential shielding failures occurred in the last 5 minutes.
+    runbook_url: ""
+
+- alert: QuotaAuthorizationFailure
+  expr: increase(dell_csm_auth_quota_check_total{result="denied",storage_type!="powerscale"}[5m])
+    > 0
+  for: 1m
+  labels:
+    severity: warning
+    platform: csm-authorization
+    component: authorization
+  annotations:
+    summary: CSM Authorization quota authorization failures
+    description: Quota authorization denials occurred in the last 5 minutes. PowerScale
+      is excluded because quota enforcement is handled differently there.
+    runbook_url: ""
+
+- alert: HighAuthorizationLatency
+  expr: histogram_quantile(<AlertAuthLatencyQuantile>, rate(dell_csm_auth_request_duration_seconds_bucket[5m]))
+    > <AlertAuthLatencyThresholdSeconds>
+  for: 5m
+  labels:
+    severity: warning
+    platform: csm-authorization
+    component: authorization
+  annotations:
+    summary: High CSM Authorization request latency
+    description: The <AlertAuthLatencyQuantile> quantile authorization request latency
+      is {{ $value }}s over the last 5 minutes.
+    runbook_url: ""
+
+- alert: AuthorizationServiceRecovery
+  expr: changes(dell_csm_auth_up[1m]) > 0 and dell_csm_auth_up == 1
+  for: 0m
+  labels:
+    severity: info
+    platform: csm-authorization
+    component: authorization
+  annotations:
+    summary: CSM Authorization proxy-server recovered
+    description: The CSM Authorization proxy-server transitioned to healthy within
+      the last minute.
+    runbook_url: ""

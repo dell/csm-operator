@@ -185,6 +185,8 @@ spec:
                   optional: true
             - name: X_CSI_REVPROXY_TLS_CERT_DIR
               value: /app/tls
+            - name: X_CSI_REVPROXY_AUTH_TOKEN_FILE
+              value: /app/auth/token
             - name: X_CSI_DYNAMIC_SG_ENABLED
               value: "<X_CSI_DYNAMIC_SG_ENABLED>"
             - name: X_CSI_SPACE_RECLAMATION_ENABLED
@@ -228,6 +230,8 @@ spec:
               mountPath: /node-topology-config
             - name: tls-secret
               mountPath: /app/tls
+            - name: rev-proxy-auth-token
+              mountPath: /app/auth
         - name: registrar
           image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0
           imagePullPolicy: IfNotPresent
@@ -314,3 +318,7 @@ spec:
         - name: tls-secret
           secret:
             secretName: <X_CSI_REVPROXY_TLS_SECRET>
+        - name: rev-proxy-auth-token
+          secret:
+            secretName: rev-proxy-auth-token
+            optional: true

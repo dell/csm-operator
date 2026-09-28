@@ -409,7 +409,7 @@ func (s *sequence) writeCertFiles() error {
 
 	for _, f := range files {
 		// #nosec G306 -- this is a test automation tool
-		if err := os.WriteFile(f.name, f.data, 0644); err != nil {
+		if err := os.WriteFile(f.name, f.data, 0o644); err != nil {
 			return err
 		}
 	}
@@ -487,7 +487,7 @@ func (s *sequence) configureValues() error {
 		imageRepository = "hashicorp/vault"
 	}
 
-	err = os.WriteFile(fmt.Sprintf("%s-values.yaml", s.name), []byte(fmt.Sprintf(values, imageRepository, k8sHost, s.name, s.name, s.name, s.name, strconv.FormatBool(s.secretsStoreCSIDriver), s.name, s.name, s.name, imageRepository)), 0644) // #nosec G306 -- this is a test automation tool
+	err = os.WriteFile(fmt.Sprintf("%s-values.yaml", s.name), []byte(fmt.Sprintf(values, imageRepository, k8sHost, s.name, s.name, s.name, s.name, strconv.FormatBool(s.secretsStoreCSIDriver), s.name, s.name, s.name, imageRepository)), 0o644) // #nosec G306 -- this is a test automation tool
 	if err != nil {
 		return err
 	}
@@ -524,7 +524,11 @@ func (s *sequence) waitForVault() error {
 	log.Printf("Waiting for %s to be Ready\n", s.vaultPodName)
 
 	var b bytes.Buffer
-	cmd := exec.Command("kubectl", "wait", "--for=condition=Ready", "--timeout", "5m", s.vaultPodName) // #nosec G204 -- this is a test automation tool
+	args := []string{"wait", "--for=condition=Ready", "--timeout", "5m", s.vaultPodName}
+	if s.openshift {
+		args = append([]string{"--insecure-skip-tls-verify=true"}, args...)
+	}
+	cmd := exec.Command("kubectl", args...) // #nosec G204 -- this is a test automation tool
 	cmd.Stdout = &b
 	cmd.Stderr = &b
 	err := cmd.Run()
@@ -539,7 +543,11 @@ func (s *sequence) enableKubernetesAuth() error {
 	log.Printf("Enabling Kubernetes authentication in %s\n", s.name)
 
 	var b bytes.Buffer
-	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", "sh", "-c", "vault auth enable kubernetes") // #nosec G204 -- this is a test automation tool
+	args := []string{"exec", s.vaultPodName, "--", "sh", "-c", "vault auth enable kubernetes"}
+	if s.openshift {
+		args = append([]string{"--insecure-skip-tls-verify=true"}, args...)
+	}
+	cmd := exec.Command("kubectl", args...) // #nosec G204 -- this is a test automation tool
 	cmd.Stdout = &b
 	cmd.Stderr = &b
 	err := cmd.Run()
@@ -554,8 +562,11 @@ func (s *sequence) configureKubernetesAuth() error {
 	log.Printf("Configuring Kubernetes authentication in %s\n", s.name)
 
 	var b bytes.Buffer
-	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", // #nosec G204 -- this is a test automation tool
-		"sh", "-c", `vault write auth/kubernetes/config kubernetes_host="$KUBERNETES_HOST" kubernetes_ca_cert=@/config/ca.crt disable_local_ca_jwt=true`) // #nosec G204 -- this is a test automation tool
+	args := []string{"exec", s.vaultPodName, "--", "sh", "-c", `vault write auth/kubernetes/config kubernetes_host="$KUBERNETES_HOST" kubernetes_ca_cert=@/config/ca.crt disable_local_ca_jwt=true`}
+	if s.openshift {
+		args = append([]string{"--insecure-skip-tls-verify=true"}, args...)
+	}
+	cmd := exec.Command("kubectl", args...) // #nosec G204 -- this is a test automation tool
 	cmd.Stdout = &b
 	cmd.Stderr = &b
 	err := cmd.Run()
@@ -570,7 +581,11 @@ func (s *sequence) configureVaultPolicy() error {
 	log.Printf("Configuring policy %s\n", s.name)
 
 	var b bytes.Buffer
-	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", "sh", "-c", fmt.Sprintf("vault policy write csm-authorization /config/%s-policy.hcl", s.name)) // #nosec G204 -- this is a test automation tool
+	args := []string{"exec", s.vaultPodName, "--", "sh", "-c", fmt.Sprintf("vault policy write csm-authorization /config/%s-policy.hcl", s.name)}
+	if s.openshift {
+		args = append([]string{"--insecure-skip-tls-verify=true"}, args...)
+	}
+	cmd := exec.Command("kubectl", args...) // #nosec G204 -- this is a test automation tool
 	cmd.Stdout = &b
 	cmd.Stderr = &b
 	err := cmd.Run()
@@ -586,7 +601,11 @@ func (s *sequence) configureVaultRole() error {
 
 	var b bytes.Buffer
 	vaultCmd := fmt.Sprintf("vault write auth/kubernetes/role/csm-authorization token_ttl=60s bound_service_account_names=storage-service,tenant-service,proxy-server,sentinel,redis bound_service_account_namespaces=%s policies=csm-authorization", s.namespace)
-	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", "sh", "-c", vaultCmd) // #nosec G204 -- this is a test automation tool
+	args := []string{"exec", s.vaultPodName, "--", "sh", "-c", vaultCmd}
+	if s.openshift {
+		args = append([]string{"--insecure-skip-tls-verify=true"}, args...)
+	}
+	cmd := exec.Command("kubectl", args...) // #nosec G204 -- this is a test automation tool
 	cmd.Stdout = &b
 	cmd.Stderr = &b
 	err := cmd.Run()
@@ -708,7 +727,11 @@ func (s *sequence) putVaultSecret(path, username, password string) error {
 	log.Printf("Writing secret %s in %s", path, s.name) //gosec:disable G706 -- this is a test automation tool
 	var b bytes.Buffer
 	vaultCmd := fmt.Sprintf("vault kv put -mount=secret %s password=%s username=%s", path, password, username)
-	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", "sh", "-c", vaultCmd) // #nosec G204, G702 -- this is a test automation tool
+	args := []string{"exec", s.vaultPodName, "--", "sh", "-c", vaultCmd}
+	if s.openshift {
+		args = append([]string{"--insecure-skip-tls-verify=true"}, args...)
+	}
+	cmd := exec.Command("kubectl", args...) // #nosec G204, G702 -- this is a test automation tool
 	cmd.Stdout = &b
 	cmd.Stderr = &b
 	err := cmd.Run()
@@ -722,7 +745,11 @@ func (s *sequence) putVaultConfigSecret(path, config string) error {
 	log.Printf("Writing config secret %s in %s", path, s.name) //gosec:disable G706 -- this is a test automation tool
 	var b bytes.Buffer
 	vaultCmd := fmt.Sprintf("vault kv put -mount=secret %s configKey=\"%s\"", path, config)
-	cmd := exec.Command("kubectl", "exec", s.vaultPodName, "--", "sh", "-c", vaultCmd) // #nosec G204, G702 -- this is a test automation tool
+	args := []string{"exec", s.vaultPodName, "--", "sh", "-c", vaultCmd}
+	if s.openshift {
+		args = append([]string{"--insecure-skip-tls-verify=true"}, args...)
+	}
+	cmd := exec.Command("kubectl", args...) // #nosec G204, G702 -- this is a test automation tool
 	cmd.Stdout = &b
 	cmd.Stderr = &b
 	err := cmd.Run()

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2023 Dell Inc., or its subsidiaries. All Rights Reserved.
+# Copyright © 2023-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -285,32 +285,36 @@ IMAGEFILEDIR="${REPODIR}/scripts/images.tar"
 
 # directories to search all files for image names
 FILES_WITH_IMAGE_NAMES=(
-  "${REPODIR}/operatorconfig/driverconfig/common/default.yaml"
+  "${REPODIR}/operatorconfig/driverconfig/common/sidecar-images.yaml"
   "${REPODIR}/bundle/manifests/dell-csm-operator.clusterserviceversion.yaml"
 )
 
-# Find the newest k8s_configmap.yaml version dynamically
+# Find the newest k8s configmap under the version-root samples/ tree.
+# Each CSM release stores its configmap at samples/v<csm>/configmaps/k8s.yaml;
+# the highest semantic version folder wins.
 find_newest_configmap() {
-  local configmap_files=($(find "${REPODIR}/samples" -name "k8s_configmap.yaml" | sort -V))
-  if [ ${#configmap_files[@]} -gt 0 ]; then
-    # Get the last file (newest version) from the sorted list
-    local newest_configmap="${configmap_files[-1]}"
-    # Check if the configmap is already in the array
-    local already_exists=0
-    for file in "${FILES_WITH_IMAGE_NAMES[@]}"; do
-      if [[ "$file" == "$newest_configmap" ]]; then
-        already_exists=1
-        break
-      fi
-    done
-    if [[ $already_exists -eq 0 ]]; then
-      FILES_WITH_IMAGE_NAMES+=("$newest_configmap")
-      echo "   Found newest configmap: $newest_configmap"
-    else
-      echo "   Configmap already in list: $newest_configmap"
+  local newest_dir
+  newest_dir=$(find "${REPODIR}/samples" -maxdepth 1 -type d -name 'v*' 2>/dev/null | sort -V | tail -1)
+  local newest_configmap="${newest_dir}/configmaps/k8s.yaml"
+
+  if [[ -z "$newest_dir" || ! -f "$newest_configmap" ]]; then
+    echo "   Warning: No k8s.yaml configmap found under ${REPODIR}/samples/v*/"
+    return
+  fi
+
+  local already_exists=0
+  for file in "${FILES_WITH_IMAGE_NAMES[@]}"; do
+    if [[ "$file" == "$newest_configmap" ]]; then
+      already_exists=1
+      break
     fi
+  done
+
+  if [[ $already_exists -eq 0 ]]; then
+    FILES_WITH_IMAGE_NAMES+=("$newest_configmap")
+    echo "   Found newest configmap: $newest_configmap"
   else
-    echo "   Warning: No k8s_configmap.yaml files found"
+    echo "   Configmap already in list: $newest_configmap"
   fi
 }
 

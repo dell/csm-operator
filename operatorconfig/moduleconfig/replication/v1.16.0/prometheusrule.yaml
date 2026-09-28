@@ -1,0 +1,304 @@
+# Copyright © 2022-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#      http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# CSM Replication Module Prometheus Alert and Record Rules.
+# Threshold placeholders (<Alert*>) are substituted at runtime by the CSM Operator
+# from the MetricsPrometheusRuleConfig spec fields on the Replication module.
+#
+# This file is structured as a list of PrometheusRule groups (PrometheusRule.spec.groups),
+# matching the driver prometheusrule.yaml pattern.  The namespace label is NOT set here —
+# it is injected uniformly into all alert rules by the operator at reconcile time (via
+# injectNamespaceLabelIntoGroups) for AlertmanagerConfig namespace-scoped routing.
+#
+# One group: csm-replication-alerts (2 record rules + 12 alert rules)
+#   Record Rules — State Tracking (SRDF state history for transition detection)
+#   Category 1 — Replication Lag & RPO      (REP-01, REP-02)
+#   Category 2 — Replication Link & Failure (REP-03, REP-04)
+#   Category 3 — Controller Health & Metrics(REP-05, REP-06)
+#   Category 4 — Bandwidth Degradation      (REP-07, PowerMax-specific)
+#   Category 5 — PowerMax SRDF State        (REP-09, REP-10, REP-11, REP-12)
+#   Category 6 — CSM-Initiated SRDF Actions (REP-08)
+#
+# SRDF State Codes (used in REP-09, REP-10, REP-11, REP-12 alerts):
+#   0 = UNKNOWN
+#   1 = SYNCHRONIZED
+#   2 = SYNC_IN_PROGRESS
+#   3 = SUSPENDED
+#   4 = FAILEDOVER
+#
+# PERFORMANCE TARGETS (BR JA-23013):
+# Critical alerts use 1m for: duration to meet 120s BR target.
+# Warning alerts use 2m for: duration to stay near target while reducing false positives.
+
+- name: csm-replication-alerts
+  interval: 30s
+  rules:
+    # ── Record Rules — State Tracking ──
+    # Record rules create derived time series for state tracking and comparison.
+
+    - record: dell_powermax_srdf_group_state_current
+      expr: dell_powermax_srdf_group_state{namespace="<AlertNamespace>"}
+
+    - record: dell_powermax_srdf_group_state_previous
+      expr: dell_powermax_srdf_group_state{namespace="<AlertNamespace>"} offset 5m
+
+    # ── Category 1: Replication Lag & RPO (REP-01, REP-02) ──
+    # Metric: dell_csm_repl_lag_seconds
+
+    # REP-01
+    # NOTE: 2m duration is an exception to the 120s BR target to reduce false positives on transient lag spikes.
+    - alert: CSMReplicationLagExceeded
+      expr: dell_csm_repl_lag_seconds{namespace="<AlertNamespace>"} > <AlertRPOThresholdSeconds>
+      for: "2m"
+      labels:
+        severity: warning
+        component: csm-replication
+        alert_id: REP-01
+      annotations:
+        summary: "CSM Replication lag exceeded for policy {{ $labels.policy_name }}"
+        description: "Replication lag for policy {{ $labels.policy_name }} (driver:
+          {{ $labels.driver }}) is {{ $value }}s (threshold: <AlertRPOThresholdSeconds>s)."
+        runbook_url: "https://dell.github.io/csm-docs/docs/troubleshooting/replication/#replication-lag"
+
+    # REP-02 — longer for: 15m distinguishes sustained RPO violation from transient spikes
+    - alert: CSMReplicationRPOViolation
+      expr: dell_csm_repl_lag_seconds{namespace="<AlertNamespace>"} > <AlertRPOThresholdSeconds>
+      for: "15m"
+      labels:
+        severity: critical
+        component: csm-replication
+        alert_id: REP-02
+      annotations:
+        summary: "CSM Replication sustained RPO violation for policy {{ $labels.policy_name
+          }}"
+        description: "Replication lag for policy {{ $labels.policy_name }} (driver:
+          {{ $labels.driver }}) has exceeded <AlertRPOThresholdSeconds>s for over
+          15 minutes."
+        runbook_url: "https://dell.github.io/csm-docs/docs/troubleshooting/replication/#rpo-violation"
+
+    # ── Category 2: Replication Link & Failure (REP-03, REP-04) ──
+
+    # REP-03
+    # SetPairStatus removes the previous status-labeled series on transitions, so max-by
+    # collapses only duplicate reports across replicator replicas.
+    - alert: CSMReplicationLinkDown
+      expr: max by (namespace, driver, policy_name) (dell_csm_repl_pair_status{namespace="<AlertNamespace>"})
+        == 0
+      for: "1m"
+      labels:
+        severity: critical
+        component: csm-replication
+        alert_id: REP-03
+      annotations:
+        summary: "CSM Replication link down for policy {{ $labels.policy_name }}"
+        description: "Replication link for policy {{ $labels.policy_name }} (driver:
+          {{ $labels.driver }}) is reporting an inactive or unknown state."
+        runbook_url: "https://dell.github.io/csm-docs/docs/troubleshooting/replication/#link-down"
+
+    # REP-04
+    # The OR clause catches first-occurrence failures: fires when the counter is > 0 but had no
+    # data 6 minutes ago (meaning it just appeared for the first time).
+    - alert: CSMReplicationFailure
+      expr: |
+        (increase(dell_csm_repl_failure_total{namespace="<AlertNamespace>"}[5m]) > 0)
+        or
+        (dell_csm_repl_failure_total{namespace="<AlertNamespace>"} > 0 unless (dell_csm_repl_failure_total{namespace="<AlertNamespace>"} offset 6m))
+      for: "0m"
+      labels:
+        severity: critical
+        component: csm-replication
+        alert_id: REP-04
+      annotations:
+        summary: "CSM Replication operation failure for driver {{ $labels.driver }}"
+        description: "Replication action {{ $labels.action }} failed for driver {{
+          $labels.driver }}. Total failures: {{ printf \"%.0f\" $value }}. Investigate
+          controller logs and array connectivity."
+        runbook_url: "https://dell.github.io/csm-docs/docs/troubleshooting/replication/#operation-failures"
+
+    # ── Category 3: Controller Health & Metrics (REP-05, REP-06) ──
+
+    # REP-05
+    - alert: CSMReplicationControllerDown
+      expr: dell_csm_repl_controller_health{namespace="<AlertNamespace>"} == 0
+      for: "5m"
+      labels:
+        severity: critical
+        component: csm-replication
+        alert_id: REP-05
+      annotations:
+        summary: "CSM Replication controller unhealthy for driver {{ $labels.driver
+          }}"
+        description: "CSM Replication controller for driver {{ $labels.driver }} is
+          reporting unhealthy status."
+        runbook_url: "https://dell.github.io/csm-docs/docs/troubleshooting/replication/#controller-health"
+
+    # REP-06 — The dedicated stale metric detects incomplete monitoring cycles. The absent()
+    # expression detects a missing replicator endpoint, while the last complete collection
+    # timestamp detects a continuously scraped exporter whose collection loop is hung.
+    - alert: CSMReplicationMetricsStale
+      expr: |
+        dell_csm_repl_metrics_stale{namespace="<AlertNamespace>"} == 1
+        or
+        absent(dell_csm_repl_last_collection_timestamp_seconds{namespace="<AlertNamespace>"})
+        or
+        (time() - max by (namespace, driver) (dell_csm_repl_last_collection_timestamp_seconds{namespace="<AlertNamespace>"})) > 300
+      for: "5m"
+      labels:
+        severity: warning
+        component: csm-replication
+        alert_id: REP-06
+      annotations:
+        summary: "CSM Replication metrics stale in namespace {{ $labels.namespace
+          }}"
+        description: "Replication metrics in namespace {{ $labels.namespace }} have
+          not been updated in over 5 minutes. This may indicate monitoring loop failure,
+          CSI gRPC connection loss, or pod scheduling issues."
+        runbook_url: "https://dell.github.io/csm-docs/docs/troubleshooting/replication/#metrics-stale"
+
+    # ── Category 4: Bandwidth Degradation (REP-07) ──
+    # PowerMax-specific metric; other platforms don't expose bandwidth metrics.
+    # NOTE: 10m duration is an intentional exception to the 120s BR target. Bandwidth fluctuates;
+    # longer duration avoids spurious alerts on transient degradation.
+
+    # REP-07
+    - alert: PowerMaxSRDFBandwidthDegraded
+      expr: dell_powermax_srdf_bandwidth_bytes_per_sec{namespace="<AlertNamespace>"}
+        < <AlertSRDFMinBandwidth>
+      for: "10m"
+      labels:
+        severity: warning
+        platform: powermax
+        component: srdf-replication
+        alert_id: REP-07
+      annotations:
+        summary: "PowerMax SRDF bandwidth degraded for RDF group {{ $labels.rdf_group
+          }}"
+        description: "SRDF bandwidth for RDF group {{ $labels.rdf_group }} in replication
+          group {{ $labels.rg_name }} (mode: {{ $labels.mode }}) is below <AlertSRDFMinBandwidth>
+          bytes/s. Driver: {{ $labels.driver }}"
+        runbook_url: "https://dell.github.io/csm-docs/docs/troubleshooting/replication/#bandwidth-degradation"
+
+    # ── Category 5: PowerMax SRDF Replication State Monitoring (REP-09, REP-10, REP-11, REP-12) ──
+    # PowerMax-specific SRDF state monitoring alerts.
+    # These alerts are owned by CSM Replication because the metrics (dell_powermax_srdf_*)
+    # are emitted by the csm-replication sidecar, not the CSI driver.
+
+    # REP-09 [PowerMax] — Transition-based alert: fires during the 5-minute window after any state change
+    # away from SYNCHRONIZED. Catches active DR events as they happen.
+    # DESIGN NOTE: This alert is EDGE-TRIGGERED. It fires within 5 minutes of a state change
+    # and resolves after ~5 minutes (when current==previous again).
+    # State 2 (SYNC_IN_PROGRESS) is explicitly filtered: it is a normal transient state during
+    # resyncs and requires no operator action. REP-10 handles the case where state 2 persists
+    # abnormally long (> 10m) via its level-triggered companion expression.
+    - alert: PowerMaxSRDFStateNotSynchronized
+      expr: dell_powermax_srdf_group_state_current != dell_powermax_srdf_group_state_previous
+        and dell_powermax_srdf_group_state_current != 1 and dell_powermax_srdf_group_state_current
+        != 2
+      for: "1m"
+      labels:
+        severity: critical
+        platform: powermax
+        component: srdf-replication
+        alert_id: REP-09
+      annotations:
+        summary: "PowerMax SRDF group {{ $labels.rdf_group }} state changed away from
+          SYNCHRONIZED"
+        description: "SRDF group {{ $labels.rdf_group }} in replication group {{ $labels.rg_name
+          }} (mode: {{ $labels.mode }}) transitioned to state {{ printf \"%.0f\" $value
+          }} (0=UNKNOWN 3=SUSPENDED 4=FAILEDOVER). Driver: {{ $labels.driver }}. If
+          this is a planned DR action, acknowledge accordingly."
+        runbook_url: "https://dell.github.io/csm-docs/docs/troubleshooting/powermax/#srdf-replication"
+
+    # REP-10 [PowerMax] — Level-triggered companion: fires when SRDF stays degraded for >10 minutes.
+    # Catches cases where SRDF starts in a degraded state (after an array restart, etc.).
+    # max by (namespace, driver, rg_name, rdf_group, mode) deduplicates pod-level series
+    # without combining identically named SRDF groups from different CSM namespaces.
+    - alert: PowerMaxSRDFStatePersistentlyDegraded
+      expr: |
+        max by (namespace, driver, rg_name, rdf_group, mode) (dell_powermax_srdf_group_state{namespace="<AlertNamespace>"}) > 2
+        or
+        max by (namespace, driver, rg_name, rdf_group, mode) (dell_powermax_srdf_group_state{namespace="<AlertNamespace>"}) == 0
+      for: "10m"
+      labels:
+        severity: critical
+        platform: powermax
+        component: srdf-replication
+        alert_id: REP-10
+      annotations:
+        summary: "PowerMax SRDF group {{ $labels.rdf_group }} persistently in degraded
+          state"
+        description: "SRDF group {{ $labels.rdf_group }} in replication group {{ $labels.rg_name
+          }} (mode: {{ $labels.mode }}) has been in state {{ printf \"%.0f\" $value
+          }} (3=SUSPENDED 4=FAILEDOVER 0=UNKNOWN) for over 10 minutes. Driver: {{
+          $labels.driver }}. Data protection is at risk."
+        runbook_url: "https://dell.github.io/csm-docs/docs/troubleshooting/powermax/#srdf-replication"
+
+    # REP-11 [PowerMax] — min by aggregates pod-level reports per namespace and SRDF group.
+    # min() fires if any pod reports link_status=0 for the duration, deduplicating across replicas.
+    - alert: PowerMaxSRDFLinkDown
+      expr: |
+        min by (namespace, driver, rdf_group, mode) (dell_powermax_srdf_link_status{namespace="<AlertNamespace>"}) == 0
+      for: "2m"
+      labels:
+        severity: critical
+        platform: powermax
+        component: srdf-replication
+        alert_id: REP-11
+      annotations:
+        summary: "PowerMax SRDF link down for RDF group {{ $labels.rdf_group }}"
+        description: "SRDF link for RDF group {{ $labels.rdf_group }} (mode: {{ $labels.mode
+          }}) is inactive. Driver: {{ $labels.driver }}. Check network connectivity
+          and RDF port status."
+        runbook_url: "https://dell.github.io/csm-docs/docs/troubleshooting/powermax/#srdf-replication"
+
+    # REP-12 [PowerMax]
+    # NOTE: 5m duration is an exception to the 120s BR target to reduce false positives on transient lag.
+    - alert: PowerMaxSRDFLagExceeded
+      expr: dell_powermax_srdf_lag_seconds{namespace="<AlertNamespace>"} > <AlertSRDFLagSeconds>
+      for: "5m"
+      labels:
+        severity: warning
+        platform: powermax
+        component: srdf-replication
+        alert_id: REP-12
+      annotations:
+        summary: "PowerMax SRDF replication lag exceeded for RDF group {{ $labels.rdf_group
+          }}"
+        description: "SRDF replication lag for RDF group {{ $labels.rdf_group }} in
+          replication group {{ $labels.rg_name }} (mode: {{ $labels.mode }}) exceeds
+          <AlertSRDFLagSeconds>s threshold. Driver: {{ $labels.driver }}"
+        runbook_url: "https://dell.github.io/csm-docs/docs/troubleshooting/powermax/#srdf-replication"
+
+    # ── Category 6: CSM-Initiated SRDF Actions (REP-08) ──
+
+    # REP-08 — CSM-initiated SRDF failover triggered
+    # Regex filter matches all failover action types (FAILOVER_LOCAL, FAILOVER_REMOTE, etc.).
+    # The OR clause handles first-occurrence (failover appears from zero).
+    - alert: CSMReplicationSRDFFailoverTriggered
+      expr: |
+        (increase(dell_csm_repl_success_total{namespace="<AlertNamespace>",action=~"(FAILOVER|UNPLANNED_FAILOVER).*"}[5m]) > 0)
+        or
+        (dell_csm_repl_success_total{namespace="<AlertNamespace>",action=~"(FAILOVER|UNPLANNED_FAILOVER).*"} > 0
+         unless (dell_csm_repl_success_total{namespace="<AlertNamespace>",action=~"(FAILOVER|UNPLANNED_FAILOVER).*"} offset 6m))
+      for: "0m"
+      labels:
+        severity: info
+        component: csm-replication
+        alert_id: REP-08
+      annotations:
+        summary: "CSM Replication SRDF failover triggered: action={{ $labels.action
+          }} for driver {{ $labels.driver }}"
+        description: "CSM Replication initiated SRDF failover action '{{ $labels.action
+          }}' for driver {{ $labels.driver }}. This indicates CSM-managed disaster
+          recovery has been activated. Verify the failover was intentional and confirm
+          RPO/RTO objectives are met."
+        runbook_url: "https://dell.github.io/csm-docs/docs/troubleshooting/replication/#srdf-failover"

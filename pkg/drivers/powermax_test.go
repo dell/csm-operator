@@ -16,6 +16,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
@@ -335,6 +336,36 @@ func getDefaultKubeletPath() csmv1.ContainerStorageModule {
 	return res
 }
 
+func TestModifyPowermaxCRMetroTypedConfigurationAppliesToControllerAndNode(t *testing.T) {
+	enabled := true
+	timeout := int32(30)
+	cr := csmForPowerMax("")
+	cr.Spec.Driver.MetroSiteFailureHandling = &csmv1.MetroSiteFailureHandlingConfig{
+		Enabled:                  enabled,
+		StateCheckTimeoutSeconds: &timeout,
+	}
+
+	for _, fileType := range []string{"Controller", "Node"} {
+		result := ModifyPowermaxCR(
+			CSIPmaxMetroSiteFailureEnabled+" "+CSIPmaxMetroStateCheckTimeout,
+			cr,
+			fileType,
+		)
+		assert.Equal(t, "true 30", result, "typed Metro configuration should apply to %s", fileType)
+	}
+}
+
+func TestPowerMaxNodeTemplateIncludesTypedMetroEnablement(t *testing.T) {
+	nodeYAML, err := os.ReadFile("../../operatorconfig/driverconfig/powermax/v2.18.0/node.yaml")
+	assert.NoError(t, err)
+
+	cr := csmForPowerMax("")
+	cr.Spec.Driver.MetroSiteFailureHandling = &csmv1.MetroSiteFailureHandlingConfig{Enabled: true}
+
+	rendered := ModifyPowermaxCR(string(nodeYAML), cr, "Node")
+	assert.Contains(t, rendered, "- name: X_CSI_POWERMAX_METRO_SITE_FAILURE_HANDLING_ENABLED\n              value: \"true\"")
+}
+
 func TestModifyPowermaxCRDynamicSGParameters(t *testing.T) {
 	tests := []struct {
 		name              string
@@ -559,4 +590,44 @@ func createCSMWithSpaceReclamationEnvs(spaceReclamationEnabled string, spaceRecl
 	res.Spec.Driver.CSIDriverType = csmv1.PowerMax
 
 	return res
+}
+
+func TestModifyPowermaxCRStorageCapacity(t *testing.T) {
+	tests := []struct {
+		name             string
+		cr               csmv1.ContainerStorageModule
+		expectedCapacity string
+	}{
+		{
+			name:             "CSIDriverSpec is nil: should use default true",
+			cr:               shared.MakeCSM("csm", "pmax-test", shared.PmaxConfigVersion),
+			expectedCapacity: "true",
+		},
+		{
+			name: "CSIDriverSpec present with StorageCapacity true: should output true",
+			cr: func() csmv1.ContainerStorageModule {
+				res := shared.MakeCSM("csm", "pmax-test", shared.PmaxConfigVersion)
+				res.Spec.Driver.CSIDriverSpec = &csmv1.CSIDriverSpec{StorageCapacity: true}
+				return res
+			}(),
+			expectedCapacity: "true",
+		},
+		{
+			name: "CSIDriverSpec present with StorageCapacity false: should output false",
+			cr: func() csmv1.ContainerStorageModule {
+				res := shared.MakeCSM("csm", "pmax-test", shared.PmaxConfigVersion)
+				res.Spec.Driver.CSIDriverSpec = &csmv1.CSIDriverSpec{StorageCapacity: false}
+				return res
+			}(),
+			expectedCapacity: "false",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			yamlString := CsiStorageCapacityEnabled
+			result := ModifyPowermaxCR(yamlString, tt.cr, "CSIDriverSpec")
+			assert.Equal(t, tt.expectedCapacity, result)
+		})
+	}
 }

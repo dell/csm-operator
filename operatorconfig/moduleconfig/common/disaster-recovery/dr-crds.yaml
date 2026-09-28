@@ -41,6 +41,12 @@ spec:
             spec:
               description: VolumeJournalSpec defines the desired state of VolumeJournal
               properties:
+                driverName:
+                  type: string
+                driverType:
+                  type: string
+                instanceUID:
+                  type: string
                 failoverArray:
                   description: FailoverArray is the preferred storage array during a site failure
                   type: string
@@ -161,6 +167,16 @@ spec:
                       - type
                     type: object
                   type: array
+                lastError:
+                  type: string
+                operationCount:
+                  format: int64
+                  type: integer
+                phase:
+                  type: string
+                retryCount:
+                  format: int64
+                  type: integer
               type: object
           required:
             - spec

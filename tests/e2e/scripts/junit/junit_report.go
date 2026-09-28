@@ -96,7 +96,7 @@ func WriteReport(results []Result, totalElapsed time.Duration) (string, error) {
 		return "", fmt.Errorf("marshal JUnit XML: %w", err)
 	}
 	payload := append([]byte(xml.Header), data...)
-	if err := os.WriteFile(filepath.Clean(path), payload, 0o644); err != nil {
+	if err := os.WriteFile(filepath.Clean(path), payload, 0o644); err != nil { // #nosec G703 -- path is constructed from hardcoded template dirs
 		return "", fmt.Errorf("write JUnit report to %s: %w", path, err)
 	}
 	return path, nil

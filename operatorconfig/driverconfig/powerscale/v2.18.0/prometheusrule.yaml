@@ -1,0 +1,319 @@
+# Copyright © 2022-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#      http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# PowerScale CSI Driver Prometheus Alert Rules.
+# This file is structured as a list of PrometheusRule groups (PrometheusRule.spec.groups).
+# Threshold placeholders (<Alert*>) are substituted at runtime by the CSM Operator
+# from the MetricsPrometheusRuleConfig CRD fields.  The namespace label is injected
+# by the operator at reconcile time (from cr.Namespace) so AlertmanagerConfig routing works.
+# To add or modify alerts for a new driver version, copy this file into the new version
+# directory and edit as needed.
+#
+# 22 alert rules across 6 groups:
+#   Group 1 — powerscale-csi-volume-operations  (8 rules)
+#   Group 2 — powerscale-csi-driver-health      (5 rules)
+#   Group 3 — powerscale-csi-quota              (3 rules)
+#   Group 4 — powerscale-csi-nodepool           (2 rules)
+#   Group 5 — powerscale-csi-access-control     (2 rules)
+#   Group 6 — powerscale-csi-nfs-performance    (2 rules)
+
+# ── Group 1: Volume Operation Failure Alerts (8 rules) ──
+# Metric: dell_csi_operation_failure_total (CounterVec)
+# Labels: cluster_name, operation, error_code
+# Threshold: <AlertVolumeOperationFailureThreshold> — failure count in 5m window.
+# for: 1m meets the 120s BR latency target for operation failure alerts.
+
+- name: powerscale-csi-volume-operations
+  interval: 30s
+  rules:
+    - alert: PowerScaleCreateVolumeFailure
+      expr: increase(dell_csi_operation_failure_total{operation="CreateVolume"}[5m]) > <AlertVolumeOperationFailureThreshold>
+      for: "1m"
+      labels:
+        severity: warning
+        platform: powerscale
+        component: csi-driver
+      annotations:
+        summary: "PowerScale CSI CreateVolume operation failures detected"
+        description: "Cluster {{ $labels.cluster_name }} has {{ printf \"%.0f\" $value }} CreateVolume failures in the last 5 minutes. Error Code: {{ $labels.error_code }}. Threshold: <AlertVolumeOperationFailureThreshold> failures."
+        runbook_url: ""
+
+    - alert: PowerScaleDeleteVolumeFailure
+      expr: increase(dell_csi_operation_failure_total{operation="DeleteVolume"}[5m]) > <AlertVolumeOperationFailureThreshold>
+      for: "1m"
+      labels:
+        severity: warning
+        platform: powerscale
+        component: csi-driver
+      annotations:
+        summary: "PowerScale CSI DeleteVolume operation failures detected"
+        description: "Cluster {{ $labels.cluster_name }} has {{ printf \"%.0f\" $value }} DeleteVolume failures in the last 5 minutes. Error Code: {{ $labels.error_code }}. Threshold: <AlertVolumeOperationFailureThreshold> failures."
+        runbook_url: ""
+
+    - alert: PowerScaleControllerPublishFailure
+      expr: increase(dell_csi_operation_failure_total{operation="ControllerPublishVolume"}[5m]) > <AlertVolumeOperationFailureThreshold>
+      for: "1m"
+      labels:
+        severity: warning
+        platform: powerscale
+        component: csi-driver
+      annotations:
+        summary: "PowerScale CSI ControllerPublishVolume operation failures detected"
+        description: "Cluster {{ $labels.cluster_name }} has {{ printf \"%.0f\" $value }} ControllerPublishVolume failures in the last 5 minutes. Error Code: {{ $labels.error_code }}. Threshold: <AlertVolumeOperationFailureThreshold> failures."
+        runbook_url: ""
+
+    - alert: PowerScaleControllerUnpublishFailure
+      expr: increase(dell_csi_operation_failure_total{operation="ControllerUnpublishVolume"}[5m]) > <AlertVolumeOperationFailureThreshold>
+      for: "1m"
+      labels:
+        severity: warning
+        platform: powerscale
+        component: csi-driver
+      annotations:
+        summary: "PowerScale CSI ControllerUnpublishVolume operation failures detected"
+        description: "Cluster {{ $labels.cluster_name }} has {{ printf \"%.0f\" $value }} ControllerUnpublishVolume failures in the last 5 minutes. Error Code: {{ $labels.error_code }}. Threshold: <AlertVolumeOperationFailureThreshold> failures."
+        runbook_url: ""
+
+    - alert: PowerScaleNodeStageFailure
+      expr: increase(dell_csi_operation_failure_total{operation="NodeStageVolume"}[5m]) > <AlertVolumeOperationFailureThreshold>
+      for: "1m"
+      labels:
+        severity: warning
+        platform: powerscale
+        component: csi-driver
+      annotations:
+        summary: "PowerScale CSI NodeStageVolume operation failures detected"
+        description: "Cluster {{ $labels.cluster_name }} has {{ printf \"%.0f\" $value }} NodeStageVolume failures in the last 5 minutes. Error Code: {{ $labels.error_code }}. Threshold: <AlertVolumeOperationFailureThreshold> failures."
+        runbook_url: ""
+
+    - alert: PowerScaleNodeUnstageFailure
+      expr: increase(dell_csi_operation_failure_total{operation="NodeUnstageVolume"}[5m]) > <AlertVolumeOperationFailureThreshold>
+      for: "1m"
+      labels:
+        severity: warning
+        platform: powerscale
+        component: csi-driver
+      annotations:
+        summary: "PowerScale CSI NodeUnstageVolume operation failures detected"
+        description: "Cluster {{ $labels.cluster_name }} has {{ printf \"%.0f\" $value }} NodeUnstageVolume failures in the last 5 minutes. Error Code: {{ $labels.error_code }}. Threshold: <AlertVolumeOperationFailureThreshold> failures."
+        runbook_url: ""
+
+    - alert: PowerScaleNodePublishFailure
+      expr: increase(dell_csi_operation_failure_total{operation="NodePublishVolume"}[5m]) > <AlertVolumeOperationFailureThreshold>
+      for: "1m"
+      labels:
+        severity: warning
+        platform: powerscale
+        component: csi-driver
+      annotations:
+        summary: "PowerScale CSI NodePublishVolume operation failures detected"
+        description: "Cluster {{ $labels.cluster_name }} has {{ printf \"%.0f\" $value }} NodePublishVolume failures in the last 5 minutes. Error Code: {{ $labels.error_code }}. Threshold: <AlertVolumeOperationFailureThreshold> failures."
+        runbook_url: ""
+
+    - alert: PowerScaleNodeUnpublishFailure
+      expr: increase(dell_csi_operation_failure_total{operation="NodeUnpublishVolume"}[5m]) > <AlertVolumeOperationFailureThreshold>
+      for: "1m"
+      labels:
+        severity: warning
+        platform: powerscale
+        component: csi-driver
+      annotations:
+        summary: "PowerScale CSI NodeUnpublishVolume operation failures detected"
+        description: "Cluster {{ $labels.cluster_name }} has {{ printf \"%.0f\" $value }} NodeUnpublishVolume failures in the last 5 minutes. Error Code: {{ $labels.error_code }}. Threshold: <AlertVolumeOperationFailureThreshold> failures."
+        runbook_url: ""
+
+- name: powerscale-csi-driver-health
+  interval: 30s
+  rules:
+    # Expression explicitly checks controller AND node counts separately; absent() cannot detect
+    # partial failure (e.g. controllers down, nodes still reporting).
+    - alert: PowerScaleDriverUnavailable
+      expr: '(count(dell_csi_driver_uptime_seconds{cluster_name=~".+",instance_type="controller"}) or on() vector(0)) == 0 or (count(dell_csi_driver_uptime_seconds{cluster_name=~".+",instance_type="node"}) or on() vector(0)) == 0'
+      for: "5m"
+      labels:
+        severity: critical
+        platform: powerscale
+        component: csi-driver
+      annotations:
+        summary: "PowerScale CSI driver metrics are unavailable"
+        description: "PowerScale CSI driver has zero controller instances or zero node instances reporting metrics for 5 minutes."
+        runbook_url: ""
+
+    - alert: PowerScaleDriverCrashLooping
+      expr: "changes(dell_csi_driver_restart_total[<AlertDriverCrashLoopWindow>]) > <AlertDriverCrashLoopRestartThreshold>"
+      for: "0m"
+      labels:
+        severity: warning
+        platform: powerscale
+        component: csi-driver
+      annotations:
+        summary: "PowerScale CSI driver is restarting frequently on pod {{ $labels.pod }}"
+        description: "PowerScale CSI driver pod {{ $labels.pod }} ({{ $labels.instance_type }}) restarted {{ $value }} times in the last <AlertDriverCrashLoopWindow> on cluster {{ $labels.cluster_name }}, exceeding the configured threshold."
+        runbook_url: ""
+
+    - alert: PowerScaleDriverHighCPU
+      expr: "dell_csi_driver_cpu_usage_percent > <AlertCPUWarningThreshold>"
+      for: "5m"
+      labels:
+        severity: warning
+        platform: powerscale
+        component: csi-driver
+      annotations:
+        summary: "PowerScale CSI driver CPU is high on pod {{ $labels.pod }}"
+        description: "PowerScale CSI driver pod {{ $labels.pod }} on cluster {{ $labels.cluster_name }} has CPU usage of {{ $value }}% (threshold: <AlertCPUWarningThreshold>%) for more than 5 minutes."
+        runbook_url: ""
+
+    - alert: PowerScaleDriverHighMemory
+      expr: "dell_csi_driver_memory_usage_bytes > <AlertMemoryWarningThreshold>"
+      for: "5m"
+      labels:
+        severity: warning
+        platform: powerscale
+        component: csi-driver
+      annotations:
+        summary: "PowerScale CSI driver memory is high on pod {{ $labels.pod }}"
+        description: "PowerScale CSI driver pod {{ $labels.pod }} on cluster {{ $labels.cluster_name }} has memory usage of {{ $value }} bytes (threshold: <AlertMemoryWarningThreshold> bytes) for more than 5 minutes."
+        runbook_url: ""
+
+    - alert: PowerScaleMetricsStale
+      expr: "dell_powerscale_metrics_stale == 1"
+      for: "5m"
+      labels:
+        severity: warning
+        platform: powerscale
+        component: csi-driver
+      annotations:
+        summary: "PowerScale metrics collection is stale on cluster {{ $labels.cluster_name }}"
+        description: "PowerScale metrics collection has reported stale data for 5 minutes on cluster {{ $labels.cluster_name }}. The stale flag is set immediately on any collection failure, regardless of whether cached data is available, ensuring the alert fires even when the cache is empty."
+        runbook_url: ""
+
+- name: powerscale-csi-quota
+  interval: 30s
+  rules:
+    - alert: PowerScaleQuotaWarning
+      expr: "dell_powerscale_quota_utilization_ratio * 100 > <AlertQuotaWarningThreshold>"
+      for: "5m"
+      labels:
+        severity: warning
+        platform: powerscale
+        component: csi-driver
+        access_zone: "{{ $labels.access_zone }}"
+      annotations:
+        summary: "Quota warning for volume {{ $labels.volume_id }} in access zone {{ $labels.access_zone }}"
+        description: 'Volume {{ $labels.volume_id }} in access zone {{ $labels.access_zone }} on cluster {{ $labels.cluster_name }} has exceeded the quota threshold at {{ $value | printf "%.1f" }}% utilization (threshold: <AlertQuotaWarningThreshold>%).'
+        runbook_url: ""
+
+    - alert: PowerScaleQuotaCritical
+      expr: "dell_powerscale_quota_utilization_ratio * 100 > <AlertQuotaCriticalThreshold>"
+      for: "5m"
+      labels:
+        severity: critical
+        platform: powerscale
+        component: csi-driver
+        access_zone: "{{ $labels.access_zone }}"
+      annotations:
+        summary: "Quota critical for volume {{ $labels.volume_id }} in access zone {{ $labels.access_zone }}"
+        description: 'Volume {{ $labels.volume_id }} in access zone {{ $labels.access_zone }} on cluster {{ $labels.cluster_name }} has exceeded the quota threshold at {{ $value | printf "%.1f" }}% utilization (threshold: <AlertQuotaCriticalThreshold>%). Immediate action required.'
+        runbook_url: ""
+
+    - alert: PowerScaleQuotaHardBreach
+      expr: "dell_powerscale_quota_hard_breach_total > 0"
+      for: "0m"
+      labels:
+        severity: critical
+        platform: powerscale
+        component: csi-driver
+      annotations:
+        summary: "Hard quota breach detected on cluster {{ $labels.cluster_name }}"
+        description: '{{ $value | printf "%.0f" }} volume(s) on cluster {{ $labels.cluster_name }} have exceeded their hard quota limit. Check individual volume quota metrics (dell_powerscale_quota_utilization_ratio) to identify affected volumes.'
+        runbook_url: ""
+
+- name: powerscale-csi-nodepool
+  interval: 30s
+  rules:
+    - alert: PowerScaleNodePoolWarning
+      expr: "dell_powerscale_nodepool_utilization_percent > <AlertNodepoolWarningThreshold>"
+      for: "5m"
+      labels:
+        severity: warning
+        platform: powerscale
+        component: csi-driver
+      annotations:
+        summary: "PowerScale node pool {{ $labels.nodepool_name }} utilization is high"
+        description: "PowerScale node pool {{ $labels.nodepool_name }} on cluster {{ $labels.cluster_name }} is at {{ $value }}% utilization (threshold: <AlertNodepoolWarningThreshold>%)."
+        runbook_url: ""
+
+    - alert: PowerScaleNodePoolCritical
+      expr: "dell_powerscale_nodepool_utilization_percent > <AlertNodepoolCriticalThreshold>"
+      for: "5m"
+      labels:
+        severity: critical
+        platform: powerscale
+        component: csi-driver
+      annotations:
+        summary: "PowerScale node pool {{ $labels.nodepool_name }} utilization is critical"
+        description: "PowerScale node pool {{ $labels.nodepool_name }} on cluster {{ $labels.cluster_name }} is at {{ $value }}% utilization (threshold: <AlertNodepoolCriticalThreshold>%). Immediate action required."
+        runbook_url: ""
+
+- name: powerscale-csi-access-control
+  interval: 30s
+  rules:
+    - alert: PowerScaleNFSAuthFailureRate
+      expr: "rate(dell_powerscale_nfs_mount_auth_failures_total[5m]) > 0"
+      for: "5m"
+      labels:
+        severity: warning
+        platform: powerscale
+        component: csi-driver
+      annotations:
+        summary: "PowerScale NFS mount authentication failures detected"
+        description: "PowerScale NFS mount authentication failures have been observed on cluster {{ $labels.cluster_name }} at a rate of {{ $value }} failures/second over the last 5 minutes."
+        runbook_url: ""
+
+    - alert: PowerScaleAPIErrorRate
+      expr: '(rate(dell_powerscale_api_calls_total{status="failure"}[<AlertAPIErrorRateWindow>]) / ignoring(status) sum without(status) (rate(dell_powerscale_api_calls_total[<AlertAPIErrorRateWindow>]))) * 100 > <AlertAPIErrorRateThreshold>'
+      for: "5m"
+      labels:
+        severity: warning
+        platform: powerscale
+        component: csi-driver
+      annotations:
+        summary: "PowerScale API error rate is elevated"
+        description: "PowerScale OneFS API error rate on cluster {{ $labels.cluster_name }} is {{ $value }}% over the last <AlertAPIErrorRateWindow> (threshold: <AlertAPIErrorRateThreshold>%)."
+        runbook_url: ""
+
+- name: powerscale-csi-nfs-performance
+  interval: 30s
+  rules:
+    - alert: PowerScaleNFSv3HighLatency
+      expr: "histogram_quantile(0.99, rate(dell_powerscale_nfs_v3_latency_seconds_bucket[5m])) > <AlertNFSv3LatencyWarningSeconds>"
+      for: "5m"
+      labels:
+        severity: warning
+        platform: powerscale
+        component: csi-driver
+      annotations:
+        summary: "PowerScale NFSv3 latency is high"
+        description: "NFS p99 latency is {{ $value | humanizeDuration }} on cluster {{ $labels.cluster_name }} (threshold: <AlertNFSv3LatencyWarningSeconds>s). Note: latency is bucket-approximated from the OneFS optime API; minimum resolution is 100ms."
+        runbook_url: ""
+
+    - alert: PowerScaleNFSv4HighLatency
+      expr: "histogram_quantile(0.99, rate(dell_powerscale_nfs_v4_latency_seconds_bucket[5m])) > <AlertNFSv4LatencyWarningSeconds>"
+      for: "5m"
+      labels:
+        severity: warning
+        platform: powerscale
+        component: csi-driver
+      annotations:
+        summary: "PowerScale NFSv4 latency is high"
+        description: "NFS p99 latency is {{ $value | humanizeDuration }} on cluster {{ $labels.cluster_name }} (threshold: <AlertNFSv4LatencyWarningSeconds>s). Note: latency is bucket-approximated from the OneFS optime API; minimum resolution is 100ms."
+        runbook_url: ""

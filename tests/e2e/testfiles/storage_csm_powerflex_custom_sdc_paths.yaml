@@ -1,0 +1,57 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: vxflexos
+  namespace: ${E2E_NS_POWERFLEX}
+spec:
+  version: ${CSM_VERSION_LATEST}
+  driver:
+    csiDriverType: "powerflex"
+    csiDriverSpec:
+      fSGroupPolicy: "File"
+      storageCapacity: true
+    replicas: 1
+    dnsPolicy: ClusterFirstWithHostNet
+    forceRemoveDriver: true
+    common:
+      imagePullPolicy: IfNotPresent
+      envs:
+        - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
+          value: "false"
+        - name: X_CSI_VXFLEXOS_ENABLESNAPSHOTCGDELETE
+          value: "false"
+        - name: CSI_LOG_LEVEL
+          value: "info"
+        - name: GOSCALEIO_DEBUG
+          value: "false"
+        - name: GOSCALEIO_SHOWHTTP
+          value: "false"
+        - name: KUBELET_CONFIG_DIR
+          value: "/var/lib/kubelet"
+        - name: CERT_SECRET_COUNT
+          value: "0"
+        - name: X_CSI_QUOTA_ENABLED
+          value: "false"
+    node:
+      envs:
+        - name: X_CSI_SDC_ENABLED
+          value: "true"
+        - name: X_CSI_APPROVE_SDC_ENABLED
+          value: "false"
+        - name: X_CSI_HEALTH_MONITOR_ENABLED
+          value: "false"
+        - name: X_CSI_SDC_SFTP_REPO_ENABLED
+          value: "false"
+    initContainers:
+      - imagePullPolicy: IfNotPresent
+        name: sdc
+        envs:
+          - name: HOST_DRV_CFG_PATH
+            value: "/custom/opt/emc/scaleio/sdc/bin"
+          - name: REPO_ADDRESS
+            value: "sftp://0.0.0.0"
+          - name: REPO_USER
+            value: "sdcRepoUser"
+          - name: MODULE_SIGCHECK
+            value: "0"
+  modules: []

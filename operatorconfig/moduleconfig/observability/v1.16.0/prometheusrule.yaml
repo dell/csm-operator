@@ -1,0 +1,59 @@
+# Copyright © 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
+#
+# Dell Technologies, Dell and other trademarks are trademarks of Dell Inc.
+# or its subsidiaries. Other trademarks may be trademarks of their respective
+# owners.
+#
+# Observability module Prometheus alert rules.
+#
+- alert: CSMObservabilityMetricsCollectionFailure
+  expr: 'absent(dell_csm_obs_collection_rate) or dell_csm_obs_collection_rate == 0'
+  for: "3m"
+  labels:
+    severity: warning
+    platform: observability
+    component: csm-module
+    alert_id: OBS-01
+  annotations:
+    summary: "CSM observability metrics collection failed on {{ $labels.global_id }}{{ $labels.cluster_name }}{{ $labels.system_id }}{{ $labels.array_id }}"
+    description: "No observability collection data has been produced for module {{ $labels.module }} on platform {{ $labels.global_id }}{{ $labels.cluster_name }}{{ $labels.system_id }}{{ $labels.array_id }} for 3 minutes. Check the observability collector and upstream driver connectivity."
+    runbook_url: "https://dell.github.io/csm-docs/docs/observability/alerts/csm-observability/"
+
+- alert: CSMObservabilityMetricsExportFailure
+  expr: 'increase(dell_csm_obs_export_success_total{status=~"failure|error"}[5m]) > 0'
+  for: "3m"
+  labels:
+    severity: warning
+    platform: observability
+    component: csm-module
+    alert_id: OBS-02
+  annotations:
+    summary: "CSM observability metrics export failure on {{ $labels.global_id }}{{ $labels.cluster_name }}{{ $labels.system_id }}{{ $labels.array_id }}"
+    description: "Observability export failures were detected for module {{ $labels.module }} on platform {{ $labels.global_id }}{{ $labels.cluster_name }}{{ $labels.system_id }}{{ $labels.array_id }}. Investigate the export backend and the observability pipeline."
+    runbook_url: "https://dell.github.io/csm-docs/docs/observability/alerts/csm-observability/"
+
+- alert: CSMObservabilityArrayConnectivityLost
+  expr: 'dell_csm_obs_array_connectivity == 0'
+  for: "2m"
+  labels:
+    severity: critical
+    platform: observability
+    component: csm-module
+    alert_id: OBS-03
+  annotations:
+    summary: "CSM observability lost array connectivity on {{ $labels.global_id }}{{ $labels.cluster_name }}{{ $labels.system_id }}{{ $labels.array_id }}"
+    description: "The observability module has reported lost array connectivity for module {{ $labels.module }} on platform {{ $labels.global_id }}{{ $labels.cluster_name }}{{ $labels.system_id }}{{ $labels.array_id }}. Check storage array reachability, credentials, and network connectivity."
+    runbook_url: "https://dell.github.io/csm-docs/docs/observability/alerts/csm-observability/"
+
+- alert: CSMObservabilityScrapeEndpointUnavailable
+  expr: 'absent(up{job=~"karavi-metrics-.*"}) or up{job=~"karavi-metrics-.*"} == 0'
+  for: "2m"
+  labels:
+    severity: critical
+    platform: observability
+    component: csm-module
+    alert_id: OBS-04
+  annotations:
+    summary: "CSM observability scrape endpoint unavailable"
+    description: "The Prometheus scrape endpoint for the observability metrics exporter is unavailable. Check the observability metrics service, ServiceMonitor, and pod health."
+    runbook_url: "https://dell.github.io/csm-docs/docs/observability/alerts/csm-observability/"

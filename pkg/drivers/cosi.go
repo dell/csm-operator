@@ -38,7 +38,7 @@ func PrecheckCosi(ctx context.Context, cr *csmv1.ContainerStorageModule, operato
 	}
 
 	// Check if driver version is supported by doing a stat on a config file
-	configFilePath := fmt.Sprintf("%s/driverconfig/%s/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, csmv1.Cosi, version)
+	configFilePath := fmt.Sprintf("%s/driverconfig/%s/%s/driver-config-params.yaml", operatorConfig.ConfigDirectory, csmv1.Cosi, version)
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		log.Errorw("PreCheckCOSI failed in version check", "Error", err.Error())
 		return fmt.Errorf("%s %s not supported", csmv1.Cosi, version)

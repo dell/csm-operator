@@ -1,0 +1,63 @@
+# Copyright © 2026 Dell Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#      http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# csm-image-allowlist.yaml -- operator-managed image/registry allowlist.
+#
+# This ConfigMap controls which container image registries are permitted
+# in ContainerStorageModule CRs. The operator validates all user-supplied
+# image overrides (spec.driver.common.image, sideCars[*].image,
+# initContainers[*].image, modules[*].components[*].image) and
+# spec.customRegistry against this list during PreChecks, before any
+# privileged workload (DaemonSet, ClusterRoleBinding) is created.
+#
+# If this ConfigMap is not deployed, the operator uses a built-in default
+# allowlist that covers Dell and official CSI sidecar registries.
+#
+# To add a private registry (e.g., for air-gapped deployments), add it
+# to the allowedRegistries list below and apply this ConfigMap to the
+# operator namespace (dell-csm-operator):
+#
+#   kubectl apply -f csm-image-allowlist.yaml -n dell-csm-operator
+#
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: csm-image-allowlist
+  namespace: dell-csm-operator
+data:
+  allowlist.yaml: |
+    allowedRegistries:
+      # Dell CSM images
+      - "quay.io/dell"
+      - "quay.io/dell/storage"
+      - "quay.io/csiaddons"
+      # Kubernetes CSI sidecar images
+      - "registry.k8s.io/sig-storage"
+      # OpenTelemetry collector
+      - "ghcr.io/open-telemetry"
+      # cert-manager
+      - "quay.io/jetstack"
+      # OPA and kube-mgmt
+      - "docker.io/openpolicyagent"
+      # Redis commander
+      - "docker.io/rediscommander"
+      # Redis (explicit image-level entry for security)
+      - "docker.io/library/redis"
+      # nginx
+      - "quay.io/nginx"
+      # COSI sidecar
+      - "gcr.io/k8s-staging-sig-storage"
+      # Red Hat Connect
+      - "registry.connect.redhat.com/dell-emc"
+      # Add your private registries below:
+      # - "my-harbor.example.com/csm"
+      # - "my-artifactory.example.com/docker-local"

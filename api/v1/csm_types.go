@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021-2026 Dell Inc. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -30,7 +30,12 @@ import (
 // +kubebuilder:validation:XValidation:rule="!(has(self.retainImageRegistryPath) && !(has(self.version) && self.version != \"\" && has(self.customRegistry) && self.customRegistry != \"\"))",message="spec.retainImageRegistryPath is forbidden unless both spec.version and spec.customRegistry are set"
 // +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.driver) && has(self.driver.initContainers) && self.driver.initContainers.exists(ic, has(ic.image) && ic.image != \"\"))",message="spec.driver.initContainers[*].image is forbidden when spec.version is set"
 // +kubebuilder:validation:XValidation:rule="!(has(self.version) && self.version != \"\" && has(self.modules) && self.modules.exists(m, has(m.components) && m.components.exists(c, has(c.envs) && c.envs.exists(e, has(e.name) && e.name == \"NGINX_PROXY_IMAGE\"))))",message="env NGINX_PROXY_IMAGE is forbidden when spec.version is set"
-// +kubebuilder:validation:XValidation:rule="!has(self.driver) || !has(self.driver.metrics) || self.driver.csiDriverType == 'powerflex'",message="spec.driver.metrics is only supported for PowerFlex driver"
+// +kubebuilder:validation:XValidation:rule="!has(self.driver) || !has(self.driver.metrics) || self.driver.csiDriverType == 'powerflex' || self.driver.csiDriverType == 'isilon' || self.driver.csiDriverType == 'powerstore' || self.driver.csiDriverType == 'powermax'",message="spec.driver.metrics is only supported for PowerFlex, PowerScale, PowerStore, and PowerMax drivers"
+// +kubebuilder:validation:XValidation:rule="!(has(self.driver) && has(self.driver.configVersion) && self.driver.configVersion != \"\" && has(self.driver.common) && has(self.driver.common.image) && self.driver.common.image != \"\")",message="spec.driver.common.image is forbidden when spec.driver.configVersion is set"
+// +kubebuilder:validation:XValidation:rule="!(has(self.driver) && has(self.driver.configVersion) && self.driver.configVersion != \"\" && has(self.driver.sideCars) && self.driver.sideCars.exists(sc, has(sc.image) && sc.image != \"\"))",message="spec.driver.sideCars[*].image is forbidden when spec.driver.configVersion is set"
+// +kubebuilder:validation:XValidation:rule="!(has(self.driver) && has(self.driver.configVersion) && self.driver.configVersion != \"\" && has(self.driver.initContainers) && self.driver.initContainers.exists(ic, has(ic.image) && ic.image != \"\"))",message="spec.driver.initContainers[*].image is forbidden when spec.driver.configVersion is set"
+// +kubebuilder:validation:XValidation:rule="!(has(self.driver) && has(self.driver.configVersion) && self.driver.configVersion != \"\" && has(self.modules) && self.modules.exists(m, has(m.components) && m.components.exists(c, has(c.image) && c.image != \"\")))",message="spec.modules[*].components[*].image is forbidden when spec.driver.configVersion is set"
+// +kubebuilder:validation:XValidation:rule="!(has(self.driver) && has(self.driver.configVersion) && self.driver.configVersion != \"\" && has(self.modules) && self.modules.exists(m, has(m.initContainer) && m.initContainer.exists(ic, has(ic.image) && ic.image != \"\")))",message="spec.modules[*].initContainer[*].image is forbidden when spec.driver.configVersion is set"
 type ContainerStorageModuleSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
@@ -52,6 +57,16 @@ type ContainerStorageModuleSpec struct {
 	// RetainImageRegistryPath is the boolean flag used to retain image registry path
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Retain Image Registry Path"
 	RetainImageRegistryPath bool `json:"retainImageRegistryPath,omitempty" yaml:"retainImageRegistryPath,omitempty"`
+
+	// Upgrade is the upgrade policy for the CSM CR.
+	// When set to "auto", the operator will automatically upgrade the CSM resource
+	// to the latest supported version.
+	// If the auto upgrade fails, the operator will automatically rollback to the
+	// previous version.
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Upgrade Policy"
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Enum=auto;manual;""
+	Upgrade UpgradePolicy `json:"upgrade,omitempty" yaml:"upgrade,omitempty"`
 }
 
 // ContainerStorageModuleStatus defines the observed state of ContainerStorageModule
@@ -75,7 +90,6 @@ type ContainerStorageModuleStatus struct {
 // +kubebuilder:resource:scope=Namespaced,shortName={"csm"}
 // +kubebuilder:printcolumn:name="CreationTime",type=date,JSONPath=`.metadata.creationTimestamp`
 // +kubebuilder:printcolumn:name="CSIDriverType",type=string,JSONPath=`.spec.driver.csiDriverType`,description="Type of CSIDriver"
-// +kubebuilder:printcolumn:name="ConfigVersion",type=string,JSONPath=`.spec.driver.configVersion`,description="Version of CSIDriver"
 // +kubebuilder:printcolumn:name="Version",type=string,JSONPath=`.spec.version`,description="CSM Version"
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`,description="State of Installation"
 //+kubebuilder:object:root=true

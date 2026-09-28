@@ -196,15 +196,7 @@ func (f Client) Create(_ context.Context, obj client.Object, _ ...client.CreateO
 }
 
 // Delete implements client.Client.
-func (f Client) Delete(_ context.Context, obj client.Object, opts ...client.DeleteOption) error {
-	if f.ErrorInjector != nil {
-		if err := f.ErrorInjector.ShouldFail("Delete", obj); err != nil {
-			return err
-		}
-	}
-	if len(opts) > 0 {
-		return fmt.Errorf("delete options are not supported")
-	}
+func (f Client) Delete(_ context.Context, obj client.Object, _ ...client.DeleteOption) error {
 	if f.ErrorInjector != nil {
 		if err := f.ErrorInjector.ShouldFail("Delete", obj); err != nil {
 			return err

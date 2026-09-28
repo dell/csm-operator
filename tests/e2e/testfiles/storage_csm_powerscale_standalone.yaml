@@ -1,0 +1,53 @@
+apiVersion: storage.dell.com/v1
+kind: ContainerStorageModule
+metadata:
+  name: powerscale
+  namespace: ${E2E_NS_POWERSCALE}
+spec:
+  version: ${CSM_VERSION_LATEST}
+  driver:
+    csiDriverType: "isilon"
+    csiDriverSpec:
+      fSGroupPolicy: "File"
+    authSecret: csm-creds
+    replicas: 2
+    dnsPolicy: ClusterFirstWithHostNet
+    forceRemoveDriver: true
+    common:
+      imagePullPolicy: Always
+      envs:
+        - name: X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION
+          value: "true"
+        - name: CERT_SECRET_COUNT
+          value: "0"
+        - name: X_CSI_ALLOWED_NETWORKS_MODE
+          value: "single"
+    metrics:
+      enabled: true
+      port: 8443
+      tlsCertSecret: ""
+      serviceMonitor:
+        enabled: false
+        interval: 30s
+        scrapeTimeout: ""
+        insecureSkipVerify: false
+      podMonitor:
+        enabled: false
+        interval: 30s
+        scrapeTimeout: ""
+        insecureSkipVerify: false
+      prometheusRule:
+        enabled: true
+        volumeOperationFailureThreshold: 3
+        quotaWarningThreshold: 80
+        quotaCriticalThreshold: 90
+        nodepoolWarningThreshold: 80
+        nodepoolCriticalThreshold: 90
+        apiErrorRateThreshold: 10
+        apiErrorRateWindow: "5m"
+        cpuWarningThreshold: 80
+        memoryWarningThreshold: 2147483648
+        nfsV3LatencyWarningSeconds: 10
+        nfsV4LatencyWarningSeconds: 10
+        driverCrashLoopRestartThreshold: 3
+        driverCrashLoopWindow: "15m"

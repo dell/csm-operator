@@ -27,7 +27,7 @@ var (
 		ConfigDirectory: "../../tests/config",
 	}
 
-	// config for version checks (csm-version-mapping.yaml is in operatorconfig)
+	// config for version checks (csm-releases.yaml is in operatorconfig)
 	configForVersionChecks = operatorutils.OperatorConfig{
 		ConfigDirectory: "../../operatorconfig",
 	}

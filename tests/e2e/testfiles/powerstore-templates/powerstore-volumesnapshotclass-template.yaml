@@ -1,0 +1,6 @@
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshotClass
+metadata:
+  name: op-e2e-powerstore-snapshot
+driver: csi-powerstore.dellemc.com
+deletionPolicy: Delete

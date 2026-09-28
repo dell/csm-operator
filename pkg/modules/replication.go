@@ -52,6 +52,8 @@ const (
 	DefaultReplicationPrefix = "<ReplicationPrefix>"
 	// DefaultLogLevel -
 	DefaultLogLevel = "<REPLICATION_CTRL_LOG_LEVEL>"
+	// DefaultLogFormat -
+	DefaultLogFormat = "<REPLICATION_CTRL_LOG_FORMAT>"
 	// DefautlReplicaCount -
 	DefautlReplicaCount = "<REPLICATION_CTRL_REPLICAS>"
 	// DefaultRetryMin -
@@ -75,6 +77,21 @@ var (
 	XCSIReplicaCTXPrefix = "X_CSI_REPLICATION_CONTEXT_PREFIX"
 	// XCSIReplicaPrefix -
 	XCSIReplicaPrefix = "X_CSI_REPLICATION_PREFIX" // #nosec G101
+
+	// ReplicationMetricsEnabledPlaceholder -
+	ReplicationMetricsEnabledPlaceholder = "<X_CSI_REPLICATION_METRICS_ENABLED>"
+	// ReplicationMetricsPortPlaceholder -
+	ReplicationMetricsPortPlaceholder = "<X_CSI_REPLICATION_METRICS_PORT>"
+	// ReplicationMetricsCollectionIntervalPlaceholder -
+	ReplicationMetricsCollectionIntervalPlaceholder = "<X_CSI_REPLICATION_METRICS_COLLECTION_INTERVAL>"
+	// ReplicationMetricsTLSCertFilePlaceholder -
+	ReplicationMetricsTLSCertFilePlaceholder = "<X_CSI_REPLICATION_METRICS_TLS_CERT_FILE>"
+	// ReplicationMetricsTLSKeyFilePlaceholder -
+	ReplicationMetricsTLSKeyFilePlaceholder = "<X_CSI_REPLICATION_METRICS_TLS_KEY_FILE>"
+	// DefaultReplicationMetricsPort -
+	DefaultReplicationMetricsPort = "8445"
+	// DefaultReplicationMetricsCollectionInterval -
+	DefaultReplicationMetricsCollectionInterval = "30s"
 )
 
 // ReplicationSupportedDrivers is a map containing the CSI Drivers supported by CSM Replication. The key is driver name and the value is the driver plugin identifier
@@ -103,6 +120,38 @@ var ReplicationSupportedDrivers = map[string]SupportedDriverParam{
 		PluginIdentifier:              drivers.PowerStorePluginIdentifier,
 		DriverConfigParamsVolumeMount: drivers.PowerStoreConfigParamsVolumeMount,
 	},
+}
+
+// ModifyReplicationMetricsCR substitutes replication metrics placeholders in YAML templates.
+func ModifyReplicationMetricsCR(yamlString string, module csmv1.Module) string {
+	metricsEnabled := "false"
+	metricsPort := DefaultReplicationMetricsPort
+	collectionInterval := DefaultReplicationMetricsCollectionInterval
+	tlsCertFile := ""
+	tlsKeyFile := ""
+
+	if module.Metrics != nil {
+		if module.Metrics.Enabled {
+			metricsEnabled = "true"
+		}
+		if module.Metrics.Port != 0 {
+			metricsPort = fmt.Sprintf("%d", module.Metrics.Port)
+		}
+		if module.Metrics.Collection != nil && module.Metrics.Collection.Interval != "" {
+			collectionInterval = module.Metrics.Collection.Interval
+		}
+		if module.Metrics.TLSCertSecret != "" {
+			tlsCertFile = "/etc/replication-metrics-tls/tls.crt"
+			tlsKeyFile = "/etc/replication-metrics-tls/tls.key"
+		}
+	}
+
+	result := strings.ReplaceAll(yamlString, ReplicationMetricsEnabledPlaceholder, metricsEnabled)
+	result = strings.ReplaceAll(result, ReplicationMetricsPortPlaceholder, metricsPort)
+	result = strings.ReplaceAll(result, ReplicationMetricsCollectionIntervalPlaceholder, collectionInterval)
+	result = strings.ReplaceAll(result, ReplicationMetricsTLSCertFilePlaceholder, tlsCertFile)
+	result = strings.ReplaceAll(result, ReplicationMetricsTLSKeyFilePlaceholder, tlsKeyFile)
+	return result
 }
 
 func getRepctlPrefices(replicaModule csmv1.Module, driverType csmv1.DriverType) (string, string) {
@@ -139,7 +188,8 @@ func getReplicaApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op 
 		return nil, nil, err
 	}
 
-	YamlString := operatorutils.ModifyCommonCR(string(buf), cr)
+	YamlString := ModifyReplicationMetricsCR(string(buf), replicaModule)
+	YamlString = operatorutils.ModifyCommonCR(YamlString, cr)
 
 	replicationContextPrefix, replicationPrefix := getRepctlPrefices(replicaModule, cr.Spec.Driver.CSIDriverType)
 	YamlString = strings.ReplaceAll(YamlString, DefaultReplicationPrefix, replicationPrefix)
@@ -155,8 +205,7 @@ func getReplicaApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op 
 
 	// For minimal manifest image override with configmap where component isn't mentioned
 	if len(replicaModule.Components) == 0 {
-		var synthetic csmv1.ContainerTemplate
-		synthetic = csmv1.ContainerTemplate{
+		var synthetic csmv1.ContainerTemplate = csmv1.ContainerTemplate{
 			Name: operatorutils.ReplicationSideCarName,
 		}
 		*container.Image = operatorutils.GetFinalImage(ctx, cr, matched, synthetic, *container.Image)
@@ -181,6 +230,30 @@ func ReplicationInjectDeployment(ctx context.Context, dp applyv1.DeploymentApply
 		return nil, err
 	}
 	container := *containerPtr
+
+	// Add TLS secret volume for replication metrics if configured
+	if replicaModule.Metrics != nil && replicaModule.Metrics.Enabled && replicaModule.Metrics.TLSCertSecret != "" {
+		metricsTLSVolName := "replication-metrics-tls"
+		metricsTLSSecretName := replicaModule.Metrics.TLSCertSecret
+		dynamicallyAddVolume(
+			&dp.Spec.Template.Spec.Volumes,
+			acorev1.VolumeApplyConfiguration{
+				Name: &metricsTLSVolName,
+				VolumeSourceApplyConfiguration: acorev1.VolumeSourceApplyConfiguration{
+					Secret: &acorev1.SecretVolumeSourceApplyConfiguration{
+						SecretName: &metricsTLSSecretName,
+					},
+				},
+			},
+		)
+
+		metricsTLSMountPath := "/etc/replication-metrics-tls"
+		readOnly := true
+		dynamicallyMountVolume(&container, acorev1.VolumeMountApplyConfiguration{
+			Name: &metricsTLSVolName, MountPath: &metricsTLSMountPath, ReadOnly: &readOnly,
+		})
+	}
+
 	dp.Spec.Template.Spec.Containers = append(dp.Spec.Template.Spec.Containers, container)
 
 	// inject replication in driver environment
@@ -377,9 +450,11 @@ func getReplicaController(ctx context.Context, op operatorutils.OperatorConfig, 
 	if err != nil {
 		return nil, err
 	}
-	YamlString = operatorutils.ModifyCommonCR(string(buf), cr)
+	YamlString = ModifyReplicationMetricsCR(string(buf), replica)
+	YamlString = operatorutils.ModifyCommonCR(YamlString, cr)
 
-	logLevel := "debug"
+	logLevel := "info"
+	logFormat := "json"
 	replicaCount := "1"
 	retryMin := "1s"
 	retryMax := "5m"
@@ -391,8 +466,7 @@ func getReplicaController(ctx context.Context, op operatorutils.OperatorConfig, 
 
 	// For minimal manifest when components aren't mentioned
 	if len(replica.Components) == 0 {
-		var synthetic csmv1.ContainerTemplate
-		synthetic = csmv1.ContainerTemplate{
+		var synthetic csmv1.ContainerTemplate = csmv1.ContainerTemplate{
 			Name: operatorutils.ReplicationControllerManager,
 		}
 		replicaImage = operatorutils.GetFinalImage(ctx, cr, matched, synthetic, YamlString)
@@ -404,6 +478,8 @@ func getReplicaController(ctx context.Context, op operatorutils.OperatorConfig, 
 			for _, env := range component.Envs {
 				if strings.Contains(DefaultLogLevel, env.Name) && env.Value != "" {
 					logLevel = env.Value
+				} else if strings.Contains(DefaultLogFormat, env.Name) && env.Value != "" {
+					logFormat = env.Value
 				} else if strings.Contains(DefautlReplicaCount, env.Name) && env.Value != "" {
 					replicaCount = env.Value
 				} else if strings.Contains(DefaultRetryMin, env.Name) && env.Value != "" {
@@ -426,6 +502,7 @@ func getReplicaController(ctx context.Context, op operatorutils.OperatorConfig, 
 	}
 
 	YamlString = strings.ReplaceAll(YamlString, DefaultLogLevel, logLevel)
+	YamlString = strings.ReplaceAll(YamlString, DefaultLogFormat, logFormat)
 	YamlString = strings.ReplaceAll(YamlString, DefautlReplicaCount, replicaCount)
 	YamlString = strings.ReplaceAll(YamlString, DefaultReplicaInitImage, replicaInitImage)
 	YamlString = strings.ReplaceAll(YamlString, DefaultRetryMax, retryMax)
@@ -492,6 +569,8 @@ func ReplicationManagerController(ctx context.Context, isDeleting bool, op opera
 }
 
 func CreateReplicationConfigmap(ctx context.Context, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, ctrlClient client.Client) ([]crclient.Object, error) {
+	log := logger.GetLogger(ctx)
+	log.Infow("Creating/Updating replication configmap", "namespace", cr.Namespace)
 	replica, err := getReplicaModule(cr)
 	if err != nil {
 		return nil, err
@@ -502,8 +581,26 @@ func CreateReplicationConfigmap(ctx context.Context, cr csmv1.ContainerStorageMo
 		return nil, err
 	}
 
+	cmYaml := string(buf)
+
+	logLevel := "info"
+	logFormat := "json"
+	for _, component := range replica.Components {
+		if component.Name == operatorutils.ReplicationControllerManager {
+			for _, env := range component.Envs {
+				if strings.Contains(DefaultLogLevel, env.Name) && env.Value != "" {
+					logLevel = env.Value
+				} else if strings.Contains(DefaultLogFormat, env.Name) && env.Value != "" {
+					logFormat = env.Value
+				}
+			}
+		}
+	}
+	cmYaml = strings.ReplaceAll(cmYaml, DefaultLogLevel, logLevel)
+	cmYaml = strings.ReplaceAll(cmYaml, DefaultLogFormat, logFormat)
+
 	var cm corev1.ConfigMap
-	if err := yaml.Unmarshal(buf, &cm); err != nil {
+	if err := yaml.Unmarshal([]byte(cmYaml), &cm); err != nil {
 		return nil, err
 	}
 
@@ -516,6 +613,14 @@ func CreateReplicationConfigmap(ctx context.Context, cr csmv1.ContainerStorageMo
 		if err := ctrlClient.Create(ctx, &cm); err != nil {
 			return nil, err
 		}
+	} else if err == nil {
+		// ConfigMap exists, update it
+		foundConfigMap.Data = cm.Data
+		if err := ctrlClient.Update(ctx, foundConfigMap); err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, err
 	}
 	return []crclient.Object{&cm}, nil
 }
@@ -561,7 +666,7 @@ func ReplicationCrdDeploy(ctx context.Context, op operatorutils.OperatorConfig, 
 		return err
 	}
 
-	return applyDeleteObjects(ctx, ctrlClient, yamlString, false)
+	return applyOrDeleteObjects(ctx, ctrlClient, yamlString, false)
 }
 
 func DeleteReplicationCrds(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
@@ -570,5 +675,5 @@ func DeleteReplicationCrds(ctx context.Context, op operatorutils.OperatorConfig,
 		return err
 	}
 
-	return applyDeleteObjects(ctx, ctrlClient, yamlString, true)
+	return applyOrDeleteObjects(ctx, ctrlClient, yamlString, true)
 }

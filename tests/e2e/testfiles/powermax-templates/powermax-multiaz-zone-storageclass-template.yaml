@@ -1,0 +1,43 @@
+# Copyright © 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#      http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Multi-array zone pool StorageClass.
+#
+# Unlike powermax-storageclass-template.yaml, this StorageClass carries NO
+# SYMID (or other array-identifying) parameter, and its allowedTopologies
+# reference only the shared zone/region labels used by
+# powermax-multiaz-pool-secret-template.yaml (both pooled arrays are
+# labeled zone.topology.kubernetes.io/zone=zoneA,
+# zone.topology.kubernetes.io/region=zoneC). A PVC submitted against this
+# StorageClass matches both pooled arrays' topology labels, so the driver
+# must resolve it via capacity-based pool selection
+# rather than being pinned to a single array (the SYMID-pinned case is
+# exercised by powermax-storageclass-template.yaml).
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: op-e2e-powermax-multiaz-zone-pool
+parameters:
+  SRP: "REPLACE_RESOURCE_POOL"
+  ServiceLevel: "REPLACE_SERVICE_LEVEL"
+provisioner: csi-powermax.dellemc.com
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+allowedTopologies:
+  - matchLabelExpressions:
+      - key: zone.topology.kubernetes.io/zone
+        values:
+          - zoneA
+      - key: zone.topology.kubernetes.io/region
+        values:
+          - zoneC

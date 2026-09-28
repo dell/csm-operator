@@ -12,7 +12,7 @@
 
 ARG BASEIMAGE
 ARG GOIMAGE
-ARG VERSION="1.12.2"
+ARG VERSION="1.13.0"
 
 FROM $GOIMAGE as builder
 ARG VERSION
@@ -21,7 +21,7 @@ RUN mkdir -p /go/src/csm-operator
 COPY ./ /go/src/csm-operator
 
 WORKDIR /go/src/csm-operator
-RUN make build IMAGE_VERSION=$VERSION
+RUN make build-binary IMAGE_VERSION=$VERSION
 
 FROM $BASEIMAGE as final
 ARG VERSION
@@ -35,7 +35,7 @@ LABEL vendor="Dell Technologies" \
     name="dell-csm-operator" \
     summary="Operator for installing Dell CSI Drivers and Dell CSM Modules" \
     description="Common Operator for installing various Dell CSI Drivers and Dell CSM Modules" \
-    release="1.17.2" \
+    release="1.18.0" \
     version=$VERSION \
     license="Dell CSM Operator Apache License"
 

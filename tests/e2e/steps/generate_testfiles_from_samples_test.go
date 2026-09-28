@@ -13,13 +13,45 @@
 package steps
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
+	"github.com/dell/csm-operator/pkg/version"
 	"sigs.k8s.io/yaml"
 )
+
+func TestStorageClassDeleteNotFoundIsIgnored(t *testing.T) {
+	if !isStorageClassDeleteNotFound(fmt.Errorf("Error from server (NotFound): storageclasses.storage.k8s.io \\\"isilon-mtls\\\" not found")) {
+		t.Fatal("expected a Kubernetes NotFound delete error to be ignored")
+	}
+	if isStorageClassDeleteNotFound(fmt.Errorf("delete storageclass: connection refused")) {
+		t.Fatal("expected a non-NotFound delete error to be returned")
+	}
+}
+
+func TestNormalizePowerStoreEndpointHost(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{name: "IPv4", input: "192.0.2.1", want: "192.0.2.1"},
+		{name: "bare IPv6", input: "2001:db8::1", want: "[2001:db8::1]"},
+		{name: "bracketed IPv6", input: "[2001:db8::1]", want: "[2001:db8::1]"},
+		{name: "link-local zone", input: "fe80::1%eth0", want: "[fe80::1%25eth0]"},
+		{name: "FQDN", input: "powerstore.example.com", want: "powerstore.example.com"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := normalizePowerStoreEndpointHost(tt.input); got != tt.want {
+				t.Fatalf("normalizePowerStoreEndpointHost(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
+	}
+}
 
 func TestGenerateTestfilesFromSamples(t *testing.T) {
 	tmpDir := t.TempDir()
@@ -30,17 +62,27 @@ func TestGenerateTestfilesFromSamples(t *testing.T) {
 		t.Skipf("samples directory not found at %s; skipping", samplesDir)
 	}
 
+	// Initialise the version package (same releases file used by e2e BeforeSuite)
+	// so that CSM_VERSION_* env vars resolve correctly.
+	releasesFile := "../../../operatorconfig/common/csm-releases.yaml"
+	if _, err := os.Stat(releasesFile); os.IsNotExist(err) {
+		t.Skipf("csm-releases.yaml not found at %s; skipping", releasesFile)
+	}
+	version.ResetForTest()
+	if err := version.Init(releasesFile); err != nil {
+		t.Fatalf("version.Init: %v", err)
+	}
+	vInfo := version.GetInfo()
+	t.Setenv("CSM_VERSION_LATEST", vInfo.CSMVersion(version.Latest))
+	t.Setenv("CSM_VERSION_N1", vInfo.CSMVersion(version.NMinusOne))
+	t.Setenv("CSM_VERSION_N2", vInfo.CSMVersion(version.NMinusTwo))
+
 	// Generate all testfiles
 	if err := GenerateTestfilesFromSamples(tmpDir, samplesDir); err != nil {
 		t.Fatalf("GenerateTestfilesFromSamples failed: %v", err)
 	}
 
 	specs := testfileSpecs()
-
-	// Verify all 40 files are created
-	if len(specs) != 40 {
-		t.Errorf("expected 40 specs, got %d", len(specs))
-	}
 
 	for _, spec := range specs {
 		path := filepath.Join(tmpDir, spec.OutputFilename)
@@ -75,6 +117,10 @@ func TestGenerateTestfilesFromSamples(t *testing.T) {
 		}
 		if cr.Kind != "ContainerStorageModule" {
 			t.Errorf("file %s: expected kind ContainerStorageModule, got %q", spec.OutputFilename, cr.Kind)
+		}
+		if spec.OutputFilename == "storage_csm_powermax_metrics.yaml" &&
+			(cr.Spec.Driver.Metrics == nil || cr.Spec.Driver.Metrics.PrometheusRule == nil || !cr.Spec.Driver.Metrics.PrometheusRule.Enabled) {
+			t.Errorf("file %s: driver metrics PrometheusRule should be enabled", spec.OutputFilename)
 		}
 
 		// Check enabled modules

@@ -17,10 +17,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
 	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
+	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -55,13 +57,13 @@ const (
 	CertManagerWebhook = "<CERT_MANAGER_WEBHOOK_IMAGE>"
 
 	// CertManagerCaInjectorImage - image for cert-manager ca injector
-	CertManagerCaInjectorImage = "quay.io/jetstack/cert-manager-cainjector:v1.11.0"
+	CertManagerCaInjectorImage = "quay.io/jetstack/cert-manager-cainjector:v1.21.1"
 
 	// CertManagerControllerImage - image for cert-manager controller
-	CertManagerControllerImage = "quay.io/jetstack/cert-manager-controller:v1.11.0"
+	CertManagerControllerImage = "quay.io/jetstack/cert-manager-controller:v1.21.1"
 
 	// CertManagerWebhookImage - image for cert-manager webhook
-	CertManagerWebhookImage = "quay.io/jetstack/cert-manager-webhook:v1.11.0"
+	CertManagerWebhookImage = "quay.io/jetstack/cert-manager-webhook:v1.21.1"
 )
 
 // SupportedDriverParam -
@@ -124,6 +126,13 @@ func readConfigFile(ctx context.Context, module csmv1.Module, cr csmv1.Container
 
 	configMapPath := fmt.Sprintf("%s/moduleconfig/%s/%s/%s", op.ConfigDirectory, module.Name, moduleConfigVersion, filename)
 	return os.ReadFile(filepath.Clean(configMapPath))
+}
+
+// ReadAuthorizationModuleConfigFile reads a configuration file for the CSM Authorization module
+// using the same version resolution logic as other authorization module resources. The filename
+// is relative to the resolved module version directory (e.g. "prometheusrule.yaml").
+func ReadAuthorizationModuleConfigFile(ctx context.Context, module csmv1.Module, cr csmv1.ContainerStorageModule, op operatorutils.OperatorConfig, filename string) ([]byte, error) {
+	return readConfigFile(ctx, module, cr, op, filename)
 }
 
 // getCertManager - configure cert-manager with the specified namespace before installation
@@ -266,7 +275,10 @@ func PatchCSMDRCRDs(ctx context.Context, isDeleting bool, op operatorutils.Opera
 	return nil
 }
 
-func applyDeleteObjects(ctx context.Context, ctrlClient crclient.Client, yamlString string, isDeleting bool) error {
+// applyOrDeleteObjects applies or deletes Kubernetes objects based on the isDeleting parameter.
+// When isDeleting is false, it applies objects to the cluster.
+// When isDeleting is true, it deletes objects from the cluster.
+func applyOrDeleteObjects(ctx context.Context, ctrlClient crclient.Client, yamlString string, isDeleting bool) error {
 	ctrlObjects, err := operatorutils.GetModuleComponentObj([]byte(yamlString))
 	if err != nil {
 		return err
@@ -285,4 +297,14 @@ func applyDeleteObjects(ctx context.Context, ctrlClient crclient.Client, yamlStr
 	}
 
 	return nil
+}
+
+// dynamicallyAddVolume appends a volume to the slice if one with the same name does not already exist.
+func dynamicallyAddVolume(volumes *[]acorev1.VolumeApplyConfiguration, vol acorev1.VolumeApplyConfiguration) {
+	contains := slices.ContainsFunc(*volumes,
+		func(v acorev1.VolumeApplyConfiguration) bool { return *v.Name == *vol.Name },
+	)
+	if !contains {
+		*volumes = append(*volumes, vol)
+	}
 }

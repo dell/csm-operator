@@ -5,8 +5,8 @@ metadata:
     alm-examples: "[]"
     capabilities: Seamless Upgrades
     categories: Storage
-    containerImage: quay.io/dell/container-storage-modules/dell-csm-operator:v1.12.2
-    createdAt: "2026-07-14T22:11:11Z"
+    containerImage: quay.io/dell/container-storage-modules/dell-csm-operator:v1.13.0
+    createdAt: "2022-03-29T11:59:59Z"
     description: Easily install and manage Dell’s CSI Drivers and CSM
     features.operators.openshift.io/disconnected: "true"
     features.operators.openshift.io/fips-compliant: "false"
@@ -17,7 +17,7 @@ metadata:
     features.operators.openshift.io/token-auth-gcp: "false"
     repository: https://github.com/dell/csm-operator
     support: Dell Technologies
-  name: dell-csm-operator.v1.12.2
+  name: dell-csm-operator.v1.13.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -138,6 +138,9 @@ spec:
             displayName: OpenTelemetry Collector Address of the OTLP endpoint using
               gRPC
             path: driver.common.openTelemetryCollectorAddress
+          - description: Ports is the list of ports for the container
+            displayName: Container Ports
+            path: driver.common.ports
           - description: PrivateKey is a private key used for a certificate/private-key
               pair
             displayName: Private key for certificate/private-key pair
@@ -304,7 +307,12 @@ spec:
               or not
             displayName: Vault Skip Certificate Validation
             path: driver.common.vaultConfigurations[0].skipCertificateValidation
-          - description: ConfigVersion is the configuration version of the driver
+          - description: VolumeMounts is the list of volume mounts for the container
+            displayName: Container Volume Mounts
+            path: driver.common.volumeMounts
+          - description: |-
+              ConfigVersion is the configuration version of the driver
+              Deprecated: Use spec.version instead. This field will be removed in a future release.
             displayName: Config Version
             path: driver.configVersion
           - description: Controller is the specification for Controller plugin only
@@ -408,6 +416,9 @@ spec:
             displayName: OpenTelemetry Collector Address of the OTLP endpoint using
               gRPC
             path: driver.controller.openTelemetryCollectorAddress
+          - description: Ports is the list of ports for the container
+            displayName: Container Ports
+            path: driver.controller.ports
           - description: PrivateKey is a private key used for a certificate/private-key
               pair
             displayName: Private key for certificate/private-key pair
@@ -574,6 +585,9 @@ spec:
               or not
             displayName: Vault Skip Certificate Validation
             path: driver.controller.vaultConfigurations[0].skipCertificateValidation
+          - description: VolumeMounts is the list of volume mounts for the container
+            displayName: Container Volume Mounts
+            path: driver.controller.volumeMounts
           - description: CSIDriverSpec is the specification for CSIDriver
             displayName: CSI Driver Spec
             path: driver.csiDriverSpec
@@ -686,6 +700,9 @@ spec:
             displayName: OpenTelemetry Collector Address of the OTLP endpoint using
               gRPC
             path: driver.initContainers[0].openTelemetryCollectorAddress
+          - description: Ports is the list of ports for the container
+            displayName: Container Ports
+            path: driver.initContainers[0].ports
           - description: PrivateKey is a private key used for a certificate/private-key
               pair
             displayName: Private key for certificate/private-key pair
@@ -852,10 +869,45 @@ spec:
               or not
             displayName: Vault Skip Certificate Validation
             path: driver.initContainers[0].vaultConfigurations[0].skipCertificateValidation
+          - description: VolumeMounts is the list of volume mounts for the container
+            displayName: Container Volume Mounts
+            path: driver.initContainers[0].volumeMounts
           - description: Metrics is the configuration for the driver metrics endpoint
               and monitoring
             displayName: Driver Metrics Configuration
             path: driver.metrics
+          - description: Array configures array-facing metrics collection controls
+            displayName: Metrics Array Configuration
+            path: driver.metrics.array
+          - description: CircuitBreaker configures metrics collection circuit breaker
+              controls
+            displayName: Metrics Circuit Breaker Configuration
+            path: driver.metrics.array.circuitBreaker
+          - description: ResetTimeout is how long to wait before retrying after opening
+              the circuit
+            displayName: Metrics Circuit Breaker Reset Timeout
+            path: driver.metrics.array.circuitBreaker.resetTimeout
+          - description: Threshold opens the circuit after this many consecutive failures
+            displayName: Metrics Circuit Breaker Threshold
+            path: driver.metrics.array.circuitBreaker.threshold
+          - description: RateLimit sets the max allowed array requests per collection
+              window
+            displayName: Metrics Array Rate Limit
+            path: driver.metrics.array.rateLimit
+          - description: Timeout sets the timeout for metrics array requests
+            displayName: Metrics Array Timeout
+            path: driver.metrics.array.timeout
+          - description: Collection configures driver metrics collection cadence and
+              cache behavior
+            displayName: Metrics Collection Configuration
+            path: driver.metrics.collection
+          - description: CacheTTL is how long collected metric responses are cached
+            displayName: Metrics Collection Cache TTL
+            path: driver.metrics.collection.cacheTTL
+          - description: Interval is how frequently metrics are collected from the
+              array
+            displayName: Metrics Collection Interval
+            path: driver.metrics.collection.interval
           - description: Enabled enables the shared Prometheus metrics HTTP endpoint
               on the controller
             displayName: Metrics Enabled
@@ -875,9 +927,198 @@ spec:
               each gateway endpoint
             displayName: Gateway Monitoring Poll Interval
             path: driver.metrics.gatewayMonitoring.pollInterval
+          - description: |-
+              LeaderElection configures leader election for array-level metrics collection
+              Only the leader controller will collect array-level metrics to avoid duplicate API calls
+            displayName: Metrics Leader Election Configuration
+            path: driver.metrics.leaderElection
+          - description: |-
+              Enabled enables leader election for array-level metrics collection
+              Only the leader controller will collect array-level metrics to avoid duplicate API calls
+              When nil, defaults to false
+            displayName: Leader Election Enabled
+            path: driver.metrics.leaderElection.enabled
+          - description: |-
+              LeaseDuration is the duration that non-leader candidates will wait to acquire the lease
+              Default value: 60s
+            displayName: Leader Election Lease Duration
+            path: driver.metrics.leaderElection.leaseDuration
+          - description: |-
+              RenewDeadline is the duration that the acting leader will retry refreshing leadership before giving up
+              Default value: 40s
+            displayName: Leader Election Renew Deadline
+            path: driver.metrics.leaderElection.renewDeadline
+          - description: |-
+              RetryPeriod is the duration the LeaderElector clients should wait between tries of actions
+              Default value: 5s
+            displayName: Leader Election Retry Period
+            path: driver.metrics.leaderElection.retryPeriod
+          - description: PodMonitor configures optional Prometheus Operator PodMonitor
+              creation for node pods
+            displayName: PodMonitor Configuration
+            path: driver.metrics.podMonitor
+          - description: |-
+              Enabled creates a PodMonitor CR for Prometheus Operator integration targeting node pods
+              Requires the Prometheus Operator CRDs to be installed in the cluster
+            displayName: PodMonitor Enabled
+            path: driver.metrics.podMonitor.enabled
+          - description: |-
+              InsecureSkipVerify skips TLS certificate verification when Prometheus scrapes the node metrics endpoint
+              Only applies when tlsCertSecret is set
+            displayName: PodMonitor Insecure Skip Verify
+            path: driver.metrics.podMonitor.insecureSkipVerify
+          - description: Interval is the Prometheus scrape interval for the node metrics
+              endpoint
+            displayName: PodMonitor Scrape Interval
+            path: driver.metrics.podMonitor.interval
+          - description: |-
+              ScrapeTimeout is the Prometheus scrape timeout for the node metrics endpoint
+              Default value: "" (unset; Prometheus uses its global scrape_timeout)
+            displayName: PodMonitor Scrape Timeout
+            path: driver.metrics.podMonitor.scrapeTimeout
           - description: Port is the port on which the metrics endpoint is exposed
             displayName: Metrics Port
             path: driver.metrics.port
+          - description: PrometheusRule configures optional Prometheus Operator alert
+              rule creation for supported drivers
+            displayName: PrometheusRule Configuration
+            path: driver.metrics.prometheusRule
+          - description: |-
+              APIErrorRateThreshold is the whole-percent API error threshold that triggers an alert for drivers exposing request success and failure metrics.
+              PowerScale uses this field.
+            displayName: API Error Rate Threshold
+            path: driver.metrics.prometheusRule.apiErrorRateThreshold
+          - description: |-
+              APIErrorRateWindow is the lookback window used when evaluating the API error ratio alert expression.
+              PowerScale uses this field.
+            displayName: API Error Rate Window
+            path: driver.metrics.prometheusRule.apiErrorRateWindow
+          - description: |-
+              ApplianceCriticalThreshold is the whole-percent appliance utilization threshold that triggers a critical alert for drivers exposing appliance metrics.
+              PowerStore uses this field.
+            displayName: Appliance Critical Threshold
+            path: driver.metrics.prometheusRule.applianceCriticalThreshold
+          - description: |-
+              ApplianceWarningThreshold is the whole-percent appliance utilization threshold that triggers a warning alert for drivers exposing appliance metrics.
+              PowerStore uses this field.
+            displayName: Appliance Warning Threshold
+            path: driver.metrics.prometheusRule.applianceWarningThreshold
+          - description: |-
+              CPUWarningThreshold is the whole-percent CPU utilization threshold that triggers a warning alert for driver pods.
+              PowerScale uses this field.
+            displayName: CPU Warning Threshold
+            path: driver.metrics.prometheusRule.cpuWarningThreshold
+          - description: |-
+              DataReductionDegradedThreshold is the data-reduction ratio below which a degradation alert fires.
+              PowerFlex uses this field (PF-16). Stored as a decimal string to avoid controller-gen float64 rejection. Default: "1.5".
+            displayName: Data Reduction Degraded Threshold
+            path: driver.metrics.prometheusRule.dataReductionDegradedThreshold
+          - description: |-
+              DriverCrashLoopRestartThreshold is the restart count threshold used to detect crash looping within the configured window.
+              PowerScale uses this field.
+            displayName: Driver CrashLoop Restart Threshold
+            path: driver.metrics.prometheusRule.driverCrashLoopRestartThreshold
+          - description: |-
+              DriverCrashLoopWindow is the lookback window used when evaluating crash loop restart deltas.
+              PowerScale uses this field.
+            displayName: Driver CrashLoop Window
+            path: driver.metrics.prometheusRule.driverCrashLoopWindow
+          - description: Enabled creates a PrometheusRule CR for Prometheus Operator
+              integration.
+            displayName: PrometheusRule Enabled
+            path: driver.metrics.prometheusRule.enabled
+          - description: |-
+              MemoryWarningThreshold is the driver memory usage threshold in bytes that triggers a warning alert.
+              PowerScale uses this field.
+            displayName: Memory Warning Threshold
+            path: driver.metrics.prometheusRule.memoryWarningThreshold
+          - description: |-
+              NFSv3LatencyWarningSeconds is the NFSv3 p99 latency threshold in seconds that triggers a warning alert.
+              PowerScale uses this field.
+            displayName: NFSv3 Latency Warning Seconds
+            path: driver.metrics.prometheusRule.nfsV3LatencyWarningSeconds
+          - description: |-
+              NFSv4LatencyWarningSeconds is the NFSv4 p99 latency threshold in seconds that triggers a warning alert.
+              PowerScale uses this field.
+            displayName: NFSv4 Latency Warning Seconds
+            path: driver.metrics.prometheusRule.nfsV4LatencyWarningSeconds
+          - description: |-
+              NodepoolCriticalThreshold is the whole-percent node pool utilization threshold that triggers a critical alert for drivers exposing node pool metrics.
+              PowerScale uses this field.
+            displayName: Node Pool Critical Threshold
+            path: driver.metrics.prometheusRule.nodepoolCriticalThreshold
+          - description: |-
+              NodepoolWarningThreshold is the whole-percent node pool utilization threshold that triggers a warning alert for drivers exposing node pool metrics.
+              PowerScale uses this field.
+            displayName: Node Pool Warning Threshold
+            path: driver.metrics.prometheusRule.nodepoolWarningThreshold
+          - description: |-
+              PoolCapacityCriticalPercent is the storage pool utilization percentage that triggers a critical alert.
+              PowerFlex uses this field (PF-14). Default: 90.
+            displayName: Pool Capacity Critical Percent
+            path: driver.metrics.prometheusRule.poolCapacityCriticalPercent
+          - description: |-
+              PoolCapacityWarningPercent is the storage pool utilization percentage that triggers a warning alert.
+              PowerFlex uses this field (PF-13). Default: 80.
+            displayName: Pool Capacity Warning Percent
+            path: driver.metrics.prometheusRule.poolCapacityWarningPercent
+          - description: |-
+              QuotaCriticalThreshold is the whole-percent quota utilization threshold that triggers a critical alert for drivers exposing quota metrics.
+              PowerScale uses this field.
+            displayName: Quota Critical Threshold
+            path: driver.metrics.prometheusRule.quotaCriticalThreshold
+          - description: |-
+              QuotaWarningThreshold is the whole-percent quota utilization threshold that triggers a warning alert for drivers exposing quota metrics.
+              PowerScale uses this field.
+            displayName: Quota Warning Threshold
+            path: driver.metrics.prometheusRule.quotaWarningThreshold
+          - description: |-
+              RCGBandwidthWarningKBps is the RCG transmit bandwidth in KB/s below which a degradation alert fires.
+              PowerFlex uses this field (PF-21). Default: 10240.
+            displayName: RCG Bandwidth Warning KBps
+            path: driver.metrics.prometheusRule.rcgBandwidthWarningKBps
+          - description: |-
+              RCGLagWarningSeconds is the persistent RCG replication lag in seconds that triggers a warning alert.
+              PowerFlex uses this field (PF-20). Default: 300.
+            displayName: RCG Lag Warning Seconds
+            path: driver.metrics.prometheusRule.rcgLagWarningSeconds
+          - description: |-
+              RCGLatencyWarningSeconds is the RCG transmit latency in seconds that triggers a warning alert.
+              PowerFlex uses this field (PF-22). Stored as a decimal string to avoid controller-gen float64 rejection. Default: "5.0".
+            displayName: RCG Latency Warning Seconds
+            path: driver.metrics.prometheusRule.rcgLatencyWarningSeconds
+          - description: |-
+              RestartCountThreshold is the pod restart count within the 15-minute window that triggers a crash-loop alert.
+              PowerFlex uses this field (PF-10). Default: 3.
+            displayName: Restart Count Threshold
+            path: driver.metrics.prometheusRule.restartCountThreshold
+          - description: |-
+              SRPSnapshotCapacityWarning is the whole-percent SRP snapshot capacity threshold that triggers
+              a warning alert. PowerMax uses this field (PM-15). SRP-level monitoring is the permanent
+              solution (per-SG snapshot metric is not required per product management decision).
+            displayName: SRP Snapshot Capacity Warning Threshold
+            path: driver.metrics.prometheusRule.srpSnapshotCapacityWarning
+          - description: |-
+              StorageGroupCapacityCritical is the whole-percent Storage Group utilization threshold that
+              triggers a critical alert. PowerMax uses this field (PM-14).
+            displayName: Storage Group Capacity Critical Threshold
+            path: driver.metrics.prometheusRule.storageGroupCapacityCritical
+          - description: |-
+              StorageGroupCapacityWarning is the whole-percent Storage Group utilization threshold that
+              triggers a warning alert. PowerMax uses this field (PM-13).
+            displayName: Storage Group Capacity Warning Threshold
+            path: driver.metrics.prometheusRule.storageGroupCapacityWarning
+          - description: |-
+              ThinRatioWarningThreshold is the thin-provisioning over-commitment ratio threshold that triggers a warning alert.
+              PowerFlex uses this field (PF-15). Stored as a decimal string to avoid controller-gen float64 rejection. Default: "0.8".
+            displayName: Thin Ratio Warning Threshold
+            path: driver.metrics.prometheusRule.thinRatioWarningThreshold
+          - description: |-
+              VolumeOperationFailureThreshold is the minimum number of operation failures within a 5-minute
+              window that triggers a volume-operation alert. All eight volume-operation alerts use this threshold.
+              PowerFlex uses this field (PF-01..08); PowerMax uses this field (PM-01..08); PowerStore uses this field. Default: 3.
+            displayName: Volume Operation Failure Threshold
+            path: driver.metrics.prometheusRule.volumeOperationFailureThreshold
           - description: ServiceMonitor configures optional Prometheus Operator ServiceMonitor
               creation
             displayName: ServiceMonitor Configuration
@@ -896,10 +1137,42 @@ spec:
               endpoint
             displayName: ServiceMonitor Scrape Interval
             path: driver.metrics.serviceMonitor.interval
+          - description: |-
+              ScrapeTimeout is the Prometheus scrape timeout for the metrics endpoint
+              Default value: "" (unset; Prometheus uses its global scrape_timeout)
+            displayName: ServiceMonitor Scrape Timeout
+            path: driver.metrics.serviceMonitor.scrapeTimeout
           - description: TLSCertSecret is the name of a Kubernetes TLS Secret used
               to serve the metrics endpoint over HTTPS
             displayName: Metrics TLS Cert Secret
             path: driver.metrics.tlsCertSecret
+          - description: MetroSiteFailureHandling configures PowerMax Metro site-failure
+              handling
+            displayName: Metro Site Failure Handling Configuration
+            path: driver.metroSiteFailureHandling
+          - description: Enabled enables Metro site-failure handling for PowerMax
+            displayName: Metro Site Failure Handling Enabled
+            path: driver.metroSiteFailureHandling.enabled
+          - description: |-
+              QueueHardLimit is the maximum number of deferred operations. New deferrals are rejected when this limit is reached
+              Must be 50–10000.
+            displayName: Metro Queue Hard Limit
+            path: driver.metroSiteFailureHandling.queueHardLimit
+          - description: |-
+              QueueWarningThreshold is the number of pending deferred operations that triggers a Kubernetes warning event
+              Must be 10–10000.
+            displayName: Metro Queue Warning Threshold
+            path: driver.metroSiteFailureHandling.queueWarningThreshold
+          - description: |-
+              ReconciliationBackoffSeconds is the base backoff (seconds) for retry on reconciliation failures
+              Actual delay = base * 2^retry, capped at 5 minutes. Must be 1–60.
+            displayName: Metro Reconciliation Backoff Seconds
+            path: driver.metroSiteFailureHandling.reconciliationBackoffSeconds
+          - description: |-
+              StateCheckTimeoutSeconds is the context timeout for CheckMetroState RDF group queries
+              Must be 5–120.
+            displayName: Metro State Check Timeout Seconds
+            path: driver.metroSiteFailureHandling.stateCheckTimeoutSeconds
           - description: Node is the specification for Node plugin only
             displayName: Node specification
             path: driver.node
@@ -1001,6 +1274,9 @@ spec:
             displayName: OpenTelemetry Collector Address of the OTLP endpoint using
               gRPC
             path: driver.node.openTelemetryCollectorAddress
+          - description: Ports is the list of ports for the container
+            displayName: Container Ports
+            path: driver.node.ports
           - description: PrivateKey is a private key used for a certificate/private-key
               pair
             displayName: Private key for certificate/private-key pair
@@ -1167,6 +1443,9 @@ spec:
               or not
             displayName: Vault Skip Certificate Validation
             path: driver.node.vaultConfigurations[0].skipCertificateValidation
+          - description: VolumeMounts is the list of volume mounts for the container
+            displayName: Container Volume Mounts
+            path: driver.node.volumeMounts
           - description: Replicas is the count of controllers for Controller plugin
             displayName: Controller count
             path: driver.replicas
@@ -1271,6 +1550,9 @@ spec:
             displayName: OpenTelemetry Collector Address of the OTLP endpoint using
               gRPC
             path: driver.sideCars[0].openTelemetryCollectorAddress
+          - description: Ports is the list of ports for the container
+            displayName: Container Ports
+            path: driver.sideCars[0].ports
           - description: PrivateKey is a private key used for a certificate/private-key
               pair
             displayName: Private key for certificate/private-key pair
@@ -1437,6 +1719,9 @@ spec:
               or not
             displayName: Vault Skip Certificate Validation
             path: driver.sideCars[0].vaultConfigurations[0].skipCertificateValidation
+          - description: VolumeMounts is the list of volume mounts for the container
+            displayName: Container Volume Mounts
+            path: driver.sideCars[0].volumeMounts
           - description: SnapshotClass is the specification for Snapshot Classes
             displayName: Snapshot Classes
             path: driver.snapshotClass
@@ -1551,6 +1836,9 @@ spec:
             displayName: OpenTelemetry Collector Address of the OTLP endpoint using
               gRPC
             path: modules[0].components[0].openTelemetryCollectorAddress
+          - description: Ports is the list of ports for the container
+            displayName: Container Ports
+            path: modules[0].components[0].ports
           - description: PrivateKey is a private key used for a certificate/private-key
               pair
             displayName: Private key for certificate/private-key pair
@@ -1717,7 +2005,12 @@ spec:
               or not
             displayName: Vault Skip Certificate Validation
             path: modules[0].components[0].vaultConfigurations[0].skipCertificateValidation
-          - description: ConfigVersion is the configuration version of the module
+          - description: VolumeMounts is the list of volume mounts for the container
+            displayName: Container Volume Mounts
+            path: modules[0].components[0].volumeMounts
+          - description: |-
+              ConfigVersion is the configuration version of the module
+              Deprecated: Use spec.version instead. This field will be removed in a future release.
             displayName: Config Version
             path: modules[0].configVersion
           - description: Enabled is used to indicate whether or not to deploy a module
@@ -1825,6 +2118,9 @@ spec:
             displayName: OpenTelemetry Collector Address of the OTLP endpoint using
               gRPC
             path: modules[0].initContainer[0].openTelemetryCollectorAddress
+          - description: Ports is the list of ports for the container
+            displayName: Container Ports
+            path: modules[0].initContainer[0].ports
           - description: PrivateKey is a private key used for a certificate/private-key
               pair
             displayName: Private key for certificate/private-key pair
@@ -1991,6 +2287,133 @@ spec:
               or not
             displayName: Vault Skip Certificate Validation
             path: modules[0].initContainer[0].vaultConfigurations[0].skipCertificateValidation
+          - description: VolumeMounts is the list of volume mounts for the container
+            displayName: Container Volume Mounts
+            path: modules[0].initContainer[0].volumeMounts
+          - description: Metrics configures module-level metrics (e.g., for resiliency
+              podmon)
+            displayName: Module Metrics Configuration
+            path: modules[0].metrics
+          - description: Collection configures metrics collection cadence and cache
+              behavior
+            displayName: Module Metrics Collection Config
+            path: modules[0].metrics.collection
+          - description: CacheTTL is how long collected metric responses are cached
+            displayName: Metrics Collection Cache TTL
+            path: modules[0].metrics.collection.cacheTTL
+          - description: Interval is how frequently metrics are collected from the
+              array
+            displayName: Metrics Collection Interval
+            path: modules[0].metrics.collection.interval
+          - description: Enabled enables the module metrics endpoint
+            displayName: Module Metrics Enabled
+            path: modules[0].metrics.enabled
+          - description: PodMonitor configures optional Prometheus Operator PodMonitor
+              creation for node pods
+            displayName: Module PodMonitor Configuration
+            path: modules[0].metrics.podMonitor
+          - description: |-
+              Enabled creates a PodMonitor CR for Prometheus Operator integration targeting node pods
+              Requires the Prometheus Operator CRDs to be installed in the cluster
+            displayName: PodMonitor Enabled
+            path: modules[0].metrics.podMonitor.enabled
+          - description: |-
+              InsecureSkipVerify skips TLS certificate verification when Prometheus scrapes the node metrics endpoint
+              Only applies when tlsCertSecret is set
+            displayName: PodMonitor Insecure Skip Verify
+            path: modules[0].metrics.podMonitor.insecureSkipVerify
+          - description: Interval is the Prometheus scrape interval for the node metrics
+              endpoint
+            displayName: PodMonitor Scrape Interval
+            path: modules[0].metrics.podMonitor.interval
+          - description: |-
+              ScrapeTimeout is the Prometheus scrape timeout for the node metrics endpoint
+              Default value: "" (unset; Prometheus uses its global scrape_timeout)
+            displayName: PodMonitor Scrape Timeout
+            path: modules[0].metrics.podMonitor.scrapeTimeout
+          - description: Port is the port on which the metrics endpoint is exposed
+            displayName: Module Metrics Port
+            path: modules[0].metrics.port
+          - description: PrometheusRule configures Prometheus Operator alert rule
+              creation for supported modules.
+            displayName: Module PrometheusRule Configuration
+            path: modules[0].metrics.prometheusRule
+          - description: |-
+              AuthFailureRateThreshold is the percentage threshold (0-100) for the high CSM Authorization failure-rate alert (P4.AUTH.2).
+              The value is divided by 100 when substituted into Prometheus expressions.
+              This field is only read when set under spec.modules[name=authorization].metrics.prometheusRule.
+            displayName: Authorization Failure Rate Threshold
+            path: modules[0].metrics.prometheusRule.authFailureRateThreshold
+          - description: |-
+              AuthLatencyQuantile is the quantile percentage (0-100) used for the high CSM Authorization latency alert (P4.AUTH.7).
+              The value is divided by 100 when substituted into Prometheus expressions (e.g., 95 for 95th percentile).
+              This field is only read when set under spec.modules[name=authorization].metrics.prometheusRule.
+            displayName: Authorization Latency Quantile
+            path: modules[0].metrics.prometheusRule.authLatencyQuantile
+          - description: |-
+              AuthLatencyThresholdSeconds is the latency threshold in seconds for the high CSM Authorization latency alert (P4.AUTH.7).
+              This field is only read when set under spec.modules[name=authorization].metrics.prometheusRule.
+            displayName: Authorization Latency Threshold Seconds
+            path: modules[0].metrics.prometheusRule.authLatencyThresholdSeconds
+          - description: |-
+              ConnectivitySuccessRatio is the minimum percentage of successful array connectivity checks
+              below which the RES-02 CSMResiliencyConnectivityLost alert fires.
+              This field is only read when set under spec.modules[name=resiliency].metrics.prometheusRule.
+              Setting it under spec.driver.metrics.prometheusRule has no effect on resiliency alerts.
+            displayName: Connectivity Success Ratio
+            path: modules[0].metrics.prometheusRule.connectivitySuccessRatio
+          - description: Enabled creates a PrometheusRule CR for Prometheus Operator
+              integration.
+            displayName: Module PrometheusRule Enabled
+            path: modules[0].metrics.prometheusRule.enabled
+          - description: |-
+              RPOThresholdSeconds is the replication lag threshold in seconds used by the
+              CSMReplicationLagExceeded (REP-01) and CSMReplicationRPOViolation (REP-02) alerts.
+              Applies when the CSM Replication module is enabled. Default: 300 (5 minutes).
+            displayName: RPO Threshold Seconds
+            path: modules[0].metrics.prometheusRule.rpoThresholdSeconds
+          - description: |-
+              SRDFLagSeconds is the SRDF replication lag threshold in seconds for the
+              PowerMaxSRDFLagExceeded (REP-12) alert.
+              Applies when the CSM Replication module is enabled with PowerMax SRDF.
+              Default: 300 (5 minutes).
+            displayName: SRDF Lag Seconds
+            path: modules[0].metrics.prometheusRule.srdfLagSeconds
+          - description: |-
+              SRDFMinBandwidth is the minimum acceptable SRDF replication bandwidth in bytes per second.
+              Used by the PowerMaxSRDFBandwidthDegraded (REP-07) alert.
+              Applies when the CSM Replication module is enabled with PowerMax SRDF.
+              Default: 10485760 (10 MB/s).
+            displayName: SRDF Minimum Bandwidth
+            path: modules[0].metrics.prometheusRule.srdfMinBandwidth
+          - description: ServiceMonitor configures optional Prometheus Operator ServiceMonitor
+              creation
+            displayName: Module ServiceMonitor Configuration
+            path: modules[0].metrics.serviceMonitor
+          - description: |-
+              Enabled creates a ServiceMonitor CR for Prometheus Operator integration
+              Requires the Prometheus Operator CRDs to be installed in the cluster
+            displayName: ServiceMonitor Enabled
+            path: modules[0].metrics.serviceMonitor.enabled
+          - description: |-
+              InsecureSkipVerify skips TLS certificate verification when Prometheus scrapes the metrics endpoint
+              Only applies when tlsCertSecret is set
+            displayName: ServiceMonitor Insecure Skip Verify
+            path: modules[0].metrics.serviceMonitor.insecureSkipVerify
+          - description: Interval is the Prometheus scrape interval for the metrics
+              endpoint
+            displayName: ServiceMonitor Scrape Interval
+            path: modules[0].metrics.serviceMonitor.interval
+          - description: |-
+              ScrapeTimeout is the Prometheus scrape timeout for the metrics endpoint
+              Default value: "" (unset; Prometheus uses its global scrape_timeout)
+            displayName: ServiceMonitor Scrape Timeout
+            path: modules[0].metrics.serviceMonitor.scrapeTimeout
+          - description: |-
+              TLSCertSecret is the name of a Kubernetes TLS Secret (tls.crt / tls.key) used to serve metrics over HTTPS
+              When set the operator mounts the secret and configures HTTPS automatically
+            displayName: Module Metrics TLS Cert Secret
+            path: modules[0].metrics.tlsCertSecret
           - description: Name is name of ContainerStorageModule modules
             displayName: Name
             path: modules[0].name
@@ -1998,6 +2421,14 @@ spec:
               image registry path
             displayName: Retain Image Registry Path
             path: retainImageRegistryPath
+          - description: |-
+              Upgrade is the upgrade policy for the CSM CR.
+              When set to "auto", the operator will automatically upgrade the CSM resource
+              to the latest supported version.
+              If the auto upgrade fails, the operator will automatically rollback to the
+              previous version.
+            displayName: Upgrade Policy
+            path: upgrade
         statusDescriptors:
           - description: Available is the number of available pods
             displayName: Available
@@ -2106,66 +2537,74 @@ spec:
     name: Dell Technologies
     url: https://github.com/dell/csm-operator
   relatedImages:
-    - image: quay.io/dell/container-storage-modules/dell-csm-operator:v1.12.2
+    - image: quay.io/dell/container-storage-modules/dell-csm-operator:v1.13.0
       name: dell-csm-operator
-    - image: quay.io/dell/container-storage-modules/csi-isilon:v2.17.2
+    - image: quay.io/dell/container-storage-modules/csi-isilon:v2.18.0
       name: csi-isilon
-    - image: quay.io/dell/container-storage-modules/csi-powermax:v2.17.2
+    - image: quay.io/dell/container-storage-modules/csi-powermax:v2.18.0
       name: csi-powermax
-    - image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.16.1
+    - image: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.17.0
       name: csipowermax-reverseproxy
-    - image: quay.io/dell/container-storage-modules/csi-powerstore:v2.17.0
+    - image: quay.io/dell/container-storage-modules/csi-powerstore:v2.18.0
       name: csi-powerstore
-    - image: quay.io/dell/container-storage-modules/csi-unity:v2.17.0
+    - image: quay.io/dell/container-storage-modules/csi-unity:v2.18.0
       name: csi-unity
-    - image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.17.0
+    - image: quay.io/dell/container-storage-modules/csi-vxflexos:v2.18.0
       name: csi-vxflexos
-    - image: quay.io/dell/container-storage-modules/cosi:v1.1.0
+    - image: quay.io/dell/container-storage-modules/cosi:v1.2.0
       name: cosi
-    - image: quay.io/dell/storage/powerflex/sdc:5.0
+    - image: quay.io/dell/storage/powerflex/sdc:5.1.0.2
       name: sdc
-    - image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.5.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.6.0
       name: karavi-authorization-proxy
-    - image: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.5.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.6.0
       name: csm-authorization-proxy
-    - image: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.5.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.6.0
       name: csm-authorization-tenant
-    - image: quay.io/dell/container-storage-modules/csm-authorization-role:v2.5.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-role:v2.6.0
       name: csm-authorization-role
-    - image: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.5.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-storage:v2.6.0
       name: csm-authorization-storage
-    - image: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.5.0
+    - image: quay.io/dell/container-storage-modules/csm-authorization-controller:v2.6.0
       name: csm-authorization-controller
-    - image: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.15.0
+    - image: quay.io/dell/container-storage-modules/dell-csi-replicator:v1.16.0
       name: dell-csi-replicator
-    - image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.15.0
+    - image: quay.io/dell/container-storage-modules/dell-replication-controller:v1.16.0
       name: dell-replication-controller-manager
-    - image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.150.1
+    - image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.160.0
       name: otel-collector
-    - image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.12.0
+    - image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.13.0
       name: metrics-powerscale
-    - image: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.10.1
+    - image: quay.io/dell/container-storage-modules/csm-metrics-powermax:v1.11.0
       name: metrics-powermax
-    - image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.15.0
+    - image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.16.0
       name: metrics-powerflex
-    - image: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.15.0
+    - image: quay.io/dell/container-storage-modules/csm-metrics-powerstore:v1.16.0
       name: metrics-powerstore
-    - image: quay.io/dell/container-storage-modules/podmon:v1.16.0
+    - image: quay.io/dell/container-storage-modules/podmon:v1.17.0
       name: podmon-node
-    - image: registry.k8s.io/sig-storage/csi-attacher:v4.11.0
+    - image: registry.k8s.io/sig-storage/csi-attacher:v4.13.0
       name: attacher
-    - image: registry.k8s.io/sig-storage/csi-provisioner:v6.2.0
+    - image: registry.k8s.io/sig-storage/csi-provisioner:v6.3.0
       name: provisioner
-    - image: registry.k8s.io/sig-storage/csi-snapshotter:v8.5.0
+    - image: registry.k8s.io/sig-storage/csi-snapshotter:v8.6.0
       name: snapshotter
-    - image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0
+    - image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.18.0
       name: registrar
-    - image: registry.k8s.io/sig-storage/csi-resizer:v2.1.0
+    - image: registry.k8s.io/sig-storage/csi-resizer:v2.2.1
       name: resizer
-    - image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.17.0
+    - image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.18.0
       name: externalhealthmonitorcontroller
-    - image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.14.0
+    - image: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.15.0
       name: metadataretriever
     - image: gcr.io/k8s-staging-sig-storage/objectstorage-sidecar:release-0.2
       name: objectstorage-provisioner-sidecar
-  version: 1.12.2
+    - image: quay.io/jetstack/cert-manager-cainjector:v1.21.1
+      name: cert-manager-cainjector
+    - image: quay.io/jetstack/cert-manager-controller:v1.21.1
+      name: cert-manager-controller
+    - image: quay.io/jetstack/cert-manager-webhook:v1.21.1
+      name: cert-manager-webhook
+    - image: docker.io/library/redis:8.10.1-alpine
+      name: redis
+  version: 1.13.0

@@ -23,6 +23,7 @@ This document describes how to run end-to-end tests for the Dell Container Stora
   - [Namespace Management](#namespace-management)
   - [Vault and Secrets Store CSI Driver](#vault-and-secrets-store-csi-driver)
   - [Authorization Proxy Host](#authorization-proxy-host)
+  - [PowerScale mTLS Test Prerequisites](#powerscale-mtls-test-prerequisites)
 - [Execution Control and Reporting](#execution-control-and-reporting)
   - [Continue-on-Failure Mode](#continue-on-failure-mode)
   - [JUnit XML Reports](#junit-xml-reports)
@@ -170,8 +171,8 @@ cd tests/e2e
 | `--obs` | Run observability module tests |
 | `--replication` | Run replication module tests |
 | `--resiliency` | Run resiliency module tests |
+| `--csiaddons` | Run CSI Addons replication tests (requires CSI Addons CRDs installed) |
 | `--zoning` | Run PowerFlex zoning tests (opt-in, requires multiple storage systems) |
-| `--sftp` | Enable SFTP for PowerFlex tests (opt-in, loads `powerflex-sftp` config section) |
 | `--offline-bundle` | Run offline bundle create/prepare tests (opt-in, requires local registry) |
 | `--no-modules` | Run driver-only tests (no module scenarios) |
 | `--sanity` | Run sanity test subset |
@@ -209,7 +210,11 @@ Platform flags select which **drivers** to test. Module flags select which **fea
 | `--no-modules` | Run driver-only (standalone) scenarios, skip all module scenarios |
 | `--sanity` | Run only scenarios tagged `sanity` |
 
-**Opt-in tags:** `--zoning`, `--sftp`, `--offline-bundle`, and `--cosi` are opt-in -- they never run unless explicitly specified. The `--sftp` flag enables SFTP support for PowerFlex tests and loads the `powerflex-sftp` section from `array-info.yaml`. Similarly, `--auth` and `--auth-proxy` are considered "exclusive" module tags: when other module filters are active, auth scenarios only run if explicitly included.
+**Opt-in tags:** `--zoning`, `--offline-bundle`, `--csiaddons`, and `--cosi` are opt-in -- they never run unless explicitly specified. SFTP for PowerFlex tests is configured via the `powerflex-sftp` section in `array-info.yaml` and is automatically enabled when the section is present with non-empty values. The `--csiaddons` flag runs CSI Addons replication tests (requires CSI Addons CRDs to be installed on the cluster). Similarly, `--auth` and `--auth-proxy` are considered "exclusive" module tags: when other module filters are active, auth scenarios only run if explicitly included.
+
+**PowerMax multi-array zone tests:** scenarios covering multiple PowerMax arrays pooled under one zone label are tagged `multiaz` in addition to `zoning` and `powermax`. Since `zoning` is opt-in, run them with `./run-e2e-test.sh --zoning --add-tag=multiaz` (add `--pmax` to skip other platforms' zoning scenarios). They require the `powermax` and `powermax-zoning` sections of `array-info.yaml` to be populated (two distinct array serial numbers are needed -- see `validate_multiaz_zoning.sh` for the pooling/rollout assertions used).
+
+**Metrics tests:** `--obs`, `--replication`, `--resiliency`, and `--auth-proxy` scenarios that enable metrics create `ServiceMonitor` and `PodMonitor` objects. The `run-e2e-test.sh` script installs the required Prometheus Operator CRDs (`servicemonitors.monitoring.coreos.com` and `podmonitors.monitoring.coreos.com`) automatically when they are missing. If you run the tests outside the script, ensure these CRDs are present first.
 
 ### Examples
 
@@ -248,6 +253,9 @@ Platform flags select which **drivers** to test. Module flags select which **fea
 
 # Combine --add-tag with a platform filter
 ./run-e2e-test.sh --powerstore --add-tag=sanity
+
+# CSI Addons replication tests for PowerMax (requires CSI Addons CRDs installed)
+./run-e2e-test.sh --csiaddons
 ```
 
 ---
@@ -361,6 +369,29 @@ You can force Vault installation with `--install-vault` even when auth tests are
 
 The entry `<cluster-ip> csm-authorization.com` is **automatically added to `/etc/hosts`** when authorization tests run. No manual host file editing is needed. On OpenShift clusters, the script resolves the hostname via `nslookup` against the internal DNS.
 
+### PowerScale mTLS Test Prerequisites
+
+mTLS scenarios require both the `tlshd` daemon on the cluster nodes and the `POWERSCALE_MTLS_FQDN` environment variable containing the PowerScale SmartConnect zone FQDN. The mTLS scenarios are skipped when either prerequisite is unavailable; non-mTLS scenarios continue normally.
+
+For a configured test environment:
+
+```bash
+export POWERSCALE_MTLS_FQDN="powerscale.example.com"
+./run-e2e-test.sh --powerscale
+```
+
+The FQDN must resolve and match the PowerScale server certificate SAN. Install and configure `tlshd` on the cluster nodes separately before running the mTLS scenario. If either `tlshd` or `POWERSCALE_MTLS_FQDN` is unavailable, the mTLS scenario is skipped without affecting non-mTLS scenarios.
+
+When the E2E runner is executed directly on a worker node that already has `tlshd` installed and active, use `--local-node-prereqs` to check the local service without SSHing to Kubernetes nodes:
+
+```bash
+./run-e2e-test.sh --powerscale --no-modules --add-tag=mtls --local-node-prereqs --continue-on-fail
+```
+
+Do not use `--local-node-prereqs` from a control machine that is not itself a Kubernetes worker; it intentionally skips remote node validation.
+
+See [MTLS_TESTING.md](MTLS_TESTING.md) for the complete setup, validation, and troubleshooting procedure.
+
 ---
 
 ## Execution Control and Reporting
@@ -397,9 +428,9 @@ Each step has a timeout category to prevent indefinite hangs:
 
 | Category | Timeout | Step patterns |
 |---|---|---|
-| **Long** | 20 min | Upgrades, third-party installs (`Install [...]`), custom tests, auth proxy configuration |
+| **Long** | 10 min | Upgrades, third-party installs (`Install [...]`), custom tests, auth proxy configuration |
 | **Medium** | 10 min | All `Validate [...]` steps |
-| **Fast** | 3 min | Everything else (apply, delete, create, enable/disable) |
+| **Fast** | 2 min | Everything else (apply, delete, create, enable/disable) |
 
 Steps are retried every 10 seconds within their timeout window. If a step doesn't succeed before the timeout, the scenario fails.
 
@@ -412,9 +443,10 @@ Some scenarios test the `spec.customRegistry` feature, which overrides image reg
 ## Dynamic Version Resolution
 
 Version strings in scenario steps are resolved automatically from
-`operatorconfig/common/csm-version-mapping.yaml`. The `pkg/version` package
-reads the mapping file at test startup and provides indexed access to CSM
-operator versions grouped by minor release (latest, n-1, n-2).
+`operatorconfig/common/csm-releases.yaml`. The top-level `pkg/version`
+package (shared with the operator itself) reads this file at test startup
+and provides indexed access to CSM operator versions grouped by minor
+release (latest, n-1, n-2).
 
 Scenario steps support the keywords **`n-1`** and **`n-2`** in place of
 literal version strings:
@@ -569,7 +601,7 @@ dell-csm-operator=quay.io/dell/container-storage-modules/dell-csm-operator:night
 | Namespace deletion hangs | Authorization CRDs with finalizers can block deletion. The script handles this automatically, but if it hangs, manually remove finalizers: `kubectl patch csmtenant <name> -n <ns> -p '{"metadata":{"finalizers":null}}' --type=merge` |
 | `--no-cleanup-ns` to debug | Keeps all test namespaces after the run so you can inspect pods, logs, and events. |
 | Tests show transient "Failed" status then pass | The operator's status calculation has a brief window where DaemonSet/Deployment counts are still converging. The test framework retries and this is expected behavior. |
-| Custom registry tests fail with image pull errors | Ensure the latest CSM version (resolved from `csm-version-mapping.yaml`) has images in your custom registry. |
+| Custom registry tests fail with image pull errors | Ensure the latest CSM version (resolved from `csm-releases.yaml`) has images in your custom registry. |
 | Offline bundle test fails at "Local registry is NOT accessible" | Start a local registry: `podman run -d -p 5000:5000 registry:2` |
 | Offline bundle test fails at "Cluster nodes CANNOT reach" | Ensure all cluster nodes can reach the registry. For insecure registries, configure `/etc/containers/registries.conf` or `/etc/docker/daemon.json` on each node. |
 | Offline bundle test fails at "Cannot pull from override source" | Verify network access to the override source registry (e.g., `csm.artifactory.cec.lab.emc.com`) and check credentials. |

@@ -1,0 +1,9 @@
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshot
+metadata:
+  name: metro-snapshot-e2e
+  namespace: REPLACE_NAMESPACE
+spec:
+  volumeSnapshotClassName: op-e2e-powerstore-snapshot
+  source:
+    persistentVolumeClaimName: metro-source-pvc-e2e

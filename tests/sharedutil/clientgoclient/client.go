@@ -28,8 +28,6 @@ import (
 	authorizationv1beta1 "k8s.io/client-go/kubernetes/typed/authorization/v1beta1"
 	autoscalingv1 "k8s.io/client-go/kubernetes/typed/autoscaling/v1"
 	autoscalingv2 "k8s.io/client-go/kubernetes/typed/autoscaling/v2"
-	autoscalingv2beta1 "k8s.io/client-go/kubernetes/typed/autoscaling/v2beta1"
-	autoscalingv2beta2 "k8s.io/client-go/kubernetes/typed/autoscaling/v2beta2"
 	batchv1 "k8s.io/client-go/kubernetes/typed/batch/v1"
 	batchv1beta1 "k8s.io/client-go/kubernetes/typed/batch/v1beta1"
 	certificatesv1 "k8s.io/client-go/kubernetes/typed/certificates/v1"
@@ -63,7 +61,7 @@ import (
 	resourceV1beta1 "k8s.io/client-go/kubernetes/typed/resource/v1beta1"
 	resourceV1beta2 "k8s.io/client-go/kubernetes/typed/resource/v1beta2"
 	schedulingv1 "k8s.io/client-go/kubernetes/typed/scheduling/v1"
-	schedulingv1alpha1 "k8s.io/client-go/kubernetes/typed/scheduling/v1alpha1"
+	schedulingv1alpha2 "k8s.io/client-go/kubernetes/typed/scheduling/v1alpha2"
 	schedulingv1beta1 "k8s.io/client-go/kubernetes/typed/scheduling/v1beta1"
 	storagev1 "k8s.io/client-go/kubernetes/typed/storage/v1"
 	storagev1alpha1 "k8s.io/client-go/kubernetes/typed/storage/v1alpha1"
@@ -165,16 +163,6 @@ func (c *K8sClient) FlowcontrolV1beta3() flowcontrolv1beta3.FlowcontrolV1beta3In
 
 // FlowcontrolV1beta2 retrieves the FlowcontrolV1beta2Client
 func (c *K8sClient) FlowcontrolV1beta2() flowcontrolv1beta2.FlowcontrolV1beta2Interface {
-	panic("implement me")
-}
-
-// AutoscalingV2beta1 retrieves the AutoscalingV2beta1Client
-func (c *K8sClient) AutoscalingV2beta1() autoscalingv2beta1.AutoscalingV2beta1Interface {
-	panic("implement me")
-}
-
-// AutoscalingV2beta2 retrieves the AutoscalingV2beta2Client
-func (c *K8sClient) AutoscalingV2beta2() autoscalingv2beta2.AutoscalingV2beta2Interface {
 	panic("implement me")
 }
 
@@ -308,13 +296,13 @@ func (c *K8sClient) RbacV1alpha1() rbacv1alpha1.RbacV1alpha1Interface {
 	panic("implement me")
 }
 
-// SchedulingV1alpha1 retrieves the SchedulingV1alpha1Client
-func (c *K8sClient) SchedulingV1alpha1() schedulingv1alpha1.SchedulingV1alpha1Interface {
+// SchedulingV1beta1 retrieves the SchedulingV1beta1Client
+func (c *K8sClient) SchedulingV1beta1() schedulingv1beta1.SchedulingV1beta1Interface {
 	panic("implement me")
 }
 
-// SchedulingV1beta1 retrieves the SchedulingV1beta1Client
-func (c *K8sClient) SchedulingV1beta1() schedulingv1beta1.SchedulingV1beta1Interface {
+// SchedulingV1alpha2 retrieves the SchedulingV1alpha2Client
+func (c *K8sClient) SchedulingV1alpha2() schedulingv1alpha2.SchedulingV1alpha2Interface {
 	panic("implement me")
 }
 

@@ -15,6 +15,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -30,6 +31,7 @@ import (
 
 	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/version"
@@ -41,6 +43,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	crzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	ctrlmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 	filters "sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -68,9 +71,11 @@ const (
 	// Operatorconfig subfolder for deployment files
 	Operatorconfig = "operatorconfig"
 	// K8sMinimumSupportedVersion is the minimum supported version for k8s
-	K8sMinimumSupportedVersion = "1.34"
+	K8sMinimumSupportedVersion = "1.35"
 	// K8sMaximumSupportedVersion is the maximum supported version for k8s
-	K8sMaximumSupportedVersion = "1.36"
+	K8sMaximumSupportedVersion = "1.37"
+	// SidecarImagesPath is the relative path to the sidecar image matrix under the config directory.
+	SidecarImagesPath = "driverconfig/common/sidecar-images.yaml"
 )
 
 var (
@@ -112,6 +117,11 @@ var (
 		return ConfigDir
 	}
 
+	// getk8sPathFn resolves the sidecar-images.yaml "overrides" key to apply
+	// for the running k8s version (empty string means "use the default image
+	// set with no override"). Named getk8sPathFn/getk8sPath for historical
+	// reasons (it used to return a whole file path back when sidecar images
+	// were split across one file per k8s version).
 	getk8sPathFn = func(log *zap.SugaredLogger, kubeVersion string, currentVersion, minVersion, maxVersion float64) string {
 		return getk8sPath(log, kubeVersion, currentVersion, minVersion, maxVersion)
 	}
@@ -129,6 +139,17 @@ var (
 	}
 )
 
+// getClusterID retrieves the unique cluster identifier from the kube-system namespace UID.
+// This provides a consistent cluster_id label for multi-cluster metric aggregation.
+var getClusterID = func(client kubernetes.Interface) string {
+	ns, err := client.CoreV1().Namespaces().Get(context.Background(), "kube-system", metav1.GetOptions{})
+	if err != nil {
+		setupLog.Error(err, "Failed to get kube-system namespace for cluster ID")
+		return "unknown"
+	}
+	return string(ns.UID)
+}
+
 func getOperatorConfig(log *zap.SugaredLogger) (operatorutils.OperatorConfig, error) {
 	cfg := operatorutils.OperatorConfig{}
 
@@ -144,8 +165,14 @@ func getOperatorConfig(log *zap.SugaredLogger) (operatorutils.OperatorConfig, er
 	}
 	kubeAPIServerVersion, err := getKubeAPIServerVersion()
 	if err != nil {
-		log.Info(fmt.Sprintf("kubeVersion err %s", kubeAPIServerVersion))
+		log.Errorf("failed to get Kubernetes API server version: %v", err)
+		return cfg, fmt.Errorf("unable to determine Kubernetes API server version: %w", err)
 	}
+	// Defensive nil check (should not happen if err == nil, but be safe)
+	if kubeAPIServerVersion == nil {
+		return cfg, errors.New("kubernetes API server version is unexpectedly nil")
+	}
+
 	// format the required k8s version
 	majorVersion := kubeAPIServerVersion.Major
 	minorVersion := strings.TrimSuffix(kubeAPIServerVersion.Minor, "+")
@@ -168,49 +195,53 @@ func getOperatorConfig(log *zap.SugaredLogger) (operatorutils.OperatorConfig, er
 		log.Infof("currentVersion is %s", kubeVersion)
 	}
 
-	k8sPath := getk8sPathFn(log, kubeVersion, currentVersion, minVersion, maxVersion)
+	overrideKey := getk8sPathFn(log, kubeVersion, currentVersion, minVersion, maxVersion)
 
 	_, err = os.ReadDir(filepath.Clean(getConfigDir()))
 	if err != nil {
 		log.Errorw(err.Error(), "cannot find driver config path", getConfigDir())
 		cfg.ConfigDirectory = Operatorconfig
 		log.Infof("Use ConfigDirectory %s", cfg.ConfigDirectory)
-		k8sPath = fmt.Sprintf("%s%s", Operatorconfig, k8sPath)
 	} else {
 		cfg.ConfigDirectory = filepath.Clean(getConfigDir())
 		log.Infof("Use ConfigDirectory %s", cfg.ConfigDirectory)
-		k8sPath = fmt.Sprintf("%s%s", getConfigDir(), k8sPath)
 	}
 
-	buf, err := os.ReadFile(filepath.Clean(k8sPath))
+	sidecarPath := filepath.Join(cfg.ConfigDirectory, SidecarImagesPath)
+	buf, err := os.ReadFile(sidecarPath)
 	if err != nil {
-		log.Info(fmt.Sprintf("reading file, %s, from the configmap mount: %v", k8sPath, err))
+		return cfg, fmt.Errorf("reading sidecar images file %s: %w", sidecarPath, err)
 	}
 
-	var imageConfig operatorutils.K8sImagesConfig
-	err = yamlUnmarshal(buf, &imageConfig)
+	var sidecarImages operatorutils.SidecarImagesConfig
+	err = yamlUnmarshal(buf, &sidecarImages)
 	if err != nil {
 		return cfg, fmt.Errorf("unmarshalling: %v", err)
 	}
 
-	cfg.K8sVersion = imageConfig
+	cfg.K8sVersion = sidecarImages.ResolveK8sImages(overrideKey)
 
 	return cfg, nil
 }
 
+// getk8sPath returns the sidecar-images.yaml "overrides" key to merge on top
+// of the default image set for the running k8s version:
+//   - "" (no override, default images only) when the running version is
+//     older than K8sMinimumSupportedVersion
+//   - K8sMaximumSupportedVersion when the running version is newer than the
+//     newest supported version
+//   - the running version itself otherwise
 func getk8sPath(log *zap.SugaredLogger, kubeVersion string, currentVersion, minVersion, maxVersion float64) string {
-	k8sPath := ""
 	if currentVersion < minVersion {
 		log.Infof("Installed k8s version %s is less than the minimum supported k8s version %s , hence using the default configurations", kubeVersion, K8sMinimumSupportedVersion)
-		k8sPath = "/driverconfig/common/default.yaml"
-	} else if currentVersion > maxVersion {
-		log.Infof("Installed k8s version %s is greater than the maximum supported k8s version %s , hence using the latest available configurations", kubeVersion, K8sMaximumSupportedVersion)
-		k8sPath = fmt.Sprintf("/driverconfig/common/k8s-%s-values.yaml", K8sMaximumSupportedVersion)
-	} else {
-		k8sPath = fmt.Sprintf("/driverconfig/common/k8s-%s-values.yaml", kubeVersion)
-		log.Infof("Current kubernetes version is %s which is a supported version ", kubeVersion)
+		return ""
 	}
-	return k8sPath
+	if currentVersion > maxVersion {
+		log.Infof("Installed k8s version %s is greater than the maximum supported k8s version %s , hence using the latest available configurations", kubeVersion, K8sMaximumSupportedVersion)
+		return K8sMaximumSupportedVersion
+	}
+	log.Infof("Current kubernetes version is %s which is a supported version ", kubeVersion)
+	return kubeVersion
 }
 
 var (
@@ -322,6 +353,11 @@ func main() {
 	recorder := eventBroadcaster.NewRecorder(clientgoscheme.Scheme, corev1.EventSource{Component: "csm"})
 
 	expRateLimiter := workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](5*time.Millisecond, 120*time.Second)
+	operatorMetrics := controllers.NewOperatorMetrics(ctrlmetrics.Registry)
+
+	// Get cluster ID from kube-system namespace UID for multi-cluster metric identification
+	clusterID := getClusterID(k8sClient)
+	setupLog.Info("Cluster ID determined", "cluster_id", clusterID)
 
 	r := &controllers.ContainerStorageModuleReconciler{
 		Client:               mgr.GetClient(),
@@ -332,6 +368,8 @@ func main() {
 		Config:               operatorConfig,
 		ContentWatchChannels: make(map[string]chan struct{}),
 		ContentWatchLock:     sync.Mutex{},
+		Metrics:              operatorMetrics,
+		ClusterID:            clusterID,
 	}
 
 	setupWithManager := getSetupWithManagerFn(r)

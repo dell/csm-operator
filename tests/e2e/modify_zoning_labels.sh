@@ -24,9 +24,21 @@
 # To validate the zone labels:
 # ./modify_zoning_labels.sh validate-zoning
 
-# get all worker node names in the cluster
+# get all schedulable node names in the cluster
+# Includes control-plane nodes that have no NoSchedule taint (i.e., they act as workers).
 get_worker_nodes() {
-  kubectl get nodes -A | grep -v -E 'master|control-plane'  | grep -v NAME | awk '{ print $1 }'
+  local workers
+  workers=$(kubectl get nodes -A | grep -v -E 'master|control-plane' | grep -v NAME | awk '{ print $1 }')
+  if [ -z "$workers" ]; then
+    # No dedicated worker nodes; fall back to schedulable control-plane nodes
+    workers=$(kubectl get nodes -o json | jq -r '
+      .items[]
+      | select(
+          (.spec.taints // [] | map(select(.effect == "NoSchedule")) | length) == 0
+        )
+      | .metadata.name')
+  fi
+  echo "$workers"
 }
 
 # add zone label to all worker nodes
@@ -98,7 +110,7 @@ read_secret() {
 # validating zoning is configured on the cluster - powermax
 validate_zoning_powermax() {
   # read the secret and extract zone information
-  secret_name="powermax-config"
+  secret_name="powermax-creds"
   namespace="${E2E_NS_POWERMAX:-e2e-powermax}"
   secret_content=$(read_secret $secret_name $namespace)
 

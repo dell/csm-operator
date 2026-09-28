@@ -21,6 +21,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/dell/csm-operator/pkg/constants"
 	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	v1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
@@ -48,22 +49,31 @@ const (
 	PowerMaxConfigVolumeMount = CSIPowerMaxSecretVolumeName
 
 	// CSIPmaxManagedArray and following used for replacing user values in config files
-	CSIPmaxManagedArray     = "<X_CSI_MANAGED_ARRAY>"
-	CSIPmaxEndpoint         = "<X_CSI_POWERMAX_ENDPOINT>"
-	CSIPmaxDebug            = "<X_CSI_POWERMAX_DEBUG>"
-	CSIPmaxPortGroup        = "<X_CSI_POWERMAX_PORTGROUPS>"
-	CSIPmaxProtocol         = "<X_CSI_TRANSPORT_PROTOCOL>"
-	CSIPmaxNodeTemplate     = "<X_CSI_IG_NODENAME_TEMPLATE>"
-	CSIPmaxModifyHostname   = "<X_CSI_IG_MODIFY_HOSTNAME>"
-	CSIPmaxHealthMonitor    = "<X_CSI_HEALTH_MONITOR_ENABLED>"
-	CSIPmaxTopology         = "<X_CSI_TOPOLOGY_CONTROL_ENABLED>"
-	CSIPmaxVsphere          = "<X_CSI_VSPHERE_ENABLED>"
-	CSIPmaxVspherePG        = "<X_CSI_VSPHERE_PORTGROUP>"
-	CSIPmaxVsphereHostname  = "<X_CSI_VSPHERE_HOSTNAME>"
-	CSIPmaxVsphereHost      = "<X_CSI_VCENTER_HOST>"
-	CSIPmaxChap             = "<X_CSI_POWERMAX_ISCSI_ENABLE_CHAP>"
-	ReverseProxyTLSSecret   = "<X_CSI_REVPROXY_TLS_SECRET>" // #nosec G101
-	CSIPmaxDynamicSGEnabled = "<X_CSI_DYNAMIC_SG_ENABLED>"
+	CSIPmaxManagedArray               = "<X_CSI_MANAGED_ARRAY>"
+	CSIPmaxEndpoint                   = "<X_CSI_POWERMAX_ENDPOINT>"
+	CSIPmaxDebug                      = "<X_CSI_POWERMAX_DEBUG>"
+	CSIPmaxPortGroup                  = "<X_CSI_POWERMAX_PORTGROUPS>"
+	CSIPmaxProtocol                   = "<X_CSI_TRANSPORT_PROTOCOL>"
+	CSIPmaxNodeTemplate               = "<X_CSI_IG_NODENAME_TEMPLATE>"
+	CSIPmaxModifyHostname             = "<X_CSI_IG_MODIFY_HOSTNAME>"
+	CSIPmaxHealthMonitor              = "<X_CSI_HEALTH_MONITOR_ENABLED>"
+	CSIPmaxTopology                   = "<X_CSI_TOPOLOGY_CONTROL_ENABLED>"
+	CSIPmaxVsphere                    = "<X_CSI_VSPHERE_ENABLED>"
+	CSIPmaxVspherePG                  = "<X_CSI_VSPHERE_PORTGROUP>"
+	CSIPmaxVsphereHostname            = "<X_CSI_VSPHERE_HOSTNAME>"
+	CSIPmaxVsphereHost                = "<X_CSI_VCENTER_HOST>"
+	CSIPmaxChap                       = "<X_CSI_POWERMAX_ISCSI_ENABLE_CHAP>"
+	ReverseProxyTLSSecret             = "<X_CSI_REVPROXY_TLS_SECRET>" // #nosec G101
+	CSIPmaxDynamicSGEnabled           = "<X_CSI_DYNAMIC_SG_ENABLED>"
+	CSIPmaxCSIAddonsReplEnabled       = "<X_CSI_CSIADDONS_REPLICATION_ENABLED>"
+	CSIPmaxMetroSiteFailureEnabled    = "<X_CSI_POWERMAX_METRO_SITE_FAILURE_HANDLING_ENABLED>"
+	CSIPmaxMetroStateCheckTimeout     = "<X_CSI_POWERMAX_METRO_STATE_CHECK_TIMEOUT>"
+	CSIPmaxMetroQueueWarningThreshold = "<X_CSI_POWERMAX_METRO_QUEUE_WARNING_THRESHOLD>"
+	CSIPmaxMetroQueueHardLimit        = "<X_CSI_POWERMAX_METRO_QUEUE_HARD_LIMIT>"
+	CSIPmaxMetroReconciliationBackoff = "<X_CSI_POWERMAX_METRO_RECONCILIATION_BACKOFF>"
+	CSIPmaxDriverInstanceUID          = "<X_CSI_DRIVER_INSTANCE_UID>"
+	CSIPmaxCapacityPollInterval       = "<X_CSI_CAPACITY_POLL_INTERVAL>"
+	CSIPmaxCapacityThresholdFull      = "<X_CSI_CAPACITY_THRESHOLD_FULL>"
 
 	// CsiPmaxMaxVolumesPerNode - Maximum volumes that the controller can schedule on the node
 	CsiPmaxMaxVolumesPerNode = "<X_CSI_MAX_VOLUMES_PER_NODE>"
@@ -85,6 +95,14 @@ const (
 	CSIPowerMaxProxyAuthTokenMountPath  string = "/etc/proxy-auth-token"            // #nosec G101
 	CSIPowerMaxProxyAuthTokenVolumeName string = "proxy-auth-token"                 // #nosec G101
 	CSIPowerMaxProxyAuthTokenKey        string = "token"                            // #nosec G101
+
+	// PowerMax metrics default values
+	powerMaxDefaultMetricsCollectionInterval  = "30s"
+	powerMaxDefaultMetricsCollectionCacheTTL  = "25s"
+	powerMaxDefaultMetricsArrayRateLimit      = int32(100)
+	powerMaxDefaultMetricsArrayTimeout        = "30s"
+	powerMaxDefaultMetricsArrayCBThreshold    = int32(3)
+	powerMaxDefaultMetricsArrayCBResetTimeout = "30s"
 )
 
 /*
@@ -120,7 +138,7 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 		return err
 	}
 	// Check if driver version is supported by doing a stat on a config file
-	configFilePath := fmt.Sprintf("%s/driverconfig/powermax/%s/upgrade-path.yaml", operatorConfig.ConfigDirectory, version)
+	configFilePath := fmt.Sprintf("%s/driverconfig/powermax/%s/driver-config-params.yaml", operatorConfig.ConfigDirectory, version)
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		log.Errorw("PreCheckPowerMax failed in version check", "Error", err.Error())
 		return fmt.Errorf("%s %s not supported", csmv1.PowerMax, version)
@@ -152,6 +170,20 @@ func PrecheckPowerMax(ctx context.Context, cr *csmv1.ContainerStorageModule, ope
 			cr.Spec.Modules[i].Enabled = true
 			cr.Spec.Modules[i].ForceRemoveModule = true
 			break
+		}
+	}
+
+	// Check for metrics TLS secret if metrics is enabled with TLS
+	if isDriverMetricsTLSEnabled(*cr) {
+		found := &corev1.Secret{}
+		secretName := cr.Spec.Driver.Metrics.TLSCertSecret
+		err := ct.Get(ctx, types.NamespacedName{Name: secretName, Namespace: cr.GetNamespace()}, found)
+		if err != nil {
+			log.Error(err, "Failed query for metrics TLS secret", secretName, "Namespace", cr.Namespace)
+			if errors.IsNotFound(err) {
+				return fmt.Errorf("failed to find metrics TLS secret %s", secretName)
+			}
+			return err
 		}
 	}
 
@@ -202,6 +234,15 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 	storageCapacity := "true"
 	maxVolumesPerNode := ""
 	dynamicSGEnabled := "false"
+	csiAddonsReplEnabled := "false"
+	metroSiteFailureEnabled := "false"
+	metroStateCheckTimeout := ""
+	metroQueueWarningThreshold := ""
+	metroQueueHardLimit := ""
+	metroReconciliationBackoff := ""
+	driverInstanceUID := ""
+	capacityPollInterval := "5m"
+	capacityThresholdFull := "100"
 	fsckEnabled := GetDriverCommonEnv(cr, CsiFsCheckEnabled, "false")
 	fsckMode := GetDriverCommonEnv(cr, CsiFsCheckMode, "checkOnly")
 
@@ -209,6 +250,65 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 	spaceReclamationSchedule := GetDriverCommonEnv(cr, CsiSpaceReclamationSchedule, "")
 	spaceReclamationMaxConcurrent := GetDriverCommonEnv(cr, CsiSpaceReclamationMaxConcurrent, "")
 	spaceReclamationTimeOut := GetDriverCommonEnv(cr, CsiSpaceReclamationTimeOut, "")
+
+	// Metrics configuration
+	metricsEnabled := "false"
+	metricsPort := "8443"
+	metricsTLSCertFile := ""
+	metricsTLSKeyFile := ""
+	metricsCollectionInterval := powerMaxDefaultMetricsCollectionInterval
+	metricsCollectionCacheTTL := powerMaxDefaultMetricsCollectionCacheTTL
+	metricsArrayRateLimit := strconv.FormatInt(int64(powerMaxDefaultMetricsArrayRateLimit), 10)
+	metricsArrayTimeout := powerMaxDefaultMetricsArrayTimeout
+	metricsArrayCBThreshold := strconv.FormatInt(int64(powerMaxDefaultMetricsArrayCBThreshold), 10)
+	metricsArrayCBResetTimeout := powerMaxDefaultMetricsArrayCBResetTimeout
+
+	if cr.Spec.Driver.Metrics != nil {
+		if cr.Spec.Driver.Metrics.Enabled {
+			metricsEnabled = "true"
+		}
+		if cr.Spec.Driver.Metrics.Port != 0 {
+			metricsPort = fmt.Sprintf("%d", cr.Spec.Driver.Metrics.Port)
+		}
+		if isDriverMetricsTLSEnabled(cr) {
+			metricsTLSCertFile = "/etc/metrics-tls/tls.crt"
+			metricsTLSKeyFile = "/etc/metrics-tls/tls.key"
+		}
+
+		// Parse collection configuration
+		if cr.Spec.Driver.Metrics.Collection != nil {
+			metricsCollectionInterval = metricsDurationOrDefault(
+				cr.Spec.Driver.Metrics.Collection.Interval,
+				powerMaxDefaultMetricsCollectionInterval,
+			)
+			metricsCollectionCacheTTL = metricsDurationOrDefault(
+				cr.Spec.Driver.Metrics.Collection.CacheTTL,
+				powerMaxDefaultMetricsCollectionCacheTTL,
+			)
+		}
+
+		// Parse array configuration
+		if cr.Spec.Driver.Metrics.Array != nil {
+			metricsArrayRateLimit = metricsPositiveIntOrDefault(
+				cr.Spec.Driver.Metrics.Array.RateLimit,
+				powerMaxDefaultMetricsArrayRateLimit,
+			)
+			metricsArrayTimeout = metricsDurationOrDefault(
+				cr.Spec.Driver.Metrics.Array.Timeout,
+				powerMaxDefaultMetricsArrayTimeout,
+			)
+			if cr.Spec.Driver.Metrics.Array.CircuitBreaker != nil {
+				metricsArrayCBThreshold = metricsPositiveIntOrDefault(
+					cr.Spec.Driver.Metrics.Array.CircuitBreaker.Threshold,
+					powerMaxDefaultMetricsArrayCBThreshold,
+				)
+				metricsArrayCBResetTimeout = metricsDurationOrDefault(
+					cr.Spec.Driver.Metrics.Array.CircuitBreaker.ResetTimeout,
+					powerMaxDefaultMetricsArrayCBResetTimeout,
+				)
+			}
+		}
+	}
 
 	// #nosec G101 - False positives
 	switch fileType {
@@ -272,6 +372,25 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 				}
 			}
 		}
+		if cr.Spec.Driver.MetroSiteFailureHandling != nil {
+			if cr.Spec.Driver.MetroSiteFailureHandling.Enabled {
+				metroSiteFailureEnabled = "true"
+			} else {
+				metroSiteFailureEnabled = "false"
+			}
+			if cr.Spec.Driver.MetroSiteFailureHandling.StateCheckTimeoutSeconds != nil {
+				metroStateCheckTimeout = fmt.Sprintf("%d", *cr.Spec.Driver.MetroSiteFailureHandling.StateCheckTimeoutSeconds)
+			}
+			if cr.Spec.Driver.MetroSiteFailureHandling.QueueWarningThreshold != nil {
+				metroQueueWarningThreshold = fmt.Sprintf("%d", *cr.Spec.Driver.MetroSiteFailureHandling.QueueWarningThreshold)
+			}
+			if cr.Spec.Driver.MetroSiteFailureHandling.QueueHardLimit != nil {
+				metroQueueHardLimit = fmt.Sprintf("%d", *cr.Spec.Driver.MetroSiteFailureHandling.QueueHardLimit)
+			}
+			if cr.Spec.Driver.MetroSiteFailureHandling.ReconciliationBackoffSeconds != nil {
+				metroReconciliationBackoff = fmt.Sprintf("%d", *cr.Spec.Driver.MetroSiteFailureHandling.ReconciliationBackoffSeconds)
+			}
+		}
 		proxyTLSSecret := RevProxyTLSSecretDefaultName
 		revProxy := cr.GetModule(csmv1.ReverseProxy)
 		for _, component := range revProxy.Components {
@@ -302,6 +421,21 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		yamlString = strings.ReplaceAll(yamlString, ReverseProxyTLSSecret, proxyTLSSecret)
 		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxDynamicSGEnabled, dynamicSGEnabled)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxMetroSiteFailureEnabled, metroSiteFailureEnabled)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxMetroStateCheckTimeout, metroStateCheckTimeout)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxMetroQueueWarningThreshold, metroQueueWarningThreshold)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxMetroQueueHardLimit, metroQueueHardLimit)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxMetroReconciliationBackoff, metroReconciliationBackoff)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsEnabled, metricsEnabled)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsPort, metricsPort)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsTLSCertFile, metricsTLSCertFile)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsTLSKeyFile, metricsTLSKeyFile)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsCollectionInterval, metricsCollectionInterval)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsCollectionCacheTTL, metricsCollectionCacheTTL)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsArrayRateLimit, metricsArrayRateLimit)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsArrayTimeout, metricsArrayTimeout)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsArrayCBThreshold, metricsArrayCBThreshold)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsArrayCBResetTimeout, metricsArrayCBResetTimeout)
 
 		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckEnabled, fsckEnabled)
 		yamlString = SubstituteEnvVar(yamlString, CsiFsCheckMode, fsckMode)
@@ -348,12 +482,62 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 				if env.Name == "X_CSI_DYNAMIC_SG_ENABLED" {
 					dynamicSGEnabled = env.Value
 				}
+				if env.Name == "X_CSI_CSIADDONS_REPLICATION_ENABLED" {
+					csiAddonsReplEnabled = env.Value
+				}
+				if env.Name == "X_CSI_POWERMAX_METRO_SITE_FAILURE_HANDLING_ENABLED" {
+					metroSiteFailureEnabled = env.Value
+				}
+				if env.Name == "X_CSI_POWERMAX_METRO_STATE_CHECK_TIMEOUT" {
+					metroStateCheckTimeout = env.Value
+				}
+				if env.Name == "X_CSI_POWERMAX_METRO_QUEUE_WARNING_THRESHOLD" {
+					metroQueueWarningThreshold = env.Value
+				}
+				if env.Name == "X_CSI_POWERMAX_METRO_QUEUE_HARD_LIMIT" {
+					metroQueueHardLimit = env.Value
+				}
+				if env.Name == "X_CSI_POWERMAX_METRO_RECONCILIATION_BACKOFF" {
+					metroReconciliationBackoff = env.Value
+				}
+				if env.Name == "X_CSI_DRIVER_INSTANCE_UID" {
+					driverInstanceUID = env.Value
+				}
 			}
 		}
+
+		// AC-001 fix: Read Metro site-failure handling configuration from CR field
+		// This takes precedence over environment variables for Operator deployments
+		if cr.Spec.Driver.MetroSiteFailureHandling != nil {
+			if cr.Spec.Driver.MetroSiteFailureHandling.Enabled {
+				metroSiteFailureEnabled = "true"
+			} else {
+				metroSiteFailureEnabled = "false"
+			}
+			if cr.Spec.Driver.MetroSiteFailureHandling.StateCheckTimeoutSeconds != nil {
+				metroStateCheckTimeout = fmt.Sprintf("%d", *cr.Spec.Driver.MetroSiteFailureHandling.StateCheckTimeoutSeconds)
+			}
+			if cr.Spec.Driver.MetroSiteFailureHandling.QueueWarningThreshold != nil {
+				metroQueueWarningThreshold = fmt.Sprintf("%d", *cr.Spec.Driver.MetroSiteFailureHandling.QueueWarningThreshold)
+			}
+			if cr.Spec.Driver.MetroSiteFailureHandling.QueueHardLimit != nil {
+				metroQueueHardLimit = fmt.Sprintf("%d", *cr.Spec.Driver.MetroSiteFailureHandling.QueueHardLimit)
+			}
+			if cr.Spec.Driver.MetroSiteFailureHandling.ReconciliationBackoffSeconds != nil {
+				metroReconciliationBackoff = fmt.Sprintf("%d", *cr.Spec.Driver.MetroSiteFailureHandling.ReconciliationBackoffSeconds)
+			}
+		}
+
 		if cr.Spec.Driver.Controller != nil {
 			for _, env := range cr.Spec.Driver.Controller.Envs {
 				if env.Name == "X_CSI_HEALTH_MONITOR_ENABLED" {
 					ctrlHealthMonitor = env.Value
+				}
+				if env.Name == "X_CSI_CAPACITY_POLL_INTERVAL" {
+					capacityPollInterval = env.Value
+				}
+				if env.Name == "X_CSI_CAPACITY_THRESHOLD_FULL" {
+					capacityThresholdFull = env.Value
 				}
 			}
 		}
@@ -387,9 +571,34 @@ func ModifyPowermaxCR(yamlString string, cr csmv1.ContainerStorageModule, fileTy
 		yamlString = strings.ReplaceAll(yamlString, ReverseProxyTLSSecret, proxyTLSSecret)
 		yamlString = strings.ReplaceAll(yamlString, CSMNameSpace, cr.Namespace)
 		yamlString = strings.ReplaceAll(yamlString, CSIPmaxDynamicSGEnabled, dynamicSGEnabled)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsEnabled, metricsEnabled)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsPort, metricsPort)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsTLSCertFile, metricsTLSCertFile)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsTLSKeyFile, metricsTLSKeyFile)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsCollectionInterval, metricsCollectionInterval)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsCollectionCacheTTL, metricsCollectionCacheTTL)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsArrayRateLimit, metricsArrayRateLimit)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsArrayTimeout, metricsArrayTimeout)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsArrayCBThreshold, metricsArrayCBThreshold)
+		yamlString = strings.ReplaceAll(yamlString, constants.CsiMetricsArrayCBResetTimeout, metricsArrayCBResetTimeout)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxCSIAddonsReplEnabled, csiAddonsReplEnabled)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxMetroSiteFailureEnabled, metroSiteFailureEnabled)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxMetroStateCheckTimeout, metroStateCheckTimeout)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxMetroQueueWarningThreshold, metroQueueWarningThreshold)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxMetroQueueHardLimit, metroQueueHardLimit)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxMetroReconciliationBackoff, metroReconciliationBackoff)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxDriverInstanceUID, driverInstanceUID)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxCapacityPollInterval, capacityPollInterval)
+		yamlString = strings.ReplaceAll(yamlString, CSIPmaxCapacityThresholdFull, capacityThresholdFull)
 	case "CSIDriverSpec":
-		if cr.Spec.Driver.CSIDriverSpec != nil && cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
-			storageCapacity = "true"
+		// Note: StorageCapacity is a bool with omitempty. Go's zero-value for bool is false,
+		// so we cannot distinguish between "user omitted the field" and "user explicitly set false"
+		// without changing the type to *bool. The chosen behavior is: default to "true" (matching
+		// the pre-placeholder hardcoded template), and only override to "false" when the user sets
+		// csiDriverSpec.storageCapacity: false explicitly. Users who set a csiDriverSpec block
+		// without specifying storageCapacity must include storageCapacity: true to preserve the default.
+		if cr.Spec.Driver.CSIDriverSpec != nil && !cr.Spec.Driver.CSIDriverSpec.StorageCapacity {
+			storageCapacity = "false"
 		}
 		yamlString = strings.ReplaceAll(yamlString, CsiStorageCapacityEnabled, storageCapacity)
 	}
@@ -449,12 +658,15 @@ func DynamicallyMountPowermaxContent(configuration interface{}, cr csmv1.Contain
 				setPowermaxMountCredentialContent(&podTemplate.Spec.Containers[i])
 			}
 		}
-	} else {
-		for i, cnt := range podTemplate.Spec.Containers {
-			if *cnt.Name == "driver" {
-				SetPowermaxConfigContent(&podTemplate.Spec.Containers[i], secretName)
-				break
-			}
+
+		return nil
+	}
+
+	for i, cnt := range podTemplate.Spec.Containers {
+		if *cnt.Name == "driver" {
+			SetPowermaxConfigContent(&podTemplate.Spec.Containers[i], secretName)
+			SetDriverMetrics(csmv1.PowerMax, cr, &podTemplate.Spec.Containers[i])
+			break
 		}
 	}
 

@@ -1,10 +1,15 @@
-// Copyright (c) 2022-2026 Dell Inc., or its subsidiaries. All Rights Reserved.
+// Copyright © 2022-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//  http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package modules
 
@@ -28,6 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	t1 "k8s.io/apimachinery/pkg/types"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
+	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -97,6 +103,120 @@ func TestReplicationInjectDeployment(t *testing.T) {
 				assert.Error(t, err)
 			}
 		})
+	}
+}
+
+func TestReplicationInjectDeploymentWithTLSMetrics(t *testing.T) {
+	ctx := context.Background()
+
+	cr, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+	assert.NoError(t, err)
+
+	// Add metrics TLS configuration to the replication module
+	for i, module := range cr.Spec.Modules {
+		if module.Name == csmv1.Replication {
+			cr.Spec.Modules[i].Metrics = &csmv1.ModuleMetrics{
+				Enabled:       true,
+				Port:          8445,
+				TLSCertSecret: "replication-metrics-tls-secret",
+			}
+		}
+	}
+
+	controllerYAML, err := drivers.GetController(ctx, cr, operatorConfig, csmv1.PowerScaleName, operatorutils.VersionSpec{})
+	assert.NoError(t, err)
+
+	newDeployment, err := ReplicationInjectDeployment(ctx, controllerYAML.Deployment, cr, operatorConfig, operatorutils.VersionSpec{})
+	assert.NoError(t, err)
+	assert.NotNil(t, newDeployment)
+
+	// Verify TLS volume was added
+	foundTLSVolume := false
+	for _, vol := range newDeployment.Spec.Template.Spec.Volumes {
+		if vol.Name != nil && *vol.Name == "replication-metrics-tls" {
+			foundTLSVolume = true
+			assert.NotNil(t, vol.Secret)
+			assert.Equal(t, "replication-metrics-tls-secret", *vol.Secret.SecretName)
+		}
+	}
+	assert.True(t, foundTLSVolume, "TLS volume should be added to deployment")
+
+	// Verify TLS volume mount was added to the replicator container
+	foundTLSMount := false
+	for _, cnt := range newDeployment.Spec.Template.Spec.Containers {
+		if cnt.Name != nil && *cnt.Name == "dell-csi-replicator" {
+			for _, vm := range cnt.VolumeMounts {
+				if vm.Name != nil && *vm.Name == "replication-metrics-tls" {
+					foundTLSMount = true
+					assert.Equal(t, "/etc/replication-metrics-tls", *vm.MountPath)
+					assert.True(t, *vm.ReadOnly)
+				}
+			}
+		}
+	}
+	assert.True(t, foundTLSMount, "TLS volume mount should be present on replicator container")
+}
+
+func TestReplicationInjectDeploymentWithoutTLSMetrics(t *testing.T) {
+	ctx := context.Background()
+
+	cr, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+	assert.NoError(t, err)
+
+	// Add metrics without TLS configuration
+	for i, module := range cr.Spec.Modules {
+		if module.Name == csmv1.Replication {
+			cr.Spec.Modules[i].Metrics = &csmv1.ModuleMetrics{
+				Enabled: true,
+				Port:    8445,
+			}
+		}
+	}
+
+	controllerYAML, err := drivers.GetController(ctx, cr, operatorConfig, csmv1.PowerScaleName, operatorutils.VersionSpec{})
+	assert.NoError(t, err)
+
+	newDeployment, err := ReplicationInjectDeployment(ctx, controllerYAML.Deployment, cr, operatorConfig, operatorutils.VersionSpec{})
+	assert.NoError(t, err)
+	assert.NotNil(t, newDeployment)
+
+	// Verify TLS volume was NOT added
+	for _, vol := range newDeployment.Spec.Template.Spec.Volumes {
+		if vol.Name != nil {
+			assert.NotEqual(t, "replication-metrics-tls", *vol.Name, "TLS volume should not be added when TLSCertSecret is empty")
+		}
+	}
+}
+
+func TestReplicationInjectDeploymentMetricsDisabled(t *testing.T) {
+	ctx := context.Background()
+
+	cr, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+	assert.NoError(t, err)
+
+	// Add metrics but disabled with TLS (TLS should not be injected)
+	for i, module := range cr.Spec.Modules {
+		if module.Name == csmv1.Replication {
+			cr.Spec.Modules[i].Metrics = &csmv1.ModuleMetrics{
+				Enabled:       false,
+				Port:          8445,
+				TLSCertSecret: "some-tls-secret",
+			}
+		}
+	}
+
+	controllerYAML, err := drivers.GetController(ctx, cr, operatorConfig, csmv1.PowerScaleName, operatorutils.VersionSpec{})
+	assert.NoError(t, err)
+
+	newDeployment, err := ReplicationInjectDeployment(ctx, controllerYAML.Deployment, cr, operatorConfig, operatorutils.VersionSpec{})
+	assert.NoError(t, err)
+	assert.NotNil(t, newDeployment)
+
+	// Verify TLS volume was NOT added when metrics disabled
+	for _, vol := range newDeployment.Spec.Template.Spec.Volumes {
+		if vol.Name != nil {
+			assert.NotEqual(t, "replication-metrics-tls", *vol.Name, "TLS volume should not be added when metrics disabled")
+		}
 	}
 }
 
@@ -571,6 +691,25 @@ func TestCreateReplicationConfigmap_ConfigMapAlreadyExists_NoError(t *testing.T)
 	assert.NotEmpty(t, objs)
 }
 
+func TestCreateReplicationConfigmap_ModuleNotFound_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	scheme := runtime.NewScheme()
+	_ = corev1.AddToScheme(scheme)
+	fakeClient := ctrlClientFake.NewClientBuilder().WithScheme(scheme).Build()
+
+	// CR without replication module
+	cr, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+	if err != nil {
+		panic(err)
+	}
+	op := operatorutils.OperatorConfig{ConfigDirectory: "../../operatorconfig"}
+
+	objs, err := CreateReplicationConfigmap(ctx, cr, op, fakeClient)
+	assert.Error(t, err)
+	assert.Nil(t, objs)
+}
+
 func TestGetReplicationCrdDeploy(t *testing.T) {
 	realConfig := operatorutils.OperatorConfig{
 		ConfigDirectory: "../../operatorconfig",
@@ -643,6 +782,42 @@ func TestReplicationCrdDeployAndDelete(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDeleteReplicationCrds_ModuleNotFound_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	scheme := runtime.NewScheme()
+	_ = apiextv1.AddToScheme(scheme)
+	fakeClient := ctrlClientFake.NewClientBuilder().WithScheme(scheme).Build()
+
+	// CR without replication module
+	cr, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+	if err != nil {
+		panic(err)
+	}
+	op := operatorutils.OperatorConfig{ConfigDirectory: "../../operatorconfig"}
+
+	err = DeleteReplicationCrds(ctx, op, cr, fakeClient)
+	assert.Error(t, err)
+}
+
+func TestCheckApplyContainersReplica_ModuleNotFound_ReturnsError(t *testing.T) {
+	// CR without replication module
+	cr := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-csm",
+			Namespace: "test-ns",
+		},
+		Spec: csmv1.ContainerStorageModuleSpec{
+			Modules: []csmv1.Module{},
+		},
+	}
+
+	containers := []acorev1.ContainerApplyConfiguration{}
+
+	err := CheckApplyContainersReplica(containers, cr)
+	assert.Error(t, err)
 }
 
 func TestGetReplicaController_UsesMatchedManagerImage_And_InitImageFromComponent(t *testing.T) {
@@ -744,7 +919,7 @@ func TestGetReplicaController_CoversInitComponentBranch(t *testing.T) {
 	// 'matched' can be empty; we only need the init image branch covered.
 	matched := operatorutils.VersionSpec{}
 
-	// Use the real operatorconfig directory so controller.yaml & version-values.yaml exist.
+	// Use the real operatorconfig directory so controller.yaml & csm-releases.yaml exist.
 	op := operatorutils.OperatorConfig{
 		ConfigDirectory: "../../operatorconfig",
 	}
@@ -1058,8 +1233,9 @@ func TestGetReplicaController_ConfigMapWinsOverCustomRegistry(t *testing.T) {
 		ConfigDirectory: "../../operatorconfig",
 	}
 	matched := operatorutils.VersionSpec{}
+	var ctrlObjects []ctrlClient.Object
 
-	ctrlObjects, err := getReplicaController(ctx, op, cr, matched)
+	_, err = getReplicaController(ctx, op, cr, matched)
 	assert.NoError(t, err, "getReplicaController should not error for backward-compatible CR without ENABLE_KUBEVIRT_PVC_REMAP")
 	// Set BOTH a custom registry and a matched (ConfigMap) image.
 	cr.Spec.CustomRegistry = "my-registry.example.com"
@@ -1153,4 +1329,125 @@ func TestGetReplicaController_NeitherConfigMapNorRegistry(t *testing.T) {
 	got := dep.Spec.Template.Spec.Containers[0].Image
 	assert.True(t, strings.Contains(got, "quay.io/dell/container-storage-modules/dell-replication-controller"),
 		"manager image should be the default template image, got: %s", got)
+}
+
+func TestModifyReplicationMetricsCR_Defaults(t *testing.T) {
+	// nil metrics - all placeholders should be replaced with defaults
+	yamlString := `env:
+  - name: X_CSI_REPLICATION_METRICS_ENABLED
+    value: "<X_CSI_REPLICATION_METRICS_ENABLED>"
+  - name: X_CSI_REPLICATION_METRICS_PORT
+    value: "<X_CSI_REPLICATION_METRICS_PORT>"
+  - name: X_CSI_REPLICATION_METRICS_COLLECTION_INTERVAL
+    value: "<X_CSI_REPLICATION_METRICS_COLLECTION_INTERVAL>"
+  - name: X_CSI_REPLICATION_METRICS_TLS_CERT_FILE
+    value: "<X_CSI_REPLICATION_METRICS_TLS_CERT_FILE>"
+  - name: X_CSI_REPLICATION_METRICS_TLS_KEY_FILE
+    value: "<X_CSI_REPLICATION_METRICS_TLS_KEY_FILE>"`
+
+	module := csmv1.Module{
+		Metrics: nil,
+	}
+
+	result := ModifyReplicationMetricsCR(yamlString, module)
+
+	assert.Contains(t, result, `value: "false"`)
+	assert.Contains(t, result, `value: "8445"`)
+	assert.Contains(t, result, `value: "30s"`)
+	assert.NotContains(t, result, ReplicationMetricsEnabledPlaceholder)
+	assert.NotContains(t, result, ReplicationMetricsPortPlaceholder)
+	assert.NotContains(t, result, ReplicationMetricsCollectionIntervalPlaceholder)
+	assert.NotContains(t, result, ReplicationMetricsTLSCertFilePlaceholder)
+	assert.NotContains(t, result, ReplicationMetricsTLSKeyFilePlaceholder)
+}
+
+func TestModifyReplicationMetricsCR_Enabled(t *testing.T) {
+	// enabled metrics with custom port and interval
+	yamlString := `env:
+  - name: X_CSI_REPLICATION_METRICS_ENABLED
+    value: "<X_CSI_REPLICATION_METRICS_ENABLED>"
+  - name: X_CSI_REPLICATION_METRICS_PORT
+    value: "<X_CSI_REPLICATION_METRICS_PORT>"
+  - name: X_CSI_REPLICATION_METRICS_COLLECTION_INTERVAL
+    value: "<X_CSI_REPLICATION_METRICS_COLLECTION_INTERVAL>"`
+
+	module := csmv1.Module{
+		Metrics: &csmv1.ModuleMetrics{
+			Enabled: true,
+			Port:    9999,
+			Collection: &csmv1.MetricsCollectionConfig{
+				Interval: "60s",
+			},
+		},
+	}
+
+	result := ModifyReplicationMetricsCR(yamlString, module)
+
+	assert.Contains(t, result, `value: "true"`)
+	assert.Contains(t, result, `value: "9999"`)
+	assert.Contains(t, result, `value: "60s"`)
+}
+
+func TestModifyReplicationMetricsCR_TLS(t *testing.T) {
+	// TLS cert set - verify cert/key paths
+	yamlString := `env:
+  - name: X_CSI_REPLICATION_METRICS_TLS_CERT_FILE
+    value: "<X_CSI_REPLICATION_METRICS_TLS_CERT_FILE>"
+  - name: X_CSI_REPLICATION_METRICS_TLS_KEY_FILE
+    value: "<X_CSI_REPLICATION_METRICS_TLS_KEY_FILE>"`
+
+	module := csmv1.Module{
+		Metrics: &csmv1.ModuleMetrics{
+			Enabled: true,
+			// #nosec G101 -- test fixture secret name, not a real credential
+			TLSCertSecret: "my-tls-secret",
+		},
+	}
+
+	result := ModifyReplicationMetricsCR(yamlString, module)
+
+	assert.Contains(t, result, `/etc/replication-metrics-tls/tls.crt`)
+	assert.Contains(t, result, `/etc/replication-metrics-tls/tls.key`)
+	assert.NotContains(t, result, ReplicationMetricsTLSCertFilePlaceholder)
+	assert.NotContains(t, result, ReplicationMetricsTLSKeyFilePlaceholder)
+}
+
+func TestModifyReplicationMetricsCR_NilMetrics(t *testing.T) {
+	// Module with nil Metrics field - placeholders should be replaced with defaults
+	yamlString := `env:
+  - name: X_CSI_REPLICATION_METRICS_ENABLED
+    value: "<X_CSI_REPLICATION_METRICS_ENABLED>"
+  - name: X_CSI_REPLICATION_METRICS_PORT
+    value: "<X_CSI_REPLICATION_METRICS_PORT>"
+  - name: X_CSI_REPLICATION_METRICS_COLLECTION_INTERVAL
+    value: "<X_CSI_REPLICATION_METRICS_COLLECTION_INTERVAL>"
+  - name: X_CSI_REPLICATION_METRICS_TLS_CERT_FILE
+    value: "<X_CSI_REPLICATION_METRICS_TLS_CERT_FILE>"
+  - name: X_CSI_REPLICATION_METRICS_TLS_KEY_FILE
+    value: "<X_CSI_REPLICATION_METRICS_TLS_KEY_FILE>"`
+
+	module := csmv1.Module{
+		Name:    csmv1.Replication,
+		Metrics: nil,
+	}
+
+	result := ModifyReplicationMetricsCR(yamlString, module)
+
+	// Verify all placeholders are resolved
+	assert.NotContains(t, result, "<X_CSI_REPLICATION_METRICS_")
+	// Defaults: enabled=false, port=8445, interval=30s, empty cert/key
+	assert.Contains(t, result, `value: "false"`)
+	assert.Contains(t, result, `value: "8445"`)
+	assert.Contains(t, result, `value: "30s"`)
+
+	// TLS cert/key should be empty strings
+	lines := strings.Split(result, "\n")
+	for i, line := range lines {
+		if strings.Contains(line, "X_CSI_REPLICATION_METRICS_TLS_CERT_FILE") && i+1 < len(lines) {
+			assert.Contains(t, lines[i+1], `value: ""`)
+		}
+		if strings.Contains(line, "X_CSI_REPLICATION_METRICS_TLS_KEY_FILE") && i+1 < len(lines) {
+			assert.Contains(t, lines[i+1], `value: ""`)
+		}
+	}
 }

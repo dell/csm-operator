@@ -1,10 +1,10 @@
-// Copyright (c) 2025-2026 Dell Inc., or its subsidiaries. All Rights Reserved.
+// Copyright (c) Dell Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//  http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 
 package modules
 
@@ -12,19 +12,22 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"strconv"
 	"strings"
+	"time"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	csmv1 "github.com/dell/csm-operator/api/v1"
+	"github.com/dell/csm-operator/pkg/constants"
 	drivers "github.com/dell/csm-operator/pkg/drivers"
 	"github.com/dell/csm-operator/pkg/logger"
 	operatorutils "github.com/dell/csm-operator/pkg/operatorutils"
 	"github.com/dell/csm-operator/pkg/resources/deployment"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -253,7 +256,234 @@ const (
 
 	// CSMNameSpace - namespace CSM is found in. Needed for cases where pod namespace is not namespace of CSM
 	CSMNameSpace string = "<CSM_NAMESPACE>"
+
+	DefaultPowerScaleObsMetricsPort            int32  = 8443
+	DefaultPowerScaleObsServiceMonitorInterval string = "30s"
+
+	DefaultPowerStoreObsMetricsPort            int32  = 8443
+	DefaultPowerStoreObsServiceMonitorInterval string = "30s"
+
+	DefaultPowerMaxObsMetricsPort            int32  = 8443
+	DefaultPowerMaxObsServiceMonitorInterval string = "30s"
+
+	DefaultPowerFlexObsMetricsPort            int32  = 8443
+	DefaultPowerFlexObsServiceMonitorInterval string = "30s"
 )
+
+type obsMetricsConfig struct {
+	enabled                          bool
+	port                             int32
+	tlsCertSecret                    string
+	serviceMonitorEnabled            bool
+	serviceMonitorInterval           string
+	serviceMonitorScrapeTimeout      string
+	serviceMonitorInsecureSkipVerify bool
+}
+
+// getObsMetricsConfig builds an obsMetricsConfig from the module spec, using the
+// provided defaults for port and service-monitor interval.
+func getObsMetricsConfig(module csmv1.Module, defaultPort int32, defaultInterval string) obsMetricsConfig {
+	config := obsMetricsConfig{
+		enabled:                     false,
+		port:                        defaultPort,
+		serviceMonitorEnabled:       false,
+		serviceMonitorInterval:      defaultInterval,
+		serviceMonitorScrapeTimeout: "",
+	}
+
+	if module.Metrics != nil {
+		config.enabled = module.Metrics.Enabled
+		if module.Metrics.Port > 0 {
+			config.port = module.Metrics.Port
+		}
+		config.tlsCertSecret = module.Metrics.TLSCertSecret
+		if module.Metrics.ServiceMonitor != nil {
+			config.serviceMonitorEnabled = module.Metrics.ServiceMonitor.Enabled
+			if module.Metrics.ServiceMonitor.Interval != "" {
+				config.serviceMonitorInterval = module.Metrics.ServiceMonitor.Interval
+			}
+			config.serviceMonitorScrapeTimeout = module.Metrics.ServiceMonitor.ScrapeTimeout
+			config.serviceMonitorInsecureSkipVerify = module.Metrics.ServiceMonitor.InsecureSkipVerify
+		}
+		return config
+	}
+
+	return config
+}
+
+func updateObsService(service *corev1.Service, metricsConfig obsMetricsConfig) {
+	filteredPorts := make([]corev1.ServicePort, 0, len(service.Spec.Ports))
+	for _, port := range service.Spec.Ports {
+		if port.Name != "obs-metrics" {
+			filteredPorts = append(filteredPorts, port)
+		}
+	}
+	if metricsConfig.enabled {
+		filteredPorts = append(filteredPorts, corev1.ServicePort{
+			Name:       "obs-metrics",
+			Port:       metricsConfig.port,
+			TargetPort: intstr.FromInt32(metricsConfig.port),
+		})
+	}
+	service.Spec.Ports = filteredPorts
+}
+
+// updateObsDeployment applies metrics configuration to the named container within a Deployment.
+func updateObsDeployment(deployment *appsv1.Deployment, metricsConfig obsMetricsConfig, containerName string) {
+	metricsTLSVolName := "metrics-tls"
+	metricsTLSMountPath := "/etc/metrics-tls"
+	certEnvName := "X_CSI_METRICS_TLS_CERT_FILE"
+	certFile := "/etc/metrics-tls/tls.crt"
+	keyEnvName := "X_CSI_METRICS_TLS_KEY_FILE"
+	keyFile := "/etc/metrics-tls/tls.key"
+
+	filteredVolumes := make([]corev1.Volume, 0, len(deployment.Spec.Template.Spec.Volumes))
+	for _, volume := range deployment.Spec.Template.Spec.Volumes {
+		if volume.Name != metricsTLSVolName {
+			filteredVolumes = append(filteredVolumes, volume)
+		}
+	}
+	if metricsConfig.enabled && metricsConfig.tlsCertSecret != "" {
+		filteredVolumes = append(filteredVolumes, corev1.Volume{
+			Name: metricsTLSVolName,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{SecretName: metricsConfig.tlsCertSecret},
+			},
+		})
+	}
+	deployment.Spec.Template.Spec.Volumes = filteredVolumes
+
+	for containerIndex := range deployment.Spec.Template.Spec.Containers {
+		container := &deployment.Spec.Template.Spec.Containers[containerIndex]
+		if container.Name != containerName {
+			continue
+		}
+
+		filteredPorts := make([]corev1.ContainerPort, 0, len(container.Ports))
+		for _, port := range container.Ports {
+			if port.Name != "obs-metrics" {
+				filteredPorts = append(filteredPorts, port)
+			}
+		}
+		if metricsConfig.enabled {
+			filteredPorts = append(filteredPorts, corev1.ContainerPort{
+				Name:          "obs-metrics",
+				ContainerPort: metricsConfig.port,
+				Protocol:      corev1.ProtocolTCP,
+			})
+		}
+		container.Ports = filteredPorts
+
+		filteredMounts := make([]corev1.VolumeMount, 0, len(container.VolumeMounts))
+		for _, mount := range container.VolumeMounts {
+			if mount.Name != metricsTLSVolName {
+				filteredMounts = append(filteredMounts, mount)
+			}
+		}
+		const (
+			metricsEnabledEnvName = "X_CSI_METRICS_ENABLED"
+			metricsPortEnvName    = "X_CSI_METRICS_PORT"
+		)
+		filteredEnv := make([]corev1.EnvVar, 0, len(container.Env))
+		for _, env := range container.Env {
+			if env.Name != certEnvName && env.Name != keyEnvName && env.Name != metricsEnabledEnvName && env.Name != metricsPortEnvName {
+				filteredEnv = append(filteredEnv, env)
+			}
+		}
+		if metricsConfig.enabled {
+			filteredEnv = append(filteredEnv,
+				corev1.EnvVar{Name: metricsEnabledEnvName, Value: "true"},
+				corev1.EnvVar{Name: metricsPortEnvName, Value: fmt.Sprintf("%d", metricsConfig.port)},
+			)
+		}
+		if metricsConfig.enabled && metricsConfig.tlsCertSecret != "" {
+			filteredMounts = append(filteredMounts, corev1.VolumeMount{
+				Name:      metricsTLSVolName,
+				MountPath: metricsTLSMountPath,
+				ReadOnly:  true,
+			})
+			filteredEnv = append(
+				filteredEnv,
+				corev1.EnvVar{Name: certEnvName, Value: certFile},
+				corev1.EnvVar{Name: keyEnvName, Value: keyFile},
+			)
+		}
+		container.VolumeMounts = filteredMounts
+		container.Env = filteredEnv
+		return
+	}
+}
+
+func updateObsServiceMonitor(obj crclient.Object, metricsConfig obsMetricsConfig) error {
+	u, ok := obj.(*unstructured.Unstructured)
+	if !ok {
+		return nil
+	}
+
+	endpoints, found, err := unstructured.NestedSlice(u.Object, "spec", "endpoints")
+	if err != nil {
+		return err
+	}
+	if !found || len(endpoints) == 0 {
+		endpoints = []interface{}{map[string]interface{}{}}
+	}
+
+	endpoint, ok := endpoints[0].(map[string]interface{})
+	if !ok {
+		endpoint = map[string]interface{}{}
+	}
+	endpoint["port"] = "obs-metrics"
+	endpoint["interval"] = metricsConfig.serviceMonitorInterval
+	if metricsConfig.serviceMonitorScrapeTimeout == "" {
+		delete(endpoint, "scrapeTimeout")
+	} else {
+		endpoint["scrapeTimeout"] = metricsConfig.serviceMonitorScrapeTimeout
+	}
+	if !metricsConfig.enabled || metricsConfig.tlsCertSecret == "" {
+		delete(endpoint, "scheme")
+		delete(endpoint, "tlsConfig")
+	} else {
+		endpoint["scheme"] = "https"
+		endpoint["tlsConfig"] = map[string]interface{}{
+			"insecureSkipVerify": metricsConfig.serviceMonitorInsecureSkipVerify,
+		}
+	}
+	endpoints[0] = endpoint
+
+	return unstructured.SetNestedSlice(u.Object, endpoints, "spec", "endpoints")
+}
+
+// applyObsMetricsConfig applies the metrics configuration to the named Service and Deployment
+// resource within the objects slice, and filters ServiceMonitor objects when metrics are disabled.
+func applyObsMetricsConfig(objects []crclient.Object, metricsConfig obsMetricsConfig, resourceName string) ([]crclient.Object, error) {
+	filteredObjects := make([]crclient.Object, 0, len(objects))
+	for _, obj := range objects {
+		switch typed := obj.(type) {
+		case *corev1.Service:
+			if typed.Name == resourceName {
+				updateObsService(typed, metricsConfig)
+			}
+			filteredObjects = append(filteredObjects, obj)
+		case *appsv1.Deployment:
+			if typed.Name == resourceName {
+				updateObsDeployment(typed, metricsConfig, resourceName)
+			}
+			filteredObjects = append(filteredObjects, obj)
+		default:
+			if obj.GetObjectKind().GroupVersionKind().Kind == "ServiceMonitor" {
+				if !metricsConfig.enabled || !metricsConfig.serviceMonitorEnabled {
+					continue
+				}
+				if err := updateObsServiceMonitor(obj, metricsConfig); err != nil {
+					return nil, err
+				}
+			}
+			filteredObjects = append(filteredObjects, obj)
+		}
+	}
+
+	return filteredObjects, nil
+}
 
 // ComponentNameToSecretPrefix - map from component name to secret prefix
 var ComponentNameToSecretPrefix = map[string]string{ObservabilityOtelCollectorName: "otel-collector", ObservabilityTopologyName: "karavi-topology", ObservabilityMetricsPowerStoreName: "karavi-metrics-powerstore"}
@@ -294,19 +524,8 @@ var defaultVolumeConfigName = map[csmv1.DriverType]string{
 	csmv1.PowerStore:     "powerstore-config",
 }
 
-var defaultSecretsName = map[csmv1.DriverType]string{
-	csmv1.PowerScale:     "<DriverDefaultReleaseName>-creds",
-	csmv1.PowerScaleName: "<DriverDefaultReleaseName>-creds",
-	csmv1.PowerFlex:      "<DriverDefaultReleaseName>-config",
-	csmv1.PowerFlexName:  "<DriverDefaultReleaseName>-config",
-	csmv1.PowerMax:       "<DriverDefaultReleaseName>-creds",
-	csmv1.PowerStore:     "<DriverDefaultReleaseName>-config",
-}
-
-var defaultAuthSecretsName = []string{"karavi-authorization-config", "proxy-authz-tokens", "proxy-server-root-certificate"}
-
 // ObservabilityPrecheck  - runs precheck for CSM Otoolsabilitytools
-func ObservabilityPrecheck(ctx context.Context, op operatorutils.OperatorConfig, obs csmv1.Module, cr csmv1.ContainerStorageModule, _ operatorutils.ReconcileCSM) error {
+func ObservabilityPrecheck(ctx context.Context, op operatorutils.OperatorConfig, obs csmv1.Module, cr csmv1.ContainerStorageModule, r operatorutils.ReconcileCSM) error {
 	log := logger.GetLogger(ctx)
 
 	if _, ok := ObservabilitySupportedDrivers[string(cr.Spec.Driver.CSIDriverType)]; !ok {
@@ -317,6 +536,21 @@ func ObservabilityPrecheck(ctx context.Context, op operatorutils.OperatorConfig,
 	if obs.ConfigVersion != "" {
 		err := checkVersion(string(csmv1.Observability), obs.ConfigVersion, op.ConfigDirectory)
 		if err != nil {
+			return err
+		}
+	}
+
+	clusterClient := operatorutils.GetCluster(ctx, r)
+	if obs.Metrics != nil && obs.Metrics.Enabled && obs.Metrics.TLSCertSecret != "" {
+		err := clusterClient.ClusterCTRLClient.Get(
+			ctx,
+			types.NamespacedName{Name: obs.Metrics.TLSCertSecret, Namespace: cr.GetNamespace()},
+			&corev1.Secret{},
+		)
+		if err != nil {
+			if k8serrors.IsNotFound(err) {
+				return fmt.Errorf("failed to find secret %s", obs.Metrics.TLSCertSecret)
+			}
 			return err
 		}
 	}
@@ -370,7 +604,7 @@ func getTopology(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.
 	}
 	YamlString := string(buf)
 
-	logLevel := "INFO"
+	logLevel := "info"
 	topologyImage := ""
 
 	for _, component := range obs.Components {
@@ -378,10 +612,21 @@ func getTopology(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.
 			topologyImage = operatorutils.GetFinalImage(ctx, cr, matched, component, YamlString)
 			for _, env := range component.Envs {
 				if strings.Contains(TopologyLogLevel, env.Name) {
-					logLevel = env.Value
+					logLevel = strings.ToLower(strings.TrimSpace(env.Value))
 				}
 			}
 		}
+	}
+
+	// Validate CR fields before YAML substitution to prevent injection attacks
+	if err := operatorutils.ValidateKubernetesName(cr.Name); err != nil {
+		return nil, fmt.Errorf("invalid CR name for YAML substitution: %w", err)
+	}
+	if err := operatorutils.ValidateKubernetesNamespace(cr.Namespace); err != nil {
+		return nil, fmt.Errorf("invalid CR namespace for YAML substitution: %w", err)
+	}
+	if err := operatorutils.ValidateYAMLSubstitutionValue(logLevel, "TopologyLogLevel"); err != nil {
+		return nil, fmt.Errorf("invalid log level for YAML substitution: %w", err)
 	}
 
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
@@ -450,7 +695,7 @@ func getOtelCollector(ctx context.Context, op operatorutils.OperatorConfig, cr c
 	if !nginxProxyImageFromConfigMap && cr.Spec.CustomRegistry != "" {
 		nginxProxyImage = operatorutils.ResolveImage(ctx, nginxProxyImage, cr)
 	}
-	otelCollectorImage := "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.143.1"
+	otelCollectorImage := "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.160.0"
 	otelCollectorImageFromConfigMap := false
 	configVersion, err := operatorutils.GetVersion(ctx, &cr, op)
 	if err != nil {
@@ -492,6 +737,20 @@ func getOtelCollector(ctx context.Context, op operatorutils.OperatorConfig, cr c
 				}
 			}
 		}
+	}
+
+	// Validate CR fields before YAML substitution to prevent injection attacks
+	if err := operatorutils.ValidateKubernetesName(cr.Name); err != nil {
+		return "", fmt.Errorf("invalid CR name for YAML substitution: %w", err)
+	}
+	if err := operatorutils.ValidateKubernetesNamespace(cr.Namespace); err != nil {
+		return "", fmt.Errorf("invalid CR namespace for YAML substitution: %w", err)
+	}
+	if err := operatorutils.ValidateImageString(otelCollectorImage, "OtelCollectorImage"); err != nil {
+		return "", fmt.Errorf("invalid image for YAML substitution: %w", err)
+	}
+	if err := operatorutils.ValidateImageString(nginxProxyImage, "NginxProxyImage"); err != nil {
+		return "", fmt.Errorf("invalid image for YAML substitution: %w", err)
 	}
 
 	YamlString = strings.ReplaceAll(YamlString, CSMName, cr.Name)
@@ -540,15 +799,20 @@ func PowerScaleMetrics(ctx context.Context, isDeleting bool, op operatorutils.Op
 		return fmt.Errorf("could not find deployment obj")
 	}
 
-	configVersion, err := operatorutils.GetVersion(ctx, &cr, op)
+	obs, err := getObservabilityModule(cr)
 	if err != nil {
 		return err
 	}
-	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
-		// append secret objects
-		powerscaleMetricsObjects, err = appendObservabilitySecrets(ctx, cr, powerscaleMetricsObjects, ctrlClient, k8sClient)
-		if err != nil {
-			return fmt.Errorf("copy secrets from %s: %v", cr.Namespace, err)
+	obsMetricsConfig := getObsMetricsConfig(obs, DefaultPowerScaleObsMetricsPort, DefaultPowerScaleObsServiceMonitorInterval)
+
+	if !obsMetricsConfig.enabled || !obsMetricsConfig.serviceMonitorEnabled {
+		serviceMonitor := &unstructured.Unstructured{}
+		serviceMonitor.SetAPIVersion("monitoring.coreos.com/v1")
+		serviceMonitor.SetKind("ServiceMonitor")
+		serviceMonitor.SetName("karavi-metrics-powerscale-obs-monitor")
+		serviceMonitor.SetNamespace(cr.Namespace)
+		if err := operatorutils.DeleteObject(ctx, serviceMonitor, ctrlClient); err != nil {
+			return err
 		}
 	}
 
@@ -558,6 +822,16 @@ func PowerScaleMetrics(ctx context.Context, isDeleting bool, op operatorutils.Op
 				return err
 			}
 		} else {
+			// ServiceMonitor requires special handling to fetch resourceVersion for updates
+			if ctrlObj.GetObjectKind().GroupVersionKind().Kind == "ServiceMonitor" {
+				found := &unstructured.Unstructured{}
+				found.SetGroupVersionKind(ctrlObj.GetObjectKind().GroupVersionKind())
+				err = ctrlClient.Get(ctx, client.ObjectKey{Name: ctrlObj.GetName(), Namespace: ctrlObj.GetNamespace()}, found)
+				if err == nil {
+					// Copy resourceVersion from existing object for optimistic concurrency
+					ctrlObj.SetResourceVersion(found.GetResourceVersion())
+				}
+			}
 			if err := operatorutils.ApplyCTRLObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
@@ -627,12 +901,39 @@ func PowerStoreMetrics(ctx context.Context, isDeleting bool, op operatorutils.Op
 		return fmt.Errorf("could not find deployment obj")
 	}
 
+	obs, err := getObservabilityModule(cr)
+	if err != nil {
+		return err
+	}
+	obsMetricsConfig := getObsMetricsConfig(obs, DefaultPowerStoreObsMetricsPort, DefaultPowerStoreObsServiceMonitorInterval)
+
+	if !obsMetricsConfig.enabled || !obsMetricsConfig.serviceMonitorEnabled {
+		serviceMonitor := &unstructured.Unstructured{}
+		serviceMonitor.SetAPIVersion("monitoring.coreos.com/v1")
+		serviceMonitor.SetKind("ServiceMonitor")
+		serviceMonitor.SetName("karavi-metrics-powerstore-obs-monitor")
+		serviceMonitor.SetNamespace(cr.Namespace)
+		if err := operatorutils.DeleteObject(ctx, serviceMonitor, ctrlClient); err != nil {
+			return err
+		}
+	}
+
 	for _, ctrlObj := range powerstoreMetricsObjects {
 		if isDeleting {
 			if err := operatorutils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
 		} else {
+			// ServiceMonitor requires special handling to fetch resourceVersion for updates
+			if ctrlObj.GetObjectKind().GroupVersionKind().Kind == "ServiceMonitor" {
+				found := &unstructured.Unstructured{}
+				found.SetGroupVersionKind(ctrlObj.GetObjectKind().GroupVersionKind())
+				err = ctrlClient.Get(ctx, client.ObjectKey{Name: ctrlObj.GetName(), Namespace: ctrlObj.GetNamespace()}, found)
+				if err == nil {
+					// Copy resourceVersion from existing object for optimistic concurrency
+					ctrlObj.SetResourceVersion(found.GetResourceVersion())
+				}
+			}
 			if err := operatorutils.ApplyCTRLObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
@@ -690,8 +991,8 @@ func getPowerStoreMetricsObjects(ctx context.Context, op operatorutils.OperatorC
 	zipkinURI := ""
 	zipkinServiceName := "metrics-powerstore"
 	zipkinProbability := "0.0"
-	logLevel := "INFO"
-	logFormat := "TEXT"
+	logLevel := "info"
+	logFormat := "json"
 	otelCollectorAddress := "otel-collector:55680"
 
 	for _, component := range obs.Components {
@@ -723,12 +1024,46 @@ func getPowerStoreMetricsObjects(ctx context.Context, op operatorutils.OperatorC
 				} else if strings.Contains(ZipkinProbability, env.Name) {
 					zipkinProbability = env.Value
 				} else if strings.Contains(PstoreLogLevel, env.Name) {
-					logLevel = env.Value
+					logLevel = strings.ToLower(strings.TrimSpace(env.Value))
 				} else if strings.Contains(PstoreLogFormat, env.Name) {
-					logFormat = env.Value
+					logFormat = strings.ToLower(strings.TrimSpace(env.Value))
 				} else if strings.Contains(OtelCollectorAddress, env.Name) {
 					otelCollectorAddress = env.Value
 				}
+			}
+		}
+	}
+
+	// Validate CR fields and user-controlled values before YAML substitution
+	if err := operatorutils.ValidateKubernetesName(cr.Name); err != nil {
+		return nil, fmt.Errorf("invalid CR name for YAML substitution: %w", err)
+	}
+	if err := operatorutils.ValidateKubernetesNamespace(cr.Namespace); err != nil {
+		return nil, fmt.Errorf("invalid CR namespace for YAML substitution: %w", err)
+	}
+	// Validate all environment-sourced values (including numeric/boolean values to prevent injection)
+	userControlledValues := map[string]string{
+		"logLevel":              logLevel,
+		"logFormat":             logFormat,
+		"otelCollectorAddress":  otelCollectorAddress,
+		"maxConcurrentQueries":  maxConcurrentQueries,
+		"volumeEnabled":         volumeEnabled,
+		"volumePollFrequency":   volumePollFrequency,
+		"spacePollFrequency":    spacePollFrequency,
+		"arrayPollFrequency":    arrayPollFrequency,
+		"fsPollFrequency":       fsPollFrequency,
+		"topologyEnabled":       topologyEnabled,
+		"topologyPollFrequency": topologyPollFrequency,
+		"apiTimeout":            apiTimeout,
+		"zipkinURI":             zipkinURI,
+		"zipkinServiceName":     zipkinServiceName,
+		"zipkinProbability":     zipkinProbability,
+	}
+	for fieldName, value := range userControlledValues {
+		// Only validate non-empty values (some fields are optional)
+		if value != "" {
+			if err := operatorutils.ValidateYAMLSubstitutionValue(value, fieldName); err != nil {
+				return nil, fmt.Errorf("invalid value for YAML substitution: %w", err)
 			}
 		}
 	}
@@ -752,12 +1087,26 @@ func getPowerStoreMetricsObjects(ctx context.Context, op operatorutils.OperatorC
 	YamlString = strings.ReplaceAll(YamlString, OtelCollectorAddress, otelCollectorAddress)
 	YamlString = strings.ReplaceAll(YamlString, DriverDefaultReleaseName, cr.Name)
 
+	obsMetricsConfig := getObsMetricsConfig(obs, DefaultPowerStoreObsMetricsPort, DefaultPowerStoreObsServiceMonitorInterval)
+	obsMetricsEnabled := "false"
+	if obsMetricsConfig.enabled {
+		obsMetricsEnabled = "true"
+	}
+	obsMetricsPort := fmt.Sprintf("%d", obsMetricsConfig.port)
+	YamlString = strings.ReplaceAll(YamlString, constants.CsiMetricsEnabled, obsMetricsEnabled)
+	YamlString = strings.ReplaceAll(YamlString, constants.CsiMetricsPort, obsMetricsPort)
+
 	metricsObjects, err := operatorutils.GetModuleComponentObj([]byte(YamlString))
 	if err != nil {
 		return nil, err
 	}
 
 	operatorutils.SetContainerImage(metricsObjects, "karavi-metrics-powerstore", "karavi-metrics-powerstore", obsPstoreImage)
+
+	metricsObjects, err = applyObsMetricsConfig(metricsObjects, obsMetricsConfig, "karavi-metrics-powerstore")
+	if err != nil {
+		return nil, err
+	}
 
 	return metricsObjects, nil
 }
@@ -775,7 +1124,7 @@ func getPowerScaleMetricsObjects(ctx context.Context, op operatorutils.OperatorC
 	}
 	YamlString := string(buf)
 
-	logLevel := "INFO"
+	logLevel := "info"
 	otelCollectorAddress := "otel-collector:55680"
 	pscaleImage := ""
 	maxConcurrentQueries := "10"
@@ -789,14 +1138,17 @@ func getPowerScaleMetricsObjects(ctx context.Context, op operatorutils.OperatorC
 	clientInsecure := "true"
 	clientAuthType := "1"
 	clientVerbose := "0"
-	logFormat := "TEXT"
+	logFormat := "json"
+	obsMetricsConfig := getObsMetricsConfig(obs, DefaultPowerScaleObsMetricsPort, DefaultPowerScaleObsServiceMonitorInterval)
+	obsMetricsEnabled := fmt.Sprintf("%t", obsMetricsConfig.enabled)
+	obsMetricsPort := fmt.Sprintf("%d", obsMetricsConfig.port)
 
 	for _, component := range obs.Components {
 		if component.Name == ObservabilityMetricsPowerScaleName {
 			pscaleImage = operatorutils.GetFinalImage(ctx, cr, matched, component, YamlString)
 			for _, env := range component.Envs {
 				if strings.Contains(PowerscaleLogLevel, env.Name) {
-					logLevel = env.Value
+					logLevel = strings.ToLower(strings.TrimSpace(env.Value))
 				} else if strings.Contains(PowerScaleMaxConcurrentQueries, env.Name) {
 					maxConcurrentQueries = env.Value
 				} else if strings.Contains(PowerscaleCapacityMetricsEnabled, env.Name) {
@@ -820,10 +1172,43 @@ func getPowerScaleMetricsObjects(ctx context.Context, op operatorutils.OperatorC
 				} else if strings.Contains(IsiclientVerbose, env.Name) {
 					clientVerbose = env.Value
 				} else if strings.Contains(PowerscaleLogFormat, env.Name) {
-					logFormat = env.Value
+					logFormat = strings.ToLower(strings.TrimSpace(env.Value))
 				} else if strings.Contains(OtelCollectorAddress, env.Name) {
 					otelCollectorAddress = env.Value
 				}
+			}
+		}
+	}
+
+	// Validate CR fields and user-controlled values before YAML substitution
+	if err := operatorutils.ValidateKubernetesName(cr.Name); err != nil {
+		return nil, fmt.Errorf("invalid CR name for YAML substitution: %w", err)
+	}
+	if err := operatorutils.ValidateKubernetesNamespace(cr.Namespace); err != nil {
+		return nil, fmt.Errorf("invalid CR namespace for YAML substitution: %w", err)
+	}
+	// Validate all environment-sourced values (including numeric/boolean values to prevent injection)
+	userControlledValues := map[string]string{
+		"logLevel":                        logLevel,
+		"logFormat":                       logFormat,
+		"otelCollectorAddress":            otelCollectorAddress,
+		"maxConcurrentQueries":            maxConcurrentQueries,
+		"capacityEnabled":                 capacityEnabled,
+		"performanceEnabled":              performanceEnabled,
+		"topologyEnabled":                 topologyEnabled,
+		"topologyPollFrequency":           topologyPollFrequency,
+		"clusterCapacityPollFrequency":    clusterCapacityPollFrequency,
+		"clusterPerformancePollFrequency": clusterPerformancePollFrequency,
+		"quotaCapacityPollFrequency":      quotaCapacityPollFrequency,
+		"clientInsecure":                  clientInsecure,
+		"clientAuthType":                  clientAuthType,
+		"clientVerbose":                   clientVerbose,
+	}
+	for fieldName, value := range userControlledValues {
+		// Only validate non-empty values (some fields are optional)
+		if value != "" {
+			if err := operatorutils.ValidateYAMLSubstitutionValue(value, fieldName); err != nil {
+				return nil, fmt.Errorf("invalid value for YAML substitution: %w", err)
 			}
 		}
 	}
@@ -844,9 +1229,15 @@ func getPowerScaleMetricsObjects(ctx context.Context, op operatorutils.OperatorC
 	YamlString = strings.ReplaceAll(YamlString, IsiclientVerbose, clientVerbose)
 	YamlString = strings.ReplaceAll(YamlString, PowerscaleLogFormat, logFormat)
 	YamlString = strings.ReplaceAll(YamlString, OtelCollectorAddress, otelCollectorAddress)
+	YamlString = strings.ReplaceAll(YamlString, constants.CsiMetricsEnabled, obsMetricsEnabled)
+	YamlString = strings.ReplaceAll(YamlString, constants.CsiMetricsPort, obsMetricsPort)
 	YamlString = strings.ReplaceAll(YamlString, DriverDefaultReleaseName, cr.Name)
 
 	metricsObjects, err := operatorutils.GetModuleComponentObj([]byte(YamlString))
+	if err != nil {
+		return nil, err
+	}
+	metricsObjects, err = applyObsMetricsConfig(metricsObjects, obsMetricsConfig, "karavi-metrics-powerscale")
 	if err != nil {
 		return nil, err
 	}
@@ -881,32 +1272,6 @@ func parseObservabilityMetricsDeployment(ctx context.Context, deployment *appsv1
 		dpApply, err = AuthInjectDeployment(ctx, *dpApply, cr, op, ctrlClient)
 		if err != nil {
 			return nil, fmt.Errorf("injecting auth into Observability metrics deployment: %v", err)
-		}
-	}
-
-	configVersion, err := operatorutils.GetVersion(ctx, &cr, op)
-	if err != nil {
-		return nil, err
-	}
-	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
-
-		// add prefix to secretName of auth volumes
-		for i, v := range dpApply.Spec.Template.Spec.Volumes {
-			if operatorutils.Contains(defaultAuthSecretsName, *v.Name) {
-				name := getNewAuthSecretName(cr.GetDriverType(), *v.Secret.SecretName)
-				dpApply.Spec.Template.Spec.Volumes[i].Secret.SecretName = &name
-			}
-		}
-		// add prefix to secretName of proxy token
-		for i, c := range dpApply.Spec.Template.Spec.Containers {
-			if *c.Name == "karavi-authorization-proxy" {
-				for j, env := range c.Env {
-					if (*env.Name == "ACCESS_TOKEN" || *env.Name == "REFRESH_TOKEN") && operatorutils.Contains(defaultAuthSecretsName, *env.ValueFrom.SecretKeyRef.Name) {
-						name := getNewAuthSecretName(cr.GetDriverType(), *env.ValueFrom.SecretKeyRef.Name)
-						dpApply.Spec.Template.Spec.Containers[i].Env[j].ValueFrom.SecretKeyRef.Name = &name
-					}
-				}
-			}
 		}
 	}
 	return dpApply, nil
@@ -950,24 +1315,22 @@ func PowerFlexMetrics(ctx context.Context, isDeleting bool, op operatorutils.Ope
 		return fmt.Errorf("could not find deployment obj")
 	}
 
-	configVersion, err := operatorutils.GetVersion(ctx, &cr, op)
-	if err != nil {
-		return err
-	}
-	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
-		// append secret objects
-		powerflexMetricsObjects, err = appendObservabilitySecrets(ctx, cr, powerflexMetricsObjects, ctrlClient, k8sClient)
-		if err != nil {
-			return fmt.Errorf("copy secrets from %s: %v", cr.Namespace, err)
-		}
-	}
-
 	for _, ctrlObj := range powerflexMetricsObjects {
 		if isDeleting {
 			if err := operatorutils.DeleteObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
 		} else {
+			// ServiceMonitor requires special handling to fetch resourceVersion for updates
+			if ctrlObj.GetObjectKind().GroupVersionKind().Kind == "ServiceMonitor" {
+				found := &unstructured.Unstructured{}
+				found.SetGroupVersionKind(ctrlObj.GetObjectKind().GroupVersionKind())
+				err = ctrlClient.Get(ctx, client.ObjectKey{Name: ctrlObj.GetName(), Namespace: ctrlObj.GetNamespace()}, found)
+				if err == nil {
+					// Copy resourceVersion from existing object for optimistic concurrency
+					ctrlObj.SetResourceVersion(found.GetResourceVersion())
+				}
+			}
 			if err := operatorutils.ApplyCTRLObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
@@ -1012,6 +1375,10 @@ func getPowerFlexMetricsObject(ctx context.Context, op operatorutils.OperatorCon
 	}
 	YamlString := string(buf)
 
+	obsMetricsConfig := getObsMetricsConfig(obs, DefaultPowerFlexObsMetricsPort, DefaultPowerFlexObsServiceMonitorInterval)
+	obsMetricsEnabled := fmt.Sprintf("%t", obsMetricsConfig.enabled)
+	obsMetricsPort := fmt.Sprintf("%d", obsMetricsConfig.port)
+
 	otelCollectorAddress := "otel-collector:55680"
 	pflexImage := ""
 	maxConcurrentQueries := "10"
@@ -1023,15 +1390,15 @@ func getPowerFlexMetricsObject(ctx context.Context, op operatorutils.OperatorCon
 	storagePoolPollFrequency := "10"
 	topologyEnabled := "true"
 	topologyPollFrequency := "30"
-	logFormat := "TEXT"
-	logLevel := "INFO"
+	logFormat := "json"
+	logLevel := "info"
 
 	for _, component := range obs.Components {
 		if component.Name == ObservabilityMetricsPowerFlexName {
 			pflexImage = operatorutils.GetFinalImage(ctx, cr, matched, component, YamlString)
 			for _, env := range component.Envs {
 				if strings.Contains(PowerflexLogLevel, env.Name) {
-					logLevel = env.Value
+					logLevel = strings.ToLower(strings.TrimSpace(env.Value))
 				} else if strings.Contains(PowerflexMaxConcurrentQueries, env.Name) {
 					maxConcurrentQueries = env.Value
 				} else if strings.Contains(PowerflexSdcMetricsEnabled, env.Name) {
@@ -1051,10 +1418,41 @@ func getPowerFlexMetricsObject(ctx context.Context, op operatorutils.OperatorCon
 				} else if strings.Contains(PowerflexStoragePoolPollFrequency, env.Name) {
 					storagePoolPollFrequency = env.Value
 				} else if strings.Contains(PowerflexLogFormat, env.Name) {
-					logFormat = env.Value
+					logFormat = strings.ToLower(strings.TrimSpace(env.Value))
 				} else if strings.Contains(OtelCollectorAddress, env.Name) {
 					otelCollectorAddress = env.Value
 				}
+			}
+		}
+	}
+
+	// Validate CR fields and user-controlled values before YAML substitution
+	if err := operatorutils.ValidateKubernetesName(cr.Name); err != nil {
+		return nil, fmt.Errorf("invalid CR name for YAML substitution: %w", err)
+	}
+	if err := operatorutils.ValidateKubernetesNamespace(cr.Namespace); err != nil {
+		return nil, fmt.Errorf("invalid CR namespace for YAML substitution: %w", err)
+	}
+	// Validate all environment-sourced values (including numeric/boolean values to prevent injection)
+	userControlledValues := map[string]string{
+		"logLevel":                 logLevel,
+		"logFormat":                logFormat,
+		"otelCollectorAddress":     otelCollectorAddress,
+		"maxConcurrentQueries":     maxConcurrentQueries,
+		"sdcEnabled":               sdcEnabled,
+		"volumeEnabled":            volumeEnabled,
+		"storagePoolEnabled":       storagePoolEnabled,
+		"sdcPollFrequency":         sdcPollFrequency,
+		"volumePollFrequency":      volumePollFrequency,
+		"storagePoolPollFrequency": storagePoolPollFrequency,
+		"topologyEnabled":          topologyEnabled,
+		"topologyPollFrequency":    topologyPollFrequency,
+	}
+	for fieldName, value := range userControlledValues {
+		// Only validate non-empty values (some fields are optional)
+		if value != "" {
+			if err := operatorutils.ValidateYAMLSubstitutionValue(value, fieldName); err != nil {
+				return nil, fmt.Errorf("invalid value for YAML substitution: %w", err)
 			}
 		}
 	}
@@ -1073,9 +1471,15 @@ func getPowerFlexMetricsObject(ctx context.Context, op operatorutils.OperatorCon
 	YamlString = strings.ReplaceAll(YamlString, PowerflexTopologyMetricsPollFrequency, topologyPollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, PowerflexLogFormat, logFormat)
 	YamlString = strings.ReplaceAll(YamlString, OtelCollectorAddress, otelCollectorAddress)
+	YamlString = strings.ReplaceAll(YamlString, constants.CsiMetricsEnabled, obsMetricsEnabled)
+	YamlString = strings.ReplaceAll(YamlString, constants.CsiMetricsPort, obsMetricsPort)
 	YamlString = strings.ReplaceAll(YamlString, DriverDefaultReleaseName, cr.Name)
 
 	metricsObjects, err := operatorutils.GetModuleComponentObj([]byte(YamlString))
+	if err != nil {
+		return nil, err
+	}
+	metricsObjects, err = applyObsMetricsConfig(metricsObjects, obsMetricsConfig, "karavi-metrics-powerflex")
 	if err != nil {
 		return nil, err
 	}
@@ -1093,70 +1497,6 @@ func getObservabilityModule(cr csmv1.ContainerStorageModule) (csmv1.Module, erro
 		}
 	}
 	return csmv1.Module{}, fmt.Errorf("could not find observability module")
-}
-
-// appendObservabilitySecrets - append secrets from driver namespace including auth secrets, change their namespace to Observability Namespace
-func appendObservabilitySecrets(ctx context.Context, cr csmv1.ContainerStorageModule, objects []client.Object, ctrlClient client.Client, _ kubernetes.Interface) ([]client.Object, error) {
-	driverSecretName := strings.ReplaceAll(defaultSecretsName[cr.GetDriverType()], DriverDefaultReleaseName, cr.Name)
-
-	if cr.Spec.Driver.AuthSecret != "" {
-		driverSecretName = cr.Spec.Driver.AuthSecret
-	}
-
-	driverSecret, err := operatorutils.GetSecret(ctx, driverSecretName, cr.GetNamespace(), ctrlClient)
-	if err != nil {
-		return objects, fmt.Errorf("reading secret [%s] error [%s]", driverSecret, err)
-	}
-
-	newSecret := createObsSecretObj(*driverSecret, operatorutils.ObservabilityNamespace, driverSecret.Name)
-	objects = append(objects, newSecret)
-
-	// authorization secrets
-	if authorizationEnabled, auth := operatorutils.IsModuleEnabled(ctx, cr, csmv1.Authorization); authorizationEnabled {
-		skipCertValid := true
-		for _, env := range auth.Components[0].Envs {
-			if env.Name == "SKIP_CERTIFICATE_VALIDATION" {
-				skipCertValid, err = strconv.ParseBool(env.Value)
-				if err != nil {
-					return objects, fmt.Errorf("%s is an invalid value for SKIP_CERTIFICATE_VALIDATION: %v", env.Value, err)
-				}
-				break
-			}
-		}
-		for _, s := range defaultAuthSecretsName {
-			if s == "proxy-server-root-certificate" && skipCertValid {
-				continue
-			}
-
-			found, err := operatorutils.GetSecret(ctx, s, cr.GetNamespace(), ctrlClient)
-			if err != nil {
-				return objects, fmt.Errorf("reading secret [%s] error [%s]", s, err)
-			}
-			newSecretName := getNewAuthSecretName(cr.GetDriverType(), found.Name)
-			newAuthSecret := createObsSecretObj(*found, operatorutils.ObservabilityNamespace, newSecretName)
-			objects = append(objects, newAuthSecret)
-		}
-	}
-
-	return objects, nil
-}
-
-// createObsSecretObj - Create new Observability Secret Object from driver Secret
-func createObsSecretObj(driverSecret corev1.Secret, newNameSpace, newSecretName string) *corev1.Secret {
-	return &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      newSecretName,
-			Namespace: newNameSpace,
-		},
-		TypeMeta: driverSecret.TypeMeta,
-		Data:     driverSecret.Data,
-		Type:     driverSecret.Type,
-	}
-}
-
-// getNewAuthSecretName - add prefix to secretName
-func getNewAuthSecretName(driverType csmv1.DriverType, secretName string) string {
-	return fmt.Sprintf("%s-%s", driverType, secretName)
 }
 
 // getIssuerCertServiceObs - gets cert manager issuer and certificate manifest for observability
@@ -1202,6 +1542,25 @@ func getIssuerCertServiceObs(ctx context.Context, op operatorutils.OperatorConfi
 	return yamlString, nil
 }
 
+// isRetryableWebhookError checks if an error is related to cert-manager webhook connectivity
+// or certificate verification issues. These errors are retryable with exponential backoff.
+// Note: String matching is used because Kubernetes API errors don't provide typed errors
+// for these specific webhook/certificate errors. The patterns are based on common
+// cert-manager webhook error messages and are relatively stable.
+func isRetryableWebhookError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errStr := err.Error()
+	// Check for common retryable error patterns from cert-manager webhooks
+	return strings.Contains(errStr, "tls: failed to verify certificate") ||
+		strings.Contains(errStr, "x509: certificate signed by unknown authority") ||
+		strings.Contains(errStr, "connection refused") ||
+		strings.Contains(errStr, "no such host") ||
+		strings.Contains(errStr, "webhook") ||
+		strings.Contains(errStr, "Internal error occurred: failed calling webhook")
+}
+
 // IssuerCertServiceObs - apply and delete the observability issuer and certificate service
 func IssuerCertServiceObs(ctx context.Context, isDeleting bool, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
 	obs, err := getObservabilityModule(cr)
@@ -1210,14 +1569,62 @@ func IssuerCertServiceObs(ctx context.Context, isDeleting bool, op operatorutils
 	}
 
 	for _, component := range obs.Components {
-		if (component.Name == ObservabilityOtelCollectorName && *(component.Enabled)) || (component.Name == ObservabilityTopologyName && *(component.Enabled)) || (component.Name == ObservabilityMetricsPowerStoreName && *(component.Enabled)) {
+		if (component.Name == ObservabilityOtelCollectorName && *component.Enabled) || (component.Name == ObservabilityTopologyName && *component.Enabled) || (component.Name == ObservabilityMetricsPowerStoreName && *component.Enabled) {
 			yamlString, err := getIssuerCertServiceObs(ctx, op, obs, component.Name, cr)
 			if err != nil {
 				return err
 			}
-			err = applyDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
-			if err != nil {
-				return err
+
+			// Retry logic with exponential backoff for webhook-related errors
+			// Note: These values are hardcoded based on industry best practices:
+			// - 5 retries provides sufficient attempts for transient webhook issues
+			// - 2s base delay with exponential backoff results in ~62s total wait time
+			// - This balances fast recovery with avoiding excessive retries
+			// Consider making configurable via environment variables if tuning is needed for specific environments
+			maxRetries := 5
+			baseDelay := 2 * time.Second
+			var lastErr error
+
+			for attempt := 0; attempt < maxRetries; attempt++ {
+				err = applyOrDeleteObjects(ctx, ctrlClient, yamlString, isDeleting)
+				if err == nil {
+					break
+				}
+
+				lastErr = err
+
+				// Only retry on webhook-related errors
+				if !isRetryableWebhookError(err) {
+					return err
+				}
+
+				// If this is the last attempt, don't wait
+				if attempt == maxRetries-1 {
+					break
+				}
+
+				// Exponential backoff
+				delay := baseDelay * time.Duration(1<<uint(attempt))
+				log := logger.GetLogger(ctx)
+				log.Warnw("Webhook error encountered, retrying",
+					"component", component.Name,
+					"attempt", attempt+1,
+					"maxRetries", maxRetries,
+					"delay", delay,
+					"error", err)
+
+				select {
+				case <-time.After(delay):
+				case <-ctx.Done():
+					if lastErr != nil {
+						return fmt.Errorf("%w: %v", ctx.Err(), lastErr)
+					}
+					return ctx.Err()
+				}
+			}
+
+			if lastErr != nil {
+				return fmt.Errorf("failed to apply certificate resources for %s after %d retries: %w", component.Name, maxRetries, lastErr)
 			}
 		}
 	}
@@ -1286,15 +1693,20 @@ func PowerMaxMetrics(ctx context.Context, isDeleting bool, op operatorutils.Oper
 		}
 	}
 
-	configVersion, err := operatorutils.GetVersion(ctx, &cr, op)
+	obs, err := getObservabilityModule(cr)
 	if err != nil {
 		return err
 	}
-	if strings.Contains(configVersion, "v2.13") || strings.Contains(configVersion, "v2.14") {
-		// append secret objects
-		powerMaxMetricsObjects, err = appendObservabilitySecrets(ctx, cr, powerMaxMetricsObjects, ctrlClient, k8sClient)
-		if err != nil {
-			return fmt.Errorf("copy secrets from %s: %v", cr.Namespace, err)
+	pmaxObsMetricsConfig := getObsMetricsConfig(obs, DefaultPowerMaxObsMetricsPort, DefaultPowerMaxObsServiceMonitorInterval)
+
+	if !pmaxObsMetricsConfig.enabled || !pmaxObsMetricsConfig.serviceMonitorEnabled {
+		serviceMonitor := &unstructured.Unstructured{}
+		serviceMonitor.SetAPIVersion("monitoring.coreos.com/v1")
+		serviceMonitor.SetKind("ServiceMonitor")
+		serviceMonitor.SetName("karavi-metrics-powermax-obs-monitor")
+		serviceMonitor.SetNamespace(cr.Namespace)
+		if err := operatorutils.DeleteObject(ctx, serviceMonitor, ctrlClient); err != nil {
+			return err
 		}
 	}
 
@@ -1304,6 +1716,16 @@ func PowerMaxMetrics(ctx context.Context, isDeleting bool, op operatorutils.Oper
 				return err
 			}
 		} else {
+			// ServiceMonitor requires special handling to fetch resourceVersion for updates
+			if ctrlObj.GetObjectKind().GroupVersionKind().Kind == "ServiceMonitor" {
+				found := &unstructured.Unstructured{}
+				found.SetGroupVersionKind(ctrlObj.GetObjectKind().GroupVersionKind())
+				err = ctrlClient.Get(ctx, client.ObjectKey{Name: ctrlObj.GetName(), Namespace: ctrlObj.GetNamespace()}, found)
+				if err == nil {
+					// Copy resourceVersion from existing object for optimistic concurrency
+					ctrlObj.SetResourceVersion(found.GetResourceVersion())
+				}
+			}
 			if err := operatorutils.ApplyCTRLObject(ctx, ctrlObj, ctrlClient); err != nil {
 				return err
 			}
@@ -1368,7 +1790,7 @@ func setPowerMaxMetricsConfigMap(dp *confv1.DeploymentApplyConfiguration, cr csm
 
 	// Dynamically add the volume
 	contains := slices.ContainsFunc(dp.Spec.Template.Spec.Volumes,
-		func(v acorev1.VolumeApplyConfiguration) bool { return *(v.Name) == *(vol.Name) },
+		func(v acorev1.VolumeApplyConfiguration) bool { return *v.Name == *vol.Name },
 	)
 	if !contains {
 		dp.Spec.Template.Spec.Volumes = append(dp.Spec.Template.Spec.Volumes, vol)
@@ -1376,10 +1798,11 @@ func setPowerMaxMetricsConfigMap(dp *confv1.DeploymentApplyConfiguration, cr csm
 
 	mountPath := "/etc/reverseproxy"
 	volumeMount := acorev1.VolumeMountApplyConfiguration{Name: &cm, MountPath: &mountPath}
-	contains = slices.ContainsFunc(dp.Spec.Template.Spec.Containers[0].VolumeMounts,
+	contains = slices.ContainsFunc(
+		dp.Spec.Template.Spec.Containers[0].VolumeMounts,
 		func(v acorev1.VolumeMountApplyConfiguration) bool {
 			// Cast to pull out value instead of comparing addresses.
-			return *(v.Name) == *(volumeMount.Name)
+			return *v.Name == *volumeMount.Name
 		},
 	)
 
@@ -1412,8 +1835,8 @@ func getPowerMaxMetricsObject(ctx context.Context, op operatorutils.OperatorConf
 	topologyPollFrequency := "300"
 	capacityPollFrequency := "3600"
 	perfPollFrequency := "300"
-	logFormat := "TEXT"
-	logLevel := "INFO"
+	logFormat := "json"
+	logLevel := "info"
 	revproxyConfigMap := "powermax-reverseproxy-config"
 
 	for _, component := range obs.Components {
@@ -1421,7 +1844,7 @@ func getPowerMaxMetricsObject(ctx context.Context, op operatorutils.OperatorConf
 			pmaxImage = operatorutils.GetFinalImage(ctx, cr, matched, component, YamlString)
 			for _, env := range component.Envs {
 				if strings.Contains(PmaxLogLevel, env.Name) {
-					logLevel = env.Value
+					logLevel = strings.ToLower(strings.TrimSpace(env.Value))
 				} else if strings.Contains(PmaxConcurrentQueries, env.Name) {
 					maxConcurrentQueries = env.Value
 				} else if strings.Contains(PmaxCapacityMetricsEnabled, env.Name) {
@@ -1439,10 +1862,40 @@ func getPowerMaxMetricsObject(ctx context.Context, op operatorutils.OperatorConf
 				} else if strings.Contains(ReverseProxyConfigMap, env.Name) {
 					revproxyConfigMap = env.Value
 				} else if strings.Contains(PmaxLogFormat, env.Name) {
-					logFormat = env.Value
+					logFormat = strings.ToLower(strings.TrimSpace(env.Value))
 				} else if strings.Contains(OtelCollectorAddress, env.Name) {
 					otelCollectorAddress = env.Value
 				}
+			}
+		}
+	}
+
+	// Validate CR fields and user-controlled values before YAML substitution
+	if err := operatorutils.ValidateKubernetesName(cr.Name); err != nil {
+		return nil, fmt.Errorf("invalid CR name for YAML substitution: %w", err)
+	}
+	if err := operatorutils.ValidateKubernetesNamespace(cr.Namespace); err != nil {
+		return nil, fmt.Errorf("invalid CR namespace for YAML substitution: %w", err)
+	}
+	// Validate all environment-sourced values (including numeric/boolean values to prevent injection)
+	userControlledValues := map[string]string{
+		"logLevel":              logLevel,
+		"logFormat":             logFormat,
+		"otelCollectorAddress":  otelCollectorAddress,
+		"maxConcurrentQueries":  maxConcurrentQueries,
+		"capacityEnabled":       capacityEnabled,
+		"perfEnabled":           perfEnabled,
+		"topologyEnabled":       topologyEnabled,
+		"topologyPollFrequency": topologyPollFrequency,
+		"capacityPollFrequency": capacityPollFrequency,
+		"perfPollFrequency":     perfPollFrequency,
+		"revproxyConfigMap":     revproxyConfigMap,
+	}
+	for fieldName, value := range userControlledValues {
+		// Only validate non-empty values (some fields are optional)
+		if value != "" {
+			if err := operatorutils.ValidateYAMLSubstitutionValue(value, fieldName); err != nil {
+				return nil, fmt.Errorf("invalid value for YAML substitution: %w", err)
 			}
 		}
 	}
@@ -1460,12 +1913,22 @@ func getPowerMaxMetricsObject(ctx context.Context, op operatorutils.OperatorConf
 	YamlString = strings.ReplaceAll(YamlString, PmaxTopologyMetricsPollFrequency, topologyPollFrequency)
 	YamlString = strings.ReplaceAll(YamlString, OtelCollectorAddress, otelCollectorAddress)
 	YamlString = strings.ReplaceAll(YamlString, ReverseProxyConfigMap, revproxyConfigMap)
+
+	pmaxObsConfig := getObsMetricsConfig(obs, DefaultPowerMaxObsMetricsPort, DefaultPowerMaxObsServiceMonitorInterval)
+	YamlString = strings.ReplaceAll(YamlString, constants.CsiMetricsEnabled, fmt.Sprintf("%t", pmaxObsConfig.enabled))
+	YamlString = strings.ReplaceAll(YamlString, constants.CsiMetricsPort, fmt.Sprintf("%d", pmaxObsConfig.port))
+
 	YamlString = strings.ReplaceAll(YamlString, DriverDefaultReleaseName, cr.Name)
 
 	metricsObjects, err := operatorutils.GetModuleComponentObj([]byte(YamlString))
 	if err != nil {
 		return nil, err
 	}
+	metricsObjects, err = applyObsMetricsConfig(metricsObjects, pmaxObsConfig, "karavi-metrics-powermax")
+	if err != nil {
+		return nil, err
+	}
+
 	operatorutils.SetContainerImage(metricsObjects, "karavi-metrics-powermax", "karavi-metrics-powermax", pmaxImage)
 
 	return metricsObjects, nil

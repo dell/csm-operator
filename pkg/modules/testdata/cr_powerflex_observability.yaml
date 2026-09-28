@@ -11,12 +11,12 @@ spec:
       # Allowed values: ReadWriteOnceWithFSType, File , None
       # Default value: ReadWriteOnceWithFSType
       fSGroupPolicy: "File"
-    configVersion: v2.17.0
+    configVersion: v2.18.0
     replicas: 1
     dnsPolicy: ClusterFirstWithHostNet
     forceRemoveDriver: true
     common:
-      image: "quay.io/dell/container-storage-modules/csi-vxflexos:v2.17.0"
+      image: "quay.io/dell/container-storage-modules/csi-vxflexos:v2.18.0"
       imagePullPolicy: IfNotPresent
       envs:
         - name: X_CSI_VXFLEXOS_ENABLELISTVOLUMESNAPSHOT
@@ -40,8 +40,6 @@ spec:
         envs:
           - name: HOST_PID
             value: "1"
-          - name: MDM
-            value: "10.x.x.x,10.x.x.x"  # provide MDM value
       # health monitor is disabled by default, refer to driver documentation before enabling it
       # Also set the env variable controller.envs.X_CSI_HEALTH_MONITOR_ENABLED  to "true".
       - name: csi-external-health-monitor-controller
@@ -119,21 +117,19 @@ spec:
         imagePullPolicy: IfNotPresent
         name: sdc
         envs:
-          - name: MDM
-            value: "10.x.x.x,10.x.x.x"  # provide MDM value
   modules:
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
       enabled: true
-      configVersion: v1.15.0
+      configVersion: v1.16.0
       components:
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
           enabled: true
           # image: Defines otel-collector image. This shouldn't be changed
           # Allowed values: string
-          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.150.1
+          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.160.0
           # certificate: certificate for cert/private-key pair -- please add cert here to use custom certificates
           # Allowed values: string
           certificate: ""
@@ -157,7 +153,7 @@ spec:
           # enabled: Enable/Disable PowerFlex metrics
           enabled: true
           # image: Defines PowerFlex metrics image. This shouldn't be changed
-          image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.15.0
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerflex:v1.16.0
           envs:
             # POWERFLEX_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerFlex
             # Allowed values: int
@@ -224,7 +220,7 @@ spec:
       enabled: false
       components:
         - name: karavi-authorization-proxy
-          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.5.0
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.6.0
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"

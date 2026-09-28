@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -38,6 +38,8 @@ import (
 	networking "k8s.io/api/networking/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	applyv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
@@ -83,11 +85,11 @@ const (
 
 	DefaultProxyServerImage    = "quay.io/dell/container-storage-modules/csm-authorization-proxy"
 	DefaultOpaImage            = "docker.io/openpolicyagent/opa:0.70.0"
-	DefaultOpaKubeMgmtImage    = "docker.io/openpolicyagent/kube-mgmt:9.2.1"
+	DefaultOpaKubeMgmtImage    = "docker.io/openpolicyagent/kube-mgmt:11.0.12"
 	DefaultTenantServiceImage  = "quay.io/dell/container-storage-modules/csm-authorization-tenant"
 	DefaultRoleServiceImage    = "quay.io/dell/container-storage-modules/csm-authorization-role"
 	DefaultStorageServiceImage = "quay.io/dell/container-storage-modules/csm-authorization-storage"
-	DefaultRedisImage          = "redis:8.4.0-alpine"
+	DefaultRedisImage          = "redis:8.10.1-alpine"
 	DefaultRedisCommanderImage = "rediscommander/redis-commander:latest"
 	DefaultControllerImage     = "quay.io/dell/container-storage-modules/csm-authorization-controller"
 
@@ -101,6 +103,14 @@ const (
 	AuthCert = "<BASE64_CERTIFICATE>"
 	// AuthPrivateKey - for tls secret
 	AuthPrivateKey = "<BASE64_PRIVATE_KEY>"
+	// DefaultAuthProxyMetricsPort - default port for the proxy-server Prometheus metrics endpoint
+	DefaultAuthProxyMetricsPort = int32(2112)
+	// DefaultAuthProxyServiceMonitorInterval - default Prometheus scrape interval for the proxy-server ServiceMonitor
+	DefaultAuthProxyServiceMonitorInterval = "30s"
+	// AuthProxyMetricsTLSVolumeName - volume name used when mounting the proxy-server metrics TLS secret
+	AuthProxyMetricsTLSVolumeName = "proxy-server-metrics-tls"
+	// AuthProxyMetricsTLSMountPath - mount path for the proxy-server metrics TLS secret
+	AuthProxyMetricsTLSMountPath = "/etc/metrics-tls"
 
 	// AuthProxyServerComponent - proxy-server component
 	AuthProxyServerComponent = "proxy-server"
@@ -210,7 +220,6 @@ func getAuthorizationModule(cr csmv1.ContainerStorageModule) (csmv1.Module, erro
 // CheckAnnotationAuth --
 func CheckAnnotationAuth(annotation map[string]string) error {
 	if annotation != nil {
-		fmt.Println(annotation)
 		if _, ok := annotation["com.dell.karavi-authorization-proxy"]; !ok {
 			return errors.New("com.dell.karavi-authorization-proxy is missing from annotation")
 		}
@@ -335,9 +344,19 @@ func getAuthApplyCR(ctx context.Context, cr csmv1.ContainerStorageModule, op ope
 		if err != nil {
 			return nil, nil, emptySpec, err
 		}
-		authConfigVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+
+		// Get auth configVersion when there is no associated driver
+		authAtLeast22, err := operatorutils.MinVersionCheck("v2.2.0", version)
 		if err != nil {
 			return nil, nil, emptySpec, err
+		}
+		if authAtLeast22 && authModule.Name == csmv1.AuthorizationServer {
+			authConfigVersion = version
+		} else {
+			authConfigVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+			if err != nil {
+				return nil, nil, emptySpec, err
+			}
 		}
 	}
 
@@ -478,9 +497,19 @@ func getAuthApplyVolumes(ctx context.Context, cr csmv1.ContainerStorageModule, o
 		if err != nil {
 			return nil, err
 		}
-		authConfigVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+
+		// Get auth configVersion when there is no associated driver
+		authAtLeast22, err := operatorutils.MinVersionCheck("v2.2.0", version)
 		if err != nil {
 			return nil, err
+		}
+		if authAtLeast22 && authModule.Name == csmv1.AuthorizationServer {
+			authConfigVersion = version
+		} else {
+			authConfigVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -649,9 +678,19 @@ func AuthorizationPrecheck(ctx context.Context, op operatorutils.OperatorConfig,
 		if err != nil {
 			return err
 		}
-		authConfigVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+
+		// Get auth configVersion when there is no associated driver
+		authAtLeast22, err := operatorutils.MinVersionCheck("v2.2.0", version)
 		if err != nil {
 			return err
+		}
+		if authAtLeast22 && auth.Name == csmv1.AuthorizationServer {
+			authConfigVersion = version
+		} else {
+			authConfigVersion, err = operatorutils.GetModuleDefaultVersion(version, cr.Spec.Driver.CSIDriverType, csmv1.Authorization, op.ConfigDirectory)
+			if err != nil {
+				return err
+			}
 		}
 	} else {
 		authConfigVersion = auth.ConfigVersion
@@ -759,6 +798,17 @@ func AuthorizationServerPrecheck(ctx context.Context, op operatorutils.OperatorC
 		}
 	}
 
+	if auth.Metrics != nil && auth.Metrics.Enabled && auth.Metrics.TLSCertSecret != "" {
+		found := &corev1.Secret{}
+		err := r.GetClient().Get(ctx, types.NamespacedName{Name: auth.Metrics.TLSCertSecret, Namespace: cr.GetNamespace()}, found)
+		if err != nil {
+			if k8serrors.IsNotFound(err) {
+				return fmt.Errorf("failed to find secret %s", auth.Metrics.TLSCertSecret)
+			}
+			return err
+		}
+	}
+
 	log.Infof("preformed pre-checks for %s proxy server", auth.Name)
 	return nil
 }
@@ -859,11 +909,6 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op oper
 		return err
 	}
 
-	err = applyDeleteObjects(ctx, ctrlClient, YamlString, isDeleting)
-	if err != nil {
-		return err
-	}
-
 	log.Infof("Config version of auth module: %s", authModule.ConfigVersion)
 	// scaffolds are applied only for v2.3.0 and above for secret provider class mounts and volumes
 	ok, err := operatorutils.MinVersionCheck("v2.3.0", authModule.ConfigVersion)
@@ -871,6 +916,27 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op oper
 		return err
 	}
 
+	// When deleting, check if authorization CRD instances (CSMRole, CSMTenant, Storage)
+	// exist in the namespace. These are user-created resources and must be deleted
+	// manually before the CSM CR can be deleted. This prevents the operator from
+	// getting stuck in an infinite loop if auth CRs remain.
+	if isDeleting {
+		err = checkAuthorizationCRDInstances(ctx, ctrlClient, cr.Namespace)
+		if err != nil {
+			return err
+		}
+	}
+
+	// When creating/updating, apply YAML manifest (Services, RBAC) before workloads.
+	if !isDeleting {
+		err = applyOrDeleteObjects(ctx, ctrlClient, YamlString, isDeleting)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Apply/delete v2.3.0+ resources (Redis, Sentinel, Proxy Server, Tenant Service)
+	// These resources are only applicable for auth module versions >= v2.3.0
 	if ok {
 		err = applyDeleteAuthorizationRedisStatefulsetV2(ctx, isDeleting, cr, ctrlClient, authModule, matched)
 		if err != nil {
@@ -901,6 +967,15 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op oper
 	err = authorizationStorageServiceV2(ctx, isDeleting, cr, ctrlClient, authModule, matched, op)
 	if err != nil {
 		return err
+	}
+
+	// When deleting, remove YAML manifest objects (Services, RBAC, etc.) AFTER
+	// workloads so pods can shut down gracefully while DNS still resolves.
+	if isDeleting {
+		err = applyOrDeleteObjects(ctx, ctrlClient, YamlString, isDeleting)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -1072,7 +1147,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 		return fmt.Errorf("converting storage-service json to yaml: %w", err)
 	}
 
-	err = applyDeleteObjects(ctx, ctrlClient, string(deploymentYaml), isDeleting)
+	err = applyOrDeleteObjects(ctx, ctrlClient, string(deploymentYaml), isDeleting)
 	if err != nil {
 		return fmt.Errorf("applying storage-service deployment: %w", err)
 	}
@@ -1263,6 +1338,59 @@ func configureConjurSecretProvider(secretProviderClasses *csmv1.StorageSystemSec
 	}
 }
 
+// applyAuthMetricsToProxyServerDeployment - injects metrics env vars, container port, and optional TLS volume
+// into the proxy-server container when metrics are enabled in the module configuration.
+func applyAuthMetricsToProxyServerDeployment(deployment *appsv1.Deployment, module csmv1.Module) {
+	if module.Metrics == nil || !module.Metrics.Enabled {
+		return
+	}
+
+	port := module.Metrics.Port
+	if port == 0 {
+		port = DefaultAuthProxyMetricsPort
+	}
+	proxyServerFound := false
+
+	for i, container := range deployment.Spec.Template.Spec.Containers {
+		if container.Name != AuthProxyServerComponent {
+			continue
+		}
+		proxyServerFound = true
+
+		deployment.Spec.Template.Spec.Containers[i].Env = append(deployment.Spec.Template.Spec.Containers[i].Env,
+			corev1.EnvVar{Name: "X_CSI_METRICS_ENABLED", Value: "true"},
+			corev1.EnvVar{Name: "X_CSI_METRICS_PORT", Value: fmt.Sprintf(":%d", port)},
+		)
+
+		deployment.Spec.Template.Spec.Containers[i].Ports = append(deployment.Spec.Template.Spec.Containers[i].Ports,
+			corev1.ContainerPort{Name: "metrics", ContainerPort: port, Protocol: corev1.ProtocolTCP},
+		)
+
+		if module.Metrics.TLSCertSecret != "" {
+			deployment.Spec.Template.Spec.Containers[i].Env = append(deployment.Spec.Template.Spec.Containers[i].Env,
+				corev1.EnvVar{Name: "X_CSI_METRICS_TLS_CERT_FILE", Value: AuthProxyMetricsTLSMountPath + "/tls.crt"},
+				corev1.EnvVar{Name: "X_CSI_METRICS_TLS_KEY_FILE", Value: AuthProxyMetricsTLSMountPath + "/tls.key"},
+			)
+			deployment.Spec.Template.Spec.Containers[i].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[i].VolumeMounts,
+				corev1.VolumeMount{Name: AuthProxyMetricsTLSVolumeName, MountPath: AuthProxyMetricsTLSMountPath, ReadOnly: true},
+			)
+		}
+
+		break
+	}
+
+	if proxyServerFound && module.Metrics.TLSCertSecret != "" {
+		deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes,
+			corev1.Volume{
+				Name: AuthProxyMetricsTLSVolumeName,
+				VolumeSource: corev1.VolumeSource{
+					Secret: &corev1.SecretVolumeSource{SecretName: module.Metrics.TLSCertSecret},
+				},
+			},
+		)
+	}
+}
+
 func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, authModule csmv1.Module, matched operatorutils.VersionSpec, op operatorutils.OperatorConfig) error {
 	replicas := 0
 	redisReplicas := 0
@@ -1305,6 +1433,7 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 	// conversion to int32 is safe for a value up to 2147483647
 	// #nosec G115
 	deployment := getProxyServerScaffold(cr.Name, sentinelName, cr.Namespace, proxyImage, opaImage, opaKubeMgmtImage, configSecretName, redisSecretName, redisPasswordKey, int32(replicas), redisReplicas)
+	applyAuthMetricsToProxyServerDeployment(&deployment, authModule)
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
 		updateConjurAnnotations(deployment.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
@@ -1321,7 +1450,7 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 		return fmt.Errorf("marshalling proxy-server deployment: %w", err)
 	}
 
-	err = applyDeleteObjects(ctx, ctrlClient, string(deploymentBytes), isDeleting)
+	err = applyOrDeleteObjects(ctx, ctrlClient, string(deploymentBytes), isDeleting)
 	if err != nil {
 		return fmt.Errorf("applying proxy-server deployment: %w", err)
 	}
@@ -1379,7 +1508,7 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 		return fmt.Errorf("marshalling tenant-service deployment: %w", err)
 	}
 
-	err = applyDeleteObjects(ctx, ctrlClient, string(deploymentBytes), isDeleting)
+	err = applyOrDeleteObjects(ctx, ctrlClient, string(deploymentBytes), isDeleting)
 	if err != nil {
 		return fmt.Errorf("applying tenant-service deployment: %w", err)
 	}
@@ -1423,11 +1552,25 @@ func applyDeleteAuthorizationRedisStatefulsetV2(ctx context.Context, isDeleting 
 		return fmt.Errorf("marshalling redis statefulset: %w", err)
 	}
 
-	err = applyDeleteObjects(ctx, ctrlClient, string(statefulsetBytes), isDeleting)
+	err = applyOrDeleteObjects(ctx, ctrlClient, string(statefulsetBytes), isDeleting)
 	if err != nil {
 		return fmt.Errorf("applying redis statefulset: %w", err)
 	}
 	return nil
+}
+
+func getAuthorizationIPFamily(authModule csmv1.Module) string {
+	for _, component := range authModule.Components {
+		for _, env := range component.Envs {
+			if env.Name == "X_CSI_AUTHORIZATION_IP_FAMILY" {
+				family := strings.ToLower(strings.TrimSpace(env.Value))
+				if family == "ipv6" || family == "dual" {
+					return family
+				}
+			}
+		}
+	}
+	return ""
 }
 
 func applyDeleteAuthorizationRediscommanderDeploymentV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, authModule csmv1.Module, matched operatorutils.VersionSpec) error {
@@ -1435,6 +1578,7 @@ func applyDeleteAuthorizationRediscommanderDeploymentV2(ctx context.Context, isD
 	sentinelName := ""
 	image := ""
 	redisReplicas := 0
+	ipFamily := getAuthorizationIPFamily(authModule)
 	for _, component := range authModule.Components {
 		switch component.Name {
 		case AuthRedisComponent:
@@ -1456,7 +1600,7 @@ func applyDeleteAuthorizationRediscommanderDeploymentV2(ctx context.Context, isD
 
 	// conversion to int32 is safe for a value up to 2147483647
 	// #nosec G115
-	deployment := getAuthorizationRediscommanderDeploymentScaffold(cr.Name, rediscommanderName, cr.Namespace, image, redisSecretName, redisUsernameKey, redisPasswordKey, sentinelName, checksum, redisReplicas)
+	deployment := getAuthorizationRediscommanderDeploymentScaffold(cr.Name, rediscommanderName, cr.Namespace, image, redisSecretName, redisUsernameKey, redisPasswordKey, sentinelName, checksum, redisReplicas, ipFamily)
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
 		updateConjurAnnotations(deployment.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
@@ -1468,7 +1612,7 @@ func applyDeleteAuthorizationRediscommanderDeploymentV2(ctx context.Context, isD
 		return fmt.Errorf("marshalling rediscommander deployment: %w", err)
 	}
 
-	err = applyDeleteObjects(ctx, ctrlClient, string(deploymentBytes), isDeleting)
+	err = applyOrDeleteObjects(ctx, ctrlClient, string(deploymentBytes), isDeleting)
 	if err != nil {
 		return fmt.Errorf("applying rediscommander deployment: %w", err)
 	}
@@ -1513,7 +1657,7 @@ func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleti
 		return fmt.Errorf("marshalling sentinel statefulset: %w", err)
 	}
 
-	err = applyDeleteObjects(ctx, ctrlClient, string(statefulsetBytes), isDeleting)
+	err = applyOrDeleteObjects(ctx, ctrlClient, string(statefulsetBytes), isDeleting)
 	if err != nil {
 		return fmt.Errorf("applying sentinel statefulset: %w", err)
 	}
@@ -1631,7 +1775,7 @@ loop:
 				return fmt.Errorf("converting vault certificate authority json to yaml: %w", err)
 			}
 
-			err = applyDeleteObjects(ctx, ctrlClient, string(yamlString), isDeleting)
+			err = applyOrDeleteObjects(ctx, ctrlClient, string(yamlString), isDeleting)
 			if err != nil {
 				return fmt.Errorf("applying vault certificate authority secret: %w", err)
 			}
@@ -1674,7 +1818,7 @@ loop:
 				return fmt.Errorf("converting vault certificate json to yaml: %w", err)
 			}
 
-			err = applyDeleteObjects(ctx, ctrlClient, string(yamlString), isDeleting)
+			err = applyOrDeleteObjects(ctx, ctrlClient, string(yamlString), isDeleting)
 			if err != nil {
 				return fmt.Errorf("applying vault certificate secret: %w", err)
 			}
@@ -1692,7 +1836,7 @@ loop:
 			}
 
 			// create/delete issuer
-			err = applyDeleteObjects(ctx, ctrlClient, string(issuerYaml), isDeleting)
+			err = applyOrDeleteObjects(ctx, ctrlClient, string(issuerYaml), isDeleting)
 			if err != nil {
 				return err
 			}
@@ -1715,7 +1859,7 @@ loop:
 			}
 
 			// create/delete certificate
-			err = applyDeleteObjects(ctx, ctrlClient, string(certYaml), isDeleting)
+			err = applyOrDeleteObjects(ctx, ctrlClient, string(certYaml), isDeleting)
 			if err != nil {
 				return err
 			}
@@ -1764,7 +1908,7 @@ func AuthorizationIngress(ctx context.Context, isDeleting, isOpenShift bool, cr 
 		}
 	}
 
-	err = applyDeleteObjects(ctx, ctrlClient, string(ingressYaml), isDeleting)
+	err = applyOrDeleteObjects(ctx, ctrlClient, string(ingressYaml), isDeleting)
 	if err != nil {
 		return err
 	}
@@ -1796,7 +1940,7 @@ func authorizationHTTPRoute(ctx context.Context, isDeleting bool, cr csmv1.Conta
 		}
 	}
 
-	return applyDeleteObjects(ctx, ctrlClient, string(routeYaml), isDeleting)
+	return applyOrDeleteObjects(ctx, ctrlClient, string(routeYaml), isDeleting)
 }
 
 // getGatewayController - configure Gateway API controller yaml with the namespace before installation (v2.5.0+)
@@ -1830,6 +1974,43 @@ func getGatewayController(ctx context.Context, op operatorutils.OperatorConfig, 
 		}
 	}
 
+	// Handle ipFamily configuration for NginxProxy
+	// Read X_CSI_AUTHORIZATION_IP_FAMILY from module common Envs
+	ipFamily := ""
+	for _, component := range auth.Components {
+		for _, env := range component.Envs {
+			if env.Name == "X_CSI_AUTHORIZATION_IP_FAMILY" {
+				ipFamily = env.Value
+				break
+			}
+		}
+		if ipFamily != "" {
+			break
+		}
+	}
+
+	// Normalize and validate allowed values; ignore invalid inputs
+	if ipFamily != "" {
+		ipLower := strings.ToLower(strings.TrimSpace(ipFamily))
+		switch ipLower {
+		case "ipv4", "ipv6", "dual":
+			ipFamily = ipLower
+		default:
+			log := logger.GetLogger(ctx)
+			log.Warnf("Invalid X_CSI_AUTHORIZATION_IP_FAMILY value %q; ignoring and using nginx default", ipFamily)
+			ipFamily = ""
+		}
+	}
+
+	// Substitute the <NGINX_IP_FAMILY> placeholder in the NginxProxy spec
+	if ipFamily != "" {
+		// If ipFamily is set, replace the placeholder with the configured value
+		YamlString = strings.ReplaceAll(YamlString, "<NGINX_IP_FAMILY>", ipFamily)
+	} else {
+		// If not set, remove the entire ipFamily line (nginx-gateway-fabric will use its default)
+		YamlString = strings.ReplaceAll(YamlString, "  ipFamily: <NGINX_IP_FAMILY>\n", "")
+	}
+
 	return YamlString, nil
 }
 
@@ -1840,7 +2021,7 @@ func GatewayController(ctx context.Context, isDeleting bool, op operatorutils.Op
 		return err
 	}
 
-	err = applyDeleteObjects(ctx, ctrlClient, YamlString, isDeleting)
+	err = applyOrDeleteObjects(ctx, ctrlClient, YamlString, isDeleting)
 	if err != nil {
 		return err
 	}
@@ -1903,7 +2084,7 @@ func NginxIngressController(ctx context.Context, isDeleting bool, op operatoruti
 		return err
 	}
 
-	err = applyDeleteObjects(ctx, ctrlClient, YamlString, isDeleting)
+	err = applyOrDeleteObjects(ctx, ctrlClient, YamlString, isDeleting)
 	if err != nil {
 		return err
 	}
@@ -1936,7 +2117,7 @@ func NginxIngressControllerCleanup(ctx context.Context, op operatorutils.Operato
 		YamlString, err := getNginxIngressController(ctx, op, *tempCR)
 		if err == nil {
 			// Found NGINX config, delete the resources
-			return applyDeleteObjects(ctx, ctrlClient, YamlString, true)
+			return applyOrDeleteObjects(ctx, ctrlClient, YamlString, true)
 		}
 	}
 
@@ -1972,7 +2153,7 @@ func InstallPolicies(ctx context.Context, isDeleting bool, op operatorutils.Oper
 		return err
 	}
 
-	err = applyDeleteObjects(ctx, ctrlClient, YamlString, isDeleting)
+	err = applyOrDeleteObjects(ctx, ctrlClient, YamlString, isDeleting)
 	if err != nil {
 		return err
 	}
@@ -2045,7 +2226,7 @@ func InstallWithCerts(ctx context.Context, isDeleting bool, op operatorutils.Ope
 		}
 
 		// create/delete issuer
-		err = applyDeleteObjects(ctx, ctrlClient, string(issuerYaml), isDeleting)
+		err = applyOrDeleteObjects(ctx, ctrlClient, string(issuerYaml), isDeleting)
 		if err != nil {
 			return err
 		}
@@ -2068,13 +2249,13 @@ func InstallWithCerts(ctx context.Context, isDeleting bool, op operatorutils.Ope
 		}
 
 		// create/delete certificate
-		err = applyDeleteObjects(ctx, ctrlClient, string(certYaml), isDeleting)
+		err = applyOrDeleteObjects(ctx, ctrlClient, string(certYaml), isDeleting)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = applyDeleteObjects(ctx, ctrlClient, YamlString, isDeleting)
+	err = applyOrDeleteObjects(ctx, ctrlClient, YamlString, isDeleting)
 	if err != nil {
 		return err
 	}
@@ -2117,12 +2298,34 @@ func AuthCrdDeploy(ctx context.Context, op operatorutils.OperatorConfig, cr csmv
 		return err
 	}
 
-	err = applyDeleteObjects(ctx, ctrlClient, yamlString, false)
+	err = applyOrDeleteObjects(ctx, ctrlClient, yamlString, false)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+// DeleteAuthCrds - delete Authorization CRDs
+func DeleteAuthCrds(ctx context.Context, op operatorutils.OperatorConfig, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client) error {
+	auth, err := getAuthorizationModule(cr)
+	if err != nil {
+		return err
+	}
+
+	// v1 does not have custom resources, so treat it like a no-op
+	if ok, err := operatorutils.MinVersionCheck("v2.0.0-alpha", auth.ConfigVersion); !ok {
+		return nil
+	} else if err != nil {
+		return err
+	}
+
+	yamlString, err := getAuthCrdDeploy(ctx, op, cr, auth)
+	if err != nil {
+		return err
+	}
+
+	return applyOrDeleteObjects(ctx, ctrlClient, yamlString, true)
 }
 
 func createSelfSignedIssuer(cr csmv1.ContainerStorageModule, name string) *certificate.Issuer {
@@ -2175,7 +2378,7 @@ func createSelfSignedCertificate(cr csmv1.ContainerStorageModule, hosts []string
 				"server auth",
 			},
 			DNSNames: hosts,
-			IssuerRef: cmmetav1.ObjectReference{
+			IssuerRef: cmmetav1.IssuerReference{
 				Name:  issuerName,
 				Kind:  "Issuer",
 				Group: "cert-manager.io",
@@ -2510,6 +2713,56 @@ func getRedisChecksumFromSecretData(ctx context.Context, ctrlClient crclient.Cli
 
 	hash := sha256.Sum256(yamlBytes)
 	return hex.EncodeToString(hash[:]), nil
+}
+
+// checkAuthorizationCRDInstances checks if authorization CRD instances
+// (CSMRole, CSMTenant, Storage) exist in the given namespace. These CRs
+// are user-created and should be deleted by the user. If they exist when
+// the CSM CR is being deleted, this function returns an error to prevent
+// the operator from getting stuck in an infinite loop and to guide the
+// user to manually delete the remaining auth CRs.
+func checkAuthorizationCRDInstances(ctx context.Context, ctrlClient crclient.Client, namespace string) error {
+	log := logger.GetLogger(ctx)
+
+	const authCRDGroup = "csm-authorization.storage.dell.com"
+	type crdKind struct {
+		resource string
+		listKind string
+		kind     string
+	}
+	kinds := []crdKind{
+		{"csmroles", "CSMRoleList", "CSMRole"},
+		{"csmtenants", "CSMTenantList", "CSMTenant"},
+		{"storages", "StorageList", "Storage"},
+	}
+
+	var existingCRs []string
+
+	for _, k := range kinds {
+		list := &unstructured.UnstructuredList{}
+		list.SetGroupVersionKind(schema.GroupVersionKind{
+			Group:   authCRDGroup,
+			Version: "v1",
+			Kind:    k.listKind,
+		})
+
+		if err := ctrlClient.List(ctx, list, crclient.InNamespace(namespace)); err != nil {
+			log.Infof("skipping %s check: %v", k.resource, err)
+			continue
+		}
+
+		for i := range list.Items {
+			item := &list.Items[i]
+			itemName := item.GetName()
+			existingCRs = append(existingCRs, fmt.Sprintf("%s/%s", k.resource, itemName))
+		}
+	}
+
+	if len(existingCRs) > 0 {
+		return fmt.Errorf("authorization CRs still exist and must be deleted manually before CSM CR deletion: %v, please delete these CRs and retry the CSM CR deletion", existingCRs)
+	}
+
+	return nil
 }
 
 // updateRedisGlobalVars - update the global redis vars from the config

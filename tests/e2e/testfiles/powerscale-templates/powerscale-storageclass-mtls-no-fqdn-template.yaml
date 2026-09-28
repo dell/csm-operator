@@ -1,0 +1,30 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: isilon-mtls-no-fqdn
+provisioner: csi-isilon.dellemc.com
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+parameters:
+  AccessZone: System
+  IsiPath: /ifs/data
+
+  # Optional node network CIDR used to authorize node IPs when PowerScale
+  # cannot resolve Kubernetes node hostnames.
+  AzNetwork: "${POWERSCALE_AZ_NETWORK}"
+
+  # FQDN Precedence Test: SmartConnectZoneFQDN is intentionally OMITTED.
+  # The driver should resolve FQDN from Secret nfsMountFQDN or X_CSI_ISI_NFS_MOUNT_FQDN.
+  # This proves the fallback precedence chain works correctly.
+
+  # NFSTransportSecurity is StorageClass-only (no inheritance from Secret or environment)
+  NFSTransportSecurity: "mtls"
+
+mountOptions:
+  - "xprtsec=mtls"
+  - "vers=4.1"
+  - "hard"
+  - "timeo=600"
+  - "retrans=2"
+
+volumeBindingMode: Immediate

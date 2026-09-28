@@ -1,0 +1,13 @@
+- apiGroups: ["replication.storage.openshift.io"]
+  resources: ["volumegroupreplications", "volumegroupreplications/status"]
+  verbs: ["get", "list", "watch", "update", "patch"]
+- apiGroups: ["replication.storage.openshift.io"]
+  resources:
+    ["volumegroupreplicationcontents", "volumegroupreplicationcontents/status"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["csiaddons.openshift.io"]
+  resources: ["csiaddonsnodes"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+- apiGroups: ["authentication.k8s.io"]
+  resources: ["tokenreviews"]
+  verbs: ["create"]

@@ -86,6 +86,7 @@ powerscale:
   POWERSCALE_PASS: ""          # Password123!
   POWERSCALE_ENDPOINT: ""      # 1.1.1.1 (do not include https://)
   POWERSCALE_PORT: ""          # 8080
+  POWERSCALE_SHARED_EXPORT_PATH: ""  # /ifs/data/csi/shared-export (for directory-backed volumes)
 
 powerscale-auth:
   POWERSCALE_AUTH_ENDPOINT: ""         # localhost
@@ -144,6 +145,7 @@ powerstore:
   POWERSTORE_PASS: ""          # password
   POWERSTORE_GLOBALID: ""      # myglobalpowerstoreid
   POWERSTORE_ENDPOINT: ""      # 1.1.1.1 (ip only, no /api/rest)
+  # IPv6 example: 2001:db8::1 (bracketed in CR: https://[2001:db8::1]/api/rest)
   POWERSTORE_PROTOCOL: "auto"  # auto
 
 powerstore-auth:
@@ -155,6 +157,14 @@ powerstore-auth:
   POWERSTORE_TENANT: ""                # csmtenant-powerstore
   POWERSTORE_TENANT_PREFIX: ""         # tn1
   POWERSTORE_POOL: ""                  # myglobalpowerstoreid
+
+# Metro configuration for PowerStore dual-array setup (used by metro-snapshot-restore tests)
+powerstore-metro:
+  POWERSTORE_METRO_USER: ""            # username for secondary array
+  POWERSTORE_METRO_PASS: ""            # password for secondary array
+  POWERSTORE_METRO_GLOBALID: ""        # global ID of secondary array
+  POWERSTORE_METRO_ENDPOINT: ""        # 2.2.2.2 (ip only, no /api/rest)
+  POWERSTORE_METRO_REMOTE_SYSTEM: ""   # remote system name as configured in PowerStore
 
 # -- Unity --
 unity:

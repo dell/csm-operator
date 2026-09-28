@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Dell Inc., or its subsidiaries. All Rights Reserved.
+// Copyright (c) 2025-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,11 +21,15 @@ import (
 	"github.com/dell/csm-operator/tests/sharedutil/crclient"
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	confv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 	acorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -237,6 +241,89 @@ func TestObservabilityPrecheck(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
+			}
+		})
+	}
+}
+
+func TestObservabilityPrecheck_MetricsTLSCertSecret(t *testing.T) {
+	type testCase struct {
+		name        string
+		mutateCR    func(*csmv1.ContainerStorageModule, *csmv1.Module)
+		secretNames []string
+		expectedErr string
+	}
+
+	tests := []testCase{
+		{
+			name: "metrics enabled with tls secret validates secret exists",
+			mutateCR: func(_ *csmv1.ContainerStorageModule, obs *csmv1.Module) {
+				obs.Metrics = &csmv1.ModuleMetrics{ //nolint:gosec
+					Enabled:       true,
+					TLSCertSecret: "powerscale-metrics-tls",
+				}
+			},
+			secretNames: []string{"powerscale-metrics-tls"},
+			expectedErr: "",
+		},
+		{
+			name: "metrics enabled with tls secret returns error when secret missing",
+			mutateCR: func(_ *csmv1.ContainerStorageModule, obs *csmv1.Module) {
+				obs.Metrics = &csmv1.ModuleMetrics{ //nolint:gosec
+					Enabled:       true,
+					TLSCertSecret: "powerscale-metrics-tls",
+				}
+			},
+			expectedErr: "failed to find secret powerscale-metrics-tls",
+		},
+		{
+			name: "metrics disabled with tls secret skips secret validation",
+			mutateCR: func(_ *csmv1.ContainerStorageModule, obs *csmv1.Module) {
+				obs.Metrics = &csmv1.ModuleMetrics{ //nolint:gosec
+					Enabled:       false,
+					TLSCertSecret: "powerscale-metrics-tls",
+				}
+			},
+			expectedErr: "",
+		},
+		{
+			name: "metrics enabled with empty tls secret skips secret validation",
+			mutateCR: func(_ *csmv1.ContainerStorageModule, obs *csmv1.Module) {
+				obs.Metrics = &csmv1.ModuleMetrics{ //nolint:gosec
+					Enabled:       true,
+					TLSCertSecret: "",
+				}
+			},
+			expectedErr: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+			if err != nil {
+				t.Fatalf("failed to load CR: %v", err)
+			}
+
+			observability := customResource.Spec.Modules[0]
+			tt.mutateCR(&customResource, &observability)
+			secrets := make([]ctrlClient.Object, 0, len(tt.secretNames))
+			for _, secretName := range tt.secretNames {
+				secrets = append(secrets, getSecret(customResource.Namespace, secretName))
+			}
+
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(secrets...).Build()
+			fakeReconcile := operatorutils.FakeReconcileCSM{
+				Client:    sourceClient,
+				K8sClient: fake.NewSimpleClientset(),
+			}
+
+			err = ObservabilityPrecheck(ctx, operatorConfig, observability, customResource, &fakeReconcile)
+			if tt.expectedErr == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedErr)
 			}
 		})
 	}
@@ -546,28 +633,6 @@ func TestPowerScaleMetrics(t *testing.T) {
 				return clientgoclient.NewFakeClient(fakeClient)
 			}
 		},
-		"success - copy secrets when secrets already existed (v2.14)": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, func() kubernetes.Interface) {
-			customResource, err := getCustomResource("./testdata/cr_powerscale_observability_214.yaml")
-			if err != nil {
-				panic(err)
-			}
-			isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
-			isilonKaraviAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
-			isilonProxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
-			karaviIsilonCreds := getSecret("karavi", "isilon-creds")
-			karaviAuthconfig := getSecret("karavi", "isilon-karavi-authorization-config")
-			proxyAuthzTokens := getSecret("karavi", "isilon-proxy-authz-tokens")
-			tmpCR := customResource
-			auth := &tmpCR.Spec.Modules[1]
-			auth.Enabled = true
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(
-				isilonCreds, isilonKaraviAuthconfig, isilonProxyAuthzTokens,
-				karaviIsilonCreds, karaviAuthconfig, proxyAuthzTokens,
-			).Build()
-			return true, false, tmpCR, sourceClient, op, func() kubernetes.Interface {
-				return clientgoclient.NewFakeClient(sourceClient)
-			}
-		},
 		"success - CR image override (powerscale metrics)": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, func() kubernetes.Interface) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
 			if err != nil {
@@ -585,25 +650,57 @@ func TestPowerScaleMetrics(t *testing.T) {
 				return clientgoclient.NewFakeClient(sourceClient)
 			}
 		},
-		// --- Failure cases below
-		"Fail - no secrets in isilon namespace (v2.14)": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, func() kubernetes.Interface) {
-			customResource, err := getCustomResource("./testdata/cr_powerscale_observability_214.yaml")
+		"success - creating with spec version set": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, func() kubernetes.Interface) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
 			if err != nil {
 				panic(err)
 			}
+			isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
 			tmpCR := customResource
-			// Ensure we exercise the v2.14 secret-copy behavior regardless of fixture drift.
-			tmpCR.Spec.Driver.ConfigVersion = "v2.14.0"
-			// Auth enabled triggers auth injection path and secrets usage
-			auth := &tmpCR.Spec.Modules[1]
-			auth.Name = csmv1.Authorization
-			auth.Enabled = true
-			// No secrets provided in isilon namespace → should fail during appendObservabilitySecrets
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-			return false, false, tmpCR, sourceClient, op, func() kubernetes.Interface {
+			tmpCR.Spec.Version = "v1.18.0"
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds).Build()
+			return true, false, tmpCR, sourceClient, op, func() kubernetes.Interface {
 				return clientgoclient.NewFakeClient(sourceClient)
 			}
 		},
+		"success - creating with auth secret override": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, func() kubernetes.Interface) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+			isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
+			tmpCR := customResource
+			tmpCR.Spec.Driver.AuthSecret = "custom-auth-secret"
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds).Build()
+			return true, false, tmpCR, sourceClient, op, func() kubernetes.Interface {
+				return clientgoclient.NewFakeClient(sourceClient)
+			}
+		},
+		"success - creating with observability self-metrics enabled": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, func() kubernetes.Interface) {
+			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+			isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
+			for mi := range customResource.Spec.Modules {
+				if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+					customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+						Enabled: true,
+						Port:    9443,
+						ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+							Enabled:       true,
+							Interval:      "15s",
+							ScrapeTimeout: "5s",
+						},
+					}
+				}
+			}
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds).Build()
+			return true, false, customResource, sourceClient, op, func() kubernetes.Interface {
+				return clientgoclient.NewFakeClient(sourceClient)
+			}
+		},
+		// --- Failure cases below
 		"Fail - wrong module name (no deployment found)": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, func() kubernetes.Interface) {
 			// Replica CR does not have observability metrics module → getPowerScaleMetricsObjects won't include deployment
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
@@ -611,45 +708,6 @@ func TestPowerScaleMetrics(t *testing.T) {
 				panic(err)
 			}
 			tmpCR := customResource
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-			return false, false, tmpCR, sourceClient, op, func() kubernetes.Interface {
-				return clientgoclient.NewFakeClient(sourceClient)
-			}
-		},
-		"Fail - skipCertificateValidation=false but no cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, func() kubernetes.Interface) {
-			customResource, err := getCustomResource("./testdata/cr_powerscale_observability_214.yaml")
-			if err != nil {
-				panic(err)
-			}
-			isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
-			karaviAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
-			proxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
-			tmpCR := customResource
-			// Ensure we exercise the v2.14 secret-copy behavior regardless of fixture drift.
-			tmpCR.Spec.Driver.ConfigVersion = "v2.14.0"
-			auth := &tmpCR.Spec.Modules[1]
-			auth.Name = csmv1.Authorization
-			auth.Enabled = true
-			// set SKIP_CERTIFICATE_VALIDATION to false → requires cert present
-			for i, env := range auth.Components[0].Envs {
-				if env.Name == "SKIP_CERTIFICATE_VALIDATION" {
-					auth.Components[0].Envs[i].Value = "false"
-				}
-			}
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds, karaviAuthconfig, proxyAuthzTokens).Build()
-			return false, false, tmpCR, sourceClient, op, func() kubernetes.Interface {
-				return clientgoclient.NewFakeClient(sourceClient)
-			}
-		},
-		"Fail - CR has version set but configmap missing (ResolveVersionFromConfigMap error)": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig, func() kubernetes.Interface) {
-			customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
-			if err != nil {
-				panic(err)
-			}
-			// Force version resolution path
-			customResource.Spec.Version = "v2.14.0"
-			tmpCR := customResource
-			// No ConfigMap present in cluster for version resolution → should error
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 			return false, false, tmpCR, sourceClient, op, func() kubernetes.Interface {
 				return clientgoclient.NewFakeClient(sourceClient)
@@ -671,25 +729,364 @@ func TestPowerScaleMetrics(t *testing.T) {
 	}
 }
 
-func TestPowerScaleMetrics_VersionResolveError(t *testing.T) {
+func TestPowerScaleMetrics_ServiceMonitorEnabledToDisabledTransitionDeletesMonitor(t *testing.T) {
 	ctx := context.Background()
-	// Construct a minimal CR that sets Spec.Version to trigger ResolveVersionFromConfigMap.
-	cr, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
-	if err != nil {
-		t.Fatalf("failed to load CR: %v", err)
+	customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+	require.NoError(t, err)
+
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled: true,
+				Port:    9443,
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled:  true,
+					Interval: "15s",
+				},
+			}
+		}
 	}
-	cr.Spec.Version = "v2.14.0" // non-empty → forces ResolveVersionFromConfigMap path
-	// Build a controller-runtime fake client with NO ConfigMaps or related resources,
-	// so ResolveVersionFromConfigMap will fail.
-	ctrlClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-	// client-go fake for deployment sync (won’t be reached due to early error).
-	k8sClient := clientgoclient.NewFakeClient(ctrlClient)
-	// Use the operatorConfig available in your test suite.
-	op := operatorConfig
-	// Act: invoke PowerScaleMetrics. Expect an error returned from version resolution.
-	err = PowerScaleMetrics(ctx, false /*isDeleting*/, op, cr, ctrlClient, k8sClient)
-	// Assert: the function must return an error at the version resolution step.
-	assert.Error(t, err, "expected error when configmap for version resolution is missing")
+
+	isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
+	fakeClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds).Build()
+	k8sClient := clientgoclient.NewFakeClient(fakeClient)
+
+	err = PowerScaleMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitor := &unstructured.Unstructured{}
+	serviceMonitor.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	require.NoError(t, fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powerscale-obs-monitor", Namespace: customResource.Namespace}, serviceMonitor))
+
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled: true,
+				Port:    9443,
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled: false,
+				},
+			}
+		}
+	}
+
+	err = PowerScaleMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitorAfter := &unstructured.Unstructured{}
+	serviceMonitorAfter.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	err = fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powerscale-obs-monitor", Namespace: customResource.Namespace}, serviceMonitorAfter)
+	require.True(t, k8sErrors.IsNotFound(err), "ServiceMonitor must be deleted when observability serviceMonitor is disabled")
+}
+
+func TestPowerScaleMetrics_MetricsEnabledToDisabledDeletesServiceMonitor(t *testing.T) {
+	ctx := context.Background()
+	customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+	require.NoError(t, err)
+
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled: true,
+				Port:    9443,
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled:  true,
+					Interval: "30s",
+				},
+			}
+		}
+	}
+
+	isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
+	fakeClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds).Build()
+	k8sClient := clientgoclient.NewFakeClient(fakeClient)
+
+	err = PowerScaleMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitor := &unstructured.Unstructured{}
+	serviceMonitor.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	require.NoError(t, fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powerscale-obs-monitor", Namespace: customResource.Namespace}, serviceMonitor))
+
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled: false,
+			}
+		}
+	}
+
+	err = PowerScaleMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitorAfter := &unstructured.Unstructured{}
+	serviceMonitorAfter.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	err = fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powerscale-obs-monitor", Namespace: customResource.Namespace}, serviceMonitorAfter)
+	require.True(t, k8sErrors.IsNotFound(err), "ServiceMonitor must be deleted when metrics.enabled is disabled")
+}
+
+func TestPowerScaleMetrics_ServiceMonitorCreatedWhenBothEnabled(t *testing.T) {
+	ctx := context.Background()
+	customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+	require.NoError(t, err)
+
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled:       true,
+				Port:          9443,
+				TLSCertSecret: "powerscale-metrics-tls",
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled:            true,
+					Interval:           "30s",
+					ScrapeTimeout:      "10s",
+					InsecureSkipVerify: true,
+				},
+			}
+		}
+	}
+
+	isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
+	fakeClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds).Build()
+	k8sClient := clientgoclient.NewFakeClient(fakeClient)
+
+	err = PowerScaleMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitor := &unstructured.Unstructured{}
+	serviceMonitor.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	err = fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powerscale-obs-monitor", Namespace: customResource.Namespace}, serviceMonitor)
+	require.NoError(t, err, "ServiceMonitor must be created when both metrics.enabled and serviceMonitor.enabled are true")
+
+	spec, found, err := unstructured.NestedMap(serviceMonitor.Object, "spec")
+	require.NoError(t, err)
+	require.True(t, found, "ServiceMonitor spec must exist")
+
+	endpoints, found, err := unstructured.NestedSlice(spec, "endpoints")
+	require.NoError(t, err)
+	require.True(t, found, "ServiceMonitor endpoints must exist")
+	require.Greater(t, len(endpoints), 0, "ServiceMonitor must have at least one endpoint")
+
+	endpoint, ok := endpoints[0].(map[string]interface{})
+	require.True(t, ok, "ServiceMonitor endpoint must be a map")
+	assert.Equal(t, "obs-metrics", endpoint["port"])
+	assert.Equal(t, "30s", endpoint["interval"])
+	assert.Equal(t, "10s", endpoint["scrapeTimeout"])
+	assert.Equal(t, "https", endpoint["scheme"])
+	tlsConfig, ok := endpoint["tlsConfig"].(map[string]interface{})
+	require.True(t, ok, "ServiceMonitor tlsConfig must be a map")
+	assert.Equal(t, true, tlsConfig["insecureSkipVerify"])
+
+	service := &corev1.Service{}
+	require.NoError(t, fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powerscale", Namespace: customResource.Namespace}, service))
+	obsMetricsPortFound := false
+	for _, port := range service.Spec.Ports {
+		if port.Name == "obs-metrics" {
+			obsMetricsPortFound = true
+			assert.Equal(t, int32(9443), port.Port)
+		}
+	}
+	assert.True(t, obsMetricsPortFound, "Service must expose obs-metrics port")
+}
+
+func TestPowerScaleMetrics_ServiceMonitorUpdatedOnCRChange(t *testing.T) {
+	ctx := context.Background()
+	customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+	require.NoError(t, err)
+
+	// Initial reconcile with interval=15s
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled: true,
+				Port:    9443,
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled:       true,
+					Interval:      "15s",
+					ScrapeTimeout: "5s",
+				},
+			}
+		}
+	}
+
+	isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
+	fakeClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds).Build()
+	k8sClient := clientgoclient.NewFakeClient(fakeClient)
+
+	err = PowerScaleMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitor := &unstructured.Unstructured{}
+	serviceMonitor.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	require.NoError(t, fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powerscale-obs-monitor", Namespace: customResource.Namespace}, serviceMonitor))
+
+	// Verify initial interval
+	spec, found, err := unstructured.NestedMap(serviceMonitor.Object, "spec")
+	require.NoError(t, err)
+	require.True(t, found)
+	endpoints, found, err := unstructured.NestedSlice(spec, "endpoints")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Greater(t, len(endpoints), 0)
+	endpoint, ok := endpoints[0].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, "15s", endpoint["interval"])
+	assert.Equal(t, "5s", endpoint["scrapeTimeout"])
+
+	// Update CR with new interval=60s and scrapeTimeout=25s
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled: true,
+				Port:    9443,
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled:       true,
+					Interval:      "60s",
+					ScrapeTimeout: "25s",
+				},
+			}
+		}
+	}
+
+	// Reconcile again
+	err = PowerScaleMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	// Verify ServiceMonitor was updated
+	serviceMonitorUpdated := &unstructured.Unstructured{}
+	serviceMonitorUpdated.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	require.NoError(t, fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powerscale-obs-monitor", Namespace: customResource.Namespace}, serviceMonitorUpdated))
+
+	spec, found, err = unstructured.NestedMap(serviceMonitorUpdated.Object, "spec")
+	require.NoError(t, err)
+	require.True(t, found)
+	endpoints, found, err = unstructured.NestedSlice(spec, "endpoints")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Greater(t, len(endpoints), 0)
+	endpoint, ok = endpoints[0].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, "60s", endpoint["interval"], "ServiceMonitor interval should be updated to 60s")
+	assert.Equal(t, "25s", endpoint["scrapeTimeout"], "ServiceMonitor scrapeTimeout should be updated to 25s")
+}
+
+func TestPowerScaleMetrics_ServiceMonitorNotCreatedWhenMetricsDisabled(t *testing.T) {
+	ctx := context.Background()
+	customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+	require.NoError(t, err)
+
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled: false,
+			}
+		}
+	}
+
+	isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
+	fakeClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds).Build()
+	k8sClient := clientgoclient.NewFakeClient(fakeClient)
+
+	err = PowerScaleMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitor := &unstructured.Unstructured{}
+	serviceMonitor.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	err = fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powerscale-obs-monitor", Namespace: customResource.Namespace}, serviceMonitor)
+	require.True(t, k8sErrors.IsNotFound(err), "ServiceMonitor must not be created when metrics.enabled is false")
+}
+
+func TestPowerScaleMetrics_ServiceMonitorTLSConfigUpdatedOnCRChange(t *testing.T) {
+	ctx := context.Background()
+	customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+	require.NoError(t, err)
+
+	// Initial reconcile with TLS enabled and insecureSkipVerify=true
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			// #nosec G101 - test file
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled:       true,
+				Port:          9443,
+				TLSCertSecret: "metrics-tls-secret", //nolint:gosec
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled:            true,
+					InsecureSkipVerify: true,
+				},
+			}
+		}
+	}
+
+	isilonCreds := getSecret(customResource.Namespace, "isilon-creds")
+	tlsSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "metrics-tls-secret",
+			Namespace: customResource.Namespace,
+		},
+	}
+	fakeClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds, tlsSecret).Build()
+	k8sClient := clientgoclient.NewFakeClient(fakeClient)
+
+	err = PowerScaleMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitor := &unstructured.Unstructured{}
+	serviceMonitor.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	require.NoError(t, fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powerscale-obs-monitor", Namespace: customResource.Namespace}, serviceMonitor))
+
+	// Verify initial TLS config
+	spec, found, err := unstructured.NestedMap(serviceMonitor.Object, "spec")
+	require.NoError(t, err)
+	require.True(t, found)
+	endpoints, found, err := unstructured.NestedSlice(spec, "endpoints")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Greater(t, len(endpoints), 0)
+	endpoint, ok := endpoints[0].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, "https", endpoint["scheme"])
+	tlsConfig, ok := endpoint["tlsConfig"].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, true, tlsConfig["insecureSkipVerify"])
+
+	// Update CR with insecureSkipVerify=false
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			// #nosec G101 - test file
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled:       true,
+				Port:          9443,
+				TLSCertSecret: "metrics-tls-secret", //nolint:gosec
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled:            true,
+					InsecureSkipVerify: false,
+				},
+			}
+		}
+	}
+
+	// Reconcile again
+	err = PowerScaleMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	// Verify ServiceMonitor TLS config was updated
+	serviceMonitorUpdated := &unstructured.Unstructured{}
+	serviceMonitorUpdated.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	require.NoError(t, fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powerscale-obs-monitor", Namespace: customResource.Namespace}, serviceMonitorUpdated))
+
+	spec, found, err = unstructured.NestedMap(serviceMonitorUpdated.Object, "spec")
+	require.NoError(t, err)
+	require.True(t, found)
+	endpoints, found, err = unstructured.NestedSlice(spec, "endpoints")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Greater(t, len(endpoints), 0)
+	endpoint, ok = endpoints[0].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, "https", endpoint["scheme"])
+	tlsConfig, ok = endpoint["tlsConfig"].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, false, tlsConfig["insecureSkipVerify"], "ServiceMonitor tlsConfig.insecureSkipVerify should be updated to false")
 }
 
 func TestOtelCollector(t *testing.T) {
@@ -928,25 +1325,6 @@ func TestPowerFlexMetrics(t *testing.T) {
 
 			return true, false, tmpCR, fakeClient, operatorConfig
 		},
-		"success - copy secrets when secrets already existed": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powerflex_observability_214.yaml")
-			if err != nil {
-				panic(err)
-			}
-			vxflexosCreds := getSecret(customResource.Namespace, "test-vxflexos-config")
-			vxflexosAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
-			vxflexosProxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
-			karaviVxflexosCreds := getSecret("karavi", "test-vxflexos-config")
-			karaviAuthconfig := getSecret("karavi", "powerflex-karavi-authorization-config")
-			proxyAuthzTokens := getSecret("karavi", "powerflex-proxy-authz-tokens")
-			tmpCR := customResource
-			auth := &tmpCR.Spec.Modules[1]
-			auth.Enabled = true
-
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(vxflexosCreds, karaviAuthconfig, proxyAuthzTokens, karaviVxflexosCreds, vxflexosAuthconfig, vxflexosProxyAuthzTokens).Build()
-
-			return true, false, tmpCR, sourceClient, operatorConfig
-		},
 		"Fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
 			if err != nil {
@@ -959,35 +1337,27 @@ func TestPowerFlexMetrics(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, operatorConfig
 		},
-		"Fail - no secrets in test-vxflexos namespace": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powerflex_observability_214.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			tmpCR := customResource
-			// Ensure we exercise the v2.14 secret-copy behavior regardless of fixture drift.
-			tmpCR.Spec.Driver.ConfigVersion = "v2.14.0"
-
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-
-			return false, false, tmpCR, sourceClient, operatorConfig
-		},
-
-		"Fail - version resolve error (ConfigMap missing)": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+		"success - creating with spec version set": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerflex_observability.yaml")
 			if err != nil {
 				panic(err)
 			}
-
+			vxflexosCreds := getSecret(customResource.Namespace, "test-vxflexos-config")
 			tmpCR := customResource
-			// Non-empty version forces ResolveVersionFromConfigMap path
-			tmpCR.Spec.Version = "v2.14.0"
-
-			// No ConfigMap seeded → resolution should fail and function should return error
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-
-			return false, false, tmpCR, sourceClient, operatorConfig
+			tmpCR.Spec.Version = "v1.18.0"
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(vxflexosCreds).Build()
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+		"success - creating with auth secret override": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerflex_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+			vxflexosCreds := getSecret(customResource.Namespace, "test-vxflexos-config")
+			tmpCR := customResource
+			tmpCR.Spec.Driver.AuthSecret = "custom-auth-secret"
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(vxflexosCreds).Build()
+			return true, false, tmpCR, sourceClient, operatorConfig
 		},
 	}
 
@@ -1003,6 +1373,98 @@ func TestPowerFlexMetrics(t *testing.T) {
 			}
 		})
 	}
+}
+
+type serviceMonitorValidatingClient struct {
+	ctrlClient.Client
+}
+
+func (c *serviceMonitorValidatingClient) Update(ctx context.Context, obj ctrlClient.Object, opts ...ctrlClient.UpdateOption) error {
+	if obj.GetObjectKind().GroupVersionKind().Kind == "ServiceMonitor" && obj.GetResourceVersion() == "" {
+		return fmt.Errorf("ServiceMonitor update missing resourceVersion")
+	}
+	return c.Client.Update(ctx, obj, opts...)
+}
+
+func TestPowerFlexMetrics_ServiceMonitorUpdatePreservesResourceVersion(t *testing.T) {
+	ctx := context.Background()
+	customResource, err := getCustomResource("./testdata/cr_powerflex_observability.yaml")
+	require.NoError(t, err)
+
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled: true,
+				Port:    9443,
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled:  true,
+					Interval: "15s",
+				},
+			}
+		}
+	}
+
+	vxflexosCreds := getSecret(customResource.Namespace, "test-vxflexos-config")
+	existingServiceMonitor := &unstructured.Unstructured{}
+	existingServiceMonitor.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	existingServiceMonitor.SetName("karavi-metrics-powerflex-obs-monitor")
+	existingServiceMonitor.SetNamespace(customResource.Namespace)
+	existingServiceMonitor.SetResourceVersion("123")
+
+	baseClient := ctrlClientFake.NewClientBuilder().WithObjects(vxflexosCreds, existingServiceMonitor).Build()
+	validatingClient := &serviceMonitorValidatingClient{Client: baseClient}
+	k8sClient := clientgoclient.NewFakeClient(validatingClient)
+
+	err = PowerFlexMetrics(ctx, false, operatorConfig, customResource, validatingClient, k8sClient)
+	require.NoError(t, err)
+}
+
+func TestPowerFlexMetrics_SelfMetricsEnvConfigured(t *testing.T) {
+	ctx := context.Background()
+
+	customResource, err := getCustomResource("./testdata/cr_powerflex_observability.yaml")
+	require.NoError(t, err)
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{Enabled: true, Port: 9443}
+		}
+	}
+	vxflexosCreds := getSecret(customResource.Namespace, "test-vxflexos-config")
+	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(vxflexosCreds).Build()
+	k8sClient := clientgoclient.NewFakeClient(sourceClient)
+
+	err = PowerFlexMetrics(ctx, false, operatorConfig, customResource, sourceClient, k8sClient)
+	require.NoError(t, err)
+
+	deployment := &appsv1.Deployment{}
+	require.NoError(t, sourceClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powerflex", Namespace: customResource.Namespace}, deployment))
+	require.NotEmpty(t, deployment.Spec.Template.Spec.Containers, "deployment must include the metrics container")
+
+	var metricsContainer *corev1.Container
+	for i := range deployment.Spec.Template.Spec.Containers {
+		if deployment.Spec.Template.Spec.Containers[i].Name == "karavi-metrics-powerflex" {
+			metricsContainer = &deployment.Spec.Template.Spec.Containers[i]
+			break
+		}
+	}
+	require.NotNil(t, metricsContainer, "karavi-metrics-powerflex container must exist")
+
+	getEnvValue := func(name string) (string, bool) {
+		for _, env := range metricsContainer.Env {
+			if env.Name == name {
+				return env.Value, true
+			}
+		}
+		return "", false
+	}
+
+	value, found := getEnvValue("X_CSI_METRICS_ENABLED")
+	require.True(t, found, "X_CSI_METRICS_ENABLED must be injected into the metrics container")
+	assert.Equal(t, "true", value)
+
+	value, found = getEnvValue("X_CSI_METRICS_PORT")
+	require.True(t, found, "X_CSI_METRICS_PORT must be injected into the metrics container")
+	assert.Equal(t, "9443", value)
 }
 
 func TestPowerStoreMetrics(t *testing.T) {
@@ -1042,6 +1504,28 @@ func TestPowerStoreMetrics(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
+		"success - creating with spec version set": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerstore_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+			powerstoreCreds := getSecret(customResource.Namespace, "test-powerstore-config")
+			tmpCR := customResource
+			tmpCR.Spec.Version = "v1.18.0"
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(powerstoreCreds).Build()
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+		"success - creating with auth secret override": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powerstore_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+			powerstoreCreds := getSecret(customResource.Namespace, "test-powerstore-config")
+			tmpCR := customResource
+			tmpCR.Spec.Driver.AuthSecret = "custom-auth-secret"
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(powerstoreCreds).Build()
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
 		"success - deleting after one cycle": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powerstore_observability.yaml")
 			if err != nil {
@@ -1074,25 +1558,6 @@ func TestPowerStoreMetrics(t *testing.T) {
 
 			return false, false, tmpCR, sourceClient, operatorConfig
 		},
-
-		// Add this inside the `tests` map in TestPowerStoreMetrics
-		"Fail - version resolve error (ConfigMap missing)": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
-			// Load the standard PowerStore observability CR
-			customResource, err := getCustomResource("./testdata/cr_powerstore_observability.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			// Force the version resolution path
-			tmpCR := customResource
-			tmpCR.Spec.Version = "v2.14.0" // non-empty triggers ResolveVersionFromConfigMap
-
-			// No ConfigMap seeded in the fake client, so resolution should fail
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-
-			// Expect error
-			return false, false, tmpCR, sourceClient, operatorConfig
-		},
 	}
 
 	for name, tc := range tests {
@@ -1107,6 +1572,366 @@ func TestPowerStoreMetrics(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestPowerStoreMetrics_ServiceMonitorEnabledToDisabledTransitionDeletesMonitor(t *testing.T) {
+	ctx := context.Background()
+	customResource, err := getCustomResource("./testdata/cr_powerstore_observability.yaml")
+	require.NoError(t, err)
+
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled: true,
+				Port:    9443,
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled:  true,
+					Interval: "15s",
+				},
+			}
+		}
+	}
+
+	powerstoreCreds := getSecret(customResource.Namespace, "test-powerstore-config")
+	fakeClient := ctrlClientFake.NewClientBuilder().WithObjects(powerstoreCreds).Build()
+	k8sClient := clientgoclient.NewFakeClient(fakeClient)
+
+	err = PowerStoreMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitor := &unstructured.Unstructured{}
+	serviceMonitor.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	require.NoError(t, fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powerstore-obs-monitor", Namespace: customResource.Namespace}, serviceMonitor))
+
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled: true,
+				Port:    9443,
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled: false,
+				},
+			}
+		}
+	}
+
+	err = PowerStoreMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitorAfter := &unstructured.Unstructured{}
+	serviceMonitorAfter.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	err = fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powerstore-obs-monitor", Namespace: customResource.Namespace}, serviceMonitorAfter)
+	require.True(t, k8sErrors.IsNotFound(err), "ServiceMonitor must be deleted when observability serviceMonitor is disabled")
+}
+
+func TestPowerStoreMetrics_MetricsEnabledToDisabledDeletesServiceMonitor(t *testing.T) {
+	ctx := context.Background()
+	customResource, err := getCustomResource("./testdata/cr_powerstore_observability.yaml")
+	require.NoError(t, err)
+
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled: true,
+				Port:    9443,
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled:  true,
+					Interval: "30s",
+				},
+			}
+		}
+	}
+
+	powerstoreCreds := getSecret(customResource.Namespace, "test-powerstore-config")
+	fakeClient := ctrlClientFake.NewClientBuilder().WithObjects(powerstoreCreds).Build()
+	k8sClient := clientgoclient.NewFakeClient(fakeClient)
+
+	err = PowerStoreMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitor := &unstructured.Unstructured{}
+	serviceMonitor.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	require.NoError(t, fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powerstore-obs-monitor", Namespace: customResource.Namespace}, serviceMonitor))
+
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled: false,
+			}
+		}
+	}
+
+	err = PowerStoreMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitorAfter := &unstructured.Unstructured{}
+	serviceMonitorAfter.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	err = fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powerstore-obs-monitor", Namespace: customResource.Namespace}, serviceMonitorAfter)
+	require.True(t, k8sErrors.IsNotFound(err), "ServiceMonitor must be deleted when metrics.enabled is disabled")
+}
+
+func TestPowerStoreMetrics_ServiceMonitorCreatedWhenBothEnabled(t *testing.T) {
+	ctx := context.Background()
+	customResource, err := getCustomResource("./testdata/cr_powerstore_observability.yaml")
+	require.NoError(t, err)
+
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled:       true,
+				Port:          9443,
+				TLSCertSecret: "powerstore-metrics-tls",
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled:            true,
+					Interval:           "30s",
+					ScrapeTimeout:      "10s",
+					InsecureSkipVerify: true,
+				},
+			}
+		}
+	}
+
+	powerstoreCreds := getSecret(customResource.Namespace, "test-powerstore-config")
+	fakeClient := ctrlClientFake.NewClientBuilder().WithObjects(powerstoreCreds).Build()
+	k8sClient := clientgoclient.NewFakeClient(fakeClient)
+
+	err = PowerStoreMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitor := &unstructured.Unstructured{}
+	serviceMonitor.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	err = fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powerstore-obs-monitor", Namespace: customResource.Namespace}, serviceMonitor)
+	require.NoError(t, err, "ServiceMonitor must be created when both metrics.enabled and serviceMonitor.enabled are true")
+
+	spec, found, err := unstructured.NestedMap(serviceMonitor.Object, "spec")
+	require.NoError(t, err)
+	require.True(t, found, "ServiceMonitor spec must exist")
+
+	endpoints, found, err := unstructured.NestedSlice(spec, "endpoints")
+	require.NoError(t, err)
+	require.True(t, found, "ServiceMonitor endpoints must exist")
+	require.Greater(t, len(endpoints), 0, "ServiceMonitor must have at least one endpoint")
+
+	endpoint, ok := endpoints[0].(map[string]interface{})
+	require.True(t, ok, "ServiceMonitor endpoint must be a map")
+	assert.Equal(t, "obs-metrics", endpoint["port"])
+	assert.Equal(t, "30s", endpoint["interval"])
+	assert.Equal(t, "10s", endpoint["scrapeTimeout"])
+	assert.Equal(t, "https", endpoint["scheme"])
+	tlsConfig, ok := endpoint["tlsConfig"].(map[string]interface{})
+	require.True(t, ok, "ServiceMonitor tlsConfig must be a map")
+	assert.Equal(t, true, tlsConfig["insecureSkipVerify"])
+
+	service := &corev1.Service{}
+	require.NoError(t, fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powerstore", Namespace: customResource.Namespace}, service))
+	obsMetricsPortFound := false
+	for _, port := range service.Spec.Ports {
+		if port.Name == "obs-metrics" {
+			obsMetricsPortFound = true
+			assert.Equal(t, int32(9443), port.Port)
+		}
+	}
+	assert.True(t, obsMetricsPortFound, "Service must expose obs-metrics port")
+}
+
+func TestPowerStoreMetrics_ServiceMonitorUpdatedOnCRChange(t *testing.T) {
+	ctx := context.Background()
+	customResource, err := getCustomResource("./testdata/cr_powerstore_observability.yaml")
+	require.NoError(t, err)
+
+	// Initial reconcile with interval=15s
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled: true,
+				Port:    9443,
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled:       true,
+					Interval:      "15s",
+					ScrapeTimeout: "5s",
+				},
+			}
+		}
+	}
+
+	powerstoreCreds := getSecret(customResource.Namespace, "test-powerstore-config")
+	fakeClient := ctrlClientFake.NewClientBuilder().WithObjects(powerstoreCreds).Build()
+	k8sClient := clientgoclient.NewFakeClient(fakeClient)
+
+	err = PowerStoreMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitor := &unstructured.Unstructured{}
+	serviceMonitor.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	require.NoError(t, fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powerstore-obs-monitor", Namespace: customResource.Namespace}, serviceMonitor))
+
+	// Verify initial interval
+	spec, found, err := unstructured.NestedMap(serviceMonitor.Object, "spec")
+	require.NoError(t, err)
+	require.True(t, found)
+	endpoints, found, err := unstructured.NestedSlice(spec, "endpoints")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Greater(t, len(endpoints), 0)
+	endpoint, ok := endpoints[0].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, "15s", endpoint["interval"])
+	assert.Equal(t, "5s", endpoint["scrapeTimeout"])
+
+	// Update CR with new interval=60s and scrapeTimeout=25s
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled: true,
+				Port:    9443,
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled:       true,
+					Interval:      "60s",
+					ScrapeTimeout: "25s",
+				},
+			}
+		}
+	}
+
+	// Reconcile again
+	err = PowerStoreMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	// Verify ServiceMonitor was updated
+	serviceMonitorUpdated := &unstructured.Unstructured{}
+	serviceMonitorUpdated.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	require.NoError(t, fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powerstore-obs-monitor", Namespace: customResource.Namespace}, serviceMonitorUpdated))
+
+	spec, found, err = unstructured.NestedMap(serviceMonitorUpdated.Object, "spec")
+	require.NoError(t, err)
+	require.True(t, found)
+	endpoints, found, err = unstructured.NestedSlice(spec, "endpoints")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Greater(t, len(endpoints), 0)
+	endpoint, ok = endpoints[0].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, "60s", endpoint["interval"], "ServiceMonitor interval should be updated to 60s")
+	assert.Equal(t, "25s", endpoint["scrapeTimeout"], "ServiceMonitor scrapeTimeout should be updated to 25s")
+}
+
+func TestPowerStoreMetrics_ServiceMonitorNotCreatedWhenMetricsDisabled(t *testing.T) {
+	ctx := context.Background()
+	customResource, err := getCustomResource("./testdata/cr_powerstore_observability.yaml")
+	require.NoError(t, err)
+
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled: false,
+			}
+		}
+	}
+
+	powerstoreCreds := getSecret(customResource.Namespace, "test-powerstore-config")
+	fakeClient := ctrlClientFake.NewClientBuilder().WithObjects(powerstoreCreds).Build()
+	k8sClient := clientgoclient.NewFakeClient(fakeClient)
+
+	err = PowerStoreMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitor := &unstructured.Unstructured{}
+	serviceMonitor.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	err = fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powerstore-obs-monitor", Namespace: customResource.Namespace}, serviceMonitor)
+	require.True(t, k8sErrors.IsNotFound(err), "ServiceMonitor must not be created when metrics.enabled is false")
+}
+
+func TestPowerStoreMetrics_ServiceMonitorTLSConfigUpdatedOnCRChange(t *testing.T) {
+	ctx := context.Background()
+	customResource, err := getCustomResource("./testdata/cr_powerstore_observability.yaml")
+	require.NoError(t, err)
+
+	// Initial reconcile with TLS enabled and insecureSkipVerify=true
+	for mi := range customResource.Spec.Modules {
+		// #nosec G101 - test file
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled:       true,
+				Port:          9443,
+				TLSCertSecret: "metrics-tls-secret", //nolint:gosec
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled:            true,
+					InsecureSkipVerify: true,
+				},
+			}
+		}
+	}
+
+	powerstoreCreds := getSecret(customResource.Namespace, "test-powerstore-config")
+	tlsSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "metrics-tls-secret",
+			Namespace: customResource.Namespace,
+		},
+	}
+	fakeClient := ctrlClientFake.NewClientBuilder().WithObjects(powerstoreCreds, tlsSecret).Build()
+	k8sClient := clientgoclient.NewFakeClient(fakeClient)
+
+	err = PowerStoreMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitor := &unstructured.Unstructured{}
+	serviceMonitor.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	require.NoError(t, fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powerstore-obs-monitor", Namespace: customResource.Namespace}, serviceMonitor))
+
+	// Verify initial TLS config
+	spec, found, err := unstructured.NestedMap(serviceMonitor.Object, "spec")
+	require.NoError(t, err)
+	require.True(t, found)
+	endpoints, found, err := unstructured.NestedSlice(spec, "endpoints")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Greater(t, len(endpoints), 0)
+	endpoint, ok := endpoints[0].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, "https", endpoint["scheme"])
+	tlsConfig, ok := endpoint["tlsConfig"].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, true, tlsConfig["insecureSkipVerify"])
+
+	// Update CR with insecureSkipVerify=false
+	for mi := range customResource.Spec.Modules {
+		// #nosec G101 - test file
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled:       true,
+				Port:          9443,
+				TLSCertSecret: "metrics-tls-secret", //nolint:gosec
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled:            true,
+					InsecureSkipVerify: false,
+				},
+			}
+		}
+	}
+
+	// Reconcile again
+	err = PowerStoreMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	// Verify ServiceMonitor TLS config was updated
+	serviceMonitorUpdated := &unstructured.Unstructured{}
+	serviceMonitorUpdated.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	require.NoError(t, fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powerstore-obs-monitor", Namespace: customResource.Namespace}, serviceMonitorUpdated))
+
+	spec, found, err = unstructured.NestedMap(serviceMonitorUpdated.Object, "spec")
+	require.NoError(t, err)
+	require.True(t, found)
+	endpoints, found, err = unstructured.NestedSlice(spec, "endpoints")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Greater(t, len(endpoints), 0)
+	endpoint, ok = endpoints[0].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, "https", endpoint["scheme"])
+	tlsConfig, ok = endpoint["tlsConfig"].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, false, tlsConfig["insecureSkipVerify"], "ServiceMonitor tlsConfig.insecureSkipVerify should be updated to false")
 }
 
 func TestPowerMaxMetrics(t *testing.T) {
@@ -1230,6 +2055,28 @@ func TestPowerMaxMetrics(t *testing.T) {
 
 			return true, false, tmpCR, sourceClient, operatorConfig
 		},
+		"success - creating with spec version set": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+			pmaxCreds := getSecret(customResource.Namespace, "test-powermax-creds")
+			tmpCR := customResource
+			tmpCR.Spec.Version = "v1.18.0"
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds).Build()
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
+		"success - creating with auth secret override": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
+			customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
+			if err != nil {
+				panic(err)
+			}
+			pmaxCreds := getSecret(customResource.Namespace, "test-powermax-creds")
+			tmpCR := customResource
+			tmpCR.Spec.Driver.AuthSecret = "custom-auth-secret"
+			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds).Build()
+			return true, false, tmpCR, sourceClient, operatorConfig
+		},
 		"success - update objects": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
 			if err != nil {
@@ -1311,20 +2158,6 @@ func TestPowerMaxMetrics(t *testing.T) {
 
 			return false, false, customResource, sourceClient, operatorConfig
 		},
-		"Fail - no secrets in test-powermax namespace": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powermax_observability_214.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			tmpCR := customResource
-			// Ensure we exercise the v2.14 secret-copy behavior regardless of fixture drift.
-			tmpCR.Spec.Driver.ConfigVersion = "v2.14.0"
-
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-
-			return false, false, tmpCR, sourceClient, operatorConfig
-		},
 		"Fail - wrong module name": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
 			customResource, err := getCustomResource("./testdata/cr_powermax_replica.yaml")
 			if err != nil {
@@ -1333,48 +2166,6 @@ func TestPowerMaxMetrics(t *testing.T) {
 
 			tmpCR := customResource
 
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
-
-			return false, false, tmpCR, sourceClient, operatorConfig
-		},
-		"Fail - skipCertificateValidation is false but no cert": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powermax_observability_214.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			pmaxCreds := getSecret(customResource.Namespace, "test-powermax-creds")
-			karaviAuthconfig := getSecret(customResource.Namespace, "karavi-authorization-config")
-			proxyAuthzTokens := getSecret(customResource.Namespace, "proxy-authz-tokens")
-
-			tmpCR := customResource
-			// Ensure we exercise the v2.14 secret-copy behavior regardless of fixture drift.
-			tmpCR.Spec.Driver.ConfigVersion = "v2.14.0"
-			auth := &tmpCR.Spec.Modules[1]
-			auth.Name = csmv1.Authorization
-			auth.Enabled = true
-			// set skipCertificateValidation to false
-			for i, env := range auth.Components[0].Envs {
-				if env.Name == "SKIP_CERTIFICATE_VALIDATION" {
-					auth.Components[0].Envs[i].Value = "false"
-				}
-			}
-			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds, karaviAuthconfig, proxyAuthzTokens).Build()
-
-			return false, false, tmpCR, sourceClient, operatorConfig
-		},
-
-		"Fail - version resolve error (ConfigMap missing)": func(*testing.T) (bool, bool, csmv1.ContainerStorageModule, ctrlClient.Client, operatorutils.OperatorConfig) {
-			customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
-			if err != nil {
-				panic(err)
-			}
-
-			tmpCR := customResource
-			// Non-empty version forces ResolveVersionFromConfigMap path
-			tmpCR.Spec.Version = "v2.14.0"
-
-			// No ConfigMap seeded → resolution should fail and function should return error
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects().Build()
 
 			return false, false, tmpCR, sourceClient, operatorConfig
@@ -1556,6 +2347,356 @@ func TestSetPowerMaxMetricsConfigMap(t *testing.T) {
 	}
 }
 
+func TestPowerMaxMetrics_ServiceMonitorEnabledToDisabledTransitionDeletesMonitor(t *testing.T) {
+	ctx := context.Background()
+	customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
+	require.NoError(t, err)
+
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled: true,
+				Port:    9443,
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled:  true,
+					Interval: "15s",
+				},
+			}
+		}
+	}
+
+	pmaxCreds := getSecret(customResource.Namespace, "test-powermax-creds")
+	fakeClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds).Build()
+	k8sClient := clientgoclient.NewFakeClient(fakeClient)
+
+	err = PowerMaxMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitor := &unstructured.Unstructured{}
+	serviceMonitor.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	require.NoError(t, fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powermax-obs-monitor", Namespace: customResource.Namespace}, serviceMonitor))
+
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled: true,
+				Port:    9443,
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled: false,
+				},
+			}
+		}
+	}
+
+	err = PowerMaxMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitorAfter := &unstructured.Unstructured{}
+	serviceMonitorAfter.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	err = fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powermax-obs-monitor", Namespace: customResource.Namespace}, serviceMonitorAfter)
+	require.True(t, k8sErrors.IsNotFound(err), "ServiceMonitor must be deleted when observability serviceMonitor is disabled")
+}
+
+func TestPowerMaxMetrics_MetricsEnabledToDisabledDeletesServiceMonitor(t *testing.T) {
+	ctx := context.Background()
+	customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
+	require.NoError(t, err)
+
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled: true,
+				Port:    9443,
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled:  true,
+					Interval: "30s",
+				},
+			}
+		}
+	}
+
+	pmaxCreds := getSecret(customResource.Namespace, "test-powermax-creds")
+	fakeClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds).Build()
+	k8sClient := clientgoclient.NewFakeClient(fakeClient)
+
+	err = PowerMaxMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitor := &unstructured.Unstructured{}
+	serviceMonitor.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	require.NoError(t, fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powermax-obs-monitor", Namespace: customResource.Namespace}, serviceMonitor))
+
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled: false,
+			}
+		}
+	}
+
+	err = PowerMaxMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitorAfter := &unstructured.Unstructured{}
+	serviceMonitorAfter.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	err = fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powermax-obs-monitor", Namespace: customResource.Namespace}, serviceMonitorAfter)
+	require.True(t, k8sErrors.IsNotFound(err), "ServiceMonitor must be deleted when metrics.enabled is disabled")
+}
+
+func TestPowerMaxMetrics_ServiceMonitorCreatedWhenBothEnabled(t *testing.T) {
+	ctx := context.Background()
+	customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
+	require.NoError(t, err)
+
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled:       true,
+				Port:          9443,
+				TLSCertSecret: "powermax-metrics-tls",
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled:            true,
+					Interval:           "30s",
+					ScrapeTimeout:      "10s",
+					InsecureSkipVerify: true,
+				},
+			}
+		}
+	}
+
+	pmaxCreds := getSecret(customResource.Namespace, "test-powermax-creds")
+	fakeClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds).Build()
+	k8sClient := clientgoclient.NewFakeClient(fakeClient)
+
+	err = PowerMaxMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitor := &unstructured.Unstructured{}
+	serviceMonitor.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	err = fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powermax-obs-monitor", Namespace: customResource.Namespace}, serviceMonitor)
+	require.NoError(t, err, "ServiceMonitor must be created when both metrics.enabled and serviceMonitor.enabled are true")
+
+	spec, found, err := unstructured.NestedMap(serviceMonitor.Object, "spec")
+	require.NoError(t, err)
+	require.True(t, found, "ServiceMonitor spec must exist")
+
+	endpoints, found, err := unstructured.NestedSlice(spec, "endpoints")
+	require.NoError(t, err)
+	require.True(t, found, "ServiceMonitor endpoints must exist")
+	require.Greater(t, len(endpoints), 0, "ServiceMonitor must have at least one endpoint")
+
+	endpoint, ok := endpoints[0].(map[string]interface{})
+	require.True(t, ok, "ServiceMonitor endpoint must be a map")
+	assert.Equal(t, "obs-metrics", endpoint["port"])
+	assert.Equal(t, "30s", endpoint["interval"])
+	assert.Equal(t, "10s", endpoint["scrapeTimeout"])
+	assert.Equal(t, "https", endpoint["scheme"])
+	tlsConfig, ok := endpoint["tlsConfig"].(map[string]interface{})
+	require.True(t, ok, "ServiceMonitor tlsConfig must be a map")
+	assert.Equal(t, true, tlsConfig["insecureSkipVerify"])
+
+	service := &corev1.Service{}
+	require.NoError(t, fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powermax", Namespace: customResource.Namespace}, service))
+	obsMetricsPortFound := false
+	for _, port := range service.Spec.Ports {
+		if port.Name == "obs-metrics" {
+			obsMetricsPortFound = true
+			assert.Equal(t, int32(9443), port.Port)
+		}
+	}
+	assert.True(t, obsMetricsPortFound, "Service must expose obs-metrics port")
+}
+
+func TestPowerMaxMetrics_ServiceMonitorUpdatedOnCRChange(t *testing.T) {
+	ctx := context.Background()
+	customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
+	require.NoError(t, err)
+
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled: true,
+				Port:    9443,
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled:       true,
+					Interval:      "15s",
+					ScrapeTimeout: "5s",
+				},
+			}
+		}
+	}
+
+	pmaxCreds := getSecret(customResource.Namespace, "test-powermax-creds")
+	fakeClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds).Build()
+	k8sClient := clientgoclient.NewFakeClient(fakeClient)
+
+	err = PowerMaxMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitor := &unstructured.Unstructured{}
+	serviceMonitor.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	require.NoError(t, fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powermax-obs-monitor", Namespace: customResource.Namespace}, serviceMonitor))
+
+	spec, found, err := unstructured.NestedMap(serviceMonitor.Object, "spec")
+	require.NoError(t, err)
+	require.True(t, found)
+	endpoints, found, err := unstructured.NestedSlice(spec, "endpoints")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Greater(t, len(endpoints), 0)
+	endpoint, ok := endpoints[0].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, "15s", endpoint["interval"])
+	assert.Equal(t, "5s", endpoint["scrapeTimeout"])
+
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled: true,
+				Port:    9443,
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled:       true,
+					Interval:      "60s",
+					ScrapeTimeout: "25s",
+				},
+			}
+		}
+	}
+
+	err = PowerMaxMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitorUpdated := &unstructured.Unstructured{}
+	serviceMonitorUpdated.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	require.NoError(t, fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powermax-obs-monitor", Namespace: customResource.Namespace}, serviceMonitorUpdated))
+
+	spec, found, err = unstructured.NestedMap(serviceMonitorUpdated.Object, "spec")
+	require.NoError(t, err)
+	require.True(t, found)
+	endpoints, found, err = unstructured.NestedSlice(spec, "endpoints")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Greater(t, len(endpoints), 0)
+	endpoint, ok = endpoints[0].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, "60s", endpoint["interval"], "ServiceMonitor interval should be updated to 60s")
+	assert.Equal(t, "25s", endpoint["scrapeTimeout"], "ServiceMonitor scrapeTimeout should be updated to 25s")
+}
+
+func TestPowerMaxMetrics_ServiceMonitorNotCreatedWhenMetricsDisabled(t *testing.T) {
+	ctx := context.Background()
+	customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
+	require.NoError(t, err)
+
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled: false,
+			}
+		}
+	}
+
+	pmaxCreds := getSecret(customResource.Namespace, "test-powermax-creds")
+	fakeClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds).Build()
+	k8sClient := clientgoclient.NewFakeClient(fakeClient)
+
+	err = PowerMaxMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitor := &unstructured.Unstructured{}
+	serviceMonitor.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	err = fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powermax-obs-monitor", Namespace: customResource.Namespace}, serviceMonitor)
+	require.True(t, k8sErrors.IsNotFound(err), "ServiceMonitor must not be created when metrics.enabled is false")
+}
+
+func TestPowerMaxMetrics_ServiceMonitorTLSConfigUpdatedOnCRChange(t *testing.T) {
+	ctx := context.Background()
+	customResource, err := getCustomResource("./testdata/cr_powermax_observability.yaml")
+	require.NoError(t, err)
+
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			// #nosec G101 - test file
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled:       true,
+				Port:          9443,
+				TLSCertSecret: "metrics-tls-secret", //nolint:gosec
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled:            true,
+					InsecureSkipVerify: true,
+				},
+			}
+		}
+	}
+
+	pmaxCreds := getSecret(customResource.Namespace, "test-powermax-creds")
+	tlsSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "metrics-tls-secret",
+			Namespace: customResource.Namespace,
+		},
+	}
+	fakeClient := ctrlClientFake.NewClientBuilder().WithObjects(pmaxCreds, tlsSecret).Build()
+	k8sClient := clientgoclient.NewFakeClient(fakeClient)
+
+	err = PowerMaxMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitor := &unstructured.Unstructured{}
+	serviceMonitor.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	require.NoError(t, fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powermax-obs-monitor", Namespace: customResource.Namespace}, serviceMonitor))
+
+	spec, found, err := unstructured.NestedMap(serviceMonitor.Object, "spec")
+	require.NoError(t, err)
+	require.True(t, found)
+	endpoints, found, err := unstructured.NestedSlice(spec, "endpoints")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Greater(t, len(endpoints), 0)
+	endpoint, ok := endpoints[0].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, "https", endpoint["scheme"])
+	tlsConfig, ok := endpoint["tlsConfig"].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, true, tlsConfig["insecureSkipVerify"])
+
+	for mi := range customResource.Spec.Modules {
+		if customResource.Spec.Modules[mi].Name == csmv1.Observability {
+			// #nosec G101 - test file
+			customResource.Spec.Modules[mi].Metrics = &csmv1.ModuleMetrics{
+				Enabled:       true,
+				Port:          9443,
+				TLSCertSecret: "metrics-tls-secret", //nolint:gosec
+				ServiceMonitor: &csmv1.MetricsServiceMonitorConfig{
+					Enabled:            true,
+					InsecureSkipVerify: false,
+				},
+			}
+		}
+	}
+
+	err = PowerMaxMetrics(ctx, false, operatorConfig, customResource, fakeClient, k8sClient)
+	require.NoError(t, err)
+
+	serviceMonitorUpdated := &unstructured.Unstructured{}
+	serviceMonitorUpdated.SetGroupVersionKind(schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "ServiceMonitor"})
+	require.NoError(t, fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: "karavi-metrics-powermax-obs-monitor", Namespace: customResource.Namespace}, serviceMonitorUpdated))
+
+	spec, found, err = unstructured.NestedMap(serviceMonitorUpdated.Object, "spec")
+	require.NoError(t, err)
+	require.True(t, found)
+	endpoints, found, err = unstructured.NestedSlice(spec, "endpoints")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Greater(t, len(endpoints), 0)
+	endpoint, ok = endpoints[0].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, "https", endpoint["scheme"])
+	tlsConfig, ok = endpoint["tlsConfig"].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, false, tlsConfig["insecureSkipVerify"], "ServiceMonitor tlsConfig.insecureSkipVerify should be updated to false")
+}
+
 func TestGetTopology_MockedInputs_CoversImageAndLogLevelBranch(t *testing.T) {
 	ctx := context.Background()
 
@@ -1647,7 +2788,7 @@ spec:
 					}
 					for _, e := range c.Env {
 						// value should have been replaced from TopologyLogLevel token to "DEBUG"
-						if e.Name == "LOG_LEVEL" && e.Value == "DEBUG" {
+						if e.Name == "LOG_LEVEL" && e.Value == "debug" {
 							foundLogLevel = true
 						}
 					}
@@ -1660,7 +2801,7 @@ spec:
 		t.Fatalf("karavi-topology container with overridden image not found in rendered objects")
 	}
 	if !foundLogLevel {
-		t.Fatalf("LOG_LEVEL env with value DEBUG not found in rendered objects")
+		t.Fatalf("LOG_LEVEL env with value debug not found in rendered objects")
 	}
 }
 
@@ -1755,166 +2896,6 @@ spec:
 	if !found {
 		t.Fatalf("karavi-metrics-powerflex container with image from matched not found")
 	}
-}
-
-func TestAppendObservabilitySecrets_SkipCertTrue_SkipsRootCert(t *testing.T) {
-	ctx := context.Background()
-
-	cr := csmv1.ContainerStorageModule{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "isilon",
-			Namespace: "isilon",
-		},
-		Spec: csmv1.ContainerStorageModuleSpec{
-			Driver: csmv1.Driver{
-				CSIDriverType: "isilon",
-				AuthSecret:    "isilon-creds",
-			},
-			Modules: []csmv1.Module{
-				{
-					Name:    csmv1.Authorization,
-					Enabled: true,
-					Components: []csmv1.ContainerTemplate{
-						{
-							Name: "karavi-authorization-proxy",
-							Envs: []corev1.EnvVar{{Name: "SKIP_CERTIFICATE_VALIDATION", Value: "true"}},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	// Seed driver secret + auth secrets, but omit proxy-server-root-certificate.
-	driverSecret := getSecret(cr.Namespace, cr.Spec.Driver.AuthSecret)
-	proxyTokens := getSecret(cr.Namespace, "proxy-authz-tokens")
-	karaviAuthCfg := getSecret(cr.Namespace, "karavi-authorization-config")
-
-	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(driverSecret, proxyTokens, karaviAuthCfg).Build()
-
-	objs, err := appendObservabilitySecrets(ctx, cr, nil, sourceClient, nil)
-	assert.NoError(t, err)
-
-	// driver secret + 2 auth secrets (root cert skipped)
-	assert.Len(t, objs, 3)
-
-	// Validate namespaces/names for created secrets
-	foundDriver := false
-	foundProxy := false
-	foundCfg := false
-	for _, obj := range objs {
-		s, ok := obj.(*corev1.Secret)
-		if !ok {
-			continue
-		}
-		if s.Namespace != operatorutils.ObservabilityNamespace {
-			continue
-		}
-		switch s.Name {
-		case driverSecret.Name:
-			foundDriver = true
-		case "isilon-proxy-authz-tokens":
-			foundProxy = true
-		case "isilon-karavi-authorization-config":
-			foundCfg = true
-		}
-	}
-	assert.True(t, foundDriver)
-	assert.True(t, foundProxy)
-	assert.True(t, foundCfg)
-}
-
-func TestAppendObservabilitySecrets_SkipCertFalse_IncludesRootCert(t *testing.T) {
-	ctx := context.Background()
-
-	cr := csmv1.ContainerStorageModule{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "isilon",
-			Namespace: "isilon",
-		},
-		Spec: csmv1.ContainerStorageModuleSpec{
-			Driver: csmv1.Driver{
-				CSIDriverType: "isilon",
-				AuthSecret:    "isilon-creds",
-			},
-			Modules: []csmv1.Module{
-				{
-					Name:    csmv1.Authorization,
-					Enabled: true,
-					Components: []csmv1.ContainerTemplate{
-						{
-							Name: "karavi-authorization-proxy",
-							Envs: []corev1.EnvVar{{Name: "SKIP_CERTIFICATE_VALIDATION", Value: "false"}},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	driverSecret := getSecret(cr.Namespace, cr.Spec.Driver.AuthSecret)
-	proxyTokens := getSecret(cr.Namespace, "proxy-authz-tokens")
-	karaviAuthCfg := getSecret(cr.Namespace, "karavi-authorization-config")
-	rootCert := getSecret(cr.Namespace, "proxy-server-root-certificate")
-
-	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(driverSecret, proxyTokens, karaviAuthCfg, rootCert).Build()
-
-	objs, err := appendObservabilitySecrets(ctx, cr, nil, sourceClient, nil)
-	assert.NoError(t, err)
-
-	// driver secret + 3 auth secrets
-	assert.Len(t, objs, 4)
-
-	foundRoot := false
-	for _, obj := range objs {
-		s, ok := obj.(*corev1.Secret)
-		if !ok {
-			continue
-		}
-		if s.Namespace != operatorutils.ObservabilityNamespace {
-			continue
-		}
-		if s.Name == "isilon-proxy-server-root-certificate" {
-			foundRoot = true
-			break
-		}
-	}
-	assert.True(t, foundRoot)
-}
-
-func TestAppendObservabilitySecrets_InvalidSkipCertValue_ReturnsError(t *testing.T) {
-	ctx := context.Background()
-
-	cr := csmv1.ContainerStorageModule{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "isilon",
-			Namespace: "isilon",
-		},
-		Spec: csmv1.ContainerStorageModuleSpec{
-			Driver: csmv1.Driver{
-				CSIDriverType: "isilon",
-				AuthSecret:    "isilon-creds",
-			},
-			Modules: []csmv1.Module{
-				{
-					Name:    csmv1.Authorization,
-					Enabled: true,
-					Components: []csmv1.ContainerTemplate{
-						{
-							Name: "karavi-authorization-proxy",
-							Envs: []corev1.EnvVar{{Name: "SKIP_CERTIFICATE_VALIDATION", Value: "not-a-bool"}},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	driverSecret := getSecret(cr.Namespace, cr.Spec.Driver.AuthSecret)
-	sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(driverSecret).Build()
-
-	_, err := appendObservabilitySecrets(ctx, cr, nil, sourceClient, nil)
-	assert.Error(t, err)
 }
 
 func TestObservabilityTopology_SupportedVersion_AppliesObjects(t *testing.T) {
@@ -2395,4 +3376,555 @@ spec:
 	if !found {
 		t.Fatalf("expected template default image to be used")
 	}
+}
+
+func TestIsRetryableWebhookError(t *testing.T) {
+	tests := []struct {
+		name     string
+		err      error
+		expected bool
+	}{
+		{
+			name:     "nil error",
+			err:      nil,
+			expected: false,
+		},
+		{
+			name:     "tls certificate verification error",
+			err:      fmt.Errorf("tls: failed to verify certificate"),
+			expected: true,
+		},
+		{
+			name:     "x509 unknown authority error",
+			err:      fmt.Errorf("x509: certificate signed by unknown authority"),
+			expected: true,
+		},
+		{
+			name:     "connection refused error",
+			err:      fmt.Errorf("connection refused"),
+			expected: true,
+		},
+		{
+			name:     "no such host error",
+			err:      fmt.Errorf("no such host"),
+			expected: true,
+		},
+		{
+			name:     "webhook error",
+			err:      fmt.Errorf("webhook configuration error"),
+			expected: true,
+		},
+		{
+			name:     "internal error calling webhook",
+			err:      fmt.Errorf("Internal error occurred: failed calling webhook"),
+			expected: true,
+		},
+		{
+			name:     "other error",
+			err:      fmt.Errorf("some other error"),
+			expected: false,
+		},
+		{
+			name:     "generic error",
+			err:      fmt.Errorf("generic error message"),
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := isRetryableWebhookError(tt.err)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestParseObservabilityMetricsDeployment(t *testing.T) {
+	ctx := context.Background()
+
+	// Test with valid deployment
+	deployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-deployment",
+			Namespace: "default",
+		},
+		Spec: appsv1.DeploymentSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "test-container",
+							Image: "test-image",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	cr, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	dpApply, err := parseObservabilityMetricsDeployment(ctx, deployment, operatorConfig, cr, ctrlClientFake.NewClientBuilder().Build())
+	assert.NoError(t, err)
+	assert.NotNil(t, dpApply)
+}
+
+func TestGetOtelCollector_ModuleNotFound_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	// CR without observability module
+	cr, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = getOtelCollector(ctx, operatorConfig, cr, operatorutils.VersionSpec{})
+	assert.Error(t, err)
+}
+
+func TestGetTopology_ModuleNotFound_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	// CR without observability module
+	cr, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = getTopology(ctx, operatorConfig, cr, operatorutils.VersionSpec{})
+	assert.Error(t, err)
+}
+
+func TestIssuerCertServiceObs_ModuleNotFound_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	// CR without observability module
+	cr, err := getCustomResource("./testdata/cr_powerscale_replica.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	err = IssuerCertServiceObs(ctx, false, operatorConfig, cr, ctrlClientFake.NewClientBuilder().Build())
+	assert.Error(t, err)
+}
+
+func TestIssuerCertServiceObs_Success(t *testing.T) {
+	ctx := context.Background()
+
+	// CR with observability module and otel-collector enabled
+	cr, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	ctrlClient := ctrlClientFake.NewClientBuilder().Build()
+	err = IssuerCertServiceObs(ctx, false, operatorConfig, cr, ctrlClient)
+	assert.NoError(t, err)
+}
+
+func TestGetTopology_InvalidCRName_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	// Save originals and restore after test
+	origGetObs := getObservabilityModuleFn
+	origReadCfg := readConfigFileFn
+	defer func() {
+		getObservabilityModuleFn = origGetObs
+		readConfigFileFn = origReadCfg
+	}()
+
+	// Mock getObservabilityModuleFn to return a valid Observability module
+	getObservabilityModuleFn = func(_ csmv1.ContainerStorageModule) (csmv1.Module, error) {
+		return csmv1.Module{
+			Name:    csmv1.Observability,
+			Enabled: true,
+			Components: []csmv1.ContainerTemplate{
+				{
+					Name: ObservabilityTopologyName,
+					Envs: []corev1.EnvVar{
+						{
+							Name:  TopologyLogLevel,
+							Value: "info",
+						},
+					},
+				},
+			},
+		}, nil
+	}
+
+	// Mock readConfigFileFn to return a minimal YAML
+	readConfigFileFn = func(_ context.Context, _ csmv1.Module, cr csmv1.ContainerStorageModule, _ operatorutils.OperatorConfig, _ string) ([]byte, error) {
+		yaml := fmt.Sprintf(`
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: karavi-topology
+  namespace: %s
+spec:
+  template:
+    spec:
+      containers:
+      - name: karavi-topology
+`, cr.Namespace)
+		return []byte(yaml), nil
+	}
+
+	// Test with invalid CR name (contains invalid characters)
+	cr := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "invalid@name#with$special.chars",
+			Namespace: "default",
+		},
+	}
+
+	_, err := getTopology(ctx, operatorConfig, cr, operatorutils.VersionSpec{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid CR name for YAML substitution")
+}
+
+func TestGetTopology_InvalidCRNamespace_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	// Save originals and restore after test
+	origGetObs := getObservabilityModuleFn
+	origReadCfg := readConfigFileFn
+	defer func() {
+		getObservabilityModuleFn = origGetObs
+		readConfigFileFn = origReadCfg
+	}()
+
+	// Mock getObservabilityModuleFn to return a valid Observability module
+	getObservabilityModuleFn = func(_ csmv1.ContainerStorageModule) (csmv1.Module, error) {
+		return csmv1.Module{
+			Name:    csmv1.Observability,
+			Enabled: true,
+			Components: []csmv1.ContainerTemplate{
+				{
+					Name: ObservabilityTopologyName,
+					Envs: []corev1.EnvVar{
+						{
+							Name:  TopologyLogLevel,
+							Value: "info",
+						},
+					},
+				},
+			},
+		}, nil
+	}
+
+	// Mock readConfigFileFn to return a minimal YAML
+	readConfigFileFn = func(_ context.Context, _ csmv1.Module, cr csmv1.ContainerStorageModule, _ operatorutils.OperatorConfig, _ string) ([]byte, error) {
+		yaml := fmt.Sprintf(`
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: karavi-topology
+  namespace: %s
+spec:
+  template:
+    spec:
+      containers:
+      - name: karavi-topology
+`, cr.Namespace)
+		return []byte(yaml), nil
+	}
+
+	// Test with invalid CR namespace (contains invalid characters)
+	cr := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "valid-name",
+			Namespace: "invalid@namespace#with$special.chars",
+		},
+	}
+
+	_, err := getTopology(ctx, operatorConfig, cr, operatorutils.VersionSpec{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid CR namespace for YAML substitution")
+}
+
+func TestGetTopology_InvalidLogLevel_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	// Save originals and restore after test
+	origGetObs := getObservabilityModuleFn
+	origReadCfg := readConfigFileFn
+	defer func() {
+		getObservabilityModuleFn = origGetObs
+		readConfigFileFn = origReadCfg
+	}()
+
+	// Mock getObservabilityModuleFn to return a module with invalid log level
+	getObservabilityModuleFn = func(_ csmv1.ContainerStorageModule) (csmv1.Module, error) {
+		return csmv1.Module{
+			Name:    csmv1.Observability,
+			Enabled: true,
+			Components: []csmv1.ContainerTemplate{
+				{
+					Name: ObservabilityTopologyName,
+					Envs: []corev1.EnvVar{
+						{
+							Name:  TopologyLogLevel,
+							Value: "info\nmalicious: content", // Contains newline - YAML injection attempt
+						},
+					},
+				},
+			},
+		}, nil
+	}
+
+	// Mock readConfigFileFn to return a minimal YAML
+	readConfigFileFn = func(_ context.Context, _ csmv1.Module, cr csmv1.ContainerStorageModule, _ operatorutils.OperatorConfig, _ string) ([]byte, error) {
+		yaml := fmt.Sprintf(`
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: karavi-topology
+  namespace: %s
+spec:
+  template:
+    spec:
+      containers:
+      - name: karavi-topology
+`, cr.Namespace)
+		return []byte(yaml), nil
+	}
+
+	// Test with valid CR name/namespace but invalid log level
+	cr := csmv1.ContainerStorageModule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "valid-name",
+			Namespace: "valid-namespace",
+		},
+	}
+
+	_, err := getTopology(ctx, operatorConfig, cr, operatorutils.VersionSpec{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid log level for YAML substitution")
+}
+
+func TestGetOtelCollector_InvalidCRName_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	// Use a real CR file and modify it to have invalid name
+	customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	// Modify the CR name to be invalid
+	customResource.Name = "invalid@name#with$special.chars"
+
+	_, err = getOtelCollector(ctx, operatorConfig, customResource, operatorutils.VersionSpec{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid CR name for YAML substitution")
+}
+
+func TestGetOtelCollector_InvalidCRNamespace_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	// Use a real CR file and modify it to have invalid namespace
+	customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	// Modify the CR namespace to be invalid
+	customResource.Namespace = "invalid@namespace#with$special.chars"
+
+	_, err = getOtelCollector(ctx, operatorConfig, customResource, operatorutils.VersionSpec{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid CR namespace for YAML substitution")
+}
+
+func TestGetOtelCollector_InvalidOtelCollectorImage_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	// Use a real CR file and modify it to have invalid otel collector image
+	customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	// Find the observability module and modify the otel collector image to be invalid
+	for i, module := range customResource.Spec.Modules {
+		if module.Name == csmv1.Observability {
+			for j, component := range module.Components {
+				if component.Name == ObservabilityOtelCollectorName {
+					// Set invalid image with newline for YAML injection attempt
+					customResource.Spec.Modules[i].Components[j].Image = csmv1.ImageType("otel-collector:latest\nmalicious: content")
+					break
+				}
+			}
+			break
+		}
+	}
+
+	_, err = getOtelCollector(ctx, operatorConfig, customResource, operatorutils.VersionSpec{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid image for YAML substitution")
+}
+
+func TestGetOtelCollector_InvalidNginxProxyImage_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	// Use a real CR file and modify it to have invalid nginx proxy image
+	customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	// Find the observability module and modify the nginx proxy image env var to be invalid
+	found := false
+	for i, module := range customResource.Spec.Modules {
+		if module.Name == csmv1.Observability {
+			for j, component := range module.Components {
+				if component.Name == ObservabilityOtelCollectorName {
+					// Set invalid nginx proxy image env var with newline for YAML injection attempt
+					for k, env := range component.Envs {
+						if env.Name == NginxProxyImage {
+							customResource.Spec.Modules[i].Components[j].Envs[k].Value = "nginx:latest\nmalicious: content"
+							found = true
+							break
+						}
+					}
+					// If env var doesn't exist, add it
+					if !found {
+						customResource.Spec.Modules[i].Components[j].Envs = append(component.Envs, corev1.EnvVar{
+							Name:  NginxProxyImage,
+							Value: "nginx:latest\nmalicious: content",
+						})
+						found = true
+					}
+					break
+				}
+			}
+			break
+		}
+	}
+
+	if !found {
+		t.Skip("NginxProxyImage env var not found in otel-collector component, skipping test")
+	}
+
+	_, err = getOtelCollector(ctx, operatorConfig, customResource, operatorutils.VersionSpec{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid image for YAML substitution")
+}
+
+func TestGetPowerStoreMetricsObjects_InvalidCRName_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	// Use a real CR file and modify it to have invalid name
+	customResource, err := getCustomResource("./testdata/cr_powerstore_observability.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	// Modify the CR name to be invalid
+	customResource.Name = "invalid@name#with$special.chars"
+
+	_, err = getPowerStoreMetricsObjects(ctx, operatorConfig, customResource, operatorutils.VersionSpec{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid CR name for YAML substitution")
+}
+
+func TestGetPowerStoreMetricsObjects_InvalidCRNamespace_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	// Use a real CR file and modify it to have invalid namespace
+	customResource, err := getCustomResource("./testdata/cr_powerstore_observability.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	// Modify the CR namespace to be invalid
+	customResource.Namespace = "invalid@namespace#with$special.chars"
+
+	_, err = getPowerStoreMetricsObjects(ctx, operatorConfig, customResource, operatorutils.VersionSpec{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid CR namespace for YAML substitution")
+}
+
+func TestGetPowerStoreMetricsObjects_InvalidValue_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	// Use a real CR file and modify it to have invalid log level
+	customResource, err := getCustomResource("./testdata/cr_powerstore_observability.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	// Find the observability module and modify the log level to be invalid
+	found := false
+	for i, module := range customResource.Spec.Modules {
+		if module.Name == csmv1.Observability {
+			for j, component := range module.Components {
+				if component.Name == ObservabilityMetricsPowerStoreName {
+					// Set invalid log level env var with newline for YAML injection attempt
+					for k, env := range component.Envs {
+						if strings.Contains("POWERSTORE_LOG_LEVEL", env.Name) {
+							customResource.Spec.Modules[i].Components[j].Envs[k].Value = "info\nmalicious: content"
+							found = true
+							break
+						}
+					}
+					// If env var doesn't exist, add it
+					if !found {
+						customResource.Spec.Modules[i].Components[j].Envs = append(component.Envs, corev1.EnvVar{
+							Name:  "POWERSTORE_LOG_LEVEL",
+							Value: "info\nmalicious: content",
+						})
+						found = true
+					}
+					break
+				}
+			}
+			break
+		}
+	}
+
+	if !found {
+		t.Skip("POWERSTORE_LOG_LEVEL env var not found in powerstore metrics component, skipping test")
+	}
+
+	_, err = getPowerStoreMetricsObjects(ctx, operatorConfig, customResource, operatorutils.VersionSpec{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid value for YAML substitution")
+}
+
+func TestGetPowerScaleMetricsObjects_InvalidCRName_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	// Use a real CR file and modify it to have invalid name
+	customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	// Modify the CR name to be invalid
+	customResource.Name = "invalid@name#with$special.chars"
+
+	_, err = getPowerScaleMetricsObjects(ctx, operatorConfig, customResource, operatorutils.VersionSpec{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid CR name for YAML substitution")
+}
+
+func TestGetPowerScaleMetricsObjects_InvalidCRNamespace_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+
+	// Use a real CR file and modify it to have invalid namespace
+	customResource, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	// Modify the CR namespace to be invalid
+	customResource.Namespace = "invalid@namespace#with$special.chars"
+
+	_, err = getPowerScaleMetricsObjects(ctx, operatorConfig, customResource, operatorutils.VersionSpec{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid CR namespace for YAML substitution")
 }

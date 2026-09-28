@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021-2026 Dell Inc. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -28,22 +28,22 @@ import (
 
 // ConfigVersions used for all unit tests
 const (
-	PFlexConfigVersion         string = "v2.17.0"
-	DowngradeConfigVersion     string = "v2.15.1"
-	ConfigVersion              string = "v2.17.0"
-	UpgradeConfigVersion       string = "v2.15.0"
+	PFlexConfigVersion         string = "v2.18.0"
+	DowngradeConfigVersion     string = "v2.17.0"
+	ConfigVersion              string = "v2.18.0"
+	UpgradeConfigVersion       string = "v2.16.0"
 	JumpUpgradeConfigVersion   string = "v2.16.0"
-	JumpDowngradeConfigVersion string = "v2.15.0"
+	JumpDowngradeConfigVersion string = "v2.16.1"
 	OldConfigVersion           string = "v2.2.0"
 	BadConfigVersion           string = "v0"
-	PStoreConfigVersion        string = "v2.17.0"
-	UnityConfigVersion         string = "v2.17.0"
-	PScaleConfigVersion        string = "v2.17.2"
-	PmaxConfigVersion          string = "v2.17.2"
-	AuthServerConfigVersion    string = "v2.5.0"
-	CosiConfigVersion          string = "v1.1.0"
+	PStoreConfigVersion        string = "v2.18.0"
+	UnityConfigVersion         string = "v2.18.0"
+	PScaleConfigVersion        string = "v2.18.0"
+	PmaxConfigVersion          string = "v2.18.0"
+	AuthServerConfigVersion    string = "v2.6.0"
+	CosiConfigVersion          string = "v1.2.0"
 	InvalidCSMVersion          string = "v1.10.0"
-	CSMVersion                 string = "v1.17.0"
+	CSMVersion                 string = "v1.18.0"
 )
 
 // StorageKey is used to store a runtime object. It's used for both clientgo client and controller runtime client
@@ -119,6 +119,7 @@ func MakeDriver(configVersion, skipCertValid string) csmv1.Driver {
 	driverObj := csmv1.Driver{
 		ConfigVersion: configVersion,
 		Common: &csmv1.ContainerTemplate{
+			Image: "", // Empty image to avoid configVersion validation conflicts
 			Envs: []corev1.EnvVar{
 				{
 					Name:  "X_CSI_ISI_SKIP_CERTIFICATE_VALIDATION",
@@ -131,6 +132,7 @@ func MakeDriver(configVersion, skipCertValid string) csmv1.Driver {
 			},
 		},
 		Node: &csmv1.ContainerTemplate{
+			Image: "", // Empty image to avoid configVersion validation conflicts
 			Envs: []corev1.EnvVar{
 				{
 					Name:  "X_CSI_SDC_SFTP_REPO_ENABLED",
