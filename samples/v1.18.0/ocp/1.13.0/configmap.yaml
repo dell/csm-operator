@@ -1,0 +1,114 @@
+#
+# Copyright © 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#      http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: csm-images
+  namespace: dell-csm-operator
+data:
+  versions.yaml: |-
+    - version: v1.18.0
+      images:
+        # ===== PowerStore Images =====
+        # dell-csm-powerstore:v2.18.0
+        powerstore: registry.connect.redhat.com/dell-emc/dell-csm-powerstore@sha256:f4906c11b94db5c085441691bfb82a251295a3623c246dffbb3d4111b8c3ccff
+        # ===== PowerFlex Images =====
+        # dell-csm-powerflex:v2.18.0
+        powerflex: registry.connect.redhat.com/dell-emc/dell-csm-powerflex@sha256:4a399f564486b28b6c8f33575051f2ec7156a7979ccf95d9ae8d93facdb9dadc
+        # sdc:5.1.0.2
+        sdc: quay.io/dell/storage/powerflex/sdc@sha256:d05e2fd6f21d4cbe63b74e18d1743991184c1e38ee91af3a8fa389b16d0f543a
+        # sdc:5.1.0.2
+        sdc-monitor: quay.io/dell/storage/powerflex/sdc@sha256:d05e2fd6f21d4cbe63b74e18d1743991184c1e38ee91af3a8fa389b16d0f543a
+        # ===== PowerScale Images =====
+        # dell-csm-powerscale:v2.18.0
+        isilon: registry.connect.redhat.com/dell-emc/dell-csm-powerscale@sha256:dfb5e309b4b6bdbd6d74f140db588a0d866fa3cfaa992bdaa1b1c2d2bf04d8a9
+        # ===== PowerMax Images =====
+        # dell-csm-powermax:v2.18.0
+        powermax: registry.connect.redhat.com/dell-emc/dell-csm-powermax@sha256:5942d900855271cba66c8310b52756bdb8cedd9c25bf863eaa1aa8b30ac92c93
+        # dell-csm-powermax-reverseproxy:v2.17.0
+        csipowermax-reverseproxy: registry.connect.redhat.com/dell-emc/dell-csm-powermax-reverseproxy@sha256:7658aee2a79fd572bfcc1223b466347063d5defb3c6bb627d37d9c55c847f723
+        # ===== Unity Images =====
+        # dell-csm-unity:v2.18.0
+        unity: registry.connect.redhat.com/dell-emc/dell-csm-unity@sha256:39dcb9ca8eb40605816d0e78b38d53f66c4d36283428fb9576baada673c3629e
+        # ===== COSI Images =====
+        # dell-csm-cosi:v1.2.0
+        cosi: registry.connect.redhat.com/dell-emc/dell-csm-cosi@sha256:7115fa0f948c209617e572bdf9d6e2fd416caab93acb1393780129b0b65fe21f
+        # ===== Common Images =====
+        #   -- CSI Sidecars --
+        # csi-provisioner:v6.3.0
+        provisioner: registry.k8s.io/sig-storage/csi-provisioner@sha256:a4b0b1a37605b7b04a293e136edf7006ec1786a8eb3f4e5a945f81d667dcc371
+        # csi-attacher:v4.13.0
+        attacher: registry.k8s.io/sig-storage/csi-attacher@sha256:d1a26170efed45491074ca4545c81844eee2b9043fb885ac01fb4aed6f8b72d2
+        # csi-node-driver-registrar:v2.18.0
+        registrar: registry.k8s.io/sig-storage/csi-node-driver-registrar@sha256:b7fefd08651f00ac4df1a196ed4c621c2451fbb899297fe9fad9e36c667af0c0
+        # csi-resizer:v2.2.1
+        resizer: registry.k8s.io/sig-storage/csi-resizer@sha256:ea1d25e23479000c7e8eeb92d827df66258df4e482ca054c5e7ce3fc0f5c41a5
+        # csi-snapshotter:v8.6.0
+        snapshotter: registry.k8s.io/sig-storage/csi-snapshotter@sha256:42af0929bcd60a43499825c078a60ff0534e08af8fbeb283aa391be40feb9f3e
+        # dell-csm-metadata-retriever:v1.15.0
+        csi-metadata-retriever: registry.connect.redhat.com/dell-emc/dell-csm-metadata-retriever@sha256:4c0fae20c8126867fd6339da86c2e941380fe64c2f6d83caa5d043a5f78a84a5
+        # csi-external-health-monitor-controller:v0.18.0
+        external-health-monitor: registry.k8s.io/sig-storage/csi-external-health-monitor-controller@sha256:430c1f2267152ce6e4547ebbad225a2b399d03e5894f2f39ba233a38e4750a47
+        # csi-addons:v0.15.0
+        csi-addons: quay.io/csiaddons/k8s-sidecar@sha256:a41efd4b48bbdde779e3430922bea0f750d6dc57e88f563160230e319b2f3c23
+        # objectstorage-provisioner-sidecar
+        objectstorage-sidecar: gcr.io/k8s-staging-sig-storage/objectstorage-sidecar@sha256:7bac5d81555fb21d94cb17cdb16490c438f91d871c0eae5d2577ba1e607791fb
+        #   -- Resiliency --
+        # dell-csm-podmon:v1.17.0
+        podmon: registry.connect.redhat.com/dell-emc/dell-csm-podmon@sha256:daa3c94d3e79658dac4db62a63eb5f32b14a3bac04e4f7fab7e4eda6b86b6b55
+        #   -- Observability --
+        # dell-csm-metrics-powermax:v1.11.0
+        metrics-powermax: registry.connect.redhat.com/dell-emc/dell-csm-metrics-powermax@sha256:4cf1cb0a5a9c82a5a219dcb3958b5d539e7e9c8ff08191b5bc0889f8f25d9f4c
+        # dell-csm-metrics-powerstore:v1.16.0
+        metrics-powerstore: registry.connect.redhat.com/dell-emc/dell-csm-metrics-powerstore@sha256:035109de19ea9cff2d5e02a87c2592bb2865df31073c16ad1e621ebe34003ee7
+        # dell-csm-metrics-powerflex:v1.16.0
+        metrics-powerflex: registry.connect.redhat.com/dell-emc/dell-csm-metrics-powerflex@sha256:73340b6057262d863652959a7297cfd5a5c1ac39c75c755fbf5154847cf24e4b
+        # dell-csm-metrics-powerscale:v1.13.0
+        metrics-powerscale: registry.connect.redhat.com/dell-emc/dell-csm-metrics-powerscale@sha256:3e598ab69e1d7cd091679cac721dae03b0df21cc73b3fab025f620677b9fb1d2
+        # opentelemetry-collector:0.160.0
+        otel-collector: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector@sha256:e495787f07dbe432ce763ebaf5bc3d113850e9eee2250ade7a3da6a882d0d69a
+        #   -- Replication --
+        # dell-csm-replicator:v1.16.0
+        dell-csi-replicator: registry.connect.redhat.com/dell-emc/dell-csm-replicator@sha256:ce33ea7f5060d9cf58903984467c39c75d283c7f82e087423b8b586477b061b2
+        # dell-csm-replication-controller-manager:v1.16.0
+        dell-replication-controller-manager: registry.connect.redhat.com/dell-emc/dell-csm-replication-controller-manager@sha256:5028f6e73cadbd545359599254dce61fd65b542efe86733a1b8c4c75b7d68f36
+        #   -- Authorization --
+        # dell-csm-authorization-sidecar:v2.6.0
+        karavi-authorization-proxy: registry.connect.redhat.com/dell-emc/dell-csm-authorization-sidecar@sha256:11826a16e25962f348dfacd583e35d6e6565147c27cb52868d7d6888d85523af
+        # dell-csm-authorization-proxy:v2.6.0
+        proxy-service: registry.connect.redhat.com/dell-emc/dell-csm-authorization-proxy@sha256:81def8da24743b95aedd3e289ef131dea7329e48726521c7d3a99a052566ce27
+        # dell-csm-authorization-tenant:v2.6.0
+        tenant-service: registry.connect.redhat.com/dell-emc/dell-csm-authorization-tenant@sha256:d1f9f0c869f6799672751f3a3469e5ed00747b6619a33d46aebaf93e7c840262
+        # dell-csm-authorization-role:v2.6.0
+        role-service: registry.connect.redhat.com/dell-emc/dell-csm-authorization-role@sha256:c5e635fc91788ffe6f665f9eb3e669ecc5cc39dcf913dcc798b829dc03e33699
+        # dell-csm-authorization-storage:v2.6.0
+        storage-service: registry.connect.redhat.com/dell-emc/dell-csm-authorization-storage@sha256:f4af1dc4a1d99c8b69a6b7b096eaf9c95284cdcaf27378473e4c3438115dbd4b
+        # dell-csm-authorization-controller:v2.6.0
+        authorization-controller: registry.connect.redhat.com/dell-emc/dell-csm-authorization-controller@sha256:51b9cff704f90cebf61b27c6a918f2d23a4bbb3a3aafbd6dadd667fe85db9a15
+        # opa:0.70.0
+        opa: docker.io/openpolicyagent/opa@sha256:2b1c4b231f6dfa6a2baea4af4109203b10cd4b65e836d72f03bfe5d8dfce7095
+        # kube-mgmt:11.0.12
+        opa-kube-mgmt: docker.io/openpolicyagent/kube-mgmt@sha256:3a8b1bacbcd84758cf685136f3e033503e9b0e2935b0fa5b04387b1faac7afd1
+        # redis:8.10.1-alpine
+        redis: docker.io/redis@sha256:ef216d85ec44f4fdf7c0e6df2d1757a4734ed32fbb278cabd3181b5a27353b79
+        # redis-commander:latest
+        commander: docker.io/rediscommander/redis-commander@sha256:19cd0c49f418779fa2822a0496c5e6516d0c792effc39ed20089e6268477e40a
+        # nginx-unprivileged:1.30.4
+        nginx-proxy: quay.io/nginx/nginx-unprivileged@sha256:a5866218f05961c7651a4a4a18d9bd0e5e5b4b26aafffb334df3423948db3560
+        # cert-manager-cainjector:v1.21.1
+        cert-manager-cainjector: quay.io/jetstack/cert-manager-cainjector@sha256:ccf6b919ec0500745a47a910118f834f9636d0aac1ff221245cd2557ed8c7c98
+        # cert-manager-controller:v1.21.1
+        cert-manager-controller: quay.io/jetstack/cert-manager-controller@sha256:416a2d76870d996460e62bd7f521bf14fa017be9e3e904aab92163a331fcb61a
+        # cert-manager-webhook:v1.21.1
+        cert-manager-webhook: quay.io/jetstack/cert-manager-webhook@sha256:d8b3961b51c8c7320633f8208dc46bf88aa13804d0f7cbe48a096b2c523cee42
