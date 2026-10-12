@@ -19,7 +19,7 @@ metadata:
   name: powerstore
   namespace: powerstore
 spec:
-  version: v1.18.0
+  version: v1.18.1
   driver:
     csiDriverType: "powerstore"
     csiDriverSpec:
@@ -37,6 +37,11 @@ spec:
     # Allowed values: <metadataName specified in the Manifest>-config
     # For example: If the metadataName is set to powerstore, authSecret value should be set to powerstore-config
     authSecret: powerstore-config
+    # IPv6 Endpoint Configuration:
+    # When configuring PowerStore array endpoints in the secret, IPv6 addresses must be bracketed.
+    # IPv4 examples: https://10.0.0.1/api/rest, https://my-array.example.com/api/rest
+    # IPv6 examples: https://[2001:db8::1]/api/rest, https://[2001:db8::1]:443/api/rest
+    # Portless IPv6 endpoints will default to port 443 (e.g., https://[2001:db8::1] defaults to https://[2001:db8::1]:443)
     # Controller count
     # Allowed values: n, where n > 0
     # Default value: 2
@@ -355,7 +360,7 @@ spec:
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
         # X_CSI_POWERSTORE_EXTERNAL_ACCESS: Allows to specify additional entries for hostAccess of NFS volumes. Both single IP address and subnet are valid entries.
-        # Allowed Values: x.x.x.x/xx or x.x.x.x
+        # Allowed Values: x.x.x.x/xx, x.x.x.x, fd00::/64, or <IPv6_ADDRESS>/128
         # Default Value:
         - name: X_CSI_POWERSTORE_EXTERNAL_ACCESS
           value:
@@ -578,6 +583,17 @@ spec:
           # Allowed values: true, false
           # Default value: false
           insecureSkipVerify: false
+        # prometheusRule: Creates a Prometheus Operator PrometheusRule containing resiliency alert rules.
+        prometheusRule:
+          # enabled: Enable/Disable PrometheusRule creation for resiliency alerts
+          # Allowed values: true, false
+          # Default value: true
+          enabled: true
+          # connectivitySuccessRatio: Minimum percentage of successful array connectivity checks
+          # below which the CSMResiliencyConnectivityLost alert fires.
+          # Allowed values: 0-100
+          # Default value: 90
+          connectivitySuccessRatio: 90
     # Replication: allows to configure replication
     # Replication CRDs must be installed before installing driver
     - name: replication
@@ -828,4 +844,4 @@ spec:
           # enabled: Enable/Disable PrometheusRule creation for observability alerts
           # Allowed values: true, false
           # Default value: false
-          enabled: false
+          enabled: true

@@ -19,6 +19,51 @@
 # .github/scripts/module-version-update.sh when a new CSM release is cut;
 # .github/scripts/sidecar-version-update.sh reads it to select driver versions.
 # Edit by hand only for out-of-band fixes.
+v1.18.1:
+  powerflex:
+    version: v2.18.0
+    minUpgradeFrom: v2.16.0
+    modules:
+      authorization: v2.6.1
+      replication: v1.16.0
+      observability: v1.16.0
+      resiliency: v1.17.0
+  powermax:
+    version: v2.18.1
+    minUpgradeFrom: v2.16.0
+    modules:
+      csireverseproxy: v2.17.0
+      authorization: v2.6.1
+      replication: v1.16.0
+      observability: v1.16.0
+      resiliency: v1.17.0
+      csi-addons-replication: v1.0.0
+  powerscale:
+    version: v2.18.1
+    minUpgradeFrom: v2.16.0
+    modules:
+      authorization: v2.6.1
+      replication: v1.16.0
+      observability: v1.16.0
+      resiliency: v1.17.0
+  powerstore:
+    version: v2.18.0
+    minUpgradeFrom: v2.16.0
+    modules:
+      resiliency: v1.17.0
+      authorization: v2.6.1
+      observability: v1.16.0
+      replication: v1.16.0
+      csi-addons-replication: v1.0.0
+  unity:
+    version: v2.18.0
+    minUpgradeFrom: v2.16.0
+  cosi:
+    version: v1.2.0
+    minUpgradeFrom: v1.0.0
+  authorization-proxy-server:
+    version: v2.6.1
+    minUpgradeFrom: v2.4.0
 v1.18.0:
   powerflex:
     version: v2.18.0

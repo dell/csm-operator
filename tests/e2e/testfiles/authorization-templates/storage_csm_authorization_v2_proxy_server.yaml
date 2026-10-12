@@ -35,7 +35,7 @@ spec:
           roleServiceReplicas: 1
           storageServiceReplicas: 1
           opa: docker.io/openpolicyagent/opa:0.70.0
-          opaKubeMgmt: openpolicyagent/kube-mgmt:11.0.12
+          opaKubeMgmt: docker.io/openpolicyagent/kube-mgmt:11.0.14
           authorizationControllerReplicas: 1
           leaderElection: true
           # controllerReconcileInterval: interval for the authorization controllers to reconcile with Redis.

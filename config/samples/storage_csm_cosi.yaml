@@ -4,7 +4,7 @@ metadata:
   name: cosi
   namespace: dell-cosi
 spec:
-  version: v1.18.0
+  version: v1.18.1
   driver:
     csiDriverType: "cosi"
     replicas: 2

@@ -142,12 +142,12 @@ static-manifests: static-crd static-manager
 
 ##@ Samples
 
-CSM_VERSION ?= v1.18.0
+CSM_VERSION ?= v1.18.1
 OCP_VERSION ?=
 
 .PHONY: samples
 samples: kustomize ## Pre-render bundle.yaml for a CSM release (and optional OCP release).
-	## Usage: make samples CSM_VERSION=v1.18.0 [OCP_VERSION=1.12.2]
+	## Usage: make samples CSM_VERSION=v1.18.1 [OCP_VERSION=1.12.2]
 	$(KUSTOMIZE) build samples/$(CSM_VERSION) > samples/$(CSM_VERSION)/bundle.yaml
 ifdef OCP_VERSION
 	$(KUSTOMIZE) build samples/$(CSM_VERSION)/ocp/$(OCP_VERSION) > samples/$(CSM_VERSION)/ocp/$(OCP_VERSION)/bundle.yaml

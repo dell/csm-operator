@@ -4,7 +4,7 @@ metadata:
   name: isilon
   namespace: isilon
 spec:
-  version: v1.18.0
+  version: v1.18.1
   driver:
     csiDriverType: "isilon"
     csiDriverSpec:

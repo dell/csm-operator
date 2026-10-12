@@ -4,7 +4,7 @@ metadata:
   name: cosi
   namespace: ${E2E_NS_COSI}
 spec:
-  version: v1.18.0
+  version: ${CSM_VERSION_LATEST}
   driver:
     csiDriverType: "cosi"
     replicas: 1
