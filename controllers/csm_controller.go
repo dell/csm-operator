@@ -105,7 +105,7 @@ const (
 	CSMFinalizerName = "finalizer.dell.emc.com"
 
 	// CSMVersion -
-	CSMVersion = "v1.18.0"
+	CSMVersion = "v1.18.1"
 
 	// RefreshEnvVar - environment variable name for watcher timed refreshes
 	RefreshEnvVar = "REFRESH_INTERVAL_MINUTES"

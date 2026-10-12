@@ -19,7 +19,7 @@ metadata:
   namespace: powermax
 spec:
   # Add fields here
-  version: v1.18.0
+  version: v1.18.1
   driver:
     csiDriverType: "powermax"
     csiDriverSpec:
@@ -214,35 +214,36 @@ spec:
         # Default value: "false"
         - name: X_CSI_CSIADDONS_REPLICATION_ENABLED
           value: "false"
-        # X_CSI_POWERMAX_METRO_SITE_FAILURE_HANDLING_ENABLED: Enable/Disable SRDF/Metro
-        # site-failure handling. When enabled, the driver detects the winning array
-        # during a site failure, defers I/O operations on the offline array, and
-        # reconciles them automatically after the array recovers.
+        # X_CSI_POWERMAX_METRO_SITE_FAILURE_HANDLING_ENABLED: Enable/Disable Metro site failure handling
         # Allowed values:
-        #   "true"  - Enable Metro site-failure handling
-        #   "false" - Disable Metro site-failure handling (default)
+        #   "true"  - Enable Metro site failure handling
+        #   "false" - Disable Metro site failure handling
         # Default value: "false"
         - name: X_CSI_POWERMAX_METRO_SITE_FAILURE_HANDLING_ENABLED
           value: "false"
-        # X_CSI_POWERMAX_METRO_QUEUE_WARNING_THRESHOLD: Number of deferred operations
-        # that triggers a warning log. Leave empty to use the default (75).
-        # Default value: "" (uses driver default of 75)
+        # X_CSI_POWERMAX_METRO_STATE_CHECK_TIMEOUT: Timeout for Metro state check (per array)
+        # Allowed values: Go duration string (e.g., "15s")
+        # Default value: "15s"
+        - name: X_CSI_POWERMAX_METRO_STATE_CHECK_TIMEOUT
+          value: "15s"
+        # X_CSI_POWERMAX_METRO_QUEUE_WARNING_THRESHOLD: Warning threshold for deferred operation queue
+        # Allowed values: integer
+        # Default value: "100"
         - name: X_CSI_POWERMAX_METRO_QUEUE_WARNING_THRESHOLD
-          value: ""
-        # X_CSI_POWERMAX_METRO_QUEUE_HARD_LIMIT: Maximum number of deferred operations
-        # before new operations are rejected. Leave empty to use the default (100).
-        # Default value: "" (uses driver default of 100)
+          value: "100"
+        # X_CSI_POWERMAX_METRO_QUEUE_HARD_LIMIT: Hard limit for deferred operation queue
+        # Allowed values: integer
+        # Default value: "500"
         - name: X_CSI_POWERMAX_METRO_QUEUE_HARD_LIMIT
-          value: ""
-        # X_CSI_POWERMAX_METRO_RECONCILIATION_BACKOFF: Base backoff duration (seconds)
-        # for the reconciliation retry loop. Leave empty to use the default (30s).
-        # Default value: "" (uses driver default of 30s)
+          value: "500"
+        # X_CSI_POWERMAX_METRO_RECONCILIATION_BACKOFF: Backoff interval for reconciliation retry
+        # Allowed values: Go duration string (e.g., "30s")
+        # Default value: "30s"
         - name: X_CSI_POWERMAX_METRO_RECONCILIATION_BACKOFF
-          value: ""
-        # X_CSI_DRIVER_INSTANCE_UID: Unique identifier for this driver instance.
-        # Used for ownership isolation in the VolumeJournal CRD for Metro site-failure handling.
-        # Automatically set from the pod UID by the operator.
-        # Default value: "" (operator sets this automatically)
+          value: "30s"
+        # X_CSI_DRIVER_INSTANCE_UID: Unique identifier for the driver instance (for CRD ownership isolation)
+        # Allowed values: string
+        # Default value: "" (empty)
         - name: X_CSI_DRIVER_INSTANCE_UID
           value: ""
     controller:
@@ -254,12 +255,18 @@ spec:
         # Default value: false
         - name: X_CSI_HEALTH_MONITOR_ENABLED
           value: "false"
-        # X_CSI_DRIVER_INSTANCE_UID: Unique identifier for this driver instance.
-        # Used for ownership isolation in the VolumeJournal CRD for Metro site-failure handling.
-        # Automatically set from the pod UID by the operator.
-        # Default value: "" (operator sets this automatically)
-        - name: X_CSI_DRIVER_INSTANCE_UID
-          value: ""
+        # X_CSI_CAPACITY_POLL_INTERVAL: Interval at which the background capacity poller
+        # refreshes per-array free-capacity utilization and health for multi-array zones.
+        # Accepts a Go duration string (e.g. "5m").
+        # Default value: "5m"
+        - name: X_CSI_CAPACITY_POLL_INTERVAL
+          value: "5m"
+        # X_CSI_CAPACITY_THRESHOLD_FULL: Capacity utilization percentage (0-100) at which
+        # an array is considered full for warning-event purposes. A warning event is emitted
+        # when utilization crosses (threshold - 10) percent.
+        # Default value: "100"
+        - name: X_CSI_CAPACITY_THRESHOLD_FULL
+          value: "100"
       # nodeSelector: Define node selection constraints for controller pods.
       # For the pod to be eligible to run on a node, the node must have each
       # of the indicated key-value pairs as labels.
@@ -409,6 +416,26 @@ spec:
         interval: 30s
         scrapeTimeout: 10s
         insecureSkipVerify: false
+      prometheusRule:
+        # enabled: When true, creates a PrometheusRule CR with 15 PowerMax CSI driver alert rules.
+        # Requires Prometheus Operator CRDs to be installed.
+        enabled: false
+        # volumeOperationFailureThreshold: Failures in 5m window to trigger PM-01 to PM-08 alerts.
+        volumeOperationFailureThreshold: 3
+        # cpuWarningThreshold: Integer percent CPU threshold for PM-10. Default: 80
+        cpuWarningThreshold: 80
+        # memoryWarningThreshold: Memory threshold in bytes for PM-11. Default: 2147483648 (2 GiB)
+        memoryWarningThreshold: 2147483648
+        # apiErrorRateThreshold: Integer percent API error rate for PM-12. Default: 10
+        apiErrorRateThreshold: 10
+        # apiErrorRateWindow: Time window for PM-12 API error rate. Default: "5m"
+        apiErrorRateWindow: "5m"
+        # storageGroupCapacityWarning: Integer percent SG utilization warning for PM-13. Default: 80
+        storageGroupCapacityWarning: 80
+        # storageGroupCapacityCritical: Integer percent SG utilization critical for PM-14. Default: 90
+        storageGroupCapacityCritical: 90
+        # srpSnapshotCapacityWarning: Integer percent SRP snapshot capacity warning for PM-15. Default: 80
+        srpSnapshotCapacityWarning: 80
   modules:
     # CSI Powermax Reverseproxy is a mandatory module for Powermax
     - name: csireverseproxy
@@ -771,3 +798,14 @@ spec:
           # Allowed values: true, false
           # Default value: false
           insecureSkipVerify: false
+        # prometheusRule: Creates a Prometheus Operator PrometheusRule containing resiliency alert rules.
+        prometheusRule:
+          # enabled: Enable/Disable PrometheusRule creation for resiliency alerts
+          # Allowed values: true, false
+          # Default value: true
+          enabled: true
+          # connectivitySuccessRatio: Minimum percentage of successful array connectivity checks
+          # below which the CSMResiliencyConnectivityLost alert fires.
+          # Allowed values: 0-100
+          # Default value: 90
+          connectivitySuccessRatio: 90

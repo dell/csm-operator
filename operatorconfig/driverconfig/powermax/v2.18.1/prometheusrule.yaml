@@ -1,0 +1,293 @@
+# Copyright © 2022-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#      http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# PowerMax CSI Driver Prometheus Alert Rules.
+# This file is structured as a list of PrometheusRule groups (PrometheusRule.spec.groups),
+# each containing a name, interval, and a list of alert rules — matching the PowerScale pattern.
+# Threshold placeholders (<Alert*>) are substituted at runtime by the CSM Operator
+# from the MetricsPrometheusRuleConfig CRD fields.  The namespace label is injected
+# uniformly into ALL alert rules by the operator at reconcile time (via injectNamespaceLabelIntoGroups)
+# so that every alert — including absent()- and sum by()-based rules that carry no metric
+# namespace label — reaches the correct AlertmanagerConfig namespace-scoped route.
+# To add or modify alerts for a new driver version, copy this file into the new version
+# directory and edit as needed.
+#
+# 15 alert rules across 3 groups:
+#   Group 1 — powermax-csi-volume-operations  (PM-01 to PM-08)
+#   Group 2 — powermax-csi-driver-health      (PM-09 to PM-12)
+#   Group 3 — powermax-csi-capacity           (PM-13 to PM-15)
+#
+# NOTE: SRDF Replication Alerts (PM-16 to PM-18) are managed by the CSM Replication module
+# PrometheusRule since SRDF metrics are emitted by the csm-replication sidecar.
+
+# ── Group 1: Volume Operation Failure Alerts (PM-01 to PM-08) ──
+# Metric: dell_csi_operation_failure_total (CounterVec)
+# Labels: array_id, operation, error_code
+# Source: service/interceptors.go
+
+- name: powermax-csi-volume-operations
+  interval: 30s
+  rules:
+    # PM-01
+    - alert: PowerMaxCreateVolumeFailure
+      expr: increase(dell_csi_operation_failure_total{operation="CreateVolume"}[5m]) > <AlertVolumeOperationFailureThreshold>
+      for: "1m"
+      labels:
+        severity: warning
+        platform: powermax
+        component: csi-driver
+        alert_id: PM-01
+      annotations:
+        summary: "PowerMax CreateVolume failures detected on array {{ $labels.array_id }}"
+        description: "CreateVolume operation failed {{ printf \"%.0f\" $value }} times in the last 5 minutes on array {{ $labels.array_id }} with error code {{ $labels.error_code }}. Threshold: <AlertVolumeOperationFailureThreshold> failures."
+        runbook_url: ""
+
+    # PM-02
+    - alert: PowerMaxDeleteVolumeFailure
+      expr: increase(dell_csi_operation_failure_total{operation="DeleteVolume"}[5m]) > <AlertVolumeOperationFailureThreshold>
+      for: "1m"
+      labels:
+        severity: warning
+        platform: powermax
+        component: csi-driver
+        alert_id: PM-02
+      annotations:
+        summary: "PowerMax DeleteVolume failures detected on array {{ $labels.array_id }}"
+        description: "DeleteVolume operation failed {{ printf \"%.0f\" $value }} times in the last 5 minutes on array {{ $labels.array_id }} with error code {{ $labels.error_code }}. Threshold: <AlertVolumeOperationFailureThreshold> failures."
+        runbook_url: ""
+
+    # PM-03
+    - alert: PowerMaxControllerPublishFailure
+      expr: increase(dell_csi_operation_failure_total{operation="ControllerPublishVolume"}[5m]) > <AlertVolumeOperationFailureThreshold>
+      for: "1m"
+      labels:
+        severity: warning
+        platform: powermax
+        component: csi-driver
+        alert_id: PM-03
+      annotations:
+        summary: "PowerMax ControllerPublishVolume failures detected on array {{ $labels.array_id }}"
+        description: "ControllerPublishVolume operation failed {{ printf \"%.0f\" $value }} times in the last 5 minutes on array {{ $labels.array_id }} with error code {{ $labels.error_code }}. Threshold: <AlertVolumeOperationFailureThreshold> failures."
+        runbook_url: ""
+
+    # PM-04
+    - alert: PowerMaxControllerUnpublishFailure
+      expr: increase(dell_csi_operation_failure_total{operation="ControllerUnpublishVolume"}[5m]) > <AlertVolumeOperationFailureThreshold>
+      for: "1m"
+      labels:
+        severity: warning
+        platform: powermax
+        component: csi-driver
+        alert_id: PM-04
+      annotations:
+        summary: "PowerMax ControllerUnpublishVolume failures detected on array {{ $labels.array_id }}"
+        description: "ControllerUnpublishVolume operation failed {{ printf \"%.0f\" $value }} times in the last 5 minutes on array {{ $labels.array_id }} with error code {{ $labels.error_code }}. Threshold: <AlertVolumeOperationFailureThreshold> failures."
+        runbook_url: ""
+
+    # PM-05 — NodeStageVolume (corrected: CreateSnapshot was incorrect per ER spec FR-1.1)
+    - alert: PowerMaxNodeStageFailure
+      expr: increase(dell_csi_operation_failure_total{operation="NodeStageVolume"}[5m]) > <AlertVolumeOperationFailureThreshold>
+      for: "1m"
+      labels:
+        severity: warning
+        platform: powermax
+        component: csi-driver
+        alert_id: PM-05
+      annotations:
+        summary: "PowerMax NodeStageVolume failures detected on array {{ $labels.array_id }}"
+        description: "NodeStageVolume operation failed {{ printf \"%.0f\" $value }} times in the last 5 minutes on array {{ $labels.array_id }} with error code {{ $labels.error_code }}. Threshold: <AlertVolumeOperationFailureThreshold> failures."
+        runbook_url: ""
+
+    # PM-06 — NodeUnstageVolume (corrected: DeleteSnapshot was incorrect per ER spec FR-1.1)
+    - alert: PowerMaxNodeUnstageFailure
+      expr: increase(dell_csi_operation_failure_total{operation="NodeUnstageVolume"}[5m]) > <AlertVolumeOperationFailureThreshold>
+      for: "1m"
+      labels:
+        severity: warning
+        platform: powermax
+        component: csi-driver
+        alert_id: PM-06
+      annotations:
+        summary: "PowerMax NodeUnstageVolume failures detected on array {{ $labels.array_id }}"
+        description: "NodeUnstageVolume operation failed {{ printf \"%.0f\" $value }} times in the last 5 minutes on array {{ $labels.array_id }} with error code {{ $labels.error_code }}. Threshold: <AlertVolumeOperationFailureThreshold> failures."
+        runbook_url: ""
+
+    # PM-07
+    - alert: PowerMaxNodePublishFailure
+      expr: increase(dell_csi_operation_failure_total{operation="NodePublishVolume"}[5m]) > <AlertVolumeOperationFailureThreshold>
+      for: "1m"
+      labels:
+        severity: warning
+        platform: powermax
+        component: csi-driver
+        alert_id: PM-07
+      annotations:
+        summary: "PowerMax NodePublishVolume failures detected on array {{ $labels.array_id }}"
+        description: "NodePublishVolume operation failed {{ printf \"%.0f\" $value }} times in the last 5 minutes on array {{ $labels.array_id }} with error code {{ $labels.error_code }}. Threshold: <AlertVolumeOperationFailureThreshold> failures."
+        runbook_url: ""
+
+    # PM-08
+    - alert: PowerMaxNodeUnpublishFailure
+      expr: increase(dell_csi_operation_failure_total{operation="NodeUnpublishVolume"}[5m]) > <AlertVolumeOperationFailureThreshold>
+      for: "1m"
+      labels:
+        severity: warning
+        platform: powermax
+        component: csi-driver
+        alert_id: PM-08
+      annotations:
+        summary: "PowerMax NodeUnpublishVolume failures detected on array {{ $labels.array_id }}"
+        description: "NodeUnpublishVolume operation failed {{ printf \"%.0f\" $value }} times in the last 5 minutes on array {{ $labels.array_id }} with error code {{ $labels.error_code }}. Threshold: <AlertVolumeOperationFailureThreshold> failures."
+        runbook_url: ""
+
+# ── Group 2: Driver Health & Resource Alerts (PM-09 to PM-12) ──
+
+- name: powermax-csi-driver-health
+  interval: 30s
+  rules:
+    # PM-09 — Driver pod unavailable.
+    # Source: service/collectors/driver_health_collector.go
+    # Uses absent() on the controller-scoped driver uptime metric to detect controller pod failure.
+    # Filter by instance_type="controller" so that running node pods do not mask a controller outage.
+    # The namespace label is injected by the operator (injectNamespaceLabelIntoGroups) because
+    # absent() only carries labels from its selector and would otherwise produce an alert with no
+    # namespace label, preventing AlertmanagerConfig namespace-scoped routing from matching it.
+    - alert: PowerMaxDriverPodUnavailable
+      expr: absent(dell_csi_driver_uptime_seconds{instance_type="controller"})
+      for: "5m"
+      labels:
+        severity: critical
+        platform: powermax
+        component: csi-driver
+        alert_id: PM-09
+      annotations:
+        summary: "PowerMax CSI driver pod is unavailable"
+        description: "The PowerMax CSI driver has not reported metrics for 5 minutes. The driver pod may be down or crash-looping. Check kubectl get pods in the driver namespace."
+        runbook_url: ""
+
+    # PM-10 — Driver high CPU.
+    # Source: service/collectors/driver_health_collector.go
+    # Metric emits values 0-100 (percent); threshold is integer percentage.
+    # NOTE: 5m for: duration is an intentional exception to the 120s BR target to reduce false positives.
+    - alert: PowerMaxDriverHighCPU
+      expr: dell_csi_driver_cpu_usage_percent > <AlertCPUWarningThreshold>
+      for: "5m"
+      labels:
+        severity: warning
+        platform: powermax
+        component: csi-driver
+        alert_id: PM-10
+      annotations:
+        summary: "PowerMax CSI driver high CPU usage"
+        description: "PowerMax CSI driver CPU usage exceeds <AlertCPUWarningThreshold>% threshold. Current value: {{ printf \"%.1f\" $value }}%."
+        runbook_url: ""
+
+    # PM-11 — Driver high memory.
+    # Source: service/collectors/driver_health_collector.go
+    # NOTE: 5m for: duration is an intentional exception to the 120s BR target to reduce false positives.
+    - alert: PowerMaxDriverHighMemory
+      expr: dell_csi_driver_memory_usage_bytes > <AlertMemoryWarningThreshold>
+      for: "5m"
+      labels:
+        severity: warning
+        platform: powermax
+        component: csi-driver
+        alert_id: PM-11
+      annotations:
+        summary: "PowerMax CSI driver high memory usage"
+        description: "PowerMax CSI driver memory usage exceeds <AlertMemoryWarningThreshold> bytes. Current value: {{ $value }} bytes."
+        runbook_url: ""
+
+    # PM-12 — Unisphere API error rate.
+    # Source: pkg/metrics/powermax_api_observer.go
+    # clamp_min(1) prevents division by zero when no API calls were made.
+    # NOTE: 5m for: duration is an intentional exception to the 120s BR target to reduce false positives.
+    - alert: PowerMaxAPIErrorRateHigh
+      expr: |
+        (
+          sum without(status)(increase(dell_csi_api_call_total{status="failure"}[<AlertAPIErrorRateWindow>]))
+          /
+          clamp_min(sum without(status)(increase(dell_csi_api_call_total[<AlertAPIErrorRateWindow>])), 1)
+        ) * 100 > <AlertAPIErrorRateThreshold>
+      for: "5m"
+      labels:
+        severity: warning
+        platform: powermax
+        component: csi-driver
+        alert_id: PM-12
+      annotations:
+        summary: "PowerMax Unisphere API error rate high on array {{ $labels.array_id }}"
+        description: "Unisphere API error rate exceeds <AlertAPIErrorRateThreshold>% threshold on array {{ $labels.array_id }}. Current rate: {{ printf \"%.1f\" $value }}%."
+        runbook_url: ""
+
+# ── Group 3: Capacity & Quota Alerts (PM-13 to PM-15) ──
+
+- name: powermax-csi-capacity
+  interval: 30s
+  rules:
+    # PM-13 — Storage group capacity warning.
+    # Source: service/collectors/storagegroup_collector.go
+    # Labels: {array_id, storage_group} (corrected from storage_group_name per ER source-code verification)
+    # NOTE: 10m for: duration is an intentional exception to the 120s BR target; capacity changes slowly.
+    - alert: PowerMaxStorageGroupCapacityWarning
+      expr: dell_csi_storagegroup_utilization_ratio * 100 > <AlertStorageGroupCapacityWarning>
+      for: "10m"
+      labels:
+        severity: warning
+        platform: powermax
+        component: csi-driver
+        alert_id: PM-13
+      annotations:
+        summary: "PowerMax storage group {{ $labels.storage_group }} capacity warning on array {{ $labels.array_id }}"
+        description: "Storage group {{ $labels.storage_group }} on array {{ $labels.array_id }} utilization exceeds <AlertStorageGroupCapacityWarning>% warning threshold."
+        runbook_url: ""
+
+    # PM-14 — Storage group capacity critical.
+    # for: 1m meets the 120s BR target for critical capacity alerts.
+    - alert: PowerMaxStorageGroupCapacityCritical
+      expr: dell_csi_storagegroup_utilization_ratio * 100 > <AlertStorageGroupCapacityCritical>
+      for: "1m"
+      labels:
+        severity: critical
+        platform: powermax
+        component: csi-driver
+        alert_id: PM-14
+      annotations:
+        summary: "PowerMax storage group {{ $labels.storage_group }} capacity critical on array {{ $labels.array_id }}"
+        description: "Storage group {{ $labels.storage_group }} on array {{ $labels.array_id }} utilization exceeds <AlertStorageGroupCapacityCritical>% critical threshold. Immediate action required."
+        runbook_url: ""
+
+    # PM-15 — SRP snapshot capacity warning (SRP-level; permanent solution per PM-15 decision).
+    # Source: service/collectors/srp_collector.go
+    # Labels: {array_id, srp_id} (corrected from srp_name per ER source-code verification)
+    # sum by(array_id, srp_id) deduplicates series when multiple controller replicas scrape the same array.
+    # The namespace label is injected by the operator (injectNamespaceLabelIntoGroups) because
+    # sum by(array_id, srp_id) drops all other labels including namespace; without the injected label
+    # the alert cannot be routed by AlertmanagerConfig CRD routes that inject a mandatory namespace matcher.
+    # NOTE: 10m for: duration is an intentional exception to the 120s BR target; snapshot capacity changes slowly.
+    - alert: PowerMaxSRPSnapshotCapacityWarning
+      expr: |
+        (
+          sum by(array_id, srp_id) (dell_powermax_srp_capacity_bytes{capacity_type="snapshot"})
+          /
+          sum by(array_id, srp_id) (dell_powermax_srp_capacity_bytes{capacity_type="total"})
+        ) * 100 > <AlertSRPSnapshotCapacityWarning>
+      for: "10m"
+      labels:
+        severity: warning
+        platform: powermax
+        component: csi-driver
+        alert_id: PM-15
+      annotations:
+        summary: "PowerMax SRP {{ $labels.srp_id }} snapshot capacity warning on array {{ $labels.array_id }}"
+        description: "SRP {{ $labels.srp_id }} on array {{ $labels.array_id }} snapshot capacity exceeds <AlertSRPSnapshotCapacityWarning>% threshold."
+        runbook_url: ""

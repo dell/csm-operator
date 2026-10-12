@@ -4,7 +4,7 @@ metadata:
   name: isilon
   namespace: isilon
 spec:
-  version: v1.18.0
+  version: v1.18.1
   driver:
     csiDriverType: "isilon"
     csiDriverSpec:
@@ -382,22 +382,22 @@ spec:
         # Examples: 192, 256
         - name: X_CSI_MAX_PATH_LIMIT
           value: "192"
-        # X_CSI_ISILON_ENABLE_DRIVER_FSGROUP_CHOWN: Enable/Disable driver-side parallel recursive chown for export-backed volumes.
+        # X_CSI_ISILON_ENABLE_DRIVER_FSGROUP_CHOWN: Enable/Disable driver-side parallel recursive chown for export-backed volumes
         # Allowed values: true, false
         # Default value: true
         - name: X_CSI_ISILON_ENABLE_DRIVER_FSGROUP_CHOWN
           value: "true"
-        # X_CSI_ISILON_CHOWN_WORKERS: Number of parallel os.Chown workers for recursive fsGroup application.
+        # X_CSI_ISILON_CHOWN_WORKERS: Number of parallel os.Chown workers for recursive fsGroup application
         # Allowed values: integer >= 1
         # Default value: 8
         - name: X_CSI_ISILON_CHOWN_WORKERS
           value: "8"
-        # X_CSI_ISILON_CHOWN_WRITEBATCH: Number of completed file paths to buffer before writing the resumable state file.
+        # X_CSI_ISILON_CHOWN_WRITEBATCH: Number of completed file paths to buffer before writing the resumable state file
         # Allowed values: integer >= 1
         # Default value: 1000
         - name: X_CSI_ISILON_CHOWN_WRITEBATCH
           value: "1000"
-        # X_CSI_ISILON_CHOWN_TIMEOUT_SECONDS: Per-NodeStageVolume/NodePublishVolume timeout for recursive chown.
+        # X_CSI_ISILON_CHOWN_TIMEOUT_SECONDS: Per-NodeStageVolume/NodePublishVolume timeout for recursive chown
         # Allowed values: integer >= 1
         # Default value: 30
         - name: X_CSI_ISILON_CHOWN_TIMEOUT_SECONDS
@@ -783,3 +783,14 @@ spec:
           # Allowed values: true, false
           # Default value: false
           insecureSkipVerify: false
+        # prometheusRule: Creates a Prometheus Operator PrometheusRule containing resiliency alert rules.
+        prometheusRule:
+          # enabled: Enable/Disable PrometheusRule creation for resiliency alerts
+          # Allowed values: true, false
+          # Default value: true
+          enabled: true
+          # connectivitySuccessRatio: Minimum percentage of successful array connectivity checks
+          # below which the CSMResiliencyConnectivityLost alert fires.
+          # Allowed values: 0-100
+          # Default value: 90
+          connectivitySuccessRatio: 90

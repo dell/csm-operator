@@ -4,7 +4,7 @@ metadata:
   name: vxflexos
   namespace: vxflexos
 spec:
-  version: v1.18.0
+  version: v1.18.1
   driver:
     csiDriverType: "powerflex"
     csiDriverSpec:

@@ -1206,7 +1206,7 @@ func TestAuthorizationServerDeployment(t *testing.T) {
 					"role-service":             "quay.io/dell/container-storage-modules/csm-authorization-role:v2.5.0",
 					"storage-service":          "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.5.0",
 					"opa":                      "docker.io/openpolicyagent/opa:0.70.0",
-					"opa-kube-mgmt":            "docker.io/openpolicyagent/kube-mgmt:11.0.12",
+					"opa-kube-mgmt":            "docker.io/openpolicyagent/kube-mgmt:11.0.14",
 					"authorization-controller": "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.5.0",
 				},
 			}
@@ -3688,13 +3688,13 @@ func TestGetVersionSpecificDefaultImages(t *testing.T) {
 			expectedController:     "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.3.0",
 		},
 		{
-			name:                   "empty version defaults to v2.6.0",
+			name:                   "empty version defaults to v2.6.1",
 			configVersion:          "",
-			expectedProxyService:   "quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.6.0",
-			expectedTenantService:  "quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.6.0",
-			expectedRoleService:    "quay.io/dell/container-storage-modules/csm-authorization-role:v2.6.0",
-			expectedStorageService: "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.6.0",
-			expectedController:     "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.6.0",
+			expectedProxyService:   "quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.6.1",
+			expectedTenantService:  "quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.6.1",
+			expectedRoleService:    "quay.io/dell/container-storage-modules/csm-authorization-role:v2.6.1",
+			expectedStorageService: "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.6.1",
+			expectedController:     "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.6.1",
 		},
 		{
 			name:            "invalid config directory returns error",

@@ -4,7 +4,7 @@ metadata:
   name: vxflexos
   namespace: vxflexos
 spec:
-  version: v1.18.0
+  version: v1.18.1
   driver:
     csiDriverType: "powerflex"
     csiDriverSpec:
@@ -316,7 +316,7 @@ spec:
         # Requires the Prometheus Operator CRDs to be installed in the cluster
         # Allowed values: true, false
         # Default value: false
-        enabled: false
+        enabled: true
         # restartCountThreshold: Pod restart count within a 15-minute window that triggers a crash-loop alert (PF-10)
         # Default value: 3
         restartCountThreshold: 3
@@ -490,7 +490,7 @@ spec:
           # enabled: Enable/Disable PrometheusRule creation for observability alerts
           # Allowed values: true, false
           # Default value: false
-          enabled: false
+          enabled: true
     # Replication: allows to configure replication
     # Replication CRDs must be installed before installing driver
     - name: replication
@@ -665,3 +665,14 @@ spec:
           # Allowed values: true, false
           # Default value: false
           insecureSkipVerify: false
+        # prometheusRule: Creates a Prometheus Operator PrometheusRule containing resiliency alert rules.
+        prometheusRule:
+          # enabled: Enable/Disable PrometheusRule creation for resiliency alerts
+          # Allowed values: true, false
+          # Default value: true
+          enabled: true
+          # connectivitySuccessRatio: Minimum percentage of successful array connectivity checks
+          # below which the CSMResiliencyConnectivityLost alert fires.
+          # Allowed values: 0-100
+          # Default value: 90
+          connectivitySuccessRatio: 90

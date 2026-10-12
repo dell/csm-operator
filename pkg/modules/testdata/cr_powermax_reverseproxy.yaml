@@ -22,7 +22,7 @@ spec:
     authSecret: powermax-creds
     replicas: 1
     common:
-      image: "quay.io/dell/container-storage-modules/csi-powermax:v2.18.0"
+      image: "quay.io/dell/container-storage-modules/csi-powermax:v2.18.1"
       imagePullPolicy: IfNotPresent
   modules:
     # CSI Powermax Reverseproxy is a mandatory module
@@ -53,7 +53,7 @@ spec:
       enabled: false
       components:
         - name: karavi-authorization-proxy
-          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.6.0
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.6.1
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"

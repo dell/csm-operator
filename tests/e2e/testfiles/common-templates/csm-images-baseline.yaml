@@ -1,4 +1,4 @@
-# Version numbers (v1.18.0, v1.17.0, v1.16.3, etc.) are NOT dynamic.
+# Version numbers (v1.18.1, v1.17.0, v1.16.3, etc.) are NOT dynamic.
 # These must be manually updated when release versions change.
 apiVersion: v1
 kind: ConfigMap
@@ -7,7 +7,7 @@ metadata:
   namespace: dell-csm-operator
 data:
   versions.yaml: |
-    - version: v1.18.0
+    - version: v1.18.1
       images:
         powerstore: quay.io/dell/container-storage-modules/csi-powerstore:nightly
         powerflex: quay.io/dell/container-storage-modules/csi-vxflexos:nightly
@@ -38,7 +38,7 @@ data:
         role-service: quay.io/dell/container-storage-modules/csm-authorization-role:nightly
         storage-service: quay.io/dell/container-storage-modules/csm-authorization-storage:nightly
         opa: docker.io/openpolicyagent/opa:0.70.0
-        opa-kube-mgmt: docker.io/openpolicyagent/kube-mgmt:11.0.12
+        opa-kube-mgmt: docker.io/openpolicyagent/kube-mgmt:11.0.14
         redis: redis:8.10.1-alpine
         commander: docker.io/rediscommander/redis-commander:latest
         attacher: registry.k8s.io/sig-storage/csi-attacher:v4.13.0
