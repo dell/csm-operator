@@ -4,7 +4,7 @@ metadata:
   name: vxflexos
   namespace: vxflexos
 spec:
-  version: v1.18.1
+  version: v1.18.2
   driver:
     csiDriverType: "powerflex"
     csiDriverSpec:
@@ -310,6 +310,43 @@ spec:
         # Allowed values: true, false
         # Default value: false
         insecureSkipVerify: false
+      # prometheusRule: Creates a Prometheus Operator PrometheusRule containing PowerFlex CSI alert rules.
+      prometheusRule:
+        # enabled: Enable/Disable PrometheusRule creation for driver alerts
+        # Requires the Prometheus Operator CRDs to be installed in the cluster
+        # Allowed values: true, false
+        # Default value: false
+        enabled: true
+        # restartCountThreshold: Pod restart count within a 15-minute window that triggers a crash-loop alert (PF-10)
+        # Default value: 3
+        restartCountThreshold: 3
+        # cpuWarningThreshold: Warning threshold for driver CPU utilization in whole percent (PF-11)
+        # Default value: 80
+        cpuWarningThreshold: 80
+        # memoryWarningThreshold: Warning threshold for driver memory usage in bytes; 2147483648 = 2 GiB (PF-12)
+        # Default value: 2147483648
+        memoryWarningThreshold: 2147483648
+        # poolCapacityWarningPercent: Warning threshold for storage pool utilization in whole percent (PF-13)
+        # Default value: 80
+        poolCapacityWarningPercent: 80
+        # poolCapacityCriticalPercent: Critical threshold for storage pool utilization in whole percent (PF-14)
+        # Default value: 90
+        poolCapacityCriticalPercent: 90
+        # thinRatioWarningThreshold: Thin-provisioning over-commitment ratio that triggers a warning alert (PF-15)
+        # Default value: "0.8"
+        thinRatioWarningThreshold: "0.8"
+        # dataReductionDegradedThreshold: Data reduction ratio below which a degradation alert fires (PF-16)
+        # Default value: "1.5"
+        dataReductionDegradedThreshold: "1.5"
+        # rcgLagWarningSeconds: Persistent RCG replication lag in seconds that triggers a warning alert (PF-20)
+        # Default value: 300
+        rcgLagWarningSeconds: 300
+        # rcgBandwidthWarningKBps: RCG transmit bandwidth in KB/s below which a degradation alert fires (PF-21)
+        # Default value: 10240
+        rcgBandwidthWarningKBps: 10240
+        # rcgLatencyWarningSeconds: RCG transmit latency in seconds that triggers a warning alert (PF-22)
+        # Default value: "5.0"
+        rcgLatencyWarningSeconds: "5.0"
   modules:
     # Authorization: enable csm-authorization for RBAC
     - name: authorization
@@ -448,6 +485,12 @@ spec:
           # Allowed values: true, false
           # Default value: false
           insecureSkipVerify: false
+        # prometheusRule: Configure Prometheus Operator PrometheusRule for observability alerts
+        prometheusRule:
+          # enabled: Enable/Disable PrometheusRule creation for observability alerts
+          # Allowed values: true, false
+          # Default value: false
+          enabled: true
     # Replication: allows to configure replication
     # Replication CRDs must be installed before installing driver
     - name: replication
@@ -549,6 +592,12 @@ spec:
             # Default value: 8083
             - name: "X_CSI_PODMON_API_PORT"
               value: "8083"
+              # podmonAPIToken: Shared secret token for authenticating podmon API requests
+              # Security note: podmon API uses HTTP; use this only on trusted cluster-internal networks.
+              # Example (literal value):
+              # - name: "X_CSI_PODMON_API_TOKEN"
+              #   value: "<strong-random-token>"
+              # Note: valueFrom.secretKeyRef is not currently supported for this token
           args:
             - "--labelvalue=csi-vxflexos"
             - "--leaderelection=false"
@@ -616,3 +665,14 @@ spec:
           # Allowed values: true, false
           # Default value: false
           insecureSkipVerify: false
+        # prometheusRule: Creates a Prometheus Operator PrometheusRule containing resiliency alert rules.
+        prometheusRule:
+          # enabled: Enable/Disable PrometheusRule creation for resiliency alerts
+          # Allowed values: true, false
+          # Default value: true
+          enabled: true
+          # connectivitySuccessRatio: Minimum percentage of successful array connectivity checks
+          # below which the CSMResiliencyConnectivityLost alert fires.
+          # Allowed values: 0-100
+          # Default value: 90
+          connectivitySuccessRatio: 90

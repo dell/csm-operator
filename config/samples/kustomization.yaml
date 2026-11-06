@@ -1,10 +1,10 @@
-## Append samples you want in your CSV to this file as resources ##
+## Generated latest-release samples included in the operator bundle ##
 resources:
-  - storage_v1_csm_powerscale.yaml
-  - storage_v1_csm_powerflex.yaml
-  - storage_v1_csm_powerstore.yaml
-  - storage_v1_csm_unity.yaml
-  - storage_v1_csm_powermax.yaml
-  - storage_v1_csm_cosi.yaml
-  - storage_v1_csm_authorization_v2.yaml
+  - storage_csm_powerscale.yaml
+  - storage_csm_powerflex.yaml
+  - storage_csm_powerstore.yaml
+  - storage_csm_unity.yaml
+  - storage_csm_powermax.yaml
+  - storage_csm_cosi.yaml
+  - storage_csm_authorization_v2.yaml
 # +kubebuilder:scaffold:manifestskustomizesamples
