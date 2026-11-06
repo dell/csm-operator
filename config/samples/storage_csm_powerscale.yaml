@@ -4,7 +4,7 @@ metadata:
   name: isilon
   namespace: isilon
 spec:
-  version: v1.18.1
+  version: v1.18.2
   driver:
     csiDriverType: "isilon"
     csiDriverSpec:
@@ -234,6 +234,38 @@ spec:
         # Allowed values: true, false
         # Default value: false
         insecureSkipVerify: false
+      # prometheusRule: Creates a Prometheus Operator PrometheusRule containing PowerScale CSI alert rules.
+      prometheusRule:
+        # enabled: Enable/Disable PrometheusRule creation for driver alerts
+        # Allowed values: true, false
+        # Default value: true
+        enabled: true
+        # volumeOperationFailureThreshold: Volume operation failure count threshold in 5m window
+        volumeOperationFailureThreshold: 3
+        # quotaWarningThreshold: Warning threshold for quota utilization in whole percent (80 = 80%)
+        quotaWarningThreshold: 80
+        # quotaCriticalThreshold: Critical threshold for quota utilization in whole percent (90 = 90%)
+        quotaCriticalThreshold: 90
+        # nodepoolWarningThreshold: Warning threshold for node pool utilization in whole percent
+        nodepoolWarningThreshold: 80
+        # nodepoolCriticalThreshold: Critical threshold for node pool utilization in whole percent
+        nodepoolCriticalThreshold: 90
+        # apiErrorRateThreshold: Warning threshold for API error rate in whole percent
+        apiErrorRateThreshold: 10
+        # apiErrorRateWindow: Prometheus duration string used for API error rate evaluation
+        apiErrorRateWindow: "5m"
+        # cpuWarningThreshold: Warning threshold for driver CPU utilization in whole percent
+        cpuWarningThreshold: 80
+        # memoryWarningThreshold: Warning threshold for driver memory usage in bytes (2 GiB)
+        memoryWarningThreshold: 2147483648
+        # nfsV3LatencyWarningSeconds: Warning threshold for NFSv3 p99 latency in seconds
+        nfsV3LatencyWarningSeconds: 10
+        # nfsV4LatencyWarningSeconds: Warning threshold for NFSv4 p99 latency in seconds
+        nfsV4LatencyWarningSeconds: 10
+        # driverCrashLoopRestartThreshold: Restart count threshold for crash loop detection
+        driverCrashLoopRestartThreshold: 3
+        # driverCrashLoopWindow: Prometheus duration string for crash loop restart delta evaluation
+        driverCrashLoopWindow: "15m"
     controller:
       envs:
         # X_CSI_ISI_QUOTA_ENABLED: Indicates whether the provisioner should attempt to set (later unset) quota
@@ -350,27 +382,26 @@ spec:
         # Examples: 192, 256
         - name: X_CSI_MAX_PATH_LIMIT
           value: "192"
-        # X_CSI_ISILON_ENABLE_DRIVER_FSGROUP_CHOWN: Enable/Disable driver-side parallel recursive chown for export-backed volumes.
-        # When disabled, the driver falls back to sequential recursive chown within the configured timeout.
+        # X_CSI_ISILON_ENABLE_DRIVER_FSGROUP_CHOWN: Enable/Disable driver-side parallel recursive chown for export-backed volumes
         # Allowed values: true, false
         # Default value: true
         - name: X_CSI_ISILON_ENABLE_DRIVER_FSGROUP_CHOWN
           value: "true"
-        # X_CSI_ISILON_CHOWN_WORKERS: Number of parallel os.Chown workers for recursive fsGroup application.
+        # X_CSI_ISILON_CHOWN_WORKERS: Number of parallel os.Chown workers for recursive fsGroup application
         # Allowed values: integer >= 1
         # Default value: 8
         - name: X_CSI_ISILON_CHOWN_WORKERS
-          value: "5"
-        # X_CSI_ISILON_CHOWN_WRITEBATCH: Number of completed file paths to buffer before writing the resumable state file.
+          value: "8"
+        # X_CSI_ISILON_CHOWN_WRITEBATCH: Number of completed file paths to buffer before writing the resumable state file
         # Allowed values: integer >= 1
         # Default value: 1000
         - name: X_CSI_ISILON_CHOWN_WRITEBATCH
-          value: "100"
-        # X_CSI_ISILON_CHOWN_TIMEOUT_SECONDS: Per-NodeStageVolume/NodePublishVolume timeout for recursive chown.
+          value: "1000"
+        # X_CSI_ISILON_CHOWN_TIMEOUT_SECONDS: Per-NodeStageVolume/NodePublishVolume timeout for recursive chown
         # Allowed values: integer >= 1
         # Default value: 30
         - name: X_CSI_ISILON_CHOWN_TIMEOUT_SECONDS
-          value: "50"
+          value: "30"
       # nodeSelector: Define node selection constraints for pods of node daemonset
       # For the pod to be eligible to run on a node, the node must have each
       # of the indicated key-value pairs as labels.
@@ -454,6 +485,9 @@ spec:
           interval: "30s"
           scrapeTimeout: ""
           insecureSkipVerify: false
+        prometheusRule:
+          enabled: true
+          rpoThresholdSeconds: 300
       components:
         - name: dell-csi-replicator
           envs:
@@ -639,6 +673,12 @@ spec:
           # Allowed values: true, false
           # Default value: false
           insecureSkipVerify: false
+        # prometheusRule: Configure Prometheus Operator PrometheusRule for observability alerts
+        prometheusRule:
+          # enabled: Enable/Disable PrometheusRule creation for observability alerts
+          # Allowed values: true, false
+          # Default value: false
+          enabled: false
     - name: resiliency
       # enabled: Enable/Disable Resiliency feature
       # Allowed values:
@@ -743,3 +783,14 @@ spec:
           # Allowed values: true, false
           # Default value: false
           insecureSkipVerify: false
+        # prometheusRule: Creates a Prometheus Operator PrometheusRule containing resiliency alert rules.
+        prometheusRule:
+          # enabled: Enable/Disable PrometheusRule creation for resiliency alerts
+          # Allowed values: true, false
+          # Default value: true
+          enabled: true
+          # connectivitySuccessRatio: Minimum percentage of successful array connectivity checks
+          # below which the CSMResiliencyConnectivityLost alert fires.
+          # Allowed values: 0-100
+          # Default value: 90
+          connectivitySuccessRatio: 90
