@@ -120,9 +120,9 @@ spec:
         name: sdc
         envs:
           - name: REPO_ADDRESS
-            value: "REPLACE_SFTP_REPO_ADDRESS"  # SFTP/private repository address. Format: "protocol://address"
+            value: "REPLACE_SFTP_REPO_ADDRESS" # SFTP/private repository address. Format: "protocol://address"
           - name: REPO_USER
-            value: "REPLACE_SFTP_REPO_USER"  # provide username to authenticate to the SFTP repo
+            value: "REPLACE_SFTP_REPO_USER" # provide username to authenticate to the SFTP repo
           - name: MODULE_SIGCHECK
             value: "0"
   modules:

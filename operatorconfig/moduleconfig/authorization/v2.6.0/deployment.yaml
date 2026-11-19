@@ -480,19 +480,6 @@ spec:
       targetPort: 6379
       name: <AUTHORIZATION_REDIS_NAME>
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: <AUTHORIZATION_REDIS_COMMANDER>
-  namespace: <NAMESPACE>
-spec:
-  selector:
-    app: <AUTHORIZATION_REDIS_COMMANDER>
-  ports:
-    - protocol: TCP
-      port: 8081
-      targetPort: 8081
----
 # Sentinel
 apiVersion: v1
 kind: ServiceAccount

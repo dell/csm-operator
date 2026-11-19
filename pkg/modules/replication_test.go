@@ -352,7 +352,7 @@ func TestReplicationPreCheck(t *testing.T) {
 
 			tmpCR := customResource
 			replica := tmpCR.Spec.Modules[0]
-			replica.ConfigVersion = "v1.13.0"
+			replica.ConfigVersion = "v1.14.0"
 
 			cluster1ConfigSecret := getSecret(operatorutils.ReplicationControllerNameSpace, "test-target-cluster-1")
 			cluster2ConfigSecret := getSecret(operatorutils.ReplicationControllerNameSpace, "test-target-cluster-2")

@@ -55,4 +55,3 @@ data:
         opa-kube-mgmt: docker.io/openpolicyagent/kube-mgmt@sha256:2c233c59becd9ec59a3f507220a8e837d06226172876adc41ebe1252a57f9fb4
         authorization-controller: registry.connect.redhat.com/dell-emc/dell-csm-authorization-controller@sha256:cc2652b90b09a75e3adf618c924a0ebbd5a06c1165ef479f6476bda2667bf403
         redis: docker.io/library/redis@sha256:0804c395e634e624243387d3c3a9c45fcaca876d313c2c8b52c3fdf9a912dded
-        commander: docker.io/rediscommander/redis-commander@sha256:19cd0c49f418779fa2822a0496c5e6516d0c792effc39ed20089e6268477e40a

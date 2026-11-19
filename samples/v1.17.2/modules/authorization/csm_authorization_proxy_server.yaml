@@ -83,7 +83,6 @@ spec:
           #    usernamePath: secrets/redis-username
           #    passwordPath: secrets/redis-password
           redisName: redis-csm
-          redisCommander: rediscommander
           sentinel: sentinel
           redisReplicas: 5
         - name: config

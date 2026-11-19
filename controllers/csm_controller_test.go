@@ -2838,7 +2838,7 @@ func getObservabilityModule() []csmv1.Module {
 		{
 			Name:          csmv1.Observability,
 			Enabled:       true,
-			ConfigVersion: "v1.13.0",
+			ConfigVersion: "v1.14.0",
 			Components: []csmv1.ContainerTemplate{
 				{
 					Name:    "topology",

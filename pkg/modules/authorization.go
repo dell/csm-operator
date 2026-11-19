@@ -90,13 +90,10 @@ const (
 	DefaultRoleServiceImage    = "quay.io/dell/container-storage-modules/csm-authorization-role"
 	DefaultStorageServiceImage = "quay.io/dell/container-storage-modules/csm-authorization-storage"
 	DefaultRedisImage          = "redis:8.10.1-alpine"
-	DefaultRedisCommanderImage = "rediscommander/redis-commander:latest"
 	DefaultControllerImage     = "quay.io/dell/container-storage-modules/csm-authorization-controller"
 
 	// AuthRedisName -
 	AuthRedisName = "<AUTHORIZATION_REDIS_NAME>"
-	// AuthRedisCommander -
-	AuthRedisCommander = "<AUTHORIZATION_REDIS_COMMANDER>"
 	// AuthRedisSentinel -
 	AuthRedisSentinel = "<AUTHORIZATION_REDIS_SENTINEL>"
 	// AuthCert - for tls secret
@@ -865,7 +862,6 @@ func getAuthorizationServerDeployment(ctx context.Context, op operatorutils.Oper
 		// redis component
 		if component.Name == AuthRedisComponent {
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisName, component.RedisName)
-			YamlString = strings.ReplaceAll(YamlString, AuthRedisCommander, component.RedisCommander)
 			YamlString = strings.ReplaceAll(YamlString, AuthRedisSentinel, component.Sentinel)
 			YamlString = strings.ReplaceAll(YamlString, AuthCSMNameSpace, cr.Namespace)
 
@@ -927,6 +923,10 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op oper
 		}
 	}
 
+	if err := deleteAuthorizationRedisCommanderDeployments(ctx, cr.Name, cr.Namespace, authModule, ctrlClient); err != nil {
+		return err
+	}
+
 	// When creating/updating, apply YAML manifest (Services, RBAC) before workloads.
 	if !isDeleting {
 		err = applyOrDeleteObjects(ctx, ctrlClient, YamlString, isDeleting)
@@ -939,11 +939,6 @@ func AuthorizationServerDeployment(ctx context.Context, isDeleting bool, op oper
 	// These resources are only applicable for auth module versions >= v2.3.0
 	if ok {
 		err = applyDeleteAuthorizationRedisStatefulsetV2(ctx, isDeleting, cr, ctrlClient, authModule, matched)
-		if err != nil {
-			return err
-		}
-
-		err = applyDeleteAuthorizationRediscommanderDeploymentV2(ctx, isDeleting, cr, ctrlClient, authModule, matched)
 		if err != nil {
 			return err
 		}
@@ -1068,7 +1063,7 @@ func authorizationStorageServiceV2(ctx context.Context, isDeleting bool, cr csmv
 
 		// redis secret provider class
 		if redisSecretProviderClassName != "" && redisSecretName != "" {
-			updateConjurAnnotations(deployment.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
+			updateConjurAnnotations(deployment.Spec.Template.Annotations, redisConjurPaths(redisConjurUsernamePath, redisConjurPasswordPath)...)
 			mountSPCVolume(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
 		}
 	}
@@ -1436,7 +1431,7 @@ func applyDeleteAuthorizationProxyServerV2(ctx context.Context, isDeleting bool,
 	applyAuthMetricsToProxyServerDeployment(&deployment, authModule)
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
-		updateConjurAnnotations(deployment.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
+		updateConjurAnnotations(deployment.Spec.Template.Annotations, redisConjurPaths(redisConjurUsernamePath, redisConjurPasswordPath)...)
 		mountSPCVolume(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
 	}
 
@@ -1494,7 +1489,7 @@ func applyDeleteAuthorizationTenantServiceV2(ctx context.Context, isDeleting boo
 	deployment := getTenantServiceScaffold(cr.Name, cr.Namespace, sentinelName, image, configSecretName, redisSecretName, redisPasswordKey, int32(replicas), redisReplicas)
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
-		updateConjurAnnotations(deployment.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
+		updateConjurAnnotations(deployment.Spec.Template.Annotations, redisConjurPaths(redisConjurUsernamePath, redisConjurPasswordPath)...)
 		mountSPCVolume(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
 	}
 
@@ -1543,7 +1538,7 @@ func applyDeleteAuthorizationRedisStatefulsetV2(ctx context.Context, isDeleting 
 	statefulset := getAuthorizationRedisStatefulsetScaffold(cr.Name, redisName, cr.Namespace, image, redisSecretName, redisPasswordKey, checksum, int32(redisReplicas))
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
-		updateConjurAnnotations(statefulset.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
+		updateConjurAnnotations(statefulset.Spec.Template.Annotations, redisConjurPaths(redisConjurUsernamePath, redisConjurPasswordPath)...)
 		mountSPCVolume(&statefulset.Spec.Template.Spec, redisSecretProviderClassName)
 	}
 
@@ -1573,50 +1568,93 @@ func getAuthorizationIPFamily(authModule csmv1.Module) string {
 	return ""
 }
 
-func applyDeleteAuthorizationRediscommanderDeploymentV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, authModule csmv1.Module, matched operatorutils.VersionSpec) error {
-	rediscommanderName := ""
-	sentinelName := ""
-	image := ""
-	redisReplicas := 0
-	ipFamily := getAuthorizationIPFamily(authModule)
+func deleteAuthorizationRedisCommanderDeployments(ctx context.Context, crName, namespace string, authModule csmv1.Module, ctrlClient crclient.Client) error {
+	names := map[string]struct{}{
+		"rediscommander": {},
+	}
 	for _, component := range authModule.Components {
-		switch component.Name {
-		case AuthRedisComponent:
-			rediscommanderName = component.RedisCommander
-			sentinelName = component.Sentinel
-			image = getDefaultAuthImage(component.Commander, DefaultRedisCommanderImage, matched)
-			image = getImageForKey(ctx, "commander", image, cr, matched)
-			redisReplicas = component.RedisReplicas
-			updateRedisGlobalVars(component)
-		default:
-			continue
+		if component.Name == AuthRedisComponent && component.RedisCommander != "" {
+			names[component.RedisCommander] = struct{}{}
 		}
 	}
 
-	checksum, err := getRedisChecksumFromSecretData(ctx, ctrlClient, cr, redisSecretName)
-	if err != nil {
-		return fmt.Errorf("getting redis secret checksum: %w", err)
+	legacyDeployments := &appsv1.DeploymentList{}
+	if err := ctrlClient.List(
+		ctx,
+		legacyDeployments,
+		crclient.InNamespace(namespace),
+	); err != nil {
+		return fmt.Errorf("listing legacy Redis Commander deployments: %w", err)
+	}
+	for _, deployment := range legacyDeployments.Items {
+		templateLabels := deployment.Spec.Template.Labels
+		if deployment.Labels["csm"] != crName && templateLabels["csm"] != crName {
+			continue
+		}
+		if templateLabels["csm"] == crName && templateLabels["app"] != deployment.Name {
+			continue
+		}
+		if isLegacyRedisCommanderDeployment(deployment) {
+			names[deployment.Name] = struct{}{}
+		}
 	}
 
-	// conversion to int32 is safe for a value up to 2147483647
-	// #nosec G115
-	deployment := getAuthorizationRediscommanderDeploymentScaffold(cr.Name, rediscommanderName, cr.Namespace, image, redisSecretName, redisUsernameKey, redisPasswordKey, sentinelName, checksum, redisReplicas, ipFamily)
+	for name := range names {
+		deployment := &appsv1.Deployment{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: namespace,
+			},
+		}
+		if err := operatorutils.DeleteObject(ctx, deployment, ctrlClient); err != nil {
+			return fmt.Errorf("deleting Redis Commander deployment %s: %w", name, err)
+		}
 
-	if redisSecretProviderClassName != "" && redisSecretName != "" {
-		updateConjurAnnotations(deployment.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
-		mountSPCVolume(&deployment.Spec.Template.Spec, redisSecretProviderClassName)
-	}
-
-	deploymentBytes, err := yaml.Marshal(&deployment)
-	if err != nil {
-		return fmt.Errorf("marshalling rediscommander deployment: %w", err)
-	}
-
-	err = applyOrDeleteObjects(ctx, ctrlClient, string(deploymentBytes), isDeleting)
-	if err != nil {
-		return fmt.Errorf("applying rediscommander deployment: %w", err)
+		service := &corev1.Service{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind:       "Service",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: namespace,
+			},
+		}
+		if err := operatorutils.DeleteObject(ctx, service, ctrlClient); err != nil {
+			return fmt.Errorf("deleting Redis Commander service %s: %w", name, err)
+		}
 	}
 	return nil
+}
+
+func isLegacyRedisCommanderDeployment(deployment appsv1.Deployment) bool {
+	for _, container := range deployment.Spec.Template.Spec.Containers {
+		hasHTTPUser := false
+		hasHTTPPassword := false
+		hasPort8081 := false
+		for _, env := range container.Env {
+			switch env.Name {
+			case "HTTP_USER":
+				hasHTTPUser = true
+			case "HTTP_PASSWORD":
+				hasHTTPPassword = true
+			}
+		}
+		for _, port := range container.Ports {
+			if port.ContainerPort == 8081 {
+				hasPort8081 = true
+				break
+			}
+		}
+		if hasHTTPUser && hasHTTPPassword && hasPort8081 {
+			return true
+		}
+	}
+	return false
 }
 
 func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleting bool, cr csmv1.ContainerStorageModule, ctrlClient crclient.Client, authModule csmv1.Module, matched operatorutils.VersionSpec) error {
@@ -1648,7 +1686,7 @@ func applyDeleteAuthorizationSentinelStatefulsetV2(ctx context.Context, isDeleti
 	statefulset := getAuthorizationSentinelStatefulsetScaffold(cr.Name, sentinelName, redisName, cr.Namespace, image, redisSecretName, redisPasswordKey, checksum, int32(redisReplicas))
 
 	if redisSecretProviderClassName != "" && redisSecretName != "" {
-		updateConjurAnnotations(statefulset.Spec.Template.Annotations, redisConjurUsernamePath, redisConjurPasswordPath)
+		updateConjurAnnotations(statefulset.Spec.Template.Annotations, redisConjurPaths(redisConjurUsernamePath, redisConjurPasswordPath)...)
 		mountSPCVolume(&statefulset.Spec.Template.Spec, redisSecretProviderClassName)
 	}
 
@@ -2794,10 +2832,11 @@ func updateRedisGlobalVars(component csmv1.ContainerTemplate) {
 func validateRedisConfig(component csmv1.ContainerTemplate) (bool, error) {
 	hasUsername := component.RedisUsername != ""
 	hasPassword := component.RedisPassword != ""
-	hasDirectCredentials := hasUsername && hasPassword
+	hasDirectCredentials := hasPassword
 
-	// Check that both username and password are provided together (if either is provided)
-	if hasUsername != hasPassword {
+	// Keep rejecting a legacy username without its password, but username is no
+	// longer required because Redis Commander is no longer deployed.
+	if hasUsername && !hasPassword {
 		return false, fmt.Errorf("redisUsername and redisPassword must be provided together")
 	}
 
@@ -2810,9 +2849,13 @@ func validateRedisConfig(component csmv1.ContainerTemplate) (bool, error) {
 			continue
 		}
 
-		// If any field is provided, all must be provided
-		if config.SecretProviderClassName == "" || config.RedisSecretName == "" || config.RedisUsernameKey == "" || config.RedisPasswordKey == "" {
-			return false, fmt.Errorf("redisSecretProviderClass requires all of: secretProviderClassName, redisSecretName, redisUsernameKey, and redisPasswordKey")
+		// The username key is retained for legacy CR compatibility but is no
+		// longer required because Redis Commander is no longer deployed.
+		if config.SecretProviderClassName == "" || config.RedisSecretName == "" || config.RedisPasswordKey == "" {
+			return false, fmt.Errorf("redisSecretProviderClass requires all of: secretProviderClassName, redisSecretName, and redisPasswordKey")
+		}
+		if config.Conjur != nil && config.Conjur.PasswordPath == "" {
+			return false, fmt.Errorf("redisSecretProviderClass Conjur configuration requires passwordPath")
 		}
 		validSecretProviderClass = true
 	}
@@ -2825,9 +2868,9 @@ func validateRedisConfig(component csmv1.ContainerTemplate) (bool, error) {
 	// Check that at least one method is provided
 	if !hasDirectCredentials && !validSecretProviderClass {
 		if hasSecretProviderClass {
-			return false, fmt.Errorf("redisSecretProviderClass is incomplete. All of the following must be specified: secretProviderClassName, redisSecretName, redisUsernameKey, and redisPasswordKey")
+			return false, fmt.Errorf("redisSecretProviderClass is incomplete. All of the following must be specified: secretProviderClassName, redisSecretName, and redisPasswordKey")
 		}
-		return false, fmt.Errorf("redis credentials are required. Either set redisUsername and redisPassword or configure redisSecretProviderClass to use a Secret Store CSI driver")
+		return false, fmt.Errorf("redis credentials are required. Either set redisPassword or configure redisSecretProviderClass to use a Secret Store CSI driver")
 	}
 
 	return hasDirectCredentials, nil
@@ -2876,6 +2919,16 @@ func updateConjurAnnotations(annotations map[string]string, paths ...string) {
 	sb.WriteString(strings.Join(lines, "\n"))
 
 	annotations["conjur.org/secrets"] = sb.String()
+}
+
+func redisConjurPaths(usernamePath, passwordPath string) []string {
+	paths := make([]string, 0, 2)
+	for _, path := range []string{usernamePath, passwordPath} {
+		if path != "" {
+			paths = append(paths, path)
+		}
+	}
+	return paths
 }
 
 func getImageForKey(ctx context.Context, key string, defaultImage string, cr csmv1.ContainerStorageModule, matched operatorutils.VersionSpec) string {

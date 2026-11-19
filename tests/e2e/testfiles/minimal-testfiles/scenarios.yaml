@@ -769,6 +769,7 @@
     - "Configure authorization-proxy-server with template [4] for [powerflex] for CR [2]"
     - "Set spec version to [n] in CR spec [3]"
     - "Apply custom resource [3]"
+    - "Validate deployment [rediscommander] from CR [3] is not created"
     - "Validate pre-upgrade snapshot exists on CR [3]"
     - "Validate custom resource [3]"
     - "Validate [powerflex] driver from CR [3] is installed"

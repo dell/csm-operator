@@ -10,14 +10,14 @@ spec:
     authSecret: isilon-creds
     replicas: 1
     common:
-      image: "quay.io/dell/container-storage-modules/csi-isilon:v2.18.1"
+      image: "quay.io/dell/container-storage-modules/csi-isilon:v2.18.2"
       imagePullPolicy: IfNotPresent
   modules:
     # observability: allows to configure observability
     - name: observability
       # enabled: Enable/Disable observability
       enabled: true
-      configVersion: v1.16.0
+      configVersion: v1.16.1
       components:
         - name: otel-collector
           # enabled: Enable/Disable OpenTelemetry Collector
@@ -36,7 +36,7 @@ spec:
           enabled: true
           # image: Defines PowerScale metrics image. This shouldn't be changed
           # Allowed values: string
-          image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.13.0
+          image: quay.io/dell/container-storage-modules/csm-metrics-powerscale:v1.13.1
           envs:
             # POWERSCALE_MAX_CONCURRENT_QUERIES: set the default max concurrent queries to PowerScale
             # Allowed values: int
@@ -112,7 +112,7 @@ spec:
       enabled: false
       components:
         - name: karavi-authorization-proxy
-          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.6.1
+          image: quay.io/dell/container-storage-modules/csm-authorization-sidecar:v2.6.2
           envs:
             # proxyHost: hostname of the csm-authorization server
             - name: "PROXY_HOST"

@@ -36,9 +36,9 @@ default:
     # container.
     externalhealthmonitorcontroller: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.18.0
     # "images.sdcmonitor" defines the container images used to monitor sdc container
-    sdcmonitor: quay.io/dell/storage/powerflex/sdc:5.1.0.2
+    sdcmonitor: quay.io/dell/storage/powerflex/sdc:5.1.0.2-5
     # "images.metadataretriever" defines the container images used for csi metadata retriever
-    metadataretriever: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.15.0
+    metadataretriever: quay.io/dell/container-storage-modules/csi-metadata-retriever:v1.15.1
     # "images.csiReverseProxy" defines the container images used for csi reverse proxy
     csiReverseProxy: quay.io/dell/container-storage-modules/csipowermax-reverseproxy:v2.17.0
 # overrides is keyed by the target Kubernetes minor version in the form

@@ -138,7 +138,7 @@ func TestObservabilityPrecheck(t *testing.T) {
 
 			tmpCR := customResource
 			observability := tmpCR.Spec.Modules[0]
-			observability.ConfigVersion = "v1.13.0"
+			observability.ConfigVersion = "v1.14.0"
 
 			sourceClient := ctrlClientFake.NewClientBuilder().WithObjects(isilonCreds).Build()
 			fakeControllerRuntimeClient := func(_ []byte) (ctrlClient.Client, error) {
@@ -3483,6 +3483,138 @@ func TestGetOtelCollector_ModuleNotFound_ReturnsError(t *testing.T) {
 
 	_, err = getOtelCollector(ctx, operatorConfig, cr, operatorutils.VersionSpec{})
 	assert.Error(t, err)
+}
+
+func TestGetOtelCollector_Success(t *testing.T) {
+	ctx := context.Background()
+
+	cr, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	yaml, err := getOtelCollector(ctx, operatorConfig, cr, operatorutils.VersionSpec{})
+	assert.NoError(t, err)
+	assert.NotEmpty(t, yaml)
+}
+
+func TestGetOtelCollector_WithCustomRegistry(t *testing.T) {
+	ctx := context.Background()
+
+	cr, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	cr.Spec.CustomRegistry = "quay.io"
+	cr.Spec.RetainImageRegistryPath = trueBool
+
+	yaml, err := getOtelCollector(ctx, operatorConfig, cr, operatorutils.VersionSpec{})
+	assert.NoError(t, err)
+	assert.NotEmpty(t, yaml)
+}
+
+func TestGetOtelCollector_WithVersionSpec(t *testing.T) {
+	ctx := context.Background()
+
+	cr, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	matched := operatorutils.VersionSpec{
+		Version: "v1.14.0",
+		Images: map[string]string{
+			"otel-collector": "quay.io/dell/container-storage-modules/csm-otel-collector:v1.0.0",
+		},
+	}
+
+	yaml, err := getOtelCollector(ctx, operatorConfig, cr, matched)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, yaml)
+}
+
+// The nginx proxy image may only be set through the env named exactly NGINX_PROXY_IMAGE: that is
+// the one name the CRD CEL rules and the image allowlist inspect. The render previously matched any
+// env whose name was a substring of the "<NGINX_PROXY_IMAGE>" placeholder (for example "NGINX" or
+// "IMAGE"), which would let an unchecked value reach the rendered otel-collector manifest.
+func TestGetOtelCollector_NginxProxyImageEnvMatchesExactName(t *testing.T) {
+	const (
+		defaultNginx = DefaultNginxProxyImage
+		customNginx  = "quay.io/nginx/nginx-unprivileged:9.9"
+		attacker     = "quay.io/attacker/evil-nginx:1"
+	)
+
+	tests := []struct {
+		name    string
+		envs    []corev1.EnvVar
+		want    string
+		notWant string
+	}{
+		{
+			name: "exact name is honored",
+			envs: []corev1.EnvVar{{Name: "NGINX_PROXY_IMAGE", Value: customNginx}},
+			want: customNginx, notWant: defaultNginx,
+		},
+		{
+			name: "no env keeps the default image",
+			envs: nil,
+			want: defaultNginx, notWant: attacker,
+		},
+		{
+			name: "exact name wins over substring-named decoys listed before and after it",
+			envs: []corev1.EnvVar{
+				{Name: "NGINX", Value: attacker},
+				{Name: "NGINX_PROXY_IMAGE", Value: customNginx},
+				{Name: "IMAGE", Value: attacker},
+			},
+			want: customNginx, notWant: attacker,
+		},
+	}
+	// Names that are substrings of, or equal to, the placeholder text must not select the image.
+	for _, decoy := range []string{
+		"NGINX", "PROXY", "IMAGE", "NGINX_PROXY", "PROXY_IMAGE", "_", "<NGINX_PROXY_IMAGE>", "<", ">",
+		"nginx_proxy_image", "NGINX_PROXY_IMAGE_", "X_NGINX_PROXY_IMAGE",
+	} {
+		tests = append(tests, struct {
+			name    string
+			envs    []corev1.EnvVar
+			want    string
+			notWant string
+		}{
+			name: "decoy name " + decoy + " is ignored",
+			envs: []corev1.EnvVar{{Name: decoy, Value: attacker}},
+			want: defaultNginx, notWant: attacker,
+		})
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cr, err := getCustomResource("./testdata/cr_powerscale_observability.yaml")
+			require.NoError(t, err)
+
+			set := false
+			for mi := range cr.Spec.Modules {
+				if cr.Spec.Modules[mi].Name != csmv1.Observability {
+					continue
+				}
+				for ci := range cr.Spec.Modules[mi].Components {
+					if cr.Spec.Modules[mi].Components[ci].Name == ObservabilityOtelCollectorName {
+						cr.Spec.Modules[mi].Components[ci].Envs = tt.envs
+						set = true
+					}
+				}
+			}
+			require.True(t, set, "fixture has no otel-collector component")
+
+			yaml, err := getOtelCollector(context.Background(), operatorConfig, cr, operatorutils.VersionSpec{})
+			require.NoError(t, err)
+
+			assert.Contains(t, yaml, tt.want)
+			assert.NotContains(t, yaml, tt.notWant)
+			assert.NotContains(t, yaml, NginxProxyImage, "placeholder must always be substituted")
+		})
+	}
 }
 
 func TestGetTopology_ModuleNotFound_ReturnsError(t *testing.T) {

@@ -1,0 +1,110 @@
+# Copyright © 2022-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#      http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# CSM Resiliency Module Prometheus Alert Rules.
+# This file is structured as a PrometheusRule spec.groups list ([]group) so it
+# can be embedded directly into spec.groups of a PrometheusRule CR by the CSM
+# Operator.
+# Each group has a "name" and a "rules" list.
+#
+# Threshold placeholders (<Alert*>) and driver placeholders
+# (<DriverName>, <DriverPlatform>)
+# are substituted at runtime by the CSM Operator from the Resiliency module's
+# ModulePrometheusRuleConfig spec fields and the driver type.
+#
+# These alerts (RES-01 to RES-04) are cross-platform PodMon failover and
+# connectivity alerts that apply to all drivers supporting CSM Resiliency:
+# PowerFlex, PowerMax, PowerScale, and PowerStore.
+#
+# PERFORMANCE TARGETS (BR JA-23013):
+# Critical alerts use 1m-2m for: duration to meet 120s BR target.
+# Info alerts use 0m (immediate) for informational notifications.
+- name: csm-resiliency-<DriverPlatform>
+  interval: 30s
+  rules:
+    # RES-01 — Pod Failure Detection
+    - alert: CSMResiliencyPodFailureDetected
+      expr: >-
+        increase(dell_csm_resiliency_failover_total{reason="node_unreachable",driver="<DriverName>"}[5m])
+        > 0
+      for: 0m
+      labels:
+        severity: warning
+        component: csm-resiliency
+        platform: <DriverPlatform>
+        driver: <DriverName>
+        alert_id: RES-01
+      annotations:
+        summary: >-
+          CSM Resiliency pod failure detected for driver {{ $labels.driver }}
+        description: >-
+          Pod failure detected due to node unreachable for driver {{ $labels.driver
+          }}.
+        runbook_url: ""
+    # RES-02 — Connectivity Loss
+    - alert: CSMResiliencyConnectivityLost
+      expr: >-
+        dell_csm_resiliency_connectivity_success_ratio{driver="<DriverName>"} * 100
+        < <AlertConnectivitySuccessRatio>
+      for: 2m
+      labels:
+        severity: critical
+        component: csm-resiliency
+        platform: <DriverPlatform>
+        driver: <DriverName>
+        alert_id: RES-02
+      annotations:
+        summary: >-
+          CSM Resiliency connectivity lost for driver {{ $labels.driver }}
+        description: >-
+          Volume connectivity success ratio for driver {{ $labels.driver }} is below
+          <AlertConnectivitySuccessRatio>%.
+        runbook_url: ""
+    # RES-03 — Failover Triggered (Informational)
+    - alert: CSMResiliencyFailoverTriggered
+      expr: >-
+        increase(dell_csm_resiliency_failover_total{status="success",driver="<DriverName>"}[5m])
+        > 0
+      for: 0m
+      labels:
+        severity: info
+        component: csm-resiliency
+        platform: <DriverPlatform>
+        driver: <DriverName>
+        alert_id: RES-03
+      annotations:
+        summary: >-
+          CSM Resiliency automated failover triggered for driver {{ $labels.driver
+          }}
+        description: >-
+          Automated pod failover operation initiated successfully for driver {{ $labels.driver
+          }}. Reason: {{ $labels.reason }}.
+        runbook_url: ""
+    # RES-04 — Failover Failed
+    - alert: CSMResiliencyFailoverFailed
+      expr: >-
+        increase(dell_csm_resiliency_failover_total{status="failure",driver="<DriverName>"}[5m])
+        > 0
+      for: 0m
+      labels:
+        severity: critical
+        component: csm-resiliency
+        platform: <DriverPlatform>
+        driver: <DriverName>
+        alert_id: RES-04
+      annotations:
+        summary: >-
+          CSM Resiliency failover failed for driver {{ $labels.driver }}
+        description: >-
+          Automated pod failover operation failed for driver {{ $labels.driver }}.
+          Reason: {{ $labels.reason }}. Manual intervention may be required.
+        runbook_url: ""
