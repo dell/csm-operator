@@ -34,7 +34,7 @@ metadata:
   name: csm-image-allowlist
   namespace: dell-csm-operator
 data:
-  allowlist.yaml: |
+  allowlist.yaml: |-
     allowedRegistries:
       # Dell CSM images
       - "quay.io/dell"
@@ -48,7 +48,7 @@ data:
       - "quay.io/jetstack"
       # OPA and kube-mgmt
       - "docker.io/openpolicyagent"
-      # Redis commander
+      # Legacy Commander field accepted for backward-compatible CR validation.
       - "docker.io/rediscommander"
       # Redis (explicit image-level entry for security)
       - "docker.io/library/redis"

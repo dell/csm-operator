@@ -1,4 +1,4 @@
-//  Copyright © 2021 - 2026 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2021-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -953,7 +953,6 @@ func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageM
 	nginxEnabled := false
 	gatewayEnabled := false
 	proxyServerEnabled := false
-	redisCommanderName := ""
 	redisName := ""
 	sentinelName := ""
 
@@ -989,7 +988,6 @@ func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageM
 					proxyServerEnabled = true
 				}
 				if c.Name == "redis" {
-					redisCommanderName = c.RedisCommander
 					redisName = c.RedisName
 					sentinelName = c.Sentinel
 				}
@@ -1039,10 +1037,6 @@ func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageM
 	if nginxEnabled && !isOpenShift {
 		requiredDeployments = append(requiredDeployments, fmt.Sprintf("%s-ingress-nginx-controller", authNamespace))
 	}
-	if redisCommanderName != "" {
-		requiredDeployments = append(requiredDeployments, redisCommanderName)
-	}
-
 	for _, deployment := range deploymentList.Items {
 		deployment := deployment
 		switch deployment.Name {
@@ -1093,14 +1087,6 @@ func authProxyStatusCheck(ctx context.Context, instance *csmv1.ContainerStorageM
 			if !checkFn(&deployment) {
 				log.Infof("%s component not running in auth proxy deployment", deployment.Name)
 				return false, nil
-			}
-		default:
-			if redisCommanderName != "" && deployment.Name == redisCommanderName {
-				foundDeployments[deployment.Name] = true
-				if !checkFn(&deployment) {
-					log.Infof("%s component not running in auth proxy deployment", deployment.Name)
-					return false, nil
-				}
 			}
 		}
 	}
@@ -1177,7 +1163,6 @@ func getAuthProxyDeploymentStatus(ctx context.Context, instance *csmv1.Container
 	certEnabled := false
 	nginxEnabled := false
 	gatewayEnabled := false
-	redisCommanderName := ""
 	redisName := ""
 	sentinelName := ""
 
@@ -1196,7 +1181,6 @@ func getAuthProxyDeploymentStatus(ctx context.Context, instance *csmv1.Container
 					certEnabled = true
 				}
 				if c.Name == "redis" {
-					redisCommanderName = c.RedisCommander
 					redisName = c.RedisName
 					sentinelName = c.Sentinel
 				}
@@ -1240,10 +1224,6 @@ func getAuthProxyDeploymentStatus(ctx context.Context, instance *csmv1.Container
 			}
 		case "proxy-server", "role-service", "storage-service", "tenant-service", "authorization-controller":
 			isAuthDep = true
-		default:
-			if redisCommanderName != "" && deployment.Name == redisCommanderName {
-				isAuthDep = true
-			}
 		}
 
 		if isAuthDep {

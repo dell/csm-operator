@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: <DriverDefaultReleaseName>-node-metrics-monitor
+  namespace: <DriverDefaultReleaseNamespace>
+  labels:
+    app: <DriverDefaultReleaseName>-node
+spec:
+  selector:
+    matchLabels:
+      app: <DriverDefaultReleaseName>-node
+  namespaceSelector:
+    matchNames:
+      - <DriverDefaultReleaseNamespace>
+  podMetricsEndpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: ""
+      path: /metrics

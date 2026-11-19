@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: <DriverDefaultReleaseName>-config-params
+  namespace: <DriverDefaultReleaseNamespace>
+data:
+  driver-config-params.yaml: |
+    CSI_LOG_LEVEL: "info"
+    CSI_LOG_FORMAT: "json"
+    AZ_RECONCILE_INTERVAL: "1h"

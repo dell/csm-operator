@@ -1086,9 +1086,15 @@ func isStorageClassDeleteNotFound(err error) bool {
 	return strings.Contains(message, "notfound") || strings.Contains(message, "not found")
 }
 
+// isMTLSTemplate identifies mTLS templates without matching non-mTLS templates.
+func isMTLSTemplate(templateFile string) bool {
+	templateFile = strings.ToLower(templateFile)
+	return strings.Contains(templateFile, "mtls") && !strings.Contains(templateFile, "non-mtls")
+}
+
 func (step *Step) setUpStorageClass(_ Resource, templateFile, crType string) error {
 	// Skip if creating mTLS StorageClass and environment is not configured
-	if strings.Contains(templateFile, "mtls") {
+	if isMTLSTemplate(templateFile) {
 		if err := skipIfMTLSEnvironmentNotConfigured(); err != nil {
 			return err
 		}
@@ -1158,6 +1164,13 @@ func (step *Step) createResourceInNamespaceWithType(_ Resource, templateFile, na
 }
 
 func (step *Step) createResourceInNamespace(_ Resource, templateFile, namespace string) error {
+	// Skip if creating mTLS pod/resource and mTLS environment is not configured
+	if isMTLSTemplate(templateFile) {
+		if err := skipIfMTLSEnvironmentNotConfigured(); err != nil {
+			return err
+		}
+	}
+
 	// Expand environment variables in the namespace parameter (e.g., ${E2E_NS_AUTH})
 	expandedNamespace := os.ExpandEnv(namespace)
 
@@ -1228,7 +1241,7 @@ func (step *Step) setUpConfigMap(res Resource, templateFile, name, namespace, cr
 
 func (step *Step) setUpSecret(_ Resource, templateFile, name, namespace, crType string) error {
 	// Skip if creating mTLS Secret and environment is not configured
-	if strings.Contains(templateFile, "mtls") {
+	if isMTLSTemplate(templateFile) {
 		if err := skipIfMTLSEnvironmentNotConfigured(); err != nil {
 			return err
 		}
@@ -6885,9 +6898,9 @@ func (step *Step) waitForPodsDeleted(_ Resource, namespace string) error {
 // ============================================================================
 
 // isMTLSEnvironmentConfigured checks if the mTLS environment is properly configured.
-// Returns true if OneFS supports mTLS and POWERSCALE_MTLS_FQDN is set.
+// Returns true if OneFS supports mTLS, POWERSCALE_MTLS_FQDN is set, and node prerequisites are met.
 func isMTLSEnvironmentConfigured() bool {
-	return isOneFSVersionMTLSSupported() && os.Getenv("POWERSCALE_MTLS_FQDN") != ""
+	return isOneFSVersionMTLSSupported() && os.Getenv("POWERSCALE_MTLS_FQDN") != "" && os.Getenv("POWERSCALE_MTLS_NODE_SUPPORTED") != "false"
 }
 
 func isOneFSVersionMTLSSupported() bool {
@@ -6906,8 +6919,15 @@ func isOneFSVersionMTLSSupported() bool {
 // skipIfMTLSEnvironmentNotConfigured returns a skip error if mTLS environment is not configured.
 // This allows mTLS tests to gracefully skip when:
 // 1. OneFS is older than 9.16.0, OR
-// 2. POWERSCALE_MTLS_FQDN environment variable is not set
+// 2. POWERSCALE_MTLS_FQDN environment variable is not set, OR
+// 3. Cluster nodes do not support kTLS or tlshd
+// POWERSCALE_MTLS_NODE_SUPPORTED is initialized by run-e2e-test.sh; an unset
+// value is treated as supported for direct test-runner invocations.
 func skipIfMTLSEnvironmentNotConfigured() error {
+	if os.Getenv("POWERSCALE_MTLS_NODE_SUPPORTED") == "false" {
+		return fmt.Errorf("SKIP: Cluster nodes do not support kTLS (/sys/module/tls missing) or tlshd daemon")
+	}
+
 	if !isOneFSVersionMTLSSupported() {
 		return fmt.Errorf("SKIP: PowerScale OneFS %q does not support mTLS; OneFS 9.16.0 or later is required", os.Getenv("POWERSCALE_ONEFS_VERSION"))
 	}
@@ -7523,7 +7543,7 @@ func (step *Step) deleteNonMTLSPVC(res Resource, namespace string) error {
 // Skips if mTLS environment is not configured when updating to mTLS template.
 func (step *Step) updateSecretWithTemplate(res Resource, templatePath, secretName, namespace, driverType string) error {
 	// Skip if updating to mTLS template and mTLS environment is not configured
-	if strings.Contains(templatePath, "mtls") {
+	if isMTLSTemplate(templatePath) {
 		if err := skipIfMTLSEnvironmentNotConfigured(); err != nil {
 			return err
 		}

@@ -1,4 +1,4 @@
-//  Copyright © 2024 - 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
+//  Copyright © 2024-2026 Dell Inc. or its subsidiaries. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -2859,42 +2859,6 @@ func TestAuthProxyStatusCheckPopulatesControllerStatusOnNotReady(t *testing.T) {
 	assert.NotEqual(t, "", newStatus.ControllerStatus.Desired, "controllerStatus.Desired should be populated even when not ready")
 }
 
-func TestAuthProxyStatusCheckRedisCommanderNotReady(t *testing.T) {
-	ctx := context.Background()
-	ctrlClient := fullFakeClient()
-	ns := "test-rcns"
-
-	csm := authProxyCSMWithRedis(ns)
-	err := ctrlClient.Create(ctx, &csm)
-	assert.NoError(t, err)
-
-	i32One := int32(1)
-
-	for _, name := range []string{"proxy-server", "role-service", "storage-service", "tenant-service", "authorization-controller"} {
-		dep := appsv1.Deployment{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
-			Status:     appsv1.DeploymentStatus{ReadyReplicas: 1, AvailableReplicas: 1},
-			Spec:       appsv1.DeploymentSpec{Replicas: &i32One},
-		}
-		err = ctrlClient.Create(ctx, &dep)
-		assert.NoError(t, err)
-	}
-
-	rcDep := appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{Name: "rediscommander", Namespace: ns},
-		Status:     appsv1.DeploymentStatus{ReadyReplicas: 0, AvailableReplicas: 0},
-		Spec:       appsv1.DeploymentSpec{Replicas: &i32One},
-	}
-	err = ctrlClient.Create(ctx, &rcDep)
-	assert.NoError(t, err)
-
-	fakeReconcile := FakeReconcileCSM{Client: ctrlClient, K8sClient: fake.NewSimpleClientset()}
-
-	status, err := authProxyStatusCheck(ctx, &csm, &fakeReconcile, nil, OperatorConfig{})
-	assert.Nil(t, err)
-	assert.False(t, status, "rediscommander not ready should cause false")
-}
-
 func TestGetAuthProxyDeploymentStatusWithStatefulsets(t *testing.T) {
 	ctx := context.Background()
 	ctrlClient := fullFakeClient()
@@ -2917,7 +2881,6 @@ func TestGetAuthProxyDeploymentStatusWithStatefulsets(t *testing.T) {
 		{"storage-service", 1, 0},
 		{"tenant-service", 1, 0},
 		{"authorization-controller", 1, 0},
-		{"rediscommander", 1, 0},
 	}
 	for _, d := range deps {
 		dep := appsv1.Deployment{
@@ -2954,8 +2917,8 @@ func TestGetAuthProxyDeploymentStatusWithStatefulsets(t *testing.T) {
 
 	podStatus, err := getAuthProxyDeploymentStatus(ctx, &csm, &fakeReconcile)
 	assert.Nil(t, err)
-	assert.Equal(t, "10", podStatus.Desired, "6 dep replicas + 3 redis + 1 sentinel = 10")
-	assert.Equal(t, "10", podStatus.Available)
+	assert.Equal(t, "9", podStatus.Desired, "5 dep replicas + 3 redis + 1 sentinel = 9")
+	assert.Equal(t, "9", podStatus.Available)
 	assert.Equal(t, "0", podStatus.Failed)
 }
 
@@ -2982,7 +2945,6 @@ func TestGetAuthProxyDeploymentStatusOpenShift(t *testing.T) {
 		{"storage-service", 1, 0},
 		{"tenant-service", 1, 0},
 		{"authorization-controller", 1, 0},
-		{"rediscommander", 1, 0},
 	}
 	for _, d := range deps {
 		dep := appsv1.Deployment{
@@ -3038,16 +3000,16 @@ func TestGetAuthProxyDeploymentStatusOpenShift(t *testing.T) {
 	fakeReconcile.Config = OperatorConfig{IsOpenShift: true}
 	podStatus, err := getAuthProxyDeploymentStatus(ctx, &csm, &fakeReconcile)
 	assert.Nil(t, err)
-	assert.Equal(t, "10", podStatus.Desired, "6 dep replicas + 3 redis + 1 sentinel = 10 (nginx/gateway skipped)")
-	assert.Equal(t, "10", podStatus.Available)
+	assert.Equal(t, "9", podStatus.Desired, "5 dep replicas + 3 redis + 1 sentinel = 9 (nginx/gateway skipped)")
+	assert.Equal(t, "9", podStatus.Available)
 	assert.Equal(t, "0", podStatus.Failed)
 
 	// Test with isOpenShift=false - nginx and gateway are not enabled in this CSM
 	fakeReconcile.Config = OperatorConfig{IsOpenShift: false}
 	podStatus, err = getAuthProxyDeploymentStatus(ctx, &csm, &fakeReconcile)
 	assert.Nil(t, err)
-	assert.Equal(t, "10", podStatus.Desired, "6 dep replicas + 3 redis + 1 sentinel = 10 (nginx/gateway not enabled)")
-	assert.Equal(t, "10", podStatus.Available)
+	assert.Equal(t, "9", podStatus.Desired, "5 dep replicas + 3 redis + 1 sentinel = 9 (nginx/gateway not enabled)")
+	assert.Equal(t, "9", podStatus.Available)
 	assert.Equal(t, "0", podStatus.Failed)
 }
 

@@ -142,7 +142,7 @@ static-manifests: static-crd static-manager
 
 ##@ Samples
 
-CSM_VERSION ?= v1.18.2
+CSM_VERSION ?= v1.18.3
 OCP_VERSION ?=
 
 .PHONY: samples

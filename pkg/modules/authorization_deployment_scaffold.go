@@ -15,9 +15,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 // getProxyServerScaffold returns proxy-server deployment for authorization v2
@@ -454,186 +452,6 @@ func getAuthorizationRedisStatefulsetScaffold(crName, name, namespace, image, re
 	}
 }
 
-// getAuthorizationRediscommanderDeploymentScaffold returns a redis commander deployment for authorization v2
-func getAuthorizationRediscommanderDeploymentScaffold(crName, name, namespace, image, redisSecretName, redisUsernameKey, redisPasswordKey, sentinelName, checksum string, sentinelReplicas int, ipFamily string) appsv1.Deployment {
-	runAsNonRoot := true
-	readOnlyRootFilesystem := false
-	allowPrivilegeEscalation := false
-	var replicas int32 = 1
-	deployment := appsv1.Deployment{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Deployment",
-			APIVersion: "apps/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Spec: appsv1.DeploymentSpec{
-			Replicas: &replicas,
-			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"app": name,
-				},
-			},
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"csm":  crName,
-						"app":  name,
-						"tier": "backend",
-					},
-					Annotations: map[string]string{
-						"checksum/secret": checksum,
-					},
-				},
-				Spec: corev1.PodSpec{
-					ServiceAccountName: "redis",
-					Containers: []corev1.Container{
-						{
-							Name:            name,
-							Image:           image,
-							ImagePullPolicy: "Always",
-							Env: []corev1.EnvVar{
-								{
-									Name:  "SENTINELS",
-									Value: buildSentinelList(sentinelReplicas, sentinelName, namespace),
-								},
-								{
-									Name:  "K8S_SIGTERM",
-									Value: "1",
-								},
-								{
-									Name: "REDIS_PASSWORD",
-									ValueFrom: &corev1.EnvVarSource{
-										SecretKeyRef: &corev1.SecretKeySelector{
-											LocalObjectReference: corev1.LocalObjectReference{
-												Name: redisSecretName,
-											},
-											Key: redisPasswordKey,
-										},
-									},
-								},
-								{
-									Name: "SENTINEL_PASSWORD",
-									ValueFrom: &corev1.EnvVarSource{
-										SecretKeyRef: &corev1.SecretKeySelector{
-											LocalObjectReference: corev1.LocalObjectReference{
-												Name: redisSecretName,
-											},
-											Key: redisPasswordKey,
-										},
-									},
-								},
-								{
-									Name: "HTTP_PASSWORD",
-									ValueFrom: &corev1.EnvVarSource{
-										SecretKeyRef: &corev1.SecretKeySelector{
-											LocalObjectReference: corev1.LocalObjectReference{
-												Name: redisSecretName,
-											},
-											Key: redisPasswordKey,
-										},
-									},
-								},
-								{
-									Name: "HTTP_USER",
-									ValueFrom: &corev1.EnvVarSource{
-										SecretKeyRef: &corev1.SecretKeySelector{
-											LocalObjectReference: corev1.LocalObjectReference{
-												Name: redisSecretName,
-											},
-											Key: redisUsernameKey,
-										},
-									},
-								},
-							},
-							Ports: []corev1.ContainerPort{
-								{
-									ContainerPort: 8081,
-									Name:          name,
-								},
-							},
-							LivenessProbe: &corev1.Probe{
-								ProbeHandler: corev1.ProbeHandler{
-									HTTPGet: &corev1.HTTPGetAction{
-										Path: "/favicon.png",
-										Port: intstr.FromInt(8081),
-									},
-								},
-								InitialDelaySeconds: 10,
-								TimeoutSeconds:      5,
-							},
-							Resources: corev1.ResourceRequirements{
-								Limits: corev1.ResourceList{
-									corev1.ResourceMemory: resource.MustParse("512Mi"),
-									corev1.ResourceCPU:    resource.MustParse("500m"),
-								},
-							},
-							SecurityContext: &corev1.SecurityContext{
-								RunAsNonRoot:             &runAsNonRoot,
-								ReadOnlyRootFilesystem:   &readOnlyRootFilesystem,
-								AllowPrivilegeEscalation: &allowPrivilegeEscalation,
-								Capabilities: &corev1.Capabilities{
-									Drop: []corev1.Capability{
-										"ALL",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	if ipFamily == "ipv6" || ipFamily == "dual" {
-		podSpec := &deployment.Spec.Template.Spec
-		podSpec.InitContainers = []corev1.Container{{
-			Name:            "dns-init",
-			Image:           image,
-			ImagePullPolicy: "Always",
-			Resources: corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("10m"),
-					corev1.ResourceMemory: resource.MustParse("16Mi"),
-				},
-				Limits: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("100m"),
-					corev1.ResourceMemory: resource.MustParse("64Mi"),
-				},
-			},
-			SecurityContext: &corev1.SecurityContext{
-				RunAsNonRoot:             &runAsNonRoot,
-				ReadOnlyRootFilesystem:   &readOnlyRootFilesystem,
-				AllowPrivilegeEscalation: &allowPrivilegeEscalation,
-				Capabilities: &corev1.Capabilities{
-					Drop: []corev1.Capability{
-						"ALL",
-					},
-				},
-			},
-			Command: []string{
-				"sh",
-				"-c",
-				"cat << 'EOF' > /init/dns-fix.js\nconst dns = require('dns');\nconst o = dns.lookup;\ndns.lookup = function(h, opt, cb) {\n  if (typeof opt === 'function') { cb = opt; opt = {}; }\n  else if (typeof opt === 'number') { opt = { family: opt }; }\n  else if (!opt) { opt = {}; }\n  if (!opt.family || opt.family === 4) { opt = Object.assign({}, opt, { family: 0 }); }\n  return o.call(this, h, opt, cb);\n};\nEOF\n",
-			},
-			VolumeMounts: []corev1.VolumeMount{{Name: "init-vol", MountPath: "/init"}},
-		}}
-		podSpec.Containers[0].Env = append([]corev1.EnvVar{
-			{Name: "ADDRESS", Value: "::"},
-			{Name: "SENTINEL_NAME", Value: "mymaster"},
-			{Name: "NODE_OPTIONS", Value: "-r /init/dns-fix.js"},
-		}, podSpec.Containers[0].Env...)
-		podSpec.Containers[0].VolumeMounts = []corev1.VolumeMount{{Name: "init-vol", MountPath: "/init"}}
-		podSpec.Volumes = []corev1.Volume{{
-			Name:         "init-vol",
-			VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},
-		}}
-	}
-	return deployment
-}
-
 // getAuthorizationSentinelStatefulsetScaffold returns sentinel statefulset for authorization v2
 func getAuthorizationSentinelStatefulsetScaffold(crName, sentinelName, redisName, namespace, image, redisSecretName, redisPasswordKey, checksum string, replicas int32) appsv1.StatefulSet {
 	return appsv1.StatefulSet{
@@ -832,6 +650,12 @@ func buildSentinelList(replicas int, sentinelName, namespace string) string {
 
 // createRedisK8sSecret creates a k8s secret for redis
 func createRedisK8sSecret(name, namespace, username, password string) corev1.Secret {
+	stringData := map[string]string{"password": password}
+	if username != "" {
+		// Preserve the legacy key for existing CRs while omitting this
+		// Commander-only credential for new password-only configurations.
+		stringData["commander_user"] = username
+	}
 	return corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Secret",
@@ -840,11 +664,8 @@ func createRedisK8sSecret(name, namespace, username, password string) corev1.Sec
 			Name:      name,
 			Namespace: namespace,
 		},
-		Type: corev1.SecretTypeBasicAuth,
-		StringData: map[string]string{
-			"password":       password,
-			"commander_user": username,
-		},
+		Type:       corev1.SecretTypeBasicAuth,
+		StringData: stringData,
 	}
 }
 

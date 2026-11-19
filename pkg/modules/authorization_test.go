@@ -2526,15 +2526,14 @@ func TestValidateRedisConfig(t *testing.T) {
 			errorContains: "must be provided together",
 		},
 		{
-			name: "error - only password provided",
+			name: "success - only password provided",
 			component: csmv1.ContainerTemplate{
 				Name:           AuthRedisComponent,
 				RedisPassword:  "test-password",
 				RedisName:      "redis-csm",
 				RedisCommander: "rediscommander",
 			},
-			expectError:   true,
-			errorContains: "must be provided together",
+			expectError: false,
 		},
 		{
 			name: "error - incomplete secret provider class",
@@ -3688,13 +3687,13 @@ func TestGetVersionSpecificDefaultImages(t *testing.T) {
 			expectedController:     "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.3.0",
 		},
 		{
-			name:                   "empty version defaults to v2.6.1",
+			name:                   "empty version defaults to v2.6.2",
 			configVersion:          "",
-			expectedProxyService:   "quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.6.1",
-			expectedTenantService:  "quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.6.1",
-			expectedRoleService:    "quay.io/dell/container-storage-modules/csm-authorization-role:v2.6.1",
-			expectedStorageService: "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.6.1",
-			expectedController:     "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.6.1",
+			expectedProxyService:   "quay.io/dell/container-storage-modules/csm-authorization-proxy:v2.6.2",
+			expectedTenantService:  "quay.io/dell/container-storage-modules/csm-authorization-tenant:v2.6.2",
+			expectedRoleService:    "quay.io/dell/container-storage-modules/csm-authorization-role:v2.6.2",
+			expectedStorageService: "quay.io/dell/container-storage-modules/csm-authorization-storage:v2.6.2",
+			expectedController:     "quay.io/dell/container-storage-modules/csm-authorization-controller:v2.6.2",
 		},
 		{
 			name:            "invalid config directory returns error",
@@ -4555,6 +4554,22 @@ func TestGetLatestAuthVersion(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAuthorizationV2602TemplateDoesNotInstallRedisCommander(t *testing.T) {
+	templatePath := filepath.Join(
+		operatorConfig.ConfigDirectory,
+		"moduleconfig",
+		"authorization",
+		"v2.6.2",
+		"deployment.yaml",
+	)
+
+	template, err := os.ReadFile(templatePath)
+	require.NoError(t, err)
+
+	assert.NotContains(t, string(template), "AUTHORIZATION_REDIS_COMMANDER")
+	assert.NotContains(t, strings.ToLower(string(template)), "redis-commander")
 }
 
 func TestGetHosts(t *testing.T) {

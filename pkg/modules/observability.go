@@ -149,6 +149,9 @@ const (
 	// NginxProxyImage - Nginx proxy image name
 	NginxProxyImage string = "<NGINX_PROXY_IMAGE>"
 
+	// DefaultNginxProxyImage - default otel-collector TLS proxy image.
+	DefaultNginxProxyImage string = "quay.io/nginx/nginx-unprivileged:1.31.8"
+
 	// OtelCollectorImage - Otel collector image name
 	OtelCollectorImage string = "<OTEL_COLLECTOR_IMAGE>"
 
@@ -684,7 +687,7 @@ func getOtelCollector(ctx context.Context, op operatorutils.OperatorConfig, cr c
 	}
 	YamlString = string(buf)
 
-	nginxProxyImage := "quay.io/nginx/nginx-unprivileged:1.27"
+	nginxProxyImage := DefaultNginxProxyImage
 	nginxProxyImageFromConfigMap := false
 	if matched.Version != "" {
 		if img := matched.Images["nginx-proxy"]; img != "" {
@@ -722,7 +725,10 @@ func getOtelCollector(ctx context.Context, op operatorutils.OperatorConfig, cr c
 			}
 
 			for _, env := range component.Envs {
-				if strings.Contains(NginxProxyImage, env.Name) {
+				if env.Name == NginxProxyImage && strings.ContainsAny(env.Value, "\r\n") {
+					return "", fmt.Errorf("invalid image for YAML substitution: nginx proxy image contains a newline")
+				}
+				if env.Name == "NGINX_PROXY_IMAGE" {
 					nginxProxyImage = env.Value
 					nginxProxyImageFromConfigMap = false
 					if matched.Version != "" {

@@ -301,7 +301,7 @@ function getMasterNodeIP() {
 
 function ensureTLSHD() {
   if [[ "$LOCAL_NODE_PREREQS" == "true" ]]; then
-    echo "Checking local tlshd availability (SSH node checks disabled)..."
+    echo "Checking local tlshd and kTLS availability (SSH node checks disabled)..."
     if ! command -v tlshd >/dev/null 2>&1; then
       echo "tlshd is not installed on the local host"
       return 1
@@ -310,11 +310,16 @@ function ensureTLSHD() {
       echo "tlshd.service is not active on the local host"
       return 1
     fi
-    echo "Local tlshd is installed and active"
+    modprobe tls 2>/dev/null || true
+    if [ ! -d /sys/module/tls ]; then
+      echo "Kernel TLS (kTLS) module (/sys/module/tls) is not available on the local host"
+      return 1
+    fi
+    echo "Local tlshd and kTLS are installed and active"
     return 0
   fi
 
-  echo "Checking tlshd availability on cluster nodes..."
+  echo "Checking tlshd and kTLS availability on cluster nodes..."
   
   # Get all node IPs from the cluster
   local nodes=$(kubectl get nodes -o jsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}')
@@ -325,15 +330,32 @@ function ensureTLSHD() {
   fi
   
   for node_ip in $nodes; do
-    echo "Installing tlshd on node $node_ip..."
-    
+    echo "Checking kTLS and tlshd on node $node_ip..."
+
+    # Load and verify the kTLS module in one SSH session. Exit 42 identifies a
+    # capability failure, while SSH's 255 status identifies connectivity/auth.
+    ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 root@$node_ip \
+      "modprobe tls 2>/dev/null || true; [ -d /sys/module/tls ] || exit 42" 2>/dev/null
+    local ktls_status=$?
+    if [ "$ktls_status" -eq 255 ]; then
+      echo "Unable to connect or authenticate to node $node_ip while checking kTLS"
+      return 1
+    elif [ "$ktls_status" -eq 42 ]; then
+      echo "Kernel TLS (kTLS) support (/sys/module/tls) not available on node $node_ip. Kernel version 6.5+ or TLS module required."
+      return 1
+    elif [ "$ktls_status" -ne 0 ]; then
+      echo "Failed to check kTLS on node $node_ip (ssh exit status $ktls_status)"
+      return 1
+    fi
+
     # Check if tlshd is already installed
     if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 root@$node_ip "which tlshd" 2>/dev/null; then
-      echo "tlshd already installed on $node_ip, skipping"
+      echo "tlshd already installed on $node_ip, skipping installation"
       continue
     fi
     
     # Install ktls-utils package (contains tlshd)
+    echo "Installing tlshd on node $node_ip..."
     ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 root@$node_ip << 'EOF'
       set -e
       # Detect OS and install tlshd
@@ -368,7 +390,7 @@ EOF
     fi
   done
   
-  echo "tlshd verification completed on all nodes"
+  echo "tlshd and kTLS verification completed on all nodes"
   return 0
 }
 
@@ -928,8 +950,13 @@ if grep -qi "mtls" "$E2E_SCENARIOS_FILE"; then
   # tlshd; older arrays run their non-mTLS scenarios normally.
   getPowerScaleOneFSVersion
   if oneFSVersionSupportsMTLS; then
-    # ensureTLSHD skips nodes where tlshd is already installed.
-    ensureTLSHD
+    # ensureTLSHD verifies kTLS and installs tlshd. If prerequisites fail, skip mTLS scenarios.
+    if ! ensureTLSHD; then
+      echo "Node kTLS or tlshd prerequisites not met; mTLS scenarios will be skipped"
+      export POWERSCALE_MTLS_NODE_SUPPORTED="false"
+    else
+      export POWERSCALE_MTLS_NODE_SUPPORTED="true"
+    fi
   else
     echo "OneFS ${POWERSCALE_ONEFS_VERSION:-unknown} does not support mTLS; mTLS scenarios will be skipped"
   fi

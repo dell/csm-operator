@@ -4,7 +4,7 @@ metadata:
   name: vxflexos
   namespace: vxflexos
 spec:
-  version: v1.18.2
+  version: v1.18.3
   driver:
     csiDriverType: "powerflex"
     csiDriverSpec:
@@ -244,9 +244,9 @@ spec:
           - name: HOST_DRV_CFG_PATH
             value: "/opt/emc/scaleio/sdc/bin"
           - name: REPO_ADDRESS
-            value: "sftp://0.0.0.0"  # SFTP/private repository address. Format: "protocol://address"
+            value: "sftp://0.0.0.0" # SFTP/private repository address. Format: "protocol://address"
           - name: REPO_USER
-            value: "sdcRepoUser"  # provide username to authenticate to the SFTP repo
+            value: "sdcRepoUser" # provide username to authenticate to the SFTP repo
           - name: MODULE_SIGCHECK
             value: "0"
     # metrics: configures the Prometheus metrics endpoint and gateway monitoring on the controller
